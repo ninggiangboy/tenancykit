@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "Shared replica and snapshot rebuild"
-status: pending
+status: done
 priority: P1
 effort: "3d"
 dependencies: [4, 5, 6]
@@ -53,12 +53,12 @@ Modify:
 
 ## Todo
 
-- [ ] `core-replica` module and CI coverage in `core.yml`
-- [ ] Guarded upserts for five streams
-- [ ] Live consumption through the inbound dispatcher
-- [ ] Snapshot client and ordered bootstrap
-- [ ] Host resolver, actor resolver, two-issuer decoders, entitlement filter
-- [ ] Rebuild-from-zero integration test
+- [x] `core-replica` module and CI coverage in `core.yml`
+- [x] Guarded upserts for five streams
+- [x] Live consumption through the inbound dispatcher
+- [x] Snapshot client and ordered bootstrap
+- [x] Host resolver, actor resolver, two-issuer decoders, entitlement filter
+- [x] Rebuild-from-zero integration test
 
 ## Verification
 

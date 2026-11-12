@@ -34,6 +34,25 @@ column). A consumer upserts and drops any event whose `version` is not newer tha
 neither arrival order nor redelivery matters. The snapshot API answers the same JSON plus `version`, and a
 replica can therefore be rebuilt from zero by paging the snapshot and then applying live events.
 
+The shared library that does all of this is `core/core-replica` (`ReplicaWriter`, `ReplicaEventHandler`,
+`SnapshotClient`, `ReplicaBootstrap`, `ReplicaHostResolver`, `ReplicaActorResolver`, `SuiteJwtDecoders`,
+`EntitlementFilter`). Every app that consumes `platform.events` keeps these five tables, which
+`core-replica/src/main/resources/dev/ngb/core/replica/replica-tables.sql` spells out for an app that starts fresh:
+
+| Stream | Table | Conflict key |
+|---|---|---|
+| `tenant.changed` | `tenants` | `id` |
+| `tenant-domain.changed` | `tenant_domains` | `id` |
+| `tenant-system.changed` | `tenant_systems` | `id` |
+| `user-access.changed` | `user_grants` | `user_id` |
+| `entitlement.changed` | `app_entitlements` | `(tenant_id, app_code)` |
+
+The rebuild order is `tenants`, `tenant-domains`, `tenant-systems`, `user-access`, `entitlements`, because the
+later tables reference `tenants`. The listener container starts only after the snapshot load finishes
+(`autoStartup=false`), so messages that arrive meanwhile wait in the durable queue and are applied afterwards; the
+version guard drops any the snapshot already covered. Platform never hard-deletes these rows, so a rebuild is
+"upsert everything", never "truncate then load".
+
 ## Topology
 
 | Exchange (topic, durable) | Producer | Routing key | Queues (one per consuming app) |
