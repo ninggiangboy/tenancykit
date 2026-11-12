@@ -18,6 +18,14 @@ The order is the order rows are locked, not the order endpoints are called.
 | Stripe event | event, then payment, then refund. A wallet credit goes through `PaymentSettlement`, so the wallet is after the payment. The retry job claims the event in an earlier, separate transaction, because the Stripe read happens before any row lock |
 | Outbox relay | `skip locked`, so it never waits. Consumers share the relay's transaction but lock an invoice or unbilled line, never a wallet |
 | Job lease, run record, rate-limit bucket, Stripe event claim | one coordination row in its own short transaction, never inside a business transaction |
+| Platform: role rename and replace permissions | role `for no key update`, then each user holding the role, ascending by id, `for update` |
+| Platform: role assign and unassign | role `for share`, then the user `for update`, then the assignment row is written |
+| Platform: user patch, direct permission grant, `AccessPublisher` | the user `for update` |
+| Platform: tenant rename and deactivate | tenant `for no key update` |
+| Platform: tenant system update | tenant system `for no key update` |
+| Platform: app entitlement enable and disable | entitlement row `for update`. When absent, `insert ... on conflict do nothing` then lock it |
+| Billing: customer update and deactivate | customer `for no key update` |
+| Billing: webhook endpoint patch and secret rotation | webhook endpoint `for no key update` |
 
 Two consequences:
 
@@ -69,6 +77,34 @@ Two consequences:
     inside each task, because `ScopedValue` does not cross a thread boundary. Nothing inside a single tenant's money
     flow runs in parallel, and a permit is held for the length of the task, including an outbound HTTP call: that is
     what bounds the connections a stuck receiver can occupy.
+11. **A write that bumps a state-transfer `version` holds the row lock across read, bump and write.** The row is
+    locked first, then the version is read, bumped in memory and written under that lock, and the repository
+    `update` carries `and version < :new` and throws when it updates no row. This matters because a consumer's
+    replica keeps only a strictly newer version (`stored.version < excluded.version`): two events for one row at
+    the same version with different state make the replica drop the second, and it then disagrees with the source
+    until the next change. A user's version also moves when one of their roles changes permissions, so a version may
+    advance without any visible field of that row changing. Platform's admin writes and Billing's customer and
+    webhook-endpoint writes follow this rule.
+
+## Conditional updates
+
+Single-resource responses carry `ETag: "<version>"`, a strong tag holding the aggregate's version as a decimal.
+An update may pin the version with `If-Match`; the rule is the same for every such endpoint:
+
+- **`If-Match` is optional.** When present it is enforced; when absent, the write is last-write-wins as it always
+  was. There is no 428 Precondition Required.
+- **Comparison is strong, per RFC 9110.** `*` passes, a comma-separated list passes when any entry matches, a weak
+  tag (`W/"3"`) never matches, and a malformed header is a 400.
+- **A mismatch is 412, a business conflict is 409.** The 412 response carries the current `ETag` so a caller can
+  retry without a separate GET.
+- **The check runs after the row lock and before any mutation.** A no-op change — renaming to the same name, setting
+  an entitlement to the state it already has — still checks the version first, so a stale tag is never answered with
+  200. Visibility is checked before the lock where one applies, so a caller that cannot see a resource gets 404, not
+  412.
+- **A version may move without a visible field changing.** A spurious 412 is acceptable; a missed one is not.
+
+`If-None-Match` and 304 are not implemented; GET responses return the `ETag` today so 304 can be added later without
+changing the contract.
 
 ## Adding a flow
 
