@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Cross-cutting code to core"
-status: pending
+status: done
 priority: P1
 effort: "2d"
 dependencies: []

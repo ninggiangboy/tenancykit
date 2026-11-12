@@ -4,6 +4,7 @@
 package dev.ngb.platform_jooq;
 
 
+import dev.ngb.platform_jooq.tables.ApiCredentials;
 import dev.ngb.platform_jooq.tables.AppEntitlements;
 import dev.ngb.platform_jooq.tables.AuditLog;
 import dev.ngb.platform_jooq.tables.EventInbox;
@@ -11,10 +12,12 @@ import dev.ngb.platform_jooq.tables.JobLeases;
 import dev.ngb.platform_jooq.tables.JobRuns;
 import dev.ngb.platform_jooq.tables.Outbox;
 import dev.ngb.platform_jooq.tables.Permissions;
+import dev.ngb.platform_jooq.tables.RateLimitBuckets;
 import dev.ngb.platform_jooq.tables.RoleAssignments;
 import dev.ngb.platform_jooq.tables.RolePermissions;
 import dev.ngb.platform_jooq.tables.Roles;
 import dev.ngb.platform_jooq.tables.TenantDomains;
+import dev.ngb.platform_jooq.tables.TenantSystems;
 import dev.ngb.platform_jooq.tables.Tenants;
 import dev.ngb.platform_jooq.tables.UserPermissions;
 import dev.ngb.platform_jooq.tables.Users;
@@ -40,6 +43,11 @@ public class Public extends SchemaImpl {
      * The reference instance of <code>public</code>
      */
     public static final Public PUBLIC = new Public();
+
+    /**
+     * The table <code>public.api_credentials</code>.
+     */
+    public final ApiCredentials API_CREDENTIALS = ApiCredentials.API_CREDENTIALS;
 
     /**
      * The table <code>public.app_entitlements</code>.
@@ -77,6 +85,11 @@ public class Public extends SchemaImpl {
     public final Permissions PERMISSIONS = Permissions.PERMISSIONS;
 
     /**
+     * The table <code>public.rate_limit_buckets</code>.
+     */
+    public final RateLimitBuckets RATE_LIMIT_BUCKETS = RateLimitBuckets.RATE_LIMIT_BUCKETS;
+
+    /**
      * The table <code>public.role_assignments</code>.
      */
     public final RoleAssignments ROLE_ASSIGNMENTS = RoleAssignments.ROLE_ASSIGNMENTS;
@@ -95,6 +108,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.tenant_domains</code>.
      */
     public final TenantDomains TENANT_DOMAINS = TenantDomains.TENANT_DOMAINS;
+
+    /**
+     * The table <code>public.tenant_systems</code>.
+     */
+    public final TenantSystems TENANT_SYSTEMS = TenantSystems.TENANT_SYSTEMS;
 
     /**
      * The table <code>public.tenants</code>.
@@ -127,6 +145,7 @@ public class Public extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
+            ApiCredentials.API_CREDENTIALS,
             AppEntitlements.APP_ENTITLEMENTS,
             AuditLog.AUDIT_LOG,
             EventInbox.EVENT_INBOX,
@@ -134,10 +153,12 @@ public class Public extends SchemaImpl {
             JobRuns.JOB_RUNS,
             Outbox.OUTBOX,
             Permissions.PERMISSIONS,
+            RateLimitBuckets.RATE_LIMIT_BUCKETS,
             RoleAssignments.ROLE_ASSIGNMENTS,
             RolePermissions.ROLE_PERMISSIONS,
             Roles.ROLES,
             TenantDomains.TENANT_DOMAINS,
+            TenantSystems.TENANT_SYSTEMS,
             Tenants.TENANTS,
             UserPermissions.USER_PERMISSIONS,
             Users.USERS

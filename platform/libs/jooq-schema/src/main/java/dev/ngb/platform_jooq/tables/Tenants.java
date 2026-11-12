@@ -6,6 +6,7 @@ package dev.ngb.platform_jooq.tables;
 
 import dev.ngb.platform_jooq.Keys;
 import dev.ngb.platform_jooq.Public;
+import dev.ngb.platform_jooq.tables.ApiCredentials.ApiCredentialsPath;
 import dev.ngb.platform_jooq.tables.AppEntitlements.AppEntitlementsPath;
 import dev.ngb.platform_jooq.tables.AuditLog.AuditLogPath;
 import dev.ngb.platform_jooq.tables.EventInbox.EventInboxPath;
@@ -14,6 +15,7 @@ import dev.ngb.platform_jooq.tables.RoleAssignments.RoleAssignmentsPath;
 import dev.ngb.platform_jooq.tables.RolePermissions.RolePermissionsPath;
 import dev.ngb.platform_jooq.tables.Roles.RolesPath;
 import dev.ngb.platform_jooq.tables.TenantDomains.TenantDomainsPath;
+import dev.ngb.platform_jooq.tables.TenantSystems.TenantSystemsPath;
 import dev.ngb.platform_jooq.tables.UserPermissions.UserPermissionsPath;
 import dev.ngb.platform_jooq.tables.Users.UsersPath;
 import dev.ngb.platform_jooq.tables.records.TenantsRecord;
@@ -176,6 +178,19 @@ public class Tenants extends TableImpl<TenantsRecord> {
         return Arrays.asList(Keys.TENANTS_CODE_KEY);
     }
 
+    private transient ApiCredentialsPath _apiCredentials;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.api_credentials</code> table
+     */
+    public ApiCredentialsPath apiCredentials() {
+        if (_apiCredentials == null)
+            _apiCredentials = new ApiCredentialsPath(this, null, Keys.API_CREDENTIALS__API_CREDENTIALS_TENANT_ID_FKEY.getInverseKey());
+
+        return _apiCredentials;
+    }
+
     private transient AppEntitlementsPath _appEntitlements;
 
     /**
@@ -277,6 +292,19 @@ public class Tenants extends TableImpl<TenantsRecord> {
             _tenantDomains = new TenantDomainsPath(this, null, Keys.TENANT_DOMAINS__TENANT_DOMAINS_TENANT_ID_FKEY.getInverseKey());
 
         return _tenantDomains;
+    }
+
+    private transient TenantSystemsPath _tenantSystems;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.tenant_systems</code> table
+     */
+    public TenantSystemsPath tenantSystems() {
+        if (_tenantSystems == null)
+            _tenantSystems = new TenantSystemsPath(this, null, Keys.TENANT_SYSTEMS__TENANT_SYSTEMS_TENANT_ID_FKEY.getInverseKey());
+
+        return _tenantSystems;
     }
 
     private transient UserPermissionsPath _userPermissions;

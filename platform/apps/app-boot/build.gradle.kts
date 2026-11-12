@@ -9,6 +9,7 @@ dependencies {
     implementation("dev.ngb:core-messaging")
     implementation(project(":contexts:tenancy"))
     implementation(project(":contexts:access"))
+    implementation(project(":contexts:integration"))
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-jackson")

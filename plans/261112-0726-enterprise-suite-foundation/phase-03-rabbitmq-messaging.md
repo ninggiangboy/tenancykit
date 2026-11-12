@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "RabbitMQ messaging"
-status: pending
+status: done
 priority: P1
 effort: "3d"
 dependencies: [1, 2]

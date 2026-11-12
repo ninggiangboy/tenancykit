@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Platform: tenancy, entitlement, suite tokens"
-status: pending
+status: done
 priority: P1
 effort: "5d"
 dependencies: [3]

@@ -1,9 +1,9 @@
 package dev.ngb.platform.boot.security;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
@@ -18,6 +18,9 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.ConfigurableJWTProcessor;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
+import dev.ngb.core.id.TenantId;
+import dev.ngb.core.id.TenantSystemId;
+import dev.ngb.platform.integration.application.token.port.TokenIssuer;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
@@ -25,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -33,12 +37,10 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
  * Signs the suite's tokens. One ES256 key signs, its thumbprint is the {@code kid}, and the JWKS publishes the
  * public halves of the signing key and, during a rotation, the previous one.
  */
-public class SuiteTokenIssuer {
+public class SuiteTokenIssuer implements TokenIssuer {
 
     /** A token outlives one request and no more. */
     public static final Duration LIFETIME = Duration.ofMinutes(10);
-
-    public record Issued(String token, long expiresIn) {}
 
     private final String issuer;
     private final ECKey signing;
@@ -62,19 +64,37 @@ public class SuiteTokenIssuer {
         return issuer;
     }
 
-    public Issued issue(String clientId, List<String> scopes, String audience) {
+    @Override
+    public Issued issueService(String clientId, Set<String> scopes, String audience) {
+        return issue("service/" + clientId, scopes, audience, Map.of());
+    }
+
+    @Override
+    public Issued issueTenantSystem(
+            TenantSystemId systemId, TenantId tenantId, String tenantCode, Set<String> scopes, String audience) {
+        return issue(
+                "tenant-system/" + systemId,
+                scopes,
+                audience,
+                Map.of(
+                        "tenant_id", tenantId.value().toString(),
+                        "tenant_code", tenantCode,
+                        "tenant_system_id", systemId.value().toString()));
+    }
+
+    private Issued issue(String subject, Set<String> scopes, String audience, Map<String, Object> extraClaims) {
         Instant now = Instant.now();
-        JWTClaimsSet claims = new JWTClaimsSet.Builder()
+        JWTClaimsSet.Builder claims = new JWTClaimsSet.Builder()
                 .issuer(issuer)
-                .subject("service/" + clientId)
+                .subject(subject)
                 .audience(audience)
                 .issueTime(Date.from(now))
                 .expirationTime(Date.from(now.plus(LIFETIME)))
                 .jwtID(UUID.randomUUID().toString())
-                .claim("scope", String.join(" ", scopes))
-                .build();
+                .claim("scope", String.join(" ", scopes));
+        extraClaims.forEach(claims::claim);
         SignedJWT jwt = new SignedJWT(
-                new JWSHeader.Builder(JWSAlgorithm.ES256).keyID(keyId).type(JOSEObjectType.JWT).build(), claims);
+                new JWSHeader.Builder(JWSAlgorithm.ES256).keyID(keyId).type(JOSEObjectType.JWT).build(), claims.build());
         try {
             jwt.sign(new ECDSASigner(signing.toECPrivateKey()));
         } catch (JOSEException e) {

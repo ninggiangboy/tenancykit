@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Platform: users and centralized RBAC"
-status: pending
+status: done
 priority: P1
 effort: "4d"
 dependencies: [4]

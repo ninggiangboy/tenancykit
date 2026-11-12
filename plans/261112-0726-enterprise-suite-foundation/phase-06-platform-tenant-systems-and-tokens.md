@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Platform: tenant systems and M2M tokens"
-status: pending
+status: done
 priority: P1
 effort: "3d"
 dependencies: [5]
@@ -42,11 +42,11 @@ Modify:
 
 ## Todo
 
-- [ ] Tenant systems and credentials moved with versions and events
-- [ ] Credential scopes validated against the catalogs
-- [ ] Token issuing for tenant systems with audience filtering
-- [ ] Rate limiting and auditing
-- [ ] `tenant-systems` snapshot stream and tests
+- [x] Tenant systems and credentials moved with versions and events
+- [x] Credential scopes validated against the catalogs
+- [x] Token issuing for tenant systems with audience filtering
+- [x] Rate limiting and auditing
+- [x] `tenant-systems` snapshot stream and tests
 
 ## Verification
 

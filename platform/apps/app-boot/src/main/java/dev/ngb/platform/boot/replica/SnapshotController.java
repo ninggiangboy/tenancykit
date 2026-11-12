@@ -3,6 +3,8 @@ package dev.ngb.platform.boot.replica;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.platform.access.application.user.query.UserAccessView;
 import dev.ngb.platform.access.application.user.query.UserQueries;
+import dev.ngb.platform.integration.application.tenantsystem.query.TenantSystemQueries;
+import dev.ngb.platform.integration.application.tenantsystem.query.TenantSystemView;
 import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementQueries;
 import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementView;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantDomainView;
@@ -31,11 +33,14 @@ class SnapshotController {
     private final TenantQueries tenants;
     private final EntitlementQueries entitlements;
     private final UserQueries users;
+    private final TenantSystemQueries tenantSystems;
 
-    SnapshotController(TenantQueries tenants, EntitlementQueries entitlements, UserQueries users) {
+    SnapshotController(
+            TenantQueries tenants, EntitlementQueries entitlements, UserQueries users, TenantSystemQueries tenantSystems) {
         this.tenants = tenants;
         this.entitlements = entitlements;
         this.users = users;
+        this.tenantSystems = tenantSystems;
     }
 
     @GetMapping("/internal/replica/{stream}")
@@ -48,6 +53,7 @@ class SnapshotController {
         return switch (stream) {
             case "tenants" -> pageOf(tenants.page(after, size), size, SnapshotController::tenantItem);
             case "tenant-domains" -> pageOf(tenants.pageDomains(after, size), size, SnapshotController::domainItem);
+            case "tenant-systems" -> pageOf(tenantSystems.page(after, size), size, SnapshotController::tenantSystemItem);
             case "entitlements" -> pageOf(entitlements.page(after, size), size, SnapshotController::entitlementItem);
             case "user-access" -> pageOf(users.pageAccess(after, size), size, SnapshotController::userAccessItem);
             default -> throw new ResponseStatusException(HttpStatus.NOT_FOUND, "unknown replica stream");
@@ -88,6 +94,16 @@ class SnapshotController {
         item.put("kind", domain.kind());
         item.put("created_at", domain.createdAt().toString());
         item.put("version", domain.version());
+        return item;
+    }
+
+    private static Map<String, Object> tenantSystemItem(TenantSystemView system) {
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("id", system.id());
+        item.put("name", system.name());
+        item.put("status", system.status());
+        item.put("created_at", system.createdAt().toString());
+        item.put("version", system.version());
         return item;
     }
 

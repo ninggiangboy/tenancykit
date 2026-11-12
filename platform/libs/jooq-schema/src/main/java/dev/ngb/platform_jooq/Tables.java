@@ -4,6 +4,7 @@
 package dev.ngb.platform_jooq;
 
 
+import dev.ngb.platform_jooq.tables.ApiCredentials;
 import dev.ngb.platform_jooq.tables.AppEntitlements;
 import dev.ngb.platform_jooq.tables.AuditLog;
 import dev.ngb.platform_jooq.tables.EventInbox;
@@ -11,10 +12,12 @@ import dev.ngb.platform_jooq.tables.JobLeases;
 import dev.ngb.platform_jooq.tables.JobRuns;
 import dev.ngb.platform_jooq.tables.Outbox;
 import dev.ngb.platform_jooq.tables.Permissions;
+import dev.ngb.platform_jooq.tables.RateLimitBuckets;
 import dev.ngb.platform_jooq.tables.RoleAssignments;
 import dev.ngb.platform_jooq.tables.RolePermissions;
 import dev.ngb.platform_jooq.tables.Roles;
 import dev.ngb.platform_jooq.tables.TenantDomains;
+import dev.ngb.platform_jooq.tables.TenantSystems;
 import dev.ngb.platform_jooq.tables.Tenants;
 import dev.ngb.platform_jooq.tables.UserPermissions;
 import dev.ngb.platform_jooq.tables.Users;
@@ -25,6 +28,11 @@ import dev.ngb.platform_jooq.tables.Users;
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Tables {
+
+    /**
+     * The table <code>public.api_credentials</code>.
+     */
+    public static final ApiCredentials API_CREDENTIALS = ApiCredentials.API_CREDENTIALS;
 
     /**
      * The table <code>public.app_entitlements</code>.
@@ -62,6 +70,11 @@ public class Tables {
     public static final Permissions PERMISSIONS = Permissions.PERMISSIONS;
 
     /**
+     * The table <code>public.rate_limit_buckets</code>.
+     */
+    public static final RateLimitBuckets RATE_LIMIT_BUCKETS = RateLimitBuckets.RATE_LIMIT_BUCKETS;
+
+    /**
      * The table <code>public.role_assignments</code>.
      */
     public static final RoleAssignments ROLE_ASSIGNMENTS = RoleAssignments.ROLE_ASSIGNMENTS;
@@ -80,6 +93,11 @@ public class Tables {
      * The table <code>public.tenant_domains</code>.
      */
     public static final TenantDomains TENANT_DOMAINS = TenantDomains.TENANT_DOMAINS;
+
+    /**
+     * The table <code>public.tenant_systems</code>.
+     */
+    public static final TenantSystems TENANT_SYSTEMS = TenantSystems.TENANT_SYSTEMS;
 
     /**
      * The table <code>public.tenants</code>.

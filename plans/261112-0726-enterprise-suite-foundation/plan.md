@@ -48,12 +48,12 @@ Business apps (CRM, HR...), charging tenants for suite use, SMS or push, payment
 
 | # | Phase | Effort | Depends on | Status |
 |---|-------|--------|-----------|--------|
-| 1 | [Cross-cutting code to core](./phase-01-cross-cutting-to-core.md) | 2d | none | Pending |
-| 2 | [Suite contracts](./phase-02-suite-contracts.md) | 1d | 1 | Pending |
-| 3 | [RabbitMQ messaging](./phase-03-rabbitmq-messaging.md) | 3d | 1, 2 | Pending |
-| 4 | [Platform: tenancy, entitlement, suite tokens](./phase-04-platform-tenancy-and-entitlement.md) | 5d | 3 | Pending |
-| 5 | [Platform: users and centralized RBAC](./phase-05-platform-users-and-rbac.md) | 4d | 4 | Pending |
-| 6 | [Platform: tenant systems and M2M tokens](./phase-06-platform-tenant-systems-and-tokens.md) | 3d | 5 | Pending |
+| 1 | [Cross-cutting code to core](./phase-01-cross-cutting-to-core.md) | 2d | none | Done |
+| 2 | [Suite contracts](./phase-02-suite-contracts.md) | 1d | 1 | Done |
+| 3 | [RabbitMQ messaging](./phase-03-rabbitmq-messaging.md) | 3d | 1, 2 | Done |
+| 4 | [Platform: tenancy, entitlement, suite tokens](./phase-04-platform-tenancy-and-entitlement.md) | 5d | 3 | Done |
+| 5 | [Platform: users and centralized RBAC](./phase-05-platform-users-and-rbac.md) | 4d | 4 | Done |
+| 6 | [Platform: tenant systems and M2M tokens](./phase-06-platform-tenant-systems-and-tokens.md) | 3d | 5 | Done |
 | 7 | [Shared replica and snapshot rebuild](./phase-07-shared-replica.md) | 3d | 4, 5, 6 | Pending |
 | 8 | [Billing cutover](./phase-08-billing-cutover.md) | 4d | 7 | Pending |
 | 9 | [Notification Hub and webhook move](./phase-09-notification-hub-and-webhooks.md) | 4d | 7, 8 | Pending |

@@ -31,4 +31,8 @@ public class TenantQueries {
     public List<TenantDomainView> pageDomains(UUID after, int limit) {
         return unitOfWork.transactional(() -> tenants.pageDomains(after, limit));
     }
+
+    public java.util.Optional<TenantView> byId(UUID id) {
+        return unitOfWork.transactional(() -> tenants.findById(id));
+    }
 }

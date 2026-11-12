@@ -57,11 +57,6 @@ class SecurityConfiguration {
     }
 
     @Bean
-    ServiceClients serviceClients(PlatformProperties properties) {
-        return new ServiceClients(properties.serviceClients());
-    }
-
-    @Bean
     CurrentActor currentActor() {
         return () -> {
             var authentication = SecurityContextHolder.getContext().getAuthentication();
