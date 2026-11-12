@@ -22,6 +22,7 @@ public final class Customer {
     private String displayName;
     private String email;
     private CustomerStatus status;
+    private long version;
 
     private Customer(
             CustomerId id,
@@ -32,7 +33,8 @@ public final class Customer {
             Instant createdAt,
             String idempotencyKey,
             String requestHash,
-            Set<ExternalIdentity> identities) {
+            Set<ExternalIdentity> identities,
+            long version) {
         this.id = Objects.requireNonNull(id, "id");
         this.tenantId = Objects.requireNonNull(tenantId, "tenantId");
         this.displayName = requireName(displayName);
@@ -42,17 +44,18 @@ public final class Customer {
         this.idempotencyKey = Objects.requireNonNull(idempotencyKey, "idempotencyKey");
         this.requestHash = Objects.requireNonNull(requestHash, "requestHash");
         this.identities = new HashSet<>(identities);
+        this.version = version;
     }
 
     public static Customer create(
             CustomerId id, TenantId tenantId, String displayName, String email, String idempotencyKey, String requestHash, Instant now) {
-        return new Customer(id, tenantId, displayName, email, CustomerStatus.ACTIVE, now, idempotencyKey, requestHash, Set.of());
+        return new Customer(id, tenantId, displayName, email, CustomerStatus.ACTIVE, now, idempotencyKey, requestHash, Set.of(), 1);
     }
 
     public static Customer restore(
             CustomerId id, TenantId tenantId, String displayName, String email, CustomerStatus status, Instant createdAt,
-            String idempotencyKey, String requestHash, Set<ExternalIdentity> identities) {
-        return new Customer(id, tenantId, displayName, email, status, createdAt, idempotencyKey, requestHash, identities);
+            String idempotencyKey, String requestHash, Set<ExternalIdentity> identities, long version) {
+        return new Customer(id, tenantId, displayName, email, status, createdAt, idempotencyKey, requestHash, identities, version);
     }
 
     /** Maps a Tenant System's user to this customer. The database enforces that one such user maps to one customer. */
@@ -60,15 +63,28 @@ public final class Customer {
         identities.add(Objects.requireNonNull(identity, "identity"));
     }
 
-    public void changeContact(String newDisplayName, String newEmail) {
+    /** @return false when the contact is unchanged, so no write and no version bump happen */
+    public boolean changeContact(String newDisplayName, String newEmail) {
         requireActive();
-        this.displayName = requireName(newDisplayName);
-        this.email = normalizeEmail(newEmail);
+        String normalizedName = requireName(newDisplayName);
+        String normalizedEmail = normalizeEmail(newEmail);
+        if (normalizedName.equals(displayName) && Objects.equals(normalizedEmail, email)) {
+            return false;
+        }
+        this.displayName = normalizedName;
+        this.email = normalizedEmail;
+        version++;
+        return true;
     }
 
-    /** Deactivating twice is allowed and changes nothing. */
-    public void deactivate() {
+    /** Deactivating twice is allowed and changes nothing. @return false when it was already deactivated */
+    public boolean deactivate() {
+        if (status == CustomerStatus.DEACTIVATED) {
+            return false;
+        }
         status = CustomerStatus.DEACTIVATED;
+        version++;
+        return true;
     }
 
     public boolean isActive() {
@@ -110,6 +126,11 @@ public final class Customer {
 
     public Set<ExternalIdentity> identities() {
         return Set.copyOf(identities);
+    }
+
+    /** The version an ETag carries; an update that pins it must match for the write to proceed. */
+    public long version() {
+        return version;
     }
 
     private void requireActive() {

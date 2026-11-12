@@ -122,6 +122,11 @@ public class WebhookEndpoints extends TableImpl<WebhookEndpointsRecord> {
      */
     public final TableField<WebhookEndpointsRecord, UUID> TENANT_SYSTEM_ID = createField(DSL.name("tenant_system_id"), SQLDataType.UUID, this, "");
 
+    /**
+     * The column <code>public.webhook_endpoints.version</code>.
+     */
+    public final TableField<WebhookEndpointsRecord, Long> VERSION = createField(DSL.name("version"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("1"), SQLDataType.BIGINT)), this, "");
+
     private WebhookEndpoints(Name alias, Table<WebhookEndpointsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

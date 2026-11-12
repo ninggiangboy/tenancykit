@@ -4,6 +4,8 @@ import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
+import dev.ngb.core.version.ConditionalUpdate;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.billing.webhook.application.endpoint.command.CreateEndpointUseCase;
 import dev.ngb.billing.webhook.application.endpoint.command.ManageEndpointUseCase;
 import dev.ngb.billing.webhook.application.endpoint.query.EndpointQueries;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -84,19 +87,26 @@ public class EndpointController {
 
     @GetMapping("/webhook-endpoints/{id}")
     @RequiresPermission(BillingPermissions.WEBHOOK_READ)
-    public EndpointResponse getEndpoint(@PathVariable String id) {
-        return EndpointResponse.ofView(endpointQueries.get(UUID.fromString(id), currentActor.caller()));
+    public ResponseEntity<EndpointResponse> getEndpoint(@PathVariable String id) {
+        WebhookEndpointView endpoint = endpointQueries.get(UUID.fromString(id), currentActor.caller());
+        return ResponseEntity.ok().eTag(ExpectedVersion.etag(endpoint.version())).body(EndpointResponse.ofView(endpoint));
     }
 
     /** Changes only the fields that are present. Setting {@code status} to {@code DISABLED} pauses delivery without losing queued events. */
     @PatchMapping("/webhook-endpoints/{id}")
     @RequiresPermission(BillingPermissions.WEBHOOK_MANAGE)
-    public EndpointResponse updateEndpoint(
-            @PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+    @ConditionalUpdate
+    public ResponseEntity<EndpointResponse> updateEndpoint(
+            @PathVariable String id,
+            @RequestHeader(value = "If-Match", required = false) String ifMatch,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             @RequestBody UpdateEndpointRequest request) {
         EndpointStatus status = request.status() == null ? null : EndpointStatus.valueOf(request.status());
-        return EndpointResponse.of(endpoints.update(Audit.of(currentActor.get().auditName(), requestId), WebhookEndpointId.of(id),
-                new ManageEndpointUseCase.Change(request.url(), request.description(), request.eventTypes(), status), currentActor.caller()));
+        WebhookEndpoint endpoint = endpoints.update(
+                Audit.of(currentActor.get().auditName(), requestId), WebhookEndpointId.of(id),
+                new ManageEndpointUseCase.Change(request.url(), request.description(), request.eventTypes(), status),
+                ExpectedVersion.fromIfMatch(ifMatch), currentActor.caller());
+        return ResponseEntity.ok().eTag(ExpectedVersion.etag(endpoint.version())).body(EndpointResponse.of(endpoint));
     }
 
     @PostMapping("/webhook-endpoints/{id}/rotate-secret")

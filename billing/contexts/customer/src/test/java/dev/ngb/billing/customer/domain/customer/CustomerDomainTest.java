@@ -75,6 +75,24 @@ class CustomerDomainTest {
     }
 
     @Test
+    void theVersionMovesOnlyWhenSomethingChanges() {
+        Customer customer = customer();
+        assertThat(customer.version()).isEqualTo(1);
+
+        assertThat(customer.changeContact("Acme Ltd", "billing@acme.test")).as("the same contact").isFalse();
+        assertThat(customer.version()).isEqualTo(1);
+
+        assertThat(customer.changeContact("Acme Holdings", "billing@acme.test")).isTrue();
+        assertThat(customer.version()).isEqualTo(2);
+
+        assertThat(customer.deactivate()).isTrue();
+        assertThat(customer.version()).isEqualTo(3);
+
+        assertThat(customer.deactivate()).as("already deactivated").isFalse();
+        assertThat(customer.version()).isEqualTo(3);
+    }
+
+    @Test
     void theCreatedEventCarriesNoPersonalData() {
         Customer customer = customer();
         customer.mapTo(new ExternalIdentity(new TenantSystemId(UUID.randomUUID()), "user_001"));

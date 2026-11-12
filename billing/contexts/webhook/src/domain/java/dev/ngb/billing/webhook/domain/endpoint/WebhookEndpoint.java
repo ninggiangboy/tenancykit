@@ -30,10 +30,12 @@ public final class WebhookEndpoint {
     private final Instant createdAt;
     private Instant updatedAt;
     private Instant secretRotatedAt;
+    private long version;
 
     private WebhookEndpoint(
             WebhookEndpointId id, TenantId tenantId, TenantSystemId tenantSystemId, String url, String description, Set<String> eventTypes,
-            EndpointStatus status, String keyId, String secretCiphertext, Instant createdAt, Instant updatedAt, Instant secretRotatedAt) {
+            EndpointStatus status, String keyId, String secretCiphertext, Instant createdAt, Instant updatedAt, Instant secretRotatedAt,
+            long version) {
         this.id = Objects.requireNonNull(id, "id");
         this.tenantId = Objects.requireNonNull(tenantId, "tenantId");
         this.tenantSystemId = tenantSystemId;
@@ -46,6 +48,7 @@ public final class WebhookEndpoint {
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
         this.secretRotatedAt = secretRotatedAt;
+        this.version = version;
     }
 
     public static WebhookEndpoint create(
@@ -57,21 +60,23 @@ public final class WebhookEndpoint {
     public static WebhookEndpoint create(
             WebhookEndpointId id, TenantId tenantId, TenantSystemId tenantSystemId, String url, String description, Collection<String> eventTypes,
             String keyId, String secretCiphertext, Instant now) {
-        return new WebhookEndpoint(id, tenantId, tenantSystemId, url, cleanDescription(description), Set.copyOf(eventTypes), EndpointStatus.ACTIVE, keyId,
-                secretCiphertext, now, now, null);
+        return new WebhookEndpoint(id, tenantId, tenantSystemId, url, cleanDescription(description), Set.copyOf(eventTypes), EndpointStatus.ACTIVE,
+                keyId, secretCiphertext, now, now, null, 1);
     }
 
     public static WebhookEndpoint restore(
             WebhookEndpointId id, TenantId tenantId, String url, String description, Collection<String> eventTypes, EndpointStatus status,
-            String keyId, String secretCiphertext, Instant createdAt, Instant updatedAt, Instant secretRotatedAt) {
-        return restore(id, tenantId, null, url, description, eventTypes, status, keyId, secretCiphertext, createdAt, updatedAt, secretRotatedAt);
+            String keyId, String secretCiphertext, Instant createdAt, Instant updatedAt, Instant secretRotatedAt, long version) {
+        return restore(id, tenantId, null, url, description, eventTypes, status, keyId, secretCiphertext, createdAt, updatedAt, secretRotatedAt,
+                version);
     }
 
     public static WebhookEndpoint restore(
             WebhookEndpointId id, TenantId tenantId, TenantSystemId tenantSystemId, String url, String description, Collection<String> eventTypes,
-            EndpointStatus status, String keyId, String secretCiphertext, Instant createdAt, Instant updatedAt, Instant secretRotatedAt) {
+            EndpointStatus status, String keyId, String secretCiphertext, Instant createdAt, Instant updatedAt, Instant secretRotatedAt,
+            long version) {
         return new WebhookEndpoint(id, tenantId, tenantSystemId, url, description, Set.copyOf(eventTypes), status, keyId, secretCiphertext, createdAt,
-                updatedAt, secretRotatedAt);
+                updatedAt, secretRotatedAt, version);
     }
 
     public void reconfigure(String newUrl, String newDescription, Collection<String> newEventTypes, Instant now) {
@@ -79,18 +84,22 @@ public final class WebhookEndpoint {
         this.description = cleanDescription(newDescription);
         this.eventTypes = normalize(Set.copyOf(newEventTypes));
         this.updatedAt = now;
+        this.version++;
     }
 
     public void changeStatus(EndpointStatus newStatus, Instant now) {
         this.status = Objects.requireNonNull(newStatus, "status");
         this.updatedAt = now;
+        this.version++;
     }
 
+    /** Secret rotation is outside the If-Match scope, but it changes the row, so the version moves with it. */
     public void rotateSecret(String newKeyId, String newCiphertext, Instant now) {
         this.keyId = Objects.requireNonNull(newKeyId, "keyId");
         this.secretCiphertext = Objects.requireNonNull(newCiphertext, "secretCiphertext");
         this.secretRotatedAt = now;
         this.updatedAt = now;
+        this.version++;
     }
 
     public boolean subscribesTo(String eventType) {
@@ -161,5 +170,10 @@ public final class WebhookEndpoint {
 
     public Instant secretRotatedAt() {
         return secretRotatedAt;
+    }
+
+    /** The version an ETag carries; a conditional PATCH that pins it must match for the write to proceed. */
+    public long version() {
+        return version;
     }
 }

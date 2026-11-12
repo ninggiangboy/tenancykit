@@ -131,6 +131,11 @@ paths:
         required: true
         schema:
           type: string
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
       - name: X-Request-Id
         in: header
         required: false
@@ -145,10 +150,25 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            ETag:
+              description: "The resource version after this change, as a strong tag"
+              schema:
+                type: string
+                example: '"3"'
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CustomerResponse"
+        "412":
+          description: The resource changed since the caller read it; the current
+            ETag is returned in the header
+          headers:
+            ETag:
+              description: The current version
+              schema:
+                type: string
+                example: '"3"'
       x-required-permission: billing:customer:write
       x-allowed-callers: []
   /stripe/webhooks/direct/{configurationId}:
@@ -1354,6 +1374,11 @@ paths:
         required: true
         schema:
           type: string
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
       - name: X-Request-Id
         in: header
         required: false
@@ -1362,10 +1387,25 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            ETag:
+              description: "The resource version after this change, as a strong tag"
+              schema:
+                type: string
+                example: '"3"'
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CustomerResponse"
+        "412":
+          description: The resource changed since the caller read it; the current
+            ETag is returned in the header
+          headers:
+            ETag:
+              description: The current version
+              schema:
+                type: string
+                example: '"3"'
       x-required-permission: billing:customer:write
       x-allowed-callers: []
   /api/v1/charges:
@@ -1478,6 +1518,11 @@ paths:
         required: true
         schema:
           type: string
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
       - name: X-Request-Id
         in: header
         required: false
@@ -1492,10 +1537,25 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            ETag:
+              description: "The resource version after this change, as a strong tag"
+              schema:
+                type: string
+                example: '"3"'
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/EndpointResponse"
+        "412":
+          description: The resource changed since the caller read it; the current
+            ETag is returned in the header
+          headers:
+            ETag:
+              description: The current version
+              schema:
+                type: string
+                example: '"3"'
       x-required-permission: billing:webhook:manage
       x-allowed-callers: []
   /test-jwks:

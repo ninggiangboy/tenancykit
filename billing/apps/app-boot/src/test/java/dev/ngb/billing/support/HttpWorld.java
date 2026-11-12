@@ -99,11 +99,17 @@ public final class HttpWorld {
     }
 
     public MvcResult call(HttpMethod method, String host, String token, String path, Object payload) {
+        return call(method, host, token, path, payload, java.util.Map.of());
+    }
+
+    /** The same call with extra request headers, for tests of If-Match and the other conditional headers. */
+    public MvcResult call(HttpMethod method, String host, String token, String path, Object payload, java.util.Map<String, String> headers) {
         try {
             MockHttpServletRequestBuilder builder = request(method, path).header("Host", host);
             if (token != null) {
                 builder.header("Authorization", "Bearer " + token);
             }
+            headers.forEach(builder::header);
             if (payload != null) {
                 builder.contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(payload));
             }

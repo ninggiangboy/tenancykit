@@ -11,6 +11,8 @@ import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
+import dev.ngb.core.version.ConditionalUpdate;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.core.idempotency.RepeatableCreate;
@@ -110,26 +112,37 @@ public class CustomerController {
 
     @GetMapping("/{id}")
     @RequiresPermission(BillingPermissions.CUSTOMER_READ)
-    public CustomerResponse get(@PathVariable String id) {
-        return CustomerResponse.ofView(queries.get(CustomerId.of(id), currentActor.callerId()));
+    public ResponseEntity<CustomerResponse> get(@PathVariable String id) {
+        CustomerView customer = queries.get(CustomerId.of(id), currentActor.callerId());
+        return ResponseEntity.ok().eTag(ExpectedVersion.etag(customer.version())).body(CustomerResponse.ofView(customer));
     }
 
     @PutMapping("/{id}")
     @RequiresPermission(BillingPermissions.CUSTOMER_WRITE)
-    public CustomerResponse update(
+    @ConditionalUpdate
+    public ResponseEntity<CustomerResponse> update(
             @PathVariable String id,
+            @RequestHeader(value = "If-Match", required = false) String ifMatch,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             @RequestBody UpdateCustomerRequest request) {
         Actor actor = currentActor.get();
-        return CustomerResponse.of(manage.update(
-                Audit.of(actor.auditName(), requestId), CustomerId.of(id), request.displayName(), request.email(), currentActor.callerId()));
+        Customer customer = manage.update(
+                Audit.of(actor.auditName(), requestId), CustomerId.of(id), request.displayName(), request.email(),
+                ExpectedVersion.fromIfMatch(ifMatch), currentActor.callerId());
+        return ResponseEntity.ok().eTag(ExpectedVersion.etag(customer.version())).body(CustomerResponse.of(customer));
     }
 
     @PostMapping("/{id}/deactivate")
     @RequiresPermission(BillingPermissions.CUSTOMER_WRITE)
-    public CustomerResponse deactivate(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+    @ConditionalUpdate
+    public ResponseEntity<CustomerResponse> deactivate(
+            @PathVariable String id,
+            @RequestHeader(value = "If-Match", required = false) String ifMatch,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         Actor actor = currentActor.get();
-        return CustomerResponse.of(manage.deactivate(Audit.of(actor.auditName(), requestId), CustomerId.of(id), currentActor.callerId()));
+        Customer customer = manage.deactivate(
+                Audit.of(actor.auditName(), requestId), CustomerId.of(id), ExpectedVersion.fromIfMatch(ifMatch), currentActor.callerId());
+        return ResponseEntity.ok().eTag(ExpectedVersion.etag(customer.version())).body(CustomerResponse.of(customer));
     }
 
     /**

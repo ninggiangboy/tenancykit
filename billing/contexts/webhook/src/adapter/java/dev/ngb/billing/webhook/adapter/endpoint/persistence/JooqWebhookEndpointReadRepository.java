@@ -49,6 +49,7 @@ public class JooqWebhookEndpointReadRepository implements EndpointReadRepository
                 row.getSecretCiphertext(),
                 row.getCreatedAt(),
                 row.getUpdatedAt(),
-                row.getSecretRotatedAt());
+                row.getSecretRotatedAt(),
+                row.getVersion());
     }
 }

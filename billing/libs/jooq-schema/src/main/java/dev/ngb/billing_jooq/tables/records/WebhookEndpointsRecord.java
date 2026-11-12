@@ -201,6 +201,21 @@ public class WebhookEndpointsRecord extends UpdatableRecordImpl<WebhookEndpoints
         return (UUID) get(11);
     }
 
+    /**
+     * Setter for <code>public.webhook_endpoints.version</code>.
+     */
+    public WebhookEndpointsRecord setVersion(Long value) {
+        set(12, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.webhook_endpoints.version</code>.
+     */
+    public Long getVersion() {
+        return (Long) get(12);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -224,7 +239,7 @@ public class WebhookEndpointsRecord extends UpdatableRecordImpl<WebhookEndpoints
     /**
      * Create a detached, initialised WebhookEndpointsRecord
      */
-    public WebhookEndpointsRecord(UUID id, UUID tenantId, String url, String description, String[] eventTypes, String status, String keyId, String secretCiphertext, Instant createdAt, Instant updatedAt, Instant secretRotatedAt, UUID tenantSystemId) {
+    public WebhookEndpointsRecord(UUID id, UUID tenantId, String url, String description, String[] eventTypes, String status, String keyId, String secretCiphertext, Instant createdAt, Instant updatedAt, Instant secretRotatedAt, UUID tenantSystemId, Long version) {
         super(WebhookEndpoints.WEBHOOK_ENDPOINTS);
 
         setId(id);
@@ -239,6 +254,7 @@ public class WebhookEndpointsRecord extends UpdatableRecordImpl<WebhookEndpoints
         setUpdatedAt(updatedAt);
         setSecretRotatedAt(secretRotatedAt);
         setTenantSystemId(tenantSystemId);
+        setVersion(version);
         resetTouchedOnNotNull();
     }
 }

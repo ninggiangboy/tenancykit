@@ -108,6 +108,11 @@ public class Customers extends TableImpl<CustomersRecord> {
      */
     public final TableField<CustomersRecord, String> REQUEST_HASH = createField(DSL.name("request_hash"), SQLDataType.CLOB.nullable(false), this, "");
 
+    /**
+     * The column <code>public.customers.version</code>.
+     */
+    public final TableField<CustomersRecord, Long> VERSION = createField(DSL.name("version"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("1"), SQLDataType.BIGINT)), this, "");
+
     private Customers(Name alias, Table<CustomersRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

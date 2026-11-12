@@ -38,6 +38,7 @@ public class JooqWebhookEndpointRepository implements WebhookEndpointRepository 
                 .set(WEBHOOK_ENDPOINTS.CREATED_AT, e.createdAt())
                 .set(WEBHOOK_ENDPOINTS.UPDATED_AT, e.updatedAt())
                 .set(WEBHOOK_ENDPOINTS.SECRET_ROTATED_AT, e.secretRotatedAt())
+                .set(WEBHOOK_ENDPOINTS.VERSION, e.version())
                 .execute();
     }
 
@@ -52,10 +53,12 @@ public class JooqWebhookEndpointRepository implements WebhookEndpointRepository 
                 .set(WEBHOOK_ENDPOINTS.SECRET_CIPHERTEXT, e.secretCiphertext())
                 .set(WEBHOOK_ENDPOINTS.UPDATED_AT, e.updatedAt())
                 .set(WEBHOOK_ENDPOINTS.SECRET_ROTATED_AT, e.secretRotatedAt())
+                .set(WEBHOOK_ENDPOINTS.VERSION, e.version())
                 .where(WEBHOOK_ENDPOINTS.ID.eq(e.id().value()))
+                .and(WEBHOOK_ENDPOINTS.VERSION.lt(e.version()))
                 .execute();
         if (updated != 1) {
-            throw new IllegalStateException("webhook endpoint " + e.id() + " was not updated");
+            throw new IllegalStateException("webhook endpoint " + e.id() + " was not updated: version " + e.version() + " is not newer");
         }
     }
 
@@ -63,6 +66,14 @@ public class JooqWebhookEndpointRepository implements WebhookEndpointRepository 
     public Optional<WebhookEndpoint> findById(WebhookEndpointId id) {
         return dsl.selectFrom(WEBHOOK_ENDPOINTS)
                 .where(WEBHOOK_ENDPOINTS.ID.eq(id.value()))
+                .fetchOptional(JooqWebhookEndpointRepository::toDomain);
+    }
+
+    @Override
+    public Optional<WebhookEndpoint> lockById(WebhookEndpointId id) {
+        return dsl.selectFrom(WEBHOOK_ENDPOINTS)
+                .where(WEBHOOK_ENDPOINTS.ID.eq(id.value()))
+                .forNoKeyUpdate()
                 .fetchOptional(JooqWebhookEndpointRepository::toDomain);
     }
 
@@ -89,7 +100,8 @@ public class JooqWebhookEndpointRepository implements WebhookEndpointRepository 
                 row.getSecretCiphertext(),
                 row.getCreatedAt(),
                 row.getUpdatedAt(),
-                row.getSecretRotatedAt());
+                row.getSecretRotatedAt(),
+                row.getVersion());
     }
 
     private static List<String> eventTypes(String[] types) {

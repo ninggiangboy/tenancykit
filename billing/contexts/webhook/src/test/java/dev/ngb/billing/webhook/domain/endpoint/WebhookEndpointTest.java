@@ -51,4 +51,21 @@ class WebhookEndpointTest {
     void needsAtLeastOneEventType() {
         assertThatThrownBy(() -> endpoint(List.of())).isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void everyChangeBumpsTheVersionASecretRotationIncluded() {
+        WebhookEndpoint e = endpoint(List.of("*"));
+        assertThat(e.version()).isEqualTo(1);
+
+        e.reconfigure("https://hooks.example.com/y", "other", List.of("charge.succeeded"), NOW);
+        assertThat(e.version()).isEqualTo(2);
+
+        e.changeStatus(EndpointStatus.DISABLED, NOW);
+        assertThat(e.version()).isEqualTo(3);
+
+        e.rotateSecret("whk_2", "cipher-2", NOW);
+        assertThat(e.version())
+                .as("rotation is outside If-Match, but it changes the row, so the next conditional PATCH must see it")
+                .isEqualTo(4);
+    }
 }

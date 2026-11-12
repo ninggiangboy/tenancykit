@@ -21,6 +21,9 @@ public interface CustomerRepository {
 
     Optional<Customer> findById(CustomerId id);
 
+    /** Reads the customer under a row lock, so the update that follows cannot race another one. */
+    Optional<Customer> lockById(CustomerId id);
+
     Optional<Customer> findByIdempotencyKey(String idempotencyKey);
 
     Optional<Customer> findByExternalIdentity(ExternalIdentity identity);

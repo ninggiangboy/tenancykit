@@ -3,6 +3,7 @@ package dev.ngb.billing.webhook;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.core.event.DomainEvent;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.core.event.EventEnvelope;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.id.TenantId;
@@ -383,17 +384,17 @@ class WebhookDeliveryIntegrationTest {
         TenantId tenant = scopes.newTenant().id();
         try (TestReceiver receiver = new TestReceiver()) {
             Registered hook = register(tenant, receiver.url(), "*");
-            scopes.runInTenant(tenant, () -> endpointAdmin.update(AUDIT, hook.endpoint().id(), new ManageEndpointUseCase.Change(null, null, null, EndpointStatus.DISABLED)));
+            scopes.runInTenant(tenant, () -> endpointAdmin.update(AUDIT, hook.endpoint().id(), new ManageEndpointUseCase.Change(null, null, null, EndpointStatus.DISABLED), ExpectedVersion.any()));
             publish(tenant, "charge.succeeded");
             relay(tenant);
             assertThat(deliveriesOf(tenant, hook.endpoint().id())).as("a disabled endpoint is not subscribed to anything").isEmpty();
 
-            scopes.runInTenant(tenant, () -> endpointAdmin.update(AUDIT, hook.endpoint().id(), new ManageEndpointUseCase.Change(null, null, null, EndpointStatus.ACTIVE)));
+            scopes.runInTenant(tenant, () -> endpointAdmin.update(AUDIT, hook.endpoint().id(), new ManageEndpointUseCase.Change(null, null, null, EndpointStatus.ACTIVE), ExpectedVersion.any()));
             publish(tenant, "charge.succeeded");
             relay(tenant);
-            scopes.runInTenant(tenant, () -> endpointAdmin.update(AUDIT, hook.endpoint().id(), new ManageEndpointUseCase.Change(null, null, null, EndpointStatus.DISABLED)));
+            scopes.runInTenant(tenant, () -> endpointAdmin.update(AUDIT, hook.endpoint().id(), new ManageEndpointUseCase.Change(null, null, null, EndpointStatus.DISABLED), ExpectedVersion.any()));
             assertThat(send(tenant)).as("queued but the endpoint is paused").isEqualTo(DeliverWebhooksUseCase.Round.NONE);
-            scopes.runInTenant(tenant, () -> endpointAdmin.update(AUDIT, hook.endpoint().id(), new ManageEndpointUseCase.Change(null, null, null, EndpointStatus.ACTIVE)));
+            scopes.runInTenant(tenant, () -> endpointAdmin.update(AUDIT, hook.endpoint().id(), new ManageEndpointUseCase.Change(null, null, null, EndpointStatus.ACTIVE), ExpectedVersion.any()));
             assertThat(send(tenant).succeeded()).isEqualTo(1);
         }
     }

@@ -141,6 +141,21 @@ public class CustomersRecord extends UpdatableRecordImpl<CustomersRecord> {
         return (String) get(7);
     }
 
+    /**
+     * Setter for <code>public.customers.version</code>.
+     */
+    public CustomersRecord setVersion(Long value) {
+        set(8, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.customers.version</code>.
+     */
+    public Long getVersion() {
+        return (Long) get(8);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -164,7 +179,7 @@ public class CustomersRecord extends UpdatableRecordImpl<CustomersRecord> {
     /**
      * Create a detached, initialised CustomersRecord
      */
-    public CustomersRecord(UUID id, UUID tenantId, String displayName, String email, String status, Instant createdAt, String idempotencyKey, String requestHash) {
+    public CustomersRecord(UUID id, UUID tenantId, String displayName, String email, String status, Instant createdAt, String idempotencyKey, String requestHash, Long version) {
         super(Customers.CUSTOMERS);
 
         setId(id);
@@ -175,6 +190,7 @@ public class CustomersRecord extends UpdatableRecordImpl<CustomersRecord> {
         setCreatedAt(createdAt);
         setIdempotencyKey(idempotencyKey);
         setRequestHash(requestHash);
+        setVersion(version);
         resetTouchedOnNotNull();
     }
 }

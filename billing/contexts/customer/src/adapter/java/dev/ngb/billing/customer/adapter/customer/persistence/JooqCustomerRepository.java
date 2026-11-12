@@ -38,6 +38,7 @@ public class JooqCustomerRepository implements CustomerRepository {
                     .set(CUSTOMERS.IDEMPOTENCY_KEY, customer.idempotencyKey())
                     .set(CUSTOMERS.REQUEST_HASH, customer.requestHash())
                     .set(CUSTOMERS.CREATED_AT, customer.createdAt())
+                    .set(CUSTOMERS.VERSION, customer.version())
                     .onConflict(CUSTOMERS.TENANT_ID, CUSTOMERS.IDEMPOTENCY_KEY)
                     .doNothing()
                     .execute();
@@ -56,12 +57,17 @@ public class JooqCustomerRepository implements CustomerRepository {
 
     @Override
     public void update(Customer customer) {
-        dsl.update(CUSTOMERS)
+        int updated = dsl.update(CUSTOMERS)
                 .set(CUSTOMERS.DISPLAY_NAME, customer.displayName())
                 .set(CUSTOMERS.EMAIL, customer.email())
                 .set(CUSTOMERS.STATUS, customer.status().name())
+                .set(CUSTOMERS.VERSION, customer.version())
                 .where(CUSTOMERS.ID.eq(customer.id().value()))
+                .and(CUSTOMERS.VERSION.lt(customer.version()))
                 .execute();
+        if (updated != 1) {
+            throw new IllegalStateException("customer " + customer.id() + " was not updated: version " + customer.version() + " is not newer");
+        }
         dsl.deleteFrom(CUSTOMER_MAPPINGS).where(CUSTOMER_MAPPINGS.CUSTOMER_ID.eq(customer.id().value())).execute();
         insertMappings(customer);
     }
@@ -70,6 +76,14 @@ public class JooqCustomerRepository implements CustomerRepository {
     public Optional<Customer> findById(CustomerId id) {
         return dsl.selectFrom(CUSTOMERS)
                 .where(CUSTOMERS.ID.eq(id.value()))
+                .fetchOptional(row -> restore(row, identities(id)));
+    }
+
+    @Override
+    public Optional<Customer> lockById(CustomerId id) {
+        return dsl.selectFrom(CUSTOMERS)
+                .where(CUSTOMERS.ID.eq(id.value()))
+                .forNoKeyUpdate()
                 .fetchOptional(row -> restore(row, identities(id)));
     }
 
@@ -90,7 +104,8 @@ public class JooqCustomerRepository implements CustomerRepository {
                 row.get(CUSTOMERS.CREATED_AT),
                 row.get(CUSTOMERS.IDEMPOTENCY_KEY),
                 row.get(CUSTOMERS.REQUEST_HASH),
-                identities);
+                identities,
+                row.get(CUSTOMERS.VERSION));
     }
 
     @Override

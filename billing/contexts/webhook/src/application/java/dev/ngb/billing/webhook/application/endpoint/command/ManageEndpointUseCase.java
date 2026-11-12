@@ -9,6 +9,7 @@ import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.tenancy.TenantContext;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.webhook.application.endpoint.port.EventTypeCatalog;
 import dev.ngb.billing.webhook.application.endpoint.port.SigningKeys;
@@ -54,15 +55,16 @@ public class ManageEndpointUseCase {
         this.clock = clock;
     }
 
-    public WebhookEndpoint update(Audit audit, WebhookEndpointId id, Change change) {
-        return update(audit, id, change, null);
+    public WebhookEndpoint update(Audit audit, WebhookEndpointId id, Change change, ExpectedVersion expected) {
+        return update(audit, id, change, expected, null);
     }
 
-    public WebhookEndpoint update(Audit audit, WebhookEndpointId id, Change change, UUID caller) {
+    public WebhookEndpoint update(Audit audit, WebhookEndpointId id, Change change, ExpectedVersion expected, UUID caller) {
         String url = change.url() == null ? null : EndpointRules.url(change.url(), settings);
         var types = change.eventTypes() == null ? null : EndpointRules.eventTypes(change.eventTypes(), catalog);
         return unitOfWork.transactional(() -> {
             WebhookEndpoint endpoint = requireVisible(id, caller);
+            expected.check(endpoint.version());
             Instant now = clock.now();
             endpoint.reconfigure(
                     url == null ? endpoint.url() : url,
@@ -96,7 +98,7 @@ public class ManageEndpointUseCase {
     }
 
     private WebhookEndpoint requireVisible(WebhookEndpointId id, UUID caller) {
-        WebhookEndpoint endpoint = endpoints.findById(id).orElseThrow(() -> new NotFoundException("webhook endpoint not found"));
+        WebhookEndpoint endpoint = endpoints.lockById(id).orElseThrow(() -> new NotFoundException("webhook endpoint not found"));
         if (caller != null && (endpoint.tenantSystemId() == null || !endpoint.tenantSystemId().equals(new TenantSystemId(caller)))) {
             throw new NotFoundException("webhook endpoint not found");
         }

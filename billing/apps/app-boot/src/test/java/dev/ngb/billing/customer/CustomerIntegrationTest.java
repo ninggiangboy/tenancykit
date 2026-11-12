@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.core.runtime.Clock;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.Application;
@@ -73,14 +74,14 @@ class CustomerIntegrationTest {
         assertThat(reloaded).usingRecursiveComparison().isEqualTo(created);
         assertThat(reloaded.identities()).containsExactly(new ExternalIdentity(system, "user_001"));
 
-        Customer updated = scopes.inTenant(tenant.id(), () -> manage.update(AUDIT, created.id(), "Acme Ltd", null));
+        Customer updated = scopes.inTenant(tenant.id(), () -> manage.update(AUDIT, created.id(), "Acme Ltd", null, ExpectedVersion.any()));
         Customer afterUpdate = scopes.inTenant(tenant.id(), () -> unitOfWork.transactional(() -> customers.findById(created.id()))).orElseThrow();
         assertThat(afterUpdate).usingRecursiveComparison().isEqualTo(updated);
         assertThat(afterUpdate.identities()).as("the mapping survives an update").hasSize(1);
 
-        scopes.runInTenant(tenant.id(), () -> manage.deactivate(AUDIT, created.id()));
+        scopes.runInTenant(tenant.id(), () -> manage.deactivate(AUDIT, created.id(), ExpectedVersion.any()));
         assertThat(scopes.inTenant(tenant.id(), () -> customerQueries.get(created.id())).isActive()).isFalse();
-        assertThatThrownBy(() -> scopes.runInTenant(tenant.id(), () -> manage.update(AUDIT, created.id(), "Again", null)))
+        assertThatThrownBy(() -> scopes.runInTenant(tenant.id(), () -> manage.update(AUDIT, created.id(), "Again", null, ExpectedVersion.any())))
                 .isInstanceOf(ConflictException.class);
     }
 

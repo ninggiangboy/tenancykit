@@ -116,6 +116,7 @@ public class JooqCustomerReadRepository implements CustomerReadRepository {
                 row.getEmail(),
                 CustomerStatus.valueOf(row.getStatus()),
                 row.getCreatedAt(),
-                List.copyOf(identities));
+                List.copyOf(identities),
+                row.getVersion());
     }
 }

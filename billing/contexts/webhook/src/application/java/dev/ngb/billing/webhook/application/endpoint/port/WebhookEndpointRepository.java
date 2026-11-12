@@ -14,6 +14,9 @@ public interface WebhookEndpointRepository {
 
     Optional<WebhookEndpoint> findById(WebhookEndpointId id);
 
+    /** Reads the endpoint under a row lock, so the update that follows cannot race another one. */
+    Optional<WebhookEndpoint> lockById(WebhookEndpointId id);
+
     /** Active endpoints that want {@code eventType}, directly or through the all-events subscription. */
     List<WebhookEndpoint> findSubscribed(String eventType);
 }

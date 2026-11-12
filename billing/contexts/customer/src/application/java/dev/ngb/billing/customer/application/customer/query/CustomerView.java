@@ -12,7 +12,8 @@ public record CustomerView(
         String email,
         CustomerStatus status,
         Instant createdAt,
-        List<CustomerIdentityView> identities) {
+        List<CustomerIdentityView> identities,
+        long version) {
 
     public boolean isActive() {
         return status == CustomerStatus.ACTIVE;

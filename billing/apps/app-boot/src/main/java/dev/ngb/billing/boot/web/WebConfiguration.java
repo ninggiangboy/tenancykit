@@ -7,12 +7,15 @@ import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.billing.boot.catalog.BillingPermissionCatalog;
 import dev.ngb.core.idempotency.RepeatableCreate;
+import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.billing.session.api.portal.PortalAuthorizer;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.headers.Header;
 import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityScheme;
@@ -104,6 +107,32 @@ class WebConfiguration implements WebMvcConfigurer {
             operation.setResponses(responses);
             return operation;
         };
+    }
+
+    /**
+     * Documents a conditional update: the operation answers an {@code ETag} on success and a 412 when the caller's
+     * {@code If-Match} is stale. Driven by the same {@link ConditionalUpdate} marker the handler carries, so the
+     * contract cannot drift from the code.
+     */
+    @Bean
+    OperationCustomizer conditionalUpdates() {
+        return (operation, handlerMethod) -> {
+            if (!handlerMethod.hasMethodAnnotation(ConditionalUpdate.class) || operation.getResponses() == null) {
+                return operation;
+            }
+            ApiResponse ok = operation.getResponses().get("200");
+            if (ok != null) {
+                ok.addHeaderObject("ETag", etagHeader("The resource version after this change, as a strong tag"));
+            }
+            operation.getResponses().addApiResponse("412", new ApiResponse()
+                    .description("The resource changed since the caller read it; the current ETag is returned in the header")
+                    .addHeaderObject("ETag", etagHeader("The current version")));
+            return operation;
+        };
+    }
+
+    private static Header etagHeader(String description) {
+        return new Header().description(description).schema(new StringSchema().example("\"3\""));
     }
 
     /** Documents which principal may call each operation, derived from the same Permission the interceptor enforces. */

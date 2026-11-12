@@ -16,7 +16,8 @@ public record WebhookEndpointView(
         String secretCiphertext,
         Instant createdAt,
         Instant updatedAt,
-        Instant secretRotatedAt) {
+        Instant secretRotatedAt,
+        long version) {
 
     public List<String> eventTypes() {
         return eventTypesCsv == null || eventTypesCsv.isEmpty() ? List.of() : List.of(eventTypesCsv.split(","));
