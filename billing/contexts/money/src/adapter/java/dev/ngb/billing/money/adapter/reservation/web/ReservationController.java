@@ -7,9 +7,9 @@ import dev.ngb.billing.money.application.reservation.command.ReleaseReservationU
 import dev.ngb.billing.money.application.reservation.command.ReserveBudgetUseCase;
 import dev.ngb.billing.money.application.reservation.query.ReservationView;
 import dev.ngb.billing.money.application.wallet.query.WalletQueries;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import dev.ngb.billing.sharedkernel.id.WalletId;
@@ -58,7 +58,7 @@ public class ReservationController {
 
     @PostMapping("/reservations")
     @RepeatableCreate
-    @RequiresPermission(Permission.RESERVATION_MANAGE)
+    @RequiresPermission(BillingPermissions.RESERVATION_MANAGE)
     public ResponseEntity<ReservationResponse> reserve(@RequestHeader("Idempotency-Key") String key, @RequestBody ReserveRequest request) {
         ReservationResult result = reserve.reserve(new ReserveBudgetCommand(
                 WalletId.of(request.walletId()), new MoneyDto(request.amount(), request.currency()).toMoney(),
@@ -68,13 +68,13 @@ public class ReservationController {
     }
 
     @GetMapping("/reservations/{id}")
-    @RequiresPermission(Permission.WALLET_READ)
+    @RequiresPermission(BillingPermissions.WALLET_READ)
     public ReservationResponse reservation(@PathVariable String id) {
         return ReservationResponse.ofView(queries.reservation(ReservationId.of(id), currentActor.caller()));
     }
 
     @PostMapping("/reservations/{id}/release")
-    @RequiresPermission(Permission.RESERVATION_MANAGE)
+    @RequiresPermission(BillingPermissions.RESERVATION_MANAGE)
     public ReservationResponse release(@PathVariable String id) {
         release.execute(ReservationId.of(id), currentActor.caller());
         return ReservationResponse.ofView(queries.reservation(ReservationId.of(id), currentActor.caller()));

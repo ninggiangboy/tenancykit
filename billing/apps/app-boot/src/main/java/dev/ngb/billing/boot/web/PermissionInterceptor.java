@@ -1,11 +1,11 @@
 package dev.ngb.billing.boot.web;
 
-import dev.ngb.billing.platform.api.actor.Authenticated;
-import dev.ngb.billing.platform.api.actor.Authorizer;
-import dev.ngb.billing.platform.api.actor.PublicEndpoint;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
 import dev.ngb.billing.session.api.portal.PortalAuthorizer;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
+import dev.ngb.core.security.Authenticated;
+import dev.ngb.core.security.Authorizer;
+import dev.ngb.core.security.PublicEndpoint;
+import dev.ngb.core.security.RequiresPermission;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.method.HandlerMethod;
@@ -13,8 +13,8 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
  * Enforces the permission an endpoint declares. A controller method that declares neither a permission nor
- * {@link Authenticated} (or {@link PublicEndpoint}) fails closed with a server error instead of being served, so no endpoint can be
- * exposed by forgetting an annotation.
+ * {@link Authenticated} (or {@link PublicEndpoint}) fails closed with a server error instead of being served, so no
+ * endpoint can be exposed by forgetting an annotation.
  */
 class PermissionInterceptor implements HandlerInterceptor {
 

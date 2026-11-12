@@ -1,8 +1,8 @@
 package dev.ngb.billing.webhook.adapter.endpoint.web;
 
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.webhook.application.endpoint.command.CreateEndpointUseCase;
 import dev.ngb.billing.webhook.application.endpoint.command.ManageEndpointUseCase;
@@ -68,7 +68,7 @@ public class EndpointController {
 
     @PostMapping("/webhook-endpoints")
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresPermission(Permission.WEBHOOK_MANAGE)
+    @RequiresPermission(BillingPermissions.WEBHOOK_MANAGE)
     public EndpointWithSecretResponse createEndpoint(
             @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody CreateEndpointRequest request) {
         CreateEndpointUseCase.Result result = create.execute(
@@ -77,20 +77,20 @@ public class EndpointController {
     }
 
     @GetMapping("/webhook-endpoints")
-    @RequiresPermission(Permission.WEBHOOK_READ)
+    @RequiresPermission(BillingPermissions.WEBHOOK_READ)
     public List<EndpointResponse> listEndpoints() {
         return endpointQueries.list(currentActor.caller()).stream().map(EndpointResponse::ofView).toList();
     }
 
     @GetMapping("/webhook-endpoints/{id}")
-    @RequiresPermission(Permission.WEBHOOK_READ)
+    @RequiresPermission(BillingPermissions.WEBHOOK_READ)
     public EndpointResponse getEndpoint(@PathVariable String id) {
         return EndpointResponse.ofView(endpointQueries.get(UUID.fromString(id), currentActor.caller()));
     }
 
     /** Changes only the fields that are present. Setting {@code status} to {@code DISABLED} pauses delivery without losing queued events. */
     @PatchMapping("/webhook-endpoints/{id}")
-    @RequiresPermission(Permission.WEBHOOK_MANAGE)
+    @RequiresPermission(BillingPermissions.WEBHOOK_MANAGE)
     public EndpointResponse updateEndpoint(
             @PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             @RequestBody UpdateEndpointRequest request) {
@@ -100,7 +100,7 @@ public class EndpointController {
     }
 
     @PostMapping("/webhook-endpoints/{id}/rotate-secret")
-    @RequiresPermission(Permission.WEBHOOK_MANAGE)
+    @RequiresPermission(BillingPermissions.WEBHOOK_MANAGE)
     public EndpointWithSecretResponse rotateSecret(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         ManageEndpointUseCase.Rotated rotated = endpoints.rotateSecret(Audit.of(currentActor.get().auditName(), requestId), WebhookEndpointId.of(id), currentActor.caller());
         return new EndpointWithSecretResponse(EndpointResponse.of(rotated.endpoint()), rotated.signingSecret());

@@ -1,8 +1,8 @@
 package dev.ngb.billing.session.adapter.portal.web;
 
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.session.application.portal.command.ManageReturnUrlsUseCase;
 import java.util.List;
@@ -34,13 +34,13 @@ public class PortalSettingsController {
     }
 
     @GetMapping
-    @RequiresPermission(Permission.PORTAL_SETTINGS_MANAGE)
+    @RequiresPermission(BillingPermissions.PORTAL_SETTINGS_MANAGE)
     public List<String> list() {
         return manage.list().stream().sorted().toList();
     }
 
     @PutMapping
-    @RequiresPermission(Permission.PORTAL_SETTINGS_MANAGE)
+    @RequiresPermission(BillingPermissions.PORTAL_SETTINGS_MANAGE)
     public List<String> replace(
             @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody ReplaceRequest request) {
         Set<String> urls = request.urls() == null ? Set.of() : Set.copyOf(request.urls());

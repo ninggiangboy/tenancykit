@@ -13,7 +13,6 @@ import dev.ngb.billing.boot.infrastructure.coordination.JobRuns;
 import dev.ngb.core.messaging.outbox.JooqEventInbox;
 import dev.ngb.core.messaging.outbox.JooqOutboxAppender;
 import dev.ngb.core.messaging.audit.JooqAuditLog;
-import dev.ngb.billing.boot.infrastructure.security.PostgresRateLimiter;
 import dev.ngb.billing.boot.infrastructure.tenancy.BillingTransactionScopeHook;
 import dev.ngb.core.spring.tenancy.ScopedTenantContext;
 import dev.ngb.core.audit.AuditLog;
@@ -75,12 +74,4 @@ class InfrastructureConfiguration {
         return new JobRuns(transactionManager, jdbc);
     }
 
-    @Bean
-    PostgresRateLimiter apiKeyRateLimiter(
-            PlatformTransactionManager transactionManager,
-            JdbcTemplate jdbc,
-            @Value("${billing.security.api-key-rate-limit.burst:100}") int burst,
-            @Value("${billing.security.api-key-rate-limit.per-second:20}") double perSecond) {
-        return new PostgresRateLimiter(transactionManager, jdbc, burst, perSecond);
-    }
 }

@@ -5,12 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.billing.Application;
 import dev.ngb.core.messaging.outbox.OutboxRelay;
-import dev.ngb.billing.platform.application.user.command.BootstrapPlatformAdminUseCase;
 import dev.ngb.billing.support.EventSchemas;
 import dev.ngb.billing.support.HttpWorld;
 import dev.ngb.billing.support.HttpWorld.Account;
 import dev.ngb.billing.support.PostgresContainerConfig;
-import dev.ngb.billing.support.RealKeycloakConfig;
+import dev.ngb.billing.support.TestTokensConfig;
+import dev.ngb.billing.support.ReplicaFixtures;
 import dev.ngb.billing.support.ScopeTestSupport;
 import dev.ngb.billing.support.TestReceiver;
 import dev.ngb.billing.webhook.application.delivery.command.DeliverWebhooksUseCase;
@@ -32,16 +32,15 @@ import tools.jackson.databind.JsonNode;
 /** The webhook API over HTTP: permissions, the one-time secret, validation, isolation and the delivery history. */
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc
-@Import({PostgresContainerConfig.class, RealKeycloakConfig.class})
+@Import({PostgresContainerConfig.class, TestTokensConfig.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WebhookHttpIntegrationTest {
 
     @Autowired MockMvc mvc;
-    @Autowired BootstrapPlatformAdminUseCase bootstrap;
     @Autowired ScopeTestSupport scopes;
+    @Autowired ReplicaFixtures replica;
     @Autowired OutboxRelay relay;
     @Autowired DeliverWebhooksUseCase deliver;
-    @Value("${billing.tenancy.base-domain}") String baseDomain;
 
     HttpWorld world;
     Account acme;
@@ -52,19 +51,14 @@ class WebhookHttpIntegrationTest {
 
     @BeforeAll
     void createWorld() {
-        world = new HttpWorld(mvc, bootstrap, scopes, baseDomain);
+        world = new HttpWorld(mvc, replica, scopes);
         acme = world.newTenant();
         globex = world.newTenant();
-        String systemId = world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems", HttpWorld.Map2.of("name", "Sample")))
-                .get("id").asString();
-        manageKey = credential(systemId, List.of("webhook:manage", "webhook:read", "customer:write", "customer:read"));
-        readKey = credential(systemId, List.of("webhook:read"));
-        noWebhookKey = credential(systemId, List.of("customer:read"));
-    }
-
-    private String credential(String systemId, List<String> scopes) {
-        return world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems/" + systemId + "/credentials",
-                HttpWorld.Map2.of("label", "x", "scopes", scopes))).get("key").asString();
+        HttpWorld.System webhookSystem = world.newSystem(
+                acme, "billing:webhook:manage", "billing:webhook:read", "billing:customer:write", "billing:customer:read");
+        manageKey = webhookSystem.token();
+        readKey = webhookSystem.tokenFor("billing:webhook:read");
+        noWebhookKey = webhookSystem.tokenFor("billing:customer:read");
     }
 
     private JsonNode createEndpoint(Account account, String token, String url, List<String> types) {

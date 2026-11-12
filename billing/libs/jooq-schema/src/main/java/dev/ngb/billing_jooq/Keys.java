@@ -4,10 +4,9 @@
 package dev.ngb.billing_jooq;
 
 
-import dev.ngb.billing_jooq.tables.ApiCredentials;
+import dev.ngb.billing_jooq.tables.AppEntitlements;
 import dev.ngb.billing_jooq.tables.AuditLog;
 import dev.ngb.billing_jooq.tables.BillingSessions;
-import dev.ngb.billing_jooq.tables.BillingUsers;
 import dev.ngb.billing_jooq.tables.Charges;
 import dev.ngb.billing_jooq.tables.CustomerMappings;
 import dev.ngb.billing_jooq.tables.Customers;
@@ -22,17 +21,12 @@ import dev.ngb.billing_jooq.tables.LedgerEntries;
 import dev.ngb.billing_jooq.tables.Outbox;
 import dev.ngb.billing_jooq.tables.PaymentAttempts;
 import dev.ngb.billing_jooq.tables.Payments;
-import dev.ngb.billing_jooq.tables.Permissions;
 import dev.ngb.billing_jooq.tables.PortalReturnUrls;
 import dev.ngb.billing_jooq.tables.PricingMetrics;
 import dev.ngb.billing_jooq.tables.PricingPlanVersions;
 import dev.ngb.billing_jooq.tables.PricingPlans;
-import dev.ngb.billing_jooq.tables.RateLimitBuckets;
 import dev.ngb.billing_jooq.tables.Refunds;
 import dev.ngb.billing_jooq.tables.Reservations;
-import dev.ngb.billing_jooq.tables.RoleAssignments;
-import dev.ngb.billing_jooq.tables.RolePermissions;
-import dev.ngb.billing_jooq.tables.Roles;
 import dev.ngb.billing_jooq.tables.StripeConfigurations;
 import dev.ngb.billing_jooq.tables.StripeCustomers;
 import dev.ngb.billing_jooq.tables.StripeEventAttempts;
@@ -47,15 +41,14 @@ import dev.ngb.billing_jooq.tables.Tenants;
 import dev.ngb.billing_jooq.tables.UsageCharges;
 import dev.ngb.billing_jooq.tables.UsageEvents;
 import dev.ngb.billing_jooq.tables.UsageRatings;
-import dev.ngb.billing_jooq.tables.UserPermissions;
+import dev.ngb.billing_jooq.tables.UserGrants;
 import dev.ngb.billing_jooq.tables.Wallets;
 import dev.ngb.billing_jooq.tables.WebhookDeliveries;
 import dev.ngb.billing_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.billing_jooq.tables.WebhookEndpoints;
-import dev.ngb.billing_jooq.tables.records.ApiCredentialsRecord;
+import dev.ngb.billing_jooq.tables.records.AppEntitlementsRecord;
 import dev.ngb.billing_jooq.tables.records.AuditLogRecord;
 import dev.ngb.billing_jooq.tables.records.BillingSessionsRecord;
-import dev.ngb.billing_jooq.tables.records.BillingUsersRecord;
 import dev.ngb.billing_jooq.tables.records.ChargesRecord;
 import dev.ngb.billing_jooq.tables.records.CustomerMappingsRecord;
 import dev.ngb.billing_jooq.tables.records.CustomersRecord;
@@ -70,17 +63,12 @@ import dev.ngb.billing_jooq.tables.records.LedgerEntriesRecord;
 import dev.ngb.billing_jooq.tables.records.OutboxRecord;
 import dev.ngb.billing_jooq.tables.records.PaymentAttemptsRecord;
 import dev.ngb.billing_jooq.tables.records.PaymentsRecord;
-import dev.ngb.billing_jooq.tables.records.PermissionsRecord;
 import dev.ngb.billing_jooq.tables.records.PortalReturnUrlsRecord;
 import dev.ngb.billing_jooq.tables.records.PricingMetricsRecord;
 import dev.ngb.billing_jooq.tables.records.PricingPlanVersionsRecord;
 import dev.ngb.billing_jooq.tables.records.PricingPlansRecord;
-import dev.ngb.billing_jooq.tables.records.RateLimitBucketsRecord;
 import dev.ngb.billing_jooq.tables.records.RefundsRecord;
 import dev.ngb.billing_jooq.tables.records.ReservationsRecord;
-import dev.ngb.billing_jooq.tables.records.RoleAssignmentsRecord;
-import dev.ngb.billing_jooq.tables.records.RolePermissionsRecord;
-import dev.ngb.billing_jooq.tables.records.RolesRecord;
 import dev.ngb.billing_jooq.tables.records.StripeConfigurationsRecord;
 import dev.ngb.billing_jooq.tables.records.StripeCustomersRecord;
 import dev.ngb.billing_jooq.tables.records.StripeEventAttemptsRecord;
@@ -95,7 +83,7 @@ import dev.ngb.billing_jooq.tables.records.TenantsRecord;
 import dev.ngb.billing_jooq.tables.records.UsageChargesRecord;
 import dev.ngb.billing_jooq.tables.records.UsageEventsRecord;
 import dev.ngb.billing_jooq.tables.records.UsageRatingsRecord;
-import dev.ngb.billing_jooq.tables.records.UserPermissionsRecord;
+import dev.ngb.billing_jooq.tables.records.UserGrantsRecord;
 import dev.ngb.billing_jooq.tables.records.WalletsRecord;
 import dev.ngb.billing_jooq.tables.records.WebhookDeliveriesRecord;
 import dev.ngb.billing_jooq.tables.records.WebhookDeliveryAttemptsRecord;
@@ -120,17 +108,12 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<ApiCredentialsRecord> API_CREDENTIALS_KEY_ID_KEY = Internal.createUniqueKey(ApiCredentials.API_CREDENTIALS, DSL.name("api_credentials_key_id_key"), new TableField[] { ApiCredentials.API_CREDENTIALS.KEY_ID }, true);
-    public static final UniqueKey<ApiCredentialsRecord> API_CREDENTIALS_PKEY = Internal.createUniqueKey(ApiCredentials.API_CREDENTIALS, DSL.name("api_credentials_pkey"), new TableField[] { ApiCredentials.API_CREDENTIALS.ID }, true);
-    public static final UniqueKey<ApiCredentialsRecord> API_CREDENTIALS_TENANT_ID_ID_KEY = Internal.createUniqueKey(ApiCredentials.API_CREDENTIALS, DSL.name("api_credentials_tenant_id_id_key"), new TableField[] { ApiCredentials.API_CREDENTIALS.TENANT_ID, ApiCredentials.API_CREDENTIALS.ID }, true);
+    public static final UniqueKey<AppEntitlementsRecord> APP_ENTITLEMENTS_PKEY = Internal.createUniqueKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_pkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID, AppEntitlements.APP_ENTITLEMENTS.APP_CODE }, true);
     public static final UniqueKey<AuditLogRecord> AUDIT_LOG_PKEY = Internal.createUniqueKey(AuditLog.AUDIT_LOG, DSL.name("audit_log_pkey"), new TableField[] { AuditLog.AUDIT_LOG.ID }, true);
     public static final UniqueKey<BillingSessionsRecord> BILLING_SESSIONS_COOKIE_TOKEN_HASH_KEY = Internal.createUniqueKey(BillingSessions.BILLING_SESSIONS, DSL.name("billing_sessions_cookie_token_hash_key"), new TableField[] { BillingSessions.BILLING_SESSIONS.COOKIE_TOKEN_HASH }, true);
     public static final UniqueKey<BillingSessionsRecord> BILLING_SESSIONS_EXCHANGE_TOKEN_HASH_KEY = Internal.createUniqueKey(BillingSessions.BILLING_SESSIONS, DSL.name("billing_sessions_exchange_token_hash_key"), new TableField[] { BillingSessions.BILLING_SESSIONS.EXCHANGE_TOKEN_HASH }, true);
     public static final UniqueKey<BillingSessionsRecord> BILLING_SESSIONS_PKEY = Internal.createUniqueKey(BillingSessions.BILLING_SESSIONS, DSL.name("billing_sessions_pkey"), new TableField[] { BillingSessions.BILLING_SESSIONS.ID }, true);
     public static final UniqueKey<BillingSessionsRecord> BILLING_SESSIONS_TENANT_ID_ID_KEY = Internal.createUniqueKey(BillingSessions.BILLING_SESSIONS, DSL.name("billing_sessions_tenant_id_id_key"), new TableField[] { BillingSessions.BILLING_SESSIONS.TENANT_ID, BillingSessions.BILLING_SESSIONS.ID }, true);
-    public static final UniqueKey<BillingUsersRecord> BILLING_USERS_KEYCLOAK_SUBJECT_KEY = Internal.createUniqueKey(BillingUsers.BILLING_USERS, DSL.name("billing_users_keycloak_subject_key"), new TableField[] { BillingUsers.BILLING_USERS.KEYCLOAK_SUBJECT }, true);
-    public static final UniqueKey<BillingUsersRecord> BILLING_USERS_PKEY = Internal.createUniqueKey(BillingUsers.BILLING_USERS, DSL.name("billing_users_pkey"), new TableField[] { BillingUsers.BILLING_USERS.ID }, true);
-    public static final UniqueKey<BillingUsersRecord> BILLING_USERS_TENANT_ID_ID_KEY = Internal.createUniqueKey(BillingUsers.BILLING_USERS, DSL.name("billing_users_tenant_id_id_key"), new TableField[] { BillingUsers.BILLING_USERS.TENANT_ID, BillingUsers.BILLING_USERS.ID }, true);
     public static final UniqueKey<ChargesRecord> CHARGES_PKEY = Internal.createUniqueKey(Charges.CHARGES, DSL.name("charges_pkey"), new TableField[] { Charges.CHARGES.ID }, true);
     public static final UniqueKey<ChargesRecord> CHARGES_TENANT_ID_ID_KEY = Internal.createUniqueKey(Charges.CHARGES, DSL.name("charges_tenant_id_id_key"), new TableField[] { Charges.CHARGES.TENANT_ID, Charges.CHARGES.ID }, true);
     public static final UniqueKey<ChargesRecord> CHARGES_TENANT_ID_IDEMPOTENCY_KEY_KEY = Internal.createUniqueKey(Charges.CHARGES, DSL.name("charges_tenant_id_idempotency_key_key"), new TableField[] { Charges.CHARGES.TENANT_ID, Charges.CHARGES.IDEMPOTENCY_KEY }, true);
@@ -159,7 +142,6 @@ public class Keys {
     public static final UniqueKey<PaymentsRecord> PAYMENTS_PKEY = Internal.createUniqueKey(Payments.PAYMENTS, DSL.name("payments_pkey"), new TableField[] { Payments.PAYMENTS.ID }, true);
     public static final UniqueKey<PaymentsRecord> PAYMENTS_TENANT_ID_ID_KEY = Internal.createUniqueKey(Payments.PAYMENTS, DSL.name("payments_tenant_id_id_key"), new TableField[] { Payments.PAYMENTS.TENANT_ID, Payments.PAYMENTS.ID }, true);
     public static final UniqueKey<PaymentsRecord> PAYMENTS_TENANT_ID_IDEMPOTENCY_KEY_KEY = Internal.createUniqueKey(Payments.PAYMENTS, DSL.name("payments_tenant_id_idempotency_key_key"), new TableField[] { Payments.PAYMENTS.TENANT_ID, Payments.PAYMENTS.IDEMPOTENCY_KEY }, true);
-    public static final UniqueKey<PermissionsRecord> PERMISSIONS_PKEY = Internal.createUniqueKey(Permissions.PERMISSIONS, DSL.name("permissions_pkey"), new TableField[] { Permissions.PERMISSIONS.CODE }, true);
     public static final UniqueKey<PortalReturnUrlsRecord> PORTAL_RETURN_URLS_PKEY = Internal.createUniqueKey(PortalReturnUrls.PORTAL_RETURN_URLS, DSL.name("portal_return_urls_pkey"), new TableField[] { PortalReturnUrls.PORTAL_RETURN_URLS.TENANT_ID, PortalReturnUrls.PORTAL_RETURN_URLS.URL }, true);
     public static final UniqueKey<PricingMetricsRecord> PRICING_METRICS_PKEY = Internal.createUniqueKey(PricingMetrics.PRICING_METRICS, DSL.name("pricing_metrics_pkey"), new TableField[] { PricingMetrics.PRICING_METRICS.TENANT_ID, PricingMetrics.PRICING_METRICS.CODE }, true);
     public static final UniqueKey<PricingPlanVersionsRecord> PRICING_PLAN_VERSIONS_PKEY = Internal.createUniqueKey(PricingPlanVersions.PRICING_PLAN_VERSIONS, DSL.name("pricing_plan_versions_pkey"), new TableField[] { PricingPlanVersions.PRICING_PLAN_VERSIONS.PLAN_ID, PricingPlanVersions.PRICING_PLAN_VERSIONS.VERSION }, true);
@@ -167,17 +149,12 @@ public class Keys {
     public static final UniqueKey<PricingPlansRecord> PRICING_PLANS_PKEY = Internal.createUniqueKey(PricingPlans.PRICING_PLANS, DSL.name("pricing_plans_pkey"), new TableField[] { PricingPlans.PRICING_PLANS.ID }, true);
     public static final UniqueKey<PricingPlansRecord> PRICING_PLANS_TENANT_ID_CODE_KEY = Internal.createUniqueKey(PricingPlans.PRICING_PLANS, DSL.name("pricing_plans_tenant_id_code_key"), new TableField[] { PricingPlans.PRICING_PLANS.TENANT_ID, PricingPlans.PRICING_PLANS.CODE }, true);
     public static final UniqueKey<PricingPlansRecord> PRICING_PLANS_TENANT_ID_ID_KEY = Internal.createUniqueKey(PricingPlans.PRICING_PLANS, DSL.name("pricing_plans_tenant_id_id_key"), new TableField[] { PricingPlans.PRICING_PLANS.TENANT_ID, PricingPlans.PRICING_PLANS.ID }, true);
-    public static final UniqueKey<RateLimitBucketsRecord> RATE_LIMIT_BUCKETS_PKEY = Internal.createUniqueKey(RateLimitBuckets.RATE_LIMIT_BUCKETS, DSL.name("rate_limit_buckets_pkey"), new TableField[] { RateLimitBuckets.RATE_LIMIT_BUCKETS.BUCKET_KEY }, true);
     public static final UniqueKey<RefundsRecord> REFUNDS_PKEY = Internal.createUniqueKey(Refunds.REFUNDS, DSL.name("refunds_pkey"), new TableField[] { Refunds.REFUNDS.ID }, true);
     public static final UniqueKey<RefundsRecord> REFUNDS_TENANT_ID_ID_KEY = Internal.createUniqueKey(Refunds.REFUNDS, DSL.name("refunds_tenant_id_id_key"), new TableField[] { Refunds.REFUNDS.TENANT_ID, Refunds.REFUNDS.ID }, true);
     public static final UniqueKey<RefundsRecord> REFUNDS_TENANT_ID_IDEMPOTENCY_KEY_KEY = Internal.createUniqueKey(Refunds.REFUNDS, DSL.name("refunds_tenant_id_idempotency_key_key"), new TableField[] { Refunds.REFUNDS.TENANT_ID, Refunds.REFUNDS.IDEMPOTENCY_KEY }, true);
     public static final UniqueKey<ReservationsRecord> RESERVATIONS_PKEY = Internal.createUniqueKey(Reservations.RESERVATIONS, DSL.name("reservations_pkey"), new TableField[] { Reservations.RESERVATIONS.ID }, true);
     public static final UniqueKey<ReservationsRecord> RESERVATIONS_TENANT_ID_ID_KEY = Internal.createUniqueKey(Reservations.RESERVATIONS, DSL.name("reservations_tenant_id_id_key"), new TableField[] { Reservations.RESERVATIONS.TENANT_ID, Reservations.RESERVATIONS.ID }, true);
     public static final UniqueKey<ReservationsRecord> RESERVATIONS_TENANT_ID_IDEMPOTENCY_KEY_KEY = Internal.createUniqueKey(Reservations.RESERVATIONS, DSL.name("reservations_tenant_id_idempotency_key_key"), new TableField[] { Reservations.RESERVATIONS.TENANT_ID, Reservations.RESERVATIONS.IDEMPOTENCY_KEY }, true);
-    public static final UniqueKey<RoleAssignmentsRecord> ROLE_ASSIGNMENTS_PKEY = Internal.createUniqueKey(RoleAssignments.ROLE_ASSIGNMENTS, DSL.name("role_assignments_pkey"), new TableField[] { RoleAssignments.ROLE_ASSIGNMENTS.USER_ID, RoleAssignments.ROLE_ASSIGNMENTS.ROLE_ID }, true);
-    public static final UniqueKey<RolePermissionsRecord> ROLE_PERMISSIONS_PKEY = Internal.createUniqueKey(RolePermissions.ROLE_PERMISSIONS, DSL.name("role_permissions_pkey"), new TableField[] { RolePermissions.ROLE_PERMISSIONS.ROLE_ID, RolePermissions.ROLE_PERMISSIONS.PERMISSION_CODE }, true);
-    public static final UniqueKey<RolesRecord> ROLES_PKEY = Internal.createUniqueKey(Roles.ROLES, DSL.name("roles_pkey"), new TableField[] { Roles.ROLES.ID }, true);
-    public static final UniqueKey<RolesRecord> ROLES_TENANT_ID_ID_KEY = Internal.createUniqueKey(Roles.ROLES, DSL.name("roles_tenant_id_id_key"), new TableField[] { Roles.ROLES.TENANT_ID, Roles.ROLES.ID }, true);
     public static final UniqueKey<StripeConfigurationsRecord> STRIPE_CONFIGURATIONS_PKEY = Internal.createUniqueKey(StripeConfigurations.STRIPE_CONFIGURATIONS, DSL.name("stripe_configurations_pkey"), new TableField[] { StripeConfigurations.STRIPE_CONFIGURATIONS.ID }, true);
     public static final UniqueKey<StripeConfigurationsRecord> STRIPE_CONFIGURATIONS_TENANT_ID_ID_KEY = Internal.createUniqueKey(StripeConfigurations.STRIPE_CONFIGURATIONS, DSL.name("stripe_configurations_tenant_id_id_key"), new TableField[] { StripeConfigurations.STRIPE_CONFIGURATIONS.TENANT_ID, StripeConfigurations.STRIPE_CONFIGURATIONS.ID }, true);
     public static final UniqueKey<StripeCustomersRecord> STRIPE_CUSTOMERS_PKEY = Internal.createUniqueKey(StripeCustomers.STRIPE_CUSTOMERS, DSL.name("stripe_customers_pkey"), new TableField[] { StripeCustomers.STRIPE_CUSTOMERS.TENANT_ID, StripeCustomers.STRIPE_CUSTOMERS.CUSTOMER_ID, StripeCustomers.STRIPE_CUSTOMERS.CONFIGURATION_ID }, true);
@@ -207,7 +184,8 @@ public class Keys {
     public static final UniqueKey<UsageRatingsRecord> USAGE_RATINGS_PKEY = Internal.createUniqueKey(UsageRatings.USAGE_RATINGS, DSL.name("usage_ratings_pkey"), new TableField[] { UsageRatings.USAGE_RATINGS.ID }, true);
     public static final UniqueKey<UsageRatingsRecord> USAGE_RATINGS_TENANT_ID_ID_KEY = Internal.createUniqueKey(UsageRatings.USAGE_RATINGS, DSL.name("usage_ratings_tenant_id_id_key"), new TableField[] { UsageRatings.USAGE_RATINGS.TENANT_ID, UsageRatings.USAGE_RATINGS.ID }, true);
     public static final UniqueKey<UsageRatingsRecord> USAGE_RATINGS_TENANT_ID_SET_KEY_ATTEMPT_KEY = Internal.createUniqueKey(UsageRatings.USAGE_RATINGS, DSL.name("usage_ratings_tenant_id_set_key_attempt_key"), new TableField[] { UsageRatings.USAGE_RATINGS.TENANT_ID, UsageRatings.USAGE_RATINGS.SET_KEY, UsageRatings.USAGE_RATINGS.ATTEMPT }, true);
-    public static final UniqueKey<UserPermissionsRecord> USER_PERMISSIONS_PKEY = Internal.createUniqueKey(UserPermissions.USER_PERMISSIONS, DSL.name("user_permissions_pkey"), new TableField[] { UserPermissions.USER_PERMISSIONS.USER_ID, UserPermissions.USER_PERMISSIONS.PERMISSION_CODE }, true);
+    public static final UniqueKey<UserGrantsRecord> USER_GRANTS_KEYCLOAK_SUBJECT_KEY = Internal.createUniqueKey(UserGrants.USER_GRANTS, DSL.name("user_grants_keycloak_subject_key"), new TableField[] { UserGrants.USER_GRANTS.KEYCLOAK_SUBJECT }, true);
+    public static final UniqueKey<UserGrantsRecord> USER_GRANTS_PKEY = Internal.createUniqueKey(UserGrants.USER_GRANTS, DSL.name("user_grants_pkey"), new TableField[] { UserGrants.USER_GRANTS.USER_ID }, true);
     public static final UniqueKey<WalletsRecord> WALLETS_PKEY = Internal.createUniqueKey(Wallets.WALLETS, DSL.name("wallets_pkey"), new TableField[] { Wallets.WALLETS.ID }, true);
     public static final UniqueKey<WalletsRecord> WALLETS_TENANT_ID_CUSTOMER_ID_CURRENCY_KEY = Internal.createUniqueKey(Wallets.WALLETS, DSL.name("wallets_tenant_id_customer_id_currency_key"), new TableField[] { Wallets.WALLETS.TENANT_ID, Wallets.WALLETS.CUSTOMER_ID, Wallets.WALLETS.CURRENCY }, true);
     public static final UniqueKey<WalletsRecord> WALLETS_TENANT_ID_ID_CURRENCY_KEY = Internal.createUniqueKey(Wallets.WALLETS, DSL.name("wallets_tenant_id_id_currency_key"), new TableField[] { Wallets.WALLETS.TENANT_ID, Wallets.WALLETS.ID, Wallets.WALLETS.CURRENCY }, true);
@@ -223,13 +201,11 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<ApiCredentialsRecord, TenantsRecord> API_CREDENTIALS__API_CREDENTIALS_TENANT_ID_FKEY = Internal.createForeignKey(ApiCredentials.API_CREDENTIALS, DSL.name("api_credentials_tenant_id_fkey"), new TableField[] { ApiCredentials.API_CREDENTIALS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
-    public static final ForeignKey<ApiCredentialsRecord, TenantSystemsRecord> API_CREDENTIALS__API_CREDENTIALS_TENANT_ID_TENANT_SYSTEM_ID_FKEY = Internal.createForeignKey(ApiCredentials.API_CREDENTIALS, DSL.name("api_credentials_tenant_id_tenant_system_id_fkey"), new TableField[] { ApiCredentials.API_CREDENTIALS.TENANT_ID, ApiCredentials.API_CREDENTIALS.TENANT_SYSTEM_ID }, Keys.TENANT_SYSTEMS_TENANT_ID_ID_KEY, new TableField[] { TenantSystems.TENANT_SYSTEMS.TENANT_ID, TenantSystems.TENANT_SYSTEMS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<AppEntitlementsRecord, TenantsRecord> APP_ENTITLEMENTS__APP_ENTITLEMENTS_TENANT_ID_FKEY = Internal.createForeignKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_tenant_id_fkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<AuditLogRecord, TenantsRecord> AUDIT_LOG__AUDIT_LOG_TENANT_ID_FKEY = Internal.createForeignKey(AuditLog.AUDIT_LOG, DSL.name("audit_log_tenant_id_fkey"), new TableField[] { AuditLog.AUDIT_LOG.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<BillingSessionsRecord, CustomersRecord> BILLING_SESSIONS__BILLING_SESSIONS_TENANT_ID_CUSTOMER_ID_FKEY = Internal.createForeignKey(BillingSessions.BILLING_SESSIONS, DSL.name("billing_sessions_tenant_id_customer_id_fkey"), new TableField[] { BillingSessions.BILLING_SESSIONS.TENANT_ID, BillingSessions.BILLING_SESSIONS.CUSTOMER_ID }, Keys.CUSTOMERS_TENANT_ID_ID_KEY, new TableField[] { Customers.CUSTOMERS.TENANT_ID, Customers.CUSTOMERS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<BillingSessionsRecord, TenantsRecord> BILLING_SESSIONS__BILLING_SESSIONS_TENANT_ID_FKEY = Internal.createForeignKey(BillingSessions.BILLING_SESSIONS, DSL.name("billing_sessions_tenant_id_fkey"), new TableField[] { BillingSessions.BILLING_SESSIONS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<BillingSessionsRecord, TenantSystemsRecord> BILLING_SESSIONS__BILLING_SESSIONS_TENANT_ID_TENANT_SYSTEM_ID_FKEY = Internal.createForeignKey(BillingSessions.BILLING_SESSIONS, DSL.name("billing_sessions_tenant_id_tenant_system_id_fkey"), new TableField[] { BillingSessions.BILLING_SESSIONS.TENANT_ID, BillingSessions.BILLING_SESSIONS.TENANT_SYSTEM_ID }, Keys.TENANT_SYSTEMS_TENANT_ID_ID_KEY, new TableField[] { TenantSystems.TENANT_SYSTEMS.TENANT_ID, TenantSystems.TENANT_SYSTEMS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
-    public static final ForeignKey<BillingUsersRecord, TenantsRecord> BILLING_USERS__BILLING_USERS_TENANT_ID_FKEY = Internal.createForeignKey(BillingUsers.BILLING_USERS, DSL.name("billing_users_tenant_id_fkey"), new TableField[] { BillingUsers.BILLING_USERS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<ChargesRecord, TenantsRecord> CHARGES__CHARGES_TENANT_ID_FKEY = Internal.createForeignKey(Charges.CHARGES, DSL.name("charges_tenant_id_fkey"), new TableField[] { Charges.CHARGES.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<ChargesRecord, ReservationsRecord> CHARGES__CHARGES_TENANT_ID_RESERVATION_ID_FKEY = Internal.createForeignKey(Charges.CHARGES, DSL.name("charges_tenant_id_reservation_id_fkey"), new TableField[] { Charges.CHARGES.TENANT_ID, Charges.CHARGES.RESERVATION_ID }, Keys.RESERVATIONS_TENANT_ID_ID_KEY, new TableField[] { Reservations.RESERVATIONS.TENANT_ID, Reservations.RESERVATIONS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<ChargesRecord, WalletsRecord> CHARGES__CHARGES_TENANT_ID_WALLET_ID_CURRENCY_FKEY = Internal.createForeignKey(Charges.CHARGES, DSL.name("charges_tenant_id_wallet_id_currency_fkey"), new TableField[] { Charges.CHARGES.TENANT_ID, Charges.CHARGES.WALLET_ID, Charges.CHARGES.CURRENCY }, Keys.WALLETS_TENANT_ID_ID_CURRENCY_KEY, new TableField[] { Wallets.WALLETS.TENANT_ID, Wallets.WALLETS.ID, Wallets.WALLETS.CURRENCY }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
@@ -269,11 +245,6 @@ public class Keys {
     public static final ForeignKey<RefundsRecord, ReservationsRecord> REFUNDS__REFUNDS_TENANT_ID_RESERVATION_ID_FKEY = Internal.createForeignKey(Refunds.REFUNDS, DSL.name("refunds_tenant_id_reservation_id_fkey"), new TableField[] { Refunds.REFUNDS.TENANT_ID, Refunds.REFUNDS.RESERVATION_ID }, Keys.RESERVATIONS_TENANT_ID_ID_KEY, new TableField[] { Reservations.RESERVATIONS.TENANT_ID, Reservations.RESERVATIONS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<ReservationsRecord, TenantsRecord> RESERVATIONS__RESERVATIONS_TENANT_ID_FKEY = Internal.createForeignKey(Reservations.RESERVATIONS, DSL.name("reservations_tenant_id_fkey"), new TableField[] { Reservations.RESERVATIONS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<ReservationsRecord, WalletsRecord> RESERVATIONS__RESERVATIONS_TENANT_ID_WALLET_ID_CURRENCY_FKEY = Internal.createForeignKey(Reservations.RESERVATIONS, DSL.name("reservations_tenant_id_wallet_id_currency_fkey"), new TableField[] { Reservations.RESERVATIONS.TENANT_ID, Reservations.RESERVATIONS.WALLET_ID, Reservations.RESERVATIONS.CURRENCY }, Keys.WALLETS_TENANT_ID_ID_CURRENCY_KEY, new TableField[] { Wallets.WALLETS.TENANT_ID, Wallets.WALLETS.ID, Wallets.WALLETS.CURRENCY }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
-    public static final ForeignKey<RoleAssignmentsRecord, RolesRecord> ROLE_ASSIGNMENTS__ROLE_ASSIGNMENTS_TENANT_ID_ROLE_ID_FKEY = Internal.createForeignKey(RoleAssignments.ROLE_ASSIGNMENTS, DSL.name("role_assignments_tenant_id_role_id_fkey"), new TableField[] { RoleAssignments.ROLE_ASSIGNMENTS.TENANT_ID, RoleAssignments.ROLE_ASSIGNMENTS.ROLE_ID }, Keys.ROLES_TENANT_ID_ID_KEY, new TableField[] { Roles.ROLES.TENANT_ID, Roles.ROLES.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
-    public static final ForeignKey<RoleAssignmentsRecord, BillingUsersRecord> ROLE_ASSIGNMENTS__ROLE_ASSIGNMENTS_TENANT_ID_USER_ID_FKEY = Internal.createForeignKey(RoleAssignments.ROLE_ASSIGNMENTS, DSL.name("role_assignments_tenant_id_user_id_fkey"), new TableField[] { RoleAssignments.ROLE_ASSIGNMENTS.TENANT_ID, RoleAssignments.ROLE_ASSIGNMENTS.USER_ID }, Keys.BILLING_USERS_TENANT_ID_ID_KEY, new TableField[] { BillingUsers.BILLING_USERS.TENANT_ID, BillingUsers.BILLING_USERS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
-    public static final ForeignKey<RolePermissionsRecord, PermissionsRecord> ROLE_PERMISSIONS__ROLE_PERMISSIONS_PERMISSION_CODE_FKEY = Internal.createForeignKey(RolePermissions.ROLE_PERMISSIONS, DSL.name("role_permissions_permission_code_fkey"), new TableField[] { RolePermissions.ROLE_PERMISSIONS.PERMISSION_CODE }, Keys.PERMISSIONS_PKEY, new TableField[] { Permissions.PERMISSIONS.CODE }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
-    public static final ForeignKey<RolePermissionsRecord, RolesRecord> ROLE_PERMISSIONS__ROLE_PERMISSIONS_TENANT_ID_ROLE_ID_FKEY = Internal.createForeignKey(RolePermissions.ROLE_PERMISSIONS, DSL.name("role_permissions_tenant_id_role_id_fkey"), new TableField[] { RolePermissions.ROLE_PERMISSIONS.TENANT_ID, RolePermissions.ROLE_PERMISSIONS.ROLE_ID }, Keys.ROLES_TENANT_ID_ID_KEY, new TableField[] { Roles.ROLES.TENANT_ID, Roles.ROLES.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
-    public static final ForeignKey<RolesRecord, TenantsRecord> ROLES__ROLES_TENANT_ID_FKEY = Internal.createForeignKey(Roles.ROLES, DSL.name("roles_tenant_id_fkey"), new TableField[] { Roles.ROLES.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<StripeConfigurationsRecord, TenantsRecord> STRIPE_CONFIGURATIONS__STRIPE_CONFIGURATIONS_TENANT_ID_FKEY = Internal.createForeignKey(StripeConfigurations.STRIPE_CONFIGURATIONS, DSL.name("stripe_configurations_tenant_id_fkey"), new TableField[] { StripeConfigurations.STRIPE_CONFIGURATIONS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<StripeCustomersRecord, StripeConfigurationsRecord> STRIPE_CUSTOMERS__STRIPE_CUSTOMERS_TENANT_ID_CONFIGURATION_ID_FKEY = Internal.createForeignKey(StripeCustomers.STRIPE_CUSTOMERS, DSL.name("stripe_customers_tenant_id_configuration_id_fkey"), new TableField[] { StripeCustomers.STRIPE_CUSTOMERS.TENANT_ID, StripeCustomers.STRIPE_CUSTOMERS.CONFIGURATION_ID }, Keys.STRIPE_CONFIGURATIONS_TENANT_ID_ID_KEY, new TableField[] { StripeConfigurations.STRIPE_CONFIGURATIONS.TENANT_ID, StripeConfigurations.STRIPE_CONFIGURATIONS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<StripeCustomersRecord, CustomersRecord> STRIPE_CUSTOMERS__STRIPE_CUSTOMERS_TENANT_ID_CUSTOMER_ID_FKEY = Internal.createForeignKey(StripeCustomers.STRIPE_CUSTOMERS, DSL.name("stripe_customers_tenant_id_customer_id_fkey"), new TableField[] { StripeCustomers.STRIPE_CUSTOMERS.TENANT_ID, StripeCustomers.STRIPE_CUSTOMERS.CUSTOMER_ID }, Keys.CUSTOMERS_TENANT_ID_ID_KEY, new TableField[] { Customers.CUSTOMERS.TENANT_ID, Customers.CUSTOMERS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
@@ -302,8 +273,7 @@ public class Keys {
     public static final ForeignKey<UsageRatingsRecord, TenantsRecord> USAGE_RATINGS__USAGE_RATINGS_TENANT_ID_FKEY = Internal.createForeignKey(UsageRatings.USAGE_RATINGS, DSL.name("usage_ratings_tenant_id_fkey"), new TableField[] { UsageRatings.USAGE_RATINGS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<UsageRatingsRecord, PricingPlanVersionsRecord> USAGE_RATINGS__USAGE_RATINGS_TENANT_ID_PLAN_ID_PLAN_VERSION_FKEY = Internal.createForeignKey(UsageRatings.USAGE_RATINGS, DSL.name("usage_ratings_tenant_id_plan_id_plan_version_fkey"), new TableField[] { UsageRatings.USAGE_RATINGS.TENANT_ID, UsageRatings.USAGE_RATINGS.PLAN_ID, UsageRatings.USAGE_RATINGS.PLAN_VERSION }, Keys.PRICING_PLAN_VERSIONS_TENANT_ID_PLAN_ID_VERSION_KEY, new TableField[] { PricingPlanVersions.PRICING_PLAN_VERSIONS.TENANT_ID, PricingPlanVersions.PRICING_PLAN_VERSIONS.PLAN_ID, PricingPlanVersions.PRICING_PLAN_VERSIONS.VERSION }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<UsageRatingsRecord, WalletsRecord> USAGE_RATINGS__USAGE_RATINGS_TENANT_ID_WALLET_ID_FKEY = Internal.createForeignKey(UsageRatings.USAGE_RATINGS, DSL.name("usage_ratings_tenant_id_wallet_id_fkey"), new TableField[] { UsageRatings.USAGE_RATINGS.TENANT_ID, UsageRatings.USAGE_RATINGS.WALLET_ID }, Keys.WALLETS_TENANT_ID_ID_KEY, new TableField[] { Wallets.WALLETS.TENANT_ID, Wallets.WALLETS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
-    public static final ForeignKey<UserPermissionsRecord, PermissionsRecord> USER_PERMISSIONS__USER_PERMISSIONS_PERMISSION_CODE_FKEY = Internal.createForeignKey(UserPermissions.USER_PERMISSIONS, DSL.name("user_permissions_permission_code_fkey"), new TableField[] { UserPermissions.USER_PERMISSIONS.PERMISSION_CODE }, Keys.PERMISSIONS_PKEY, new TableField[] { Permissions.PERMISSIONS.CODE }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
-    public static final ForeignKey<UserPermissionsRecord, BillingUsersRecord> USER_PERMISSIONS__USER_PERMISSIONS_TENANT_ID_USER_ID_FKEY = Internal.createForeignKey(UserPermissions.USER_PERMISSIONS, DSL.name("user_permissions_tenant_id_user_id_fkey"), new TableField[] { UserPermissions.USER_PERMISSIONS.TENANT_ID, UserPermissions.USER_PERMISSIONS.USER_ID }, Keys.BILLING_USERS_TENANT_ID_ID_KEY, new TableField[] { BillingUsers.BILLING_USERS.TENANT_ID, BillingUsers.BILLING_USERS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<UserGrantsRecord, TenantsRecord> USER_GRANTS__USER_GRANTS_TENANT_ID_FKEY = Internal.createForeignKey(UserGrants.USER_GRANTS, DSL.name("user_grants_tenant_id_fkey"), new TableField[] { UserGrants.USER_GRANTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<WalletsRecord, CustomersRecord> WALLETS__WALLETS_TENANT_ID_CUSTOMER_ID_FKEY = Internal.createForeignKey(Wallets.WALLETS, DSL.name("wallets_tenant_id_customer_id_fkey"), new TableField[] { Wallets.WALLETS.TENANT_ID, Wallets.WALLETS.CUSTOMER_ID }, Keys.CUSTOMERS_TENANT_ID_ID_KEY, new TableField[] { Customers.CUSTOMERS.TENANT_ID, Customers.CUSTOMERS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<WalletsRecord, TenantsRecord> WALLETS__WALLETS_TENANT_ID_FKEY = Internal.createForeignKey(Wallets.WALLETS, DSL.name("wallets_tenant_id_fkey"), new TableField[] { Wallets.WALLETS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<WebhookDeliveriesRecord, WebhookEndpointsRecord> WEBHOOK_DELIVERIES__WEBHOOK_DELIVERIES_TENANT_ID_ENDPOINT_ID_FKEY = Internal.createForeignKey(WebhookDeliveries.WEBHOOK_DELIVERIES, DSL.name("webhook_deliveries_tenant_id_endpoint_id_fkey"), new TableField[] { WebhookDeliveries.WEBHOOK_DELIVERIES.TENANT_ID, WebhookDeliveries.WEBHOOK_DELIVERIES.ENDPOINT_ID }, Keys.WEBHOOK_ENDPOINTS_TENANT_ID_ID_KEY, new TableField[] { WebhookEndpoints.WEBHOOK_ENDPOINTS.TENANT_ID, WebhookEndpoints.WEBHOOK_ENDPOINTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);

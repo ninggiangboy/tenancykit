@@ -42,7 +42,6 @@ import dev.ngb.billing.payment.domain.stripe.StripeEventId;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.error.ConflictException;
 import dev.ngb.core.error.IdempotencyConflictException;
-import dev.ngb.billing.platform.domain.tenant.Tenant;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.support.EventSchemas;
@@ -50,6 +49,7 @@ import dev.ngb.billing.support.FakePaymentProvider;
 import dev.ngb.billing.support.FakePaymentProviderConfig;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
+import dev.ngb.billing.support.ReplicaFixtures;
 import dev.ngb.billing.support.ScopeTestSupport;
 import dev.ngb.billing.support.StripeEvents;
 import dev.ngb.billing.support.UncommittedRace;
@@ -192,7 +192,7 @@ class PaymentIntegrationTest {
         assertThat(ledgerEntries(w)).isZero();
         assertThat(stripe.checkouts).hasSize(1);
         assertThat(stripe.checkouts.get(0).request().paymentId()).isEqualTo(p.id());
-        assertThat(stripe.checkouts.get(0).access().connectedAccountId()).as("Direct mode charges the Tenant's own account").isNull();
+        assertThat(stripe.checkouts.get(0).access().connectedAccountId()).as("Direct mode charges the ReplicaFixtures.TenantSeed's own account").isNull();
     }
 
     @Test

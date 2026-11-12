@@ -96,6 +96,21 @@ public class TenantDomainsRecord extends UpdatableRecordImpl<TenantDomainsRecord
         return (Instant) get(4);
     }
 
+    /**
+     * Setter for <code>public.tenant_domains.version</code>.
+     */
+    public TenantDomainsRecord setVersion(Long value) {
+        set(5, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.tenant_domains.version</code>.
+     */
+    public Long getVersion() {
+        return (Long) get(5);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -119,7 +134,7 @@ public class TenantDomainsRecord extends UpdatableRecordImpl<TenantDomainsRecord
     /**
      * Create a detached, initialised TenantDomainsRecord
      */
-    public TenantDomainsRecord(UUID id, UUID tenantId, String hostname, String kind, Instant createdAt) {
+    public TenantDomainsRecord(UUID id, UUID tenantId, String hostname, String kind, Instant createdAt, Long version) {
         super(TenantDomains.TENANT_DOMAINS);
 
         setId(id);
@@ -127,6 +142,7 @@ public class TenantDomainsRecord extends UpdatableRecordImpl<TenantDomainsRecord
         setHostname(hostname);
         setKind(kind);
         setCreatedAt(createdAt);
+        setVersion(version);
         resetTouchedOnNotNull();
     }
 }

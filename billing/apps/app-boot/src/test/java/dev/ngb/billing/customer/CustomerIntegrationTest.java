@@ -20,11 +20,10 @@ import dev.ngb.core.error.ConflictException;
 import dev.ngb.core.error.IdempotencyConflictException;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.id.TenantSystemId;
-import dev.ngb.billing.platform.application.tenantsystem.command.CreateTenantSystemUseCase;
-import dev.ngb.billing.platform.domain.tenant.Tenant;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
+import dev.ngb.billing.support.ReplicaFixtures;
 import dev.ngb.billing.support.ScopeTestSupport;
 import dev.ngb.billing.support.UncommittedRace;
 import java.util.UUID;
@@ -49,14 +48,14 @@ class CustomerIntegrationTest {
     @Autowired ManageCustomerUseCase manage;
     @Autowired CustomerQueries customerQueries;
     @Autowired CustomerLookup lookup;
-    @Autowired CreateTenantSystemUseCase systems;
     @Autowired Clock clock;
     @Autowired IdGenerator ids;
     @Autowired OwnerDatabase owner;
     @Autowired ScopeTestSupport scopes;
+    @Autowired ReplicaFixtures replica;
 
-    private TenantSystemId newSystem(Tenant tenant) {
-        return scopes.inTenant(tenant.id(), () -> systems.create(new Audit("user/tester", "req"), "Sample " + UUID.randomUUID())).id();
+    private TenantSystemId newSystem(ReplicaFixtures.TenantSeed tenant) {
+        return replica.tenantSystem(tenant.id().value(), "Sample " + UUID.randomUUID());
     }
 
     private CreateCustomerUseCase.Command command(TenantSystemId system, String externalUserId, String name, String key) {
@@ -65,7 +64,7 @@ class CustomerIntegrationTest {
 
     @Test
     void aCustomerRoundTripsWithItsMappingAndUpdatesPersist() {
-        Tenant tenant = scopes.newTenant();
+        ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
         TenantSystemId system = newSystem(tenant);
         Customer created = scopes.inTenant(tenant.id(),
                 () -> createCustomer.execute(new CreateCustomerUseCase.Command(system, "user_001", "Acme", "billing@acme.test", "key-1", AUDIT))).customer();
@@ -87,8 +86,8 @@ class CustomerIntegrationTest {
 
     @Test
     void theSameExternalUserIdInTwoTenantsIsTwoIndependentCustomers() {
-        Tenant a = scopes.newTenant();
-        Tenant b = scopes.newTenant();
+        ReplicaFixtures.TenantSeed a = scopes.newTenant();
+        ReplicaFixtures.TenantSeed b = scopes.newTenant();
         TenantSystemId systemA = newSystem(a);
         TenantSystemId systemB = newSystem(b);
 
@@ -105,7 +104,7 @@ class CustomerIntegrationTest {
 
     @Test
     void retryingWithTheSameKeyReturnsTheSameCustomerAndWritesOnceEverywhere() {
-        Tenant tenant = scopes.newTenant();
+        ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
         TenantSystemId system = newSystem(tenant);
 
         var first = scopes.inTenant(tenant.id(), () -> createCustomer.execute(command(system, "user_001", "Acme", "retry-key")));
@@ -122,7 +121,7 @@ class CustomerIntegrationTest {
 
     @Test
     void reusingAKeyForADifferentRequestIsRejected() {
-        Tenant tenant = scopes.newTenant();
+        ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
         TenantSystemId system = newSystem(tenant);
         scopes.inTenant(tenant.id(), () -> createCustomer.execute(command(system, "user_001", "Acme", "shared-key")));
 
@@ -133,7 +132,7 @@ class CustomerIntegrationTest {
 
     @Test
     void anExternalUserCannotBeMappedTwiceUnderDifferentKeys() {
-        Tenant tenant = scopes.newTenant();
+        ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
         TenantSystemId system = newSystem(tenant);
         scopes.inTenant(tenant.id(), () -> createCustomer.execute(command(system, "user_001", "Acme", "key-a")));
 
@@ -145,7 +144,7 @@ class CustomerIntegrationTest {
 
     @Test
     void aCustomerCanBeCreatedWithoutAMapping() {
-        Tenant tenant = scopes.newTenant();
+        ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
         Customer customer = scopes.inTenant(tenant.id(), () -> createCustomer.execute(command(null, null, "Walk-in", "k"))).customer();
         assertThat(customer.identities()).isEmpty();
         assertThatThrownBy(() -> scopes.inTenant(tenant.id(), () -> createCustomer.execute(command(null, "user_001", "Half", "k2"))))
@@ -154,8 +153,8 @@ class CustomerIntegrationTest {
 
     @Test
     void aMappingToAnotherTenantsSystemIsRejectedByTheDatabase() {
-        Tenant a = scopes.newTenant();
-        Tenant b = scopes.newTenant();
+        ReplicaFixtures.TenantSeed a = scopes.newTenant();
+        ReplicaFixtures.TenantSeed b = scopes.newTenant();
         TenantSystemId systemOfB = newSystem(b);
 
         assertThatThrownBy(() -> scopes.inTenant(a.id(), () -> createCustomer.execute(command(systemOfB, "user_001", "Sneaky", "k"))))
@@ -165,7 +164,7 @@ class CustomerIntegrationTest {
 
     @Test
     void anUnknownCustomerIsNotFound() {
-        Tenant tenant = scopes.newTenant();
+        ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
         assertThatThrownBy(() -> scopes.inTenant(tenant.id(), () -> customerQueries.get(new CustomerId(ids.newId()))))
                 .isInstanceOf(NotFoundException.class);
         assertThat(clock.now()).isNotNull();
@@ -173,7 +172,7 @@ class CustomerIntegrationTest {
 
     @Test
     void aDuplicateArrivingWhileTheFirstIsUncommittedWaitsAndReplaysIt() throws Exception {
-        Tenant tenant = scopes.newTenant();
+        ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
         TenantSystemId system = newSystem(tenant);
 
         var race = UncommittedRace.run(unitOfWork, scopes, owner, tenant.id(), "insert into %\"customers\"%",
@@ -189,7 +188,7 @@ class CustomerIntegrationTest {
 
     @Test
     void concurrentDuplicatesProduceOneCustomer() throws Exception {
-        Tenant tenant = scopes.newTenant();
+        ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
         TenantSystemId system = newSystem(tenant);
         ExecutorService pool = Executors.newFixedThreadPool(8);
         try {

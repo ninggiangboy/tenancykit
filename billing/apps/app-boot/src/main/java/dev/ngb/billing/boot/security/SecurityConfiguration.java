@@ -2,35 +2,36 @@ package dev.ngb.billing.boot.security;
 
 import dev.ngb.billing.boot.portal.PortalCookieSettings;
 import dev.ngb.billing.boot.web.PortalCorsConfigurationSource;
-import dev.ngb.billing.platform.api.actor.Actor;
-import dev.ngb.core.error.AccessDeniedException;
-import dev.ngb.billing.platform.api.actor.Authorizer;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.application.auth.service.Authentication;
-import dev.ngb.billing.platform.domain.role.AuthorizationPolicy;
-import dev.ngb.billing.platform.domain.credential.ApiKey;
 import dev.ngb.billing.session.api.portal.CurrentPortalVisitor;
 import dev.ngb.billing.session.api.portal.PortalAuthorizer;
 import dev.ngb.billing.session.api.portal.PortalSessions;
 import dev.ngb.billing.session.api.portal.PortalVisitor;
+import dev.ngb.core.error.AccessDeniedException;
+import dev.ngb.core.replica.security.ReplicaActorConverter;
+import dev.ngb.core.replica.security.ReplicaActorResolver;
+import dev.ngb.core.replica.security.SuiteJwtDecoders;
+import dev.ngb.core.security.Actor;
+import dev.ngb.core.security.Authorizer;
+import dev.ngb.core.security.CurrentActor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
-import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * One filter chain, three possible principals: an OIDC bearer token (a Billing user), a Billing-issued API
- * key (a Tenant System) and, later, a Billing Session. The tenant scope was fixed by the hostname before this
- * chain runs; each principal is then validated against that scope.
+ * One stateless chain, two possible principals: a Keycloak user token or a Platform suite token, both verified by
+ * {@link SuiteJwtDecoders} against exactly two issuers and the {@code billing} audience. The tenant scope was fixed by
+ * the hostname filter before this chain runs; the replica actor resolver then refuses an identity that is not active
+ * in that tenant.
+ *
+ * <p>Billing no longer accepts API keys: a Tenant System exchanges its credential at Platform for a suite token.
  */
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
@@ -40,22 +41,20 @@ class SecurityConfiguration {
     @Bean
     SecurityFilterChain apiSecurity(
             HttpSecurity http,
-            Authentication authentication,
+            SuiteJwtDecoders decoders,
+            ReplicaActorResolver actorResolver,
             PortalSessions portalSessions,
             PortalCookieSettings portalCookieSettings,
             PortalCorsConfigurationSource portalCors,
             @Value("${billing.portal.enabled:true}") boolean portalEnabled) throws Exception {
-        BearerTokenResolver defaultResolver = new DefaultBearerTokenResolver();
-        // API keys are bearer tokens too; the OIDC filter must leave them to the API-key filter.
-        BearerTokenResolver oidcOnly = request -> {
-            String token = defaultResolver.resolve(request);
-            return token != null && token.startsWith(ApiKey.PREFIX) ? null : token;
-        };
         http.csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(portalCors))
                 .sessionManagement(sessions -> sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/actuator/health", "/actuator/health/**")
+                        .permitAll()
+                        // Tests publish a local JWKS here; production points the decoder at the real issuers.
+                        .requestMatchers("/test-jwks")
                         .permitAll()
                         // Stripe calls these; the signature of the body is the proof, verified before anything is read.
                         .requestMatchers("/stripe/webhooks/**")
@@ -66,12 +65,12 @@ class SecurityConfiguration {
                         .anyRequest()
                         .authenticated())
                 .oauth2ResourceServer(resource -> resource
-                        .bearerTokenResolver(oidcOnly)
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(new JwtActorConverter(authentication))))
-                .addFilterBefore(new ApiKeyAuthenticationFilter(authentication), BearerTokenAuthenticationFilter.class)
+                        .jwt(jwt -> jwt.decoder(decoders).jwtAuthenticationConverter(new ReplicaActorConverter(actorResolver))))
                 .headers(Customizer.withDefaults());
         if (portalEnabled) {
-            http.addFilterBefore(new PortalSessionAuthenticationFilter(portalSessions, portalCookieSettings), BearerTokenAuthenticationFilter.class);
+            http.addFilterBefore(
+                    new PortalSessionAuthenticationFilter(portalSessions, portalCookieSettings),
+                    BearerTokenAuthenticationFilter.class);
         }
         return http.build();
     }
@@ -83,16 +82,20 @@ class SecurityConfiguration {
             if (authentication instanceof ActorAuthentication actorAuthentication) {
                 return actorAuthentication.actor();
             }
+            // The replica's resource-server converter authenticates a suite/user token as its own type.
+            if (authentication instanceof dev.ngb.core.replica.security.ReplicaAuthentication replica) {
+                return replica.actor();
+            }
             throw new IllegalStateException("the request is not authenticated");
         };
     }
 
     @Bean
     Authorizer authorizer(CurrentActor currentActor) {
-        return permission -> {
+        return code -> {
             Actor actor = currentActor.get();
-            if (!AuthorizationPolicy.permits(actor.permissions(), permission, actor.scope())) {
-                throw new AccessDeniedException("missing permission " + permission.code());
+            if (!actor.has(code)) {
+                throw new AccessDeniedException("missing permission " + code);
             }
         };
     }

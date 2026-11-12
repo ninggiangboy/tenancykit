@@ -35,6 +35,19 @@ public class PostgresContainerConfig {
         return POSTGRES;
     }
 
+    /**
+     * The replica properties every test needs, for the tests that build their own registry instead of importing this
+     * configuration. The replica is seeded directly, so the snapshot fetch is never reached; the properties are
+     * validated at startup and so need a value.
+     */
+    public static void replicaDefaults(org.springframework.test.context.DynamicPropertyRegistry registry) {
+        registry.add("suite.replica.platform-base-url", () -> "http://platform.test");
+        registry.add("suite.replica.client-id", () -> "billing");
+        registry.add("suite.replica.client-secret", () -> "test-secret");
+        registry.add("suite.replica.rebuild-on-start", () -> "false");
+        registry.add("suite.app-code", () -> "billing");
+    }
+
     @Bean
     DynamicPropertyRegistrar databaseProperties() {
         return registry -> {
@@ -64,6 +77,12 @@ public class PostgresContainerConfig {
             registry.add("billing.outbox.max-attempts", () -> "3");
             // Stripe events that cannot be applied give up quickly in tests.
             registry.add("billing.payments.event-max-attempts", () -> "3");
+            // The replica is seeded straight into the tables; the snapshot fetch is never reached in tests, but the
+            // properties are validated at startup, so they need a value here rather than in every test class.
+            registry.add("suite.replica.platform-base-url", () -> "http://platform.test");
+            registry.add("suite.replica.client-id", () -> "billing");
+            registry.add("suite.replica.client-secret", () -> "test-secret");
+            registry.add("suite.replica.rebuild-on-start", () -> "false");
         };
     }
 

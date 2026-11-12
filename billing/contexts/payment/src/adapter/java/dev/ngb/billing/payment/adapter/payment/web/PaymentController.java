@@ -7,9 +7,9 @@ import dev.ngb.billing.payment.application.payment.query.PaymentQueries;
 import dev.ngb.billing.payment.application.payment.query.PaymentView;
 import dev.ngb.billing.payment.domain.payment.Payment;
 import dev.ngb.billing.payment.domain.payment.PaymentStatus;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.Currency;
@@ -82,7 +82,7 @@ public class PaymentController {
      */
     @PostMapping("/payments/top-ups")
     @RepeatableCreate
-    @RequiresPermission(Permission.PAYMENT_CREATE)
+    @RequiresPermission(BillingPermissions.PAYMENT_CREATE)
     public ResponseEntity<PaymentResponse> createTopUp(
             @RequestHeader("Idempotency-Key") String key, @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             @RequestBody TopUpRequest request) {
@@ -95,7 +95,7 @@ public class PaymentController {
     }
 
     @GetMapping("/payments")
-    @RequiresPermission(Permission.PAYMENT_READ)
+    @RequiresPermission(BillingPermissions.PAYMENT_READ)
     public List<PaymentResponse> payments(
             @RequestParam(required = false) String walletId, @RequestParam(required = false) String status, @RequestParam(required = false) String before,
             @RequestParam(defaultValue = "50") int limit) {
@@ -104,7 +104,7 @@ public class PaymentController {
     }
 
     @GetMapping("/payments/{id}")
-    @RequiresPermission(Permission.PAYMENT_READ)
+    @RequiresPermission(BillingPermissions.PAYMENT_READ)
     public PaymentDetailResponse payment(@PathVariable String id) {
         PaymentQueries.PaymentDetail detail = queries.payment(UUID.fromString(id), currentActor.caller());
         return new PaymentDetailResponse(PaymentResponse.ofView(detail.payment()), detail.refunds().stream().map(RefundResponse::ofView).toList(),

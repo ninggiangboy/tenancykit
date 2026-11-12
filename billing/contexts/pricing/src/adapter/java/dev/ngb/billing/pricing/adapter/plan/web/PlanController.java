@@ -1,8 +1,8 @@
 package dev.ngb.billing.pricing.adapter.plan.web;
 
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.pricing.adapter.plan.json.RuleDto;
 import dev.ngb.billing.pricing.api.plan.BillingCycle;
@@ -86,7 +86,7 @@ public class PlanController {
 
     @PostMapping("/pricing-plans")
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresPermission(Permission.PRICING_MANAGE)
+    @RequiresPermission(BillingPermissions.PRICING_MANAGE)
     public PlanResponse createPlan(@RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody CreatePlanRequest request) {
         if (request.version() == null || request.version().rule() == null || request.model() == null) {
             throw new IllegalArgumentException("model and version.rule are required");
@@ -98,13 +98,13 @@ public class PlanController {
 
     /** Tenant systems list the plans they may offer: pass {@code status=ACTIVE}. */
     @GetMapping("/pricing-plans")
-    @RequiresPermission(Permission.PRICING_READ)
+    @RequiresPermission(BillingPermissions.PRICING_READ)
     public List<PlanResponse> listPlans(@RequestParam(required = false) String status) {
         return planQueries.list(status == null ? null : PlanStatus.valueOf(status)).stream().map(v -> PlanResponse.ofView(v, json)).toList();
     }
 
     @GetMapping("/pricing-plans/{id}")
-    @RequiresPermission(Permission.PRICING_READ)
+    @RequiresPermission(BillingPermissions.PRICING_READ)
     public PlanResponse getPlan(@PathVariable String id) {
         return PlanResponse.ofView(planQueries.get(UUID.fromString(id)), json);
     }
@@ -112,7 +112,7 @@ public class PlanController {
     /** Adds the next version. Earlier versions, and every charge that used them, are unchanged. */
     @PostMapping("/pricing-plans/{id}/versions")
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresPermission(Permission.PRICING_MANAGE)
+    @RequiresPermission(BillingPermissions.PRICING_MANAGE)
     public VersionResponse publishVersion(
             @PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody VersionRequest request) {
         if (request.rule() == null) {
@@ -123,7 +123,7 @@ public class PlanController {
     }
 
     @PostMapping("/pricing-plans/{id}/retire")
-    @RequiresPermission(Permission.PRICING_MANAGE)
+    @RequiresPermission(BillingPermissions.PRICING_MANAGE)
     public PlanResponse retire(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         return PlanResponse.of(plans.retire(Audit.of(currentActor.get().auditName(), requestId), PricingPlanId.of(id)));
     }

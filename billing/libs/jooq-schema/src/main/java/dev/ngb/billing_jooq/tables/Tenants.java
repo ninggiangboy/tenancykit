@@ -6,10 +6,9 @@ package dev.ngb.billing_jooq.tables;
 
 import dev.ngb.billing_jooq.Keys;
 import dev.ngb.billing_jooq.Public;
-import dev.ngb.billing_jooq.tables.ApiCredentials.ApiCredentialsPath;
+import dev.ngb.billing_jooq.tables.AppEntitlements.AppEntitlementsPath;
 import dev.ngb.billing_jooq.tables.AuditLog.AuditLogPath;
 import dev.ngb.billing_jooq.tables.BillingSessions.BillingSessionsPath;
-import dev.ngb.billing_jooq.tables.BillingUsers.BillingUsersPath;
 import dev.ngb.billing_jooq.tables.Charges.ChargesPath;
 import dev.ngb.billing_jooq.tables.Customers.CustomersPath;
 import dev.ngb.billing_jooq.tables.EventInbox.EventInboxPath;
@@ -27,7 +26,6 @@ import dev.ngb.billing_jooq.tables.PricingPlanVersions.PricingPlanVersionsPath;
 import dev.ngb.billing_jooq.tables.PricingPlans.PricingPlansPath;
 import dev.ngb.billing_jooq.tables.Refunds.RefundsPath;
 import dev.ngb.billing_jooq.tables.Reservations.ReservationsPath;
-import dev.ngb.billing_jooq.tables.Roles.RolesPath;
 import dev.ngb.billing_jooq.tables.StripeConfigurations.StripeConfigurationsPath;
 import dev.ngb.billing_jooq.tables.StripeCustomers.StripeCustomersPath;
 import dev.ngb.billing_jooq.tables.StripeEventAttempts.StripeEventAttemptsPath;
@@ -41,6 +39,7 @@ import dev.ngb.billing_jooq.tables.TenantSystems.TenantSystemsPath;
 import dev.ngb.billing_jooq.tables.UsageCharges.UsageChargesPath;
 import dev.ngb.billing_jooq.tables.UsageEvents.UsageEventsPath;
 import dev.ngb.billing_jooq.tables.UsageRatings.UsageRatingsPath;
+import dev.ngb.billing_jooq.tables.UserGrants.UserGrantsPath;
 import dev.ngb.billing_jooq.tables.Wallets.WalletsPath;
 import dev.ngb.billing_jooq.tables.WebhookDeliveries.WebhookDeliveriesPath;
 import dev.ngb.billing_jooq.tables.WebhookDeliveryAttempts.WebhookDeliveryAttemptsPath;
@@ -123,6 +122,11 @@ public class Tenants extends TableImpl<TenantsRecord> {
      */
     public final TableField<TenantsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.INSTANT.nullable(false), this, "");
 
+    /**
+     * The column <code>public.tenants.version</code>.
+     */
+    public final TableField<TenantsRecord, Long> VERSION = createField(DSL.name("version"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("1"), SQLDataType.BIGINT)), this, "");
+
     private Tenants(Name alias, Table<TenantsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -200,17 +204,17 @@ public class Tenants extends TableImpl<TenantsRecord> {
         return Arrays.asList(Keys.TENANTS_CODE_KEY);
     }
 
-    private transient ApiCredentialsPath _apiCredentials;
+    private transient AppEntitlementsPath _appEntitlements;
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.api_credentials</code> table
+     * <code>public.app_entitlements</code> table
      */
-    public ApiCredentialsPath apiCredentials() {
-        if (_apiCredentials == null)
-            _apiCredentials = new ApiCredentialsPath(this, null, Keys.API_CREDENTIALS__API_CREDENTIALS_TENANT_ID_FKEY.getInverseKey());
+    public AppEntitlementsPath appEntitlements() {
+        if (_appEntitlements == null)
+            _appEntitlements = new AppEntitlementsPath(this, null, Keys.APP_ENTITLEMENTS__APP_ENTITLEMENTS_TENANT_ID_FKEY.getInverseKey());
 
-        return _apiCredentials;
+        return _appEntitlements;
     }
 
     private transient AuditLogPath _auditLog;
@@ -237,19 +241,6 @@ public class Tenants extends TableImpl<TenantsRecord> {
             _billingSessions = new BillingSessionsPath(this, null, Keys.BILLING_SESSIONS__BILLING_SESSIONS_TENANT_ID_FKEY.getInverseKey());
 
         return _billingSessions;
-    }
-
-    private transient BillingUsersPath _billingUsers;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>public.billing_users</code> table
-     */
-    public BillingUsersPath billingUsers() {
-        if (_billingUsers == null)
-            _billingUsers = new BillingUsersPath(this, null, Keys.BILLING_USERS__BILLING_USERS_TENANT_ID_FKEY.getInverseKey());
-
-        return _billingUsers;
     }
 
     private transient ChargesPath _charges;
@@ -473,18 +464,6 @@ public class Tenants extends TableImpl<TenantsRecord> {
         return _reservations;
     }
 
-    private transient RolesPath _roles;
-
-    /**
-     * Get the implicit to-many join path to the <code>public.roles</code> table
-     */
-    public RolesPath roles() {
-        if (_roles == null)
-            _roles = new RolesPath(this, null, Keys.ROLES__ROLES_TENANT_ID_FKEY.getInverseKey());
-
-        return _roles;
-    }
-
     private transient StripeConfigurationsPath _stripeConfigurations;
 
     /**
@@ -652,6 +631,19 @@ public class Tenants extends TableImpl<TenantsRecord> {
             _usageRatings = new UsageRatingsPath(this, null, Keys.USAGE_RATINGS__USAGE_RATINGS_TENANT_ID_FKEY.getInverseKey());
 
         return _usageRatings;
+    }
+
+    private transient UserGrantsPath _userGrants;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.user_grants</code>
+     * table
+     */
+    public UserGrantsPath userGrants() {
+        if (_userGrants == null)
+            _userGrants = new UserGrantsPath(this, null, Keys.USER_GRANTS__USER_GRANTS_TENANT_ID_FKEY.getInverseKey());
+
+        return _userGrants;
     }
 
     private transient WalletsPath _wallets;

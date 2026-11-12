@@ -6,59 +6,6 @@ servers:
 - url: /
   description: "Any Billing hostname: platform.<base-domain> or <tenant-code>.<base-domain>"
 paths:
-  /api/v1/users/{id}/roles/{roleId}:
-    put:
-      tags:
-      - user-controller
-      operationId: assignRole
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: roleId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/UserResponse"
-      x-required-permission: user:manage
-      x-allowed-callers:
-      - platform-user
-      - tenant-user
-    delete:
-      tags:
-      - user-controller
-      operationId: unassignRole
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: roleId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/UserResponse"
-      x-required-permission: user:manage
-      x-allowed-callers:
-      - platform-user
-      - tenant-user
   /api/v1/stripe/configuration/webhook-secret:
     put:
       tags:
@@ -83,9 +30,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ConfigurationResponse"
-      x-required-permission: stripe:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:stripe:manage
+      x-allowed-callers: []
   /api/v1/stripe/configuration/direct:
     put:
       tags:
@@ -110,37 +56,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ConfigurationResponse"
-      x-required-permission: stripe:manage
-      x-allowed-callers:
-      - tenant-user
-  /api/v1/roles/{id}/permissions:
-    put:
-      tags:
-      - role-controller
-      operationId: setPermissions
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SetPermissionsRequest"
-        required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/RoleResponse"
-      x-required-permission: role:manage
-      x-allowed-callers:
-      - platform-user
-      - tenant-user
+      x-required-permission: billing:stripe:manage
+      x-allowed-callers: []
   /api/v1/portal/return-urls:
     get:
       tags:
@@ -155,9 +72,8 @@ paths:
                 type: array
                 items:
                   type: string
-      x-required-permission: portal-settings:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:portal-settings:manage
+      x-allowed-callers: []
     put:
       tags:
       - portal-settings-controller
@@ -183,9 +99,8 @@ paths:
                 type: array
                 items:
                   type: string
-      x-required-permission: portal-settings:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:portal-settings:manage
+      x-allowed-callers: []
   /api/v1/customers/{id}:
     get:
       tags:
@@ -204,10 +119,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CustomerResponse"
-      x-required-permission: customer:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:customer:read
+      x-allowed-callers: []
     put:
       tags:
       - customer-controller
@@ -236,10 +149,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CustomerResponse"
-      x-required-permission: customer:write
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:customer:write
+      x-allowed-callers: []
   /stripe/webhooks/direct/{configurationId}:
     post:
       tags:
@@ -383,10 +294,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/EndpointResponse"
-      x-required-permission: webhook:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:webhook:read
+      x-allowed-callers: []
     post:
       tags:
       - endpoint-controller
@@ -410,10 +319,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/EndpointWithSecretResponse"
-      x-required-permission: webhook:manage
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:webhook:manage
+      x-allowed-callers: []
   /api/v1/webhook-endpoints/{id}/rotate-secret:
     post:
       tags:
@@ -437,10 +344,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/EndpointWithSecretResponse"
-      x-required-permission: webhook:manage
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:webhook:manage
+      x-allowed-callers: []
   /api/v1/webhook-deliveries/{id}/resend:
     post:
       tags:
@@ -464,10 +369,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/DeliveryResponse"
-      x-required-permission: webhook:manage
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:webhook:manage
+      x-allowed-callers: []
   /api/v1/wallets:
     get:
       tags:
@@ -488,10 +391,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/WalletResponse"
-      x-required-permission: wallet:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:wallet:read
+      x-allowed-callers: []
     post:
       tags:
       - wallet-controller
@@ -515,49 +416,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/WalletResponse"
-      x-required-permission: wallet:manage
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
-  /api/v1/users:
-    get:
-      tags:
-      - user-controller
-      operationId: list_1
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/UserResponse"
-      x-required-permission: user:read
-      x-allowed-callers:
-      - platform-user
-      - tenant-user
-    post:
-      tags:
-      - user-controller
-      operationId: create
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateUserRequest"
-        required: true
-      responses:
-        "201":
-          description: Created
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/UserResponse"
-      x-required-permission: user:manage
-      x-allowed-callers:
-      - platform-user
-      - tenant-user
+      x-required-permission: billing:wallet:manage
+      x-allowed-callers: []
   /api/v1/usage-events:
     get:
       tags:
@@ -607,10 +467,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/UsageEventResponse"
-      x-required-permission: usage:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:usage:read
+      x-allowed-callers: []
     post:
       tags:
       - usage-controller
@@ -635,10 +493,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/RecordedResponse"
-      x-required-permission: usage:record
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:usage:record
+      x-allowed-callers: []
   /api/v1/usage-events/batch:
     post:
       tags:
@@ -657,229 +513,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/BatchResponse"
-      x-required-permission: usage:record
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
-  /api/v1/tenants:
-    get:
-      tags:
-      - tenant-controller
-      operationId: list_2
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TenantResponse"
-      x-required-permission: tenant:read
-      x-allowed-callers:
-      - platform-user
-    post:
-      tags:
-      - tenant-controller
-      operationId: create_1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateTenantRequest"
-        required: true
-      responses:
-        "201":
-          description: Created
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/TenantResponse"
-      x-required-permission: tenant:create
-      x-allowed-callers:
-      - platform-user
-  /api/v1/tenants/{id}/domains:
-    get:
-      tags:
-      - tenant-controller
-      operationId: domains
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/DomainResponse"
-      x-required-permission: tenant:read
-      x-allowed-callers:
-      - platform-user
-    post:
-      tags:
-      - tenant-controller
-      operationId: addDomain
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AddDomainRequest"
-        required: true
-      responses:
-        "201":
-          description: Created
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/DomainResponse"
-      x-required-permission: tenant-domain:manage
-      x-allowed-callers:
-      - platform-user
-  /api/v1/tenants/{id}/deactivate:
-    post:
-      tags:
-      - tenant-controller
-      operationId: deactivate
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/TenantResponse"
-      x-required-permission: tenant:deactivate
-      x-allowed-callers:
-      - platform-user
-  /api/v1/tenant-systems:
-    get:
-      tags:
-      - tenant-system-controller
-      operationId: list_3
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/SystemResponse"
-      x-required-permission: tenant-system:read
-      x-allowed-callers:
-      - tenant-user
-    post:
-      tags:
-      - tenant-system-controller
-      operationId: create_2
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateSystemRequest"
-        required: true
-      responses:
-        "201":
-          description: Created
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/SystemResponse"
-      x-required-permission: tenant-system:manage
-      x-allowed-callers:
-      - tenant-user
-  /api/v1/tenant-systems/{id}/credentials:
-    get:
-      tags:
-      - tenant-system-controller
-      operationId: listCredentials
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CredentialResponse"
-      x-required-permission: credential:manage
-      x-allowed-callers:
-      - tenant-user
-    post:
-      tags:
-      - tenant-system-controller
-      operationId: createCredential
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateCredentialRequest"
-        required: true
-      responses:
-        "201":
-          description: Created
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/IssuedCredentialResponse"
-      x-required-permission: credential:manage
-      x-allowed-callers:
-      - tenant-user
-  /api/v1/tenant-systems/{id}/credentials/rotate:
-    post:
-      tags:
-      - tenant-system-controller
-      operationId: rotate
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RotateRequest"
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/IssuedCredentialResponse"
-      x-required-permission: credential:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:usage:record
+      x-allowed-callers: []
   /api/v1/subscriptions:
     get:
       tags:
@@ -922,10 +557,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/SubscriptionResponse"
-      x-required-permission: subscription:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:subscription:read
+      x-allowed-callers: []
     post:
       tags:
       - subscription-controller
@@ -961,10 +594,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/SubscriptionDetailResponse"
-      x-required-permission: subscription:manage
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:subscription:manage
+      x-allowed-callers: []
   /api/v1/subscriptions/{id}/cancel:
     post:
       tags:
@@ -988,10 +619,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/SubscriptionDetailResponse"
-      x-required-permission: subscription:manage
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:subscription:manage
+      x-allowed-callers: []
   /api/v1/stripe/reconcile:
     post:
       tags:
@@ -1004,9 +633,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ReconcileResponse"
-      x-required-permission: stripe:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:stripe:manage
+      x-allowed-callers: []
   /api/v1/stripe/incidents/{id}/resolve:
     post:
       tags:
@@ -1026,9 +654,8 @@ paths:
       responses:
         "204":
           description: No Content
-      x-required-permission: stripe:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:stripe:manage
+      x-allowed-callers: []
   /api/v1/stripe/events/{id}/retry:
     post:
       tags:
@@ -1052,9 +679,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/EventDetailResponse"
-      x-required-permission: stripe:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:stripe:manage
+      x-allowed-callers: []
   /api/v1/stripe/configuration/refresh:
     post:
       tags:
@@ -1073,9 +699,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ConfigurationResponse"
-      x-required-permission: stripe:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:stripe:manage
+      x-allowed-callers: []
   /api/v1/stripe/configuration/connect:
     post:
       tags:
@@ -1100,9 +725,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ConnectionResponse"
-      x-required-permission: stripe:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:stripe:manage
+      x-allowed-callers: []
   /api/v1/stripe/configuration/connect/link:
     post:
       tags:
@@ -1115,48 +739,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ConnectionResponse"
-      x-required-permission: stripe:manage
-      x-allowed-callers:
-      - tenant-user
-  /api/v1/roles:
-    get:
-      tags:
-      - role-controller
-      operationId: list_4
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/RoleResponse"
-      x-required-permission: role:read
-      x-allowed-callers:
-      - platform-user
-      - tenant-user
-    post:
-      tags:
-      - role-controller
-      operationId: create_3
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateRoleRequest"
-        required: true
-      responses:
-        "201":
-          description: Created
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/RoleResponse"
-      x-required-permission: role:manage
-      x-allowed-callers:
-      - platform-user
-      - tenant-user
+      x-required-permission: billing:stripe:manage
+      x-allowed-callers: []
   /api/v1/reservations:
     post:
       tags:
@@ -1188,10 +772,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ReservationResponse"
-      x-required-permission: reservation:manage
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:reservation:manage
+      x-allowed-callers: []
   /api/v1/reservations/{id}/release:
     post:
       tags:
@@ -1210,10 +792,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ReservationResponse"
-      x-required-permission: reservation:manage
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:reservation:manage
+      x-allowed-callers: []
   /api/v1/reservations/{id}/capture:
     post:
       tags:
@@ -1250,10 +830,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ChargeResponse"
-      x-required-permission: charge:create
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:charge:create
+      x-allowed-callers: []
   /api/v1/pricing/usage-charges:
     post:
       tags:
@@ -1279,10 +857,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/RatingResponse"
-      x-required-permission: charge:create
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:charge:create
+      x-allowed-callers: []
   /api/v1/pricing/reservations:
     post:
       tags:
@@ -1314,10 +890,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ReserveResponse"
-      x-required-permission: reservation:manage
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:reservation:manage
+      x-allowed-callers: []
   /api/v1/pricing/estimates:
     post:
       tags:
@@ -1336,10 +910,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/EstimateResponse"
-      x-required-permission: pricing:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:pricing:read
+      x-allowed-callers: []
   /api/v1/pricing-plans:
     get:
       tags:
@@ -1360,10 +932,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PlanResponse"
-      x-required-permission: pricing:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:pricing:read
+      x-allowed-callers: []
     post:
       tags:
       - plan-controller
@@ -1387,9 +957,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PlanResponse"
-      x-required-permission: pricing:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:pricing:manage
+      x-allowed-callers: []
   /api/v1/pricing-plans/{id}/versions:
     post:
       tags:
@@ -1419,9 +988,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/VersionResponse"
-      x-required-permission: pricing:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:pricing:manage
+      x-allowed-callers: []
   /api/v1/pricing-plans/{id}/retire:
     post:
       tags:
@@ -1445,9 +1013,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PlanResponse"
-      x-required-permission: pricing:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:pricing:manage
+      x-allowed-callers: []
   /api/v1/payments/{id}/refunds:
     post:
       tags:
@@ -1489,9 +1056,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/RefundResponse"
-      x-required-permission: refund:create
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:refund:create
+      x-allowed-callers: []
   /api/v1/payments/top-ups:
     post:
       tags:
@@ -1528,10 +1094,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PaymentResponse"
-      x-required-permission: payment:create
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:payment:create
+      x-allowed-callers: []
   /api/v1/ledger-entries/{id}/reverse:
     post:
       tags:
@@ -1556,9 +1120,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ReversalResponse"
-      x-required-permission: ledger:reverse
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:ledger:reverse
+      x-allowed-callers: []
   /api/v1/invoices:
     get:
       tags:
@@ -1601,10 +1164,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/InvoiceResponse"
-      x-required-permission: invoice:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:invoice:read
+      x-allowed-callers: []
     post:
       tags:
       - invoice-controller
@@ -1634,10 +1195,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/InvoiceDetailResponse"
-      x-required-permission: invoice:create
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:invoice:create
+      x-allowed-callers: []
   /api/v1/invoices/{id}/void:
     post:
       tags:
@@ -1667,9 +1226,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/InvoiceDetailResponse"
-      x-required-permission: invoice:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:invoice:manage
+      x-allowed-callers: []
   /api/v1/invoices/{id}/uncollectible:
     post:
       tags:
@@ -1693,9 +1251,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/InvoiceDetailResponse"
-      x-required-permission: invoice:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:invoice:manage
+      x-allowed-callers: []
   /api/v1/invoices/{id}/payments:
     post:
       tags:
@@ -1731,15 +1288,13 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PayInvoiceResponse"
-      x-required-permission: payment:create
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:payment:create
+      x-allowed-callers: []
   /api/v1/customers:
     get:
       tags:
       - customer-controller
-      operationId: list_5
+      operationId: list_1
       responses:
         "200":
           description: OK
@@ -1749,14 +1304,12 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CustomerResponse"
-      x-required-permission: customer:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:customer:read
+      x-allowed-callers: []
     post:
       tags:
       - customer-controller
-      operationId: create_4
+      operationId: create
       parameters:
       - name: Idempotency-Key
         in: header
@@ -1788,15 +1341,13 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CustomerResponse"
-      x-required-permission: customer:write
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:customer:write
+      x-allowed-callers: []
   /api/v1/customers/{id}/deactivate:
     post:
       tags:
       - customer-controller
-      operationId: deactivate_1
+      operationId: deactivate
       parameters:
       - name: id
         in: path
@@ -1815,10 +1366,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CustomerResponse"
-      x-required-permission: customer:write
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:customer:write
+      x-allowed-callers: []
   /api/v1/charges:
     post:
       tags:
@@ -1850,15 +1399,13 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ChargeResponse"
-      x-required-permission: charge:create
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:charge:create
+      x-allowed-callers: []
   /api/v1/billing-sessions:
     post:
       tags:
       - billing-session-controller
-      operationId: create_5
+      operationId: create_1
       parameters:
       - name: X-Request-Id
         in: header
@@ -1878,10 +1425,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CreateResponse"
-      x-required-permission: billing-session:create
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:billing-session:create
+      x-allowed-callers: []
   /api/v1/billing-sessions/{id}/revoke:
     post:
       tags:
@@ -1901,10 +1446,8 @@ paths:
       responses:
         "200":
           description: OK
-      x-required-permission: billing-session:create
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:billing-session:create
+      x-allowed-callers: []
   /api/v1/webhook-endpoints/{id}:
     get:
       tags:
@@ -1923,10 +1466,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/EndpointResponse"
-      x-required-permission: webhook:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:webhook:read
+      x-allowed-callers: []
     patch:
       tags:
       - endpoint-controller
@@ -1955,10 +1496,21 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/EndpointResponse"
-      x-required-permission: webhook:manage
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:webhook:manage
+      x-allowed-callers: []
+  /test-jwks:
+    get:
+      tags:
+      - jwks-endpoint
+      operationId: jwks
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
   /portal/api/wallets:
     get:
       tags:
@@ -2396,10 +1948,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DeliveryResponse"
-      x-required-permission: webhook:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:webhook:read
+      x-allowed-callers: []
   /api/v1/webhook-deliveries/{id}:
     get:
       tags:
@@ -2418,10 +1968,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/DeliveryDetailResponse"
-      x-required-permission: webhook:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:webhook:read
+      x-allowed-callers: []
   /api/v1/wallets/{id}:
     get:
       tags:
@@ -2440,10 +1988,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/WalletResponse"
-      x-required-permission: wallet:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:wallet:read
+      x-allowed-callers: []
   /api/v1/wallets/{id}/ledger:
     get:
       tags:
@@ -2478,32 +2024,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/LedgerEntryResponse"
-      x-required-permission: wallet:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
-  /api/v1/users/{id}:
-    get:
-      tags:
-      - user-controller
-      operationId: get_1
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/UserResponse"
-      x-required-permission: user:read
-      x-allowed-callers:
-      - platform-user
-      - tenant-user
+      x-required-permission: billing:wallet:read
+      x-allowed-callers: []
   /api/v1/usage-aggregates:
     get:
       tags:
@@ -2543,52 +2065,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TotalResponse"
-      x-required-permission: usage:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
-  /api/v1/tenants/{id}:
-    get:
-      tags:
-      - tenant-controller
-      operationId: get_2
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/TenantResponse"
-      x-required-permission: tenant:read
-      x-allowed-callers:
-      - platform-user
-  /api/v1/tenant-systems/{id}:
-    get:
-      tags:
-      - tenant-system-controller
-      operationId: get_3
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/SystemResponse"
-      x-required-permission: tenant-system:read
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:usage:read
+      x-allowed-callers: []
   /api/v1/subscriptions/{id}:
     get:
       tags:
@@ -2607,10 +2085,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/SubscriptionDetailResponse"
-      x-required-permission: subscription:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:subscription:read
+      x-allowed-callers: []
   /api/v1/stripe/incidents:
     get:
       tags:
@@ -2639,9 +2115,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/IncidentResponse"
-      x-required-permission: stripe:read
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:stripe:read
+      x-allowed-callers: []
   /api/v1/stripe/events:
     get:
       tags:
@@ -2674,9 +2149,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/EventResponse"
-      x-required-permission: stripe:read
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:stripe:read
+      x-allowed-callers: []
   /api/v1/stripe/events/{id}:
     get:
       tags:
@@ -2695,9 +2169,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/EventDetailResponse"
-      x-required-permission: stripe:read
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:stripe:read
+      x-allowed-callers: []
   /api/v1/stripe/configuration:
     get:
       tags:
@@ -2710,9 +2183,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ConfigurationResponse"
-      x-required-permission: stripe:read
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:stripe:read
+      x-allowed-callers: []
     delete:
       tags:
       - stripe-controller
@@ -2726,31 +2198,8 @@ paths:
       responses:
         "204":
           description: No Content
-      x-required-permission: stripe:manage
-      x-allowed-callers:
-      - tenant-user
-  /api/v1/roles/{id}:
-    get:
-      tags:
-      - role-controller
-      operationId: get_4
-      parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/RoleResponse"
-      x-required-permission: role:read
-      x-allowed-callers:
-      - platform-user
-      - tenant-user
+      x-required-permission: billing:stripe:manage
+      x-allowed-callers: []
   /api/v1/reservations/{id}:
     get:
       tags:
@@ -2769,10 +2218,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ReservationResponse"
-      x-required-permission: wallet:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:wallet:read
+      x-allowed-callers: []
   /api/v1/refunds/{id}:
     get:
       tags:
@@ -2791,10 +2238,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/RefundResponse"
-      x-required-permission: payment:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:payment:read
+      x-allowed-callers: []
   /api/v1/pricing/usage-charges/{id}:
     get:
       tags:
@@ -2813,10 +2258,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/RatingResponse"
-      x-required-permission: pricing:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:pricing:read
+      x-allowed-callers: []
   /api/v1/pricing-plans/{id}:
     get:
       tags:
@@ -2835,28 +2278,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PlanResponse"
-      x-required-permission: pricing:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
-  /api/v1/permissions:
-    get:
-      tags:
-      - role-controller
-      operationId: catalog
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                type: array
-                items:
-                  type: string
-      x-required-permission: role:read
-      x-allowed-callers:
-      - platform-user
-      - tenant-user
+      x-required-permission: billing:pricing:read
+      x-allowed-callers: []
   /api/v1/payments:
     get:
       tags:
@@ -2894,10 +2317,8 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PaymentResponse"
-      x-required-permission: payment:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:payment:read
+      x-allowed-callers: []
   /api/v1/payments/{id}:
     get:
       tags:
@@ -2916,26 +2337,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/PaymentDetailResponse"
-      x-required-permission: payment:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
-  /api/v1/me:
-    get:
-      tags:
-      - me-controller
-      operationId: me
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/MeResponse"
-      x-allowed-callers:
-      - platform-user
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:payment:read
+      x-allowed-callers: []
   /api/v1/invoices/{id}:
     get:
       tags:
@@ -2954,10 +2357,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/InvoiceDetailResponse"
-      x-required-permission: invoice:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:invoice:read
+      x-allowed-callers: []
   /api/v1/customers/by-external-user/{externalUserId}:
     get:
       tags:
@@ -2981,10 +2382,8 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CustomerResponse"
-      x-required-permission: customer:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      x-required-permission: billing:customer:read
+      x-allowed-callers: []
   /api/v1/charges/{id}:
     get:
       tags:
@@ -3003,62 +2402,10 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ChargeResponse"
-      x-required-permission: wallet:read
-      x-allowed-callers:
-      - tenant-user
-      - tenant-system
-  /api/v1/tenant-systems/{systemId}/credentials/{credentialId}:
-    delete:
-      tags:
-      - tenant-system-controller
-      operationId: revoke_1
-      parameters:
-      - name: systemId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: credentialId
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/CredentialResponse"
-      x-required-permission: credential:manage
-      x-allowed-callers:
-      - tenant-user
+      x-required-permission: billing:wallet:read
+      x-allowed-callers: []
 components:
   schemas:
-    UserResponse:
-      type: object
-      properties:
-        id:
-          type: string
-        email:
-          type: string
-        displayName:
-          type: string
-        status:
-          type: string
-        roleIds:
-          type: array
-          items:
-            type: string
-          uniqueItems: true
-        directPermissions:
-          type: array
-          items:
-            type: string
-          uniqueItems: true
-        createdAt:
-          type: string
-          format: date-time
     WebhookSecretRequest:
       type: object
       properties:
@@ -3106,30 +2453,6 @@ components:
           type: string
         webhookSecret:
           type: string
-    SetPermissionsRequest:
-      type: object
-      properties:
-        permissions:
-          type: array
-          items:
-            type: string
-    RoleResponse:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        system:
-          type: boolean
-        permissions:
-          type: array
-          items:
-            type: string
-          uniqueItems: true
-        createdAt:
-          type: string
-          format: date-time
     ReplaceRequest:
       type: object
       properties:
@@ -3346,19 +2669,6 @@ components:
         createdAt:
           type: string
           format: date-time
-    CreateUserRequest:
-      type: object
-      properties:
-        email:
-          type: string
-        displayName:
-          type: string
-        temporaryPassword:
-          type: string
-        roleIds:
-          type: array
-          items:
-            type: string
     UsageEventRequest:
       type: object
       properties:
@@ -3427,114 +2737,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/RecordedResponse"
-    CreateTenantRequest:
-      type: object
-      properties:
-        code:
-          type: string
-        name:
-          type: string
-        adminEmail:
-          type: string
-        adminDisplayName:
-          type: string
-        adminTemporaryPassword:
-          type: string
-    TenantResponse:
-      type: object
-      properties:
-        id:
-          type: string
-        code:
-          type: string
-        name:
-          type: string
-        status:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-    AddDomainRequest:
-      type: object
-      properties:
-        hostname:
-          type: string
-    DomainResponse:
-      type: object
-      properties:
-        id:
-          type: string
-        hostname:
-          type: string
-        kind:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-    CreateSystemRequest:
-      type: object
-      properties:
-        name:
-          type: string
-    SystemResponse:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        status:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-    CreateCredentialRequest:
-      type: object
-      properties:
-        label:
-          type: string
-        scopes:
-          type: array
-          items:
-            type: string
-    CredentialResponse:
-      type: object
-      properties:
-        id:
-          type: string
-        keyId:
-          type: string
-        label:
-          type: string
-        scopes:
-          type: array
-          items:
-            type: string
-          uniqueItems: true
-        status:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        expiresAt:
-          type: string
-          format: date-time
-        revokedAt:
-          type: string
-          format: date-time
-    IssuedCredentialResponse:
-      type: object
-      properties:
-        credential:
-          $ref: "#/components/schemas/CredentialResponse"
-        key:
-          type: string
-    RotateRequest:
-      type: object
-      properties:
-        overlapMinutes:
-          type: integer
-          format: int64
     SubscribeRequest:
       type: object
       properties:
@@ -3692,15 +2894,6 @@ components:
           $ref: "#/components/schemas/ConfigurationResponse"
         onboardingUrl:
           type: string
-    CreateRoleRequest:
-      type: object
-      properties:
-        name:
-          type: string
-        permissions:
-          type: array
-          items:
-            type: string
     ReserveRequest:
       type: object
       properties:
@@ -4407,35 +3600,18 @@ components:
         resolvedAt:
           type: string
           format: date-time
-    MeResponse:
-      type: object
-      properties:
-        type:
-          type: string
-        id:
-          type: string
-        tenantId:
-          type: string
-        scope:
-          type: string
-        displayName:
-          type: string
-        permissions:
-          type: array
-          items:
-            type: string
-          uniqueItems: true
   securitySchemes:
     oidc:
       type: http
       description: Billing User signed in through Keycloak
       scheme: bearer
       bearerFormat: JWT
-    apiKey:
+    suiteToken:
       type: http
-      description: Tenant System credential issued by Billing
+      description: Platform suite token for a Tenant System; obtain it from POST /oauth/token
+        on Platform
       scheme: bearer
-      bearerFormat: cbk_<key-id>_<secret>
+      bearerFormat: JWT
     portalSession:
       type: apiKey
       description: "Billing Session cookie, obtained by exchanging the single-use\

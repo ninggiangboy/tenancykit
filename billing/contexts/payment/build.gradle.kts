@@ -4,11 +4,8 @@ plugins {
 
 dependencies {
     // The platform contract, the customer lookup, and the money contract: crediting a verified top-up, holding and taking back a refund.
-    "domainImplementation"(project(":contexts:platform"))
-    "applicationImplementation"(project(":contexts:platform"))
     "applicationImplementation"(project(":contexts:customer"))
     "applicationImplementation"(project(":contexts:money"))
-    "adapterImplementation"(project(":contexts:platform"))
     "adapterImplementation"(project(":contexts:customer"))
     "adapterImplementation"(project(":contexts:money"))
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-jooq")

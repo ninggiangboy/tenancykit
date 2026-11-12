@@ -96,6 +96,21 @@ public class TenantsRecord extends UpdatableRecordImpl<TenantsRecord> {
         return (Instant) get(4);
     }
 
+    /**
+     * Setter for <code>public.tenants.version</code>.
+     */
+    public TenantsRecord setVersion(Long value) {
+        set(5, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.tenants.version</code>.
+     */
+    public Long getVersion() {
+        return (Long) get(5);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -119,7 +134,7 @@ public class TenantsRecord extends UpdatableRecordImpl<TenantsRecord> {
     /**
      * Create a detached, initialised TenantsRecord
      */
-    public TenantsRecord(UUID id, String code, String name, String status, Instant createdAt) {
+    public TenantsRecord(UUID id, String code, String name, String status, Instant createdAt, Long version) {
         super(Tenants.TENANTS);
 
         setId(id);
@@ -127,6 +142,7 @@ public class TenantsRecord extends UpdatableRecordImpl<TenantsRecord> {
         setName(name);
         setStatus(status);
         setCreatedAt(createdAt);
+        setVersion(version);
         resetTouchedOnNotNull();
     }
 }

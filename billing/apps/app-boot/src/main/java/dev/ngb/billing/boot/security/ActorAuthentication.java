@@ -1,6 +1,6 @@
 package dev.ngb.billing.boot.security;
 
-import dev.ngb.billing.platform.api.actor.Actor;
+import dev.ngb.core.security.Actor;
 import java.util.List;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 
@@ -11,6 +11,7 @@ final class ActorAuthentication extends AbstractAuthenticationToken {
 
     private final transient Actor actor;
 
+    @SuppressWarnings("this-escape")
     ActorAuthentication(Actor actor) {
         super(List.of());
         this.actor = actor;

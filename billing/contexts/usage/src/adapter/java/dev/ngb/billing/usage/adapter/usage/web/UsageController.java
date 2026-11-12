@@ -1,10 +1,10 @@
 package dev.ngb.billing.usage.adapter.usage.web;
 
 import org.springframework.context.annotation.Profile;
-import dev.ngb.billing.platform.api.actor.Actor;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.Actor;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.usage.api.lookup.UsageEventId;
@@ -87,27 +87,27 @@ public class UsageController {
     /** 201 for a newly recorded event, 200 when the same event was already recorded. */
     @PostMapping("/usage-events")
     @RepeatableCreate(repeated = "The same event was already recorded; the recorded event is returned")
-    @RequiresPermission(Permission.USAGE_RECORD)
+    @RequiresPermission(BillingPermissions.USAGE_RECORD)
     public ResponseEntity<RecordedResponse> recordOne(@RequestBody UsageEventRequest request) {
-        RecordUsageUseCase.Recorded recorded = record.record(toItem(request, currentActor.get()), currentActor.caller());
+        RecordUsageUseCase.Recorded recorded = record.record(toItem(request, currentActor.caller()), currentActor.caller());
         return ResponseEntity.status(recorded.replayed() ? HttpStatus.OK : HttpStatus.CREATED).body(RecordedResponse.of(recorded));
     }
 
     /** All-or-nothing: if any event is invalid or conflicts, none is stored. Up to 500 events. */
     @PostMapping("/usage-events/batch")
-    @RequiresPermission(Permission.USAGE_RECORD)
+    @RequiresPermission(BillingPermissions.USAGE_RECORD)
     public BatchResponse recordBatch(@RequestBody BatchRequest request) {
         if (request.events() == null) {
             throw new IllegalArgumentException("events is required");
         }
-        Actor actor = currentActor.get();
-        return new BatchResponse(record.record(request.events().stream().map(e -> toItem(e, actor)).toList(), currentActor.caller()).stream()
+        java.util.UUID caller = currentActor.caller();
+        return new BatchResponse(record.record(request.events().stream().map(e -> toItem(e, caller)).toList(), caller).stream()
                 .map(RecordedResponse::of).toList());
     }
 
     /** Newest first. Pass the last {@code id} of a page as {@code before} for the next one. */
     @GetMapping("/usage-events")
-    @RequiresPermission(Permission.USAGE_READ)
+    @RequiresPermission(BillingPermissions.USAGE_READ)
     public List<UsageEventResponse> history(
             @RequestParam String customerId, @RequestParam(required = false) String metric, @RequestParam(required = false) Instant from,
             @RequestParam(required = false) Instant to, @RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
@@ -117,14 +117,14 @@ public class UsageController {
 
     /** Quantity and event count per metric over {@code [from, to)}, for rating and for invoices. */
     @GetMapping("/usage-aggregates")
-    @RequiresPermission(Permission.USAGE_READ)
+    @RequiresPermission(BillingPermissions.USAGE_READ)
     public List<TotalResponse> aggregates(
             @RequestParam String customerId, @RequestParam(required = false) List<String> metric, @RequestParam Instant from, @RequestParam Instant to) {
         Set<String> metrics = metric == null ? Set.of() : new HashSet<>(metric);
         return queries.totals(CustomerId.of(customerId), metrics, from, to, currentActor.caller()).stream().map(TotalResponse::of).toList();
     }
 
-    private static RecordUsageUseCase.Item toItem(UsageEventRequest r, Actor actor) {
+    private static RecordUsageUseCase.Item toItem(UsageEventRequest r, java.util.UUID caller) {
         if (r == null) {
             throw new IllegalArgumentException("a usage event is required");
         }
@@ -132,6 +132,6 @@ public class UsageController {
             throw new IllegalArgumentException("customerId and quantity are required");
         }
         return new RecordUsageUseCase.Item(CustomerId.of(r.customerId()), r.metric(), new BigDecimal(r.quantity().strip()), r.unit(), r.occurredAt(),
-                r.idempotencyKey(), new UsageTrace(actor.tenantSystemId(), r.resourceRef(), r.sourceEventId()));
+                r.idempotencyKey(), new UsageTrace(caller == null ? null : new dev.ngb.core.id.TenantSystemId(caller), r.resourceRef(), r.sourceEventId()));
     }
 }

@@ -9,7 +9,6 @@ import dev.ngb.billing.invoicing.application.cycle.command.CloseBillingCycleUseC
 import dev.ngb.billing.money.api.charge.ChargeCommand;
 import dev.ngb.billing.money.api.charge.ChargeResult;
 import dev.ngb.billing.money.api.charge.ChargeWallet;
-import dev.ngb.billing.platform.application.user.command.BootstrapPlatformAdminUseCase;
 import dev.ngb.billing.pricing.PricingTestWorld;
 import dev.ngb.billing.pricing.api.plan.BillingCycle;
 import dev.ngb.billing.sharedkernel.money.Money;
@@ -19,7 +18,8 @@ import dev.ngb.billing.support.HttpWorld;
 import dev.ngb.billing.support.HttpWorld.Account;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
-import dev.ngb.billing.support.RealKeycloakConfig;
+import dev.ngb.billing.support.TestTokensConfig;
+import dev.ngb.billing.support.ReplicaFixtures;
 import dev.ngb.billing.support.ScopeTestSupport;
 import java.util.List;
 import java.util.UUID;
@@ -45,7 +45,7 @@ import tools.jackson.databind.json.JsonMapper;
  */
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc
-@Import({PostgresContainerConfig.class, RealKeycloakConfig.class, FakePaymentProviderConfig.class})
+@Import({PostgresContainerConfig.class, TestTokensConfig.class, FakePaymentProviderConfig.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class InvoicingHttpIntegrationTest {
 
@@ -53,15 +53,14 @@ class InvoicingHttpIntegrationTest {
             + "wallet:read,customer:write,customer:read,charge:create";
 
     @Autowired MockMvc mvc;
-    @Autowired BootstrapPlatformAdminUseCase bootstrap;
     @Autowired ScopeTestSupport scopes;
+    @Autowired ReplicaFixtures replica;
     @Autowired OwnerDatabase owner;
     @Autowired FakePaymentProvider stripe;
     @Autowired PricingTestWorld pricing;
     @Autowired ChargeWallet charges;
     @Autowired OutboxRelay relay;
     @Autowired CloseBillingCycleUseCase closeCycle;
-    @Value("${billing.tenancy.base-domain}") String baseDomain;
 
     private final JsonMapper json = JsonMapper.builder().build();
     HttpWorld world;
@@ -75,12 +74,12 @@ class InvoicingHttpIntegrationTest {
 
     @BeforeAll
     void createWorld() {
-        world = new HttpWorld(mvc, bootstrap, scopes, baseDomain);
+        world = new HttpWorld(mvc, replica, scopes);
         acme = world.newTenant();
         tenant = new TenantId(UUID.fromString(acme.tenantId()));
-        systemKey = credential("Sample", List.of(SCOPES_TEXT.split(",")));
-        otherSystemKey = credential("Other", List.of(SCOPES_TEXT.split(",")));
-        viewerToken = world.newUserToken(acme, java.util.Set.of(world.createRole(acme, "Viewer", java.util.Set.of("invoice:read", "subscription:read"))));
+        systemKey = world.newSystem(acme, prefixed(SCOPES_TEXT.split(","))).token();
+        otherSystemKey = world.newSystem(acme, prefixed(SCOPES_TEXT.split(","))).token();
+        viewerToken = world.newUserToken(acme, java.util.Set.of("billing:invoice:read", "billing:subscription:read"));
         customerId = world.body(call(HttpMethod.POST, systemKey, "/api/v1/customers", "cust-" + UUID.randomUUID(),
                 HttpWorld.Map2.of("externalUserId", "u-" + UUID.randomUUID(), "displayName", "Payer"))).get("id").asString();
         walletId = world.body(call(HttpMethod.POST, systemKey, "/api/v1/wallets", null,
@@ -94,10 +93,8 @@ class InvoicingHttpIntegrationTest {
         stripe.reset();
     }
 
-    private String credential(String name, List<String> scopeList) {
-        String systemId = world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems", HttpWorld.Map2.of("name", name))).get("id").asString();
-        return world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems/" + systemId + "/credentials",
-                HttpWorld.Map2.of("label", "x", "scopes", scopeList))).get("key").asString();
+    private static String[] prefixed(String[] codes) {
+        return java.util.Arrays.stream(codes).map(code -> "billing:" + code).toArray(String[]::new);
     }
 
     private MvcResult call(HttpMethod method, String token, String path, String idempotencyKey, Object payload) {
@@ -217,11 +214,11 @@ class InvoicingHttpIntegrationTest {
     }
 
     @Test
-    void aSystemCannotBeGrantedTheAdministrativeInvoicePermission() {
-        String systemId = world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems", HttpWorld.Map2.of("name", "Greedy"))).get("id").asString();
-        int rejected = world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems/" + systemId + "/credentials",
-                HttpWorld.Map2.of("label", "x", "scopes", List.of("invoice:manage"))).getResponse().getStatus();
-        assertThat(rejected).isBetween(400, 422);
+    void aTenantSystemTokenWithoutInvoiceManageIsRefused() {
+        // Billing no longer issues credentials; Platform refuses invoice:manage to a machine. Here a machine token
+        // that simply lacks the code is refused by Billing's own check.
+        String system = world.newSystem(acme, "billing:invoice:read").token();
+        assertThat(status(call(HttpMethod.POST, system, "/api/v1/invoices/" + UUID.randomUUID() + "/void", null, null))).isEqualTo(403);
     }
 
     @Test

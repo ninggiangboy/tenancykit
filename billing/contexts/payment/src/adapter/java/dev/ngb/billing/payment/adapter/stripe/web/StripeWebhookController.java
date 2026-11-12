@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Profile;
 import dev.ngb.billing.payment.application.stripe.command.ReceiveStripeWebhookUseCase;
 import dev.ngb.billing.payment.domain.stripe.StripeConfigurationId;
 import dev.ngb.core.error.NotFoundException;
-import dev.ngb.billing.platform.api.actor.PublicEndpoint;
+import dev.ngb.core.security.PublicEndpoint;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

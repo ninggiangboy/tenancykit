@@ -40,6 +40,7 @@ class ApiProfileIntegrationTest {
         registry.add("spring.flyway.placeholders.appDbPassword", () -> PostgresContainerConfig.APP_PASSWORD);
         registry.add("billing.jobs.enabled", () -> "true");
         registry.add("billing.secrets.master-key", () -> PostgresContainerConfig.TEST_MASTER_KEY);
+        PostgresContainerConfig.replicaDefaults(registry);
     }
 
     @Autowired ApplicationContext context;

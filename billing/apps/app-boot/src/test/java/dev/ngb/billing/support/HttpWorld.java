@@ -2,7 +2,10 @@ package dev.ngb.billing.support;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 
-import dev.ngb.billing.platform.application.user.command.BootstrapPlatformAdminUseCase;
+import dev.ngb.core.id.TenantId;
+import dev.ngb.core.id.TenantSystemId;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpMethod;
@@ -13,66 +16,86 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-/** Builds real tenants and users (in Keycloak and Billing) and calls the API over MockMvc with real tokens. */
+/**
+ * Builds real tenants, users and Tenant Systems in the replica and calls the API over MockMvc with real signed
+ * tokens. Billing owns none of that data any more: the rows are seeded as Platform would publish them, and the
+ * tokens are minted with the test key pair ({@link TestTokenFactory}).
+ */
 public final class HttpWorld {
 
-    public static final String PASSWORD = "Perm-pass-1";
+    /** Every Billing code a tenant administrator holds, for the seeded admin user. */
+    public static final List<String> ADMIN_PERMISSIONS = List.of(
+            "billing:customer:read", "billing:customer:write",
+            "billing:billing-session:create", "billing:portal-settings:manage",
+            "billing:wallet:read", "billing:wallet:manage", "billing:reservation:manage", "billing:charge:create",
+            "billing:ledger:reverse", "billing:pricing:read", "billing:pricing:manage",
+            "billing:usage:record", "billing:usage:read",
+            "billing:stripe:read", "billing:stripe:manage",
+            "billing:payment:read", "billing:payment:create", "billing:refund:create",
+            "billing:invoice:read", "billing:invoice:create", "billing:invoice:manage",
+            "billing:subscription:read", "billing:subscription:manage",
+            "billing:webhook:read", "billing:webhook:manage");
 
-    public record Account(String tenantId, String code, String host, String adminEmail, String adminToken) {}
+    /** A seeded tenant: its id, code, hostname and the token of an administrator who holds every Billing code. */
+    public record Account(String tenantId, String code, String host, String adminToken) {
+
+        public TenantId id() {
+            return new TenantId(UUID.fromString(tenantId));
+        }
+    }
+
+    /** A Tenant System with a token for the given permission codes. */
+    public record System(String id, String token, TenantId tenantId) {
+
+        public UUID uuid() {
+            return UUID.fromString(id);
+        }
+
+        /** Another token for the same system, with a narrower or different grant. */
+        public String tokenFor(String... scopes) {
+            return TestTokenFactory.tenantSystemToken(uuid(), tenantId.value(), scopes);
+        }
+    }
 
     private final MockMvc mvc;
-    private final BootstrapPlatformAdminUseCase bootstrap;
+    private final ReplicaFixtures replica;
     private final ScopeTestSupport scopes;
     private final JsonMapper json = JsonMapper.builder().build();
-    private final String baseDomain;
-    private String platformToken;
 
-    public HttpWorld(MockMvc mvc, BootstrapPlatformAdminUseCase bootstrap, ScopeTestSupport scopes, String baseDomain) {
+    public HttpWorld(MockMvc mvc, ReplicaFixtures replica, ScopeTestSupport scopes) {
         this.mvc = mvc;
-        this.bootstrap = bootstrap;
+        this.replica = replica;
         this.scopes = scopes;
-        this.baseDomain = baseDomain;
     }
 
-    public String platformHost() {
-        return "platform." + baseDomain;
-    }
-
-    public synchronized String platformAdminToken() {
-        if (platformToken == null) {
-            String email = "root-" + UUID.randomUUID() + "@example.com";
-            scopes.runOnPlatform(() -> bootstrap.execute(email, "Root", "Temp-pass-1"));
-            String subject = lookupSubject("platform:" + email);
-            KeycloakFixture.setPermanentPassword(subject, PASSWORD);
-            platformToken = KeycloakFixture.accessToken("platform:" + email, PASSWORD);
-        }
-        return platformToken;
-    }
-
-    /** Provisions a tenant through the real endpoint, as the platform administrator, with a first admin. */
+    /** A fresh active tenant, entitled to Billing, with its own hostname and an administrator token. */
     public Account newTenant() {
-        String code = "w" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-        String email = "admin-" + UUID.randomUUID() + "@example.com";
-        JsonNode created = body(call(HttpMethod.POST, platformHost(), platformAdminToken(), "/api/v1/tenants", Map2.of(
-                "code", code, "name", "Tenant " + code, "adminEmail", email, "adminDisplayName", "Admin", "adminTemporaryPassword", "Temp-pass-1")));
-        String subject = lookupSubject(code + ":" + email);
-        KeycloakFixture.setPermanentPassword(subject, PASSWORD);
-        return new Account(created.get("id").asString(), code, code + "." + baseDomain, email,
-                KeycloakFixture.accessToken(code + ":" + email, PASSWORD));
+        ReplicaFixtures.TenantSeed seed = replica.tenant();
+        String adminSubject = "admin-" + UUID.randomUUID();
+        replica.user(seed.id().value(), adminSubject, ADMIN_PERMISSIONS.toArray(String[]::new));
+        return new Account(
+                seed.id().toString(), seed.code(), seed.host(), TestTokenFactory.userToken(adminSubject));
     }
 
-    /** Creates a user in the tenant through the real endpoint with the given roles and returns a token for it. */
-    public String newUserToken(Account account, Set<String> roleIds) {
-        String email = "user-" + UUID.randomUUID() + "@example.com";
-        body(call(HttpMethod.POST, account.host(), account.adminToken(), "/api/v1/users", Map2.of(
-                "email", email, "displayName", "User", "temporaryPassword", "Temp-pass-1", "roleIds", roleIds)));
-        KeycloakFixture.setPermanentPassword(lookupSubject(account.code() + ":" + email), PASSWORD);
-        return KeycloakFixture.accessToken(account.code() + ":" + email, PASSWORD);
+    /** A Tenant System of the tenant, with a Platform token naming only the given codes. */
+    public System newSystem(Account account, String... scopes) {
+        TenantSystemId id = replica.tenantSystem(account.id().value(), "System " + UUID.randomUUID());
+        return new System(
+                id.toString(),
+                TestTokenFactory.tenantSystemToken(id.value(), account.id().value(), scopes),
+                account.id());
     }
 
-    public String createRole(Account account, String name, Set<String> permissions) {
-        return body(call(HttpMethod.POST, account.host(), account.adminToken(), "/api/v1/roles", Map2.of("name", name, "permissions", permissions)))
-                .get("id").asString();
+    /** A Tenant User of the tenant, with a Keycloak-shaped token for the given codes. */
+    public String newUserToken(Account account, String... permissions) {
+        String subject = "kc-" + UUID.randomUUID();
+        replica.user(account.id().value(), subject, permissions);
+        return TestTokenFactory.userToken(subject);
+    }
+
+    /** A Tenant User holding exactly the given codes. */
+    public String newUserToken(Account account, Set<String> permissionCodes) {
+        return newUserToken(account, permissionCodes.toArray(String[]::new));
     }
 
     public MvcResult call(HttpMethod method, String host, String token, String path, Object payload) {
@@ -106,22 +129,26 @@ public final class HttpWorld {
         }
     }
 
-    private static String lookupSubject(String username) {
-        JsonNode users = JsonMapper.builder().build().readTree(
-                KeycloakFixture.adminApi().get().uri("/users?username={u}&exact=true", username).retrieve().body(String.class));
-        return users.get(0).get("id").asString();
-    }
-
     /** Tiny map builder that accepts mixed value types without unchecked generics. */
     public static final class Map2 {
         private Map2() {}
 
-        public static java.util.Map<String, Object> of(Object... keyValues) {
-            java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+        public static Map<String, Object> of(Object... keyValues) {
+            Map<String, Object> map = new java.util.LinkedHashMap<>();
             for (int i = 0; i < keyValues.length; i += 2) {
                 map.put((String) keyValues[i], keyValues[i + 1]);
             }
             return map;
         }
+    }
+
+    /** The scope helper, for a test that needs to run work inside a seeded tenant. */
+    public ScopeTestSupport scopes() {
+        return scopes;
+    }
+
+    /** The replica fixture, for a test that needs to seed or remove a row directly. */
+    public ReplicaFixtures replica() {
+        return replica;
     }
 }

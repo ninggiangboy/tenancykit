@@ -144,6 +144,10 @@ class MultiInstanceRuntimeIntegrationTest {
                 "--spring.flyway.enabled=false",
                 "--billing.secrets.master-key=" + PostgresContainerConfig.TEST_MASTER_KEY,
                 "--billing.tenancy.base-domain=localhost",
+                "--suite.replica.platform-base-url=http://localhost:65535",
+                "--suite.replica.client-id=billing",
+                "--suite.replica.client-secret=test-secret",
+                "--suite.replica.rebuild-on-start=false",
                 "--billing.jobs.enabled=" + jobs,
                 // Two workers on a two-connection pool: leave the permits at that size so a worker never queues
                 // on its own pool.

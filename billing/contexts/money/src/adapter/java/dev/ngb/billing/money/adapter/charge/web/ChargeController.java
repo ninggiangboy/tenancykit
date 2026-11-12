@@ -8,9 +8,9 @@ import dev.ngb.billing.money.api.reservation.ReservationId;
 import dev.ngb.billing.money.application.charge.command.ChargeUseCase;
 import dev.ngb.billing.money.application.charge.query.ChargeView;
 import dev.ngb.billing.money.application.wallet.query.WalletQueries;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import dev.ngb.billing.sharedkernel.id.WalletId;
@@ -59,7 +59,7 @@ public class ChargeController {
     /** Charges the actual cost against the reservation and releases whatever was not used. */
     @PostMapping("/reservations/{id}/capture")
     @RepeatableCreate
-    @RequiresPermission(Permission.CHARGE_CREATE)
+    @RequiresPermission(BillingPermissions.CHARGE_CREATE)
     public ResponseEntity<ChargeResponse> capture(
             @PathVariable String id, @RequestHeader("Idempotency-Key") String key, @RequestBody CaptureRequest request) {
         ChargeResult result = charge.charge(new ChargeCommand(
@@ -69,7 +69,7 @@ public class ChargeController {
 
     @PostMapping("/charges")
     @RepeatableCreate
-    @RequiresPermission(Permission.CHARGE_CREATE)
+    @RequiresPermission(BillingPermissions.CHARGE_CREATE)
     public ResponseEntity<ChargeResponse> charge(@RequestHeader("Idempotency-Key") String key, @RequestBody ChargeRequest request) {
         ChargeResult result = charge.charge(new ChargeCommand(
                 WalletId.of(request.walletId()), null, new MoneyDto(request.amount(), request.currency()).toMoney(), request.usageRef(),
@@ -78,7 +78,7 @@ public class ChargeController {
     }
 
     @GetMapping("/charges/{id}")
-    @RequiresPermission(Permission.WALLET_READ)
+    @RequiresPermission(BillingPermissions.WALLET_READ)
     public ChargeResponse getCharge(@PathVariable String id) {
         ChargeView found = queries.charge(ChargeId.of(id), currentActor.caller());
         return ChargeResponse.ofView(new ChargeResult(found.id(), found.status(), found.failureReason(), found.amount(), null, false), found);

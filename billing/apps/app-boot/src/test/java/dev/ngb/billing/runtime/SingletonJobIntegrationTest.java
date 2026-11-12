@@ -53,6 +53,7 @@ class SingletonJobIntegrationTest {
         registry.add("billing.jobs.verify-ledger-initial-delay", () -> "PT1H");
         registry.add("billing.jobs.verify-ledger-not-before", () -> "00:00");
         registry.add("billing.secrets.master-key", () -> PostgresContainerConfig.TEST_MASTER_KEY);
+        PostgresContainerConfig.replicaDefaults(registry);
     }
 
     @Autowired MoneyJobs moneyJobs;
@@ -137,9 +138,14 @@ class SingletonJobIntegrationTest {
     }
 
     @Test
-    void thePlatformBootstrapRunsOnceAndReleasesItsLease() {
+    void billingNoLongerBootstrapsThePlatform() {
+        // Users, roles and the permission catalog are Platform's; Billing only reads them from the replica. No
+        // bootstrap lease is taken and no permissions table exists.
         assertThat(lease(BOOTSTRAP)).isZero();
-        assertThat(jdbc.queryForObject("select count(*) from permissions", Integer.class)).isPositive();
+        assertThat(jdbc.queryForObject(
+                        "select count(*) from information_schema.tables where table_schema = 'public' and table_name = 'permissions'",
+                        Integer.class))
+                .isZero();
     }
 
     private Integer claim(String runKey, UUID tenant) {

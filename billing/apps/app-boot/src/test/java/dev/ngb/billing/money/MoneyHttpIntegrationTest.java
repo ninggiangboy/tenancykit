@@ -5,13 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.ngb.billing.Application;
 import dev.ngb.billing.money.api.wallet.CreditCommand;
 import dev.ngb.billing.money.api.wallet.CreditWallet;
-import dev.ngb.billing.platform.application.user.command.BootstrapPlatformAdminUseCase;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.support.HttpWorld;
 import dev.ngb.billing.support.HttpWorld.Account;
 import dev.ngb.billing.support.PostgresContainerConfig;
-import dev.ngb.billing.support.RealKeycloakConfig;
+import dev.ngb.billing.support.TestTokensConfig;
+import dev.ngb.billing.support.ReplicaFixtures;
 import dev.ngb.billing.support.ScopeTestSupport;
 import java.util.List;
 import java.util.Set;
@@ -35,17 +35,16 @@ import tools.jackson.databind.json.JsonMapper;
 /** The money API over HTTP: who may do what, idempotency headers, and the 402 semantics. */
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc
-@Import({PostgresContainerConfig.class, RealKeycloakConfig.class})
+@Import({PostgresContainerConfig.class, TestTokensConfig.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MoneyHttpIntegrationTest {
 
     private static final List<String> MONEY_SCOPES = List.of("customer:read", "customer:write", "wallet:read", "wallet:manage", "reservation:manage", "charge:create");
 
     @Autowired MockMvc mvc;
-    @Autowired BootstrapPlatformAdminUseCase bootstrap;
     @Autowired ScopeTestSupport scopes;
+    @Autowired ReplicaFixtures replica;
     @Autowired CreditWallet creditWallet;
-    @Value("${billing.tenancy.base-domain}") String baseDomain;
 
     private final JsonMapper json = JsonMapper.builder().build();
     HttpWorld world;
@@ -57,19 +56,17 @@ class MoneyHttpIntegrationTest {
 
     @BeforeAll
     void createWorld() {
-        world = new HttpWorld(mvc, bootstrap, scopes, baseDomain);
+        world = new HttpWorld(mvc, replica, scopes);
         acme = world.newTenant();
         globex = world.newTenant();
-        String systemId = world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems",
-                HttpWorld.Map2.of("name", "Sample"))).get("id").asString();
-        key = credential(systemId, MONEY_SCOPES);
-        readOnlyKey = credential(systemId, List.of("wallet:read"));
+        HttpWorld.System moneySystem = world.newSystem(acme, prefixed(MONEY_SCOPES));
+        key = moneySystem.token();
+        readOnlyKey = moneySystem.tokenFor("billing:wallet:read");
         customerId = world.body(post(acme, key, "cust-" + UUID.randomUUID(), "/api/v1/customers", HttpWorld.Map2.of("externalUserId", "user-" + UUID.randomUUID(), "displayName", "Acme Ltd"))).get("id").asString();
     }
 
-    private String credential(String systemId, List<String> scopes) {
-        return world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems/" + systemId + "/credentials",
-                HttpWorld.Map2.of("label", "x", "scopes", scopes))).get("key").asString();
+    private static String[] prefixed(List<String> codes) {
+        return codes.stream().map(code -> "billing:" + code).toArray(String[]::new);
     }
 
     private MvcResult post(Account account, String token, String idempotencyKey, String path, Object body) {
@@ -226,10 +223,12 @@ class MoneyHttpIntegrationTest {
 
         assertThat(world.status(HttpMethod.POST, acme.host(), key, "/api/v1/ledger-entries/" + entryId + "/reverse", HttpWorld.Map2.of("reason", "x")))
                 .as("a tenant system key cannot reverse").isEqualTo(403);
-        String systemId = world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems", HttpWorld.Map2.of("name", "S" + UUID.randomUUID()))).get("id").asString();
-        assertThat(world.status(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems/" + systemId + "/credentials",
-                HttpWorld.Map2.of("label", "x", "scopes", List.of("ledger:reverse")))).as("the permission cannot be granted to a machine").isEqualTo(400);
-        String viewer = world.newUserToken(acme, Set.of(viewerRole()));
+        // Billing no longer issues credentials; Platform refuses ledger:reverse to a machine. A machine token that
+        // simply lacks the code is refused by Billing's own check, which is what this asserts.
+        String noReverse = world.newSystem(acme, "billing:wallet:read").token();
+        assertThat(world.status(HttpMethod.POST, acme.host(), noReverse, "/api/v1/ledger-entries/" + entryId + "/reverse", HttpWorld.Map2.of("reason", "x")))
+                .as("a machine without ledger:reverse is refused").isEqualTo(403);
+        String viewer = world.newUserToken(acme, Set.of("billing:wallet:read"));
         assertThat(world.status(HttpMethod.POST, acme.host(), viewer, "/api/v1/ledger-entries/" + entryId + "/reverse", HttpWorld.Map2.of("reason", "x"))).isEqualTo(403);
 
         MvcResult reversed = world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/ledger-entries/" + entryId + "/reverse",
@@ -250,7 +249,7 @@ class MoneyHttpIntegrationTest {
     void permissionsGateEveryMoneyEndpoint() {
         String wallet = openWallet("USD", "PREPAID");
         credit(wallet, 1_000, "USD");
-        String viewer = world.newUserToken(acme, Set.of(viewerRole()));
+        String viewer = world.newUserToken(acme, Set.of("billing:wallet:read"));
         String nobody = world.newUserToken(acme, Set.of());
         String reservation = parse(post(acme, key, "perm-res-" + UUID.randomUUID(), "/api/v1/reservations",
                 HttpWorld.Map2.of("walletId", wallet, "amount", 10, "currency", "USD"))).get("id").asString();
@@ -281,14 +280,5 @@ class MoneyHttpIntegrationTest {
         assertThat(world.status(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/wallets/" + wallet + "/ledger", null)).isEqualTo(404);
         assertThat(world.status(HttpMethod.GET, acme.host(), acme.adminToken(), "/api/v1/wallets?customerId=" + customerId, null)).isEqualTo(200);
         assertThat(world.body(world.call(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/wallets?customerId=" + customerId, null))).isEmpty();
-    }
-
-    private String viewerRole() {
-        for (JsonNode role : world.body(world.call(HttpMethod.GET, acme.host(), acme.adminToken(), "/api/v1/roles", null))) {
-            if (role.get("name").asString().equals("Tenant Viewer")) {
-                return role.get("id").asString();
-            }
-        }
-        throw new IllegalStateException("no viewer role");
     }
 }

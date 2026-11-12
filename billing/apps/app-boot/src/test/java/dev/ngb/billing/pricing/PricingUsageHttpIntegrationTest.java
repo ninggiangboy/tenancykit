@@ -6,7 +6,6 @@ import dev.ngb.core.id.TenantId;
 import dev.ngb.billing.Application;
 import dev.ngb.billing.money.api.wallet.CreditCommand;
 import dev.ngb.billing.money.api.wallet.CreditWallet;
-import dev.ngb.billing.platform.application.user.command.BootstrapPlatformAdminUseCase;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
@@ -14,7 +13,8 @@ import dev.ngb.billing.support.HttpWorld;
 import dev.ngb.billing.support.HttpWorld.Account;
 import dev.ngb.billing.support.HttpWorld.Map2;
 import dev.ngb.billing.support.PostgresContainerConfig;
-import dev.ngb.billing.support.RealKeycloakConfig;
+import dev.ngb.billing.support.TestTokensConfig;
+import dev.ngb.billing.support.ReplicaFixtures;
 import dev.ngb.billing.support.ScopeTestSupport;
 import java.time.Instant;
 import java.util.List;
@@ -39,7 +39,7 @@ import tools.jackson.databind.json.JsonMapper;
 /** Pricing plans, estimation, usage ingestion and charging over HTTP: permissions, status codes and the idempotency contract. */
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc
-@Import({PostgresContainerConfig.class, RealKeycloakConfig.class})
+@Import({PostgresContainerConfig.class, TestTokensConfig.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PricingUsageHttpIntegrationTest {
 
@@ -50,10 +50,9 @@ class PricingUsageHttpIntegrationTest {
     private static final String TO = "2026-10-02T00:00:00Z";
 
     @Autowired MockMvc mvc;
-    @Autowired BootstrapPlatformAdminUseCase bootstrap;
     @Autowired ScopeTestSupport scopes;
+    @Autowired ReplicaFixtures replica;
     @Autowired CreditWallet creditWallet;
-    @Value("${billing.tenancy.base-domain}") String baseDomain;
 
     private final JsonMapper json = JsonMapper.builder().build();
     HttpWorld world;
@@ -61,20 +60,21 @@ class PricingUsageHttpIntegrationTest {
     Account globex;
     String ops;
     String readOnly;
+    String chargeReader;
 
     @BeforeAll
     void createWorld() {
-        world = new HttpWorld(mvc, bootstrap, scopes, baseDomain);
+        world = new HttpWorld(mvc, replica, scopes);
         acme = world.newTenant();
         globex = world.newTenant();
-        String systemId = world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems", Map2.of("name", "Sample"))).get("id").asString();
-        ops = credential(systemId, OPS);
-        readOnly = credential(systemId, List.of("pricing:read"));
+        HttpWorld.System opsSystem = world.newSystem(acme, prefixed(OPS));
+        ops = opsSystem.token();
+        readOnly = world.newSystem(acme, "billing:pricing:read").token();
+        chargeReader = opsSystem.tokenFor("billing:pricing:read", "billing:usage:read");
     }
 
-    private String credential(String systemId, List<String> scopes) {
-        return world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems/" + systemId + "/credentials",
-                Map2.of("label", "x", "scopes", scopes))).get("key").asString();
+    private static String[] prefixed(List<String> codes) {
+        return codes.stream().map(code -> "billing:" + code).toArray(String[]::new);
     }
 
     private String metric() {
@@ -372,7 +372,7 @@ class PricingUsageHttpIntegrationTest {
         assertThat(parse(repeated).get("replayed").asBoolean()).isTrue();
         assertThat(parse(repeated).get("id").asString()).isEqualTo(body.get("id").asString());
         assertThat(ok(call(acme, ops, HttpMethod.GET, "/api/v1/wallets/" + wallet, null)).get("balance").get("amount").asLong()).isEqualTo(500 + 5000 - 1950);
-        assertThat(ok(call(acme, readOnly, HttpMethod.GET, "/api/v1/pricing/usage-charges/" + body.get("id").asString(), null)).get("amount").get("amount").asLong()).isEqualTo(1950);
+        assertThat(ok(call(acme, chargeReader, HttpMethod.GET, "/api/v1/pricing/usage-charges/" + body.get("id").asString(), null)).get("amount").get("amount").asLong()).isEqualTo(1950);
 
         Map<String, Object> nothing = Map2.of("customerId", customer, "walletId", wallet, "planId", plan, "from", "2026-01-01T00:00:00Z", "to", "2026-01-02T00:00:00Z");
         MvcResult none = call(acme, ops, HttpMethod.POST, "/api/v1/pricing/usage-charges", nothing);

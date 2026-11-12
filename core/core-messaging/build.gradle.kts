@@ -12,7 +12,8 @@ dependencies {
     api("io.micrometer:micrometer-core")
     api("org.springframework.amqp:spring-rabbit")
     implementation("org.springframework:spring-context")
-    implementation(libs.spring.retry)
+    // AmqpInboundDispatcher's constructor takes a RetryTemplate, so every consumer must see the type.
+    api(libs.spring.retry)
     implementation("tools.jackson.core:jackson-databind")
     implementation("org.slf4j:slf4j-api")
     testImplementation(libs.archunit.junit5)

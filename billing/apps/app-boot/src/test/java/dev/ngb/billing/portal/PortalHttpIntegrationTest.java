@@ -5,14 +5,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 
 import dev.ngb.billing.Application;
-import dev.ngb.billing.platform.application.user.command.BootstrapPlatformAdminUseCase;
 import dev.ngb.billing.support.FakePaymentProvider;
 import dev.ngb.billing.support.FakePaymentProviderConfig;
 import dev.ngb.billing.support.HttpWorld;
 import dev.ngb.billing.support.HttpWorld.Account;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
-import dev.ngb.billing.support.RealKeycloakConfig;
+import dev.ngb.billing.support.TestTokensConfig;
+import dev.ngb.billing.support.ReplicaFixtures;
 import dev.ngb.billing.support.ScopeTestSupport;
 import dev.ngb.billing.support.StripeEvents;
 import jakarta.servlet.http.Cookie;
@@ -43,7 +43,7 @@ import tools.jackson.databind.json.JsonMapper;
  */
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc
-@Import({PostgresContainerConfig.class, RealKeycloakConfig.class, FakePaymentProviderConfig.class})
+@Import({PostgresContainerConfig.class, TestTokensConfig.class, FakePaymentProviderConfig.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PortalHttpIntegrationTest {
 
@@ -52,11 +52,11 @@ class PortalHttpIntegrationTest {
     private static final String RETURN_URL = "https://app.acme.test/portal-done";
 
     @Autowired MockMvc mvc;
-    @Autowired BootstrapPlatformAdminUseCase bootstrap;
     @Autowired ScopeTestSupport scopes;
+    @Value("${billing.tenancy.base-domain}") String baseDomain;
+    @Autowired ReplicaFixtures replica;
     @Autowired OwnerDatabase owner;
     @Autowired FakePaymentProvider stripe;
-    @Value("${billing.tenancy.base-domain}") String baseDomain;
 
     private final JsonMapper json = JsonMapper.builder().build();
     HttpWorld world;
@@ -71,16 +71,14 @@ class PortalHttpIntegrationTest {
 
     @BeforeAll
     void createWorld() {
-        world = new HttpWorld(mvc, bootstrap, scopes, baseDomain);
+        world = new HttpWorld(mvc, replica, scopes);
         acme = world.newTenant();
         globex = world.newTenant();
-        String systemId = world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems",
-                HttpWorld.Map2.of("name", "Portal System"))).get("id").asString();
-        systemKey = world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(),
-                "/api/v1/tenant-systems/" + systemId + "/credentials", HttpWorld.Map2.of("label", "portal", "scopes", List.of(
-                        "billing-session:create", "customer:read", "customer:write", "wallet:read", "wallet:manage",
-                        "payment:create", "payment:read", "charge:create", "usage:record", "usage:read", "invoice:read",
-                        "invoice:create", "subscription:manage", "subscription:read")))).get("key").asString();
+        systemKey = world.newSystem(acme,
+                "billing:billing-session:create", "billing:customer:read", "billing:customer:write", "billing:wallet:read",
+                "billing:wallet:manage", "billing:payment:create", "billing:payment:read", "billing:charge:create",
+                "billing:usage:record", "billing:usage:read", "billing:invoice:read", "billing:invoice:create",
+                "billing:subscription:manage", "billing:subscription:read").token();
         customerA = createCustomer("a-" + UUID.randomUUID());
         customerB = createCustomer("b-" + UUID.randomUUID());
         walletA = openWallet(customerA, "USD");
@@ -194,7 +192,7 @@ class PortalHttpIntegrationTest {
         String sessionId = owner.jdbc().queryForObject("select checkout_session_id from payments where id = ?", String.class, UUID.fromString(paymentId));
         String body = StripeEvents.paidCheckout(StripeEvents.newEventId(), null, sessionId, "pi_portal_" + UUID.randomUUID().toString().substring(0, 8),
                 paymentId, 2500);
-        MvcResult delivered = mvc.perform(post("/stripe/webhooks/direct/" + configId).header("Host", "platform." + baseDomain)
+        MvcResult delivered = mvc.perform(post("/stripe/webhooks/direct/" + configId).header("Host", acme.host())
                 .contentType(MediaType.APPLICATION_JSON).content(body.getBytes(StandardCharsets.UTF_8))
                 .header("Stripe-Signature", StripeEvents.sign(WEBHOOK_SECRET, body))).andReturn();
         assertThat(delivered.getResponse().getStatus()).isEqualTo(200);

@@ -1,6 +1,6 @@
 package dev.ngb.billing.boot.portal;
 
-import dev.ngb.billing.platform.api.actor.PublicEndpoint;
+import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.billing.session.api.portal.CurrentPortalVisitor;
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.api.portal.PortalSessions;

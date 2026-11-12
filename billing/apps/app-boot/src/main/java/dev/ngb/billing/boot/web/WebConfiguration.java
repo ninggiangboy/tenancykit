@@ -1,12 +1,11 @@
 package dev.ngb.billing.boot.web;
 
-import dev.ngb.billing.platform.adapter.auth.web.CallerResolver;
-import dev.ngb.billing.platform.api.actor.Authenticated;
-import dev.ngb.billing.platform.api.actor.Authorizer;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.PermissionScope;
-import dev.ngb.billing.platform.api.actor.PublicEndpoint;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.Authenticated;
+import dev.ngb.core.security.Authorizer;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.core.security.PublicEndpoint;
+import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.billing.boot.catalog.BillingPermissionCatalog;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.session.api.portal.PortalAuthorizer;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
@@ -32,10 +31,12 @@ class WebConfiguration implements WebMvcConfigurer {
 
     private final Authorizer authorizer;
     private final PortalAuthorizer portalAuthorizer;
+    private final BillingPermissionCatalog catalog;
 
-    WebConfiguration(Authorizer authorizer, PortalAuthorizer portalAuthorizer) {
+    WebConfiguration(Authorizer authorizer, PortalAuthorizer portalAuthorizer, BillingPermissionCatalog catalog) {
         this.authorizer = authorizer;
         this.portalAuthorizer = portalAuthorizer;
+        this.catalog = catalog;
     }
 
     @Override
@@ -56,8 +57,8 @@ class WebConfiguration implements WebMvcConfigurer {
                 .components(new Components()
                         .addSecuritySchemes("oidc", new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")
                                 .description("Billing User signed in through Keycloak"))
-                        .addSecuritySchemes("apiKey", new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("cbk_<key-id>_<secret>")
-                                .description("Tenant System credential issued by Billing"))
+                        .addSecuritySchemes("suiteToken", new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")
+                                .description("Platform suite token for a Tenant System; obtain it from POST /oauth/token on Platform"))
                         .addSecuritySchemes("portalSession", new SecurityScheme().type(SecurityScheme.Type.APIKEY).in(SecurityScheme.In.COOKIE)
                                 .name("billing_portal")
                                 .description("Billing Session cookie, obtained by exchanging the single-use portal token")));
@@ -69,7 +70,7 @@ class WebConfiguration implements WebMvcConfigurer {
         return (operation, handlerMethod) -> {
             RequiresPermission required = handlerMethod.getMethodAnnotation(RequiresPermission.class);
             if (required != null) {
-                operation.addExtension("x-required-permission", required.value().code());
+                operation.addExtension("x-required-permission", required.value());
             }
             RequiresPortalPermission portal = handlerMethod.getMethodAnnotation(RequiresPortalPermission.class);
             if (portal != null) {
@@ -115,14 +116,16 @@ class WebConfiguration implements WebMvcConfigurer {
             }
             RequiresPermission required = handlerMethod.getMethodAnnotation(RequiresPermission.class);
             if (required != null) {
+                BillingPermissionCatalog.Entry entry = catalog.find(required.value()).orElse(
+                        new BillingPermissionCatalog.Entry(required.value(), java.util.Set.of(), false));
                 List<String> callers = new java.util.ArrayList<>();
-                if (required.value().validIn(PermissionScope.PLATFORM)) {
+                if (entry.scopes().contains("platform")) {
                     callers.add("platform-user");
                 }
-                if (required.value().validIn(PermissionScope.TENANT)) {
+                if (entry.scopes().contains("tenant")) {
                     callers.add("tenant-user");
                 }
-                if (required.value().grantableToTenantSystem()) {
+                if (entry.grantableToTenantSystem()) {
                     callers.add("tenant-system");
                 }
                 operation.addExtension("x-allowed-callers", callers);

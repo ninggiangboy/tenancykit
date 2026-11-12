@@ -1,9 +1,9 @@
 package dev.ngb.billing.session.adapter.portal.web;
 
-import dev.ngb.billing.platform.api.actor.Actor;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.Actor;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.billing.session.api.portal.PortalPermission;
@@ -55,7 +55,7 @@ public class BillingSessionController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresPermission(Permission.BILLING_SESSION_CREATE)
+    @RequiresPermission(BillingPermissions.BILLING_SESSION_CREATE)
     public CreateResponse create(
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             @RequestBody CreateRequest request,
@@ -64,8 +64,12 @@ public class BillingSessionController {
             throw new IllegalArgumentException("customerId and returnUrl are required");
         }
         Actor actor = currentActor.get();
-        String tenantSystemId = actor.tenantSystem().map(Object::toString)
-                .orElseThrow(() -> new AccessDeniedException("only a tenant system can create a billing session"));
+        String tenantSystemId = currentActor.caller() == null
+                ? null
+                : currentActor.caller().toString();
+        if (tenantSystemId == null) {
+            throw new AccessDeniedException("only a tenant system can create a billing session");
+        }
         Set<PortalPermission> permissions = request.permissions() == null
                 ? null
                 : PortalPermission.fromCodes(Set.copyOf(request.permissions()));
@@ -83,11 +87,11 @@ public class BillingSessionController {
     }
 
     @PostMapping("/{id}/revoke")
-    @RequiresPermission(Permission.BILLING_SESSION_CREATE)
+    @RequiresPermission(BillingPermissions.BILLING_SESSION_CREATE)
     public ResponseEntity<Void> revoke(
             @PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         Actor actor = currentActor.get();
-        java.util.UUID tenantSystemId = actor.tenantSystemId() == null ? null : actor.tenantSystemId().value();
+        java.util.UUID tenantSystemId = currentActor.caller();
         revoke.execute(BillingSessionId.of(id), tenantSystemId, Audit.of(actor.auditName(), requestId));
         return ResponseEntity.noContent().build();
     }

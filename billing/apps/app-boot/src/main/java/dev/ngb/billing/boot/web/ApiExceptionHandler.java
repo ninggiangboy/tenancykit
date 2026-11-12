@@ -8,7 +8,6 @@ import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.money.api.wallet.InsufficientFundsException;
 import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.core.error.IdempotencyConflictException;
-import dev.ngb.billing.platform.application.auth.exception.RateLimitExceededException;
 import dev.ngb.billing.session.application.portal.exception.InvalidPortalSessionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,10 +74,6 @@ class ApiExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, "You do not have permission to do this.");
     }
 
-    @ExceptionHandler(RateLimitExceededException.class)
-    ProblemDetail rateLimited(RateLimitExceededException e) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, "Too many requests.");
-    }
 
     /** An unknown, already used, revoked or expired session token; the answer does not say which. */
     @ExceptionHandler(InvalidPortalSessionException.class)

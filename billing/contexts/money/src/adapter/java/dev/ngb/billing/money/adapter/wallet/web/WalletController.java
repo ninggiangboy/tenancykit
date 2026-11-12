@@ -5,9 +5,9 @@ import dev.ngb.billing.money.application.wallet.command.OpenWalletUseCase;
 import dev.ngb.billing.money.application.wallet.query.WalletQueries;
 import dev.ngb.billing.money.application.wallet.query.WalletView;
 import dev.ngb.billing.money.domain.wallet.Wallet;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
@@ -63,7 +63,7 @@ public class WalletController {
     }
 
     @PostMapping("/wallets")
-    @RequiresPermission(Permission.WALLET_MANAGE)
+    @RequiresPermission(BillingPermissions.WALLET_MANAGE)
     public ResponseEntity<WalletResponse> openWallet(
             @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody OpenWalletRequest request) {
         Currency currency = Currency.of(request.currency());
@@ -75,13 +75,13 @@ public class WalletController {
     }
 
     @GetMapping("/wallets")
-    @RequiresPermission(Permission.WALLET_READ)
+    @RequiresPermission(BillingPermissions.WALLET_READ)
     public List<WalletResponse> wallets(@RequestParam String customerId) {
         return queries.walletsOf(CustomerId.of(customerId), currentActor.caller()).stream().map(WalletResponse::ofView).toList();
     }
 
     @GetMapping("/wallets/{id}")
-    @RequiresPermission(Permission.WALLET_READ)
+    @RequiresPermission(BillingPermissions.WALLET_READ)
     public WalletResponse wallet(@PathVariable String id) {
         return WalletResponse.ofView(queries.wallet(WalletId.of(id), currentActor.caller()));
     }

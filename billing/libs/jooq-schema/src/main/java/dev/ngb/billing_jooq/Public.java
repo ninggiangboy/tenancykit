@@ -4,10 +4,9 @@
 package dev.ngb.billing_jooq;
 
 
-import dev.ngb.billing_jooq.tables.ApiCredentials;
+import dev.ngb.billing_jooq.tables.AppEntitlements;
 import dev.ngb.billing_jooq.tables.AuditLog;
 import dev.ngb.billing_jooq.tables.BillingSessions;
-import dev.ngb.billing_jooq.tables.BillingUsers;
 import dev.ngb.billing_jooq.tables.Charges;
 import dev.ngb.billing_jooq.tables.CustomerMappings;
 import dev.ngb.billing_jooq.tables.Customers;
@@ -22,17 +21,12 @@ import dev.ngb.billing_jooq.tables.LedgerEntries;
 import dev.ngb.billing_jooq.tables.Outbox;
 import dev.ngb.billing_jooq.tables.PaymentAttempts;
 import dev.ngb.billing_jooq.tables.Payments;
-import dev.ngb.billing_jooq.tables.Permissions;
 import dev.ngb.billing_jooq.tables.PortalReturnUrls;
 import dev.ngb.billing_jooq.tables.PricingMetrics;
 import dev.ngb.billing_jooq.tables.PricingPlanVersions;
 import dev.ngb.billing_jooq.tables.PricingPlans;
-import dev.ngb.billing_jooq.tables.RateLimitBuckets;
 import dev.ngb.billing_jooq.tables.Refunds;
 import dev.ngb.billing_jooq.tables.Reservations;
-import dev.ngb.billing_jooq.tables.RoleAssignments;
-import dev.ngb.billing_jooq.tables.RolePermissions;
-import dev.ngb.billing_jooq.tables.Roles;
 import dev.ngb.billing_jooq.tables.StripeConfigurations;
 import dev.ngb.billing_jooq.tables.StripeCustomers;
 import dev.ngb.billing_jooq.tables.StripeEventAttempts;
@@ -47,7 +41,7 @@ import dev.ngb.billing_jooq.tables.Tenants;
 import dev.ngb.billing_jooq.tables.UsageCharges;
 import dev.ngb.billing_jooq.tables.UsageEvents;
 import dev.ngb.billing_jooq.tables.UsageRatings;
-import dev.ngb.billing_jooq.tables.UserPermissions;
+import dev.ngb.billing_jooq.tables.UserGrants;
 import dev.ngb.billing_jooq.tables.Wallets;
 import dev.ngb.billing_jooq.tables.WebhookDeliveries;
 import dev.ngb.billing_jooq.tables.WebhookDeliveryAttempts;
@@ -76,9 +70,9 @@ public class Public extends SchemaImpl {
     public static final Public PUBLIC = new Public();
 
     /**
-     * The table <code>public.api_credentials</code>.
+     * The table <code>public.app_entitlements</code>.
      */
-    public final ApiCredentials API_CREDENTIALS = ApiCredentials.API_CREDENTIALS;
+    public final AppEntitlements APP_ENTITLEMENTS = AppEntitlements.APP_ENTITLEMENTS;
 
     /**
      * The table <code>public.audit_log</code>.
@@ -89,11 +83,6 @@ public class Public extends SchemaImpl {
      * The table <code>public.billing_sessions</code>.
      */
     public final BillingSessions BILLING_SESSIONS = BillingSessions.BILLING_SESSIONS;
-
-    /**
-     * The table <code>public.billing_users</code>.
-     */
-    public final BillingUsers BILLING_USERS = BillingUsers.BILLING_USERS;
 
     /**
      * The table <code>public.charges</code>.
@@ -166,11 +155,6 @@ public class Public extends SchemaImpl {
     public final Payments PAYMENTS = Payments.PAYMENTS;
 
     /**
-     * The table <code>public.permissions</code>.
-     */
-    public final Permissions PERMISSIONS = Permissions.PERMISSIONS;
-
-    /**
      * The table <code>public.portal_return_urls</code>.
      */
     public final PortalReturnUrls PORTAL_RETURN_URLS = PortalReturnUrls.PORTAL_RETURN_URLS;
@@ -191,11 +175,6 @@ public class Public extends SchemaImpl {
     public final PricingPlans PRICING_PLANS = PricingPlans.PRICING_PLANS;
 
     /**
-     * The table <code>public.rate_limit_buckets</code>.
-     */
-    public final RateLimitBuckets RATE_LIMIT_BUCKETS = RateLimitBuckets.RATE_LIMIT_BUCKETS;
-
-    /**
      * The table <code>public.refunds</code>.
      */
     public final Refunds REFUNDS = Refunds.REFUNDS;
@@ -204,21 +183,6 @@ public class Public extends SchemaImpl {
      * The table <code>public.reservations</code>.
      */
     public final Reservations RESERVATIONS = Reservations.RESERVATIONS;
-
-    /**
-     * The table <code>public.role_assignments</code>.
-     */
-    public final RoleAssignments ROLE_ASSIGNMENTS = RoleAssignments.ROLE_ASSIGNMENTS;
-
-    /**
-     * The table <code>public.role_permissions</code>.
-     */
-    public final RolePermissions ROLE_PERMISSIONS = RolePermissions.ROLE_PERMISSIONS;
-
-    /**
-     * The table <code>public.roles</code>.
-     */
-    public final Roles ROLES = Roles.ROLES;
 
     /**
      * The table <code>public.stripe_configurations</code>.
@@ -291,9 +255,9 @@ public class Public extends SchemaImpl {
     public final UsageRatings USAGE_RATINGS = UsageRatings.USAGE_RATINGS;
 
     /**
-     * The table <code>public.user_permissions</code>.
+     * The table <code>public.user_grants</code>.
      */
-    public final UserPermissions USER_PERMISSIONS = UserPermissions.USER_PERMISSIONS;
+    public final UserGrants USER_GRANTS = UserGrants.USER_GRANTS;
 
     /**
      * The table <code>public.wallets</code>.
@@ -331,10 +295,9 @@ public class Public extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
-            ApiCredentials.API_CREDENTIALS,
+            AppEntitlements.APP_ENTITLEMENTS,
             AuditLog.AUDIT_LOG,
             BillingSessions.BILLING_SESSIONS,
-            BillingUsers.BILLING_USERS,
             Charges.CHARGES,
             CustomerMappings.CUSTOMER_MAPPINGS,
             Customers.CUSTOMERS,
@@ -349,17 +312,12 @@ public class Public extends SchemaImpl {
             Outbox.OUTBOX,
             PaymentAttempts.PAYMENT_ATTEMPTS,
             Payments.PAYMENTS,
-            Permissions.PERMISSIONS,
             PortalReturnUrls.PORTAL_RETURN_URLS,
             PricingMetrics.PRICING_METRICS,
             PricingPlanVersions.PRICING_PLAN_VERSIONS,
             PricingPlans.PRICING_PLANS,
-            RateLimitBuckets.RATE_LIMIT_BUCKETS,
             Refunds.REFUNDS,
             Reservations.RESERVATIONS,
-            RoleAssignments.ROLE_ASSIGNMENTS,
-            RolePermissions.ROLE_PERMISSIONS,
-            Roles.ROLES,
             StripeConfigurations.STRIPE_CONFIGURATIONS,
             StripeCustomers.STRIPE_CUSTOMERS,
             StripeEventAttempts.STRIPE_EVENT_ATTEMPTS,
@@ -374,7 +332,7 @@ public class Public extends SchemaImpl {
             UsageCharges.USAGE_CHARGES,
             UsageEvents.USAGE_EVENTS,
             UsageRatings.USAGE_RATINGS,
-            UserPermissions.USER_PERMISSIONS,
+            UserGrants.USER_GRANTS,
             Wallets.WALLETS,
             WebhookDeliveries.WEBHOOK_DELIVERIES,
             WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS,

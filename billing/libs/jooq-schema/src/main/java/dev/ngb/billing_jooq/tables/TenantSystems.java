@@ -6,7 +6,6 @@ package dev.ngb.billing_jooq.tables;
 
 import dev.ngb.billing_jooq.Keys;
 import dev.ngb.billing_jooq.Public;
-import dev.ngb.billing_jooq.tables.ApiCredentials.ApiCredentialsPath;
 import dev.ngb.billing_jooq.tables.BillingSessions.BillingSessionsPath;
 import dev.ngb.billing_jooq.tables.CustomerMappings.CustomerMappingsPath;
 import dev.ngb.billing_jooq.tables.Tenants.TenantsPath;
@@ -88,6 +87,11 @@ public class TenantSystems extends TableImpl<TenantSystemsRecord> {
      * The column <code>public.tenant_systems.created_at</code>.
      */
     public final TableField<TenantSystemsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.INSTANT.nullable(false), this, "");
+
+    /**
+     * The column <code>public.tenant_systems.version</code>.
+     */
+    public final TableField<TenantSystemsRecord, Long> VERSION = createField(DSL.name("version"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("1"), SQLDataType.BIGINT)), this, "");
 
     private TenantSystems(Name alias, Table<TenantSystemsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -181,19 +185,6 @@ public class TenantSystems extends TableImpl<TenantSystemsRecord> {
             _tenants = new TenantsPath(this, Keys.TENANT_SYSTEMS__TENANT_SYSTEMS_TENANT_ID_FKEY, null);
 
         return _tenants;
-    }
-
-    private transient ApiCredentialsPath _apiCredentials;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>public.api_credentials</code> table
-     */
-    public ApiCredentialsPath apiCredentials() {
-        if (_apiCredentials == null)
-            _apiCredentials = new ApiCredentialsPath(this, null, Keys.API_CREDENTIALS__API_CREDENTIALS_TENANT_ID_TENANT_SYSTEM_ID_FKEY.getInverseKey());
-
-        return _apiCredentials;
     }
 
     private transient BillingSessionsPath _billingSessions;

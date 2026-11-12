@@ -1,8 +1,8 @@
 package dev.ngb.billing.webhook.adapter.delivery.web;
 
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.webhook.application.delivery.command.ManageDeliveryUseCase;
 import dev.ngb.billing.webhook.application.delivery.query.DeliveryAttemptView;
@@ -67,7 +67,7 @@ public class DeliveryController {
 
     /** Newest first. Pass the last {@code id} of a page as {@code before} for the next one. */
     @GetMapping("/webhook-deliveries")
-    @RequiresPermission(Permission.WEBHOOK_READ)
+    @RequiresPermission(BillingPermissions.WEBHOOK_READ)
     public List<DeliveryResponse> listDeliveries(
             @RequestParam(required = false) String status, @RequestParam(required = false) String endpointId,
             @RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
@@ -81,7 +81,7 @@ public class DeliveryController {
     }
 
     @GetMapping("/webhook-deliveries/{id}")
-    @RequiresPermission(Permission.WEBHOOK_READ)
+    @RequiresPermission(BillingPermissions.WEBHOOK_READ)
     public DeliveryDetailResponse getDelivery(@PathVariable String id) {
         DeliveryQueries.Detail detail = deliveryQueries.get(UUID.fromString(id), currentActor.caller());
         return new DeliveryDetailResponse(DeliveryResponse.ofView(detail.delivery()), detail.delivery().body(),
@@ -91,7 +91,7 @@ public class DeliveryController {
     /** Queues a fresh delivery of the same stored event to the same endpoint. Answers 202: sending happens asynchronously. */
     @PostMapping("/webhook-deliveries/{id}/resend")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @RequiresPermission(Permission.WEBHOOK_MANAGE)
+    @RequiresPermission(BillingPermissions.WEBHOOK_MANAGE)
     public DeliveryResponse resend(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         return DeliveryResponse.of(deliveries.resend(Audit.of(currentActor.get().auditName(), requestId), WebhookDeliveryId.of(id), currentActor.caller()));
     }

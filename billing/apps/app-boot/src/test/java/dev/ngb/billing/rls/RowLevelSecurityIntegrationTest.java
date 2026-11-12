@@ -6,9 +6,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.Application;
-import dev.ngb.billing.platform.domain.tenant.Tenant;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
+import dev.ngb.billing.support.ReplicaFixtures;
 import dev.ngb.billing.support.ScopeTestSupport;
 import dev.ngb.billing.support.TestEvent;
 import java.util.List;
@@ -37,8 +37,8 @@ class RowLevelSecurityIntegrationTest {
 
     @Test
     void noTenantSeesNothingAndEachTenantSeesOnlyItself() {
-        Tenant a = scopes.newTenant();
-        Tenant b = scopes.newTenant();
+        ReplicaFixtures.TenantSeed a = scopes.newTenant();
+        ReplicaFixtures.TenantSeed b = scopes.newTenant();
         TestEvent eventA = TestEvent.forTenant(a.id());
         TestEvent eventB = TestEvent.forTenant(b.id());
         scopes.runInTenant(a.id(), () -> unitOfWork.transactional(() -> events.publish(eventA)));
@@ -62,8 +62,8 @@ class RowLevelSecurityIntegrationTest {
 
     @Test
     void aTenantCannotWriteRowsForAnotherTenant() {
-        Tenant a = scopes.newTenant();
-        Tenant b = scopes.newTenant();
+        ReplicaFixtures.TenantSeed a = scopes.newTenant();
+        ReplicaFixtures.TenantSeed b = scopes.newTenant();
         TestEvent forB = TestEvent.forTenant(b.id());
 
         assertThatThrownBy(() -> scopes.runInTenant(a.id(), () -> unitOfWork.transactional(() -> events.publish(forB))))
@@ -73,7 +73,7 @@ class RowLevelSecurityIntegrationTest {
 
     @Test
     void aWriteOutsideAnyUnitOfWorkFailsClosed() {
-        Tenant a = scopes.newTenant();
+        ReplicaFixtures.TenantSeed a = scopes.newTenant();
         TestEvent event = TestEvent.forTenant(a.id());
         assertThatThrownBy(() -> appJdbc.update(
                         "insert into outbox (id, tenant_id, aggregate, type, payload, created_at, next_attempt_at)"
@@ -85,8 +85,8 @@ class RowLevelSecurityIntegrationTest {
 
     @Test
     void compositeForeignKeysRejectCrossTenantReferences() {
-        Tenant a = scopes.newTenant();
-        Tenant b = scopes.newTenant();
+        ReplicaFixtures.TenantSeed a = scopes.newTenant();
+        ReplicaFixtures.TenantSeed b = scopes.newTenant();
         String parent = "fk_parent_" + System.nanoTime();
         String child = "fk_child_" + System.nanoTime();
         owner.jdbc().execute("create table " + parent + " (tenant_id uuid not null, id uuid not null, primary key (tenant_id, id))");

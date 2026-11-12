@@ -42,15 +42,6 @@ billing:
   tenancy:
     # Platform Administration is platform.<base-domain>; a Tenant is <tenant-code>.<base-domain>.
     base-domain: ${BILLING_BASE_DOMAIN:localhost}
-  keycloak:
-    base-url: ${BILLING_KEYCLOAK_URL:http://localhost:8081}
-    realm: billing
-    admin-client-id: billing-admin
-    admin-client-secret: ${BILLING_KEYCLOAK_ADMIN_CLIENT_SECRET}
-  bootstrap:
-    # Optional: creates the first Platform administrator on start when the email is set and unused.
-    platform-admin-email: ${BILLING_BOOTSTRAP_ADMIN_EMAIL:}
-    platform-admin-temporary-password: ${BILLING_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD:}
   secrets:
     # Master key for secrets at rest (webhook signing secrets, Stripe keys): base64 of 32 random bytes, e.g. `openssl rand -base64 32`.
     master-key: ${BILLING_SECRETS_MASTER_KEY}
@@ -152,6 +143,21 @@ management:
         include: health
 
 suite:
+  # This app's code, its token audience and its entitlement key.
+  app-code: ${SUITE_APP_CODE:billing}
+  # The Platform replica: where the snapshot lives and how to authenticate to it. Billing keeps tenants,
+  # tenant_domains, tenant_systems, user_grants and app_entitlements current from platform.events.
+  replica:
+    platform-base-url: ${BILLING_PLATFORM_BASE_URL:http://localhost:8082}
+    platform-issuer: ${BILLING_PLATFORM_ISSUER:http://localhost:8082}
+    platform-jwk-set-uri: ${BILLING_PLATFORM_JWK_SET_URI:http://localhost:8082/.well-known/jwks.json}
+    client-id: ${BILLING_REPLICA_CLIENT_ID:billing}
+    client-secret: ${BILLING_REPLICA_CLIENT_SECRET}
+    rebuild-on-start: ${BILLING_REPLICA_REBUILD_ON_START:true}
+    page-limit: ${BILLING_REPLICA_PAGE_LIMIT:200}
+    request-timeout: ${BILLING_REPLICA_REQUEST_TIMEOUT:PT10S}
+    queue: ${BILLING_PLATFORM_EVENTS_QUEUE:billing.platform-events}
+    exchange: ${PLATFORM_EVENTS_EXCHANGE:platform.events}
   messaging:
     # One topic exchange per producer. Every event type with a schema under contracts/events/billing is exported here.
     exchange: ${BILLING_EVENTS_EXCHANGE:billing.events}

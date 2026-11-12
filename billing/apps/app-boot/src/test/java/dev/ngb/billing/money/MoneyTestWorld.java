@@ -7,10 +7,10 @@ import dev.ngb.billing.money.api.wallet.CreditWallet;
 import dev.ngb.billing.money.api.wallet.WalletMode;
 import dev.ngb.billing.money.application.wallet.command.OpenWalletUseCase;
 import dev.ngb.billing.money.domain.wallet.Wallet;
-import dev.ngb.billing.platform.domain.tenant.Tenant;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.money.Money;
+import dev.ngb.billing.support.ReplicaFixtures;
 import dev.ngb.billing.support.ScopeTestSupport;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -23,7 +23,7 @@ public class MoneyTestWorld {
     public static final Currency USD = Currency.of("USD");
     public static final Currency VND = Currency.of("VND");
 
-    public record World(Tenant tenant, CustomerId customerId, Wallet wallet) {}
+    public record World(ReplicaFixtures.TenantSeed tenant, CustomerId customerId, Wallet wallet) {}
 
     private final ScopeTestSupport scopes;
     private final CreateCustomerUseCase createCustomer;
@@ -47,7 +47,7 @@ public class MoneyTestWorld {
 
     /** A second prepaid wallet in the same tenant, owned by another customer, for cross-wallet races. */
     public World anotherWallet(World base, long initialBalance) {
-        Tenant tenant = base.tenant();
+        ReplicaFixtures.TenantSeed tenant = base.tenant();
         CustomerId customerId = scopes.inTenant(tenant.id(), () -> createCustomer.execute(new CreateCustomerUseCase.Command(
                 null, null, "Customer " + UUID.randomUUID(), null, UUID.randomUUID().toString(), new Audit("user/test", "req"))).customer().id());
         Wallet wallet = scopes.inTenant(tenant.id(), () -> openWallet.execute(new OpenWalletUseCase.Command(
@@ -57,7 +57,7 @@ public class MoneyTestWorld {
     }
 
     private World world(WalletMode mode, long limit, long initialBalance) {
-        Tenant tenant = scopes.newTenant();
+        ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
         CustomerId customerId = scopes.inTenant(tenant.id(), () -> createCustomer.execute(new CreateCustomerUseCase.Command(
                 null, null, "Customer " + UUID.randomUUID(), null, UUID.randomUUID().toString(), new Audit("user/test", "req"))).customer().id());
         Wallet wallet = scopes.inTenant(tenant.id(), () -> openWallet.execute(new OpenWalletUseCase.Command(
@@ -68,7 +68,7 @@ public class MoneyTestWorld {
         return new World(tenant, customerId, wallet);
     }
 
-    public void credit(Tenant tenant, Wallet wallet, long amount) {
+    public void credit(ReplicaFixtures.TenantSeed tenant, Wallet wallet, long amount) {
         scopes.inTenant(tenant.id(), () -> creditWallet.credit(new CreditCommand(
                 wallet.id(), Money.of(amount, wallet.currency()), "topup:" + UUID.randomUUID(), null, "credit-" + UUID.randomUUID(), "system/test")));
     }

@@ -5,15 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.spring.tenancy.ScopedTenantContext;
-import dev.ngb.billing.platform.application.tenant.query.TenantDomainView;
-import dev.ngb.billing.platform.application.tenant.query.TenantQueries;
-import dev.ngb.billing.platform.application.tenant.query.TenantReadRepository;
-import dev.ngb.billing.platform.application.tenant.query.TenantView;
-import dev.ngb.billing.platform.domain.tenant.TenantStatus;
-import java.time.Instant;
+import dev.ngb.billing.boot.replica.ReplicaTenants;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -26,44 +20,33 @@ import org.junit.jupiter.api.Test;
 /** The sweep runs every tenant once, bounds the concurrency and keeps one failure from stopping the rest. */
 class TenantSweepTest {
 
-    private static List<TenantView> tenants(int count) {
-        List<TenantView> views = new ArrayList<>();
+    private static List<UUID> tenants(int count) {
+        List<UUID> ids = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            views.add(new TenantView(UUID.randomUUID(), "t" + i, "Tenant " + i, TenantStatus.ACTIVE, Instant.now()));
+            ids.add(UUID.randomUUID());
         }
-        return views;
+        return ids;
     }
 
-    private static TenantSweep sweep(int parallelism, List<TenantView> views, ScopedTenantContext context) {
-        TenantReadRepository repository = new TenantReadRepository() {
-            @Override
-            public List<TenantView> list() {
-                return views;
-            }
-
-            @Override
-            public Optional<TenantView> findById(UUID id) {
-                return views.stream().filter(view -> view.id().equals(id)).findFirst();
-            }
-
-            @Override
-            public List<TenantDomainView> domains(UUID tenantId) {
-                return List.of();
-            }
-        };
+    private static TenantSweep sweep(int parallelism, List<UUID> views, ScopedTenantContext context) {
         UnitOfWork unitOfWork = new UnitOfWork() {
             @Override
             public <T> T transactional(java.util.function.Supplier<T> work) {
                 return work.get();
             }
         };
-        TenantQueries queries = new TenantQueries(unitOfWork, repository);
-        return new TenantSweep(context, queries, parallelism);
+        ReplicaTenants tenants = new ReplicaTenants(unitOfWork, null) {
+            @Override
+            public List<UUID> activeIds() {
+                return views;
+            }
+        };
+        return new TenantSweep(context, tenants, parallelism);
     }
 
     @Test
     void everyTenantRunsExactlyOnceAndNeverMoreThanThePermitsAtOnce() {
-        List<TenantView> views = tenants(40);
+        List<UUID> views = tenants(40);
         TenantSweep sweep = sweep(4, views, new ScopedTenantContext());
         ConcurrentHashMap<TenantId, AtomicInteger> runs = new ConcurrentHashMap<>();
         AtomicInteger running = new AtomicInteger();
@@ -88,7 +71,7 @@ class TenantSweepTest {
 
     @Test
     void theTenantScopeIsBoundInsideTheTaskThread() {
-        List<TenantView> views = tenants(10);
+        List<UUID> views = tenants(10);
         ScopedTenantContext context = new ScopedTenantContext();
         TenantSweep sweep = sweep(3, views, context);
         AtomicReference<Throwable> mismatch = new AtomicReference<>();
@@ -107,7 +90,7 @@ class TenantSweepTest {
 
     @Test
     void aFailingTenantDoesNotStopTheOthers() {
-        List<TenantView> views = tenants(40);
+        List<UUID> views = tenants(40);
         TenantSweep sweep = sweep(4, views, new ScopedTenantContext());
         AtomicInteger ran = new AtomicInteger();
 
@@ -122,7 +105,7 @@ class TenantSweepTest {
 
     @Test
     void aBlockedTenantDoesNotStopALaterOneFromStarting() throws Exception {
-        List<TenantView> views = tenants(4);
+        List<UUID> views = tenants(4);
         TenantSweep sweep = sweep(4, views, new ScopedTenantContext());
         CountDownLatch blocked = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
@@ -130,7 +113,7 @@ class TenantSweepTest {
 
         Thread caller = Thread.ofPlatform().start(() -> sweep.forEachActiveTenant(tenant -> {
             started.add(tenant);
-            if (tenant.equals(new TenantId(views.get(0).id()))) {
+            if (tenant.equals(new TenantId(views.get(0)))) {
                 blocked.countDown();
                 try {
                     release.await(5, TimeUnit.SECONDS);
@@ -154,7 +137,7 @@ class TenantSweepTest {
 
     @Test
     void parallelismOfOneRunsEverythingOnTheCallingThread() {
-        List<TenantView> views = tenants(5);
+        List<UUID> views = tenants(5);
         TenantSweep sweep = sweep(1, views, new ScopedTenantContext());
         Thread caller = Thread.currentThread();
         AtomicInteger offThread = new AtomicInteger();

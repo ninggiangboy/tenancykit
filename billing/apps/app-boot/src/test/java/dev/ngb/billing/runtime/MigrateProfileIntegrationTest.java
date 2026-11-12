@@ -32,6 +32,7 @@ class MigrateProfileIntegrationTest {
         registry.add("spring.flyway.placeholders.appDbPassword", () -> PostgresContainerConfig.APP_PASSWORD);
         registry.add("billing.secrets.master-key", () -> PostgresContainerConfig.TEST_MASTER_KEY);
         registry.add("billing.migrate.exit", () -> "false");
+        PostgresContainerConfig.replicaDefaults(registry);
     }
 
     @Autowired ApplicationContext context;

@@ -6,10 +6,10 @@ import dev.ngb.billing.money.application.ledger.command.ReverseEntryUseCase;
 import dev.ngb.billing.money.application.ledger.query.LedgerEntryView;
 import dev.ngb.billing.money.application.wallet.query.WalletQueries;
 import dev.ngb.billing.money.domain.ledger.LedgerEntry;
-import dev.ngb.billing.platform.api.actor.Actor;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.Actor;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import java.time.Instant;
@@ -64,14 +64,14 @@ public class LedgerController {
     }
 
     @GetMapping("/wallets/{id}/ledger")
-    @RequiresPermission(Permission.WALLET_READ)
+    @RequiresPermission(BillingPermissions.WALLET_READ)
     public List<LedgerEntryResponse> ledger(
             @PathVariable String id, @RequestParam(defaultValue = "0") long afterSequence, @RequestParam(defaultValue = "50") int limit) {
         return queries.ledger(WalletId.of(id), afterSequence, limit, currentActor.caller()).stream().map(LedgerEntryResponse::ofView).toList();
     }
 
     @PostMapping("/ledger-entries/{id}/reverse")
-    @RequiresPermission(Permission.LEDGER_REVERSE)
+    @RequiresPermission(BillingPermissions.LEDGER_REVERSE)
     public ReversalResponse reverse(@PathVariable String id, @RequestBody ReverseRequest request) {
         Actor actor = currentActor.get();
         ReverseEntryUseCase.Replacement replacement = null;

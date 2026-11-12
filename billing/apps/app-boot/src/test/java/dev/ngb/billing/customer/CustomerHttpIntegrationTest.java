@@ -3,11 +3,11 @@ package dev.ngb.billing.customer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.billing.Application;
-import dev.ngb.billing.platform.application.user.command.BootstrapPlatformAdminUseCase;
 import dev.ngb.billing.support.HttpWorld;
 import dev.ngb.billing.support.HttpWorld.Account;
 import dev.ngb.billing.support.PostgresContainerConfig;
-import dev.ngb.billing.support.RealKeycloakConfig;
+import dev.ngb.billing.support.TestTokensConfig;
+import dev.ngb.billing.support.ReplicaFixtures;
 import dev.ngb.billing.support.ScopeTestSupport;
 import java.util.List;
 import java.util.Map;
@@ -32,14 +32,13 @@ import tools.jackson.databind.json.JsonMapper;
 /** Customers over HTTP, for Tenant Systems (API key) and Tenant Users (OIDC), with the idempotency contract. */
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc
-@Import({PostgresContainerConfig.class, RealKeycloakConfig.class})
+@Import({PostgresContainerConfig.class, TestTokensConfig.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CustomerHttpIntegrationTest {
 
     @Autowired MockMvc mvc;
-    @Autowired BootstrapPlatformAdminUseCase bootstrap;
     @Autowired ScopeTestSupport scopes;
-    @Value("${billing.tenancy.base-domain}") String baseDomain;
+    @Autowired ReplicaFixtures replica;
 
     private final JsonMapper json = JsonMapper.builder().build();
     HttpWorld world;
@@ -52,24 +51,17 @@ class CustomerHttpIntegrationTest {
 
     @BeforeAll
     void createWorld() {
-        world = new HttpWorld(mvc, bootstrap, scopes, baseDomain);
+        world = new HttpWorld(mvc, replica, scopes);
         acme = world.newTenant();
         globex = world.newTenant();
-        acmeSystemId = newSystem(acme);
-        acmeKey = newKey(acme, acmeSystemId, List.of("customer:read", "customer:write"));
-        acmeReadOnlyKey = newKey(acme, acmeSystemId, List.of("customer:read"));
-        globexKey = newKey(globex, newSystem(globex), List.of("customer:read", "customer:write"));
+        HttpWorld.System acmeSystem = world.newSystem(acme, "billing:customer:read", "billing:customer:write");
+        acmeSystemId = acmeSystem.id();
+        acmeKey = acmeSystem.token();
+        acmeReadOnlyKey = world.newSystem(acme, "billing:customer:read").token();
+        globexKey = world.newSystem(globex, "billing:customer:read", "billing:customer:write").token();
     }
 
-    private String newSystem(Account account) {
-        return world.body(world.call(HttpMethod.POST, account.host(), account.adminToken(), "/api/v1/tenant-systems",
-                HttpWorld.Map2.of("name", "System " + UUID.randomUUID()))).get("id").asString();
-    }
 
-    private String newKey(Account account, String systemId, List<String> scopes) {
-        return world.body(world.call(HttpMethod.POST, account.host(), account.adminToken(),
-                "/api/v1/tenant-systems/" + systemId + "/credentials", HttpWorld.Map2.of("label", "x", "scopes", scopes))).get("key").asString();
-    }
 
     private MvcResult post(Account account, String token, String idempotencyKey, Object body) throws Exception {
         var request = MockMvcRequestBuilders.post("/api/v1/customers").header("Host", account.host())
@@ -142,7 +134,7 @@ class CustomerHttpIntegrationTest {
 
     @Test
     void aTenantSystemCannotActForAnotherSystem() throws Exception {
-        String otherSystem = newSystem(acme);
+        String otherSystem = world.newSystem(acme, "billing:customer:read").id();
         MvcResult result = post(acme, acmeKey, "k-" + UUID.randomUUID(),
                 HttpWorld.Map2.of("tenantSystemId", otherSystem, "externalUserId", "u", "displayName", "x"));
         assertThat(result.getResponse().getStatus()).isEqualTo(403);
@@ -150,8 +142,7 @@ class CustomerHttpIntegrationTest {
 
     @Test
     void aTenantUserAdministersCustomersWithTheRightPermissions() throws Exception {
-        String viewerRole = viewerRoleId(acme);
-        String viewer = world.newUserToken(acme, Set.of(viewerRole));
+        String viewer = world.newUserToken(acme, Set.of("billing:customer:read"));
         String nobody = world.newUserToken(acme, Set.of());
 
         MvcResult created = post(acme, acme.adminToken(), "admin-" + UUID.randomUUID(),
@@ -189,13 +180,4 @@ class CustomerHttpIntegrationTest {
         assertThat(foreignSystem.getResponse().getStatus()).as("a tenant system that does not exist").isEqualTo(409);
     }
 
-    private String viewerRoleId(Account account) {
-        JsonNode roles = world.body(world.call(HttpMethod.GET, account.host(), account.adminToken(), "/api/v1/roles", null));
-        for (JsonNode role : roles) {
-            if (role.get("name").asString().equals("Tenant Viewer")) {
-                return role.get("id").asString();
-            }
-        }
-        throw new IllegalStateException("no viewer role");
-    }
 }

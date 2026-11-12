@@ -3,9 +3,9 @@ package dev.ngb.billing.payment.adapter.incident.web;
 import dev.ngb.billing.payment.application.incident.query.IncidentQueries;
 import dev.ngb.billing.payment.application.incident.query.IncidentView;
 import dev.ngb.billing.payment.application.stripe.command.ManageStripeEventUseCase;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import java.time.Instant;
 import java.util.List;
@@ -46,14 +46,14 @@ public class IncidentController {
     }
 
     @GetMapping("/stripe/incidents")
-    @RequiresPermission(Permission.STRIPE_READ)
+    @RequiresPermission(BillingPermissions.STRIPE_READ)
     public List<IncidentResponse> incidents(@RequestParam(defaultValue = "true") boolean open, @RequestParam(defaultValue = "50") int limit) {
         return incidentQueries.list(open, limit).stream().map(IncidentResponse::ofView).toList();
     }
 
     @PostMapping("/stripe/incidents/{id}/resolve")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @RequiresPermission(Permission.STRIPE_MANAGE)
+    @RequiresPermission(BillingPermissions.STRIPE_MANAGE)
     public void resolveIncident(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         eventAdmin.resolveIncident(Audit.of(currentActor.get().auditName(), requestId), UUID.fromString(id));
     }

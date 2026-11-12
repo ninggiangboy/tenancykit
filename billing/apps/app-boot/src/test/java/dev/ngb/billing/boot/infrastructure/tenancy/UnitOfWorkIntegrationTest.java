@@ -11,9 +11,9 @@ import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.tenancy.TenantContext;
-import dev.ngb.billing.platform.domain.tenant.Tenant;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
+import dev.ngb.billing.support.ReplicaFixtures;
 import dev.ngb.billing.support.ScopeTestSupport;
 import dev.ngb.billing.support.TestEvent;
 import java.time.Instant;
@@ -44,7 +44,7 @@ class UnitOfWorkIntegrationTest {
 
     @Test
     void outboxAndAuditCommitTogether() {
-        Tenant tenant = scopes.newTenant();
+        ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
 
         scopes.runInTenant(tenant.id(), () -> unitOfWork.transactional(() -> writeEverything(tenant.id())));
 
@@ -54,7 +54,7 @@ class UnitOfWorkIntegrationTest {
 
     @Test
     void aFailureAfterTheOutboxAppendRollsBackEveryTable() {
-        Tenant tenant = scopes.newTenant();
+        ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
 
         assertThatThrownBy(() -> scopes.inTenant(tenant.id(), () -> unitOfWork.transactional(() -> {
                     writeEverything(tenant.id());
@@ -68,7 +68,7 @@ class UnitOfWorkIntegrationTest {
 
     @Test
     void publishingOutsideAUnitOfWorkIsRejected() {
-        Tenant tenant = scopes.newTenant();
+        ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
         assertThatThrownBy(() -> scopes.inTenant(tenant.id(), () -> {
                     events.publish(TestEvent.forTenant(tenant.id()));
                     return null;
@@ -85,8 +85,8 @@ class UnitOfWorkIntegrationTest {
 
     @Test
     void aNestedUnitOfWorkJoinsInTheSameScopeAndRejectsADifferentOne() {
-        Tenant a = scopes.newTenant();
-        Tenant b = scopes.newTenant();
+        ReplicaFixtures.TenantSeed a = scopes.newTenant();
+        ReplicaFixtures.TenantSeed b = scopes.newTenant();
 
         scopes.runInTenant(a.id(), () -> unitOfWork.transactional(() -> unitOfWork.transactional(() -> events.publish(TestEvent.forTenant(a.id())))));
         assertThat(rows("outbox", a.id())).isEqualTo(1);

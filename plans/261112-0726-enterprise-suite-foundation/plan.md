@@ -55,7 +55,7 @@ Business apps (CRM, HR...), charging tenants for suite use, SMS or push, payment
 | 5 | [Platform: users and centralized RBAC](./phase-05-platform-users-and-rbac.md) | 4d | 4 | Done |
 | 6 | [Platform: tenant systems and M2M tokens](./phase-06-platform-tenant-systems-and-tokens.md) | 3d | 5 | Done |
 | 7 | [Shared replica and snapshot rebuild](./phase-07-shared-replica.md) | 3d | 4, 5, 6 | Done |
-| 8 | [Billing cutover](./phase-08-billing-cutover.md) | 4d | 7 | Pending |
+| 8 | [Billing cutover](./phase-08-billing-cutover.md) | 4d | 7 | Done |
 | 9 | [Notification Hub and webhook move](./phase-09-notification-hub-and-webhooks.md) | 4d | 7, 8 | Pending |
 | 10 | [Email and templates](./phase-10-email-and-templates.md) | 3d | 9 | Pending |
 | 11 | [In-app notifications](./phase-11-in-app-notifications.md) | 2d | 10 | Pending |

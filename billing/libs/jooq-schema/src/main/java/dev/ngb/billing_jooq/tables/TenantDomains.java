@@ -85,6 +85,11 @@ public class TenantDomains extends TableImpl<TenantDomainsRecord> {
      */
     public final TableField<TenantDomainsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.INSTANT.nullable(false), this, "");
 
+    /**
+     * The column <code>public.tenant_domains.version</code>.
+     */
+    public final TableField<TenantDomainsRecord, Long> VERSION = createField(DSL.name("version"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("1"), SQLDataType.BIGINT)), this, "");
+
     private TenantDomains(Name alias, Table<TenantDomainsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

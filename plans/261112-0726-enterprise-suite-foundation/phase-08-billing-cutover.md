@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "Billing cutover"
-status: pending
+status: done
 priority: P1
 effort: "4d"
 dependencies: [7]
@@ -56,13 +56,13 @@ Delete:
 
 ## Todo
 
-- [ ] `BillingPermissions` and rewritten checks
-- [ ] Security on replica: two issuers, host resolver, entitlement filter
-- [ ] `V23` migration and jOOQ regeneration
-- [ ] `contexts:platform` and dead classes deleted
-- [ ] OpenAPI contracts regenerated and reviewed
-- [ ] ArchUnit rules updated
-- [ ] Full build green
+- [x] `BillingPermissions` and rewritten checks
+- [x] Security on replica: two issuers, host resolver, entitlement filter
+- [x] `V23` migration and jOOQ regeneration
+- [x] `contexts:platform` and dead classes deleted
+- [x] OpenAPI contracts regenerated and reviewed
+- [x] ArchUnit rules updated
+- [x] Full build green
 
 ## Verification
 

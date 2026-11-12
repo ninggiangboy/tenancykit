@@ -7,14 +7,14 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import dev.ngb.billing.Application;
-import dev.ngb.billing.platform.application.user.command.BootstrapPlatformAdminUseCase;
 import dev.ngb.billing.support.FakePaymentProvider;
 import dev.ngb.billing.support.FakePaymentProviderConfig;
 import dev.ngb.billing.support.HttpWorld;
 import dev.ngb.billing.support.HttpWorld.Account;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
-import dev.ngb.billing.support.RealKeycloakConfig;
+import dev.ngb.billing.support.TestTokensConfig;
+import dev.ngb.billing.support.ReplicaFixtures;
 import dev.ngb.billing.support.ScopeTestSupport;
 import dev.ngb.billing.support.StripeEvents;
 import java.nio.charset.StandardCharsets;
@@ -43,7 +43,7 @@ import tools.jackson.databind.json.JsonMapper;
  */
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc
-@Import({PostgresContainerConfig.class, RealKeycloakConfig.class, FakePaymentProviderConfig.class})
+@Import({PostgresContainerConfig.class, TestTokensConfig.class, FakePaymentProviderConfig.class})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PaymentHttpIntegrationTest {
 
@@ -51,11 +51,11 @@ class PaymentHttpIntegrationTest {
     private static final String WEBHOOK_SECRET = "whsec_http_webhook_secret_0123456789";
 
     @Autowired MockMvc mvc;
-    @Autowired BootstrapPlatformAdminUseCase bootstrap;
     @Autowired ScopeTestSupport scopes;
+    @Value("${billing.tenancy.base-domain}") String baseDomain;
+    @Autowired ReplicaFixtures replica;
     @Autowired OwnerDatabase owner;
     @Autowired FakePaymentProvider stripe;
-    @Value("${billing.tenancy.base-domain}") String baseDomain;
 
     private final JsonMapper json = JsonMapper.builder().build();
     HttpWorld world;
@@ -68,16 +68,13 @@ class PaymentHttpIntegrationTest {
 
     @BeforeAll
     void createWorld() {
-        world = new HttpWorld(mvc, bootstrap, scopes, baseDomain);
+        world = new HttpWorld(mvc, replica, scopes);
         acme = world.newTenant();
         globex = world.newTenant();
-        String systemId = world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems", HttpWorld.Map2.of("name", "Sample")))
-                .get("id").asString();
-        systemKey = world.body(world.call(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/tenant-systems/" + systemId + "/credentials",
-                HttpWorld.Map2.of("label", "x", "scopes", List.of("payment:create", "payment:read", "wallet:manage", "wallet:read", "customer:write", "customer:read"))))
-                .get("key").asString();
-        String viewerRole = world.createRole(acme, "Viewer", java.util.Set.of("payment:read", "stripe:read"));
-        viewerToken = world.newUserToken(acme, java.util.Set.of(viewerRole));
+        systemKey = world.newSystem(acme,
+                "billing:payment:create", "billing:payment:read", "billing:wallet:manage", "billing:wallet:read",
+                "billing:customer:write", "billing:customer:read").token();
+        viewerToken = world.newUserToken(acme, java.util.Set.of("billing:payment:read", "billing:stripe:read"));
         customerId = world.body(call(HttpMethod.POST, acme, systemKey, "/api/v1/customers", "cust-" + UUID.randomUUID(),
                 HttpWorld.Map2.of("externalUserId", "u-" + UUID.randomUUID(), "displayName", "Payer"))).get("id").asString();
         walletId = world.body(call(HttpMethod.POST, acme, systemKey, "/api/v1/wallets", null,
@@ -124,7 +121,7 @@ class PaymentHttpIntegrationTest {
                 UUID.fromString(payment.get("id").asString()));
         String body = StripeEvents.paidCheckout(StripeEvents.newEventId(), null, session, intentId,
                 payment.get("id").asString(), payment.get("amount").get("amount").asLong());
-        MvcResult result = mvc.perform(post("/stripe/webhooks/direct/" + configId).header("Host", "platform." + baseDomain)
+        MvcResult result = mvc.perform(post("/stripe/webhooks/direct/" + configId).header("Host", acme.host())
                 .contentType(MediaType.APPLICATION_JSON).content(body.getBytes(StandardCharsets.UTF_8))
                 .header("Stripe-Signature", StripeEvents.sign(WEBHOOK_SECRET, body))).andReturn();
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
@@ -213,9 +210,12 @@ class PaymentHttpIntegrationTest {
                 .as("refunds are never granted to a tenant system").isEqualTo(403);
         assertThat(call(HttpMethod.POST, acme, viewerToken, "/api/v1/payments/top-ups", "k",
                 HttpWorld.Map2.of("walletId", walletId, "amount", 100, "currency", "USD")).getResponse().getStatus()).as("a viewer cannot top up").isEqualTo(403);
-        String anySystem = world.body(call(HttpMethod.POST, acme, acme.adminToken(), "/api/v1/tenant-systems", null, HttpWorld.Map2.of("name", "Another"))).get("id").asString();
-        assertThat(call(HttpMethod.POST, acme, acme.adminToken(), "/api/v1/tenant-systems/" + anySystem + "/credentials", null,
-                HttpWorld.Map2.of("label", "x", "scopes", List.of("refund:create"))).getResponse().getStatus()).as("the scope cannot be granted to a machine").isEqualTo(400);
+        // Billing no longer issues credentials; Platform refuses billing:refund:create to a machine. A machine token
+        // that simply lacks the code is refused by Billing's own check, which is what this asserts.
+        String noRefund = world.newSystem(acme, "billing:payment:read").token();
+        assertThat(call(HttpMethod.POST, acme, noRefund, "/api/v1/payments/" + UUID.randomUUID() + "/refunds", "k",
+                HttpWorld.Map2.of("amount", 100, "currency", "USD", "reason", "requested_by_customer")).getResponse().getStatus())
+                .as("a machine without billing:refund:create is refused").isEqualTo(403);
     }
 
     @Test

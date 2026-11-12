@@ -98,8 +98,8 @@ class ArchitectureTest {
 
     @org.junit.jupiter.api.Test
     void theJobRuleHasSubjects() {
-        assertThat(scheduledClasses()).as("a rule that matches no class passes vacuously").isGreaterThanOrEqualTo(6);
-        assertThat(jobClasses()).as("a rule that matches no class passes vacuously").isGreaterThanOrEqualTo(7);
+        assertThat(scheduledClasses()).as("a rule that matches no class passes vacuously").isGreaterThanOrEqualTo(5);
+        assertThat(jobClasses()).as("a rule that matches no class passes vacuously").isGreaterThanOrEqualTo(6);
     }
 
     /**

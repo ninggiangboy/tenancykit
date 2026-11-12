@@ -8,9 +8,9 @@ import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionView
 import dev.ngb.billing.invoicing.domain.subscription.Subscription;
 import dev.ngb.billing.invoicing.domain.subscription.SubscriptionId;
 import dev.ngb.billing.invoicing.domain.subscription.SubscriptionStatus;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
@@ -79,7 +79,7 @@ public class SubscriptionController {
      */
     @PostMapping("/subscriptions")
     @RepeatableCreate
-    @RequiresPermission(Permission.SUBSCRIPTION_MANAGE)
+    @RequiresPermission(BillingPermissions.SUBSCRIPTION_MANAGE)
     public ResponseEntity<SubscriptionDetailResponse> subscribe(
             @RequestHeader("Idempotency-Key") String key, @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             @RequestBody SubscribeRequest request) {
@@ -92,7 +92,7 @@ public class SubscriptionController {
     }
 
     @GetMapping("/subscriptions")
-    @RequiresPermission(Permission.SUBSCRIPTION_READ)
+    @RequiresPermission(BillingPermissions.SUBSCRIPTION_READ)
     public List<SubscriptionResponse> subscriptions(
             @RequestParam(required = false) String customerId, @RequestParam(required = false) String walletId, @RequestParam(required = false) String status,
             @RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
@@ -102,7 +102,7 @@ public class SubscriptionController {
     }
 
     @GetMapping("/subscriptions/{id}")
-    @RequiresPermission(Permission.SUBSCRIPTION_READ)
+    @RequiresPermission(BillingPermissions.SUBSCRIPTION_READ)
     public SubscriptionDetailResponse subscription(@PathVariable String id) {
         return subscriptionDetail(UUID.fromString(id));
     }
@@ -112,7 +112,7 @@ public class SubscriptionController {
      * Billing stops no Resource: the Tenant System decides what the end means for it.
      */
     @PostMapping("/subscriptions/{id}/cancel")
-    @RequiresPermission(Permission.SUBSCRIPTION_MANAGE)
+    @RequiresPermission(BillingPermissions.SUBSCRIPTION_MANAGE)
     public SubscriptionDetailResponse cancel(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         Subscription canceled = cancelSubscription.execute(new CancelSubscriptionUseCase.Command(SubscriptionId.of(id), Audit.of(currentActor.get().auditName(), requestId),
                 currentActor.caller()));

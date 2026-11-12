@@ -9,9 +9,9 @@ import dev.ngb.billing.payment.PaymentTestWorld.PayWorld;
 import dev.ngb.billing.payment.domain.payment.Payment;
 import dev.ngb.billing.payment.domain.payment.PaymentId;
 import dev.ngb.core.tenancy.RequestScope;
-import dev.ngb.billing.support.FakeIdentityConfig;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
+import dev.ngb.billing.support.TestTokensConfig;
 import dev.ngb.billing.support.StripeEvents;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -33,7 +33,7 @@ import org.springframework.test.web.servlet.MvcResult;
  */
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc
-@Import({PostgresContainerConfig.class, FakeIdentityConfig.class})
+@Import({PostgresContainerConfig.class, TestTokensConfig.class})
 @TestPropertySource(properties = {
     "billing.payments.connect.platform-secret-key=sk_test_platform_key_for_tests_only",
     "billing.payments.connect.webhook-secret=whsec_connect_for_tests_only_0123456789"})
@@ -44,10 +44,15 @@ class StripeWebhookHttpIntegrationTest {
     @Autowired MockMvc mvc;
     @Autowired PaymentTestWorld worlds;
     @Autowired OwnerDatabase owner;
-    @Value("${billing.tenancy.base-domain}") String baseDomain;
+    @Autowired dev.ngb.billing.support.ReplicaFixtures replica;
+    private String webhookHost;
 
+    /** Stripe reaches a tenant hostname; the account named in the event decides whose books change. */
     private String host() {
-        return "platform." + baseDomain;
+        if (webhookHost == null) {
+            webhookHost = replica.tenant().host();
+        }
+        return webhookHost;
     }
 
     private MvcResult send(String path, String body, String signature) throws Exception {
@@ -77,6 +82,8 @@ class StripeWebhookHttpIntegrationTest {
     private long incidents(PayWorld w, String kind) {
         return owner.count("select coalesce(sum(occurrences), 0) from stripe_incidents where tenant_id = ? and kind = ?", w.money().tenant().id().value(), kind);
     }
+
+    @Value("${billing.tenancy.base-domain}") String baseDomain;
 
     @Test
     void aSignedEventNeedsNoLoginAndCreditsTheWalletOnce() throws Exception {

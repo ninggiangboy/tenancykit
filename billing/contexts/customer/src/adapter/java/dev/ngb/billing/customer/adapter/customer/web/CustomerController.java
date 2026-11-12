@@ -6,10 +6,10 @@ import dev.ngb.billing.customer.application.customer.command.ManageCustomerUseCa
 import dev.ngb.billing.customer.application.customer.query.CustomerQueries;
 import dev.ngb.billing.customer.application.customer.query.CustomerView;
 import dev.ngb.billing.customer.domain.customer.Customer;
-import dev.ngb.billing.platform.api.actor.Actor;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.Actor;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.core.id.TenantSystemId;
@@ -79,7 +79,7 @@ public class CustomerController {
     /** Safe to retry: the same Idempotency-Key returns the same customer (201 for new, 200 for replay); the same key with a different body is a 409. */
     @PostMapping
     @RepeatableCreate
-    @RequiresPermission(Permission.CUSTOMER_WRITE)
+    @RequiresPermission(BillingPermissions.CUSTOMER_WRITE)
     public ResponseEntity<CustomerResponse> create(
             @RequestHeader("Idempotency-Key") String idempotencyKey,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
@@ -93,13 +93,13 @@ public class CustomerController {
     }
 
     @GetMapping
-    @RequiresPermission(Permission.CUSTOMER_READ)
+    @RequiresPermission(BillingPermissions.CUSTOMER_READ)
     public List<CustomerResponse> list() {
-        return queries.list(currentActor.get().tenantSystemId()).stream().map(CustomerResponse::ofView).toList();
+        return queries.list(currentActor.callerId()).stream().map(CustomerResponse::ofView).toList();
     }
 
     @GetMapping("/by-external-user/{externalUserId}")
-    @RequiresPermission(Permission.CUSTOMER_READ)
+    @RequiresPermission(BillingPermissions.CUSTOMER_READ)
     public CustomerResponse byExternalUser(@PathVariable String externalUserId, @RequestParam(required = false) String tenantSystemId) {
         TenantSystemId system = tenantSystemFor(currentActor.get(), tenantSystemId);
         if (system == null) {
@@ -109,39 +109,40 @@ public class CustomerController {
     }
 
     @GetMapping("/{id}")
-    @RequiresPermission(Permission.CUSTOMER_READ)
+    @RequiresPermission(BillingPermissions.CUSTOMER_READ)
     public CustomerResponse get(@PathVariable String id) {
-        return CustomerResponse.ofView(queries.get(CustomerId.of(id), currentActor.get().tenantSystemId()));
+        return CustomerResponse.ofView(queries.get(CustomerId.of(id), currentActor.callerId()));
     }
 
     @PutMapping("/{id}")
-    @RequiresPermission(Permission.CUSTOMER_WRITE)
+    @RequiresPermission(BillingPermissions.CUSTOMER_WRITE)
     public CustomerResponse update(
             @PathVariable String id,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             @RequestBody UpdateCustomerRequest request) {
         Actor actor = currentActor.get();
         return CustomerResponse.of(manage.update(
-                Audit.of(actor.auditName(), requestId), CustomerId.of(id), request.displayName(), request.email(), actor.tenantSystemId()));
+                Audit.of(actor.auditName(), requestId), CustomerId.of(id), request.displayName(), request.email(), currentActor.callerId()));
     }
 
     @PostMapping("/{id}/deactivate")
-    @RequiresPermission(Permission.CUSTOMER_WRITE)
+    @RequiresPermission(BillingPermissions.CUSTOMER_WRITE)
     public CustomerResponse deactivate(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         Actor actor = currentActor.get();
-        return CustomerResponse.of(manage.deactivate(Audit.of(actor.auditName(), requestId), CustomerId.of(id), actor.tenantSystemId()));
+        return CustomerResponse.of(manage.deactivate(Audit.of(actor.auditName(), requestId), CustomerId.of(id), currentActor.callerId()));
     }
 
     /**
      * A Tenant System always acts for itself and may not name another one; a Tenant User names the system (or
      * none, to create an unmapped customer).
      */
-    private static TenantSystemId tenantSystemFor(Actor actor, String requested) {
-        if (actor.tenantSystemId() != null) {
-            if (requested != null && !TenantSystemId.of(requested).equals(actor.tenantSystemId())) {
+    private TenantSystemId tenantSystemFor(Actor actor, String requested) {
+        TenantSystemId acting = currentActor.callerId();
+        if (acting != null) {
+            if (requested != null && !TenantSystemId.of(requested).equals(acting)) {
                 throw new AccessDeniedException("a tenant system can only act for itself");
             }
-            return actor.tenantSystemId();
+            return acting;
         }
         return requested == null ? null : TenantSystemId.of(requested);
     }

@@ -3,9 +3,9 @@ package dev.ngb.billing.boot.jobs;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.core.tenancy.TenantContext;
-import dev.ngb.billing.platform.application.tenant.query.TenantQueries;
-import dev.ngb.billing.platform.application.tenant.query.TenantView;
+import dev.ngb.billing.boot.replica.ReplicaTenants;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,11 +35,11 @@ public class TenantSweep {
     private static final Logger LOG = LoggerFactory.getLogger(TenantSweep.class);
 
     private final TenantContext tenantContext;
-    private final TenantQueries tenants;
+    private final ReplicaTenants tenants;
     private final int parallelism;
     private final Semaphore permits;
 
-    TenantSweep(TenantContext tenantContext, TenantQueries tenants, @Value("${billing.jobs.tenant-parallelism:1}") int parallelism) {
+    TenantSweep(TenantContext tenantContext, ReplicaTenants tenants, @Value("${billing.jobs.tenant-parallelism:1}") int parallelism) {
         this.tenantContext = tenantContext;
         this.tenants = tenants;
         this.parallelism = parallelism;
@@ -47,14 +47,14 @@ public class TenantSweep {
     }
 
     public void forEachActiveTenant(Consumer<TenantId> work) {
-        List<TenantView> active = tenantContext.callAs(RequestScope.platform(), tenants::list).stream().filter(TenantView::isActive).toList();
+        List<UUID> active = tenantContext.callAs(RequestScope.platform(), tenants::activeIds);
         if (parallelism <= 1) {
-            for (TenantView tenant : active) {
-                TenantId tenantId = new TenantId(tenant.id());
+            for (UUID tenant : active) {
+                TenantId tenantId = new TenantId(tenant);
                 try {
                     tenantContext.runAs(RequestScope.tenant(tenantId), () -> work.accept(tenantId));
                 } catch (RuntimeException failure) {
-                    LOG.error("background job failed for tenant {}", tenant.code(), failure);
+                    LOG.error("background job failed for tenant {}", tenant, failure);
                 }
             }
             return;
@@ -62,7 +62,7 @@ public class TenantSweep {
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             List<Callable<Void>> tasks = active.stream()
                     .<Callable<Void>>map(tenant -> () -> {
-                        runBounded(new TenantId(tenant.id()), tenant.code(), work);
+                        runBounded(new TenantId(tenant), tenant.toString(), work);
                         return null;
                     })
                     .toList();

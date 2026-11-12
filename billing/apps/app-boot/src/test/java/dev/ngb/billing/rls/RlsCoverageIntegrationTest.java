@@ -24,7 +24,7 @@ class RlsCoverageIntegrationTest {
      * Tables that carry a tenant_id but are not tenant-scoped rows: the hostname or Stripe account is resolved before
      * any tenant is known, and a run record is claimed outside a tenant-scoped transaction on purpose.
      */
-    private static final Set<String> PLATFORM_OWNED = Set.of("tenant_domains", "stripe_routes", "job_runs");
+    private static final Set<String> PLATFORM_OWNED = Set.of("tenant_domains", "stripe_routes", "job_runs", "app_entitlements");
 
     @Autowired OwnerDatabase owner;
 

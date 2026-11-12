@@ -3,25 +3,24 @@ package dev.ngb.billing.support;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.core.tenancy.TenantContext;
-import dev.ngb.billing.platform.application.tenant.command.CreateTenantUseCase;
-import dev.ngb.billing.platform.domain.tenant.Tenant;
-import java.util.UUID;
-import java.util.function.Supplier;
 import org.springframework.stereotype.Component;
 
-/** Test helpers for running work in a scope and creating throwaway tenants. */
+/**
+ * Test helpers for running work in a scope. A tenant is seeded straight into the replica
+ * ({@link ReplicaFixtures}); Billing no longer calls a tenant-creation use case.
+ */
 @Component
 public class ScopeTestSupport {
 
     private final TenantContext tenantContext;
-    private final CreateTenantUseCase createTenant;
+    private final ReplicaFixtures replica;
 
-    ScopeTestSupport(TenantContext tenantContext, CreateTenantUseCase createTenant) {
+    ScopeTestSupport(TenantContext tenantContext, ReplicaFixtures replica) {
         this.tenantContext = tenantContext;
-        this.createTenant = createTenant;
+        this.replica = replica;
     }
 
-    public <T> T inTenant(TenantId tenantId, Supplier<T> work) {
+    public <T> T inTenant(TenantId tenantId, java.util.function.Supplier<T> work) {
         return tenantContext.callAs(RequestScope.tenant(tenantId), work);
     }
 
@@ -33,12 +32,12 @@ public class ScopeTestSupport {
         tenantContext.runAs(RequestScope.platform(), work);
     }
 
-    public <T> T onPlatform(Supplier<T> work) {
+    public <T> T onPlatform(java.util.function.Supplier<T> work) {
         return tenantContext.callAs(RequestScope.platform(), work);
     }
 
-    public Tenant newTenant() {
-        String code = "t" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-        return onPlatform(() -> createTenant.execute(new CreateTenantUseCase.Command(code, "Tenant " + code, "tester", "req-1")));
+    /** A fresh active, entitled tenant in the replica. */
+    public ReplicaFixtures.TenantSeed newTenant() {
+        return replica.tenant();
     }
 }

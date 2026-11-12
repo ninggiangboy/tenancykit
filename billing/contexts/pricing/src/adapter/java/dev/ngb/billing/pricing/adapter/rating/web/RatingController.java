@@ -1,9 +1,9 @@
 package dev.ngb.billing.pricing.adapter.rating.web;
 
 import dev.ngb.billing.money.api.reservation.ReservationResult;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.pricing.application.rating.command.ChargeFromUsageUseCase;
 import dev.ngb.billing.pricing.application.rating.command.EstimateCostUseCase;
@@ -127,7 +127,7 @@ public class RatingController {
 
     /** A pure calculation: nothing is stored, and the same input is priced exactly as the real charge would be. */
     @PostMapping("/pricing/estimates")
-    @RequiresPermission(Permission.PRICING_READ)
+    @RequiresPermission(BillingPermissions.PRICING_READ)
     public EstimateResponse estimate(@RequestBody EstimateRequest request) {
         return EstimateResponse.of(estimates.estimate(new EstimateCostUseCase.Request(PricingPlanId.of(required(request.planId(), "planId")), request.version(), request.at(), measures(request.usage()))));
     }
@@ -135,7 +135,7 @@ public class RatingController {
     /** Holds the estimated cost on the wallet. 201 for a new reservation, 200 when the key replays one, 402 when the wallet cannot cover it. */
     @PostMapping("/pricing/reservations")
     @RepeatableCreate
-    @RequiresPermission(Permission.RESERVATION_MANAGE)
+    @RequiresPermission(BillingPermissions.RESERVATION_MANAGE)
     public ResponseEntity<ReserveResponse> reserveEstimate(@RequestHeader("Idempotency-Key") String key, @RequestBody ReserveRequest request) {
         ReserveFromEstimateUseCase.Result result = reserve.reserve(new ReserveFromEstimateUseCase.Command(
                 WalletId.of(required(request.walletId(), "walletId")), PricingPlanId.of(required(request.planId(), "planId")), request.version(), request.at(),
@@ -152,7 +152,7 @@ public class RatingController {
      */
     @PostMapping("/pricing/usage-charges")
     @RepeatableCreate(repeated = "The usage was already charged and that rating is returned, or there was nothing to charge")
-    @RequiresPermission(Permission.CHARGE_CREATE)
+    @RequiresPermission(BillingPermissions.CHARGE_CREATE)
     public ResponseEntity<RatingResponse> chargeUsage(@RequestBody ChargeUsageRequest request) {
         if (request.from() == null || request.to() == null) {
             throw new IllegalArgumentException("from and to are required");
@@ -169,7 +169,7 @@ public class RatingController {
     }
 
     @GetMapping("/pricing/usage-charges/{id}")
-    @RequiresPermission(Permission.PRICING_READ)
+    @RequiresPermission(BillingPermissions.PRICING_READ)
     public RatingResponse getRating(@PathVariable String id) {
         return RatingResponse.ofView(ratings.get(UUID.fromString(id), currentActor.caller()));
     }

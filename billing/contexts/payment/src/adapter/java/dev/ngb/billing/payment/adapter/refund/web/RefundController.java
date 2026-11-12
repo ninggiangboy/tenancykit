@@ -5,9 +5,9 @@ import dev.ngb.billing.payment.application.refund.query.RefundQueries;
 import dev.ngb.billing.payment.application.refund.query.RefundView;
 import dev.ngb.billing.payment.domain.payment.PaymentId;
 import dev.ngb.billing.payment.domain.refund.Refund;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.Currency;
@@ -65,7 +65,7 @@ public class RefundController {
      */
     @PostMapping("/payments/{id}/refunds")
     @RepeatableCreate
-    @RequiresPermission(Permission.REFUND_CREATE)
+    @RequiresPermission(BillingPermissions.REFUND_CREATE)
     public ResponseEntity<RefundResponse> requestRefund(
             @PathVariable String id, @RequestHeader("Idempotency-Key") String key,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody RefundRequest request) {
@@ -81,7 +81,7 @@ public class RefundController {
     }
 
     @GetMapping("/refunds/{id}")
-    @RequiresPermission(Permission.PAYMENT_READ)
+    @RequiresPermission(BillingPermissions.PAYMENT_READ)
     public RefundResponse getRefund(@PathVariable String id) {
         return RefundResponse.ofView(refundQueries.get(UUID.fromString(id), currentActor.caller()));
     }

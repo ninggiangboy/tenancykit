@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import dev.ngb.billing.Application;
 import dev.ngb.billing.support.PostgresContainerConfig;
+import dev.ngb.billing.support.ReplicaFixtures;
 import dev.ngb.billing.support.RepositoryPaths;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -37,13 +38,16 @@ class OpenApiContractTest {
     private static final String TENANT_CONTRACT = "contracts/openapi/billing-tenant-system.yaml";
 
     @Autowired MockMvc mvc;
+    @Autowired ReplicaFixtures replica;
     @Value("${billing.tenancy.base-domain}") String baseDomain;
 
     private final YAMLMapper yaml = YAMLMapper.builder().build();
 
     @Test
     void committedOpenApiDocumentMatchesTheGeneratedOne() throws Exception {
-        String generated = mvc.perform(get("/v3/api-docs.yaml").header("Host", "platform." + baseDomain))
+        // The API now answers on a tenant hostname; the platform host belongs to the Platform service.
+        String host = replica.tenant().host();
+        String generated = mvc.perform(get("/v3/api-docs.yaml").header("Host", host))
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         assertThat(generated).startsWith("openapi:");
         Path root = repositoryRoot();

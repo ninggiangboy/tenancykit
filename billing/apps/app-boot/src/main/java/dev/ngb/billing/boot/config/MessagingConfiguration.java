@@ -27,17 +27,28 @@ import tools.jackson.databind.json.JsonMapper;
 @Configuration(proxyBeanMethods = false)
 class MessagingConfiguration {
 
+    /**
+     * Billing produces to {@code billing.events} and consumes Platform's five state-transfer events from
+     * {@code platform.events} through {@code billing.platform-events}. The queue is declared here so every deployment
+     * gets it, and the replica's listener container is what actually reads it.
+     */
     @Bean
     MessagingProperties messagingProperties(
             EventTypeCatalog catalog,
             @Value("${suite.messaging.exchange:billing.events}") String exchange,
+            @Value("${suite.replica.queue:billing.platform-events}") String platformQueue,
+            @Value("${suite.replica.exchange:platform.events}") String platformExchange,
             @Value("${suite.messaging.relay.batch-size:50}") int batchSize,
             @Value("${suite.messaging.relay.max-attempts:10}") int maxAttempts,
             @Value("${suite.messaging.relay.backoff-base:PT10S}") Duration backoffBase,
             @Value("${suite.messaging.relay.backoff-cap:PT1H}") Duration backoffCap) {
         Map<String, String> exports = new LinkedHashMap<>();
         catalog.eventTypes().forEach(type -> exports.put(type, exchange));
-        return new MessagingProperties(exchange, exports, List.of(), new Relay(batchSize, maxAttempts, backoffBase, backoffCap));
+        List<MessagingProperties.QueueBinding> queues = List.of(new MessagingProperties.QueueBinding(
+                platformQueue,
+                platformExchange,
+                List.of("tenant.changed", "tenant-domain.changed", "tenant-system.changed", "user-access.changed", "entitlement.changed")));
+        return new MessagingProperties(exchange, exports, queues, new Relay(batchSize, maxAttempts, backoffBase, backoffCap));
     }
 
     @Bean

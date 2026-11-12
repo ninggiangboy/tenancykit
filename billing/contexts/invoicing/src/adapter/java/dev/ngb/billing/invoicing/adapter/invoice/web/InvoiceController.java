@@ -11,9 +11,9 @@ import dev.ngb.billing.invoicing.domain.invoice.Invoice;
 import dev.ngb.billing.invoicing.domain.invoice.InvoiceId;
 import dev.ngb.billing.invoicing.domain.invoice.InvoiceStatus;
 import dev.ngb.billing.money.api.charge.ChargeId;
-import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.actor.RequiresPermission;
+import dev.ngb.core.security.CurrentActor;
+import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
@@ -98,7 +98,7 @@ public class InvoiceController {
 
     /** Newest first. Pass the last {@code id} of a page as {@code before} for the next one. */
     @GetMapping("/invoices")
-    @RequiresPermission(Permission.INVOICE_READ)
+    @RequiresPermission(BillingPermissions.INVOICE_READ)
     public List<InvoiceResponse> invoices(
             @RequestParam(required = false) String customerId, @RequestParam(required = false) String walletId, @RequestParam(required = false) String status,
             @RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
@@ -108,7 +108,7 @@ public class InvoiceController {
     }
 
     @GetMapping("/invoices/{id}")
-    @RequiresPermission(Permission.INVOICE_READ)
+    @RequiresPermission(BillingPermissions.INVOICE_READ)
     public InvoiceDetailResponse invoice(@PathVariable String id) {
         return InvoiceDetailResponse.of(invoiceQueries.get(UUID.fromString(id), currentActor.caller()));
     }
@@ -119,7 +119,7 @@ public class InvoiceController {
      */
     @PostMapping("/invoices")
     @RepeatableCreate(repeated = "The charge already had an invoice; that invoice is returned")
-    @RequiresPermission(Permission.INVOICE_CREATE)
+    @RequiresPermission(BillingPermissions.INVOICE_CREATE)
     public ResponseEntity<InvoiceDetailResponse> invoiceCharge(
             @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody InvoiceChargeRequest request) {
         if (request.chargeId() == null) {
@@ -137,7 +137,7 @@ public class InvoiceController {
      */
     @PostMapping("/invoices/{id}/payments")
     @RepeatableCreate
-    @RequiresPermission(Permission.PAYMENT_CREATE)
+    @RequiresPermission(BillingPermissions.PAYMENT_CREATE)
     public ResponseEntity<PayInvoiceResponse> pay(
             @PathVariable String id, @RequestHeader("Idempotency-Key") String key, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         PayInvoiceUseCase.Result result = payInvoice.execute(new PayInvoiceUseCase.Command(InvoiceId.of(id), key, Audit.of(currentActor.get().auditName(), requestId),
@@ -150,7 +150,7 @@ public class InvoiceController {
 
     /** Cancels the request for payment. The wallet is not touched and a paid invoice cannot be voided (409). */
     @PostMapping("/invoices/{id}/void")
-    @RequiresPermission(Permission.INVOICE_MANAGE)
+    @RequiresPermission(BillingPermissions.INVOICE_MANAGE)
     public InvoiceDetailResponse voidInvoice(
             @PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody VoidRequest request) {
         Invoice voided = manageInvoice.voidInvoice(InvoiceId.of(id), request.reason(), Audit.of(currentActor.get().auditName(), requestId));
@@ -159,7 +159,7 @@ public class InvoiceController {
 
     /** Writes an open invoice off as unlikely to be paid. It can still be paid later. */
     @PostMapping("/invoices/{id}/uncollectible")
-    @RequiresPermission(Permission.INVOICE_MANAGE)
+    @RequiresPermission(BillingPermissions.INVOICE_MANAGE)
     public InvoiceDetailResponse markUncollectible(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         Invoice written = manageInvoice.markUncollectible(InvoiceId.of(id), Audit.of(currentActor.get().auditName(), requestId));
         return InvoiceDetailResponse.of(invoiceQueries.get(written.id().value(), currentActor.caller()));
