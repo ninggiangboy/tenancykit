@@ -1,0 +1,63 @@
+spring:
+  application:
+    name: platform
+  datasource:
+    url: ${PLATFORM_DB_URL:jdbc:postgresql://localhost:5432/platform}
+    username: ${PLATFORM_DB_USER:platform_app}
+    password: ${PLATFORM_DB_PASSWORD:platform}
+  flyway:
+    locations: classpath:db/migration
+    # Migrations run as the table owner; the application runs as platform_app.
+    url: ${PLATFORM_MIGRATION_DB_URL:${PLATFORM_DB_URL:jdbc:postgresql://localhost:5432/platform}}
+    user: ${PLATFORM_MIGRATION_DB_USER:platform}
+    password: ${PLATFORM_MIGRATION_DB_PASSWORD:platform}
+    placeholders:
+      appDbPassword: ${PLATFORM_DB_PASSWORD:platform}
+  rabbitmq:
+    host: ${PLATFORM_RABBITMQ_HOST:localhost}
+    port: ${PLATFORM_RABBITMQ_PORT:5672}
+    username: ${PLATFORM_RABBITMQ_USER:billing}
+    password: ${PLATFORM_RABBITMQ_PASSWORD:billing}
+    # The relay marks an outbox row only after waitForConfirmsOrDie: simple publisher confirms, not correlated.
+    publisher-confirm-type: simple
+
+platform:
+  tenancy:
+    # Platform Administration is <platform-hostname>; a Tenant is <tenant-code>.<base-domain>.
+    base-domain: ${PLATFORM_BASE_DOMAIN:localhost}
+    platform-hostname: ${PLATFORM_HOSTNAME:platform.localhost}
+  users:
+    # Keycloak's JWKS. Blank means only suite tokens are accepted, which is the state before users exist.
+    jwk-set-uri: ${PLATFORM_OIDC_JWK_SET_URI:}
+  tokens:
+    issuer: ${PLATFORM_TOKEN_ISSUER:http://localhost:8082}
+    # ES256 private key in PEM form. Blank generates an ephemeral key, for local development only.
+    signing-key: ${PLATFORM_TOKEN_SIGNING_KEY:}
+    previous-signing-key: ${PLATFORM_TOKEN_PREVIOUS_SIGNING_KEY:}
+  # Service clients of the suite: the secret is stored as its hex SHA-256, never in clear.
+  service-clients:
+    - id: ${PLATFORM_SERVICE_CLIENT_ID:billing}
+      secret-hash: ${PLATFORM_SERVICE_CLIENT_SECRET_HASH:}
+      scopes: [platform:replica:read]
+  outbox:
+    poll-delay: PT1S
+
+suite:
+  messaging:
+    # One topic exchange per producer. Platform exports the state-transfer events consumers replicate.
+    exchange: ${PLATFORM_EVENTS_EXCHANGE:platform.events}
+    relay:
+      batch-size: ${PLATFORM_OUTBOX_BROKER_BATCH_SIZE:50}
+      max-attempts: ${PLATFORM_OUTBOX_BROKER_MAX_ATTEMPTS:10}
+      backoff-base: PT10S
+      backoff-cap: PT1H
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true

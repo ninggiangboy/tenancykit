@@ -1,0 +1,24 @@
+name: platform
+
+on:
+  pull_request:
+    paths: ["platform/**", "core/**", "contracts/**", ".github/workflows/platform.yml"]
+  push:
+    branches: [main, dev]
+    paths: ["platform/**", "core/**", "contracts/**", ".github/workflows/platform.yml"]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+      # ubuntu-latest ships a Docker daemon, which Testcontainers uses for PostgreSQL and RabbitMQ.
+      - run: ./gradlew build

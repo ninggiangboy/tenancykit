@@ -66,14 +66,14 @@ Every use case writes the aggregate (with its incremented `version`) and the eve
 
 ## Todo
 
-- [ ] `platform/` build, conventions, CI workflow
-- [ ] Core string-based security types and interceptor
-- [ ] Tenancy and domain use cases with versions and events
-- [ ] Entitlement use cases and API
-- [ ] Token issuer, `/oauth/token`, JWKS, service clients
-- [ ] Snapshot API with cursor paging
-- [ ] Migrations, jOOQ schema, `JooqSchemaTest`
-- [ ] ArchUnit rules and fixtures
+- [x] `platform/` build, conventions, CI workflow
+- [x] Core string-based security types and interceptor
+- [x] Tenancy and domain use cases with versions and events
+- [x] Entitlement use cases and API
+- [x] Token issuer, `/oauth/token`, JWKS, service clients
+- [x] Snapshot API with cursor paging
+- [x] Migrations, jOOQ schema, `JooqSchemaTest`
+- [x] ArchUnit rules and fixtures
 
 ## Verification
 
