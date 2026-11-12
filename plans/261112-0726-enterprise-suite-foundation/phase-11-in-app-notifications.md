@@ -1,13 +1,15 @@
 ---
 phase: 11
 title: "In-app notifications"
-status: pending
+status: cancelled
 priority: P2
 effort: "2d"
 dependencies: [10]
 ---
 
 # Phase 11: In-app realtime notifications
+
+> **Cancelled on 2026-11-12.** The Notification Hub is dropped from the suite, so this phase is not built. Webhooks stay in Billing with their `Billing-*` headers. The text below is kept only as a record of what was planned.
 
 ## Goal
 

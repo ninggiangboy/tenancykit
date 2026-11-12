@@ -1,13 +1,15 @@
 ---
 phase: 10
 title: "Email and templates"
-status: pending
+status: cancelled
 priority: P1
 effort: "3d"
 dependencies: [9]
 ---
 
 # Phase 10: Email with per-tenant templates
+
+> **Cancelled on 2026-11-12.** The Notification Hub is dropped from the suite, so this phase is not built. Webhooks stay in Billing with their `Billing-*` headers. The text below is kept only as a record of what was planned.
 
 ## Goal
 

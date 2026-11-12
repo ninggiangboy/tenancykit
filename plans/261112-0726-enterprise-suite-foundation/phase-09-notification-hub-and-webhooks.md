@@ -1,13 +1,15 @@
 ---
 phase: 9
 title: "Notification Hub and webhook move"
-status: pending
+status: cancelled
 priority: P1
 effort: "4d"
 dependencies: [7, 8]
 ---
 
 # Phase 9: Notification Hub skeleton and the webhook move
+
+> **Cancelled on 2026-11-12.** The Notification Hub is dropped from the suite, so this phase is not built. Webhooks stay in Billing with their `Billing-*` headers. The text below is kept only as a record of what was planned.
 
 ## Goal
 

@@ -1,9 +1,9 @@
 ---
-title: "Enterprise suite foundation: Platform service, RabbitMQ, Notification Hub"
-description: "Turn the repo into the foundation of a multi-tenant SaaS suite: extract Platform from Billing, add RabbitMQ and a Notification Hub."
+title: "Enterprise suite foundation: Platform service and RabbitMQ"
+description: "Turn the repo into the foundation of a multi-tenant SaaS suite: extract Platform from Billing and connect the services through RabbitMQ."
 status: pending
 priority: P1
-effort: 40d
+effort: 29d
 branch: dev
 tags: [refactor, backend, auth, infra, api, database]
 blockedBy: []
@@ -15,33 +15,33 @@ created: 2026-11-12
 
 ## Overview
 
-The repo stops being "Billing plus a sample tenant" and becomes the foundation of a multi-tenant SaaS suite (learning/portfolio goal). Platform (tenant, domain, user, centralized RBAC, app entitlement, machine credentials and suite tokens) is extracted from `billing/contexts/platform` into its own deployable `platform/` build. Events cross systems through RabbitMQ. A new `notification/` build (Notification Hub) takes over outbound webhooks from Billing and adds email with templates and in-app realtime notifications. Billing becomes one app of the suite and keeps local replicas of the Platform data it needs.
+The repo stops being "Billing plus a sample tenant" and becomes the foundation of a multi-tenant SaaS suite (learning/portfolio goal). Platform (tenant, domain, user, centralized RBAC, app entitlement, machine credentials and suite tokens) is extracted from `billing/contexts/platform` into its own deployable `platform/` build. Events cross systems through RabbitMQ. Billing becomes one app of the suite and keeps local replicas of the Platform data it needs; it keeps sending its own outbound webhooks.
+
+**Scope change, 2026-11-12:** the Notification Hub (webhook move, email with templates, in-app notifications) is dropped. Phases 9, 10 and 11 are cancelled, phases 12-14 are reduced, and the Hub's contracts, audience and catalog were removed from `dev`. The Hub mentions in the Done phases 1-8 are left as the record of what was done at the time.
 
 Source: `/ak-advise` session of 2026-11-12. Preview: [suite preview](../reports/advise-261112-1400-enterprise-suite-pivot-preview.html).
 
 ## Done means
 
-- `docker compose up` runs Keycloak, RabbitMQ, Platform, Billing and Notification Hub, each service with its own database.
-- Creating a tenant in Platform makes its replica appear in Billing and the Hub (integration tests per service and the suite smoke script).
+- `docker compose up` runs Keycloak, RabbitMQ, Platform, Billing and the sample tenant, each service with its own database.
+- Creating a tenant in Platform makes its replica appear in Billing (integration tests per service and the suite smoke script).
 - Platform exposes a snapshot API; the shared replica consumer in `core/` rebuilds a replica from zero.
 - Billing has no tenant, user or role business logic: `billing/contexts/platform` is deleted, the identity tables and the bearer-secret path are gone, cross-cutting code lives in `core/`.
-- `tenant/` calls Billing with a Platform-issued JWT and verifies webhooks from the Hub.
-- `invoice.created` produces one email (Mailpit) and one in-app notification.
+- `tenant/` calls Billing with a Platform-issued JWT and still verifies Billing's webhooks.
 - ArchUnit, Gradle and database-level checks block any service from reaching another service's database.
 - Docs describe the suite model.
 
 ## Out of scope
 
-Business apps (CRM, HR...), charging tenants for suite use, SMS or push, payment providers other than Stripe, custom domains, an API gateway with logic, CDC or event sourcing, migrating existing data, the Suite Console UI (separate follow-up plan, see phase 14).
+Business apps (CRM, HR...), a Notification Hub or any email, in-app, SMS or push channel, moving webhooks out of Billing, charging tenants for suite use, payment providers other than Stripe, custom domains, an API gateway with logic, CDC or event sourcing, migrating existing data, the Suite Console UI (separate follow-up plan, see phase 14).
 
 ## Constraints
 
 - Keycloak authenticates only; Platform authorizes; apps only enforce.
 - No shared database. Shared code lives only in `core/`; contracts live in `contracts/`.
 - Keep the conventions: `api`/`domain`/`application`/`adapter` source sets, jOOQ with committed generated code, ArchUnit with arch-fixtures, `UnitOfWork`.
-- RabbitMQ: one topic exchange per producer (`platform.events`, `billing.events`), one queue per consuming app with a dead-letter exchange.
+- RabbitMQ: one topic exchange per producer (`platform.events`, `billing.events`), one queue per consuming app with a dead-letter exchange. `billing.events` has no consumer for now.
 - Replicated events carry a monotonic `version`; consumers drop older versions.
-- Email and in-app go through a `notification.requested` command sent by the owning app; webhooks are the Hub forwarding public events.
 - Every phase merges into `dev` on its own with every build green.
 
 ## Phases
@@ -56,12 +56,12 @@ Business apps (CRM, HR...), charging tenants for suite use, SMS or push, payment
 | 6 | [Platform: tenant systems and M2M tokens](./phase-06-platform-tenant-systems-and-tokens.md) | 3d | 5 | Done |
 | 7 | [Shared replica and snapshot rebuild](./phase-07-shared-replica.md) | 3d | 4, 5, 6 | Done |
 | 8 | [Billing cutover](./phase-08-billing-cutover.md) | 4d | 7 | Done |
-| 9 | [Notification Hub and webhook move](./phase-09-notification-hub-and-webhooks.md) | 4d | 7, 8 | Pending |
-| 10 | [Email and templates](./phase-10-email-and-templates.md) | 3d | 9 | Pending |
-| 11 | [In-app notifications](./phase-11-in-app-notifications.md) | 2d | 10 | Pending |
-| 12 | [Tenant System migration](./phase-12-tenant-system-migration.md) | 2d | 6, 9 | Pending |
-| 13 | [Suite runtime and isolation](./phase-13-suite-runtime-and-isolation.md) | 3d | 4-12 | Pending |
-| 14 | [Docs and plan cleanup](./phase-14-docs-and-plan-cleanup.md) | 1d | 1-13 | Pending |
+| 9 | [Notification Hub and webhook move](./phase-09-notification-hub-and-webhooks.md) | - | - | Cancelled |
+| 10 | [Email and templates](./phase-10-email-and-templates.md) | - | - | Cancelled |
+| 11 | [In-app notifications](./phase-11-in-app-notifications.md) | - | - | Cancelled |
+| 12 | [Tenant System migration](./phase-12-tenant-system-migration.md) | 1d | 6 | Pending |
+| 13 | [Suite runtime and isolation](./phase-13-suite-runtime-and-isolation.md) | 2.5d | 4-8, 12 | Pending |
+| 14 | [Docs and plan cleanup](./phase-14-docs-and-plan-cleanup.md) | 0.5d | 1-8, 12, 13 | Pending |
 
 ## Cross-plan dependencies
 
@@ -72,4 +72,4 @@ Business apps (CRM, HR...), charging tenants for suite use, SMS or push, payment
 
 ## Key decisions carried in
 
-Central RBAC with per-app permission catalogs; suite tokens signed by Platform (service clients and tenant systems); state-transfer `*.changed` events for replicated data; per-service replica tables named as in Billing today (`tenants`, `tenant_domains`, `tenant_systems`) so existing foreign keys and RLS stay.
+Central RBAC with per-app permission catalogs (`billing`, `platform`); suite tokens signed by Platform (service clients and tenant systems); state-transfer `*.changed` events for replicated data; per-service replica tables named as in Billing today (`tenants`, `tenant_domains`, `tenant_systems`) so existing foreign keys and RLS stay.
