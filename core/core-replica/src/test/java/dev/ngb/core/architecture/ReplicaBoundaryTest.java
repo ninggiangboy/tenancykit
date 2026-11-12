@@ -17,7 +17,7 @@ class ReplicaBoundaryTest {
     static final ArchRule replicaDoesNotDependOnAService = noClasses()
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("dev.ngb.billing..", "dev.ngb.tenant..", "dev.ngb.platform..", "dev.ngb.notification..")
+            .resideInAnyPackage("dev.ngb.billing..", "dev.ngb.tenant..", "dev.ngb.platform..")
             .because("core-replica is shared by every service, so no service may leak into it");
 
     @ArchTest

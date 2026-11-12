@@ -5,8 +5,8 @@ a **command** (a request one app sends to one owner); the transport is the same.
 
 ## Envelope
 
-The AMQP body is UTF-8 JSON and is exactly the document a tenant system would receive as a webhook, so the
-Notification Hub can forward a producer's bytes without re-serialising them:
+The AMQP body is UTF-8 JSON and is exactly the document a tenant system would receive as a webhook, so a
+consumer can forward a producer's bytes without re-serialising them:
 
 ```json
 {
@@ -57,9 +57,8 @@ version guard drops any the snapshot already covered. Platform never hard-delete
 
 | Exchange (topic, durable) | Producer | Routing key | Queues (one per consuming app) |
 |---|---|---|---|
-| `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events`, `notification.platform-events` |
-| `billing.events` | Billing | event type | `notification.billing-events` |
-| `notification.requests` | any app | `notification.requested` | `notification.requests` |
+| `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events` |
+| `billing.events` | Billing | event type | none yet; an app that wants Billing's public events declares its own queue |
 
 Each queue is durable, bound to its exchange by the event types the consumer accepts, and declares
 `x-dead-letter-exchange: suite.dlx`. The matching `<queue>.dlq` is bound to `suite.dlx` by the queue name. Consumers

@@ -24,10 +24,7 @@ public final class BillingPermissions {
     /** Corrects the ledger. Administrators only: never granted to a Tenant System. */
     public static final String LEDGER_REVERSE = "billing:ledger:reverse";
 
-    /**
-     * Webhooks are Billing's until the Notification Hub takes them over (phase 9 of the suite plan), so Billing
-     * enforces and namespaces these two codes for now.
-     */
+    /** Webhooks are Billing's, so Billing enforces and namespaces these two codes. */
     public static final String WEBHOOK_READ = "billing:webhook:read";
     public static final String WEBHOOK_MANAGE = "billing:webhook:manage";
 

@@ -22,7 +22,7 @@ Tenant System uses the credential id and secret issued by `platform:credential:m
 |---|---|
 | `iss` | Platform's issuer URL. |
 | `sub` | `tenant-system/<id>` or `service/<client>`. |
-| `aud` | Exactly one app code (`billing`, `notification`, `platform`). |
+| `aud` | Exactly one app code (`billing`, `platform`). |
 | `exp`, `iat` | Ten minutes of life, issued now. A consumer tolerates at most 30 seconds of clock skew. |
 | `jti` | Unique per token, for logging. |
 | `scope` | Space-separated permission codes, only those valid for the audience app. |
@@ -53,7 +53,7 @@ secret. Requesting `audience=billing` yields, decoded:
 }
 ```
 
-The credential carried `billing:*` and `notification:*` codes; only the requested audience's codes reach `scope`.
+The credential carried `billing:*` and `platform:*` codes; only the requested audience's codes reach `scope`.
 The `scope` is ordered, so two answers with the same grant are byte-identical.
 
 ## Rate limiting and revocation

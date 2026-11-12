@@ -73,7 +73,7 @@ class TenantSystemTokenIntegrationTest {
     void aTokenRequestedForAnotherAudienceCarriesNoScopesFromBilling() throws Exception {
         Setup setup = setup(Set.of("billing:invoice:read"));
 
-        Jwt jwt = decode(accessToken(setup.issued().plaintextKey(), "notification"));
+        Jwt jwt = decode(accessToken(setup.issued().plaintextKey(), "platform"));
 
         assertThat(jwt.getClaimAsString("scope")).isEmpty();
     }

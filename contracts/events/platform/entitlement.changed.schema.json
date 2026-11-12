@@ -19,8 +19,7 @@
     "app_code": {
       "type": "string",
       "enum": [
-        "billing",
-        "notification"
+        "billing"
       ]
     },
     "enabled": {

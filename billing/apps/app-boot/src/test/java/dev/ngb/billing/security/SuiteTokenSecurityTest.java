@@ -56,7 +56,7 @@ class SuiteTokenSecurityTest {
         String foreign = dev.ngb.billing.support.TestTokenFactory.tokenForOtherAudience(subject);
 
         assertThat(world.status(HttpMethod.GET, account.host(), foreign, "/api/v1/customers", null))
-                .as("a notification-audience token is not a billing token")
+                .as("a token minted for another audience is not a billing token")
                 .isEqualTo(401);
     }
 

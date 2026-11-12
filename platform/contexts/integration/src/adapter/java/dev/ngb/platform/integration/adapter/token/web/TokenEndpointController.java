@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 class TokenEndpointController {
 
-    private static final Set<String> AUDIENCES = Set.of("platform", "billing", "notification");
+    private static final Set<String> AUDIENCES = Set.of("platform", "billing");
     private static final String RETRY_AFTER = "1";
 
     private final IssueTokenUseCase tokens;

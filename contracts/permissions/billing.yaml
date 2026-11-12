@@ -51,12 +51,12 @@
   grantable_to_tenant_system: false
 
 - code: billing:webhook:read
-  description: Read webhook endpoints and the delivery history. Moves to the Notification Hub with webhooks.
+  description: Read webhook endpoints and the delivery history.
   scopes: [tenant]
   grantable_to_tenant_system: true
 
 - code: billing:webhook:manage
-  description: Create, update, disable and rotate the secret of a webhook endpoint; resend a delivery. Moves to the Notification Hub with webhooks.
+  description: Create, update, disable and rotate the secret of a webhook endpoint; resend a delivery.
   scopes: [tenant]
   grantable_to_tenant_system: true
 

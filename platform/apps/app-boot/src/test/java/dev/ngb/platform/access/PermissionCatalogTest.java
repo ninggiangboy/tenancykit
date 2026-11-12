@@ -16,7 +16,7 @@ class PermissionCatalogTest {
     void everyAppContributesItsCodes() {
         assertThat(catalog.find("platform:tenant:create")).isPresent();
         assertThat(catalog.find("billing:invoice:read")).isPresent();
-        assertThat(catalog.find("notification:webhook:manage")).isPresent();
+        assertThat(catalog.find("billing:webhook:manage")).isPresent();
         assertThat(catalog.find("no:such:code")).isEmpty();
     }
 

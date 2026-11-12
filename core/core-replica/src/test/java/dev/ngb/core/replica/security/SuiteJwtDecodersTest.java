@@ -47,16 +47,16 @@ class SuiteJwtDecodersTest {
     void aTokenWithAnotherAudienceFailsTheAudienceValidator() throws Exception {
         // The decoder cannot verify a signature without a JWKS, so this checks the audience rule itself through the
         // public @Jwt shape the validator sees.
-        Jwt forNotification = Jwt.withTokenValue("token")
+        Jwt forPlatform = Jwt.withTokenValue("token")
                 .header("alg", "ES256")
                 .issuer("http://platform.test")
                 .subject("tenant-system/" + UUID.randomUUID())
-                .audience(List.of("notification"))
+                .audience(List.of("platform"))
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(60))
                 .build();
 
-        assertThat(forNotification.getAudience()).doesNotContain("billing");
+        assertThat(forPlatform.getAudience()).doesNotContain("billing");
     }
 
     @Test

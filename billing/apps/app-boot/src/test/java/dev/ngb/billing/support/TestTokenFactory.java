@@ -59,7 +59,7 @@ public final class TestTokenFactory {
 
     /** A token whose audience is another app, to prove Billing refuses it. */
     public static String tokenForOtherAudience(String subject) {
-        return sign(USER_ISSUER, subject, "notification", Map.of());
+        return sign(USER_ISSUER, subject, "platform", Map.of());
     }
 
     private static String sign(String issuer, String subject, String audience, Map<String, Object> extra) {
