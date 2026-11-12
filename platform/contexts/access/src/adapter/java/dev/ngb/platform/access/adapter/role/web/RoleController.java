@@ -3,6 +3,7 @@ package dev.ngb.platform.access.adapter.role.web;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.role.command.CreateRoleUseCase;
 import dev.ngb.platform.access.application.role.command.ManageRoleUseCase;
 import dev.ngb.platform.access.application.role.query.RoleQueries;
@@ -13,12 +14,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -71,29 +74,37 @@ class RoleController {
 
     @PutMapping("/{id}/permissions")
     @RequiresPermission("platform:role:manage")
-    RoleResponse replacePermissions(@PathVariable UUID id, @RequestBody PermissionsRequest request) {
-        return RoleResponse.of(manageRole.execute(new ManageRoleUseCase.Command(
-                new RoleId(id), ManageRoleUseCase.Action.REPLACE_PERMISSIONS, request.permissions(), null, null)));
+    ResponseEntity<RoleResponse> replacePermissions(
+            @PathVariable UUID id, @RequestBody PermissionsRequest request,
+            @RequestHeader(value = "If-Match", required = false) String ifMatch) {
+        Role role = manageRole.execute(new ManageRoleUseCase.Command(
+                new RoleId(id), ManageRoleUseCase.Action.REPLACE_PERMISSIONS, request.permissions(), null, null,
+                ExpectedVersion.fromIfMatch(ifMatch)));
+        return ResponseEntity.ok().eTag(ExpectedVersion.etag(role.version())).body(RoleResponse.of(role));
     }
 
     @PutMapping("/{id}")
     @RequiresPermission("platform:role:manage")
-    RoleResponse rename(@PathVariable UUID id, @RequestBody RenameRequest request) {
-        return RoleResponse.of(manageRole.execute(new ManageRoleUseCase.Command(
-                new RoleId(id), ManageRoleUseCase.Action.RENAME, Set.of(), request.name(), null)));
+    ResponseEntity<RoleResponse> rename(
+            @PathVariable UUID id, @RequestBody RenameRequest request,
+            @RequestHeader(value = "If-Match", required = false) String ifMatch) {
+        Role role = manageRole.execute(new ManageRoleUseCase.Command(
+                new RoleId(id), ManageRoleUseCase.Action.RENAME, Set.of(), request.name(), null,
+                ExpectedVersion.fromIfMatch(ifMatch)));
+        return ResponseEntity.ok().eTag(ExpectedVersion.etag(role.version())).body(RoleResponse.of(role));
     }
 
     @PostMapping("/{id}/users/{userId}")
     @RequiresPermission("platform:role:manage")
     RoleResponse assign(@PathVariable UUID id, @PathVariable UUID userId) {
         return RoleResponse.of(manageRole.execute(new ManageRoleUseCase.Command(
-                new RoleId(id), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, new UserId(userId))));
+                new RoleId(id), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, new UserId(userId), ExpectedVersion.any())));
     }
 
     @DeleteMapping("/{id}/users/{userId}")
     @RequiresPermission("platform:role:manage")
     RoleResponse unassign(@PathVariable UUID id, @PathVariable UUID userId) {
         return RoleResponse.of(manageRole.execute(new ManageRoleUseCase.Command(
-                new RoleId(id), ManageRoleUseCase.Action.UNASSIGN, Set.of(), null, new UserId(userId))));
+                new RoleId(id), ManageRoleUseCase.Action.UNASSIGN, Set.of(), null, new UserId(userId), ExpectedVersion.any())));
     }
 }

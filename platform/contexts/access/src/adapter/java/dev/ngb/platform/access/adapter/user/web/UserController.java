@@ -3,6 +3,7 @@ package dev.ngb.platform.access.adapter.user.web;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.user.command.CreateUserUseCase;
 import dev.ngb.platform.access.application.user.command.ManageUserPermissionsUseCase;
 import dev.ngb.platform.access.application.user.command.ManageUserUseCase;
@@ -12,12 +13,14 @@ import dev.ngb.platform.access.domain.user.UserId;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -72,14 +75,22 @@ class UserController {
 
     @PatchMapping("/{id}")
     @RequiresPermission("platform:user:manage")
-    UserResponse update(@PathVariable UUID id, @RequestBody UpdateRequest request) {
-        return UserResponse.of(manageUser.execute(new ManageUserUseCase.Command(
-                new UserId(id), ManageUserUseCase.Action.valueOf(request.action()), request.name())));
+    ResponseEntity<UserResponse> update(
+            @PathVariable UUID id, @RequestBody UpdateRequest request,
+            @RequestHeader(value = "If-Match", required = false) String ifMatch) {
+        User user = manageUser.execute(new ManageUserUseCase.Command(
+                new UserId(id), ManageUserUseCase.Action.valueOf(request.action()), request.name(),
+                ExpectedVersion.fromIfMatch(ifMatch)));
+        return ResponseEntity.ok().eTag(ExpectedVersion.etag(user.version())).body(UserResponse.of(user));
     }
 
     @PutMapping("/{id}/permissions/{code}")
     @RequiresPermission("platform:user:manage")
-    UserResponse setPermission(@PathVariable UUID id, @PathVariable String code, @RequestParam boolean grant) {
-        return UserResponse.of(managePermissions.execute(new ManageUserPermissionsUseCase.Command(new UserId(id), code, grant)));
+    ResponseEntity<UserResponse> setPermission(
+            @PathVariable UUID id, @PathVariable String code, @RequestParam boolean grant,
+            @RequestHeader(value = "If-Match", required = false) String ifMatch) {
+        User user = managePermissions.execute(new ManageUserPermissionsUseCase.Command(
+                new UserId(id), code, grant, ExpectedVersion.fromIfMatch(ifMatch)));
+        return ResponseEntity.ok().eTag(ExpectedVersion.etag(user.version())).body(UserResponse.of(user));
     }
 }

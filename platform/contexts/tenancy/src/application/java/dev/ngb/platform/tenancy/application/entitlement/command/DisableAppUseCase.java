@@ -7,6 +7,7 @@ import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.tenancy.application.entitlement.exception.UnknownAppException;
 import dev.ngb.platform.tenancy.application.entitlement.port.AppCatalog;
 import dev.ngb.platform.tenancy.application.entitlement.port.AppEntitlementRepository;
@@ -19,7 +20,7 @@ import java.time.Instant;
 /** Disables one app of the suite for one Tenant. Disabling twice is a no-op that publishes nothing. */
 public class DisableAppUseCase {
 
-    public record Command(TenantId tenantId, String appCode, String actor, String requestId) {}
+    public record Command(TenantId tenantId, String appCode, String actor, String requestId, ExpectedVersion expected) {}
 
     private final UnitOfWork unitOfWork;
     private final TenantRepository tenants;
@@ -51,7 +52,7 @@ public class DisableAppUseCase {
             }
             Instant now = clock.now();
             EntitlementRows.Locked locked = EntitlementRows.lockOrInsert(
-                    entitlements, AppEntitlement.disable(command.tenantId(), command.appCode(), now));
+                    entitlements, AppEntitlement.disable(command.tenantId(), command.appCode(), now), command.expected());
             AppEntitlement entitlement = locked.entitlement();
             if (!locked.inserted() && !entitlement.setEnabled(false, now)) {
                 return entitlement;

@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import dev.ngb.core.audit.Audit;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.core.tenancy.TenantContext;
@@ -82,7 +83,7 @@ class TenantSystemTokenIntegrationTest {
     void aDisabledTenantSystemGets401() throws Exception {
         Setup setup = setup(Set.of("billing:invoice:read"));
         inTenant(setup.tenantId(), () -> systems.execute(
-                CALLER, new ManageTenantSystemUseCase.Command(setup.system().id(), ManageTenantSystemUseCase.Action.DISABLE, null)));
+                CALLER, new ManageTenantSystemUseCase.Command(setup.system().id(), ManageTenantSystemUseCase.Action.DISABLE, null, ExpectedVersion.any())));
 
         assertThat(httpStatus(setup.issued().plaintextKey())).isEqualTo(401);
     }

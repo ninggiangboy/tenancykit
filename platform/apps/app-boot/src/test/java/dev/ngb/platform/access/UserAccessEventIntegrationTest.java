@@ -3,6 +3,7 @@ package dev.ngb.platform.access;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.core.tenancy.TenantContext;
@@ -61,9 +62,9 @@ class UserAccessEventIntegrationTest {
                 tenant.id(), PermissionScope.TENANT, "Reader", Set.of("billing:invoice:read"))));
 
         onPlatform(() -> manageRole.execute(new ManageRoleUseCase.Command(
-                role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, first.id())));
+                role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, first.id(), ExpectedVersion.any())));
         onPlatform(() -> manageRole.execute(new ManageRoleUseCase.Command(
-                role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, second.id())));
+                role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, second.id(), ExpectedVersion.any())));
 
         assertThat(events(first.id().value())).isNotEmpty().last().satisfies(payload -> {
             assertThat(payload.get("version").asLong()).isGreaterThan(1);
@@ -72,7 +73,7 @@ class UserAccessEventIntegrationTest {
 
         onPlatform(() -> manageRole.execute(new ManageRoleUseCase.Command(
                 role.id(), ManageRoleUseCase.Action.REPLACE_PERMISSIONS,
-                Set.of("billing:invoice:read", "billing:wallet:read"), null, null)));
+                Set.of("billing:invoice:read", "billing:wallet:read"), null, null, ExpectedVersion.any())));
 
         assertThat(events(first.id().value())).last().satisfies(payload ->
                 assertThat(permissions(payload)).containsExactly("billing:invoice:read", "billing:wallet:read"));
@@ -89,7 +90,7 @@ class UserAccessEventIntegrationTest {
         User user = newUser(tenant);
 
         onPlatform(() -> managePermissions.execute(new ManageUserPermissionsUseCase.Command(
-                user.id(), "billing:wallet:read", true)));
+                user.id(), "billing:wallet:read", true, ExpectedVersion.any())));
 
         assertThat(events(user.id().value())).last().satisfies(payload ->
                 assertThat(permissions(payload)).containsExactly("billing:wallet:read"));

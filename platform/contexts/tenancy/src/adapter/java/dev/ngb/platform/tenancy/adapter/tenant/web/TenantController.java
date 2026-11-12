@@ -3,6 +3,7 @@ package dev.ngb.platform.tenancy.adapter.tenant.web;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.tenancy.application.tenant.command.AddTenantDomainUseCase;
 import dev.ngb.platform.tenancy.application.tenant.command.DeactivateTenantUseCase;
 import dev.ngb.platform.tenancy.application.tenant.command.RenameTenantUseCase;
@@ -11,6 +12,7 @@ import dev.ngb.platform.tenancy.domain.tenant.Tenant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -64,18 +66,24 @@ class TenantController {
 
     @PutMapping("/{id}")
     @RequiresPermission("platform:tenant:create")
-    TenantResponse rename(
+    ResponseEntity<TenantResponse> rename(
             @PathVariable UUID id, @RequestBody RenameRequest request,
+            @RequestHeader(value = "If-Match", required = false) String ifMatch,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        return TenantResponse.of(renameTenant.execute(
-                new RenameTenantUseCase.Command(new TenantId(id), request.name(), currentActor.get().auditName(), requestId)));
+        Tenant tenant = renameTenant.execute(new RenameTenantUseCase.Command(
+                new TenantId(id), request.name(), currentActor.get().auditName(), requestId, ExpectedVersion.fromIfMatch(ifMatch)));
+        return conditional(tenant, TenantResponse.of(tenant));
     }
 
     @PostMapping("/{id}/deactivate")
     @RequiresPermission("platform:tenant:deactivate")
-    TenantResponse deactivate(@PathVariable UUID id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        return TenantResponse.of(deactivateTenant.execute(
-                new DeactivateTenantUseCase.Command(new TenantId(id), currentActor.get().auditName(), requestId)));
+    ResponseEntity<TenantResponse> deactivate(
+            @PathVariable UUID id,
+            @RequestHeader(value = "If-Match", required = false) String ifMatch,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+        Tenant tenant = deactivateTenant.execute(new DeactivateTenantUseCase.Command(
+                new TenantId(id), currentActor.get().auditName(), requestId, ExpectedVersion.fromIfMatch(ifMatch)));
+        return conditional(tenant, TenantResponse.of(tenant));
     }
 
     @PostMapping("/{id}/domains")
@@ -86,5 +94,9 @@ class TenantController {
             @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         addDomain.execute(new AddTenantDomainUseCase.Command(
                 new TenantId(id), request.hostname(), currentActor.get().auditName(), requestId));
+    }
+
+    private static ResponseEntity<TenantResponse> conditional(Tenant tenant, TenantResponse body) {
+        return ResponseEntity.ok().eTag(ExpectedVersion.etag(tenant.version())).body(body);
     }
 }

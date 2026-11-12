@@ -3,6 +3,7 @@ package dev.ngb.platform.access;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.core.tenancy.TenantContext;
@@ -70,12 +71,12 @@ class RolePermissionRaceIntegrationTest {
 
     private Role assign(Role role, User user) {
         return manageRole.execute(new ManageRoleUseCase.Command(
-                role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, user.id()));
+                role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, user.id(), ExpectedVersion.any()));
     }
 
     private Role replacePermissions(Role role, Set<String> permissions) {
         return manageRole.execute(new ManageRoleUseCase.Command(
-                role.id(), ManageRoleUseCase.Action.REPLACE_PERMISSIONS, permissions, null, null));
+                role.id(), ManageRoleUseCase.Action.REPLACE_PERMISSIONS, permissions, null, null, ExpectedVersion.any()));
     }
 
     private Tenant newTenant() {

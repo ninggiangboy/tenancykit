@@ -3,6 +3,7 @@ package dev.ngb.platform.tenancy;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.core.tenancy.RequestScope;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.platform.Application;
 import dev.ngb.platform.support.OwnerDatabase;
@@ -42,7 +43,7 @@ class TenancyEventIntegrationTest {
                 assertThat(payload.get("version").asLong()).isEqualTo(1));
         assertThat(payloads("tenant-domain.changed", tenant.id().value())).hasSize(1);
 
-        onPlatform(() -> renameTenant.execute(new RenameTenantUseCase.Command(tenant.id(), "Acme Holdings", "user/tester", "req-2")));
+        onPlatform(() -> renameTenant.execute(new RenameTenantUseCase.Command(tenant.id(), "Acme Holdings", "user/tester", "req-2", ExpectedVersion.any())));
         assertThat(payloads("tenant.changed", tenant.id().value()))
                 .hasSize(2)
                 .last()
@@ -51,7 +52,7 @@ class TenancyEventIntegrationTest {
                     assertThat(payload.get("name").asString()).isEqualTo("Acme Holdings");
                 });
 
-        onPlatform(() -> deactivateTenant.execute(new DeactivateTenantUseCase.Command(tenant.id(), "user/tester", "req-3")));
+        onPlatform(() -> deactivateTenant.execute(new DeactivateTenantUseCase.Command(tenant.id(), "user/tester", "req-3", ExpectedVersion.any())));
         assertThat(payloads("tenant.changed", tenant.id().value()))
                 .hasSize(3)
                 .last()
@@ -61,7 +62,7 @@ class TenancyEventIntegrationTest {
                 });
 
         // A second deactivation changes nothing and publishes nothing.
-        onPlatform(() -> deactivateTenant.execute(new DeactivateTenantUseCase.Command(tenant.id(), "user/tester", "req-4")));
+        onPlatform(() -> deactivateTenant.execute(new DeactivateTenantUseCase.Command(tenant.id(), "user/tester", "req-4", ExpectedVersion.any())));
         assertThat(payloads("tenant.changed", tenant.id().value())).hasSize(3);
     }
 
@@ -70,7 +71,7 @@ class TenancyEventIntegrationTest {
         Tenant tenant = onPlatform(() -> createTenant.execute(new CreateTenantUseCase.Command(
                 "ent" + suffix(), "Entitled", "user/tester", "req-1")));
 
-        onPlatform(() -> enableApp.execute(new EnableAppUseCase.Command(tenant.id(), "billing", "user/tester", "req-2")));
+        onPlatform(() -> enableApp.execute(new EnableAppUseCase.Command(tenant.id(), "billing", "user/tester", "req-2", ExpectedVersion.any())));
 
         List<tools.jackson.databind.JsonNode> published = payloads("entitlement.changed", tenant.id().value());
         assertThat(published).hasSize(1);

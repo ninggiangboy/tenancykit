@@ -1,6 +1,7 @@
 package dev.ngb.platform.access.application.role.command;
 
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.access.port.AccessRepository;
 import dev.ngb.platform.access.application.access.service.AccessPublisher;
 import dev.ngb.platform.access.application.permission.exception.UnknownPermissionException;
@@ -27,7 +28,8 @@ public class ManageRoleUseCase {
 
     public enum Action { REPLACE_PERMISSIONS, RENAME, ASSIGN, UNASSIGN }
 
-    public record Command(RoleId roleId, Action action, Set<String> permissions, String name, UserId userId) {}
+    public record Command(
+            RoleId roleId, Action action, Set<String> permissions, String name, UserId userId, ExpectedVersion expected) {}
 
     private final UnitOfWork unitOfWork;
     private final RoleRepository roles;
@@ -49,15 +51,21 @@ public class ManageRoleUseCase {
 
     public Role execute(Command command) {
         return unitOfWork.transactional(() -> switch (command.action()) {
-            case REPLACE_PERMISSIONS -> replacePermissions(lockedForUpdate(command.roleId()), command.permissions());
-            case RENAME -> rename(lockedForUpdate(command.roleId()), command.name());
+            case REPLACE_PERMISSIONS -> replacePermissions(lockedForUpdate(command), command.permissions());
+            case RENAME -> rename(lockedForUpdate(command), command.name());
             case ASSIGN -> assign(lockedForShare(command.roleId()), command.userId());
             case UNASSIGN -> unassign(lockedForShare(command.roleId()), command.userId());
         });
     }
 
-    private Role lockedForUpdate(RoleId roleId) {
-        return roles.lockForUpdate(roleId).orElseThrow(() -> new RoleNotFoundException(roleId.toString()));
+    /**
+     * A rename and a permission replacement carry a version the caller may pin with {@code If-Match}, so they check it
+     * under the lock, before any mutation. An assign changes the user's access, not the role, and takes no version.
+     */
+    private Role lockedForUpdate(Command command) {
+        Role role = roles.lockForUpdate(command.roleId()).orElseThrow(() -> new RoleNotFoundException(command.roleId().toString()));
+        command.expected().check(role.version());
+        return role;
     }
 
     private Role lockedForShare(RoleId roleId) {

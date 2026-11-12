@@ -10,6 +10,7 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.integration.application.tenantsystem.port.TenantSystemRepository;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystem;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystemEvents;
@@ -19,7 +20,7 @@ public class ManageTenantSystemUseCase {
 
     public enum Action { RENAME, DISABLE }
 
-    public record Command(TenantSystemId systemId, Action action, String name) {}
+    public record Command(TenantSystemId systemId, Action action, String name, ExpectedVersion expected) {}
 
     private final UnitOfWork unitOfWork;
     private final TenantSystemRepository systems;
@@ -58,6 +59,7 @@ public class ManageTenantSystemUseCase {
             TenantId tenantId = tenantContext.requireTenant();
             TenantSystem system = systems.lockById(command.systemId())
                     .orElseThrow(() -> new dev.ngb.core.error.NotFoundException("tenant system not found"));
+            command.expected().check(system.version());
             boolean changed = switch (command.action()) {
                 case RENAME -> system.rename(command.name());
                 case DISABLE -> system.disable();

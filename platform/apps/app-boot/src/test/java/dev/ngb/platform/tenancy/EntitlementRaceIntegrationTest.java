@@ -3,6 +3,7 @@ package dev.ngb.platform.tenancy;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.platform.Application;
@@ -80,11 +81,11 @@ class EntitlementRaceIntegrationTest {
     }
 
     private AppEntitlement enable(Tenant tenant) {
-        return enableApp.execute(new EnableAppUseCase.Command(tenant.id(), APP, "user/tester", "req-enable"));
+        return enableApp.execute(new EnableAppUseCase.Command(tenant.id(), APP, "user/tester", "req-enable", ExpectedVersion.any()));
     }
 
     private AppEntitlement disable(Tenant tenant) {
-        return disableApp.execute(new DisableAppUseCase.Command(tenant.id(), APP, "user/tester", "req-disable"));
+        return disableApp.execute(new DisableAppUseCase.Command(tenant.id(), APP, "user/tester", "req-disable", ExpectedVersion.any()));
     }
 
     private List<JsonNode> events(Tenant tenant) {

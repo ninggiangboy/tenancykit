@@ -3,6 +3,7 @@ package dev.ngb.platform.access;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.core.tenancy.TenantContext;
@@ -123,12 +124,12 @@ class ConcurrentUserAccessIntegrationTest {
 
     private Role assign(Role role, User user) {
         return manageRole.execute(new ManageRoleUseCase.Command(
-                role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, user.id()));
+                role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, user.id(), ExpectedVersion.any()));
     }
 
     private Role unassign(Role role, User user) {
         return manageRole.execute(new ManageRoleUseCase.Command(
-                role.id(), ManageRoleUseCase.Action.UNASSIGN, Set.of(), null, user.id()));
+                role.id(), ManageRoleUseCase.Action.UNASSIGN, Set.of(), null, user.id(), ExpectedVersion.any()));
     }
 
     private Tenant newTenant() {

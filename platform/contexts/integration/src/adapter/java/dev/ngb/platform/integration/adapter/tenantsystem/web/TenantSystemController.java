@@ -5,6 +5,7 @@ import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.integration.application.credential.command.ManageCredentialUseCase;
 import dev.ngb.platform.integration.application.credential.query.CredentialQueries;
 import dev.ngb.platform.integration.application.credential.query.CredentialView;
@@ -19,6 +20,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -119,19 +121,24 @@ class TenantSystemController {
 
     @GetMapping("/{id}")
     @RequiresPermission("platform:tenant-system:read")
-    SystemResponse get(@PathVariable String id) {
-        return SystemResponse.ofView(systemQueries.get(TenantSystemId.of(id).value()));
+    ResponseEntity<SystemResponse> get(@PathVariable String id) {
+        SystemResponse system = SystemResponse.ofView(systemQueries.get(TenantSystemId.of(id).value()));
+        return ResponseEntity.ok().eTag(ExpectedVersion.etag(system.version())).body(system);
     }
 
     @PutMapping("/{id}")
     @RequiresPermission("platform:tenant-system:manage")
-    SystemResponse update(
+    ResponseEntity<SystemResponse> update(
             @PathVariable String id, @RequestBody UpdateSystemRequest request,
+            @RequestHeader(value = "If-Match", required = false) String ifMatch,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        return SystemResponse.of(systems.execute(
+        TenantSystem system = systems.execute(
                 caller(requestId),
                 new ManageTenantSystemUseCase.Command(
-                        TenantSystemId.of(id), ManageTenantSystemUseCase.Action.valueOf(request.action()), request.name())));
+                        TenantSystemId.of(id), ManageTenantSystemUseCase.Action.valueOf(request.action()), request.name(),
+                        ExpectedVersion.fromIfMatch(ifMatch)));
+        SystemResponse body = SystemResponse.of(system);
+        return ResponseEntity.ok().eTag(ExpectedVersion.etag(body.version())).body(body);
     }
 
     @PostMapping("/{id}/credentials")

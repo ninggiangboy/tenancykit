@@ -7,6 +7,7 @@ import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.tenancy.application.tenant.exception.TenantNotFoundException;
 import dev.ngb.platform.tenancy.application.tenant.port.TenantRepository;
 import dev.ngb.platform.tenancy.domain.tenant.Tenant;
@@ -16,7 +17,7 @@ import java.time.Instant;
 /** Renames a Tenant; the change bumps the aggregate version and publishes the new state. */
 public class RenameTenantUseCase {
 
-    public record Command(TenantId tenantId, String name, String actor, String requestId) {}
+    public record Command(TenantId tenantId, String name, String actor, String requestId, ExpectedVersion expected) {}
 
     private final UnitOfWork unitOfWork;
     private final TenantRepository tenants;
@@ -39,6 +40,7 @@ public class RenameTenantUseCase {
         return unitOfWork.transactional(() -> {
             Tenant tenant = tenants.lockById(command.tenantId())
                     .orElseThrow(() -> new TenantNotFoundException(command.tenantId().toString()));
+            command.expected().check(tenant.version());
             if (!tenant.rename(command.name())) {
                 return tenant;
             }

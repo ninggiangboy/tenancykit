@@ -1,6 +1,7 @@
 package dev.ngb.platform.access.application.user.command;
 
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.access.port.AccessRepository;
 import dev.ngb.platform.access.application.access.service.AccessPublisher;
 import dev.ngb.platform.access.application.permission.exception.UnknownPermissionException;
@@ -13,7 +14,7 @@ import dev.ngb.platform.access.domain.user.UserId;
 /** Grants or revokes one direct permission on a user, outside any role. */
 public class ManageUserPermissionsUseCase {
 
-    public record Command(UserId userId, String permissionCode, boolean grant) {}
+    public record Command(UserId userId, String permissionCode, boolean grant, ExpectedVersion expected) {}
 
     private final UnitOfWork unitOfWork;
     private final UserRepository users;
@@ -33,6 +34,7 @@ public class ManageUserPermissionsUseCase {
     public User execute(Command command) {
         return unitOfWork.transactional(() -> {
             User user = users.lockById(command.userId()).orElseThrow(() -> new UserNotFoundException(command.userId().toString()));
+            command.expected().check(user.version());
             var permission = catalog.find(command.permissionCode())
                     .orElseThrow(() -> new UnknownPermissionException(command.permissionCode(), "is not in the catalog"));
             if (!permission.validIn(user.scope())) {
