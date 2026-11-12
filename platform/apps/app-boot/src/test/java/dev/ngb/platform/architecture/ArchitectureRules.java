@@ -265,9 +265,13 @@ final class ArchitectureRules {
                 .because("one place per feature lists what it announces");
     }
 
+    /**
+     * The plain-Java core depends on nothing of an application's. The three framework modules are excluded on purpose:
+     * the Spring implementation, the messaging infrastructure and the Platform replica all ship framework types.
+     */
     private static ArchRule coreIsSelfContained(String core) {
         return classes().that().resideInAnyPackage(core + "..")
-                .and().resideOutsideOfPackages(core + ".spring..", core + ".messaging..")
+                .and().resideOutsideOfPackages(core + ".spring..", core + ".messaging..", core + ".replica..")
                 .should().onlyDependOnClassesThat().resideInAnyPackage(JAVA, core + "..")
                 .because("the core is shared by every application build and depends on nothing of theirs");
     }

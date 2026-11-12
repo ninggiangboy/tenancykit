@@ -33,17 +33,26 @@ public class JooqTenantRepository implements TenantRepository {
 
     @Override
     public void update(Tenant tenant) {
-        dsl.update(TENANTS)
+        int updated = dsl.update(TENANTS)
                 .set(TENANTS.NAME, tenant.name())
                 .set(TENANTS.STATUS, tenant.status().name())
                 .set(TENANTS.VERSION, tenant.version())
                 .where(TENANTS.ID.eq(tenant.id().value()))
+                .and(TENANTS.VERSION.lt(tenant.version()))
                 .execute();
+        if (updated != 1) {
+            throw new IllegalStateException("tenant " + tenant.id() + " was not updated: version " + tenant.version() + " is not newer");
+        }
     }
 
     @Override
     public Optional<Tenant> findById(TenantId id) {
         return dsl.selectFrom(TENANTS).where(TENANTS.ID.eq(id.value())).fetchOptional(JooqTenantRepository::toTenant);
+    }
+
+    @Override
+    public Optional<Tenant> lockById(TenantId id) {
+        return dsl.selectFrom(TENANTS).where(TENANTS.ID.eq(id.value())).forNoKeyUpdate().fetchOptional(JooqTenantRepository::toTenant);
     }
 
     @Override

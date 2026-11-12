@@ -37,17 +37,27 @@ public class JooqUserRepository implements UserRepository {
 
     @Override
     public void update(User user) {
-        dsl.update(USERS)
+        // The guard is defence in depth: a caller that did not hold the row lock cannot publish a duplicate version.
+        int updated = dsl.update(USERS)
                 .set(USERS.DISPLAY_NAME, user.displayName())
                 .set(USERS.STATUS, user.status().name())
                 .set(USERS.VERSION, user.version())
                 .where(USERS.ID.eq(user.id().value()))
+                .and(USERS.VERSION.lt(user.version()))
                 .execute();
+        if (updated != 1) {
+            throw new IllegalStateException("user " + user.id() + " was not updated: version " + user.version() + " is not newer");
+        }
     }
 
     @Override
     public Optional<User> findById(UserId id) {
         return dsl.selectFrom(USERS).where(USERS.ID.eq(id.value())).fetchOptional(JooqUserRepository::toUser);
+    }
+
+    @Override
+    public Optional<User> lockById(UserId id) {
+        return dsl.selectFrom(USERS).where(USERS.ID.eq(id.value())).forUpdate().fetchOptional(JooqUserRepository::toUser);
     }
 
     @Override

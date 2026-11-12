@@ -32,7 +32,7 @@ public class ManageUserPermissionsUseCase {
 
     public User execute(Command command) {
         return unitOfWork.transactional(() -> {
-            User user = users.findById(command.userId()).orElseThrow(() -> new UserNotFoundException(command.userId().toString()));
+            User user = users.lockById(command.userId()).orElseThrow(() -> new UserNotFoundException(command.userId().toString()));
             var permission = catalog.find(command.permissionCode())
                     .orElseThrow(() -> new UnknownPermissionException(command.permissionCode(), "is not in the catalog"));
             if (!permission.validIn(user.scope())) {

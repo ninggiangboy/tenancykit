@@ -52,7 +52,7 @@ public class ProvisionTenantUseCase {
                 command.adminTemporaryPassword()));
         unitOfWork.transactional(() -> {
             access.assign(tenantId.value(), admin.id().value(), role.id().value());
-            publisher.publishFor(admin);
+            publisher.publishFor(admin.id());
             return null;
         });
         return new Provisioned(tenantId, command.adminEmail());

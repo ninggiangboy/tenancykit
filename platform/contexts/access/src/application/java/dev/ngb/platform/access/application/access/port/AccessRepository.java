@@ -9,6 +9,7 @@ public interface AccessRepository {
 
     Set<String> effectivePermissions(UUID userId);
 
+    /** The holders of one role, ascending by id, so a fan-out always takes its user locks in one order. */
     List<UUID> userIdsForRole(UUID roleId);
 
     void assign(UUID tenantId, UUID userId, UUID roleId);

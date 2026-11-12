@@ -13,6 +13,13 @@ public interface UserRepository {
 
     Optional<User> findById(UserId id);
 
+    /**
+     * Reads the user under a row lock, so a version bump that follows cannot race another one.
+     *
+     * @return empty when the user does not exist
+     */
+    Optional<User> lockById(UserId id);
+
     Optional<User> findByKeycloakSubject(String subject);
 
     Optional<User> findByEmail(dev.ngb.core.id.TenantId tenantId, String email);

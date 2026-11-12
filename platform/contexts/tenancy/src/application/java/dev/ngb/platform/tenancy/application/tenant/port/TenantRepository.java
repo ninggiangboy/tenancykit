@@ -14,5 +14,8 @@ public interface TenantRepository {
 
     Optional<Tenant> findById(TenantId id);
 
+    /** Reads the tenant under a row lock, so a version bump that follows cannot race another one. */
+    Optional<Tenant> lockById(TenantId id);
+
     Optional<Tenant> findByCode(TenantCode code);
 }

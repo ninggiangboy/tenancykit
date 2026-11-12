@@ -18,6 +18,10 @@ import java.util.Set;
 /**
  * Edits a role or (un)assigns it. Changing the permission set recomputes every holder, so consumers never need role
  * or join logic.
+ *
+ * <p>Every action takes a role lock before it touches anything: a rename or a permission replacement takes
+ * {@code for no key update}, an assign or unassign takes {@code for share}. The two conflict, so an assign racing a
+ * permission replacement on one role serialises, and whichever runs second sees the other's committed rows.
  */
 public class ManageRoleUseCase {
 
@@ -44,23 +48,23 @@ public class ManageRoleUseCase {
     }
 
     public Role execute(Command command) {
-        return unitOfWork.transactional(() -> {
-            Role role = roles.findById(command.roleId()).orElseThrow(() -> new RoleNotFoundException(command.roleId().toString()));
-            switch (command.action()) {
-                case REPLACE_PERMISSIONS -> replacePermissions(role, command.permissions());
-                case RENAME -> {
-                    if (role.rename(command.name())) {
-                        roles.update(role);
-                    }
-                }
-                case ASSIGN -> assign(role, command.userId());
-                case UNASSIGN -> unassign(role, command.userId());
-            }
-            return role;
+        return unitOfWork.transactional(() -> switch (command.action()) {
+            case REPLACE_PERMISSIONS -> replacePermissions(lockedForUpdate(command.roleId()), command.permissions());
+            case RENAME -> rename(lockedForUpdate(command.roleId()), command.name());
+            case ASSIGN -> assign(lockedForShare(command.roleId()), command.userId());
+            case UNASSIGN -> unassign(lockedForShare(command.roleId()), command.userId());
         });
     }
 
-    private void replacePermissions(Role role, Set<String> permissions) {
+    private Role lockedForUpdate(RoleId roleId) {
+        return roles.lockForUpdate(roleId).orElseThrow(() -> new RoleNotFoundException(roleId.toString()));
+    }
+
+    private Role lockedForShare(RoleId roleId) {
+        return roles.lockForShare(roleId).orElseThrow(() -> new RoleNotFoundException(roleId.toString()));
+    }
+
+    private Role replacePermissions(Role role, Set<String> permissions) {
         permissions.forEach(code -> {
             var permission = catalog.find(code).orElseThrow(() -> new UnknownPermissionException(code, "is not in the catalog"));
             if (!permission.validIn(role.scope())) {
@@ -68,21 +72,31 @@ public class ManageRoleUseCase {
             }
         });
         if (!role.replacePermissions(permissions)) {
-            return;
+            return role;
         }
         roles.update(role);
         publisher.publishForRole(role.id());
+        return role;
     }
 
-    private void assign(Role role, UserId userId) {
-        User user = users.findById(userId).orElseThrow(() -> new UserNotFoundException(userId.toString()));
+    private Role rename(Role role, String name) {
+        if (role.rename(name)) {
+            roles.update(role);
+        }
+        return role;
+    }
+
+    private Role assign(Role role, UserId userId) {
+        User user = users.lockById(userId).orElseThrow(() -> new UserNotFoundException(userId.toString()));
         access.assign(role.tenantId().value(), user.id().value(), role.id().value());
         publisher.publishFor(user);
+        return role;
     }
 
-    private void unassign(Role role, UserId userId) {
-        User user = users.findById(userId).orElseThrow(() -> new UserNotFoundException(userId.toString()));
+    private Role unassign(Role role, UserId userId) {
+        User user = users.lockById(userId).orElseThrow(() -> new UserNotFoundException(userId.toString()));
         access.unassign(role.tenantId().value(), user.id().value(), role.id().value());
         publisher.publishFor(user);
+        return role;
     }
 }

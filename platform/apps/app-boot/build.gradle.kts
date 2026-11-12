@@ -24,6 +24,8 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation(project(":testing:arch-fixtures"))
+    // The replica writer proves the events Platform publishes converge in a consumer's schema.
+    testImplementation("dev.ngb:core-replica")
     // Generates the jOOQ schema from the migrations for the drift test.
     testImplementation("org.jooq:jooq-codegen")
     testImplementation("org.jooq:jooq-meta")

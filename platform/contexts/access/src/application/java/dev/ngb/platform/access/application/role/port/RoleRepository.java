@@ -14,5 +14,14 @@ public interface RoleRepository {
 
     Optional<Role> findById(RoleId id);
 
+    /** Locks the role so a rename or a permission replacement cannot race another writer. */
+    Optional<Role> lockForUpdate(RoleId id);
+
+    /**
+     * Locks the role for an assign or unassign. A share lock conflicts with {@link #lockForUpdate}, so an assign and a
+     * permission replacement on one role serialise.
+     */
+    Optional<Role> lockForShare(RoleId id);
+
     Optional<Role> findByName(UUID tenantId, String name);
 }

@@ -40,17 +40,31 @@ public class JooqRoleRepository implements RoleRepository {
 
     @Override
     public void update(Role role) {
-        dsl.update(ROLES)
+        int updated = dsl.update(ROLES)
                 .set(ROLES.NAME, role.name())
                 .set(ROLES.VERSION, role.version())
                 .where(ROLES.ID.eq(role.id().value()))
+                .and(ROLES.VERSION.lt(role.version()))
                 .execute();
+        if (updated != 1) {
+            throw new IllegalStateException("role " + role.id() + " was not updated: version " + role.version() + " is not newer");
+        }
         replacePermissions(role);
     }
 
     @Override
     public Optional<Role> findById(RoleId id) {
         return dsl.selectFrom(ROLES).where(ROLES.ID.eq(id.value())).fetchOptional(record -> toRole(record, permissionsOf(id.value())));
+    }
+
+    @Override
+    public Optional<Role> lockForUpdate(RoleId id) {
+        return dsl.selectFrom(ROLES).where(ROLES.ID.eq(id.value())).forNoKeyUpdate().fetchOptional(record -> toRole(record, permissionsOf(id.value())));
+    }
+
+    @Override
+    public Optional<Role> lockForShare(RoleId id) {
+        return dsl.selectFrom(ROLES).where(ROLES.ID.eq(id.value())).forShare().fetchOptional(record -> toRole(record, permissionsOf(id.value())));
     }
 
     @Override

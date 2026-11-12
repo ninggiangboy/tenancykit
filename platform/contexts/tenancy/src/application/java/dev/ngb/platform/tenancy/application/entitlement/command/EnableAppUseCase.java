@@ -50,13 +50,15 @@ public class EnableAppUseCase {
                 throw new UnknownAppException(command.appCode());
             }
             Instant now = clock.now();
-            AppEntitlement entitlement = entitlements.find(command.tenantId(), command.appCode())
-                    .map(existing -> {
-                        existing.setEnabled(true, now);
-                        return existing;
-                    })
-                    .orElseGet(() -> AppEntitlement.enable(command.tenantId(), command.appCode(), now));
-            entitlements.upsert(entitlement);
+            EntitlementRows.Locked locked = EntitlementRows.lockOrInsert(
+                    entitlements, AppEntitlement.enable(command.tenantId(), command.appCode(), now));
+            AppEntitlement entitlement = locked.entitlement();
+            if (!locked.inserted() && !entitlement.setEnabled(true, now)) {
+                return entitlement;
+            }
+            if (!locked.inserted()) {
+                entitlements.update(entitlement);
+            }
             events.publish(new EntitlementEvents.EntitlementChanged(ids.newId(), entitlement, now));
             auditLog.record(AuditEntry.platform(
                     command.actor(), "entitlement.enabled", "tenant/" + command.tenantId() + "/app/" + command.appCode(),

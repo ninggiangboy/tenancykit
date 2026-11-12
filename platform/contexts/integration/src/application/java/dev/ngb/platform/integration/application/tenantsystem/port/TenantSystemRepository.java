@@ -15,6 +15,9 @@ public interface TenantSystemRepository {
 
     Optional<TenantSystem> findById(TenantSystemId id);
 
+    /** Reads the tenant system under a row lock, so a version bump that follows cannot race another one. */
+    Optional<TenantSystem> lockById(TenantSystemId id);
+
     /** One snapshot page, ordered by id, for the {@code tenant-systems} replica stream. */
     List<TenantSystem> page(java.util.UUID after, int limit);
 }

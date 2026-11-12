@@ -5,6 +5,10 @@ spring:
     url: ${PLATFORM_DB_URL:jdbc:postgresql://localhost:5432/platform}
     username: ${PLATFORM_DB_USER:platform_app}
     password: ${PLATFORM_DB_PASSWORD:platform}
+    hikari:
+      # Admin writes take row locks on purpose, so a stuck holder must not block every request behind it. A wait that
+      # outlasts the timeout is a 503 with Retry-After, not a hung connection.
+      connection-init-sql: "SET lock_timeout = '10s'; SET idle_in_transaction_session_timeout = '60s'"
   flyway:
     locations: classpath:db/migration
     # Migrations run as the table owner; the application runs as platform_app.

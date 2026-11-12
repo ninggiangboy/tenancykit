@@ -42,6 +42,7 @@ public class JooqAccessRepository implements AccessRepository {
         return dsl.select(ROLE_ASSIGNMENTS.USER_ID)
                 .from(ROLE_ASSIGNMENTS)
                 .where(ROLE_ASSIGNMENTS.ROLE_ID.eq(roleId))
+                .orderBy(ROLE_ASSIGNMENTS.USER_ID)
                 .fetch(ROLE_ASSIGNMENTS.USER_ID);
     }
 

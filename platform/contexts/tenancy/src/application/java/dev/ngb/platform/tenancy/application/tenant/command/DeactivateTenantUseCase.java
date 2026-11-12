@@ -37,7 +37,7 @@ public class DeactivateTenantUseCase {
 
     public Tenant execute(Command command) {
         return unitOfWork.transactional(() -> {
-            Tenant tenant = tenants.findById(command.tenantId())
+            Tenant tenant = tenants.lockById(command.tenantId())
                     .orElseThrow(() -> new TenantNotFoundException(command.tenantId().toString()));
             if (!tenant.deactivate()) {
                 return tenant;

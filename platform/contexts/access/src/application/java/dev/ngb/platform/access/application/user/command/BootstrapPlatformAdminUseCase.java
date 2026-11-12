@@ -67,7 +67,7 @@ public class BootstrapPlatformAdminUseCase {
                 return created;
             });
             access.assign(platform.value(), admin.id().value(), role.id().value());
-            publisher.publishFor(admin);
+            publisher.publishFor(admin.id());
             return null;
         });
     }

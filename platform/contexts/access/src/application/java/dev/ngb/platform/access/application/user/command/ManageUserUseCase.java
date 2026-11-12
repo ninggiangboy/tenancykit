@@ -26,7 +26,7 @@ public class ManageUserUseCase {
 
     public User execute(Command command) {
         return unitOfWork.transactional(() -> {
-            User user = users.findById(command.userId()).orElseThrow(() -> new UserNotFoundException(command.userId().toString()));
+            User user = users.lockById(command.userId()).orElseThrow(() -> new UserNotFoundException(command.userId().toString()));
             boolean changed = switch (command.action()) {
                 case ENABLE -> user.enable();
                 case DISABLE -> user.disable();

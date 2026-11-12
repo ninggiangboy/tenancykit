@@ -56,7 +56,7 @@ public class ManageTenantSystemUseCase {
     public TenantSystem execute(Audit caller, Command command) {
         return unitOfWork.transactional(() -> {
             TenantId tenantId = tenantContext.requireTenant();
-            TenantSystem system = systems.findById(command.systemId())
+            TenantSystem system = systems.lockById(command.systemId())
                     .orElseThrow(() -> new dev.ngb.core.error.NotFoundException("tenant system not found"));
             boolean changed = switch (command.action()) {
                 case RENAME -> system.rename(command.name());
