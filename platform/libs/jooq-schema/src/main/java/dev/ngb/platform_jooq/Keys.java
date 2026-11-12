@@ -10,16 +10,28 @@ import dev.ngb.platform_jooq.tables.EventInbox;
 import dev.ngb.platform_jooq.tables.JobLeases;
 import dev.ngb.platform_jooq.tables.JobRuns;
 import dev.ngb.platform_jooq.tables.Outbox;
+import dev.ngb.platform_jooq.tables.Permissions;
+import dev.ngb.platform_jooq.tables.RoleAssignments;
+import dev.ngb.platform_jooq.tables.RolePermissions;
+import dev.ngb.platform_jooq.tables.Roles;
 import dev.ngb.platform_jooq.tables.TenantDomains;
 import dev.ngb.platform_jooq.tables.Tenants;
+import dev.ngb.platform_jooq.tables.UserPermissions;
+import dev.ngb.platform_jooq.tables.Users;
 import dev.ngb.platform_jooq.tables.records.AppEntitlementsRecord;
 import dev.ngb.platform_jooq.tables.records.AuditLogRecord;
 import dev.ngb.platform_jooq.tables.records.EventInboxRecord;
 import dev.ngb.platform_jooq.tables.records.JobLeasesRecord;
 import dev.ngb.platform_jooq.tables.records.JobRunsRecord;
 import dev.ngb.platform_jooq.tables.records.OutboxRecord;
+import dev.ngb.platform_jooq.tables.records.PermissionsRecord;
+import dev.ngb.platform_jooq.tables.records.RoleAssignmentsRecord;
+import dev.ngb.platform_jooq.tables.records.RolePermissionsRecord;
+import dev.ngb.platform_jooq.tables.records.RolesRecord;
 import dev.ngb.platform_jooq.tables.records.TenantDomainsRecord;
 import dev.ngb.platform_jooq.tables.records.TenantsRecord;
+import dev.ngb.platform_jooq.tables.records.UserPermissionsRecord;
+import dev.ngb.platform_jooq.tables.records.UsersRecord;
 
 import org.jooq.ForeignKey;
 import org.jooq.TableField;
@@ -46,10 +58,19 @@ public class Keys {
     public static final UniqueKey<JobLeasesRecord> JOB_LEASES_PKEY = Internal.createUniqueKey(JobLeases.JOB_LEASES, DSL.name("job_leases_pkey"), new TableField[] { JobLeases.JOB_LEASES.NAME }, true);
     public static final UniqueKey<JobRunsRecord> JOB_RUNS_PKEY = Internal.createUniqueKey(JobRuns.JOB_RUNS, DSL.name("job_runs_pkey"), new TableField[] { JobRuns.JOB_RUNS.JOB, JobRuns.JOB_RUNS.RUN_KEY, JobRuns.JOB_RUNS.TENANT_ID }, true);
     public static final UniqueKey<OutboxRecord> OUTBOX_PKEY = Internal.createUniqueKey(Outbox.OUTBOX, DSL.name("outbox_pkey"), new TableField[] { Outbox.OUTBOX.ID }, true);
+    public static final UniqueKey<PermissionsRecord> PERMISSIONS_PKEY = Internal.createUniqueKey(Permissions.PERMISSIONS, DSL.name("permissions_pkey"), new TableField[] { Permissions.PERMISSIONS.CODE }, true);
+    public static final UniqueKey<RoleAssignmentsRecord> ROLE_ASSIGNMENTS_PKEY = Internal.createUniqueKey(RoleAssignments.ROLE_ASSIGNMENTS, DSL.name("role_assignments_pkey"), new TableField[] { RoleAssignments.ROLE_ASSIGNMENTS.USER_ID, RoleAssignments.ROLE_ASSIGNMENTS.ROLE_ID }, true);
+    public static final UniqueKey<RolePermissionsRecord> ROLE_PERMISSIONS_PKEY = Internal.createUniqueKey(RolePermissions.ROLE_PERMISSIONS, DSL.name("role_permissions_pkey"), new TableField[] { RolePermissions.ROLE_PERMISSIONS.ROLE_ID, RolePermissions.ROLE_PERMISSIONS.PERMISSION_CODE }, true);
+    public static final UniqueKey<RolesRecord> ROLES_PKEY = Internal.createUniqueKey(Roles.ROLES, DSL.name("roles_pkey"), new TableField[] { Roles.ROLES.ID }, true);
+    public static final UniqueKey<RolesRecord> ROLES_TENANT_ID_NAME_KEY = Internal.createUniqueKey(Roles.ROLES, DSL.name("roles_tenant_id_name_key"), new TableField[] { Roles.ROLES.TENANT_ID, Roles.ROLES.NAME }, true);
     public static final UniqueKey<TenantDomainsRecord> TENANT_DOMAINS_HOSTNAME_KEY = Internal.createUniqueKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_hostname_key"), new TableField[] { TenantDomains.TENANT_DOMAINS.HOSTNAME }, true);
     public static final UniqueKey<TenantDomainsRecord> TENANT_DOMAINS_PKEY = Internal.createUniqueKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_pkey"), new TableField[] { TenantDomains.TENANT_DOMAINS.ID }, true);
     public static final UniqueKey<TenantsRecord> TENANTS_CODE_KEY = Internal.createUniqueKey(Tenants.TENANTS, DSL.name("tenants_code_key"), new TableField[] { Tenants.TENANTS.CODE }, true);
     public static final UniqueKey<TenantsRecord> TENANTS_PKEY = Internal.createUniqueKey(Tenants.TENANTS, DSL.name("tenants_pkey"), new TableField[] { Tenants.TENANTS.ID }, true);
+    public static final UniqueKey<UserPermissionsRecord> USER_PERMISSIONS_PKEY = Internal.createUniqueKey(UserPermissions.USER_PERMISSIONS, DSL.name("user_permissions_pkey"), new TableField[] { UserPermissions.USER_PERMISSIONS.USER_ID, UserPermissions.USER_PERMISSIONS.PERMISSION_CODE }, true);
+    public static final UniqueKey<UsersRecord> USERS_KEYCLOAK_SUBJECT_KEY = Internal.createUniqueKey(Users.USERS, DSL.name("users_keycloak_subject_key"), new TableField[] { Users.USERS.KEYCLOAK_SUBJECT }, true);
+    public static final UniqueKey<UsersRecord> USERS_PKEY = Internal.createUniqueKey(Users.USERS, DSL.name("users_pkey"), new TableField[] { Users.USERS.ID }, true);
+    public static final UniqueKey<UsersRecord> USERS_TENANT_ID_EMAIL_KEY = Internal.createUniqueKey(Users.USERS, DSL.name("users_tenant_id_email_key"), new TableField[] { Users.USERS.TENANT_ID, Users.USERS.EMAIL }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
@@ -59,5 +80,14 @@ public class Keys {
     public static final ForeignKey<AuditLogRecord, TenantsRecord> AUDIT_LOG__AUDIT_LOG_TENANT_ID_FKEY = Internal.createForeignKey(AuditLog.AUDIT_LOG, DSL.name("audit_log_tenant_id_fkey"), new TableField[] { AuditLog.AUDIT_LOG.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<EventInboxRecord, TenantsRecord> EVENT_INBOX__EVENT_INBOX_TENANT_ID_FKEY = Internal.createForeignKey(EventInbox.EVENT_INBOX, DSL.name("event_inbox_tenant_id_fkey"), new TableField[] { EventInbox.EVENT_INBOX.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<OutboxRecord, TenantsRecord> OUTBOX__OUTBOX_TENANT_ID_FKEY = Internal.createForeignKey(Outbox.OUTBOX, DSL.name("outbox_tenant_id_fkey"), new TableField[] { Outbox.OUTBOX.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<RoleAssignmentsRecord, RolesRecord> ROLE_ASSIGNMENTS__ROLE_ASSIGNMENTS_ROLE_ID_FKEY = Internal.createForeignKey(RoleAssignments.ROLE_ASSIGNMENTS, DSL.name("role_assignments_role_id_fkey"), new TableField[] { RoleAssignments.ROLE_ASSIGNMENTS.ROLE_ID }, Keys.ROLES_PKEY, new TableField[] { Roles.ROLES.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<RoleAssignmentsRecord, TenantsRecord> ROLE_ASSIGNMENTS__ROLE_ASSIGNMENTS_TENANT_ID_FKEY = Internal.createForeignKey(RoleAssignments.ROLE_ASSIGNMENTS, DSL.name("role_assignments_tenant_id_fkey"), new TableField[] { RoleAssignments.ROLE_ASSIGNMENTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<RoleAssignmentsRecord, UsersRecord> ROLE_ASSIGNMENTS__ROLE_ASSIGNMENTS_USER_ID_FKEY = Internal.createForeignKey(RoleAssignments.ROLE_ASSIGNMENTS, DSL.name("role_assignments_user_id_fkey"), new TableField[] { RoleAssignments.ROLE_ASSIGNMENTS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<RolePermissionsRecord, RolesRecord> ROLE_PERMISSIONS__ROLE_PERMISSIONS_ROLE_ID_FKEY = Internal.createForeignKey(RolePermissions.ROLE_PERMISSIONS, DSL.name("role_permissions_role_id_fkey"), new TableField[] { RolePermissions.ROLE_PERMISSIONS.ROLE_ID }, Keys.ROLES_PKEY, new TableField[] { Roles.ROLES.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<RolePermissionsRecord, TenantsRecord> ROLE_PERMISSIONS__ROLE_PERMISSIONS_TENANT_ID_FKEY = Internal.createForeignKey(RolePermissions.ROLE_PERMISSIONS, DSL.name("role_permissions_tenant_id_fkey"), new TableField[] { RolePermissions.ROLE_PERMISSIONS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<RolesRecord, TenantsRecord> ROLES__ROLES_TENANT_ID_FKEY = Internal.createForeignKey(Roles.ROLES, DSL.name("roles_tenant_id_fkey"), new TableField[] { Roles.ROLES.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<TenantDomainsRecord, TenantsRecord> TENANT_DOMAINS__TENANT_DOMAINS_TENANT_ID_FKEY = Internal.createForeignKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_tenant_id_fkey"), new TableField[] { TenantDomains.TENANT_DOMAINS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<UserPermissionsRecord, TenantsRecord> USER_PERMISSIONS__USER_PERMISSIONS_TENANT_ID_FKEY = Internal.createForeignKey(UserPermissions.USER_PERMISSIONS, DSL.name("user_permissions_tenant_id_fkey"), new TableField[] { UserPermissions.USER_PERMISSIONS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<UserPermissionsRecord, UsersRecord> USER_PERMISSIONS__USER_PERMISSIONS_USER_ID_FKEY = Internal.createForeignKey(UserPermissions.USER_PERMISSIONS, DSL.name("user_permissions_user_id_fkey"), new TableField[] { UserPermissions.USER_PERMISSIONS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<UsersRecord, TenantsRecord> USERS__USERS_TENANT_ID_FKEY = Internal.createForeignKey(Users.USERS, DSL.name("users_tenant_id_fkey"), new TableField[] { Users.USERS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }

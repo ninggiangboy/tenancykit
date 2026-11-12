@@ -4,7 +4,6 @@ import dev.ngb.core.id.TenantId;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.platform.tenancy.application.tenant.command.AddTenantDomainUseCase;
-import dev.ngb.platform.tenancy.application.tenant.command.CreateTenantUseCase;
 import dev.ngb.platform.tenancy.application.tenant.command.DeactivateTenantUseCase;
 import dev.ngb.platform.tenancy.application.tenant.command.RenameTenantUseCase;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantQueries;
@@ -27,8 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/tenants")
 class TenantController {
 
-    record CreateRequest(String code, String name) {}
-
     record RenameRequest(String name) {}
 
     record DomainRequest(String hostname) {}
@@ -42,7 +39,6 @@ class TenantController {
         }
     }
 
-    private final CreateTenantUseCase createTenant;
     private final RenameTenantUseCase renameTenant;
     private final DeactivateTenantUseCase deactivateTenant;
     private final AddTenantDomainUseCase addDomain;
@@ -50,22 +46,13 @@ class TenantController {
     private final CurrentActor currentActor;
 
     TenantController(
-            CreateTenantUseCase createTenant, RenameTenantUseCase renameTenant, DeactivateTenantUseCase deactivateTenant,
+            RenameTenantUseCase renameTenant, DeactivateTenantUseCase deactivateTenant,
             AddTenantDomainUseCase addDomain, TenantQueries queries, CurrentActor currentActor) {
-        this.createTenant = createTenant;
         this.renameTenant = renameTenant;
         this.deactivateTenant = deactivateTenant;
         this.addDomain = addDomain;
         this.queries = queries;
         this.currentActor = currentActor;
-    }
-
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    @RequiresPermission("platform:tenant:create")
-    TenantResponse create(@RequestBody CreateRequest request, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        return TenantResponse.of(createTenant.execute(
-                new CreateTenantUseCase.Command(request.code(), request.name(), currentActor.get().auditName(), requestId)));
     }
 
     @GetMapping

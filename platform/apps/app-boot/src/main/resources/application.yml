@@ -26,6 +26,15 @@ platform:
     # Platform Administration is <platform-hostname>; a Tenant is <tenant-code>.<base-domain>.
     base-domain: ${PLATFORM_BASE_DOMAIN:localhost}
     platform-hostname: ${PLATFORM_HOSTNAME:platform.localhost}
+  keycloak:
+    base-url: ${PLATFORM_KEYCLOAK_URL:http://localhost:8081}
+    realm: ${PLATFORM_KEYCLOAK_REALM:billing}
+    admin-client-id: ${PLATFORM_KEYCLOAK_ADMIN_CLIENT_ID:platform-admin}
+    admin-client-secret: ${PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET:}
+  bootstrap:
+    # Optional: creates the first Platform administrator on start, through Keycloak.
+    platform-admin-email: ${PLATFORM_BOOTSTRAP_ADMIN_EMAIL:}
+    platform-admin-temporary-password: ${PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD:}
   users:
     # Keycloak's JWKS. Blank means only suite tokens are accepted, which is the state before users exist.
     jwk-set-uri: ${PLATFORM_OIDC_JWK_SET_URI:}

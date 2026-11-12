@@ -6,6 +6,8 @@ import dev.ngb.platform.tenancy.adapter.entitlement.persistence.JooqEntitlementR
 import dev.ngb.platform.tenancy.adapter.tenant.persistence.JooqTenantDomainRepository;
 import dev.ngb.platform.tenancy.adapter.tenant.persistence.JooqTenantReadRepository;
 import dev.ngb.platform.tenancy.adapter.tenant.persistence.JooqTenantRepository;
+import dev.ngb.platform.tenancy.api.provisioning.TenantProvisioning;
+import dev.ngb.platform.tenancy.application.service.TenantProvisioningService;
 import dev.ngb.platform.boot.catalog.ClasspathAppCatalog;
 import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.event.EventPublisher;
@@ -64,6 +66,11 @@ class TenancyConfiguration {
     @Bean
     AppCatalog appCatalog() {
         return new ClasspathAppCatalog();
+    }
+
+    @Bean
+    TenantProvisioning tenantProvisioning(CreateTenantUseCase createTenant) {
+        return new TenantProvisioningService(createTenant);
     }
 
     @Bean

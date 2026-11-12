@@ -37,6 +37,9 @@ final class ArchitectureRules {
         for (String table : List.of("Tenants", "TenantDomains", "AppEntitlements")) {
             TABLE_OWNER.put(table, "tenancy");
         }
+        for (String table : List.of("Users", "Roles", "RolePermissions", "RoleAssignments", "UserPermissions", "Permissions")) {
+            TABLE_OWNER.put(table, "access");
+        }
         for (String table : List.of("Outbox", "EventInbox", "AuditLog", "JobLeases", "JobRuns")) {
             TABLE_OWNER.put(table, "boot");
         }

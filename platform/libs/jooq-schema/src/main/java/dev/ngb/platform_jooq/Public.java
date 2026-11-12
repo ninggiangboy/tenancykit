@@ -10,8 +10,14 @@ import dev.ngb.platform_jooq.tables.EventInbox;
 import dev.ngb.platform_jooq.tables.JobLeases;
 import dev.ngb.platform_jooq.tables.JobRuns;
 import dev.ngb.platform_jooq.tables.Outbox;
+import dev.ngb.platform_jooq.tables.Permissions;
+import dev.ngb.platform_jooq.tables.RoleAssignments;
+import dev.ngb.platform_jooq.tables.RolePermissions;
+import dev.ngb.platform_jooq.tables.Roles;
 import dev.ngb.platform_jooq.tables.TenantDomains;
 import dev.ngb.platform_jooq.tables.Tenants;
+import dev.ngb.platform_jooq.tables.UserPermissions;
+import dev.ngb.platform_jooq.tables.Users;
 
 import java.util.Arrays;
 import java.util.List;
@@ -66,6 +72,26 @@ public class Public extends SchemaImpl {
     public final Outbox OUTBOX = Outbox.OUTBOX;
 
     /**
+     * The table <code>public.permissions</code>.
+     */
+    public final Permissions PERMISSIONS = Permissions.PERMISSIONS;
+
+    /**
+     * The table <code>public.role_assignments</code>.
+     */
+    public final RoleAssignments ROLE_ASSIGNMENTS = RoleAssignments.ROLE_ASSIGNMENTS;
+
+    /**
+     * The table <code>public.role_permissions</code>.
+     */
+    public final RolePermissions ROLE_PERMISSIONS = RolePermissions.ROLE_PERMISSIONS;
+
+    /**
+     * The table <code>public.roles</code>.
+     */
+    public final Roles ROLES = Roles.ROLES;
+
+    /**
      * The table <code>public.tenant_domains</code>.
      */
     public final TenantDomains TENANT_DOMAINS = TenantDomains.TENANT_DOMAINS;
@@ -74,6 +100,16 @@ public class Public extends SchemaImpl {
      * The table <code>public.tenants</code>.
      */
     public final Tenants TENANTS = Tenants.TENANTS;
+
+    /**
+     * The table <code>public.user_permissions</code>.
+     */
+    public final UserPermissions USER_PERMISSIONS = UserPermissions.USER_PERMISSIONS;
+
+    /**
+     * The table <code>public.users</code>.
+     */
+    public final Users USERS = Users.USERS;
 
     /**
      * No further instances allowed
@@ -97,8 +133,14 @@ public class Public extends SchemaImpl {
             JobLeases.JOB_LEASES,
             JobRuns.JOB_RUNS,
             Outbox.OUTBOX,
+            Permissions.PERMISSIONS,
+            RoleAssignments.ROLE_ASSIGNMENTS,
+            RolePermissions.ROLE_PERMISSIONS,
+            Roles.ROLES,
             TenantDomains.TENANT_DOMAINS,
-            Tenants.TENANTS
+            Tenants.TENANTS,
+            UserPermissions.USER_PERMISSIONS,
+            Users.USERS
         );
     }
 }

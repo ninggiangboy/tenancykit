@@ -10,7 +10,12 @@ import dev.ngb.platform_jooq.tables.AppEntitlements.AppEntitlementsPath;
 import dev.ngb.platform_jooq.tables.AuditLog.AuditLogPath;
 import dev.ngb.platform_jooq.tables.EventInbox.EventInboxPath;
 import dev.ngb.platform_jooq.tables.Outbox.OutboxPath;
+import dev.ngb.platform_jooq.tables.RoleAssignments.RoleAssignmentsPath;
+import dev.ngb.platform_jooq.tables.RolePermissions.RolePermissionsPath;
+import dev.ngb.platform_jooq.tables.Roles.RolesPath;
 import dev.ngb.platform_jooq.tables.TenantDomains.TenantDomainsPath;
+import dev.ngb.platform_jooq.tables.UserPermissions.UserPermissionsPath;
+import dev.ngb.platform_jooq.tables.Users.UsersPath;
 import dev.ngb.platform_jooq.tables.records.TenantsRecord;
 
 import java.time.Instant;
@@ -223,6 +228,44 @@ public class Tenants extends TableImpl<TenantsRecord> {
         return _outbox;
     }
 
+    private transient RoleAssignmentsPath _roleAssignments;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.role_assignments</code> table
+     */
+    public RoleAssignmentsPath roleAssignments() {
+        if (_roleAssignments == null)
+            _roleAssignments = new RoleAssignmentsPath(this, null, Keys.ROLE_ASSIGNMENTS__ROLE_ASSIGNMENTS_TENANT_ID_FKEY.getInverseKey());
+
+        return _roleAssignments;
+    }
+
+    private transient RolePermissionsPath _rolePermissions;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.role_permissions</code> table
+     */
+    public RolePermissionsPath rolePermissions() {
+        if (_rolePermissions == null)
+            _rolePermissions = new RolePermissionsPath(this, null, Keys.ROLE_PERMISSIONS__ROLE_PERMISSIONS_TENANT_ID_FKEY.getInverseKey());
+
+        return _rolePermissions;
+    }
+
+    private transient RolesPath _roles;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.roles</code> table
+     */
+    public RolesPath roles() {
+        if (_roles == null)
+            _roles = new RolesPath(this, null, Keys.ROLES__ROLES_TENANT_ID_FKEY.getInverseKey());
+
+        return _roles;
+    }
+
     private transient TenantDomainsPath _tenantDomains;
 
     /**
@@ -234,6 +277,31 @@ public class Tenants extends TableImpl<TenantsRecord> {
             _tenantDomains = new TenantDomainsPath(this, null, Keys.TENANT_DOMAINS__TENANT_DOMAINS_TENANT_ID_FKEY.getInverseKey());
 
         return _tenantDomains;
+    }
+
+    private transient UserPermissionsPath _userPermissions;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.user_permissions</code> table
+     */
+    public UserPermissionsPath userPermissions() {
+        if (_userPermissions == null)
+            _userPermissions = new UserPermissionsPath(this, null, Keys.USER_PERMISSIONS__USER_PERMISSIONS_TENANT_ID_FKEY.getInverseKey());
+
+        return _userPermissions;
+    }
+
+    private transient UsersPath _users;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.users</code> table
+     */
+    public UsersPath users() {
+        if (_users == null)
+            _users = new UsersPath(this, null, Keys.USERS__USERS_TENANT_ID_FKEY.getInverseKey());
+
+        return _users;
     }
 
     @Override

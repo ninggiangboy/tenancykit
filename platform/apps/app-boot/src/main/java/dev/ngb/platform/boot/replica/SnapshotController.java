@@ -1,6 +1,8 @@
 package dev.ngb.platform.boot.replica;
 
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.platform.access.application.user.query.UserAccessView;
+import dev.ngb.platform.access.application.user.query.UserQueries;
 import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementQueries;
 import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementView;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantDomainView;
@@ -28,10 +30,12 @@ class SnapshotController {
 
     private final TenantQueries tenants;
     private final EntitlementQueries entitlements;
+    private final UserQueries users;
 
-    SnapshotController(TenantQueries tenants, EntitlementQueries entitlements) {
+    SnapshotController(TenantQueries tenants, EntitlementQueries entitlements, UserQueries users) {
         this.tenants = tenants;
         this.entitlements = entitlements;
+        this.users = users;
     }
 
     @GetMapping("/internal/replica/{stream}")
@@ -45,6 +49,7 @@ class SnapshotController {
             case "tenants" -> pageOf(tenants.page(after, size), size, SnapshotController::tenantItem);
             case "tenant-domains" -> pageOf(tenants.pageDomains(after, size), size, SnapshotController::domainItem);
             case "entitlements" -> pageOf(entitlements.page(after, size), size, SnapshotController::entitlementItem);
+            case "user-access" -> pageOf(users.pageAccess(after, size), size, SnapshotController::userAccessItem);
             default -> throw new ResponseStatusException(HttpStatus.NOT_FOUND, "unknown replica stream");
         };
     }
@@ -55,7 +60,8 @@ class SnapshotController {
         for (T row : rows) {
             Map<String, Object> item = mapper.item(row);
             items.add(item);
-            last = item.containsKey("id") ? (UUID) item.get("id") : (UUID) item.get("tenant_id");
+            Object cursor = item.get("id") != null ? item.get("id") : item.get("user_id") != null ? item.get("user_id") : item.get("tenant_id");
+            last = (UUID) cursor;
         }
         Map<String, Object> answer = new LinkedHashMap<>();
         answer.put("items", items);
@@ -91,6 +97,20 @@ class SnapshotController {
         item.put("app_code", entitlement.appCode());
         item.put("enabled", entitlement.enabled());
         item.put("version", entitlement.version());
+        return item;
+    }
+
+    private static Map<String, Object> userAccessItem(UserAccessView access) {
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("user_id", access.user().id());
+        item.put("tenant_id", access.user().tenantId());
+        item.put("scope", access.user().scope());
+        item.put("keycloak_subject", access.user().keycloakSubject());
+        item.put("email", access.user().email());
+        item.put("display_name", access.user().displayName());
+        item.put("status", access.user().status());
+        item.put("permissions", access.sortedPermissions());
+        item.put("version", access.user().version());
         return item;
     }
 

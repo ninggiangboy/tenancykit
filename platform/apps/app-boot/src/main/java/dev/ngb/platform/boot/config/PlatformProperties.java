@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /** Deployment configuration of the Platform service. */
 @ConfigurationProperties(prefix = "platform")
-public record PlatformProperties(Tokens tokens, Tenancy tenancy, List<ServiceClient> serviceClients) {
+public record PlatformProperties(Tokens tokens, Tenancy tenancy, List<ServiceClient> serviceClients, Bootstrap bootstrap) {
 
     public PlatformProperties {
         serviceClients = serviceClients == null ? List.of() : List.copyOf(serviceClients);
@@ -23,6 +23,9 @@ public record PlatformProperties(Tokens tokens, Tenancy tenancy, List<ServiceCli
      * @param platformHostname the hostname Platform Administration answers on
      */
     public record Tenancy(String baseDomain, String platformHostname) {}
+
+    /** The optional first Platform administrator, created through Keycloak on start. */
+    public record Bootstrap(String platformAdminEmail, String platformAdminTemporaryPassword) {}
 
     /**
      * @param secretHash the hex SHA-256 of the client secret; the secret itself is never stored

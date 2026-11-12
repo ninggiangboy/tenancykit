@@ -52,12 +52,12 @@ Billing is **not** changed in this phase; it still has its own copy until phase 
 
 ## Todo
 
-- [ ] Permission catalog loaded from `contracts/permissions/`
-- [ ] Users, roles, assignments, direct grants moved; enum replaced
-- [ ] Effective access and `user-access.changed` fan-out
-- [ ] Provisioning and bootstrap moved; Keycloak realm updated
-- [ ] `/api/v1/me`, `user-access` snapshot stream
-- [ ] Tests ported and new tests added
+- [x] Permission catalog loaded from `contracts/permissions/`
+- [x] Users, roles, assignments, direct grants moved; enum replaced
+- [x] Effective access and `user-access.changed` fan-out
+- [x] Provisioning and bootstrap moved; Keycloak realm updated
+- [x] `/api/v1/me`, `user-access` snapshot stream
+- [x] Tests ported and new tests added
 
 ## Verification
 

@@ -20,7 +20,7 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME:?set it in .env}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD:?set it in .env}
       # Substituted into ops/keycloak/realm-export.json when the realm is imported.
-      BILLING_ADMIN_CLIENT_SECRET: ${BILLING_KEYCLOAK_ADMIN_CLIENT_SECRET:?set it in .env}
+      PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET: ${PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET:?set it in .env}
     ports:
       - "8081:8080"
     volumes:

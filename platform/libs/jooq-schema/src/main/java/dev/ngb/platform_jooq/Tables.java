@@ -10,8 +10,14 @@ import dev.ngb.platform_jooq.tables.EventInbox;
 import dev.ngb.platform_jooq.tables.JobLeases;
 import dev.ngb.platform_jooq.tables.JobRuns;
 import dev.ngb.platform_jooq.tables.Outbox;
+import dev.ngb.platform_jooq.tables.Permissions;
+import dev.ngb.platform_jooq.tables.RoleAssignments;
+import dev.ngb.platform_jooq.tables.RolePermissions;
+import dev.ngb.platform_jooq.tables.Roles;
 import dev.ngb.platform_jooq.tables.TenantDomains;
 import dev.ngb.platform_jooq.tables.Tenants;
+import dev.ngb.platform_jooq.tables.UserPermissions;
+import dev.ngb.platform_jooq.tables.Users;
 
 
 /**
@@ -51,6 +57,26 @@ public class Tables {
     public static final Outbox OUTBOX = Outbox.OUTBOX;
 
     /**
+     * The table <code>public.permissions</code>.
+     */
+    public static final Permissions PERMISSIONS = Permissions.PERMISSIONS;
+
+    /**
+     * The table <code>public.role_assignments</code>.
+     */
+    public static final RoleAssignments ROLE_ASSIGNMENTS = RoleAssignments.ROLE_ASSIGNMENTS;
+
+    /**
+     * The table <code>public.role_permissions</code>.
+     */
+    public static final RolePermissions ROLE_PERMISSIONS = RolePermissions.ROLE_PERMISSIONS;
+
+    /**
+     * The table <code>public.roles</code>.
+     */
+    public static final Roles ROLES = Roles.ROLES;
+
+    /**
      * The table <code>public.tenant_domains</code>.
      */
     public static final TenantDomains TENANT_DOMAINS = TenantDomains.TENANT_DOMAINS;
@@ -59,4 +85,14 @@ public class Tables {
      * The table <code>public.tenants</code>.
      */
     public static final Tenants TENANTS = Tenants.TENANTS;
+
+    /**
+     * The table <code>public.user_permissions</code>.
+     */
+    public static final UserPermissions USER_PERMISSIONS = UserPermissions.USER_PERMISSIONS;
+
+    /**
+     * The table <code>public.users</code>.
+     */
+    public static final Users USERS = Users.USERS;
 }

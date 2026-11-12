@@ -26,8 +26,8 @@
   },
   "clients": [
     {
-      "clientId": "billing-web",
-      "name": "Core Billing web apps",
+      "clientId": "suite-console",
+      "name": "Suite Console",
       "enabled": true,
       "publicClient": true,
       "standardFlowEnabled": true,
@@ -60,6 +60,17 @@
           }
         },
         {
+          "name": "platform-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "platform",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
           "name": "billing-audience",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
@@ -69,15 +80,26 @@
             "id.token.claim": "false",
             "access.token.claim": "true"
           }
+        },
+        {
+          "name": "notification-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "notification",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
         }
       ]
     },
     {
-      "clientId": "billing-admin",
-      "name": "Core Billing identity administration",
+      "clientId": "platform-admin",
+      "name": "Platform identity administration",
       "enabled": true,
       "publicClient": false,
-      "secret": "${BILLING_ADMIN_CLIENT_SECRET}",
+      "secret": "${PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET}",
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
@@ -94,9 +116,9 @@
   ],
   "users": [
     {
-      "username": "service-account-billing-admin",
+      "username": "service-account-platform-admin",
       "enabled": true,
-      "serviceAccountClientId": "billing-admin",
+      "serviceAccountClientId": "platform-admin",
       "clientRoles": {
         "realm-management": [
           "manage-users",
