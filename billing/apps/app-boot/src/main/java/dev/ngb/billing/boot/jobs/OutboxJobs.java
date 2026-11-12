@@ -1,7 +1,7 @@
 package dev.ngb.billing.boot.jobs;
 
 import org.springframework.context.annotation.Profile;
-import dev.ngb.billing.boot.infrastructure.messaging.OutboxRelay;
+import dev.ngb.core.messaging.outbox.OutboxRelay;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

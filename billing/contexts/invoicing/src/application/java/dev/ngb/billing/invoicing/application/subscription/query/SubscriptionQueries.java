@@ -4,7 +4,7 @@ import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.util.PageSize;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
 import dev.ngb.billing.invoicing.domain.subscription.SubscriptionStatus;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import java.util.List;
 import java.util.UUID;

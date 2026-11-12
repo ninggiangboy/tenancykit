@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.core.id.TenantId;
 import dev.ngb.billing.Application;
-import dev.ngb.billing.boot.infrastructure.messaging.OutboxRelay;
+import dev.ngb.core.messaging.outbox.OutboxRelay;
 import dev.ngb.billing.invoicing.application.cycle.command.CloseBillingCycleUseCase;
 import dev.ngb.billing.money.api.charge.ChargeCommand;
 import dev.ngb.billing.money.api.charge.ChargeResult;

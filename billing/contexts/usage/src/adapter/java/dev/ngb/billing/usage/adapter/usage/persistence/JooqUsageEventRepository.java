@@ -3,7 +3,7 @@ package dev.ngb.billing.usage.adapter.usage.persistence;
 import static dev.ngb.billing_jooq.Tables.USAGE_EVENTS;
 
 import dev.ngb.core.id.TenantId;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.usage.api.lookup.UsageEventId;
 import dev.ngb.billing.usage.application.usage.port.UsageEventRepository;

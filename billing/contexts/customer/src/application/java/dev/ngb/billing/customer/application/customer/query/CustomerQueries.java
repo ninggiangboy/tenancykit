@@ -2,8 +2,8 @@ package dev.ngb.billing.customer.application.customer.query;
 
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.customer.application.customer.port.CustomerRepository;
-import dev.ngb.billing.platform.api.error.NotFoundException;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import java.util.List;
 

@@ -6,7 +6,7 @@ import dev.ngb.billing.payment.application.stripe.command.ManageStripeEventUseCa
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -55,6 +55,6 @@ public class IncidentController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequiresPermission(Permission.STRIPE_MANAGE)
     public void resolveIncident(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        eventAdmin.resolveIncident(Audit.of(currentActor.get(), requestId), UUID.fromString(id));
+        eventAdmin.resolveIncident(Audit.of(currentActor.get().auditName(), requestId), UUID.fromString(id));
     }
 }

@@ -2,7 +2,7 @@ package dev.ngb.billing.webhook.application.delivery.query;
 
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.util.PageSize;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.webhook.domain.delivery.DeliveryStatus;
 import java.util.List;
 import java.util.UUID;

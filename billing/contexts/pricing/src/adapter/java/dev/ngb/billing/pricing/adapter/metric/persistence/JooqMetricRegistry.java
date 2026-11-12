@@ -2,7 +2,7 @@ package dev.ngb.billing.pricing.adapter.metric.persistence;
 
 import static dev.ngb.billing_jooq.Tables.PRICING_METRICS;
 
-import dev.ngb.billing.platform.api.error.ConflictException;
+import dev.ngb.core.error.ConflictException;
 import dev.ngb.billing.pricing.application.metric.port.MetricRegistry;
 import java.util.Optional;
 import org.jooq.DSLContext;

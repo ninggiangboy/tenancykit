@@ -3,7 +3,7 @@ package dev.ngb.billing.pricing;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.billing.money.MoneyTestWorld;
 import dev.ngb.billing.money.MoneyTestWorld.World;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.pricing.api.plan.BillingCycle;
 import dev.ngb.billing.pricing.application.plan.command.ManagePlanUseCase;
 import dev.ngb.billing.pricing.domain.plan.PricingPlan;

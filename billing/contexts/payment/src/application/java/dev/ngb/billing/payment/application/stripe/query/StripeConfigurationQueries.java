@@ -1,7 +1,7 @@
 package dev.ngb.billing.payment.application.stripe.query;
 
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 
 /** Reads the current Stripe configuration for the GET handler. */
 public class StripeConfigurationQueries {

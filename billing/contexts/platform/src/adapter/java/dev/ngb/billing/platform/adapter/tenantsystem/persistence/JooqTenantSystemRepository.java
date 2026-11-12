@@ -4,8 +4,8 @@ import static dev.ngb.billing_jooq.Tables.TENANT_SYSTEMS;
 
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.util.Causes;
-import dev.ngb.billing.platform.api.error.ConflictException;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.error.ConflictException;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.platform.application.tenantsystem.port.TenantSystemRepository;
 import dev.ngb.billing.platform.domain.tenantsystem.TenantSystem;
 import dev.ngb.billing.platform.domain.tenantsystem.TenantSystemStatus;

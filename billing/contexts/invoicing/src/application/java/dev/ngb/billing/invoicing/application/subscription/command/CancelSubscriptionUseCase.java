@@ -8,10 +8,10 @@ import dev.ngb.billing.invoicing.application.subscription.port.SubscriptionRepos
 import dev.ngb.billing.invoicing.domain.subscription.Subscription;
 import dev.ngb.billing.invoicing.domain.subscription.SubscriptionHistoryEntry;
 import dev.ngb.billing.invoicing.domain.subscription.SubscriptionId;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.audit.AuditEntry;
-import dev.ngb.billing.platform.api.audit.AuditLog;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.audit.AuditEntry;
+import dev.ngb.core.audit.AuditLog;
+import dev.ngb.core.error.NotFoundException;
 import java.time.Instant;
 import java.util.UUID;
 

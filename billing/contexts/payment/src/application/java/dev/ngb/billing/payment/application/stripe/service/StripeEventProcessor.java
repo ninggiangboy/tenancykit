@@ -16,7 +16,7 @@ import dev.ngb.billing.payment.domain.stripe.IntegrationMode;
 import dev.ngb.billing.payment.domain.stripe.StripeConfiguration;
 import dev.ngb.billing.payment.domain.stripe.StripeEvent;
 import dev.ngb.billing.payment.domain.stripe.StripeEventId;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import java.time.Instant;
 import java.util.function.DoubleSupplier;
 

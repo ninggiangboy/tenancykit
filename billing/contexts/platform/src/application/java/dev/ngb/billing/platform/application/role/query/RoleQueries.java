@@ -1,7 +1,7 @@
 package dev.ngb.billing.platform.application.role.query;
 
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import java.util.List;
 import java.util.UUID;
 

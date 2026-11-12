@@ -8,7 +8,7 @@ import dev.ngb.billing.money.api.reservation.ReservationId;
 import dev.ngb.billing.money.api.reservation.ReservationStatus;
 import dev.ngb.billing.money.application.reservation.port.ReservationRepository;
 import dev.ngb.billing.money.domain.reservation.Reservation;
-import dev.ngb.billing.platform.api.error.IdempotencyConflictException;
+import dev.ngb.core.error.IdempotencyConflictException;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;

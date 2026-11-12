@@ -6,7 +6,7 @@ import dev.ngb.billing.customer.api.lookup.CustomerLookup;
 import dev.ngb.billing.payment.application.refund.query.RefundReadRepository;
 import dev.ngb.billing.payment.application.refund.query.RefundView;
 import dev.ngb.billing.payment.domain.payment.PaymentStatus;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import java.util.List;

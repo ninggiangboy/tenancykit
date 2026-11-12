@@ -7,7 +7,7 @@ import dev.ngb.billing.money.api.reservation.ReserveBudget;
 import dev.ngb.billing.money.api.reservation.ReserveBudgetCommand;
 import dev.ngb.billing.money.api.wallet.WalletLookup;
 import dev.ngb.billing.money.api.wallet.WalletSummary;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.pricing.domain.metric.Measure;
 import dev.ngb.billing.pricing.domain.plan.PricingPlanId;
 import dev.ngb.billing.sharedkernel.id.WalletId;

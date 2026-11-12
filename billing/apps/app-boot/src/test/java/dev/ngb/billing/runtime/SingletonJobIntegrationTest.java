@@ -6,7 +6,7 @@ import static org.mockito.Mockito.doAnswer;
 import dev.ngb.billing.Application;
 import dev.ngb.billing.boot.jobs.MoneyJobs;
 import dev.ngb.billing.money.application.ledger.command.VerifyLedgerUseCase;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.support.PostgresContainerConfig;
 import java.time.Instant;
 import java.time.LocalDate;

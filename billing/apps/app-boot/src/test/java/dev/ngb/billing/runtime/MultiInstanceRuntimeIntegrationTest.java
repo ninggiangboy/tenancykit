@@ -4,13 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.sun.net.httpserver.HttpServer;
 import dev.ngb.billing.Application;
-import dev.ngb.billing.boot.infrastructure.messaging.OutboxRelay;
+import dev.ngb.core.messaging.outbox.OutboxRelay;
 import dev.ngb.billing.invoicing.application.subscription.command.CreateSubscriptionUseCase;
 import dev.ngb.billing.money.MoneyTestWorld;
 import dev.ngb.billing.money.MoneyTestWorld.World;
 import dev.ngb.billing.money.api.charge.ChargeCommand;
 import dev.ngb.billing.money.api.charge.ChargeWallet;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.pricing.PricingTestWorld;
 import dev.ngb.billing.pricing.api.plan.BillingCycle;
 import dev.ngb.billing.sharedkernel.money.Currency;

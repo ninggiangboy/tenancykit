@@ -4,7 +4,7 @@ import dev.ngb.billing.money.api.reservation.ReservationResult;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.idempotency.RepeatableCreate;
+import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.pricing.application.rating.command.ChargeFromUsageUseCase;
 import dev.ngb.billing.pricing.application.rating.command.EstimateCostUseCase;
 import dev.ngb.billing.pricing.application.rating.command.ReserveFromEstimateUseCase;

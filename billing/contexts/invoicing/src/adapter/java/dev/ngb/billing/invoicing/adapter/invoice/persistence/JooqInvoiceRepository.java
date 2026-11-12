@@ -16,7 +16,7 @@ import dev.ngb.billing.invoicing.domain.invoice.InvoicePayment;
 import dev.ngb.billing.invoicing.domain.invoice.InvoiceStatus;
 import dev.ngb.billing.invoicing.domain.invoice.ItemSource;
 import dev.ngb.billing.invoicing.domain.invoice.Settlement;
-import dev.ngb.billing.platform.api.error.ConflictException;
+import dev.ngb.core.error.ConflictException;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.billing.sharedkernel.money.Currency;

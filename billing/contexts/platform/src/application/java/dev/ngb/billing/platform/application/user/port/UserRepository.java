@@ -1,6 +1,6 @@
 package dev.ngb.billing.platform.application.user.port;
 
-import dev.ngb.billing.platform.api.error.ConflictException;
+import dev.ngb.core.error.ConflictException;
 import dev.ngb.billing.platform.domain.user.BillingUser;
 import dev.ngb.billing.platform.domain.user.BillingUserId;
 import java.util.List;

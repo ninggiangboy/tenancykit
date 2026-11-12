@@ -1,6 +1,6 @@
 package dev.ngb.billing.platform;
 
-import dev.ngb.billing.platform.api.error.ConflictException;
+import dev.ngb.core.error.ConflictException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -9,7 +9,7 @@ import dev.ngb.billing.platform.api.actor.Actor;
 import dev.ngb.billing.platform.api.actor.ActorType;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.application.auth.service.Authentication;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.platform.application.credential.command.ManageCredentialUseCase;
 import dev.ngb.billing.platform.application.auth.exception.RateLimitExceededException;
 import dev.ngb.billing.platform.application.tenantsystem.command.CreateTenantSystemUseCase;

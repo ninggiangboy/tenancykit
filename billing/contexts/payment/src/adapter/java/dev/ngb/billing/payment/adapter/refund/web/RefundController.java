@@ -8,8 +8,8 @@ import dev.ngb.billing.payment.domain.refund.Refund;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.idempotency.RepeatableCreate;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
@@ -76,7 +76,7 @@ public class RefundController {
             }
             amount = Money.of(request.amount(), Currency.of(request.currency()));
         }
-        RequestRefundUseCase.Result result = refund.execute(new RequestRefundUseCase.Command(PaymentId.of(id), amount, request.reason(), key, Audit.of(currentActor.get(), requestId)));
+        RequestRefundUseCase.Result result = refund.execute(new RequestRefundUseCase.Command(PaymentId.of(id), amount, request.reason(), key, Audit.of(currentActor.get().auditName(), requestId)));
         return ResponseEntity.status(result.replayed() ? HttpStatus.OK : HttpStatus.CREATED).body(RefundResponse.of(result.refund()));
     }
 

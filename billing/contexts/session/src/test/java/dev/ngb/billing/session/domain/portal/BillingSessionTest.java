@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.core.id.TenantId;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.application.portal.service.ReturnUrlPolicy;
 import dev.ngb.billing.sharedkernel.id.CustomerId;

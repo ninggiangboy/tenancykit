@@ -8,7 +8,7 @@ import dev.ngb.billing.Application;
 import dev.ngb.billing.payment.PaymentTestWorld.PayWorld;
 import dev.ngb.billing.payment.domain.payment.Payment;
 import dev.ngb.billing.payment.domain.payment.PaymentId;
-import dev.ngb.billing.platform.api.actor.RequestScope;
+import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.billing.support.FakeIdentityConfig;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;

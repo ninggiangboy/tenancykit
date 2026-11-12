@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.ngb.core.event.EventEnvelope;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.messaging.outbox.OutboxRelay;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.Application;
 import dev.ngb.billing.support.OwnerDatabase;

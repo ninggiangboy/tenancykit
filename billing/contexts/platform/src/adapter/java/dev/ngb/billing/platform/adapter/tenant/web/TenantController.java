@@ -4,7 +4,7 @@ import dev.ngb.core.id.TenantId;
 import dev.ngb.billing.platform.adapter.auth.web.CallerResolver;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.platform.application.tenant.command.AddTenantDomainUseCase;
 import dev.ngb.billing.platform.application.tenant.command.DeactivateTenantUseCase;
 import dev.ngb.billing.platform.application.tenant.command.ProvisionTenantUseCase;

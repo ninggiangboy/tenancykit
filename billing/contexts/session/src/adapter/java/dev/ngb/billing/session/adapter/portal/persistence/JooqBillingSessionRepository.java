@@ -3,7 +3,7 @@ package dev.ngb.billing.session.adapter.portal.persistence;
 import static dev.ngb.billing_jooq.Tables.BILLING_SESSIONS;
 
 import dev.ngb.core.id.TenantId;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.application.portal.port.BillingSessionRepository;
 import dev.ngb.billing.session.domain.portal.BillingSession;

@@ -2,7 +2,7 @@ package dev.ngb.billing.customer.application.customer.port;
 
 import dev.ngb.billing.customer.domain.customer.Customer;
 import dev.ngb.billing.customer.domain.customer.ExternalIdentity;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import java.util.Optional;
 
@@ -13,7 +13,7 @@ public interface CustomerRepository {
      * Inserts the customer unless this tenant already has one with its idempotency key.
      *
      * @return true when the row was inserted, false when the key already existed
-     * @throws dev.ngb.billing.platform.api.error.ConflictException when an external user is already mapped to a customer
+     * @throws dev.ngb.core.error.ConflictException when an external user is already mapped to a customer
      */
     boolean addIfAbsent(Customer customer);
 

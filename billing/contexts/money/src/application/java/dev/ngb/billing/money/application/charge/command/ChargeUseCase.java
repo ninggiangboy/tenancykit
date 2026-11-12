@@ -19,9 +19,9 @@ import dev.ngb.billing.money.domain.charge.ChargeService;
 import dev.ngb.billing.money.domain.event.MoneyEvents;
 import dev.ngb.billing.money.domain.reservation.Reservation;
 import dev.ngb.billing.money.domain.wallet.Wallet;
-import dev.ngb.billing.platform.api.error.ConflictException;
-import dev.ngb.billing.platform.api.error.NotFoundException;
-import dev.ngb.billing.platform.api.idempotency.Fingerprint;
+import dev.ngb.core.error.ConflictException;
+import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.idempotency.Fingerprint;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import java.time.Instant;
 

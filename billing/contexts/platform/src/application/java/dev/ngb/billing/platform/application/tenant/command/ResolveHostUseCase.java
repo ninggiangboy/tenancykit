@@ -1,7 +1,7 @@
 package dev.ngb.billing.platform.application.tenant.command;
 
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.billing.platform.api.actor.RequestScope;
+import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.billing.platform.application.tenant.port.TenantDomainRepository;
 import dev.ngb.billing.platform.application.tenant.port.TenantRepository;
 import dev.ngb.billing.platform.domain.tenant.Hostname;

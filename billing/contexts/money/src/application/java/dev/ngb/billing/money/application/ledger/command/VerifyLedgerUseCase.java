@@ -4,9 +4,9 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.money.application.ledger.port.LedgerVerifier;
 import dev.ngb.billing.money.application.messaging.service.MoneyActors;
-import dev.ngb.billing.platform.api.audit.AuditEntry;
-import dev.ngb.billing.platform.api.audit.AuditLog;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.audit.AuditEntry;
+import dev.ngb.core.audit.AuditLog;
+import dev.ngb.core.tenancy.TenantContext;
 import java.util.List;
 
 /**

@@ -11,7 +11,7 @@ import dev.ngb.billing.money.application.ledger.query.LedgerEntryView;
 import dev.ngb.billing.money.application.ledger.query.LedgerReadRepository;
 import dev.ngb.billing.money.application.reservation.query.ReservationReadRepository;
 import dev.ngb.billing.money.application.reservation.query.ReservationView;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import java.util.List;

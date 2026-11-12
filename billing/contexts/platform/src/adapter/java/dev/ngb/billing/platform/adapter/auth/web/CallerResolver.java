@@ -1,7 +1,7 @@
 package dev.ngb.billing.platform.adapter.auth.web;
 
 import dev.ngb.billing.platform.api.actor.CurrentActor;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -16,7 +16,7 @@ public class CallerResolver {
     }
 
     public Audit current() {
-        return Audit.of(currentActor.get(), suppliedRequestId());
+        return Audit.of(currentActor.get().auditName(), suppliedRequestId());
     }
 
     private static String suppliedRequestId() {

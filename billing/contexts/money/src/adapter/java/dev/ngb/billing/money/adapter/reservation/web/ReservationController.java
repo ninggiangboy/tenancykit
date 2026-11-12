@@ -10,7 +10,7 @@ import dev.ngb.billing.money.application.wallet.query.WalletQueries;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.idempotency.RepeatableCreate;
+import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import java.time.Duration;

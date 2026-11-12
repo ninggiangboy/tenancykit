@@ -1,8 +1,8 @@
 package dev.ngb.billing.boot.startup;
 
 import dev.ngb.billing.boot.infrastructure.coordination.JobLeases;
-import dev.ngb.billing.platform.api.actor.RequestScope;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.tenancy.RequestScope;
+import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.platform.application.role.command.SeedDefaultRolesUseCase;
 import dev.ngb.billing.platform.application.role.command.SeedPermissionsUseCase;
 import dev.ngb.billing.platform.application.tenant.command.EnsurePlatformDomainUseCase;

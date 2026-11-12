@@ -1,8 +1,8 @@
 package dev.ngb.billing.support;
 
 import dev.ngb.core.id.TenantId;
-import dev.ngb.billing.platform.api.actor.RequestScope;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.tenancy.RequestScope;
+import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.platform.application.tenant.command.CreateTenantUseCase;
 import dev.ngb.billing.platform.domain.tenant.Tenant;
 import java.util.UUID;

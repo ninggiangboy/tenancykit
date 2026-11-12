@@ -7,10 +7,10 @@ import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.security.SecretCipher;
 import dev.ngb.core.spring.security.AesGcmSecretCipher;
 import dev.ngb.core.util.Backoff;
-import dev.ngb.billing.boot.infrastructure.messaging.OutboxRelay;
+import dev.ngb.core.messaging.outbox.OutboxRelay;
 import dev.ngb.billing.boot.infrastructure.messaging.SchemaEventTypeCatalog;
-import dev.ngb.billing.platform.api.audit.AuditLog;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.audit.AuditLog;
+import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.webhook.adapter.delivery.crypto.HmacSha256Signer;
 import dev.ngb.billing.webhook.adapter.delivery.http.HttpComponentsWebhookSender;
 import dev.ngb.billing.webhook.adapter.delivery.json.JacksonEventBodyWriter;
@@ -60,7 +60,7 @@ class WebhookConfiguration {
             @Value("${billing.outbox.max-attempts:10}") int maxAttempts,
             @Value("${billing.outbox.backoff-base:PT10S}") Duration backoffBase,
             @Value("${billing.outbox.backoff-cap:PT1H}") Duration backoffCap) {
-        return new OutboxRelay(unitOfWork, dsl, json, publisher, clock, meters, batchSize, maxAttempts, new Backoff(backoffBase, backoffCap, 0.2));
+        return new OutboxRelay(unitOfWork, dsl, json, publisher, clock, meters, "billing", batchSize, maxAttempts, new Backoff(backoffBase, backoffCap, 0.2));
     }
 
     @Bean

@@ -1,7 +1,7 @@
 package dev.ngb.billing.boot.web;
 
-import dev.ngb.billing.platform.api.actor.RequestScope;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.tenancy.RequestScope;
+import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.platform.application.tenant.command.ResolveHostUseCase;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

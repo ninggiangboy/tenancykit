@@ -6,8 +6,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import dev.ngb.billing.Application;
-import dev.ngb.billing.platform.api.actor.RequestScope;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.tenancy.RequestScope;
+import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.platform.application.tenant.command.AddTenantDomainUseCase;
 import dev.ngb.billing.platform.application.tenant.command.DeactivateTenantUseCase;
 import dev.ngb.billing.platform.domain.tenant.Tenant;

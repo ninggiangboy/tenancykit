@@ -1,6 +1,6 @@
 package dev.ngb.billing.platform;
 
-import dev.ngb.billing.platform.api.error.ConflictException;
+import dev.ngb.core.error.ConflictException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 

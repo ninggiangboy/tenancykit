@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.billing.boot.infrastructure.tenancy.ScopedTenantContext;
+import dev.ngb.core.spring.tenancy.ScopedTenantContext;
 import dev.ngb.billing.platform.application.tenant.query.TenantDomainView;
 import dev.ngb.billing.platform.application.tenant.query.TenantQueries;
 import dev.ngb.billing.platform.application.tenant.query.TenantReadRepository;

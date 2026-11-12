@@ -1,8 +1,8 @@
 package dev.ngb.billing.platform.application.credential.query;
 
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.billing.platform.api.error.NotFoundException;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.platform.application.tenantsystem.query.TenantSystemReadRepository;
 import java.util.List;
 

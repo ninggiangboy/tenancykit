@@ -8,7 +8,7 @@ import dev.ngb.billing.money.domain.wallet.Wallet;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.money.Money;
@@ -70,7 +70,7 @@ public class WalletController {
         WalletMode mode = WalletMode.valueOf(request.mode());
         Money limit = request.creditLimit() == null ? null : Money.of(request.creditLimit(), currency);
         OpenWalletUseCase.Result result = openWallet.execute(new OpenWalletUseCase.Command(
-                CustomerId.of(request.customerId()), currency, mode, limit, Audit.of(currentActor.get(), requestId), currentActor.caller()));
+                CustomerId.of(request.customerId()), currency, mode, limit, Audit.of(currentActor.get().auditName(), requestId), currentActor.caller()));
         return ResponseEntity.status(result.created() ? HttpStatus.CREATED : HttpStatus.OK).body(WalletResponse.of(result.wallet()));
     }
 

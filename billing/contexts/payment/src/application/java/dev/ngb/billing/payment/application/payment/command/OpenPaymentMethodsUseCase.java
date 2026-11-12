@@ -9,9 +9,9 @@ import dev.ngb.billing.payment.application.payment.port.StripeCustomerRepository
 import dev.ngb.billing.payment.application.stripe.port.StripeConfigurationRepository;
 import dev.ngb.billing.payment.application.stripe.service.ProviderAccess;
 import dev.ngb.billing.payment.domain.stripe.StripeConfiguration;
-import dev.ngb.billing.platform.api.error.ConflictException;
-import dev.ngb.billing.platform.api.error.NotFoundException;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.error.ConflictException;
+import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 
 /**

@@ -12,7 +12,7 @@ import java.util.Optional;
  */
 public interface WalletRepository {
 
-    /** @throws dev.ngb.billing.platform.api.error.ConflictException when the customer already has a wallet in that currency */
+    /** @throws dev.ngb.core.error.ConflictException when the customer already has a wallet in that currency */
     void add(Wallet wallet);
 
     /** Writes the wallet's balance, held total and last sequence. */

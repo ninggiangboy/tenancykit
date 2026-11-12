@@ -10,7 +10,7 @@ import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.Application;
 import dev.ngb.billing.boot.jobs.OutboxJobs;
 import dev.ngb.billing.boot.jobs.WebhookJobs;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.support.PostgresContainerConfig;
 import dev.ngb.billing.support.ScopeTestSupport;
 import dev.ngb.billing.support.TestEvent;

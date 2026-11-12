@@ -4,7 +4,7 @@ import static dev.ngb.billing_jooq.Tables.WEBHOOK_ENDPOINTS;
 import static org.jooq.impl.DSL.condition;
 
 import dev.ngb.core.id.TenantId;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.webhook.application.endpoint.port.WebhookEndpointRepository;
 import dev.ngb.billing.webhook.domain.endpoint.EndpointStatus;
 import dev.ngb.billing.webhook.domain.endpoint.WebhookEndpoint;

@@ -3,7 +3,7 @@ package dev.ngb.billing.webhook.adapter.endpoint.web;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.webhook.application.endpoint.command.CreateEndpointUseCase;
 import dev.ngb.billing.webhook.application.endpoint.command.ManageEndpointUseCase;
 import dev.ngb.billing.webhook.application.endpoint.query.EndpointQueries;
@@ -72,7 +72,7 @@ public class EndpointController {
     public EndpointWithSecretResponse createEndpoint(
             @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody CreateEndpointRequest request) {
         CreateEndpointUseCase.Result result = create.execute(
-                new CreateEndpointUseCase.Command(request.url(), request.description(), request.eventTypes(), Audit.of(currentActor.get(), requestId), currentActor.caller()));
+                new CreateEndpointUseCase.Command(request.url(), request.description(), request.eventTypes(), Audit.of(currentActor.get().auditName(), requestId), currentActor.caller()));
         return new EndpointWithSecretResponse(EndpointResponse.of(result.endpoint()), result.signingSecret());
     }
 
@@ -95,14 +95,14 @@ public class EndpointController {
             @PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId,
             @RequestBody UpdateEndpointRequest request) {
         EndpointStatus status = request.status() == null ? null : EndpointStatus.valueOf(request.status());
-        return EndpointResponse.of(endpoints.update(Audit.of(currentActor.get(), requestId), WebhookEndpointId.of(id),
+        return EndpointResponse.of(endpoints.update(Audit.of(currentActor.get().auditName(), requestId), WebhookEndpointId.of(id),
                 new ManageEndpointUseCase.Change(request.url(), request.description(), request.eventTypes(), status), currentActor.caller()));
     }
 
     @PostMapping("/webhook-endpoints/{id}/rotate-secret")
     @RequiresPermission(Permission.WEBHOOK_MANAGE)
     public EndpointWithSecretResponse rotateSecret(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        ManageEndpointUseCase.Rotated rotated = endpoints.rotateSecret(Audit.of(currentActor.get(), requestId), WebhookEndpointId.of(id), currentActor.caller());
+        ManageEndpointUseCase.Rotated rotated = endpoints.rotateSecret(Audit.of(currentActor.get().auditName(), requestId), WebhookEndpointId.of(id), currentActor.caller());
         return new EndpointWithSecretResponse(EndpointResponse.of(rotated.endpoint()), rotated.signingSecret());
     }
 }

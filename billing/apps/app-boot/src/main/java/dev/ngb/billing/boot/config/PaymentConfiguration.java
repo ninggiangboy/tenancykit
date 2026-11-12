@@ -57,8 +57,8 @@ import dev.ngb.billing.payment.application.stripe.query.StripeEventReadRepositor
 import dev.ngb.billing.payment.application.stripe.service.ProviderAccess;
 import dev.ngb.billing.payment.application.stripe.service.StripeConfigurationService;
 import dev.ngb.billing.payment.application.stripe.service.StripeEventProcessor;
-import dev.ngb.billing.platform.api.audit.AuditLog;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.audit.AuditLog;
+import dev.ngb.core.tenancy.TenantContext;
 import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 import org.jooq.DSLContext;

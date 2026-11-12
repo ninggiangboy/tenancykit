@@ -1,7 +1,7 @@
 package dev.ngb.billing.platform.application.user.command;
 
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.platform.application.messaging.service.PlatformActors;
 import dev.ngb.billing.platform.application.role.command.SeedDefaultRolesUseCase;
 import dev.ngb.billing.platform.application.role.port.RoleRepository;

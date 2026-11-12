@@ -13,8 +13,8 @@ import dev.ngb.billing.money.application.wallet.port.WalletRepository;
 import dev.ngb.billing.money.domain.event.MoneyEvents;
 import dev.ngb.billing.money.domain.ledger.LedgerEntry;
 import dev.ngb.billing.money.domain.wallet.Wallet;
-import dev.ngb.billing.platform.api.error.NotFoundException;
-import dev.ngb.billing.platform.api.idempotency.Fingerprint;
+import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.idempotency.Fingerprint;
 import java.time.Instant;
 
 /**

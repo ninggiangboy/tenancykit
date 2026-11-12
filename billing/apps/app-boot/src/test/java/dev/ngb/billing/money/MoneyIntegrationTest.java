@@ -30,9 +30,9 @@ import dev.ngb.billing.money.application.reservation.command.ExpireReservationsU
 import dev.ngb.billing.money.application.reservation.command.ReleaseReservationUseCase;
 import dev.ngb.billing.money.application.wallet.query.WalletQueries;
 import dev.ngb.billing.money.application.wallet.query.WalletView;
-import dev.ngb.billing.platform.api.error.ConflictException;
-import dev.ngb.billing.platform.api.error.IdempotencyConflictException;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.ConflictException;
+import dev.ngb.core.error.IdempotencyConflictException;
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
@@ -563,10 +563,10 @@ class MoneyIntegrationTest {
         World b = worlds.prepaid(2_000);
 
         assertThatThrownBy(() -> scopes.inTenant(b.tenant().id(), () -> queries.wallet(a.wallet().id())))
-                .isInstanceOf(dev.ngb.billing.platform.api.error.NotFoundException.class);
+                .isInstanceOf(dev.ngb.core.error.NotFoundException.class);
         assertThatThrownBy(() -> scopes.inTenant(b.tenant().id(), () -> charge.charge(
                         new ChargeCommand(a.wallet().id(), null, usd(1), null, "x", "cross"))))
-                .isInstanceOf(dev.ngb.billing.platform.api.error.NotFoundException.class);
+                .isInstanceOf(dev.ngb.core.error.NotFoundException.class);
         assertThat(scopes.inTenant(b.tenant().id(), () -> ledger.findByIdempotencyKey("anything"))).isEmpty();
         assertThat(wallet(a).balance()).isEqualTo(usd(1_000));
     }

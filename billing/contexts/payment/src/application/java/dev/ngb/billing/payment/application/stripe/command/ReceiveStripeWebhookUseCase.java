@@ -20,9 +20,9 @@ import dev.ngb.billing.payment.domain.stripe.StripeConfigurationId;
 import dev.ngb.billing.payment.domain.stripe.StripeEnvironment;
 import dev.ngb.billing.payment.domain.stripe.StripeEvent;
 import dev.ngb.billing.payment.domain.stripe.StripeEventId;
-import dev.ngb.billing.platform.api.actor.RequestScope;
-import dev.ngb.billing.platform.api.error.NotFoundException;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.tenancy.RequestScope;
+import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.tenancy.TenantContext;
 import java.util.Optional;
 
 /**

@@ -16,7 +16,7 @@ import dev.ngb.billing.money.api.ledger.LedgerPostingResult;
 import dev.ngb.billing.money.api.wallet.CreditCommand;
 import dev.ngb.billing.money.api.wallet.CreditWallet;
 import dev.ngb.billing.payment.api.payment.PaymentEventTypes;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import java.time.Instant;

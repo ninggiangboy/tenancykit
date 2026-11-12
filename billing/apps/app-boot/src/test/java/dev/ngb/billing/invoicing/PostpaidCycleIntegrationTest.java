@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.ngb.core.event.EventEnvelope;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.Application;
-import dev.ngb.billing.boot.infrastructure.messaging.OutboxRelay;
+import dev.ngb.core.messaging.outbox.OutboxRelay;
 import dev.ngb.billing.invoicing.application.cycle.command.CloseBillingCycleUseCase;
 import dev.ngb.billing.invoicing.application.cycle.command.CollectChargeUseCase;
 import dev.ngb.billing.money.MoneyTestWorld;

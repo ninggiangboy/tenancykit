@@ -1,6 +1,6 @@
 package dev.ngb.billing.platform.application.credential.port;
 
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.platform.domain.credential.ApiCredential;
 import dev.ngb.billing.platform.domain.credential.ApiCredentialId;
 import java.util.List;

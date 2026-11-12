@@ -10,10 +10,10 @@ import dev.ngb.billing.platform.api.actor.Actor;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.error.AccessDeniedException;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
-import dev.ngb.billing.platform.api.idempotency.RepeatableCreate;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.error.AccessDeniedException;
+import dev.ngb.core.id.TenantSystemId;
+import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import java.time.Instant;
 import java.util.List;
@@ -87,7 +87,7 @@ public class CustomerController {
         Actor actor = currentActor.get();
         TenantSystemId system = tenantSystemFor(actor, request.tenantSystemId());
         CreateCustomerUseCase.Result result = create.execute(new CreateCustomerUseCase.Command(
-                system, request.externalUserId(), request.displayName(), request.email(), idempotencyKey, Audit.of(actor, requestId)));
+                system, request.externalUserId(), request.displayName(), request.email(), idempotencyKey, Audit.of(actor.auditName(), requestId)));
         HttpStatus status = result.replayed() ? HttpStatus.OK : HttpStatus.CREATED;
         return ResponseEntity.status(status).body(CustomerResponse.of(result.customer()));
     }
@@ -122,14 +122,14 @@ public class CustomerController {
             @RequestBody UpdateCustomerRequest request) {
         Actor actor = currentActor.get();
         return CustomerResponse.of(manage.update(
-                Audit.of(actor, requestId), CustomerId.of(id), request.displayName(), request.email(), actor.tenantSystemId()));
+                Audit.of(actor.auditName(), requestId), CustomerId.of(id), request.displayName(), request.email(), actor.tenantSystemId()));
     }
 
     @PostMapping("/{id}/deactivate")
     @RequiresPermission(Permission.CUSTOMER_WRITE)
     public CustomerResponse deactivate(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         Actor actor = currentActor.get();
-        return CustomerResponse.of(manage.deactivate(Audit.of(actor, requestId), CustomerId.of(id), actor.tenantSystemId()));
+        return CustomerResponse.of(manage.deactivate(Audit.of(actor.auditName(), requestId), CustomerId.of(id), actor.tenantSystemId()));
     }
 
     /**

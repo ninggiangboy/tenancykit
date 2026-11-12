@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.PermissionScope;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.platform.domain.credential.ApiCredential;
 import dev.ngb.billing.platform.domain.credential.ApiCredentialId;
 import dev.ngb.billing.platform.domain.credential.ApiKey;

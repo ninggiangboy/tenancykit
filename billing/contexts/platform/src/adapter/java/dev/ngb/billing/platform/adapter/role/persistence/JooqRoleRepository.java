@@ -7,7 +7,7 @@ import dev.ngb.core.id.TenantId;
 import dev.ngb.core.util.Causes;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.PermissionScope;
-import dev.ngb.billing.platform.api.error.ConflictException;
+import dev.ngb.core.error.ConflictException;
 import dev.ngb.billing.platform.application.role.port.RoleRepository;
 import dev.ngb.billing.platform.domain.role.Role;
 import dev.ngb.billing.platform.domain.role.RoleId;

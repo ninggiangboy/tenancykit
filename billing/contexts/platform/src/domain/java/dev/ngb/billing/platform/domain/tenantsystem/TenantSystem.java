@@ -2,7 +2,7 @@ package dev.ngb.billing.platform.domain.tenantsystem;
 
 import dev.ngb.core.ddd.AggregateRoot;
 import dev.ngb.core.id.TenantId;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.id.TenantSystemId;
 import java.time.Instant;
 import java.util.Objects;
 

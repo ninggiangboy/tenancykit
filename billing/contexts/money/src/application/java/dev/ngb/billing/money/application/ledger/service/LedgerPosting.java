@@ -7,7 +7,7 @@ import dev.ngb.billing.money.application.ledger.port.LedgerRepository;
 import dev.ngb.billing.money.application.wallet.port.WalletRepository;
 import dev.ngb.billing.money.domain.ledger.LedgerEntry;
 import dev.ngb.billing.money.domain.wallet.Wallet;
-import dev.ngb.billing.platform.api.error.IdempotencyConflictException;
+import dev.ngb.core.error.IdempotencyConflictException;
 import dev.ngb.billing.sharedkernel.money.Money;
 import java.time.Instant;
 import java.util.Optional;

@@ -17,7 +17,7 @@ import dev.ngb.billing.payment.domain.stripe.StripeConfigurationId;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -108,21 +108,21 @@ public class StripeController {
     @RequiresPermission(Permission.STRIPE_MANAGE)
     public ConfigurationResponse connectDirect(
             @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody DirectRequest request) {
-        return configurationResponse(configuration.connectDirect(Audit.of(currentActor.get(), requestId), request.secretKey(), request.publishableKey(), request.webhookSecret()));
+        return configurationResponse(configuration.connectDirect(Audit.of(currentActor.get().auditName(), requestId), request.secretKey(), request.publishableKey(), request.webhookSecret()));
     }
 
     @PutMapping("/stripe/configuration/webhook-secret")
     @RequiresPermission(Permission.STRIPE_MANAGE)
     public ConfigurationResponse setWebhookSecret(
             @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody WebhookSecretRequest request) {
-        return configurationResponse(configuration.setWebhookSecret(Audit.of(currentActor.get(), requestId), request.webhookSecret()));
+        return configurationResponse(configuration.setWebhookSecret(Audit.of(currentActor.get().auditName(), requestId), request.webhookSecret()));
     }
 
     @PostMapping("/stripe/configuration/connect")
     @RequiresPermission(Permission.STRIPE_MANAGE)
     public ConnectionResponse startConnect(
             @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody ConnectRequest request) {
-        return connectionResponse(configuration.startConnect(Audit.of(currentActor.get(), requestId), request.displayName(), request.contactEmail()));
+        return connectionResponse(configuration.startConnect(Audit.of(currentActor.get().auditName(), requestId), request.displayName(), request.contactEmail()));
     }
 
     /** A new onboarding link, for when the earlier one has expired. */
@@ -136,7 +136,7 @@ public class StripeController {
     @PostMapping("/stripe/configuration/refresh")
     @RequiresPermission(Permission.STRIPE_MANAGE)
     public ConfigurationResponse refresh(@RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        return configurationResponse(configuration.refresh(Audit.of(currentActor.get(), requestId)));
+        return configurationResponse(configuration.refresh(Audit.of(currentActor.get().auditName(), requestId)));
     }
 
     @GetMapping("/stripe/configuration")
@@ -149,7 +149,7 @@ public class StripeController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequiresPermission(Permission.STRIPE_MANAGE)
     public void disconnect(@RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        configuration.disconnect(Audit.of(currentActor.get(), requestId));
+        configuration.disconnect(Audit.of(currentActor.get().auditName(), requestId));
     }
 
     /** Newest first. Pass the last {@code id} of a page as {@code before} for the next one. */
@@ -171,7 +171,7 @@ public class StripeController {
     @PostMapping("/stripe/events/{id}/retry")
     @RequiresPermission(Permission.STRIPE_MANAGE)
     public EventDetailResponse retry(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        eventAdmin.retry(Audit.of(currentActor.get(), requestId), StripeEventId.of(id));
+        eventAdmin.retry(Audit.of(currentActor.get().auditName(), requestId), StripeEventId.of(id));
         return eventDetail(eventQueries.get(UUID.fromString(id)));
     }
 

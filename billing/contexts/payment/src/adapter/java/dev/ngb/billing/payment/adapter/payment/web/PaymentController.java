@@ -10,8 +10,8 @@ import dev.ngb.billing.payment.domain.payment.PaymentStatus;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.idempotency.RepeatableCreate;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
@@ -90,7 +90,7 @@ public class PaymentController {
             throw new IllegalArgumentException("walletId and currency are required");
         }
         CreateTopUpUseCase.Result result = topUp.execute(new CreateTopUpUseCase.Command(WalletId.of(request.walletId()),
-                Money.of(request.amount(), Currency.of(request.currency())), key, Audit.of(currentActor.get(), requestId), currentActor.caller()));
+                Money.of(request.amount(), Currency.of(request.currency())), key, Audit.of(currentActor.get().auditName(), requestId), currentActor.caller()));
         return ResponseEntity.status(result.replayed() ? HttpStatus.OK : HttpStatus.CREATED).body(PaymentResponse.of(result.payment()));
     }
 

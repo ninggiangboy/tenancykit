@@ -2,8 +2,8 @@ package dev.ngb.billing.pricing.application.rating.command;
 
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.billing.platform.api.error.ConflictException;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.ConflictException;
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.pricing.application.plan.port.PlanRepository;
 import dev.ngb.billing.pricing.application.rating.service.PlanSelection;
 import dev.ngb.billing.pricing.domain.metric.Measure;

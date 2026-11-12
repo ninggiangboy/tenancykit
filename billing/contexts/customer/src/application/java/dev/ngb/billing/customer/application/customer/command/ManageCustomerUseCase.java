@@ -4,13 +4,13 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.customer.application.customer.port.CustomerRepository;
 import dev.ngb.billing.customer.domain.customer.Customer;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.audit.AuditEntry;
-import dev.ngb.billing.platform.api.audit.AuditLog;
-import dev.ngb.billing.platform.api.error.ConflictException;
-import dev.ngb.billing.platform.api.error.NotFoundException;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.audit.AuditEntry;
+import dev.ngb.core.audit.AuditLog;
+import dev.ngb.core.error.ConflictException;
+import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.tenancy.TenantContext;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 
 /** Reading and maintaining the Customers of the current tenant. */

@@ -1,6 +1,6 @@
 package dev.ngb.billing.customer.domain.customer;
 
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.id.TenantSystemId;
 import java.util.Objects;
 
 /** A user account in a Tenant System, identified by that system's own id for it. */

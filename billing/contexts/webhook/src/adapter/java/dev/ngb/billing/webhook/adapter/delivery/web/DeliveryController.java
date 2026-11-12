@@ -3,7 +3,7 @@ package dev.ngb.billing.webhook.adapter.delivery.web;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.webhook.application.delivery.command.ManageDeliveryUseCase;
 import dev.ngb.billing.webhook.application.delivery.query.DeliveryAttemptView;
 import dev.ngb.billing.webhook.application.delivery.query.DeliveryQueries;
@@ -93,6 +93,6 @@ public class DeliveryController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     @RequiresPermission(Permission.WEBHOOK_MANAGE)
     public DeliveryResponse resend(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        return DeliveryResponse.of(deliveries.resend(Audit.of(currentActor.get(), requestId), WebhookDeliveryId.of(id), currentActor.caller()));
+        return DeliveryResponse.of(deliveries.resend(Audit.of(currentActor.get().auditName(), requestId), WebhookDeliveryId.of(id), currentActor.caller()));
     }
 }

@@ -1,6 +1,6 @@
 package dev.ngb.billing.platform.application.tenant.exception;
 
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 public class TenantNotFoundException extends NotFoundException {
 
     private static final long serialVersionUID = 1L;

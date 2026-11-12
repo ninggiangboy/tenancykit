@@ -2,8 +2,8 @@ package dev.ngb.billing.session.application.portal.command;
 
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.billing.platform.api.audit.AuditEntry;
-import dev.ngb.billing.platform.api.audit.AuditLog;
+import dev.ngb.core.audit.AuditEntry;
+import dev.ngb.core.audit.AuditLog;
 import dev.ngb.billing.session.application.portal.exception.InvalidPortalSessionException;
 import dev.ngb.billing.session.application.portal.port.BillingSessionRepository;
 import dev.ngb.billing.session.application.portal.service.SessionTokens;

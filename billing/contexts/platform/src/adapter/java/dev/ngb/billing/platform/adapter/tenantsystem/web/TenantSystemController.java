@@ -1,10 +1,10 @@
 package dev.ngb.billing.platform.adapter.tenantsystem.web;
 
 import org.springframework.context.annotation.Profile;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.platform.application.credential.command.ManageCredentialUseCase;
 import dev.ngb.billing.platform.application.credential.query.CredentialQueries;
 import dev.ngb.billing.platform.application.credential.query.CredentialView;

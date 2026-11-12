@@ -14,8 +14,8 @@ import dev.ngb.billing.money.api.charge.ChargeId;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.idempotency.RepeatableCreate;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import java.time.Instant;
 import java.util.List;
@@ -126,7 +126,7 @@ public class InvoiceController {
             throw new IllegalArgumentException("chargeId is required");
         }
         InvoiceChargeUseCase.Result result = invoiceCharge.execute(new InvoiceChargeUseCase.Command(ChargeId.of(request.chargeId()),
-                Audit.of(currentActor.get(), requestId), currentActor.caller()));
+                Audit.of(currentActor.get().auditName(), requestId), currentActor.caller()));
         InvoiceQueries.InvoiceDetail detail = invoiceQueries.get(result.invoice().id().value(), currentActor.caller());
         return ResponseEntity.status(result.replayed() ? HttpStatus.OK : HttpStatus.CREATED).body(InvoiceDetailResponse.of(detail));
     }
@@ -140,7 +140,7 @@ public class InvoiceController {
     @RequiresPermission(Permission.PAYMENT_CREATE)
     public ResponseEntity<PayInvoiceResponse> pay(
             @PathVariable String id, @RequestHeader("Idempotency-Key") String key, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        PayInvoiceUseCase.Result result = payInvoice.execute(new PayInvoiceUseCase.Command(InvoiceId.of(id), key, Audit.of(currentActor.get(), requestId),
+        PayInvoiceUseCase.Result result = payInvoice.execute(new PayInvoiceUseCase.Command(InvoiceId.of(id), key, Audit.of(currentActor.get().auditName(), requestId),
                 currentActor.caller()));
         InvoiceQueries.InvoiceDetail detail = invoiceQueries.get(result.invoice().id().value(), currentActor.caller());
         PayInvoiceResponse body = new PayInvoiceResponse(InvoiceDetailResponse.of(detail), new StartedPaymentResponse(result.payment().paymentId().toString(),
@@ -153,7 +153,7 @@ public class InvoiceController {
     @RequiresPermission(Permission.INVOICE_MANAGE)
     public InvoiceDetailResponse voidInvoice(
             @PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody VoidRequest request) {
-        Invoice voided = manageInvoice.voidInvoice(InvoiceId.of(id), request.reason(), Audit.of(currentActor.get(), requestId));
+        Invoice voided = manageInvoice.voidInvoice(InvoiceId.of(id), request.reason(), Audit.of(currentActor.get().auditName(), requestId));
         return InvoiceDetailResponse.of(invoiceQueries.get(voided.id().value(), currentActor.caller()));
     }
 
@@ -161,7 +161,7 @@ public class InvoiceController {
     @PostMapping("/invoices/{id}/uncollectible")
     @RequiresPermission(Permission.INVOICE_MANAGE)
     public InvoiceDetailResponse markUncollectible(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        Invoice written = manageInvoice.markUncollectible(InvoiceId.of(id), Audit.of(currentActor.get(), requestId));
+        Invoice written = manageInvoice.markUncollectible(InvoiceId.of(id), Audit.of(currentActor.get().auditName(), requestId));
         return InvoiceDetailResponse.of(invoiceQueries.get(written.id().value(), currentActor.caller()));
     }
 }

@@ -1,6 +1,6 @@
 package dev.ngb.billing.platform;
 
-import dev.ngb.billing.platform.api.error.ConflictException;
+import dev.ngb.core.error.ConflictException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -8,7 +8,7 @@ import dev.ngb.billing.Application;
 import dev.ngb.billing.platform.api.actor.Actor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.application.auth.service.Authentication;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.platform.application.tenant.command.ProvisionTenantUseCase;
 import dev.ngb.billing.platform.application.role.command.ManageRoleUseCase;
 import dev.ngb.billing.platform.application.role.query.RoleQueries;

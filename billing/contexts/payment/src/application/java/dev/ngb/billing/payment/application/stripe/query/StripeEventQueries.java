@@ -3,7 +3,7 @@ package dev.ngb.billing.payment.application.stripe.query;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.util.PageSize;
 import dev.ngb.billing.payment.domain.stripe.EventStatus;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import java.util.List;
 import java.util.UUID;
 

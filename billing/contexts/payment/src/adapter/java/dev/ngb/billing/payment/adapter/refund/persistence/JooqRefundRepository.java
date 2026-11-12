@@ -9,7 +9,7 @@ import dev.ngb.billing.payment.domain.payment.PaymentId;
 import dev.ngb.billing.payment.domain.refund.Refund;
 import dev.ngb.billing.payment.domain.refund.RefundId;
 import dev.ngb.billing.payment.domain.refund.RefundStatus;
-import dev.ngb.billing.platform.api.error.IdempotencyConflictException;
+import dev.ngb.core.error.IdempotencyConflictException;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing_jooq.Keys;

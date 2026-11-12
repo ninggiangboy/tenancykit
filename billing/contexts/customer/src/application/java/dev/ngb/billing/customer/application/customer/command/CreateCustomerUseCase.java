@@ -9,12 +9,12 @@ import dev.ngb.billing.customer.application.customer.port.CustomerRepository;
 import dev.ngb.billing.customer.domain.customer.Customer;
 import dev.ngb.billing.customer.domain.customer.CustomerEvents.CustomerCreated;
 import dev.ngb.billing.customer.domain.customer.ExternalIdentity;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.audit.AuditEntry;
-import dev.ngb.billing.platform.api.audit.AuditLog;
-import dev.ngb.billing.platform.api.idempotency.Fingerprint;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.audit.AuditEntry;
+import dev.ngb.core.audit.AuditLog;
+import dev.ngb.core.idempotency.Fingerprint;
+import dev.ngb.core.tenancy.TenantContext;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import java.time.Instant;
 

@@ -3,7 +3,7 @@ package dev.ngb.billing.session.adapter.portal.web;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.session.application.portal.command.ManageReturnUrlsUseCase;
 import java.util.List;
 import java.util.Set;
@@ -44,6 +44,6 @@ public class PortalSettingsController {
     public List<String> replace(
             @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody ReplaceRequest request) {
         Set<String> urls = request.urls() == null ? Set.of() : Set.copyOf(request.urls());
-        return manage.replace(urls, Audit.of(currentActor.get(), requestId)).stream().sorted().toList();
+        return manage.replace(urls, Audit.of(currentActor.get().auditName(), requestId)).stream().sorted().toList();
     }
 }

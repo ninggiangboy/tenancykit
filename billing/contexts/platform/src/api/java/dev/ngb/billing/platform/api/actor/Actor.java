@@ -1,7 +1,7 @@
 package dev.ngb.billing.platform.api.actor;
 
 import dev.ngb.core.id.TenantId;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.id.TenantSystemId;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;

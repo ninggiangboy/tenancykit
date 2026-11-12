@@ -1,8 +1,8 @@
 package dev.ngb.billing.boot.infrastructure.tenancy;
 
 import dev.ngb.core.runtime.TransactionScopeHook;
-import dev.ngb.billing.platform.api.actor.RequestScope;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.tenancy.RequestScope;
+import dev.ngb.core.tenancy.TenantContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**

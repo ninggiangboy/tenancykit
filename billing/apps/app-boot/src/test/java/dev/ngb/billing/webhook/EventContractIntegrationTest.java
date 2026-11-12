@@ -78,7 +78,7 @@ class EventContractIntegrationTest {
     @Autowired dev.ngb.billing.payment.application.payment.port.PaymentRepository paymentRepository;
     @Autowired dev.ngb.billing.payment.application.refund.port.RefundRepository refundRepository;
     @Autowired dev.ngb.core.runtime.UnitOfWork unitOfWork;
-    @Autowired dev.ngb.billing.boot.infrastructure.messaging.OutboxRelay relay;
+    @Autowired dev.ngb.core.messaging.outbox.OutboxRelay relay;
     @Autowired dev.ngb.billing.invoicing.application.cycle.command.CloseBillingCycleUseCase closeCycle;
     @Autowired dev.ngb.billing.invoicing.application.subscription.command.CreateSubscriptionUseCase subscribe;
 

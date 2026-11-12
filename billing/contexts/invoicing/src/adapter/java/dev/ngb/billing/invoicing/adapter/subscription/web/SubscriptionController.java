@@ -11,8 +11,8 @@ import dev.ngb.billing.invoicing.domain.subscription.SubscriptionStatus;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.idempotency.RepeatableCreate;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import java.time.Instant;
@@ -87,7 +87,7 @@ public class SubscriptionController {
             throw new IllegalArgumentException("walletId and planId are required");
         }
         CreateSubscriptionUseCase.Result result = createSubscription.execute(new CreateSubscriptionUseCase.Command(WalletId.of(request.walletId()),
-                UUID.fromString(request.planId()), key, Audit.of(currentActor.get(), requestId), currentActor.caller()));
+                UUID.fromString(request.planId()), key, Audit.of(currentActor.get().auditName(), requestId), currentActor.caller()));
         return ResponseEntity.status(result.replayed() ? HttpStatus.OK : HttpStatus.CREATED).body(subscriptionDetail(result.subscription().id().value()));
     }
 
@@ -114,7 +114,7 @@ public class SubscriptionController {
     @PostMapping("/subscriptions/{id}/cancel")
     @RequiresPermission(Permission.SUBSCRIPTION_MANAGE)
     public SubscriptionDetailResponse cancel(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        Subscription canceled = cancelSubscription.execute(new CancelSubscriptionUseCase.Command(SubscriptionId.of(id), Audit.of(currentActor.get(), requestId),
+        Subscription canceled = cancelSubscription.execute(new CancelSubscriptionUseCase.Command(SubscriptionId.of(id), Audit.of(currentActor.get().auditName(), requestId),
                 currentActor.caller()));
         return subscriptionDetail(canceled.id().value());
     }

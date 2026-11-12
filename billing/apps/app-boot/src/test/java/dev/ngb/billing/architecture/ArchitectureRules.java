@@ -146,6 +146,7 @@ final class ArchitectureRules {
     static List<NamedRule> core(String core) {
         return List.of(
                 new NamedRule("core-is-self-contained", coreIsSelfContained(core)),
+                new NamedRule("core-messaging-is-self-contained", coreMessagingIsSelfContained(core)),
                 new NamedRule("core-spring-is-self-contained", coreSpringIsSelfContained(core)));
     }
 
@@ -260,9 +261,17 @@ final class ArchitectureRules {
      */
     private static ArchRule coreIsSelfContained(String core) {
         return classes().that().resideInAnyPackage(core + "..")
-                .and().resideOutsideOfPackage(core + ".spring..")
+                .and().resideOutsideOfPackages(core + ".spring..", core + ".messaging..")
                 .should().onlyDependOnClassesThat().resideInAnyPackage(JAVA, core + "..")
                 .because("the core is shared by every application build and depends on nothing of theirs");
+    }
+
+    private static ArchRule coreMessagingIsSelfContained(String core) {
+        return classes().that().resideInAPackage(core + ".messaging..")
+                .should().onlyDependOnClassesThat()
+                .resideInAnyPackage(JAVA, "javax..", "jakarta..", core + "..", "org.springframework..", "org.jooq..",
+                        "tools.jackson..", "com.fasterxml..", "io.micrometer..", "org.slf4j..")
+                .because("core-messaging sees the JDK, the core, jOOQ, Spring, Jackson, Micrometer and SLF4J only");
     }
 
     private static ArchRule coreSpringIsSelfContained(String core) {

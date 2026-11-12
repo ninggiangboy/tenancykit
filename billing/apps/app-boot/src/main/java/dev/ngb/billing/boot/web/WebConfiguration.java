@@ -7,7 +7,7 @@ import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.PermissionScope;
 import dev.ngb.billing.platform.api.actor.PublicEndpoint;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.idempotency.RepeatableCreate;
+import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.session.api.portal.PortalAuthorizer;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
 import io.swagger.v3.oas.models.Components;

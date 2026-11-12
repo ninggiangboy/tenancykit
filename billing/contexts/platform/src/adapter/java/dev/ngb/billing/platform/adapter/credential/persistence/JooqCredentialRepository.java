@@ -4,7 +4,7 @@ import static dev.ngb.billing_jooq.Tables.API_CREDENTIALS;
 
 import dev.ngb.core.id.TenantId;
 import dev.ngb.billing.platform.api.actor.Permission;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.platform.application.credential.port.CredentialRepository;
 import dev.ngb.billing.platform.domain.credential.ApiCredential;
 import dev.ngb.billing.platform.domain.credential.ApiCredentialId;

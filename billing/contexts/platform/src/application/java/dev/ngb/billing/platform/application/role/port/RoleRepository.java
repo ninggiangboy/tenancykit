@@ -1,6 +1,6 @@
 package dev.ngb.billing.platform.application.role.port;
 
-import dev.ngb.billing.platform.api.error.ConflictException;
+import dev.ngb.core.error.ConflictException;
 import dev.ngb.billing.platform.domain.role.Role;
 import dev.ngb.billing.platform.domain.role.RoleId;
 import java.util.Collection;

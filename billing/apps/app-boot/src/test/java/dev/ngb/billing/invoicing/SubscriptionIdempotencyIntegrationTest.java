@@ -9,7 +9,7 @@ import dev.ngb.billing.invoicing.application.subscription.command.RenewSubscript
 import dev.ngb.billing.invoicing.domain.subscription.Subscription;
 import dev.ngb.billing.money.MoneyTestWorld;
 import dev.ngb.billing.money.MoneyTestWorld.World;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.pricing.PricingTestWorld;
 import dev.ngb.billing.pricing.api.plan.BillingCycle;
 import dev.ngb.billing.support.OwnerDatabase;

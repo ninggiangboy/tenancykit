@@ -8,10 +8,10 @@ import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.Application;
-import dev.ngb.billing.boot.infrastructure.messaging.OutboxRelay;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.error.ConflictException;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.messaging.outbox.OutboxRelay;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.error.ConflictException;
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
 import dev.ngb.billing.support.ScopeTestSupport;
@@ -248,7 +248,7 @@ class WebhookDeliveryIntegrationTest {
             relay(tenant);
             WebhookDeliveryView pending = deliveriesOf(tenant, hook.endpoint().id()).get(0);
             org.assertj.core.api.Assertions.assertThatThrownBy(() -> scopes.inTenant(tenant, () -> deliveryAdmin.resend(AUDIT, new WebhookDeliveryId(pending.id()))))
-                    .isInstanceOf(dev.ngb.billing.platform.api.error.ConflictException.class);
+                    .isInstanceOf(dev.ngb.core.error.ConflictException.class);
         }
     }
 
@@ -478,7 +478,7 @@ class WebhookDeliveryIntegrationTest {
             assertThat(second.get(0).id()).isLessThan(first.get(1).id());
             WebhookDeliveryId unknown = new WebhookDeliveryId(UUID.randomUUID());
             org.assertj.core.api.Assertions.assertThatThrownBy(() -> scopes.inTenant(tenant, () -> deliveryQueries.get(unknown.value())))
-                    .isInstanceOf(dev.ngb.billing.platform.api.error.NotFoundException.class);
+                    .isInstanceOf(dev.ngb.core.error.NotFoundException.class);
         }
     }
 }

@@ -10,7 +10,7 @@ import dev.ngb.billing.invoicing.domain.subscription.Subscription;
 import dev.ngb.billing.invoicing.domain.subscription.SubscriptionHistoryEntry;
 import dev.ngb.billing.invoicing.domain.subscription.SubscriptionId;
 import dev.ngb.billing.invoicing.domain.subscription.SubscriptionStatus;
-import dev.ngb.billing.platform.api.error.ConflictException;
+import dev.ngb.core.error.ConflictException;
 import dev.ngb.billing.pricing.api.plan.BillingCycle;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;

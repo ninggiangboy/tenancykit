@@ -7,11 +7,11 @@ import dev.ngb.billing.payment.application.stripe.port.StripeEventRepository;
 import dev.ngb.billing.payment.application.stripe.service.StripeEventProcessor;
 import dev.ngb.billing.payment.domain.stripe.StripeEvent;
 import dev.ngb.billing.payment.domain.stripe.StripeEventId;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.audit.AuditEntry;
-import dev.ngb.billing.platform.api.audit.AuditLog;
-import dev.ngb.billing.platform.api.error.NotFoundException;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.audit.AuditEntry;
+import dev.ngb.core.audit.AuditLog;
+import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.tenancy.TenantContext;
 import java.time.Instant;
 import java.util.UUID;
 

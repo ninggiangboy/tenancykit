@@ -4,7 +4,7 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.pricing.api.metric.MetricCatalog;
 import dev.ngb.billing.usage.adapter.usage.persistence.JooqUsageEventReadRepository;
 import dev.ngb.billing.usage.adapter.usage.persistence.JooqUsageEventRepository;

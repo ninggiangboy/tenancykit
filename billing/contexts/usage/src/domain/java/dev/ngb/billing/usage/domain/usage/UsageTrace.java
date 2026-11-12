@@ -1,6 +1,6 @@
 package dev.ngb.billing.usage.domain.usage;
 
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.id.TenantSystemId;
 
 /** Where a usage event came from: the tenant system that reported it, its resource, and its own event id. */
 public record UsageTrace(TenantSystemId tenantSystemId, String resourceRef, String sourceEventId) {

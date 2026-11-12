@@ -15,10 +15,10 @@ import dev.ngb.billing.payment.domain.payment.Payment;
 import dev.ngb.billing.payment.domain.payment.PaymentId;
 import dev.ngb.billing.payment.domain.payment.PaymentStatus;
 import dev.ngb.billing.payment.domain.stripe.StripeConfiguration;
-import dev.ngb.billing.platform.api.error.ConflictException;
-import dev.ngb.billing.platform.api.error.IdempotencyConflictException;
-import dev.ngb.billing.platform.api.error.NotFoundException;
-import dev.ngb.billing.platform.api.idempotency.Fingerprint;
+import dev.ngb.core.error.ConflictException;
+import dev.ngb.core.error.IdempotencyConflictException;
+import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.idempotency.Fingerprint;
 import java.util.Locale;
 import java.util.Optional;
 

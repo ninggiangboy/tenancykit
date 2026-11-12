@@ -4,8 +4,8 @@ import dev.ngb.billing.platform.api.actor.Actor;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.error.AccessDeniedException;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.application.portal.command.OpenBillingSessionUseCase;
 import dev.ngb.billing.session.application.portal.command.RevokeBillingSessionUseCase;
@@ -72,7 +72,7 @@ public class BillingSessionController {
         Duration ttl = request.expiresInSeconds() == null ? null : Duration.ofSeconds(request.expiresInSeconds());
         OpenBillingSessionUseCase.Result result = open.execute(new OpenBillingSessionUseCase.Command(
                 CustomerId.of(request.customerId()), request.returnUrl(), permissions, ttl, java.util.UUID.fromString(tenantSystemId),
-                Audit.of(actor, requestId)));
+                Audit.of(actor.auditName(), requestId)));
         BillingSession session = result.session();
         return new CreateResponse(
                 session.id().toString(),
@@ -88,7 +88,7 @@ public class BillingSessionController {
             @PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         Actor actor = currentActor.get();
         java.util.UUID tenantSystemId = actor.tenantSystemId() == null ? null : actor.tenantSystemId().value();
-        revoke.execute(BillingSessionId.of(id), tenantSystemId, Audit.of(actor, requestId));
+        revoke.execute(BillingSessionId.of(id), tenantSystemId, Audit.of(actor.auditName(), requestId));
         return ResponseEntity.noContent().build();
     }
 

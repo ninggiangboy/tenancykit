@@ -11,7 +11,7 @@ import dev.ngb.billing.invoicing.domain.cycle.UnbilledLine;
 import dev.ngb.billing.invoicing.domain.invoice.Invoice;
 import dev.ngb.billing.invoicing.domain.invoice.InvoiceId;
 import dev.ngb.billing.invoicing.domain.invoice.InvoiceOrigin;
-import dev.ngb.billing.platform.api.error.ConflictException;
+import dev.ngb.core.error.ConflictException;
 import java.util.List;
 
 /**

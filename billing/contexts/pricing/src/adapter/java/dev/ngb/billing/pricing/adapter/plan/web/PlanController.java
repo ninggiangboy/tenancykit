@@ -3,7 +3,7 @@ package dev.ngb.billing.pricing.adapter.plan.web;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.api.actor.Permission;
 import dev.ngb.billing.platform.api.actor.RequiresPermission;
-import dev.ngb.billing.platform.api.audit.Audit;
+import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.pricing.adapter.plan.json.RuleDto;
 import dev.ngb.billing.pricing.api.plan.BillingCycle;
 import dev.ngb.billing.pricing.application.plan.command.ManagePlanUseCase;
@@ -92,7 +92,7 @@ public class PlanController {
             throw new IllegalArgumentException("model and version.rule are required");
         }
         PricingModel model = PricingModel.valueOf(request.model());
-        return PlanResponse.of(plans.create(Audit.of(currentActor.get(), requestId), request.code(), request.name(), Currency.of(required(request.currency(), "currency")),
+        return PlanResponse.of(plans.create(Audit.of(currentActor.get().auditName(), requestId), request.code(), request.name(), Currency.of(required(request.currency(), "currency")),
                 terms(request.version(), model)));
     }
 
@@ -119,13 +119,13 @@ public class PlanController {
             throw new IllegalArgumentException("rule is required");
         }
         PricingPlanId planId = PricingPlanId.of(id);
-        return VersionResponse.of(plans.publishVersion(Audit.of(currentActor.get(), requestId), planId, terms(request, plans.get(planId).model())));
+        return VersionResponse.of(plans.publishVersion(Audit.of(currentActor.get().auditName(), requestId), planId, terms(request, plans.get(planId).model())));
     }
 
     @PostMapping("/pricing-plans/{id}/retire")
     @RequiresPermission(Permission.PRICING_MANAGE)
     public PlanResponse retire(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        return PlanResponse.of(plans.retire(Audit.of(currentActor.get(), requestId), PricingPlanId.of(id)));
+        return PlanResponse.of(plans.retire(Audit.of(currentActor.get().auditName(), requestId), PricingPlanId.of(id)));
     }
 
     private static ManagePlanUseCase.Terms terms(VersionRequest v, PricingModel model) {

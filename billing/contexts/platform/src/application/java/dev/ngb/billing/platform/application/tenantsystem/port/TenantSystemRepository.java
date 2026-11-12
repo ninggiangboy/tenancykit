@@ -1,7 +1,7 @@
 package dev.ngb.billing.platform.application.tenantsystem.port;
 
-import dev.ngb.billing.platform.api.error.ConflictException;
-import dev.ngb.billing.platform.api.tenant.TenantSystemId;
+import dev.ngb.core.error.ConflictException;
+import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.platform.domain.tenantsystem.TenantSystem;
 import java.util.Optional;
 

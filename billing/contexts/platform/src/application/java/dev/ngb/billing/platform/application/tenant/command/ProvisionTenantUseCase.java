@@ -1,9 +1,9 @@
 package dev.ngb.billing.platform.application.tenant.command;
 
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.billing.platform.api.actor.RequestScope;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.tenancy.RequestScope;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.platform.application.role.command.SeedDefaultRolesUseCase;
 import dev.ngb.billing.platform.application.role.port.RoleRepository;
 import dev.ngb.billing.platform.application.user.command.ManageUserUseCase;

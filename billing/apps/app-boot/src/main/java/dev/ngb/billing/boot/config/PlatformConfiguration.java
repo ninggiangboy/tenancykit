@@ -16,8 +16,8 @@ import dev.ngb.billing.platform.adapter.tenantsystem.persistence.JooqTenantSyste
 import dev.ngb.billing.platform.adapter.tenantsystem.persistence.JooqTenantSystemRepository;
 import dev.ngb.billing.platform.adapter.user.persistence.JooqUserReadRepository;
 import dev.ngb.billing.platform.adapter.user.persistence.JooqUserRepository;
-import dev.ngb.billing.platform.api.audit.AuditLog;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.audit.AuditLog;
+import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.platform.application.auth.port.IdentityProviderPort;
 import dev.ngb.billing.platform.application.auth.port.RateLimiter;
 import dev.ngb.billing.platform.application.auth.service.Authentication;

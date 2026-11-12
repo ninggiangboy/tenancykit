@@ -16,7 +16,7 @@ import dev.ngb.billing.money.api.charge.ChargeCommand;
 import dev.ngb.billing.money.api.charge.ChargeResult;
 import dev.ngb.billing.money.api.charge.ChargeStatus;
 import dev.ngb.billing.money.api.charge.ChargeWallet;
-import dev.ngb.billing.platform.api.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.pricing.api.plan.PeriodPrice;
 import dev.ngb.billing.pricing.api.plan.PlanPricing;
 import dev.ngb.billing.sharedkernel.money.Money;

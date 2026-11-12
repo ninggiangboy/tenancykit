@@ -3,7 +3,7 @@ package dev.ngb.billing.boot.security;
 import dev.ngb.billing.boot.portal.PortalCookieSettings;
 import dev.ngb.billing.boot.web.PortalCorsConfigurationSource;
 import dev.ngb.billing.platform.api.actor.Actor;
-import dev.ngb.billing.platform.api.error.AccessDeniedException;
+import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.billing.platform.api.actor.Authorizer;
 import dev.ngb.billing.platform.api.actor.CurrentActor;
 import dev.ngb.billing.platform.application.auth.service.Authentication;

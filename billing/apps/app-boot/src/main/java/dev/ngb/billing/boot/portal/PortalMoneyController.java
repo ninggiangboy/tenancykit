@@ -6,7 +6,7 @@ import dev.ngb.billing.money.application.wallet.query.WalletView;
 import dev.ngb.billing.payment.application.payment.command.CreateTopUpUseCase;
 import dev.ngb.billing.payment.domain.payment.Payment;
 import dev.ngb.billing.payment.domain.payment.PaymentStatus;
-import dev.ngb.billing.platform.api.idempotency.RepeatableCreate;
+import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
 import dev.ngb.billing.sharedkernel.money.Currency;

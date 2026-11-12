@@ -39,9 +39,9 @@ import dev.ngb.billing.payment.domain.refund.Refund;
 import dev.ngb.billing.payment.domain.refund.RefundStatus;
 import dev.ngb.billing.payment.domain.stripe.EventStatus;
 import dev.ngb.billing.payment.domain.stripe.StripeEventId;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.error.ConflictException;
-import dev.ngb.billing.platform.api.error.IdempotencyConflictException;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.error.ConflictException;
+import dev.ngb.core.error.IdempotencyConflictException;
 import dev.ngb.billing.platform.domain.tenant.Tenant;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.billing.sharedkernel.money.Money;
@@ -603,7 +603,7 @@ class PaymentIntegrationTest {
 
         assertThat(second.id()).isNotEqualTo(first.configuration().id());
         assertThatThrownBy(() -> paid(first, p, StripeEvents.newEventId(), "pi_x" + sfx)).as("the old endpoint is gone")
-                .isInstanceOf(dev.ngb.billing.platform.api.error.NotFoundException.class);
+                .isInstanceOf(dev.ngb.core.error.NotFoundException.class);
         assertThat(paid(rotated, p, StripeEvents.newEventId(), "pi_rot" + sfx).disposition()).as("the new endpoint settles the old payment")
                 .isEqualTo(Disposition.PROCESSED);
         assertThat(balance(rotated)).isEqualTo(5000);
@@ -1112,7 +1112,7 @@ class PaymentIntegrationTest {
         assertThat(scopes.inTenant(b.money().tenant().id(), () -> queries.list((WalletId) null, null, null, 50))).isEmpty();
         assertThat(scopes.inTenant(b.money().tenant().id(), () -> eventQueries.list(null, null, 50))).isEmpty();
         assertThatThrownBy(() -> scopes.inTenant(b.money().tenant().id(), () -> queries.payment(p.id().value())))
-                .isInstanceOf(dev.ngb.billing.platform.api.error.NotFoundException.class);
+                .isInstanceOf(dev.ngb.core.error.NotFoundException.class);
     }
 
     // ---- contract ------------------------------------------------------------------------------------------------

@@ -1,8 +1,8 @@
 package dev.ngb.billing.boot.jobs;
 
 import dev.ngb.core.id.TenantId;
-import dev.ngb.billing.platform.api.actor.RequestScope;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.tenancy.RequestScope;
+import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.platform.application.tenant.query.TenantQueries;
 import dev.ngb.billing.platform.application.tenant.query.TenantView;
 import java.util.List;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
  * <p>With {@code billing.jobs.tenant-parallelism} above one, tenants run on virtual threads bounded by one
  * semaphore shared by every job, so a tenant whose consumer is slow cannot delay the tenants behind it and the
  * whole worker never asks the database for more connections than its pool. The scope is bound inside each task:
- * {@link dev.ngb.billing.platform.api.actor.RequestScope} lives in a {@code ScopedValue}, which does not
+ * {@link dev.ngb.core.tenancy.RequestScope} lives in a {@code ScopedValue}, which does not
  * cross a thread boundary.
  */
 @Profile("worker")

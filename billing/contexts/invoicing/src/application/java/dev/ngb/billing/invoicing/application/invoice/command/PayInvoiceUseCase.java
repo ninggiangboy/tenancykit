@@ -9,13 +9,13 @@ import dev.ngb.billing.invoicing.domain.invoice.InvoiceId;
 import dev.ngb.billing.payment.api.invoice.StartInvoicePayment;
 import dev.ngb.billing.payment.api.invoice.StartInvoicePaymentCommand;
 import dev.ngb.billing.payment.api.invoice.StartInvoicePaymentResult;
-import dev.ngb.billing.platform.api.audit.Audit;
-import dev.ngb.billing.platform.api.audit.AuditEntry;
-import dev.ngb.billing.platform.api.audit.AuditLog;
-import dev.ngb.billing.platform.api.error.ConflictException;
-import dev.ngb.billing.platform.api.error.NotFoundException;
-import dev.ngb.billing.platform.api.idempotency.Fingerprint;
-import dev.ngb.billing.platform.api.tenant.TenantContext;
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.audit.AuditEntry;
+import dev.ngb.core.audit.AuditLog;
+import dev.ngb.core.error.ConflictException;
+import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.idempotency.Fingerprint;
+import dev.ngb.core.tenancy.TenantContext;
 import java.util.UUID;
 
 /**
