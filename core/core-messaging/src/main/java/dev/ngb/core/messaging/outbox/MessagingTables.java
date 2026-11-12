@@ -12,27 +12,36 @@ import org.jooq.impl.SQLDataType;
 /**
  * The tables core writes, addressed by plain SQL rather than a service's generated schema. The column contract
  * every consuming service's migration must satisfy lives in {@code schema-contract.md} next to this package.
+ * Public only because the broker relay in the sibling package reads the same outbox row.
  */
-final class MessagingTables {
+public final class MessagingTables {
 
-    static final Table<Record> OUTBOX = DSL.table(DSL.name("outbox"));
-    static final Field<UUID> OUTBOX_ID = DSL.field(DSL.name("outbox", "id"), SQLDataType.UUID);
-    static final Field<UUID> OUTBOX_TENANT_ID = DSL.field(DSL.name("outbox", "tenant_id"), SQLDataType.UUID);
-    static final Field<String> OUTBOX_AGGREGATE = DSL.field(DSL.name("outbox", "aggregate"), SQLDataType.VARCHAR);
-    static final Field<String> OUTBOX_TYPE = DSL.field(DSL.name("outbox", "type"), SQLDataType.VARCHAR);
-    static final Field<JSONB> OUTBOX_PAYLOAD = DSL.field(DSL.name("outbox", "payload"), SQLDataType.JSONB);
-    static final Field<OffsetDateTime> OUTBOX_CREATED_AT =
+    public static final Table<Record> OUTBOX = DSL.table(DSL.name("outbox"));
+    public static final Field<UUID> OUTBOX_ID = DSL.field(DSL.name("outbox", "id"), SQLDataType.UUID);
+    public static final Field<UUID> OUTBOX_TENANT_ID = DSL.field(DSL.name("outbox", "tenant_id"), SQLDataType.UUID);
+    public static final Field<String> OUTBOX_AGGREGATE = DSL.field(DSL.name("outbox", "aggregate"), SQLDataType.VARCHAR);
+    public static final Field<String> OUTBOX_TYPE = DSL.field(DSL.name("outbox", "type"), SQLDataType.VARCHAR);
+    public static final Field<JSONB> OUTBOX_PAYLOAD = DSL.field(DSL.name("outbox", "payload"), SQLDataType.JSONB);
+    public static final Field<OffsetDateTime> OUTBOX_CREATED_AT =
             DSL.field(DSL.name("outbox", "created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE);
-    static final Field<String> OUTBOX_STATUS = DSL.field(DSL.name("outbox", "status"), SQLDataType.VARCHAR);
-    static final Field<Integer> OUTBOX_ATTEMPTS = DSL.field(DSL.name("outbox", "attempts"), SQLDataType.INTEGER);
-    static final Field<OffsetDateTime> OUTBOX_NEXT_ATTEMPT_AT =
+    public static final Field<String> OUTBOX_STATUS = DSL.field(DSL.name("outbox", "status"), SQLDataType.VARCHAR);
+    public static final Field<Integer> OUTBOX_ATTEMPTS = DSL.field(DSL.name("outbox", "attempts"), SQLDataType.INTEGER);
+    public static final Field<OffsetDateTime> OUTBOX_NEXT_ATTEMPT_AT =
             DSL.field(DSL.name("outbox", "next_attempt_at"), SQLDataType.TIMESTAMPWITHTIMEZONE);
-    static final Field<String> OUTBOX_LAST_ERROR = DSL.field(DSL.name("outbox", "last_error"), SQLDataType.VARCHAR);
+    public static final Field<String> OUTBOX_LAST_ERROR = DSL.field(DSL.name("outbox", "last_error"), SQLDataType.VARCHAR);
 
-    static final Table<Record> EVENT_INBOX = DSL.table(DSL.name("event_inbox"));
-    static final Field<UUID> EVENT_INBOX_TENANT_ID = DSL.field(DSL.name("event_inbox", "tenant_id"), SQLDataType.UUID);
-    static final Field<String> EVENT_INBOX_CONSUMER = DSL.field(DSL.name("event_inbox", "consumer"), SQLDataType.VARCHAR);
-    static final Field<UUID> EVENT_INBOX_EVENT_ID = DSL.field(DSL.name("event_inbox", "event_id"), SQLDataType.UUID);
+    // The broker path's own cursor on the same row, so publishing to RabbitMQ never disturbs the in-process relay.
+    public static final Field<OffsetDateTime> OUTBOX_PUBLISHED_AT =
+            DSL.field(DSL.name("outbox", "published_at"), SQLDataType.TIMESTAMPWITHTIMEZONE);
+    public static final Field<String> OUTBOX_PUBLISH_STATUS = DSL.field(DSL.name("outbox", "publish_status"), SQLDataType.VARCHAR);
+    public static final Field<Integer> OUTBOX_PUBLISH_ATTEMPTS = DSL.field(DSL.name("outbox", "publish_attempts"), SQLDataType.INTEGER);
+    public static final Field<OffsetDateTime> OUTBOX_PUBLISH_NEXT_AT =
+            DSL.field(DSL.name("outbox", "publish_next_at"), SQLDataType.TIMESTAMPWITHTIMEZONE);
+
+    public static final Table<Record> EVENT_INBOX = DSL.table(DSL.name("event_inbox"));
+    public static final Field<UUID> EVENT_INBOX_TENANT_ID = DSL.field(DSL.name("event_inbox", "tenant_id"), SQLDataType.UUID);
+    public static final Field<String> EVENT_INBOX_CONSUMER = DSL.field(DSL.name("event_inbox", "consumer"), SQLDataType.VARCHAR);
+    public static final Field<UUID> EVENT_INBOX_EVENT_ID = DSL.field(DSL.name("event_inbox", "event_id"), SQLDataType.UUID);
 
     private MessagingTables() {}
 }

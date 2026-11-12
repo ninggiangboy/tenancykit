@@ -172,6 +172,66 @@ public class OutboxRecord extends UpdatableRecordImpl<OutboxRecord> {
         return (String) get(9);
     }
 
+    /**
+     * Setter for <code>public.outbox.published_at</code>.
+     */
+    public OutboxRecord setPublishedAt(Instant value) {
+        set(10, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.outbox.published_at</code>.
+     */
+    public Instant getPublishedAt() {
+        return (Instant) get(10);
+    }
+
+    /**
+     * Setter for <code>public.outbox.publish_status</code>.
+     */
+    public OutboxRecord setPublishStatus(String value) {
+        set(11, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.outbox.publish_status</code>.
+     */
+    public String getPublishStatus() {
+        return (String) get(11);
+    }
+
+    /**
+     * Setter for <code>public.outbox.publish_attempts</code>.
+     */
+    public OutboxRecord setPublishAttempts(Integer value) {
+        set(12, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.outbox.publish_attempts</code>.
+     */
+    public Integer getPublishAttempts() {
+        return (Integer) get(12);
+    }
+
+    /**
+     * Setter for <code>public.outbox.publish_next_at</code>.
+     */
+    public OutboxRecord setPublishNextAt(Instant value) {
+        set(13, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.outbox.publish_next_at</code>.
+     */
+    public Instant getPublishNextAt() {
+        return (Instant) get(13);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -195,7 +255,7 @@ public class OutboxRecord extends UpdatableRecordImpl<OutboxRecord> {
     /**
      * Create a detached, initialised OutboxRecord
      */
-    public OutboxRecord(UUID id, UUID tenantId, String aggregate, String type, JSONB payload, Instant createdAt, String status, Integer attempts, Instant nextAttemptAt, String lastError) {
+    public OutboxRecord(UUID id, UUID tenantId, String aggregate, String type, JSONB payload, Instant createdAt, String status, Integer attempts, Instant nextAttemptAt, String lastError, Instant publishedAt, String publishStatus, Integer publishAttempts, Instant publishNextAt) {
         super(Outbox.OUTBOX);
 
         setId(id);
@@ -208,6 +268,10 @@ public class OutboxRecord extends UpdatableRecordImpl<OutboxRecord> {
         setAttempts(attempts);
         setNextAttemptAt(nextAttemptAt);
         setLastError(lastError);
+        setPublishedAt(publishedAt);
+        setPublishStatus(publishStatus);
+        setPublishAttempts(publishAttempts);
+        setPublishNextAt(publishNextAt);
         resetTouchedOnNotNull();
     }
 }

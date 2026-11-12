@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -82,7 +83,7 @@ class OutboxRelayIntegrationTest {
                         primary key (tenant_id, consumer, event_id)
                     )""");
         }
-        dsl = DSL.using(dataSource, SQLDialect.POSTGRES);
+        dsl = DSL.using(new TransactionAwareDataSourceProxy(dataSource), SQLDialect.POSTGRES);
         unitOfWork = new SpringUnitOfWork(new DataSourceTransactionManager(dataSource), TransactionScopeHook.none());
         events = new JooqOutboxAppender(dsl, JsonMapper.builder().build());
         ApplicationEventPublisher publisher = event -> {

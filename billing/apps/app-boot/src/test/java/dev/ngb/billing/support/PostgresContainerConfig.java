@@ -5,25 +5,29 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.test.context.DynamicPropertyRegistrar;
 import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.rabbitmq.RabbitMQContainer;
 
 /**
- * One PostgreSQL container shared by every integration test in the JVM; the image matches
- * docker-compose.yml. Flyway connects as the container's superuser (the table owner) and the
- * application connects as the unprivileged billing_app role, exactly as in production.
+ * One PostgreSQL container and one RabbitMQ container shared by every integration test in the JVM; the images
+ * match docker-compose.yml. Flyway connects as the container's superuser (the table owner) and the application
+ * connects as the unprivileged billing_app role, exactly as in production.
  */
 @TestConfiguration(proxyBeanMethods = false)
 public class PostgresContainerConfig {
 
     public static final String IMAGE = "postgres:18";
+    public static final String RABBITMQ_IMAGE = "rabbitmq:4.1-management";
     public static final String APP_ROLE = "billing_app";
     public static final String APP_PASSWORD = "app-role-test-secret";
     /** 32 bytes, base64: a fixed key for tests only. */
     public static final String TEST_MASTER_KEY = "dGVzdC1tYXN0ZXIta2V5LTMyLWJ5dGVzLWxvbmctISE=";
 
     private static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(IMAGE);
+    private static final RabbitMQContainer RABBITMQ = new RabbitMQContainer(RABBITMQ_IMAGE);
 
     static {
         POSTGRES.start();
+        RABBITMQ.start();
     }
 
     /** Shared with tests that build their own property source instead of importing this configuration. */
@@ -44,6 +48,12 @@ public class PostgresContainerConfig {
             // Many cached Spring contexts share one container; small idle pools keep them under its connection limit.
             registry.add("spring.datasource.hikari.maximum-pool-size", () -> "4");
             registry.add("spring.datasource.hikari.minimum-idle", () -> "0");
+            registry.add("spring.rabbitmq.host", RABBITMQ::getHost);
+            registry.add("spring.rabbitmq.port", RABBITMQ::getAmqpPort);
+            registry.add("spring.rabbitmq.username", RABBITMQ::getAdminUsername);
+            registry.add("spring.rabbitmq.password", RABBITMQ::getAdminPassword);
+            // The broker relay marks a row only after waitForConfirmsOrDie: simple confirms, not correlated.
+            registry.add("spring.rabbitmq.publisher-confirm-type", () -> "simple");
             // Tests drive the background jobs directly and deterministically.
             registry.add("billing.jobs.enabled", () -> "false");
             registry.add("billing.secrets.master-key", () -> TEST_MASTER_KEY);

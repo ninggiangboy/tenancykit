@@ -22,6 +22,13 @@ spring:
     url: ${BILLING_DB_URL:jdbc:postgresql://localhost:5432/billing}
     username: ${BILLING_DB_USER:billing_app}
     password: ${BILLING_DB_PASSWORD}
+  rabbitmq:
+    host: ${BILLING_RABBITMQ_HOST:localhost}
+    port: ${BILLING_RABBITMQ_PORT:5672}
+    username: ${BILLING_RABBITMQ_USER:billing}
+    password: ${BILLING_RABBITMQ_PASSWORD:billing}
+    # The relay marks an outbox row only after waitForConfirmsOrDie, which needs simple publisher confirms.
+    publisher-confirm-type: simple
   flyway:
     locations: classpath:db/migration
     # Migrations run as the table owner; the application runs as billing_app.
@@ -143,3 +150,13 @@ management:
     web:
       exposure:
         include: health
+
+suite:
+  messaging:
+    # One topic exchange per producer. Every event type with a schema under contracts/events/billing is exported here.
+    exchange: ${BILLING_EVENTS_EXCHANGE:billing.events}
+    relay:
+      batch-size: ${BILLING_OUTBOX_BROKER_BATCH_SIZE:50}
+      max-attempts: ${BILLING_OUTBOX_BROKER_MAX_ATTEMPTS:10}
+      backoff-base: PT10S
+      backoff-cap: PT1H

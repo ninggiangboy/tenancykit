@@ -1,12 +1,14 @@
 # Versions the core build needs: the JDK toolchain and the BOM that manages the test libraries.
 [versions]
 spring-boot = "4.1.2"
+spring-retry = "2.0.13"
 archunit = "1.5.1"
 jdk = "25"
 
 [libraries]
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
 spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "spring-boot" }
+spring-retry = { module = "org.springframework.retry:spring-retry", version.ref = "spring-retry" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 
 [plugins]

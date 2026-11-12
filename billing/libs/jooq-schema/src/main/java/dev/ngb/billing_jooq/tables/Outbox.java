@@ -111,6 +111,26 @@ public class Outbox extends TableImpl<OutboxRecord> {
      */
     public final TableField<OutboxRecord, String> LAST_ERROR = createField(DSL.name("last_error"), SQLDataType.CLOB, this, "");
 
+    /**
+     * The column <code>public.outbox.published_at</code>.
+     */
+    public final TableField<OutboxRecord, Instant> PUBLISHED_AT = createField(DSL.name("published_at"), SQLDataType.INSTANT, this, "");
+
+    /**
+     * The column <code>public.outbox.publish_status</code>.
+     */
+    public final TableField<OutboxRecord, String> PUBLISH_STATUS = createField(DSL.name("publish_status"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field(DSL.raw("'PENDING'::text"), SQLDataType.CLOB)), this, "");
+
+    /**
+     * The column <code>public.outbox.publish_attempts</code>.
+     */
+    public final TableField<OutboxRecord, Integer> PUBLISH_ATTEMPTS = createField(DSL.name("publish_attempts"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.INTEGER)), this, "");
+
+    /**
+     * The column <code>public.outbox.publish_next_at</code>.
+     */
+    public final TableField<OutboxRecord, Instant> PUBLISH_NEXT_AT = createField(DSL.name("publish_next_at"), SQLDataType.INSTANT.nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.INSTANT)), this, "");
+
     private Outbox(Name alias, Table<OutboxRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -203,6 +223,7 @@ public class Outbox extends TableImpl<OutboxRecord> {
     @Override
     public List<Check<OutboxRecord>> getChecks() {
         return Arrays.asList(
+            Internal.createCheck(this, DSL.name("outbox_publish_status_check"), "((publish_status = ANY (ARRAY['PENDING'::text, 'PUBLISHED'::text, 'DEAD'::text, 'SKIPPED'::text])))", true),
             Internal.createCheck(this, DSL.name("outbox_status_check"), "((status = ANY (ARRAY['PENDING'::text, 'DELIVERED'::text, 'DEAD'::text])))", true)
         );
     }

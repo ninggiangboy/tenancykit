@@ -25,6 +25,17 @@ services:
     volumes:
       - ./ops/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
 
+  rabbitmq:
+    image: rabbitmq:4.1-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${BILLING_RABBITMQ_USER:-billing}
+      RABBITMQ_DEFAULT_PASS: ${BILLING_RABBITMQ_PASSWORD:-billing}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
   tenant-postgres:
     image: postgres:18
     environment:
@@ -38,4 +49,5 @@ services:
 
 volumes:
   postgres-data:
+  rabbitmq-data:
   tenant-postgres-data:

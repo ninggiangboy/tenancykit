@@ -18,12 +18,22 @@ create these columns in its own migration.
 | `attempts` | `integer` | not null, default 0 |
 | `next_attempt_at` | `timestamptz` | not null |
 | `last_error` | `text` | nullable |
+| `published_at` | `timestamptz` | nullable; set only after the broker confirms |
+| `publish_status` | `text` | not null, default `PENDING`, one of `PENDING`, `PUBLISHED`, `DEAD`, `SKIPPED` |
+| `publish_attempts` | `integer` | not null, default 0 |
+| `publish_next_at` | `timestamptz` | not null, default `now()` |
 
 Row-level security is on `tenant_id`. Keep a partial index for due rows:
 
 ```sql
 create index outbox_pending_idx on outbox (next_attempt_at) where status = 'PENDING';
+create index outbox_publish_pending_idx on outbox (publish_next_at)
+    where published_at is null and publish_status = 'PENDING';
 ```
+
+The last four columns are the broker relay's own cursor, independent of `status`, so publishing to RabbitMQ never
+changes what the in-process relay sees. A row written before the broker path existed is set to `SKIPPED` by the
+migration, so history is never replayed to the broker.
 
 ## `event_inbox`
 

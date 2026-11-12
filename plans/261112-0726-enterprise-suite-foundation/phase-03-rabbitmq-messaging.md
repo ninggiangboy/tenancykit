@@ -53,12 +53,12 @@ Modify:
 
 ## Todo
 
-- [ ] Broker cursor columns in the core contract and in Billing's migration
-- [ ] `BrokerRelay` with confirms, backoff and DEAD state
-- [ ] `AmqpInboundDispatcher` with inbox, retry and DLQ
-- [ ] Topology from configuration
-- [ ] Billing publishes its public events; compose runs RabbitMQ
-- [ ] Integration tests for publish, outage, dedupe and DLQ
+- [x] Broker cursor columns in the core contract and in Billing's migration
+- [x] `BrokerRelay` with confirms, backoff and DEAD state
+- [x] `AmqpInboundDispatcher` with inbox, retry and DLQ
+- [x] Topology from configuration
+- [x] Billing publishes its public events; compose runs RabbitMQ
+- [x] Integration tests for publish, outage, dedupe and DLQ
 
 ## Verification
 
