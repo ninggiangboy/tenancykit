@@ -8,6 +8,8 @@ import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.money.api.wallet.InsufficientFundsException;
 import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.core.error.IdempotencyConflictException;
+import dev.ngb.core.error.PreconditionFailedException;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.billing.session.application.portal.exception.InvalidPortalSessionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,18 @@ class ApiExceptionHandler {
     @ExceptionHandler({ConflictException.class, IdempotencyConflictException.class})
     ProblemDetail conflict(RuntimeException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+    }
+
+    /** The caller compared against an older state; the current ETag rides along so it can retry without a GET. */
+    @ExceptionHandler(PreconditionFailedException.class)
+    ResponseEntity<ProblemDetail> preconditionFailed(PreconditionFailedException e) {
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.PRECONDITION_FAILED, "The resource changed since it was read. Fetch it again and retry with the new ETag.");
+        ResponseEntity.BodyBuilder response = ResponseEntity.status(HttpStatus.PRECONDITION_FAILED);
+        if (e.currentVersion() != null) {
+            response.eTag(ExpectedVersion.etag(e.currentVersion()));
+        }
+        return response.body(detail);
     }
 
     /** A reference to something missing in this tenant, or a clash with existing data. Details stay in the log. */

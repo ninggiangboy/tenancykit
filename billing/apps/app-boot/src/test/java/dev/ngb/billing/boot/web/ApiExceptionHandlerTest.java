@@ -2,6 +2,7 @@ package dev.ngb.billing.boot.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import dev.ngb.core.error.PreconditionFailedException;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.PessimisticLockingFailureException;
@@ -35,7 +36,7 @@ class ApiExceptionHandlerTest {
     }
 
     @Test
-    void aConnectionPoolTimeoutAnswersServiceUnavailableWithoutLeakingThePool() {
+    void aConnectionPoolTimeoutAnswersServiceUnavailableWithoutLeakingThePool() throws Exception {
         ResponseEntity<ProblemDetail> response = handler.noConnection(
                 new CannotGetJdbcConnectionException("Failed to obtain JDBC Connection", new IllegalStateException("HikariPool-1 - Connection is not available, request timed out after 3000ms")));
 
@@ -47,5 +48,23 @@ class ApiExceptionHandlerTest {
                 .contains("Idempotency-Key")
                 .doesNotContain("HikariPool")
                 .doesNotContain("3000ms");
+    }
+
+    @Test
+    void aStaleIfMatchAnswersPreconditionFailedWithTheCurrentEtag() {
+        ResponseEntity<ProblemDetail> response = handler.preconditionFailed(new PreconditionFailedException(4L));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.PRECONDITION_FAILED);
+        assertThat(response.getHeaders().getETag()).isEqualTo("\"4\"");
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).contains("Fetch it again");
+    }
+
+    @Test
+    void aPreconditionOnAnAbsentRowAnswersPreconditionFailedWithoutAnEtag() {
+        ResponseEntity<ProblemDetail> response = handler.preconditionFailed(new PreconditionFailedException(null));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.PRECONDITION_FAILED);
+        assertThat(response.getHeaders().getETag()).isNull();
     }
 }
