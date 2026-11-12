@@ -1,0 +1,72 @@
+# Platform's permission catalog.
+#
+# codes are namespaced by the app that enforces them: <app>:<resource>:<action>. A role may hold only a code whose
+# `scopes` include the role's scope, so a tenant role can never hold a platform-level right.
+#
+# scopes: platform and/or tenant. grantable_to_tenant_system: whether an API credential may carry the code.
+
+- code: platform:tenant:create
+  description: Create a Tenant.
+  scopes: [platform]
+  grantable_to_tenant_system: false
+
+- code: platform:tenant:read
+  description: Read the Tenants the caller may see.
+  scopes: [platform]
+  grantable_to_tenant_system: false
+
+- code: platform:tenant:deactivate
+  description: Deactivate a Tenant, which stops every app for it.
+  scopes: [platform]
+  grantable_to_tenant_system: false
+
+- code: platform:tenant-domain:manage
+  description: Add and remove the hostnames that resolve to a Tenant.
+  scopes: [platform]
+  grantable_to_tenant_system: false
+
+- code: platform:user:read
+  description: Read the users of the caller's scope.
+  scopes: [platform, tenant]
+  grantable_to_tenant_system: false
+
+- code: platform:user:manage
+  description: Create, enable, disable and rename users.
+  scopes: [platform, tenant]
+  grantable_to_tenant_system: false
+
+- code: platform:role:read
+  description: Read roles and their permissions.
+  scopes: [platform, tenant]
+  grantable_to_tenant_system: false
+
+- code: platform:role:manage
+  description: Create, edit and delete roles, and assign them to users.
+  scopes: [platform, tenant]
+  grantable_to_tenant_system: false
+
+- code: platform:tenant-system:read
+  description: Read the Tenant Systems of the caller's Tenant.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: platform:tenant-system:manage
+  description: Create, disable and rename Tenant Systems.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: platform:credential:manage
+  description: Issue and revoke the API credentials a Tenant System authenticates with.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: platform:entitlement:manage
+  description: Enable or disable an app of the suite for a Tenant.
+  scopes: [platform]
+  grantable_to_tenant_system: false
+
+# Service clients only: no user role can hold it. The snapshot API answers with whole replica streams.
+- code: platform:replica:read
+  description: Read a service's replica snapshot stream.
+  scopes: []
+  grantable_to_tenant_system: false

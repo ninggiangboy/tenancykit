@@ -1,12 +1,23 @@
-# Billing events and webhook delivery
+# Suite events and webhook delivery
+
+Event schemas are namespaced by the service that produces them:
+
+| Folder | Producer | Delivery |
+|---|---|---|
+| `billing/` | Billing | AMQP (`billing.events`) between services, and signed HTTP to Tenant Systems. |
+| `platform/` | Platform | AMQP (`platform.events`) only: state-transfer `*.changed` events other services replicate. |
+
+Within a producer folder, the `*.schema.json` files are the source of truth for which event types that service
+publishes and for the shape of each event's `data`. The application packages them and rejects a subscription to a
+type that has no schema. A test builds every event through the real code and validates it against its schema, so a
+payload that drifts from its schema fails the build.
+
+Between services the AMQP message body is the same document as the webhook body, described in
+[messaging/README.md](../messaging/README.md). The rest of this file describes the signed HTTP delivery to a Tenant
+System.
 
 Billing reports business state changes to a Tenant System as signed HTTP webhooks. A webhook only reports a
 fact; it never asks the receiver to do anything, and the receiver decides its own policy.
-
-The `*.schema.json` files in this directory are the source of truth for which event types exist and for the
-shape of each event's `data`. The application packages them and rejects a subscription to a type that has no
-schema. A test builds every event through the real code and validates it against its schema, so a payload
-that drifts from its schema fails the build.
 
 ## The delivered document
 
@@ -102,6 +113,6 @@ export function verify(secret: string, timestamp: string, rawBody: Buffer, signa
 
 ## Adding an event
 
-1. Add `<type>.schema.json` here (copy a neighbour; keep `additionalProperties: false`).
+1. Add `<type>.schema.json` in the producer's folder (copy a neighbour; keep `additionalProperties: false`).
 2. Emit the event from the owning module with a payload that matches it.
 3. Run the event contract test; it fails if an emitted type has no schema or a payload does not validate.

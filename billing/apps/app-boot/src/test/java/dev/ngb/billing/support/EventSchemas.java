@@ -17,7 +17,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Stream;
 
-/** Loads the event schemas from contracts/events and validates event data against them. */
+/** Loads Billing's event schemas from contracts/events/billing and validates event data against them. */
 public final class EventSchemas {
 
     private static final String SUFFIX = ".schema.json";
@@ -40,7 +40,7 @@ public final class EventSchemas {
     private EventSchemas() {}
 
     public static Path directory() {
-        return RepositoryPaths.repositoryRoot().resolve("contracts/events");
+        return RepositoryPaths.repositoryRoot().resolve("contracts/events/billing");
     }
 
     public static Set<String> types() {

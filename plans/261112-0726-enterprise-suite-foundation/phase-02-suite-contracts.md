@@ -86,11 +86,11 @@ Token claims (`contracts/tokens/README.md`): `iss` (Platform issuer URL), `sub` 
 
 ## Todo
 
-- [ ] Billing schemas moved; Billing build green
-- [ ] Five Platform event schemas
-- [ ] `notification.requested` schema
-- [ ] Three permission catalogs with the mapping test
-- [ ] Messaging topology and token claims documented
+- [x] Billing schemas moved; Billing build green
+- [x] Five Platform event schemas
+- [x] `notification.requested` schema
+- [x] Three permission catalogs with the mapping test
+- [x] Messaging topology and token claims documented
 
 ## Verification
 

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/platform/entitlement.changed.schema.json",
+  "title": "Entitlement changed",
+  "description": "Whether one Tenant may use one app of the suite. A consumer upserts by (tenant_id, app_code) when `version` is newer. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "tenant_id",
+    "app_code",
+    "enabled",
+    "version"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "tenant_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "app_code": {
+      "type": "string",
+      "enum": [
+        "billing",
+        "notification"
+      ]
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

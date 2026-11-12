@@ -46,10 +46,10 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers-postgresql")
 }
 
-// The event schemas under contracts/events are the source of truth for which event types exist; the
+// The event schemas under contracts/events/billing are the source of truth for which event types exist; the
 // application reads them from the classpath, so the catalog and the contract cannot drift apart.
 tasks.processResources {
-    from(layout.projectDirectory.dir("../../../contracts/events")) {
+    from(layout.projectDirectory.dir("../../../contracts/events/billing")) {
         include("*.schema.json")
         into("events")
     }

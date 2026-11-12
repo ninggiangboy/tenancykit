@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/platform/user-access.changed.schema.json",
+  "title": "User access changed",
+  "description": "One user's effective access, recomputed by Platform from direct grants and role assignments across every app. Consumers store one row per user and never join roles themselves. A consumer upserts by user id when `version` is newer. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "user_id",
+    "tenant_id",
+    "scope",
+    "keycloak_subject",
+    "email",
+    "display_name",
+    "status",
+    "permissions",
+    "version"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "tenant_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The reserved platform tenant for a platform-scope user."
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "PLATFORM",
+        "TENANT"
+      ]
+    },
+    "keycloak_subject": {
+      "type": "string",
+      "description": "The Keycloak user id the token subject carries."
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "DISABLED"
+      ]
+    },
+    "permissions": {
+      "type": "array",
+      "description": "Every effective permission code, across all apps, such as billing:invoice:read.",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

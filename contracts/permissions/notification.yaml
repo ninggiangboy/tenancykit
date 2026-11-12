@@ -1,0 +1,31 @@
+# Notification Hub's permission catalog.
+#
+# codes are namespaced by the app that enforces them: <app>:<resource>:<action>. A role may hold only a code whose
+# `scopes` include the role's scope.
+#
+# scopes: platform and/or tenant. grantable_to_tenant_system: whether an API credential may carry the code.
+
+- code: notification:webhook:read
+  description: Read webhook endpoints and the delivery history.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: notification:webhook:manage
+  description: Create, update, disable and rotate the secret of a webhook endpoint; resend a delivery.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: notification:template:read
+  description: Read notification templates and their versions.
+  scopes: [platform]
+  grantable_to_tenant_system: false
+
+- code: notification:template:manage
+  description: Create, version and retire notification templates.
+  scopes: [platform]
+  grantable_to_tenant_system: false
+
+- code: notification:delivery:read
+  description: Read notification deliveries and their outcomes.
+  scopes: [platform, tenant]
+  grantable_to_tenant_system: false

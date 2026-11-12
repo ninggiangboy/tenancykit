@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/platform/tenant-domain.changed.schema.json",
+  "title": "Tenant domain changed",
+  "description": "The full current state of one hostname that resolves to a Tenant or to the Platform. A consumer upserts by domain id when `version` is newer. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "id",
+    "tenant_id",
+    "hostname",
+    "kind",
+    "created_at",
+    "version"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "tenant_id": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Null for a PLATFORM domain, which belongs to no Tenant."
+    },
+    "hostname": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "PLATFORM",
+        "TENANT_SUBDOMAIN"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

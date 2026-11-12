@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/platform/tenant.changed.schema.json",
+  "title": "Tenant changed",
+  "description": "The full current state of one Tenant, carried by a state-transfer event. A consumer upserts the row when `version` is newer than the stored one, so a replica can merge events and a snapshot in any order. The reserved platform pseudo-tenant (00000000-0000-7000-8000-000000000001) is published too, because platform-scope jobs need it. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "id",
+    "code",
+    "name",
+    "status",
+    "created_at",
+    "version"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "code": {
+      "type": "string",
+      "description": "The Tenant code, unique across the suite."
+    },
+    "name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "DEACTIVATED"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The aggregate's optimistic-lock version; a consumer drops an event older than the row it holds."
+    }
+  }
+}

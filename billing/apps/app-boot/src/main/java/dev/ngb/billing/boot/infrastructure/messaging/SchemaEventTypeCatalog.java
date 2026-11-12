@@ -8,8 +8,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 /**
- * The event types are the schemas in {@code contracts/events}, packaged on the classpath under {@code events/}:
- * the file {@code charge.succeeded.schema.json} defines the type {@code charge.succeeded}.
+ * The event types are Billing's schemas in {@code contracts/events/billing}, packaged on the classpath under
+ * {@code events/}: the file {@code charge.succeeded.schema.json} defines the type {@code charge.succeeded}.
  */
 public class SchemaEventTypeCatalog implements EventTypeCatalog {
 

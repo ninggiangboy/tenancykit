@@ -1,0 +1,121 @@
+# Billing's permission catalog.
+#
+# codes are namespaced by the app that enforces them: <app>:<resource>:<action>. A role may hold only a code whose
+# `scopes` include the role's scope.
+#
+# scopes: platform and/or tenant. grantable_to_tenant_system: whether an API credential may carry the code.
+
+- code: billing:customer:read
+  description: Read the customers of the caller's Tenant.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:customer:write
+  description: Create, rename and deactivate customers.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:billing-session:create
+  description: Create and revoke a Billing Session for one customer.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:portal-settings:manage
+  description: Manage the return URLs a Billing Session may point back to.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: billing:wallet:read
+  description: Read wallets, ledger entries and balances.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:wallet:manage
+  description: Credit and debit wallets.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:reservation:manage
+  description: Reserve, release and expire funds in a wallet.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:charge:create
+  description: Charge a wallet.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:ledger:reverse
+  description: Reverse a ledger entry.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: billing:pricing:read
+  description: Read pricing plans and their versions.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:pricing:manage
+  description: Create, version and retire pricing plans.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: billing:usage:record
+  description: Record usage that pricing may rate.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:usage:read
+  description: Read recorded usage.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:stripe:read
+  description: Read the Stripe configuration, its webhook history and reconciliation findings.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: billing:stripe:manage
+  description: Connect or disconnect Stripe, set its secrets and retry its events.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: billing:payment:read
+  description: Read payments, attempts and refunds.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:payment:create
+  description: Start a wallet top-up through the Tenant's Stripe configuration.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:refund:create
+  description: Send money back to a customer's card.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: billing:invoice:read
+  description: Read invoices and invoice payments.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:invoice:create
+  description: Ask for an invoice for one charge.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:invoice:manage
+  description: Void an invoice or write it off as uncollectible.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: billing:subscription:read
+  description: Read subscriptions.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:subscription:manage
+  description: Start and cancel subscriptions.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
