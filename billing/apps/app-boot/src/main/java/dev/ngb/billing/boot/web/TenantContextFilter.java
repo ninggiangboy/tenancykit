@@ -1,7 +1,7 @@
 package dev.ngb.billing.boot.web;
 
-import dev.ngb.core.replica.web.ReplicaHostResolver;
-import dev.ngb.core.replica.web.ReplicaTenantFilter;
+import dev.ngb.core.suite.web.SuiteHostResolver;
+import dev.ngb.core.suite.web.SuiteTenantFilter;
 import dev.ngb.core.tenancy.TenantContext;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -15,9 +15,9 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
-class TenantContextFilter extends ReplicaTenantFilter {
+class TenantContextFilter extends SuiteTenantFilter {
 
-    TenantContextFilter(ReplicaHostResolver hosts, TenantContext tenantContext) {
+    TenantContextFilter(SuiteHostResolver hosts, TenantContext tenantContext) {
         super(hosts, tenantContext);
     }
 }

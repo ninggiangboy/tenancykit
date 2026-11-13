@@ -8,6 +8,8 @@ dependencies {
     implementation("dev.ngb:core-spring")
     implementation("dev.ngb:core-messaging")
     implementation("dev.ngb:core-replica")
+    implementation("dev.ngb:core-platform-sync")
+    implementation("dev.ngb:core-suite")
     implementation("dev.ngb:core-feign")
     implementation(project(":contexts:customer"))
     implementation(project(":contexts:money"))

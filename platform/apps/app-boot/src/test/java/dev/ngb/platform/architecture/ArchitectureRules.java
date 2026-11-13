@@ -269,13 +269,14 @@ final class ArchitectureRules {
 
     /**
      * The plain-Java core depends on nothing of an application's. The framework modules are excluded on purpose: the
-     * Spring implementation, the messaging infrastructure, the Platform replica and the Feign client all ship framework
-     * types, and each is re-gated by its own rule below.
+     * Spring implementation, the messaging infrastructure, the replica, the snapshot sync, the suite policy and the
+     * Feign client all ship framework types.
      */
     private static ArchRule coreIsSelfContained(String core) {
         return classes().that().resideInAnyPackage(core + "..")
                 .and().resideOutsideOfPackages(
-                        core + ".spring..", core + ".messaging..", core + ".replica..", core + ".feign..")
+                        core + ".spring..", core + ".messaging..", core + ".replica..", core + ".sync..",
+                        core + ".suite..", core + ".feign..")
                 .should().onlyDependOnClassesThat().resideInAnyPackage(JAVA, core + "..")
                 .because("the core is shared by every application build and depends on nothing of theirs");
     }

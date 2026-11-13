@@ -99,7 +99,7 @@ see [payments-and-stripe.md](payments-and-stripe.md) and [webhooks-and-events.md
 | Platform service | Tenancy, users and RBAC, entitlement, Tenant Systems, credentials and token issuance move out of Billing into a `platform/` build | Two responsibilities with different lifecycles: identity and access belong to the suite, not to one app, and every app then enforces the same authorities |
 | Messaging | RabbitMQ over Kafka: one topic exchange per producer (`platform.events`, `billing.events`), one durable queue per consuming app with a dead-letter exchange. Replica events carry a monotonic `version`; a consumer drops an older one | The suite needs request/reply-free state transfer and dead-letter handling, not a log or a stream-processing platform. See [suite-messaging.md](suite-messaging.md) |
 | Replica and rebuild | Each app keeps a replica of the Platform data it enforces, rebuilt by paging a snapshot API and kept current by `platform.events` (`*.changed` state-transfer events) | A request costs no call to Platform, and a fresh app starts correct without replaying history. See [suite-messaging.md](suite-messaging.md) |
-| Shared technical core | `core-kernel`, `core-spring`, plus `core-messaging` (outbox, inbox, broker relay, topology), `core-replica` (snapshot client, writer, host resolver, actor resolver, entitlement filter) and `core-feign` (the HTTP client plumbing every service-to-service call shares), shared by every service build | The messaging and replica machinery is identical in every app; keeping it in one place makes a new app a wiring exercise, and ArchUnit keeps each core module free of any service's types |
+| Shared technical core | `core-kernel`, `core-spring`, plus `core-messaging` (outbox, inbox, broker relay, topology), `core-replica` (the replica's tables, writer and event handler), `core-platform-sync` (snapshot client and rebuild), `core-suite` (token decoder, host resolver, actor resolver, entitlement filter) and `core-feign` (the HTTP client plumbing every service-to-service call shares), shared by every service build | The messaging, replica and suite-policy machinery is identical in every app; keeping it in one place makes a new app a wiring exercise, and ArchUnit keeps each core module free of any service's types |
 
 ### Trade-offs behind the recorded choices
 
@@ -150,8 +150,8 @@ directory: `:contexts:money`, `:libs:jooq-schema`, `:apps:app-boot`):
 | `testing/` | `arch-fixtures` | Deliberately violating classes that prove each ArchUnit rule can fail |
 
 Billing no longer has a `platform` context: tenants, users, roles, Tenant Systems and credentials live in Platform.
-Billing's security is `SuiteJwtDecoders` (two issuers) and `ReplicaActorResolver` (the actor from its replica), and
-its host filter resolves a tenant through `ReplicaHostResolver`. An ArchUnit rule fails the build when a Billing class
+Billing's security is `SuiteJwtDecoders` (two issuers) and `SuiteActorResolver` (the actor from its replica), and
+its host filter resolves a tenant through `SuiteHostResolver`. An ArchUnit rule fails the build when a Billing class
 names `dev.ngb.platform`, `dev.ngb.tenant` or `dev.ngb.notification`, and a Gradle task fails when a Billing project
 declares such a dependency.
 
@@ -163,7 +163,9 @@ and `tenant/` include with `includeBuild("../core")`:
 | `core-kernel` | Plain Java ports and helpers: `UnitOfWork` and `TransactionScopeHook`, `Clock`, `IdGenerator`, `SecretCipher`, the event, inbox and publisher ports, `TenantId` and `TenantSystemId`, the security `Actor` model, `ExpectedVersion`, the DDD base types and the `Backoff`, `Causes`, `Text` and `PageSize` helpers |
 | `core-spring` | The Spring implementations: `SpringUnitOfWork`, `SystemClock`, `UuidV7IdGenerator`, `AesGcmSecretCipher`, `PermissionInterceptor`, `ScopedTenantContext` |
 | `core-messaging` | Outbox, inbox, broker relay, the tenant-scoped envelope codec and `SuiteTopology` |
-| `core-replica` | `SnapshotClient`, `ReplicaBootstrap`, `ReplicaWriter`, `ReplicaEventHandler`, `ReplicaHostResolver`, `SuiteJwtDecoders`, `ReplicaActorResolver` and `EntitlementFilter` |
+| `core-replica` | The replica itself: `ReplicaTables`, `ReplicaWriter`, `ReplicaEventHandler`, the reference DDL and the schema assertion fixture. No HTTP client, no resource server, no request filter |
+| `core-platform-sync` | `SnapshotClient`, `ReplicaBootstrap` and `ReplicaProperties`: pages Platform's snapshot and rebuilds the replica from it |
+| `core-suite` | `SuiteJwtDecoders`, `SuiteHostResolver`, `SuiteActorResolver`, `SuiteTenantFilter`, `SuiteEntitlementFilter` and `SuiteEntitlements`: what a request must satisfy to be a member of the suite |
 | `core-feign` | The shared HTTP client plumbing: `FeignClients`, the `JacksonCodec`, the `LinearRetryer`, the `TokenProvider` and its client-credentials implementation, the contract and the `StatusFeignErrorMapper` base |
 
 Its root package is `dev.ngb.core`, outside every service's root, so Modulith does not see it. ArchUnit holds each
@@ -174,7 +176,8 @@ Decisions:
 
 - The Java root packages are `dev.ngb.platform`, `dev.ngb.billing` and `dev.ngb.tenant`; each build's Modulith
   discovers its modules by that root. The Gradle group is `dev.ngb` everywhere; the core is found by its coordinates
-  (`dev.ngb:core-kernel`, `dev.ngb:core-spring`, `dev.ngb:core-messaging`, `dev.ngb:core-replica`, `dev.ngb:core-feign`).
+  (`dev.ngb:core-kernel`, `dev.ngb:core-spring`, `dev.ngb:core-messaging`, `dev.ngb:core-replica`,
+  `dev.ngb:core-platform-sync`, `dev.ngb:core-suite`, `dev.ngb:core-feign`).
 - `money` owns Wallet, Ledger, Reservation and Charge, so the whole money path commits in one transaction that
   includes its outbox row.
 - `shared-kernel` holds only a service's business value objects and stays small; a growing kernel is split, not

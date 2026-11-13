@@ -46,7 +46,8 @@ separate source sets, so Spring cannot leak into the plain-Java inner layers. Pa
 by feature and then by role (`...command`, `...query`, `...port`, `...service`), adapters by
 `adapter.<feature>.<technology>`, and `api` by the capability a caller uses (`lookup`, `execution`,
 `recording`). `./gradlew checkNoBillingDependency` fails if any module declares a Gradle dependency
-on Billing or Platform, or on a service-only core module (`core-messaging`, `core-replica`); the shared
+on Billing or Platform, or on a service-only core module (`core-messaging`, `core-replica`,
+`core-platform-sync`, `core-suite`); the shared
 `core-kernel` and `core-spring` are allowed, and `ArchitectureTest`, its fixture meta-test and
 `ModulithVerificationTest` re-check the same boundaries and package shape on the classpath.
 

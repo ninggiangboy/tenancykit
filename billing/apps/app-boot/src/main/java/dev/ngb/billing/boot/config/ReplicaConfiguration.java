@@ -8,15 +8,15 @@ import dev.ngb.core.feign.TokenProvider;
 import dev.ngb.core.feign.TokenSettings;
 import dev.ngb.core.messaging.inbound.AmqpInboundDispatcher;
 import dev.ngb.core.messaging.inbound.InboundEventHandler;
-import dev.ngb.core.replica.ReplicaBootstrap;
 import dev.ngb.core.replica.ReplicaEventHandler;
-import dev.ngb.core.replica.ReplicaProperties;
 import dev.ngb.core.replica.ReplicaWriter;
-import dev.ngb.core.replica.SnapshotClient;
-import dev.ngb.core.replica.security.ReplicaActorResolver;
-import dev.ngb.core.replica.security.SuiteJwtDecoders;
-import dev.ngb.core.replica.web.ReplicaEntitlements;
-import dev.ngb.core.replica.web.ReplicaHostResolver;
+import dev.ngb.core.suite.security.SuiteActorResolver;
+import dev.ngb.core.suite.security.SuiteJwtDecoders;
+import dev.ngb.core.suite.web.SuiteEntitlements;
+import dev.ngb.core.suite.web.SuiteHostResolver;
+import dev.ngb.core.sync.ReplicaBootstrap;
+import dev.ngb.core.sync.ReplicaProperties;
+import dev.ngb.core.sync.SnapshotClient;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
@@ -30,9 +30,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 /**
- * Wires `core-replica` into Billing: the snapshot it is rebuilt from, the five guarded upserts, the platform-events
- * listener, the hostname resolver, the actor resolver and the two-issuer token decoder. The listener, its dispatcher
- * and the rebuild run only in the worker profile, like every other broker consumer.
+ * Wires the suite core into Billing: `core-platform-sync` fetches the snapshot and rebuilds the replica,
+ * `core-replica` applies the five guarded upserts and the platform-events listener, and `core-suite` reads the host,
+ * the actor and the entitlement from it. The listener, its dispatcher and the rebuild run only in the worker profile,
+ * like every other broker consumer.
  */
 @Configuration(proxyBeanMethods = false)
 class ReplicaConfiguration {
@@ -66,18 +67,18 @@ class ReplicaConfiguration {
     }
 
     @Bean
-    ReplicaHostResolver replicaHostResolver(UnitOfWork unitOfWork, DSLContext dsl) {
-        return new ReplicaHostResolver(unitOfWork, dsl);
+    SuiteHostResolver suiteHostResolver(UnitOfWork unitOfWork, DSLContext dsl) {
+        return new SuiteHostResolver(unitOfWork, dsl);
     }
 
     @Bean
-    ReplicaEntitlements replicaEntitlements(UnitOfWork unitOfWork, DSLContext dsl) {
-        return new ReplicaEntitlements(unitOfWork, dsl);
+    SuiteEntitlements suiteEntitlements(UnitOfWork unitOfWork, DSLContext dsl) {
+        return new SuiteEntitlements(unitOfWork, dsl);
     }
 
     @Bean
-    ReplicaActorResolver replicaActorResolver(UnitOfWork unitOfWork, DSLContext dsl, TenantContext tenantContext) {
-        return new ReplicaActorResolver(unitOfWork, dsl, tenantContext);
+    SuiteActorResolver suiteActorResolver(UnitOfWork unitOfWork, DSLContext dsl, TenantContext tenantContext) {
+        return new SuiteActorResolver(unitOfWork, dsl, tenantContext);
     }
 
     @Bean

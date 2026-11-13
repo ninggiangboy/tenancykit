@@ -12,7 +12,7 @@ import dev.ngb.core.feign.FeignSettings;
 import dev.ngb.core.feign.StaticTokenProvider;
 import dev.ngb.core.feign.TokenProvider;
 import dev.ngb.core.feign.TokenSettings;
-import dev.ngb.core.replica.SnapshotClient;
+import dev.ngb.core.sync.SnapshotClient;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;

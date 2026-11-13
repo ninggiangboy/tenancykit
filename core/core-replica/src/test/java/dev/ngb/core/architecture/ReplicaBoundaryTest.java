@@ -7,8 +7,9 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
 /**
- * The replica is a core module, so it is shared by every app and never reaches into one. It may use Spring (the
- * resource server, the web client) and jOOQ (the plain-SQL replica tables), because it is the library that owns them.
+ * The replica is a core module, so it is shared by every app and never reaches into one. It may use jOOQ (the
+ * plain-SQL replica tables), because it is the library that owns them; it holds no request-side type, so an app that
+ * only serves requests never pays for the replica machinery.
  */
 @AnalyzeClasses(packages = "dev.ngb.core.replica")
 class ReplicaBoundaryTest {
@@ -33,4 +34,12 @@ class ReplicaBoundaryTest {
             .dependOnClassesThat()
             .resideInAnyPackage("feign..", "dev.ngb.core.feign..")
             .because("the snapshot transport belongs to the app's boot layer, so core-replica names no HTTP client");
+
+    @ArchTest
+    static final ArchRule replicaDoesNotUseTheRequestSide = noClasses()
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("org.springframework.security..", "jakarta.servlet..", "com.nimbusds..",
+                    "dev.ngb.core.suite..", "dev.ngb.core.sync..")
+            .because("the replica owns state, not requests; the token, tenant and entitlement rules live in core-suite");
 }

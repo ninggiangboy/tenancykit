@@ -8,7 +8,7 @@ import org.gradle.api.artifacts.ProjectDependency
  * separate build and found by its coordinates, so `dev.ngb:core-kernel` and `dev.ngb:core-spring` pass.
  */
 val foreignServices = setOf("billing", "platform")
-val serviceOnlyCoreModules = setOf("core-messaging", "core-replica")
+val serviceOnlyCoreModules = setOf("core-messaging", "core-replica", "core-platform-sync", "core-suite")
 
 tasks.register("checkNoBillingDependency") {
     group = "verification"

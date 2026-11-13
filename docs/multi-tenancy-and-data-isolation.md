@@ -38,7 +38,7 @@ three databases that way, and `ops/smoke/isolation.sh` proves a cross-database c
 No database is shared, so Platform data reaches an app as a replica the app owns. The replica tables keep the names
 and shapes they had in Billing (`tenants`, `tenant_domains`, `tenant_systems`, `user_grants`, `app_entitlements`), so
 the foreign keys and Row-Level Security that already governed them are unchanged: a Billing table that points at
-`tenants` still does, and a replica row is still tenant-scoped. `core-replica` writes the replica from Platform's
+`tenants` still does, and a replica row is still tenant-scoped. `core-platform-sync` writes the replica from Platform's
 snapshot and from `platform.events`; the app enforces from the replica exactly as it would from its own tables. A
 replica lag therefore delays enforcement, not isolation: a tenant that Platform deactivated is still isolated, just
 still reachable until the consumer catches up, and `tenant_systems.status` is re-checked on every request so a

@@ -265,13 +265,15 @@ final class ArchitectureRules {
 
     /**
      * The shared core is shared by more than one application build, so it may name only the JDK and itself. The
-     * framework modules (the Spring implementations, the messaging infrastructure, the Platform replica and the Feign
-     * client) see the framework types they are built from; none may reach back into an application.
+     * framework modules (the Spring implementations, the messaging infrastructure, the replica, the snapshot sync,
+     * the suite policy and the Feign client) see the framework types they are built from; none may reach back into an
+     * application.
      */
     private static ArchRule coreIsSelfContained(String core) {
         return classes().that().resideInAnyPackage(core + "..")
                 .and().resideOutsideOfPackages(
-                        core + ".spring..", core + ".messaging..", core + ".replica..", core + ".feign..")
+                        core + ".spring..", core + ".messaging..", core + ".replica..", core + ".sync..",
+                        core + ".suite..", core + ".feign..")
                 .should().onlyDependOnClassesThat().resideInAnyPackage(JAVA, core + "..")
                 .because("the core is shared by every application build and depends on nothing of theirs");
     }

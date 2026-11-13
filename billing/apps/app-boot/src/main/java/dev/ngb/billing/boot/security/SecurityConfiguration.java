@@ -7,9 +7,10 @@ import dev.ngb.billing.session.api.portal.PortalAuthorizer;
 import dev.ngb.billing.session.api.portal.PortalSessions;
 import dev.ngb.billing.session.api.portal.PortalVisitor;
 import dev.ngb.core.error.AccessDeniedException;
-import dev.ngb.core.replica.security.ReplicaActorConverter;
-import dev.ngb.core.replica.security.ReplicaActorResolver;
-import dev.ngb.core.replica.security.SuiteJwtDecoders;
+import dev.ngb.core.suite.security.SuiteActorConverter;
+import dev.ngb.core.suite.security.SuiteActorResolver;
+import dev.ngb.core.suite.security.SuiteAuthentication;
+import dev.ngb.core.suite.security.SuiteJwtDecoders;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.Authorizer;
 import dev.ngb.core.security.CurrentActor;
@@ -42,7 +43,7 @@ class SecurityConfiguration {
     SecurityFilterChain apiSecurity(
             HttpSecurity http,
             SuiteJwtDecoders decoders,
-            ReplicaActorResolver actorResolver,
+            SuiteActorResolver actorResolver,
             PortalSessions portalSessions,
             PortalCookieSettings portalCookieSettings,
             PortalCorsConfigurationSource portalCors,
@@ -65,7 +66,7 @@ class SecurityConfiguration {
                         .anyRequest()
                         .authenticated())
                 .oauth2ResourceServer(resource -> resource
-                        .jwt(jwt -> jwt.decoder(decoders).jwtAuthenticationConverter(new ReplicaActorConverter(actorResolver))))
+                        .jwt(jwt -> jwt.decoder(decoders).jwtAuthenticationConverter(new SuiteActorConverter(actorResolver))))
                 .headers(Customizer.withDefaults());
         if (portalEnabled) {
             http.addFilterBefore(
@@ -83,8 +84,8 @@ class SecurityConfiguration {
                 return actorAuthentication.actor();
             }
             // The replica's resource-server converter authenticates a suite/user token as its own type.
-            if (authentication instanceof dev.ngb.core.replica.security.ReplicaAuthentication replica) {
-                return replica.actor();
+            if (authentication instanceof SuiteAuthentication suite) {
+                return suite.actor();
             }
             throw new IllegalStateException("the request is not authenticated");
         };

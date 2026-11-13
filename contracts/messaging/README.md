@@ -34,10 +34,11 @@ column). A consumer upserts and drops any event whose `version` is not newer tha
 neither arrival order nor redelivery matters. The snapshot API answers the same JSON plus `version`, and a
 replica can therefore be rebuilt from zero by paging the snapshot and then applying live events.
 
-The shared library that does all of this is `core/core-replica` (`ReplicaWriter`, `ReplicaEventHandler`,
-`SnapshotClient`, `ReplicaBootstrap`, `ReplicaHostResolver`, `ReplicaActorResolver`, `SuiteJwtDecoders`,
-`EntitlementFilter`). Every app that consumes `platform.events` keeps these five tables, which
-`core-replica/src/main/resources/dev/ngb/core/replica/replica-tables.sql` spells out for an app that starts fresh:
+The shared libraries that do all of this are `core/core-replica` (`ReplicaWriter`, `ReplicaEventHandler`),
+`core/core-platform-sync` (`SnapshotClient`, `ReplicaBootstrap`) and `core/core-suite` (`SuiteHostResolver`,
+`SuiteActorResolver`, `SuiteJwtDecoders`, `SuiteEntitlementFilter`). Every app that consumes `platform.events` keeps
+these five tables, which `core-replica/src/main/resources/dev/ngb/core/replica/replica-tables.sql` spells out for an
+app that starts fresh:
 
 | Stream | Table | Conflict key |
 |---|---|---|

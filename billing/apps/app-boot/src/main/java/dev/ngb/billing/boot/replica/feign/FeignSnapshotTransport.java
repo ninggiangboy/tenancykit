@@ -4,7 +4,7 @@ import dev.ngb.core.feign.FeignClients;
 import dev.ngb.core.feign.FeignFailures;
 import dev.ngb.core.feign.FeignSettings;
 import dev.ngb.core.feign.TokenProvider;
-import dev.ngb.core.replica.SnapshotClient;
+import dev.ngb.core.sync.SnapshotClient;
 import feign.RetryableException;
 import java.util.List;
 
