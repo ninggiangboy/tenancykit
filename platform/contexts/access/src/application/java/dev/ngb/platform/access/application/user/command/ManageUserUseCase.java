@@ -1,9 +1,9 @@
 package dev.ngb.platform.access.application.user.command;
 
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.access.service.AccessPublisher;
-import dev.ngb.platform.access.application.user.exception.UserNotFoundException;
 import dev.ngb.platform.access.application.user.port.UserRepository;
 import dev.ngb.platform.access.domain.user.User;
 import dev.ngb.platform.access.domain.user.UserId;
@@ -27,7 +27,7 @@ public class ManageUserUseCase {
 
     public User execute(Command command) {
         return unitOfWork.transactional(() -> {
-            User user = users.lockById(command.userId()).orElseThrow(() -> new UserNotFoundException(command.userId().toString()));
+            User user = users.lockById(command.userId()).orElseThrow(() -> new NotFoundException("no user " + command.userId()));
             command.expected().check(user.version());
             boolean changed = switch (command.action()) {
                 case ENABLE -> user.enable();

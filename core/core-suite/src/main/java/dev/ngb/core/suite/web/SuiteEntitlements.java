@@ -33,7 +33,7 @@ public class SuiteEntitlements {
     /** Requires an enabled entitlement in the current scope; Platform scope is always allowed. */
     public void requireEnabled(TenantContext tenantContext, String appCode) {
         if (tenantContext.current() instanceof RequestScope.Tenant && !enabledFor(tenantContext, appCode)) {
-            throw new NotFoundException("app-not-enabled");
+            throw new NotFoundException("this tenant has not enabled " + appCode);
         }
     }
 }

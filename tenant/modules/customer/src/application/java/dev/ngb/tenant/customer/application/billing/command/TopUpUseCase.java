@@ -4,8 +4,8 @@ import dev.ngb.tenant.billing.api.client.BillingPayments;
 import dev.ngb.tenant.billing.api.client.BillingWallets;
 import dev.ngb.tenant.billing.api.model.Payment;
 import dev.ngb.tenant.customer.api.lookup.CustomerDirectory;
-import dev.ngb.tenant.shared.error.BadRequestException;
-import dev.ngb.tenant.shared.error.NotFoundException;
+import dev.ngb.core.error.BadRequestException;
+import dev.ngb.core.error.NotFoundException;
 import java.util.UUID;
 
 /** Scenario 10: a mapped customer tops up a wallet it owns. */

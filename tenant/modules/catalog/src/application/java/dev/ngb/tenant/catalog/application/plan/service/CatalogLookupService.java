@@ -3,7 +3,7 @@ package dev.ngb.tenant.catalog.application.plan.service;
 import dev.ngb.tenant.catalog.api.lookup.CatalogLookup;
 import dev.ngb.tenant.catalog.application.plan.query.CatalogPlanReadRepository;
 import dev.ngb.tenant.catalog.application.plan.query.PlanView;
-import dev.ngb.tenant.shared.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import java.util.UUID;
 
 /** Serves the catalog facts other modules need, through the query side. */

@@ -2,8 +2,8 @@ package dev.ngb.tenant.catalog.application.plan.command;
 
 import dev.ngb.tenant.catalog.application.plan.port.CatalogPlanRepository;
 import dev.ngb.tenant.catalog.domain.plan.CatalogPlan;
-import dev.ngb.tenant.shared.error.BadRequestException;
-import dev.ngb.tenant.shared.error.NotFoundException;
+import dev.ngb.core.error.BadRequestException;
+import dev.ngb.core.error.NotFoundException;
 
 /** Binds a local catalog plan to the Billing plan the bootstrap created for it. */
 public class AttachBillingPlanUseCase {

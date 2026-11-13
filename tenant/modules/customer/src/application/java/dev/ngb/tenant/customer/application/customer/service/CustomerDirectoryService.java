@@ -3,7 +3,7 @@ package dev.ngb.tenant.customer.application.customer.service;
 import dev.ngb.tenant.customer.api.lookup.CustomerDirectory;
 import dev.ngb.tenant.customer.application.customer.query.CustomerReadRepository;
 import dev.ngb.tenant.customer.application.customer.query.CustomerView;
-import dev.ngb.tenant.shared.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import java.util.UUID;
 
 /** Serves the customer facts other modules need, through the query side. */

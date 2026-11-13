@@ -5,8 +5,8 @@ import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.tenant.customer.application.customer.port.CustomerRepository;
 import dev.ngb.tenant.customer.application.customer.service.CustomerMapping;
 import dev.ngb.tenant.customer.domain.customer.Customer;
-import dev.ngb.tenant.shared.error.NotFoundException;
-import dev.ngb.tenant.shared.error.UpstreamUnavailableException;
+import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.error.UpstreamUnavailableException;
 import java.util.Optional;
 import java.util.UUID;
 

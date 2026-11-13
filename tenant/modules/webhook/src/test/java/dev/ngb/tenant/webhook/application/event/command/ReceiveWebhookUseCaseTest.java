@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.tenant.resource.api.execution.ExecutionOrders;
-import dev.ngb.tenant.shared.error.UnauthorizedException;
+import dev.ngb.core.error.UnauthorizedException;
 import dev.ngb.tenant.webhook.application.event.port.CustomerPeriods;
 import dev.ngb.tenant.webhook.application.event.port.DebtBook;
 import dev.ngb.tenant.webhook.application.event.port.WebhookRepository;

@@ -11,4 +11,5 @@ dependencies {
     compileOnly("org.springframework:spring-webmvc")
     compileOnly("jakarta.servlet:jakarta.servlet-api")
     testImplementation("org.assertj:assertj-core")
+    testImplementation("org.springframework:spring-web")
 }

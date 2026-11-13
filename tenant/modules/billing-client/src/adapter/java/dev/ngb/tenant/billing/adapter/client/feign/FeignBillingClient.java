@@ -41,7 +41,7 @@ import dev.ngb.tenant.billing.api.model.SubscriptionDetail;
 import dev.ngb.tenant.billing.api.model.UsageEvent;
 import dev.ngb.tenant.billing.api.model.UsageEventRequest;
 import dev.ngb.tenant.billing.api.model.Wallet;
-import dev.ngb.tenant.shared.error.UpstreamUnavailableException;
+import dev.ngb.core.error.UpstreamUnavailableException;
 import feign.RetryableException;
 import java.time.Instant;
 import java.util.List;

@@ -1,8 +1,8 @@
 package dev.ngb.tenant.billing.adapter.client.feign;
 
 import dev.ngb.core.feign.FeignFailures;
-import dev.ngb.tenant.shared.error.UnauthorizedException;
-import dev.ngb.tenant.shared.error.UpstreamUnavailableException;
+import dev.ngb.core.error.UnauthorizedException;
+import dev.ngb.core.error.UpstreamUnavailableException;
 
 /** The tenant's own error types for a refused credential and an unreachable Billing. */
 public final class TenantFeignFailures implements FeignFailures {

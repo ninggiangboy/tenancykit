@@ -3,7 +3,7 @@ package dev.ngb.tenant.customer.application.billing.command;
 import dev.ngb.tenant.billing.api.client.BillingSessions;
 import dev.ngb.tenant.billing.api.model.BillingSession;
 import dev.ngb.tenant.customer.api.lookup.CustomerDirectory;
-import dev.ngb.tenant.shared.error.BadRequestException;
+import dev.ngb.core.error.BadRequestException;
 import java.util.List;
 import java.util.UUID;
 

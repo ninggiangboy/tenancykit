@@ -9,7 +9,7 @@ import dev.ngb.tenant.identity.application.user.command.RegisterUserUseCase;
 import dev.ngb.tenant.identity.application.user.query.UserReadRepository;
 import dev.ngb.tenant.identity.application.user.query.UserView;
 import dev.ngb.tenant.identity.domain.user.User;
-import dev.ngb.tenant.shared.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

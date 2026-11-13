@@ -1,14 +1,13 @@
 package dev.ngb.platform.access.application.role.command;
 
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.access.port.AccessRepository;
 import dev.ngb.platform.access.application.access.service.AccessPublisher;
 import dev.ngb.platform.access.application.permission.exception.UnknownPermissionException;
 import dev.ngb.platform.access.application.permission.port.PermissionCatalog;
-import dev.ngb.platform.access.application.role.exception.RoleNotFoundException;
 import dev.ngb.platform.access.application.role.port.RoleRepository;
-import dev.ngb.platform.access.application.user.exception.UserNotFoundException;
 import dev.ngb.platform.access.application.user.port.UserRepository;
 import dev.ngb.platform.access.domain.role.Role;
 import dev.ngb.platform.access.domain.role.RoleId;
@@ -63,13 +62,13 @@ public class ManageRoleUseCase {
      * under the lock, before any mutation. An assign changes the user's access, not the role, and takes no version.
      */
     private Role lockedForUpdate(Command command) {
-        Role role = roles.lockForUpdate(command.roleId()).orElseThrow(() -> new RoleNotFoundException(command.roleId().toString()));
+        Role role = roles.lockForUpdate(command.roleId()).orElseThrow(() -> new NotFoundException("no role " + command.roleId()));
         command.expected().check(role.version());
         return role;
     }
 
     private Role lockedForShare(RoleId roleId) {
-        return roles.lockForShare(roleId).orElseThrow(() -> new RoleNotFoundException(roleId.toString()));
+        return roles.lockForShare(roleId).orElseThrow(() -> new NotFoundException("no role " + roleId));
     }
 
     private Role replacePermissions(Role role, Set<String> permissions) {
@@ -95,14 +94,14 @@ public class ManageRoleUseCase {
     }
 
     private Role assign(Role role, UserId userId) {
-        User user = users.lockById(userId).orElseThrow(() -> new UserNotFoundException(userId.toString()));
+        User user = users.lockById(userId).orElseThrow(() -> new NotFoundException("no user " + userId));
         access.assign(role.tenantId().value(), user.id().value(), role.id().value());
         publisher.publishFor(user);
         return role;
     }
 
     private Role unassign(Role role, UserId userId) {
-        User user = users.lockById(userId).orElseThrow(() -> new UserNotFoundException(userId.toString()));
+        User user = users.lockById(userId).orElseThrow(() -> new NotFoundException("no user " + userId));
         access.unassign(role.tenantId().value(), user.id().value(), role.id().value());
         publisher.publishFor(user);
         return role;

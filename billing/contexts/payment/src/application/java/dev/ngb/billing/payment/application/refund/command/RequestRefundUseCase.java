@@ -106,7 +106,7 @@ public class RequestRefundUseCase {
                     prepared.payment().id(), prepared.payment().paymentIntentId(), refund.amount(), refund.reason()), "refund-" + refund.id());
         } catch (ProviderRejectedException rejected) {
             unitOfWork.transactional(() -> {
-                Refund locked = refunds.lockById(refund.id()).orElseThrow();
+                Refund locked = refunds.lockById(refund.id()).orElseThrow(() -> new NotFoundException("no refund " + refund.id()));
                 settlement.releaseHold(locked);
                 locked.fail(rejected.getMessage(), clock.now());
                 refunds.update(locked);
@@ -115,7 +115,7 @@ public class RequestRefundUseCase {
         }
         // The outcome of an unreachable Stripe is unknown: the refund stays PENDING and the same key retries it safely.
         Refund attached = unitOfWork.transactional(() -> {
-            Refund locked = refunds.lockById(refund.id()).orElseThrow();
+            Refund locked = refunds.lockById(refund.id()).orElseThrow(() -> new NotFoundException("no refund " + refund.id()));
             locked.attachStripeRefund(created.refundId(), clock.now());
             refunds.update(locked);
             return locked;
@@ -129,7 +129,7 @@ public class RequestRefundUseCase {
      * longer connected has to be refunded in the Stripe Dashboard.
      */
     private StripeConfiguration usable(Payment payment) {
-        StripeConfiguration own = configurations.findById(payment.configurationId()).orElseThrow();
+        StripeConfiguration own = configurations.findById(payment.configurationId()).orElseThrow(() -> new NotFoundException("no stripe configuration " + payment.configurationId()));
         if (own.status().isLive()) {
             return own;
         }

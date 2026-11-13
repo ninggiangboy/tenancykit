@@ -27,7 +27,7 @@ class ArchitectureTest {
                 .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
                 .importPackages(ArchitectureRules.CORE);
         // Guards against an import that silently matches nothing and makes every rule pass.
-        assertThat(production.contain(ROOT + ".shared.error.ConflictException")).isTrue();
+        assertThat(production.contain(ROOT + ".identity.domain.user.User")).isTrue();
         assertThat(core.contain("dev.ngb.core.runtime.UnitOfWork")).isTrue();
         assertThat(core.contain("dev.ngb.core.spring.runtime.SpringUnitOfWork")).isTrue();
     }

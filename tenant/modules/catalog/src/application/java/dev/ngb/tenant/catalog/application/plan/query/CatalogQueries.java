@@ -1,6 +1,6 @@
 package dev.ngb.tenant.catalog.application.plan.query;
 
-import dev.ngb.tenant.shared.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import java.util.List;
 import java.util.UUID;
 

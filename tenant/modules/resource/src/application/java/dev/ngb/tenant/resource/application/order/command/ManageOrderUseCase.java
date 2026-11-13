@@ -5,8 +5,8 @@ import dev.ngb.tenant.billing.api.client.BillingSubscriptions;
 import dev.ngb.tenant.customer.api.lookup.CustomerDirectory;
 import dev.ngb.tenant.resource.application.order.port.OrderRepository;
 import dev.ngb.tenant.resource.domain.order.Order;
-import dev.ngb.tenant.shared.error.BadRequestException;
-import dev.ngb.tenant.shared.error.NotFoundException;
+import dev.ngb.core.error.BadRequestException;
+import dev.ngb.core.error.NotFoundException;
 import java.util.UUID;
 
 /** Order changes that reach Billing: cancelling a subscription-backed order keeps its paid period. */

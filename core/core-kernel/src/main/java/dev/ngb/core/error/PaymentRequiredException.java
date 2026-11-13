@@ -1,4 +1,4 @@
-package dev.ngb.tenant.shared.error;
+package dev.ngb.core.error;
 
 /** The wallet cannot cover the requested amount. */
 public class PaymentRequiredException extends RuntimeException {

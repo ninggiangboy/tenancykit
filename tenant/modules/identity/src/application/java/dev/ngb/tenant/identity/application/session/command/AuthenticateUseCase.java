@@ -8,8 +8,8 @@ import dev.ngb.tenant.identity.application.user.port.UserRepository;
 import dev.ngb.tenant.identity.application.session.service.Tokens;
 import dev.ngb.tenant.identity.domain.user.User;
 import dev.ngb.tenant.identity.domain.session.UserSession;
-import dev.ngb.tenant.shared.error.ForbiddenException;
-import dev.ngb.tenant.shared.error.UnauthorizedException;
+import dev.ngb.core.error.AccessDeniedException;
+import dev.ngb.core.error.UnauthorizedException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
@@ -45,7 +45,7 @@ public class AuthenticateUseCase {
         String normalized = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
         User user = users.findByEmail(normalized).orElseThrow(() -> new UnauthorizedException("invalid email or password"));
         if (!user.active()) {
-            throw new ForbiddenException("this account is disabled");
+            throw new AccessDeniedException("this account is disabled");
         }
         if (password == null || !hasher.matches(password, user.passwordHash())) {
             throw new UnauthorizedException("invalid email or password");

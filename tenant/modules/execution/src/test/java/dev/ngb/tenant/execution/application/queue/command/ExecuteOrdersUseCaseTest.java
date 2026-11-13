@@ -11,7 +11,7 @@ import dev.ngb.tenant.billing.api.model.Rating;
 import dev.ngb.tenant.billing.api.model.Reservation;
 import dev.ngb.tenant.resource.api.execution.ExecutionQueue;
 import dev.ngb.tenant.resource.api.execution.ExecutionOrders;
-import dev.ngb.tenant.shared.error.UpstreamUnavailableException;
+import dev.ngb.core.error.UpstreamUnavailableException;
 import dev.ngb.tenant.usage.api.recording.UsageRecorder;
 import java.time.Instant;
 import java.util.ArrayList;

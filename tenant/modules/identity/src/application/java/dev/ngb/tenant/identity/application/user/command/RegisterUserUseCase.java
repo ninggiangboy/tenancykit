@@ -8,8 +8,8 @@ import dev.ngb.tenant.identity.api.account.RegisteredAccount;
 import dev.ngb.tenant.identity.application.user.port.PasswordHasher;
 import dev.ngb.tenant.identity.application.user.port.UserRepository;
 import dev.ngb.tenant.identity.domain.user.User;
-import dev.ngb.tenant.shared.error.BadRequestException;
-import dev.ngb.tenant.shared.error.ConflictException;
+import dev.ngb.core.error.BadRequestException;
+import dev.ngb.core.error.ConflictException;
 
 /** Registers a local account with its own credentials. */
 public class RegisterUserUseCase {

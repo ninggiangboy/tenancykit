@@ -1,5 +1,6 @@
 package dev.ngb.platform.access.application.user.command;
 
+import dev.ngb.core.error.ConflictException;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -7,7 +8,6 @@ import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.security.PermissionScope;
 import dev.ngb.platform.access.application.access.service.AccessPublisher;
 import dev.ngb.platform.access.application.auth.port.IdentityProviderPort;
-import dev.ngb.platform.access.application.user.exception.UserAlreadyExistsException;
 import dev.ngb.platform.access.application.user.port.UserRepository;
 import dev.ngb.platform.access.domain.user.User;
 import dev.ngb.platform.access.domain.user.UserId;
@@ -39,7 +39,7 @@ public class CreateUserUseCase {
     public User execute(Command command) {
         return unitOfWork.transactional(() -> {
             if (users.findByEmail(command.tenantId(), command.email()).isPresent()) {
-                throw new UserAlreadyExistsException(command.email());
+                throw new ConflictException("a user with this email already exists: " + command.email());
             }
             String subject = identities.createUser(
                     command.tenantCode() + ":" + command.email(), command.email(), command.displayName(), command.temporaryPassword());

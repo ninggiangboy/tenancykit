@@ -5,7 +5,7 @@ import dev.ngb.tenant.identity.api.account.AccountListener;
 import dev.ngb.tenant.identity.api.account.RegisteredAccount;
 import dev.ngb.tenant.identity.application.user.port.UserRepository;
 import dev.ngb.tenant.identity.domain.user.User;
-import dev.ngb.tenant.shared.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import java.util.UUID;
 
 /** Administrative operations on local accounts: listing, roles and deactivation. */

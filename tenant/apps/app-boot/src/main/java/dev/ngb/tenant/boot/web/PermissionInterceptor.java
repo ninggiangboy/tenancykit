@@ -2,8 +2,8 @@ package dev.ngb.tenant.boot.web;
 
 import dev.ngb.tenant.identity.api.security.AuthenticatedUser;
 import dev.ngb.tenant.identity.api.security.RequiresPermission;
-import dev.ngb.tenant.shared.error.ForbiddenException;
-import dev.ngb.tenant.shared.error.UnauthorizedException;
+import dev.ngb.core.error.AccessDeniedException;
+import dev.ngb.core.error.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
@@ -31,7 +31,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
             throw new UnauthorizedException("authentication is required");
         }
         if (!user.permits(required.value())) {
-            throw new ForbiddenException("missing permission " + required.value().code());
+            throw new AccessDeniedException("missing permission " + required.value().code());
         }
         return true;
     }

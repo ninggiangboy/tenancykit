@@ -8,8 +8,8 @@ import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.tenant.identity.api.security.Role;
 import dev.ngb.tenant.identity.application.session.command.AuthenticateUseCase;
 import dev.ngb.tenant.identity.domain.user.User;
-import dev.ngb.tenant.shared.error.ForbiddenException;
-import dev.ngb.tenant.shared.error.UnauthorizedException;
+import dev.ngb.core.error.AccessDeniedException;
+import dev.ngb.core.error.UnauthorizedException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -63,6 +63,6 @@ class AuthenticateUseCaseTest {
         users.save(user.disabled());
 
         assertThatThrownBy(() -> authenticate.execute("ada@example.com", "correct-horse"))
-                .isInstanceOf(ForbiddenException.class);
+                .isInstanceOf(AccessDeniedException.class);
     }
 }

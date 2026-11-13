@@ -3,7 +3,7 @@ package dev.ngb.tenant.customer.application.customer.service;
 import dev.ngb.tenant.billing.api.client.BillingCustomers;
 import dev.ngb.tenant.billing.api.model.Customer;
 import dev.ngb.tenant.customer.application.customer.port.CustomerRepository;
-import dev.ngb.tenant.shared.error.ConflictException;
+import dev.ngb.core.error.ConflictException;
 
 /**
  * Creates the Billing Customer and stores the returned id as the mapping. Billing derives this Tenant System from

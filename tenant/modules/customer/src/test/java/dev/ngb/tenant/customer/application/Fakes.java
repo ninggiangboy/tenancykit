@@ -6,7 +6,7 @@ import dev.ngb.tenant.customer.application.customer.port.CustomerRepository;
 import dev.ngb.tenant.customer.application.customer.query.CustomerReadRepository;
 import dev.ngb.tenant.customer.application.customer.query.CustomerView;
 import dev.ngb.tenant.customer.domain.customer.CustomerStatus;
-import dev.ngb.tenant.shared.error.UpstreamUnavailableException;
+import dev.ngb.core.error.UpstreamUnavailableException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -87,7 +87,7 @@ final class Fakes {
                 throw new UpstreamUnavailableException("billing is down");
             }
             if (conflict) {
-                throw new dev.ngb.tenant.shared.error.ConflictException("already mapped");
+                throw new dev.ngb.core.error.ConflictException("already mapped");
             }
             created.add(customer);
             return new Customer("cus_" + created.size(), customer.displayName(), customer.email(), "ACTIVE", null);

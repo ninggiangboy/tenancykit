@@ -8,7 +8,7 @@ import dev.ngb.tenant.catalog.application.plan.port.CatalogPlanRepository;
 import dev.ngb.tenant.catalog.application.plan.service.CatalogLookupService;
 import dev.ngb.tenant.catalog.domain.plan.CatalogPlan;
 import dev.ngb.tenant.catalog.domain.plan.ResourceType;
-import dev.ngb.tenant.shared.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;

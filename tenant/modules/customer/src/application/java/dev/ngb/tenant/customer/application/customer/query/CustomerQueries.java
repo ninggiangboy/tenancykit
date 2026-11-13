@@ -14,12 +14,12 @@ public class CustomerQueries {
 
     public CustomerView byUser(UUID userId) {
         return customers.byUserId(userId)
-                .orElseThrow(() -> new dev.ngb.tenant.shared.error.NotFoundException("customer not found"));
+                .orElseThrow(() -> new dev.ngb.core.error.NotFoundException("customer not found"));
     }
 
     public CustomerView byId(UUID id) {
         return customers.byId(id)
-                .orElseThrow(() -> new dev.ngb.tenant.shared.error.NotFoundException("customer not found"));
+                .orElseThrow(() -> new dev.ngb.core.error.NotFoundException("customer not found"));
     }
 
     public List<CustomerView> list() {

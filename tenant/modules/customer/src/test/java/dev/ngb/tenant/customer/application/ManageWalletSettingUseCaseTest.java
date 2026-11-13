@@ -14,7 +14,7 @@ import dev.ngb.tenant.customer.application.wallet.port.WalletSettingRepository;
 import dev.ngb.tenant.customer.domain.customer.Customer;
 import dev.ngb.tenant.customer.domain.wallet.CustomerWalletSetting;
 import dev.ngb.tenant.customer.domain.wallet.WalletMode;
-import dev.ngb.tenant.shared.error.BadRequestException;
+import dev.ngb.core.error.BadRequestException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;

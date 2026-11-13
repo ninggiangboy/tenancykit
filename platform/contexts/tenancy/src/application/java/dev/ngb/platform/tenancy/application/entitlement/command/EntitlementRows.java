@@ -31,7 +31,8 @@ final class EntitlementRows {
         if (entitlements.insertIfAbsent(firstVersion)) {
             return new Locked(firstVersion, true);
         }
-        AppEntitlement raced = entitlements.lock(firstVersion.tenantId(), firstVersion.appCode()).orElseThrow();
+        AppEntitlement raced = entitlements.lock(firstVersion.tenantId(), firstVersion.appCode())
+                .orElseThrow(() -> new IllegalStateException("the entitlement row disappeared during a concurrent first disposition"));
         expected.check(raced.version());
         return new Locked(raced, false);
     }

@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.core.runtime.IdGenerator;
-import dev.ngb.tenant.shared.error.BadRequestException;
+import dev.ngb.core.error.BadRequestException;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;

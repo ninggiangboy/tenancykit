@@ -87,7 +87,7 @@ class SuiteEntitlementsIntegrationTest {
                     return null;
                 }))
                 .isInstanceOf(NotFoundException.class)
-                .hasMessageContaining("app-not-enabled");
+                .hasMessageContaining("this tenant has not enabled billing");
     }
 
     @Test

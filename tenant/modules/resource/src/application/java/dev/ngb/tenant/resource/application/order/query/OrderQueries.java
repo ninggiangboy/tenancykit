@@ -1,7 +1,7 @@
 package dev.ngb.tenant.resource.application.order.query;
 
 import dev.ngb.tenant.customer.api.lookup.CustomerDirectory;
-import dev.ngb.tenant.shared.error.NotFoundException;
+import dev.ngb.core.error.NotFoundException;
 import java.util.List;
 import java.util.UUID;
 

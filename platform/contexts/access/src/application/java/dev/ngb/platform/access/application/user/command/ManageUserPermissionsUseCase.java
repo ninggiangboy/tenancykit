@@ -1,12 +1,12 @@
 package dev.ngb.platform.access.application.user.command;
 
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.access.port.AccessRepository;
 import dev.ngb.platform.access.application.access.service.AccessPublisher;
 import dev.ngb.platform.access.application.permission.exception.UnknownPermissionException;
 import dev.ngb.platform.access.application.permission.port.PermissionCatalog;
-import dev.ngb.platform.access.application.user.exception.UserNotFoundException;
 import dev.ngb.platform.access.application.user.port.UserRepository;
 import dev.ngb.platform.access.domain.user.User;
 import dev.ngb.platform.access.domain.user.UserId;
@@ -33,7 +33,7 @@ public class ManageUserPermissionsUseCase {
 
     public User execute(Command command) {
         return unitOfWork.transactional(() -> {
-            User user = users.lockById(command.userId()).orElseThrow(() -> new UserNotFoundException(command.userId().toString()));
+            User user = users.lockById(command.userId()).orElseThrow(() -> new NotFoundException("no user " + command.userId()));
             command.expected().check(user.version());
             var permission = catalog.find(command.permissionCode())
                     .orElseThrow(() -> new UnknownPermissionException(command.permissionCode(), "is not in the catalog"));

@@ -1,5 +1,6 @@
 package dev.ngb.billing.payment.application.payment.service;
 
+import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.payment.application.payment.port.PaymentProvider;
@@ -48,14 +49,14 @@ public class CheckoutOpener {
         } catch (ProviderRejectedException rejected) {
             // Stripe said no for good: the payment never reached a customer, so close it and tell the caller.
             unitOfWork.transactional(() -> {
-                Payment locked = payments.lockById(payment.id()).orElseThrow();
+                Payment locked = payments.lockById(payment.id()).orElseThrow(() -> new NotFoundException("no payment " + payment.id()));
                 locked.fail(rejected.getMessage(), clock.now());
                 payments.update(locked);
             });
             throw rejected;
         }
         return unitOfWork.transactional(() -> {
-            Payment locked = payments.lockById(payment.id()).orElseThrow();
+            Payment locked = payments.lockById(payment.id()).orElseThrow(() -> new NotFoundException("no payment " + payment.id()));
             locked.attachCheckout(checkout.sessionId(), checkout.url(), clock.now());
             payments.update(locked);
             return locked;

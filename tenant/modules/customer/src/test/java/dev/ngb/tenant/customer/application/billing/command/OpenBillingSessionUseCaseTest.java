@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.tenant.billing.api.model.BillingSession;
 import dev.ngb.tenant.customer.application.billing.BillingFakes;
-import dev.ngb.tenant.shared.error.BadRequestException;
+import dev.ngb.core.error.BadRequestException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

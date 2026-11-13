@@ -19,9 +19,9 @@ import dev.ngb.tenant.billing.api.model.RecordedUsage;
 import dev.ngb.tenant.billing.api.model.ReserveResult;
 import dev.ngb.tenant.billing.api.model.UsageEventRequest;
 import dev.ngb.tenant.billing.api.model.Wallet;
-import dev.ngb.tenant.shared.error.NotFoundException;
-import dev.ngb.tenant.shared.error.PaymentRequiredException;
-import dev.ngb.tenant.shared.error.UpstreamUnavailableException;
+import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.error.PaymentRequiredException;
+import dev.ngb.core.error.UpstreamUnavailableException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -232,7 +232,7 @@ class FeignBillingClientTest {
     @Test
     void refusesToReachBillingWithoutACredential() {
         assertThatThrownBy(() -> clientWith("").plans(null))
-                .isInstanceOf(dev.ngb.tenant.shared.error.UnauthorizedException.class);
+                .isInstanceOf(dev.ngb.core.error.UnauthorizedException.class);
 
         assertThat(billing.requests()).isEmpty();
     }
@@ -264,7 +264,7 @@ class FeignBillingClientTest {
                         new FeignSettings("Billing", billing.baseUrl(), Duration.ofSeconds(1), Duration.ofSeconds(1), 1, Duration.ofMillis(1)),
                         new RotatingTokens())
                 .get("cus_1"))
-                .isInstanceOf(dev.ngb.tenant.shared.error.UnauthorizedException.class);
+                .isInstanceOf(dev.ngb.core.error.UnauthorizedException.class);
 
         assertThat(billing.requests()).hasSize(2);
     }

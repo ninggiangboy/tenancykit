@@ -97,6 +97,6 @@ public class CreateSubscriptionUseCase {
         }
         // The first period is due at once: charge it now, in its own transaction, so a refusal by the wallet leaves the subscription recorded.
         renewal.renewIfDue(created.subscription().id());
-        return new Result(unitOfWork.transactional(() -> subscriptions.findById(created.subscription().id()).orElseThrow()), false);
+        return new Result(unitOfWork.transactional(() -> subscriptions.findById(created.subscription().id()).orElseThrow(() -> new NotFoundException("no subscription " + created.subscription().id()))), false);
     }
 }
