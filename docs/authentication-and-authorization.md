@@ -44,6 +44,12 @@ hold several roles and permissions in both scopes. Roles are managed dynamically
 hardcoded; Platform seeds a Platform Administrator role and, per Tenant, a Tenant Administrator role holding every
 tenant-scope code.
 
+A role may hold only a code whose catalogued `scopes` include the role's own scope, and a caller may create, rename,
+assign or grant only a role whose scope is no wider than their own — a Tenant Administrator holding every tenant-scope
+code still cannot mint a `platform` role or hand out a right they do not hold. The acting tenant is derived from the
+authenticated actor, never from a request body. `contracts/permissions/` is the only list of codes Platform accepts,
+and a test compares the codes the controllers declare with it.
+
 Platform resolves a user's effective permission set from their roles and direct grants and puts it in the suite token
 or the `/api/v1/me` answer. An app receives the codes for its own app only: a `billing`-audience token carries only
 `billing:*` codes, filtered at issuance, so a code for another app can never appear.
@@ -54,7 +60,10 @@ A Tenant System is a third party that does not share the Platform's identity pro
 through Keycloak. It exchanges a Platform-issued client credential for a short-lived suite token.
 
 - Platform issues the credential: a key id and a secret, one per Tenant System, stored as a hash and shown once. A
-  Tenant User creates, rotates (with an overlap window) and revokes it; a Tenant System never creates its own.
+  Tenant User creates, rotates (with an overlap window) and revokes it; a Tenant System never creates its own. A
+  rotate and a revoke run under a lock on the Tenant System and a version guard on the credential, so concurrent
+  rotations cannot leave more than two live credentials and a rotation can never resurrect a revoked one. Every
+  access command records exactly one audit entry.
 - A service client (`PLATFORM_SERVICE_CLIENT_ID`) works the same way for a trusted service, such as Billing's replica
   rebuild; its secret's SHA-256 is configuration.
 - The grant is `POST /oauth/token` with HTTP Basic client authentication, `grant_type=client_credentials` and

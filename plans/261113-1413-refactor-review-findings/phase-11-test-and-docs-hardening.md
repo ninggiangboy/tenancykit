@@ -84,14 +84,34 @@ the code does not have.
 
 ## Success criteria
 
-- [ ] Every finding in the plan has at least one automated regression test or an explicit "not testable here" note.
-- [ ] Platform has domain/use-case unit tests; usage, money and settlement have focused tests.
-- [ ] `PaymentIntegrationTest` no longer exceeds ~300 lines; coverage is unchanged.
-- [ ] Test packages mirror production and the rule enforces it.
-- [ ] Docs and contracts describe the implemented behaviour; the web placeholder claim is removed.
-- [ ] CI runs core tests and detects rule-set drift.
+- [x] Every finding in the plan has at least one automated regression test or an explicit "not testable here" note.
+- [x] Platform has domain/use-case unit tests; usage, money and settlement have focused tests.
+- [x] `PaymentIntegrationTest` no longer exceeds ~300 lines; coverage is unchanged.
+- [x] Test packages mirror production and the rule enforces it.
+- [x] Docs and contracts describe the implemented behaviour; the web placeholder claim is removed.
+- [x] CI runs core tests and detects rule-set drift.
 
 ## Risks
 
 Docker/Testcontainers may be unavailable. Mitigation: keep unit tests Docker-free, run integration tests where Docker
 exists, and report the skipped set instead of claiming a full pass.
+
+## Notes from the remaining work
+
+- Tests that need Docker (Testcontainers PostgreSQL) and cannot run without it: the four new payment suites
+  `billing/apps/app-boot/.../payment/{TopUpIntegrationTest,StripeEventIntegrationTest,RefundIntegrationTest,ReconciliationIntegrationTest}`
+  and `core/core-messaging/.../audit/JooqAuditLogIntegrationTest`. `SuiteTenantFilterTest`, `SuiteEntitlementFilterTest`,
+  `SpringUnitOfWorkTest`, `ScopedTenantContextTest`, `PermissionInterceptorTest`, `CoreKernelBoundaryTest`,
+  `CoreSpringBoundaryTest` and every domain and use-case test added here run with no Docker.
+- `PaymentIntegrationTest` is now an empty file: the four suites plus `PaymentWorld` replace it, and the class is
+  removed with `git rm` because this phase had no shell access. Its 56 `@Test` methods are preserved
+  (9 top-up, 22 Stripe results and retry claims, 18 refunds, 7 reconciliation/isolation/contract).
+- Tenant tests already mirrored production packages before this phase; the test-package rule was enabled in phase 7
+  for all three services (`ArchitectureTest.testsMirrorProductionPackages`), so nothing was moved. The repository
+  integration tests sit in module-root packages, which the rule does not cover.
+- The five read repositories were already exercised against Testcontainers PostgreSQL inside their feature's
+  `Jooq*RepositoryIntegrationTest`; the claim in `docs/tenant-system.md` was softened to say so instead of promising a
+  class of their own.
+- The rule-id drift check is `ArchitectureRulesTest` in `core-arch` plus each service's `ArchitectureMetaTest`; the new
+  `rule-set` job in `.github/workflows/core.yml` runs all four.
+

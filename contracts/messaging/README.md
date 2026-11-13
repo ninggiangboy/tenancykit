@@ -5,9 +5,9 @@ a **command** (a request one app sends to one owner); the transport is the same.
 
 ## Envelope
 
-There is **one** canonical envelope, in camelCase. The AMQP body is UTF-8 JSON and is exactly the document a tenant
-system receives as a webhook, so a consumer can forward a producer's bytes without re-serialising them and the two
-deliveries cannot drift apart:
+There is **one** canonical envelope, in camelCase, produced by `EventDocument`. The AMQP body is UTF-8 JSON, and the
+webhook writer emits the same bytes, so a consumer can forward a producer's output without re-serialising it and the
+two deliveries cannot drift apart:
 
 ```json
 {
@@ -21,8 +21,8 @@ deliveries cannot drift apart:
 }
 ```
 
-`data` is validated by `contracts/events/<producer>/<type>.schema.json` for an event, or
-`contracts/commands/<type>.schema.json` for a command. `id` is a UUID v7 chosen by the producer and is the
+`data` is validated by `contracts/events/<producer>/<type>.schema.json`: only an event with a schema is published
+and only an event type with a schema may be subscribed to. `id` is a UUID v7 chosen by the producer and is the
 deduplication key; `aggregate` is the aggregate the event belongs to, such as `invoice/42`.
 
 **Compatibility rule.** `schemaVersion` is bumped only when the envelope itself changes incompatibly. A reader

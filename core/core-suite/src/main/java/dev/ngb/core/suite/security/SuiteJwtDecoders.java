@@ -115,7 +115,7 @@ public class SuiteJwtDecoders implements JwtDecoder {
         }
     }
 
-    /** Requires {@code aud} to contain exactly the app's code. */
+    /** Requires {@code aud} to contain the app's code. */
     private static OAuth2TokenValidator<Jwt> audience(String appCode) {
         return jwt -> {
             List<String> aud = jwt.getAudience();

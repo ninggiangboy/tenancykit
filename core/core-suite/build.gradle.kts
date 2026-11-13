@@ -16,6 +16,8 @@ dependencies {
     // Every suite test runs the shipped replica DDL, so its database has the shape an app's migration produces.
     testImplementation(testFixtures(project(":core-replica")))
     testImplementation("org.springframework:spring-jdbc")
+    testImplementation("org.springframework:spring-test")
+    testImplementation("jakarta.servlet:jakarta.servlet-api")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.testcontainers:testcontainers-postgresql")
     testImplementation("org.postgresql:postgresql")

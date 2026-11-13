@@ -1,6 +1,8 @@
 name: core
 
-# billing and tenant include core as a separate build, which compiles it but never runs its tests.
+# A change under core/ reaches the three service builds through includeBuild("../core"), but a composite build only
+# builds the tasks it needs: billing, platform and tenant compile core and never run its tests. This workflow runs
+# them, and it re-runs the rule-id comparison in all four builds so the shared rule set cannot drift apart unnoticed.
 on:
   pull_request:
     paths: ["core/**", ".github/workflows/core.yml"]
@@ -22,3 +24,31 @@ jobs:
           java-version: "25"
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew build
+
+  rule-set:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+
+      # core-arch pins the generic rule ids and asserts the three services resolve the same list; a rule added,
+      # removed or renamed there turns this red.
+      - name: Common rule ids
+        working-directory: core
+        run: ./gradlew :core-arch:test --tests '*ArchitectureRulesTest'
+
+      # Each service declares its own rule ids plus its documented extras, and proves every rule still fails on
+      # its fixture. A rule that disappears from one service fails here.
+      - name: Billing rule ids
+        working-directory: billing
+        run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
+      - name: Platform rule ids
+        working-directory: platform
+        run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
+      - name: Tenant rule ids
+        working-directory: tenant
+        run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'

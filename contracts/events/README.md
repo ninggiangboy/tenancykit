@@ -12,9 +12,9 @@ publishes and for the shape of each event's `data`. The application packages the
 type that has no schema. A test builds every event through the real code and validates it against its schema, so a
 payload that drifts from its schema fails the build.
 
-Between services the AMQP message body is the same document as the webhook body, described in
-[messaging/README.md](../messaging/README.md). The rest of this file describes the signed HTTP delivery to a Tenant
-System.
+Between services the AMQP message body is the one canonical envelope the webhook writer emits too, described in
+[messaging/README.md](../messaging/README.md): both are produced by `EventDocument`, so a receiver of either gets the
+same bytes. The rest of this file describes the signed HTTP delivery to a Tenant System.
 
 Billing reports business state changes to a Tenant System as signed HTTP webhooks. A webhook only reports a
 fact; it never asks the receiver to do anything, and the receiver decides its own policy.

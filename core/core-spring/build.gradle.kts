@@ -14,4 +14,7 @@ dependencies {
     compileOnly("jakarta.servlet:jakarta.servlet-api")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.springframework:spring-web")
+    testImplementation("org.springframework:spring-webmvc")
+    testImplementation("jakarta.servlet:jakarta.servlet-api")
+    testImplementation(libs.archunit.junit5)
 }

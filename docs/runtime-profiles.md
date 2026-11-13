@@ -46,8 +46,8 @@ no logic, retries nothing and rewrites no body. See [suite-messaging.md](suite-m
 ## What each profile owns
 
 - **Jobs.** `worker` owns outbox relay, webhook delivery, subscription renewal, billing cycle close, reservation
-  expiry, ledger verification, Stripe retry, Stripe reconciliation and rate-limit cleanup.
-  `api` owns none of them. A test asserts both halves.
+  expiry, ledger verification, Stripe retry and Stripe reconciliation. `api` owns none of them. A test asserts both
+  halves.
 - **The replica listener.** The `platform.events` listener lives in Billing's `worker` (a `@Profile("worker")`
   container), started after the rebuild by `ReplicaBootstrap`, so the `api` runtime stays free of broker consumption
   while the worker keeps the replica current. A run with no profile (dev and test) activates both.
@@ -65,10 +65,12 @@ no logic, retries nothing and rewrites no body. See [suite-messaging.md](suite-m
   (`stripe_events.claimed_until`), because it reads from Stripe before it opens the transaction that locks the row:
   a claimed event is invisible to another worker until that deadline passes, and a worker that dies mid-attempt
   hands it back instead of losing it.
-- **Rate limiting.** API-key limits live in `rate_limit_buckets`, shared by every `api` instance. A key that
-  authenticates spends its own bucket; a request that does not spends one of 1024 buckets chosen by key id, so
-  invented key ids cannot create unbounded rows or exhaust a real key's budget. A worker removes idle buckets in
-  bounded `skip locked` batches, repeating while a batch comes back full.
+- **Rate limiting.** Billing runs no limiter of its own: it holds no API keys, and the credentials a Tenant System
+  exchanges for a suite token are Platform's. The `POST /oauth/token` limits live in Platform's `rate_limit_buckets`:
+  a claimed client id spends its own bucket before its secret is compared, and a request that does not authenticate
+  also spends the caller's address and one shared anonymous bucket, which has its own wider allowance
+  (`platform.security.token-rate-limit.anonymous-burst`), so inventing client ids cannot multiply a caller's attempts.
+  A Platform job removes idle buckets in bounded `skip locked` batches, repeating while a batch comes back full.
 - **Threading.** `api` enables virtual threads, so a wait for Stripe or Keycloak does not occupy a request thread,
   and pairs that with a 3s Hikari `connection-timeout`: the pool stays at 20, so a request that cannot get a
   connection is refused with a 503 and `Retry-After: 1` instead of queueing for 30s. `worker` deliberately stays on

@@ -135,9 +135,11 @@ Decisions:
 ## Test pyramid
 
 - Unit tests on the plain-Java application layer with in-memory fakes.
-- `Jooq*RepositoryIntegrationTest` for each repository, against a Testcontainers PostgreSQL: round
-  trips, conflict-ignoring inserts, upserts, guarded updates, the bulk delete, and a two-claimer test
-  that asserts disjoint queue batches and incremented attempts.
+- A `Jooq*RepositoryIntegrationTest` per feature, against a Testcontainers PostgreSQL: round trips,
+  conflict-ignoring inserts, upserts, guarded updates, the bulk delete, and a two-claimer test that asserts
+  disjoint queue batches and incremented attempts. Each class proves the feature's write repository and its
+  `Jooq*ReadRepository` together, so a read projection is checked against the same migrated schema rather than
+  in a class of its own.
 - One `*HttpIntegrationTest` per controller, with the full response body asserted, plus the signed,
   forged, stale and duplicate webhook deliveries. Billing is replaced by `FakeBilling`; the tests
   never call the network.
