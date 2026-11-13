@@ -1,6 +1,7 @@
 package dev.ngb.tenant.customer.application.wallet.command;
 
 import dev.ngb.core.runtime.Clock;
+import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.tenant.billing.api.client.BillingWallets;
 import dev.ngb.tenant.billing.api.model.Wallet;
 import dev.ngb.tenant.customer.api.lookup.CustomerDirectory;
@@ -17,28 +18,43 @@ import java.util.regex.Pattern;
 /**
  * Scenario 13: the customer's setting selects the wallet mode on Billing's side. Opening the same
  * customer and currency again returns Billing's existing wallet, so an explicit update is safe.
+ *
+ * <p>The currency a customer starts in comes from configuration, and a wallet Billing refuses to open
+ * at registration is logged against the account: the customer stays PENDING, and an explicit
+ * wallet-settings update opens the wallet later.
  */
 public class ManageWalletSettingUseCase {
+
+    private static final System.Logger LOG = System.getLogger(ManageWalletSettingUseCase.class.getName());
 
     private static final Pattern CURRENCY = Pattern.compile("^[A-Z]{3}$");
 
     private final CustomerDirectory customers;
     private final WalletSettingRepository settings;
     private final BillingWallets wallets;
+    private final UnitOfWork unitOfWork;
     private final Clock clock;
+    private final String defaultCurrency;
 
     public ManageWalletSettingUseCase(
-            CustomerDirectory customers, WalletSettingRepository settings, BillingWallets wallets, Clock clock) {
+            CustomerDirectory customers,
+            WalletSettingRepository settings,
+            BillingWallets wallets,
+            UnitOfWork unitOfWork,
+            Clock clock,
+            String defaultCurrency) {
         this.customers = customers;
         this.settings = settings;
         this.wallets = wallets;
+        this.unitOfWork = unitOfWork;
         this.clock = clock;
+        this.defaultCurrency = defaultCurrency;
     }
 
     public CustomerWalletSetting current(UUID userId) {
         CustomerDirectory.CustomerSnapshot customer = mapped(userId);
         return settings.findByCustomerId(customer.id())
-                .orElseGet(() -> CustomerWalletSetting.defaults(customer.id()));
+                .orElseGet(() -> CustomerWalletSetting.defaults(customer.id(), defaultCurrency));
     }
 
     public CustomerWalletSetting update(UUID userId, WalletMode mode, String currency, Long creditLimit) {
@@ -54,24 +70,30 @@ public class ManageWalletSettingUseCase {
             throw new BadRequestException("a credit limit cannot be negative");
         }
         Long limit = mode == WalletMode.POSTPAID ? creditLimit : null;
-        Wallet wallet = wallets.open(
-                "wallet:" + customer.billingCustomerId() + ":" + normalized,
-                new BillingWallets.OpenWallet(customer.billingCustomerId(), normalized, mode.name(), limit));
-        CustomerWalletSetting setting = new CustomerWalletSetting(
-                customer.id(), mode, normalized, limit, wallet.id(), clock.now());
-        settings.save(setting);
-        return setting;
+        return unitOfWork.transactional(() -> {
+            Wallet wallet = wallets.open(
+                    "wallet:" + customer.billingCustomerId() + ":" + normalized,
+                    new BillingWallets.OpenWallet(customer.billingCustomerId(), normalized, mode.name(), limit));
+            CustomerWalletSetting setting = new CustomerWalletSetting(
+                    customer.id(), mode, normalized, limit, wallet.id(), clock.now());
+            settings.save(setting);
+            return setting;
+        });
     }
 
     public void ensureDefaultWallet(UUID userId) {
+        CustomerDirectory.CustomerSnapshot customer = customers.byUserId(userId);
+        if (!customer.mapped() || settings.findByCustomerId(customer.id()).isPresent()) {
+            return;
+        }
         try {
-            CustomerDirectory.CustomerSnapshot customer = customers.byUserId(userId);
-            if (!customer.mapped() || settings.findByCustomerId(customer.id()).isPresent()) {
-                return;
-            }
-            update(userId, WalletMode.PREPAID, "USD", null);
+            update(userId, WalletMode.PREPAID, defaultCurrency, null);
         } catch (UpstreamUnavailableException | ConflictException | BadRequestException e) {
-            // Registration still succeeds; an explicit wallet-settings update opens it later.
+            LOG.log(
+                    System.Logger.Level.WARNING,
+                    "user " + userId + ": the default " + defaultCurrency
+                            + " wallet was not opened (" + e.getMessage()
+                            + "); the account waits for an explicit wallet-settings update");
         }
     }
 

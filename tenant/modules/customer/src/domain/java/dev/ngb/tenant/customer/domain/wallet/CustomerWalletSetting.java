@@ -12,7 +12,7 @@ public record CustomerWalletSetting(
         String walletId,
         Instant updatedAt) {
 
-    public static CustomerWalletSetting defaults(UUID customerId) {
-        return new CustomerWalletSetting(customerId, WalletMode.PREPAID, "USD", null, null, null);
+    public static CustomerWalletSetting defaults(UUID customerId, String currency) {
+        return new CustomerWalletSetting(customerId, WalletMode.PREPAID, currency, null, null, null);
     }
 }

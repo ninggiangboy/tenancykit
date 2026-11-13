@@ -2,6 +2,7 @@ package dev.ngb.tenant.boot.config;
 
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
+import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.tenant.identity.adapter.session.persistence.JooqSessionRepository;
 import dev.ngb.tenant.identity.adapter.user.persistence.JooqUserReadRepository;
 import dev.ngb.tenant.identity.adapter.user.persistence.JooqUserRepository;
@@ -47,8 +48,13 @@ class IdentityConfiguration {
 
     @Bean
     RegisterUserUseCase registerUserUseCase(
-            UserRepository users, PasswordHasher hasher, Clock clock, IdGenerator ids, AccountListener listener) {
-        return new RegisterUserUseCase(users, hasher, clock, ids, listener);
+            UserRepository users,
+            PasswordHasher hasher,
+            UnitOfWork unitOfWork,
+            Clock clock,
+            IdGenerator ids,
+            AccountListener listener) {
+        return new RegisterUserUseCase(users, hasher, unitOfWork, clock, ids, listener);
     }
 
     @Bean

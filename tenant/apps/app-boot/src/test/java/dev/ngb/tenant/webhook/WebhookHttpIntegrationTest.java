@@ -40,6 +40,14 @@ class WebhookHttpIntegrationTest extends HttpIntegrationTest {
     }
 
     @Test
+    void rejectsAForgedDeliveryWhoseBodyIsNotEvenJson() {
+        String body = "{\"id\":\"evt_" + UUID.randomUUID() + "\",\"type\":";
+        String timestamp = Long.toString(Instant.now().getEpochSecond());
+
+        assertThat(status(post(eventId(body), "payment.failed", timestamp, "v1=deadbeef", body))).isEqualTo(401);
+    }
+
+    @Test
     void rejectsAStaleTimestamp() {
         String body = paymentFailed();
         String timestamp = Long.toString(Instant.now().minusSeconds(600).getEpochSecond());

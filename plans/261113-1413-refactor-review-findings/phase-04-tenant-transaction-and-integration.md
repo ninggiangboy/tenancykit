@@ -83,11 +83,11 @@ keys, verify webhook signatures before parsing, and turn its stringly order/webh
 
 ## Success criteria
 
-- [ ] A failure in the second write of each flow leaves no partial state.
-- [ ] Retrying a top-up or order with the same key never creates a second Billing reservation/subscription.
-- [ ] A tampered body is rejected before JSON parsing.
-- [ ] The order state machine accepts only the documented edges; a stale worker cannot finish a re-claimed row.
-- [ ] Two simultaneous first registrations cannot both become ADMIN.
+- [x] A failure in the second write of each flow leaves no partial state.
+- [x] Retrying a top-up or order with the same key never creates a second Billing reservation/subscription.
+- [x] A tampered body is rejected before JSON parsing.
+- [x] The order state machine accepts only the documented edges; a stale worker cannot finish a re-claimed row.
+- [x] Two simultaneous first registrations cannot both become ADMIN.
 
 ## Risks
 

@@ -41,13 +41,12 @@ public class AuthController {
         this.sessions = sessions;
     }
 
-    /** The first account becomes the administrator; every later self-registration is a viewer. */
+    /** The first account of this tenant becomes its administrator; every later self-registration is a viewer. */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public UserView register(@RequestBody RegisterRequest request) {
-        Role role = register.anyUserExists() ? Role.VIEWER : Role.ADMIN;
         User user = register.execute(new RegisterUserUseCase.Command(
-                request.email(), request.displayName(), request.password(), role));
+                request.email(), request.displayName(), request.password(), null));
         return UserView.of(user);
     }
 

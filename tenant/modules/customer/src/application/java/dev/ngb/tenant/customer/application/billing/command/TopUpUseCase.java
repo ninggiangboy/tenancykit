@@ -8,7 +8,10 @@ import dev.ngb.core.error.BadRequestException;
 import dev.ngb.core.error.NotFoundException;
 import java.util.UUID;
 
-/** Scenario 10: a mapped customer tops up a wallet it owns. */
+/**
+ * Scenario 10: a mapped customer tops up a wallet it owns. The caller supplies the idempotency key,
+ * so a retried top-up replays Billing's own result instead of starting a second payment.
+ */
 public class TopUpUseCase {
 
     private final CustomerDirectory customers;
@@ -22,6 +25,9 @@ public class TopUpUseCase {
     }
 
     public Payment execute(UUID userId, String walletId, long amount, String currency, String idempotencyKey) {
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            throw new BadRequestException("an Idempotency-Key header is required");
+        }
         CustomerDirectory.CustomerSnapshot customer = mapped(userId);
         boolean owned = wallets.wallets(customer.billingCustomerId()).stream()
                 .anyMatch(wallet -> wallet.id().equals(walletId));
@@ -31,10 +37,8 @@ public class TopUpUseCase {
         if (amount <= 0) {
             throw new BadRequestException("a top-up amount must be positive");
         }
-        String key = idempotencyKey == null || idempotencyKey.isBlank()
-                ? "top-up:" + customer.billingCustomerId() + ":" + UUID.randomUUID()
-                : idempotencyKey;
-        return payments.createTopUp(key, new BillingPayments.TopUpRequest(walletId, amount, currency));
+        return payments.createTopUp(
+                idempotencyKey.trim(), new BillingPayments.TopUpRequest(walletId, amount, currency));
     }
 
     private CustomerDirectory.CustomerSnapshot mapped(UUID userId) {

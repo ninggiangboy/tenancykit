@@ -4,7 +4,6 @@ package dev.ngb.tenant.identity.api.security;
 public enum Permission {
     USER_MANAGE("user:manage"),
     CUSTOMER_MANAGE("customer:manage"),
-    CATALOG_MANAGE("catalog:manage"),
     ORDER_CREATE("order:create"),
     ORDER_MANAGE("order:manage"),
     ORDER_READ("order:read"),

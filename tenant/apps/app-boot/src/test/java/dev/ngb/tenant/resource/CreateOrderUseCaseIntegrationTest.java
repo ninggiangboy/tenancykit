@@ -23,7 +23,9 @@ import dev.ngb.tenant.resource.api.execution.ExecutionQueue.Claimed;
 import dev.ngb.tenant.resource.application.order.command.CreateOrderUseCase;
 import dev.ngb.tenant.resource.application.order.port.OrderQueueRepository;
 import dev.ngb.tenant.resource.application.order.port.OrderRepository;
+import dev.ngb.tenant.resource.application.order.query.OrderView;
 import dev.ngb.tenant.resource.application.order.query.OrderReadRepository;
+import dev.ngb.tenant.resource.domain.order.Order;
 import dev.ngb.tenant.support.HttpIntegrationTest;
 import dev.ngb.tenant.support.HttpWorld;
 import java.time.Duration;
@@ -63,6 +65,9 @@ class CreateOrderUseCaseIntegrationTest extends HttpIntegrationTest {
     OrderReadRepository read;
 
     @Autowired
+    CreateOrderUseCase create;
+
+    @Autowired
     UnitOfWork unitOfWork;
 
     @Autowired
@@ -78,17 +83,60 @@ class CreateOrderUseCaseIntegrationTest extends HttpIntegrationTest {
     IdGenerator ids;
 
     @Test
-    void aFailingEnqueueLeavesNoOrderBehind() {
-        String email = "atomic-" + UUID.randomUUID() + "@example.com";
-        User user = registerUser.execute(
-                new RegisterUserUseCase.Command(email, "Ada", HttpWorld.PASSWORD, Role.VIEWER));
+    void anEnqueueThatFailsFailsThePendingOrderInsteadOfLeavingItQueued() {
+        User user = register();
         Customer customer = customers.findByUserId(user.id()).orElseThrow();
+        CatalogPlan plan = plan("atomic");
+
+        CreateOrderUseCase failingQueue = new CreateOrderUseCase(
+                catalog, customerDirectory, pricing, subscriptions, wallets, orders, failing(), unitOfWork,
+                clock, ids, Duration.ofMinutes(15));
+
+        assertThatThrownBy(() -> failingQueue.execute(
+                        new CreateOrderUseCase.Command(user.id(), plan.id(), "120", null, "atomic-" + UUID.randomUUID())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(read.forCustomer(customer.id())).singleElement().satisfies(order -> {
+            assertThat(order.status()).isEqualTo("FAILED");
+            assertThat(order.failureReason()).isEqualTo("queue is down");
+            assertThat(order.reservationId()).isEqualTo("res_1");
+        });
+    }
+
+    @Test
+    void theSameKeyQueuesTheOrderOnce() {
+        User user = register();
+        Customer customer = customers.findByUserId(user.id()).orElseThrow();
+        CatalogPlan plan = plan("replay");
+        String key = "replay-" + UUID.randomUUID();
+
+        OrderView first = view(create.execute(new CreateOrderUseCase.Command(user.id(), plan.id(), "120", null, key)));
+        OrderView replay = view(create.execute(new CreateOrderUseCase.Command(user.id(), plan.id(), "120", null, key)));
+
+        assertThat(replay.id()).isEqualTo(first.id());
+        assertThat(replay.status()).isEqualTo("QUEUED");
+        assertThat(read.forCustomer(customer.id())).hasSize(1);
+    }
+
+    private User register() {
+        String email = "atomic-" + UUID.randomUUID() + "@example.com";
+        return registerUser.execute(new RegisterUserUseCase.Command(email, "Ada", HttpWorld.PASSWORD, Role.VIEWER));
+    }
+
+    private CatalogPlan plan(String prefix) {
         CatalogPlan plan = new CatalogPlan(
-                UUID.randomUUID(), "atomic-" + UUID.randomUUID(), "Compute",
+                UUID.randomUUID(), prefix + "-" + UUID.randomUUID(), "Compute",
                 ResourceType.COMPUTE, "description", "bplan_1", true, NOW);
         plans.save(plan);
+        return plan;
+    }
 
-        OrderQueueRepository failing = new OrderQueueRepository() {
+    private OrderView view(Order order) {
+        return read.byId(order.id()).orElseThrow();
+    }
+
+    private static OrderQueueRepository failing() {
+        return new OrderQueueRepository() {
             @Override
             public void enqueue(UUID orderId, Instant enqueuedAt) {
                 throw new IllegalStateException("queue is down");
@@ -105,13 +153,5 @@ class CreateOrderUseCaseIntegrationTest extends HttpIntegrationTest {
             @Override
             public void requeue(UUID orderId) {}
         };
-        CreateOrderUseCase create = new CreateOrderUseCase(
-                catalog, customerDirectory, pricing, subscriptions, wallets, orders, failing, unitOfWork,
-                clock, ids, Duration.ofMinutes(15));
-
-        assertThatThrownBy(() -> create.execute(new CreateOrderUseCase.Command(user.id(), plan.id(), "120", null)))
-                .isInstanceOf(IllegalStateException.class);
-
-        assertThat(read.forCustomer(customer.id())).isEmpty();
     }
 }

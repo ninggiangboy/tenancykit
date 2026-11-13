@@ -30,10 +30,14 @@ public record User(
     }
 
     public static User register(IdGenerator ids, String email, String displayName, String passwordHash, Role role, Instant now) {
-        // A missing value must reach the constructor's validation, which answers 400, not fail on trim().
-        String normalizedEmail = email == null ? null : email.trim().toLowerCase(Locale.ROOT);
         String normalizedName = displayName == null ? null : displayName.trim();
-        return new User(ids.newId(), normalizedEmail, normalizedName, passwordHash, role, UserStatus.ACTIVE, now);
+        return new User(ids.newId(), normalizeEmail(email), normalizedName, passwordHash, role, UserStatus.ACTIVE, now);
+    }
+
+    /** The one spelling of an email address: an account is found, checked and saved by it. */
+    public static String normalizeEmail(String email) {
+        // A missing value must reach the constructor's validation, which answers 400, not fail on trim().
+        return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
 
     public User withRole(Role next) {

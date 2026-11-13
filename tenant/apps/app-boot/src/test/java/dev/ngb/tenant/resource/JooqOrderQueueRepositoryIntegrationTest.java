@@ -1,6 +1,7 @@
 package dev.ngb.tenant.resource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -58,9 +59,11 @@ class JooqOrderQueueRepositoryIntegrationTest extends HttpIntegrationTest {
                 UUID.randomUUID(), "queue-" + UUID.randomUUID(), "Compute",
                 ResourceType.COMPUTE, "description", "bplan_1", true, NOW);
         plans.save(plan);
-        Order order = Order.queued(
-                ids, customer.id(), customer.billingCustomerId(), "wal_1", plan.id(), "bplan_1",
-                "TIME_BASED", "compute.vcpu_minute", "120", "vCPU-minute", null, 1000, "USD", null, null, NOW);
+        Order order = Order.pending(
+                        ids, customer.id(), customer.billingCustomerId(), "wal_1", plan.id(), "bplan_1",
+                        "TIME_BASED", "compute.vcpu_minute", "120", "vCPU-minute", null, "USD",
+                        "ORD-" + UUID.randomUUID(), NOW)
+                .queued(1000, "res_1", null, NOW);
         orders.save(order);
         return order.id();
     }
@@ -76,9 +79,29 @@ class JooqOrderQueueRepositoryIntegrationTest extends HttpIntegrationTest {
 
         queue.finish(orderId);
         assertThat(queue.claim(10)).isEmpty();
+        assertThatThrownBy(() -> queue.finish(orderId)).isInstanceOf(IllegalStateException.class);
+    }
 
+    @Test
+    void aRequeuedRowIsClaimedAgainByAnyWorker() {
+        UUID orderId = order();
+        queue.enqueue(orderId, NOW);
+
+        assertThat(queue.claim(10)).contains(new Claimed(orderId, 1));
         queue.requeue(orderId);
-        assertThat(queue.claim(10)).containsExactly(new Claimed(orderId, 2));
+
+        assertThat(queue.claim(10)).contains(new Claimed(orderId, 2));
+    }
+
+    @Test
+    void aStaleWorkerCannotFinishOrRequeueARowItNoLongerHolds() {
+        UUID orderId = order();
+        queue.enqueue(orderId, NOW);
+        queue.claim(10);
+        queue.requeue(orderId);
+
+        assertThatThrownBy(() -> queue.finish(orderId)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> queue.requeue(orderId)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

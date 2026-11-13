@@ -28,8 +28,19 @@ credential through tenant-system credential management; see [docs/tenant-system.
 
 The `billing/` deployment is only a dependency at runtime. With Billing stopped the service
 still starts and serves registration (the mapping stays `PENDING`), login, users, the catalog
-and webhook verification. Actions that need Billing fail with a clear `502` and leave no order
-behind.
+and webhook verification. Actions that need Billing fail with a clear `502` and leave no
+executable order behind: an order is stored as `PENDING` first and is only `QUEUED` once Billing
+answered, and a Billing refusal or a failed enqueue fails that row. A process that dies between
+the two writes leaves a `PENDING` order that `OrderExpiryJob` fails once its reservation can no
+longer be live.
+
+### Idempotency
+
+Every write the caller can safely repeat carries the caller's `Idempotency-Key` header and is
+refused with `400` without one: `POST /api/orders`, `POST /api/billing/top-ups`. An order derives
+its `reference` from the key, so a retry of the same key returns the order it already created
+instead of reserving twice, and a top-up passes the key to Billing, which replays its own result.
+Internal identifiers always come from the shared `IdGenerator`, never from a random call.
 
 ### Bootstrap
 
@@ -95,9 +106,9 @@ exercised by the phase 14 end-to-end suite with a second tenant.
 | Users | `GET /api/users/me`, `GET/POST /api/users`, `PUT /api/users/{id}/role`, `POST /api/users/{id}/deactivate` |
 | Customers | `GET /api/customers/me`, `GET /api/customers`, `POST /api/customers/{id}/mapping`, `GET/PUT /api/customers/me/wallet-settings` |
 | Catalog | `GET /api/catalog/plans`, `GET /api/catalog/plans/{id}`, `GET /api/catalog/resource-types` |
-| Orders | `POST/GET /api/orders`, `GET /api/orders/{id}`, `POST /api/orders/{id}/cancel` |
+| Orders | `POST/GET /api/orders` (`Idempotency-Key` on create), `GET /api/orders/{id}`, `POST /api/orders/{id}/cancel` |
 | Usage | `GET /api/usage` |
-| Billing views | `POST /api/billing/session`, `GET /api/billing/wallets`, `GET /api/billing/invoices`, `GET /api/billing/payments`, `POST /api/billing/top-ups` |
+| Billing views | `POST /api/billing/session`, `GET /api/billing/wallets`, `GET /api/billing/invoices`, `GET /api/billing/payments`, `POST /api/billing/top-ups` (`Idempotency-Key`) |
 | Webhooks | `POST /webhooks/billing` |
 
 ## Configuration
@@ -109,5 +120,7 @@ exercised by the phase 14 end-to-end suite with a second tenant.
 | `SAMPLE_TENANT_PLATFORM_URL`, `SAMPLE_TENANT_PLATFORM_CLIENT_ID`, `SAMPLE_TENANT_PLATFORM_CLIENT_SECRET` | Platform and the client credentials it issued to this Tenant System; the token's audience is `SAMPLE_TENANT_PLATFORM_AUDIENCE` (default `billing`) |
 | `SAMPLE_TENANT_WEBHOOK_SECRET` | Signing secret for inbound Billing webhooks |
 | `SAMPLE_TENANT_EXECUTION_ENABLED`, `SAMPLE_TENANT_EXECUTION_POLL_DELAY` | The execution worker |
+| `SAMPLE_TENANT_ORDER_EXPIRY_ENABLED` | The job that fails a `PENDING` order a crash left behind; the window is `tenant.resource.reservation-ttl` |
+| `SAMPLE_TENANT_WALLET_CURRENCY` | The currency a customer's wallet is opened in until it chooses another one |
 | `SAMPLE_TENANT_BOOTSTRAP_ENABLED`, `SAMPLE_TENANT_BOOTSTRAP_ADMIN_TOKEN` | One-shot reference provisioning |
 | `SAMPLE_TENANT_PORTAL_RETURN_URL` | Default return URL for a Billing Session |

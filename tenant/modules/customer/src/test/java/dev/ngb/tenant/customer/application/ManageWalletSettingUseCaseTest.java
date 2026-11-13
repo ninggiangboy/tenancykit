@@ -3,8 +3,8 @@ package dev.ngb.tenant.customer.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
+import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.tenant.billing.api.client.BillingWallets;
 import dev.ngb.tenant.billing.api.model.Amount;
 import dev.ngb.tenant.billing.api.model.Wallet;
@@ -15,12 +15,14 @@ import dev.ngb.tenant.customer.domain.customer.Customer;
 import dev.ngb.tenant.customer.domain.wallet.CustomerWalletSetting;
 import dev.ngb.tenant.customer.domain.wallet.WalletMode;
 import dev.ngb.core.error.BadRequestException;
+import dev.ngb.core.error.UpstreamUnavailableException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
 class ManageWalletSettingUseCaseTest {
@@ -31,12 +33,13 @@ class ManageWalletSettingUseCaseTest {
     private final Fakes.Customers customers = new Fakes.Customers();
     private final InMemorySettings settings = new InMemorySettings();
     private final FakeWallets wallets = new FakeWallets();
+    private final RecordingUnitOfWork unitOfWork = new RecordingUnitOfWork();
     private final IdGenerator ids = () -> UUID.randomUUID();
     private final ManageWalletSettingUseCase useCase = new ManageWalletSettingUseCase(
-            new CustomerDirectoryService(customers), settings, wallets, () -> NOW);
+            new CustomerDirectoryService(customers), settings, wallets, unitOfWork, () -> NOW, "USD");
 
     @Test
-    void theDefaultSettingIsPrepaidInUsd() {
+    void theDefaultSettingIsPrepaidInTheConfiguredCurrency() {
         mapped();
 
         CustomerWalletSetting setting = useCase.current(USER);
@@ -44,6 +47,15 @@ class ManageWalletSettingUseCaseTest {
         assertThat(setting.walletMode()).isEqualTo(WalletMode.PREPAID);
         assertThat(setting.currency()).isEqualTo("USD");
         assertThat(setting.walletId()).isNull();
+    }
+
+    @Test
+    void theDefaultCurrencyComesFromConfiguration() {
+        mapped();
+        ManageWalletSettingUseCase euro = new ManageWalletSettingUseCase(
+                new CustomerDirectoryService(customers), settings, wallets, unitOfWork, () -> NOW, "EUR");
+
+        assertThat(euro.current(USER).currency()).isEqualTo("EUR");
     }
 
     @Test
@@ -59,6 +71,7 @@ class ManageWalletSettingUseCaseTest {
         assertThat(wallets.last.mode()).isEqualTo("POSTPAID");
         assertThat(wallets.last.creditLimit()).isEqualTo(50_000L);
         assertThat(settings.byCustomer).containsKey(setting.customerId());
+        assertThat(unitOfWork.transactions).isEqualTo(1);
     }
 
     @Test
@@ -97,8 +110,29 @@ class ManageWalletSettingUseCaseTest {
         assertThat(wallets.opened).hasSize(1);
     }
 
+    @Test
+    void aWalletBillingRefusesLeavesTheAccountWaitingInsteadOfFailingRegistration() {
+        mapped();
+        wallets.unavailable();
+
+        useCase.ensureDefaultWallet(USER);
+
+        assertThat(wallets.opened).isEmpty();
+        assertThat(settings.byCustomer).isEmpty();
+    }
+
     private void mapped() {
         customers.save(Customer.pending(ids, USER, "Ada", "ada@example.com", NOW).mapped("cus_1"));
+    }
+
+    private static final class RecordingUnitOfWork implements UnitOfWork {
+        private int transactions;
+
+        @Override
+        public <T> T transactional(Supplier<T> work) {
+            transactions++;
+            return work.get();
+        }
     }
 
     private static final class InMemorySettings implements WalletSettingRepository {
@@ -118,6 +152,11 @@ class ManageWalletSettingUseCaseTest {
     private static final class FakeWallets implements BillingWallets {
         private final List<OpenWallet> opened = new java.util.ArrayList<>();
         private OpenWallet last;
+        private boolean unavailable;
+
+        void unavailable() {
+            unavailable = true;
+        }
 
         @Override
         public List<Wallet> wallets(String customerId) {
@@ -131,6 +170,9 @@ class ManageWalletSettingUseCaseTest {
 
         @Override
         public Wallet open(String idempotencyKey, OpenWallet request) {
+            if (unavailable) {
+                throw new UpstreamUnavailableException("billing is down");
+            }
             opened.add(request);
             last = request;
             return walletOf(request.customerId());

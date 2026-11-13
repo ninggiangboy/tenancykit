@@ -50,9 +50,11 @@ class JooqOrderRepositoryIntegrationTest extends HttpIntegrationTest {
                 UUID.randomUUID(), "order-" + UUID.randomUUID(), "Compute",
                 ResourceType.COMPUTE, "description", "bplan_1", true, NOW);
         plans.save(plan);
-        Order order = Order.queued(
-                ids, customer.id(), customer.billingCustomerId(), "wal_1", plan.id(), "bplan_1",
-                "TIME_BASED", "compute.vcpu_minute", "120", "vCPU-minute", null, 1000, "USD", null, null, NOW);
+        Order order = Order.pending(
+                        ids, customer.id(), customer.billingCustomerId(), "wal_1", plan.id(), "bplan_1",
+                        "TIME_BASED", "compute.vcpu_minute", "120", "vCPU-minute", null, "USD",
+                        "ORD-" + UUID.randomUUID(), NOW)
+                .queued(1000, "res_1", null, NOW);
         orders.save(order);
         return order;
     }
@@ -79,5 +81,31 @@ class JooqOrderRepositoryIntegrationTest extends HttpIntegrationTest {
         assertThat(read.forCustomer(order.customerId())).extracting(view -> view.id()).contains(order.id());
         assertThat(read.forBillingCustomer(order.billingCustomerId())).extracting(view -> view.id()).contains(order.id());
         assertThat(read.all()).extracting(view -> view.id()).contains(order.id());
+    }
+
+    @Test
+    void findsAnOrderByItsReferenceAndAPendingOneBeforeACutoff() {
+        Order queued = existingOrder();
+        Order pending = Order.pending(
+                ids,
+                queued.customerId(),
+                queued.billingCustomerId(),
+                "wal_1",
+                queued.catalogPlanId(),
+                "bplan_1",
+                "TIME_BASED",
+                "compute.vcpu_minute",
+                "120",
+                "vCPU-minute",
+                null,
+                "USD",
+                "ORD-" + UUID.randomUUID(),
+                NOW);
+        orders.save(pending);
+
+        assertThat(orders.findByReference(pending.reference()).orElseThrow().status()).isEqualTo(OrderStatus.PENDING);
+        assertThat(orders.findPendingBefore(NOW.plusSeconds(60))).extracting(Order::id).contains(pending.id());
+        assertThat(orders.findPendingBefore(NOW.plusSeconds(60))).extracting(Order::id).doesNotContain(queued.id());
+        assertThat(orders.findPendingBefore(NOW.minusSeconds(60))).extracting(Order::id).doesNotContain(pending.id());
     }
 }

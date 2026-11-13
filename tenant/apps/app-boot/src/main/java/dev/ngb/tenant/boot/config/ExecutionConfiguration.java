@@ -1,6 +1,7 @@
 package dev.ngb.tenant.boot.config;
 
 import dev.ngb.core.runtime.Clock;
+import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.tenant.billing.api.client.BillingCharges;
 import dev.ngb.tenant.execution.application.queue.command.ExecuteOrdersUseCase;
 import dev.ngb.tenant.resource.api.execution.ExecutionOrders;
@@ -21,8 +22,9 @@ class ExecutionConfiguration {
             ExecutionOrders orders,
             UsageRecorder usage,
             @Qualifier("billingCharges") BillingCharges charges,
+            UnitOfWork unitOfWork,
             Clock clock,
             @Value("${tenant.execution.max-attempts:3}") int maxAttempts) {
-        return new ExecuteOrdersUseCase(queue, orders, usage, charges, clock, maxAttempts);
+        return new ExecuteOrdersUseCase(queue, orders, usage, charges, unitOfWork, clock, maxAttempts);
     }
 }

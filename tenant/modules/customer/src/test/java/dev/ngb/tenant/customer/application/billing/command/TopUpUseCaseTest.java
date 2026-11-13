@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.tenant.billing.api.model.Payment;
 import dev.ngb.tenant.customer.application.billing.BillingFakes;
+import dev.ngb.core.error.BadRequestException;
 import dev.ngb.core.error.NotFoundException;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,14 @@ class TopUpUseCaseTest {
     void refusesATopUpForAnotherCustomersWallet() {
         assertThatThrownBy(() -> topUp.execute(BillingFakes.USER, "wal_other", 500, "USD", "key"))
                 .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void refusesATopUpWithoutAnIdempotencyKey() {
+        assertThatThrownBy(() -> topUp.execute(BillingFakes.USER, "wal_1", 500, "USD", " "))
+                .isInstanceOf(BadRequestException.class);
+
+        assertThat(payments.topUpKey).isNull();
     }
 
     @Test

@@ -48,7 +48,7 @@ public class WalletSettingController {
     }
 
     @PutMapping
-    @RequiresPermission(Permission.CUSTOMER_MANAGE)
+    @RequiresPermission(Permission.SETTINGS_MANAGE)
     public SettingResponse update(
             @AuthenticationPrincipal AuthenticatedUser principal, @RequestBody UpdateRequest request) {
         return SettingResponse.of(

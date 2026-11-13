@@ -2,7 +2,6 @@ package dev.ngb.tenant.webhook.adapter.event.web;
 
 import dev.ngb.tenant.webhook.application.event.command.ReceiveWebhookUseCase;
 import dev.ngb.tenant.webhook.application.event.service.WebhookEnvelope;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -42,15 +41,17 @@ public class WebhookController {
             @RequestHeader(value = "Billing-Timestamp", required = false) String timestamp,
             @RequestHeader(value = "Billing-Signature", required = false) String signature,
             @RequestBody byte[] body) {
-        EventBody parsed = json.readValue(body, EventBody.class);
         ReceiveWebhookUseCase.Outcome outcome = receive.receive(
                 new ReceiveWebhookUseCase.Headers(eventId, eventType, timestamp, signature),
                 body,
-                new String(body, StandardCharsets.UTF_8),
-                new WebhookEnvelope(parsed.id(), parsed.type(), parsed.tenantId(), parsed.occurredAt(), parsed.data()));
+                raw -> envelope(json.readValue(raw, EventBody.class)));
         LOG.info(
                 "webhook-accepted type={} id={} decision={} duplicate={}",
-                parsed.type(), parsed.id(), outcome.decision(), outcome.duplicate());
+                outcome.envelope().type(), outcome.envelope().id(), outcome.decision(), outcome.duplicate());
         return ResponseEntity.ok().build();
+    }
+
+    private static WebhookEnvelope envelope(EventBody parsed) {
+        return new WebhookEnvelope(parsed.id(), parsed.type(), parsed.tenantId(), parsed.occurredAt(), parsed.data());
     }
 }

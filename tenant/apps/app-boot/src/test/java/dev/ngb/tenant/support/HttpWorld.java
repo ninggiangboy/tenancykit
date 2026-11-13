@@ -58,6 +58,10 @@ public final class HttpWorld {
     public record Account(String id, String email, String token) {}
 
     public MvcResult call(HttpMethod method, String token, String path, Object payload) {
+        return call(method, token, path, payload, Map.of());
+    }
+
+    public MvcResult call(HttpMethod method, String token, String path, Object payload, Map<String, String> headers) {
         try {
             MockHttpServletRequestBuilder builder = request(method, path);
             if (token != null) {
@@ -66,6 +70,7 @@ public final class HttpWorld {
             if (payload != null) {
                 builder.contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(payload));
             }
+            headers.forEach(builder::header);
             return mvc.perform(builder).andReturn();
         } catch (Exception e) {
             throw new IllegalStateException(e);

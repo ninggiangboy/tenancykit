@@ -40,6 +40,7 @@ public class PostgresContainerConfig {
             registry.add("spring.datasource.hikari.minimum-idle", () -> "0");
             // Tests drive the execution worker directly and deterministically.
             registry.add("tenant.execution.enabled", () -> "false");
+            registry.add("tenant.resource.expiry-enabled", () -> "false");
         };
     }
 }

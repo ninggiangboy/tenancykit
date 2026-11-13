@@ -3,6 +3,8 @@ package dev.ngb.tenant.catalog.adapter.plan.web;
 import dev.ngb.tenant.catalog.application.plan.query.CatalogQueries;
 import dev.ngb.tenant.catalog.application.plan.query.PlanView;
 import dev.ngb.tenant.catalog.domain.plan.ResourceType;
+import dev.ngb.tenant.identity.api.security.Permission;
+import dev.ngb.tenant.identity.api.security.RequiresPermission;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 /** The offer catalog the ordering screens read. */
 @RestController
 @RequestMapping("/api/catalog")
+@RequiresPermission(Permission.ORDER_READ)
 public class CatalogController {
 
     public record PlanResponse(

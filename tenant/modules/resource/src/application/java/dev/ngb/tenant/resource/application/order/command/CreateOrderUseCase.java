@@ -17,20 +17,29 @@ import dev.ngb.tenant.customer.api.lookup.CustomerDirectory;
 import dev.ngb.tenant.resource.application.order.port.OrderQueueRepository;
 import dev.ngb.tenant.resource.application.order.port.OrderRepository;
 import dev.ngb.tenant.resource.domain.order.Order;
+import dev.ngb.tenant.resource.domain.order.OrderStatus;
 import dev.ngb.core.error.BadRequestException;
 import dev.ngb.core.error.NotFoundException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * Scenarios 2, 3 and 4: fetch the Billing plan, estimate the cost, check the wallet, reserve the
- * estimate, and only then create the order and its queue row. A refused reservation leaves no order.
+ * Scenarios 2, 3 and 4: check the Billing plan, estimate the cost and check the wallet, then persist a
+ * PENDING order carrying the deterministic reference of the caller's idempotency key, reserve or
+ * subscribe with that same reference, and finally commit the QUEUED order with its queue row.
+ *
+ * <p>The remote call stays outside the final transaction. A failure after the order exists fails the
+ * pending row instead of leaving it half-applied, and a crash that leaves the row pending is expired
+ * by {@link #expirePending()} once the reservation can no longer be live.
  */
 public class CreateOrderUseCase {
 
-    public record Command(UUID userId, UUID planId, String quantity, Long events) {}
+    private static final String EXPIRED_REASON = "the order was not confirmed before its reservation could expire";
+
+    public record Command(UUID userId, UUID planId, String quantity, Long events, String idempotencyKey) {}
 
     private final CatalogLookup catalog;
     private final CustomerDirectory customers;
@@ -70,6 +79,7 @@ public class CreateOrderUseCase {
     }
 
     public Order execute(Command command) {
+        String idempotencyKey = idempotencyKey(command.idempotencyKey());
         CatalogLookup.PlanSnapshot plan = catalog.get(command.planId());
         if (!plan.billable()) {
             throw new BadRequestException("this plan is not bound to a Billing plan yet");
@@ -90,30 +100,38 @@ public class CreateOrderUseCase {
 
         String quantity = command.quantity() == null || command.quantity().isBlank() ? "1" : command.quantity();
         Long events = eventCount(plan, quantity, command.events());
-        Instant now = clock.now();
-        String reference = "order:" + customer.id() + ":" + UUID.randomUUID();
-        String reservationId = null;
-        String subscriptionId = null;
-        long amount = 0;
-
-        if (subscriptionPlan(plan)) {
-            SubscriptionDetail started = subscriptions.subscribe(
-                    "subscription:" + reference, wallet.id(), plan.billingPlanId());
-            subscriptionId = started.subscription().id();
-        } else {
-            Estimate estimate = pricing.estimate(new BillingPricing.EstimateRequest(
-                    plan.billingPlanId(), null, now, usage(plan, quantity, events)));
-            amount = estimate.amount() == null ? 0 : estimate.amount().amount();
-            if (amount > 0) {
-                ReserveResult reserved = pricing.reserve(
-                        "reserve:" + reference,
-                        new BillingPricing.ReserveRequest(
-                                wallet.id(), amount, currency, reservationTtl.toSeconds(), reference));
-                reservationId = reserved.reservation().id();
-            }
+        String reference = reference(customer.id(), idempotencyKey);
+        Order replay = orders.findByReference(reference).orElse(null);
+        if (replay != null && replay.status() != OrderStatus.PENDING) {
+            return replay;
         }
+        Order pending = replay != null ? replay : persist(plan, customer, wallet, quantity, events, currency, reference);
+        return confirm(pending, plan, wallet, quantity, events, currency);
+    }
 
-        Order order = Order.queued(
+    public int expirePending() {
+        Instant now = clock.now();
+        List<Order> stale = orders.findPendingBefore(now.minus(reservationTtl));
+        int expired = 0;
+        for (Order order : stale) {
+            unitOfWork.transactional(() -> {
+                orders.save(order.failed(EXPIRED_REASON, now));
+                return null;
+            });
+            expired++;
+        }
+        return expired;
+    }
+
+    private Order persist(
+            CatalogLookup.PlanSnapshot plan,
+            CustomerDirectory.CustomerSnapshot customer,
+            Wallet wallet,
+            String quantity,
+            Long events,
+            String currency,
+            String reference) {
+        Order pending = Order.pending(
                 ids,
                 customer.id(),
                 customer.billingCustomerId(),
@@ -125,17 +143,91 @@ public class CreateOrderUseCase {
                 quantity,
                 plan.unit(),
                 events,
-                amount,
                 currency,
-                reservationId,
-                subscriptionId,
-                now);
+                reference,
+                clock.now());
         unitOfWork.transactional(() -> {
-            orders.save(order);
-            queue.enqueue(order.id(), order.createdAt());
+            orders.save(pending);
             return null;
         });
+        return pending;
+    }
+
+    private Order confirm(
+            Order pending,
+            CatalogLookup.PlanSnapshot plan,
+            Wallet wallet,
+            String quantity,
+            Long events,
+            String currency) {
+        String reference = pending.reference();
+        String reservationId = null;
+        String subscriptionId = null;
+        long amount = 0;
+        try {
+            if (subscriptionPlan(plan)) {
+                SubscriptionDetail started = subscriptions.subscribe(
+                        "subscription:" + reference, wallet.id(), plan.billingPlanId());
+                subscriptionId = started.subscription().id();
+            } else {
+                Estimate estimate = pricing.estimate(new BillingPricing.EstimateRequest(
+                        plan.billingPlanId(), null, clock.now(), usage(plan, quantity, events)));
+                amount = estimate.amount() == null ? 0 : estimate.amount().amount();
+                if (amount > 0) {
+                    ReserveResult reserved = pricing.reserve(
+                            "reserve:" + reference,
+                            new BillingPricing.ReserveRequest(
+                                    wallet.id(), amount, currency, reservationTtl.toSeconds(), reference));
+                    reservationId = reserved.reservation().id();
+                }
+            }
+        } catch (RuntimeException e) {
+            fail(pending, e);
+            throw e;
+        }
+        return commit(pending.queued(amount, reservationId, subscriptionId, clock.now()));
+    }
+
+    private Order commit(Order order) {
+        try {
+            unitOfWork.transactional(() -> {
+                orders.save(order);
+                queue.enqueue(order.id(), order.createdAt());
+                return null;
+            });
+        } catch (RuntimeException e) {
+            fail(order, e);
+            throw e;
+        }
         return order;
+    }
+
+    private void fail(Order order, RuntimeException cause) {
+        try {
+            unitOfWork.transactional(() -> {
+                orders.save(order.failed(reason(cause), clock.now()));
+                return null;
+            });
+        } catch (RuntimeException compensation) {
+            cause.addSuppressed(compensation);
+        }
+    }
+
+    private static String idempotencyKey(String idempotencyKey) {
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            throw new BadRequestException("an Idempotency-Key header is required");
+        }
+        return idempotencyKey.trim();
+    }
+
+    private static String reference(UUID customerId, String idempotencyKey) {
+        String material = "order:" + customerId + ":" + idempotencyKey;
+        return "ORD-" + UUID.nameUUIDFromBytes(material.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String reason(RuntimeException e) {
+        String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+        return message.length() <= 300 ? message : message.substring(0, 300);
     }
 
     private static boolean subscriptionPlan(CatalogLookup.PlanSnapshot plan) {

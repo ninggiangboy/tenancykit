@@ -3,6 +3,7 @@ package dev.ngb.tenant.execution.application.queue.command;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.core.runtime.Clock;
+import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.tenant.billing.api.client.BillingCharges;
 import dev.ngb.tenant.billing.api.model.Amount;
 import dev.ngb.tenant.billing.api.model.Charge;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
 class ExecuteOrdersUseCaseTest {
@@ -29,8 +31,9 @@ class ExecuteOrdersUseCaseTest {
     private final FakeOrders orders = new FakeOrders();
     private final FakeUsage usage = new FakeUsage();
     private final FakeCharges charges = new FakeCharges();
+    private final InMemoryUnitOfWork unitOfWork = new InMemoryUnitOfWork(orders);
     private final ExecuteOrdersUseCase execute =
-            new ExecuteOrdersUseCase(queue, orders, usage, charges, () -> NOW, 3);
+            new ExecuteOrdersUseCase(queue, orders, usage, charges, unitOfWork, () -> NOW, 3);
 
     @Test
     void runsRecordsUsageCapturesReleasesAndCompletes() {
@@ -42,6 +45,20 @@ class ExecuteOrdersUseCaseTest {
         assertThat(charges.captured).isTrue();
         assertThat(charges.released).isTrue();
         assertThat(queue.finished).isTrue();
+        assertThat(unitOfWork.transactions).isEqualTo(1);
+    }
+
+    @Test
+    void aFailedSettlementRollsBackAndTheOrderIsRequeued() {
+        usage.fail = true;
+
+        execute.run(10);
+
+        assertThat(orders.status).isEqualTo("QUEUED");
+        assertThat(usage.commands).isEmpty();
+        assertThat(charges.captured).isFalse();
+        assertThat(queue.requeued).isTrue();
+        assertThat(unitOfWork.transactions).isEqualTo(2);
     }
 
     @Test
@@ -119,6 +136,28 @@ class ExecuteOrdersUseCaseTest {
         assertThat(charges.rated).isFalse();
         assertThat(charges.captured).isFalse();
         assertThat(orders.status).isEqualTo("COMPLETED");
+    }
+
+    private static final class InMemoryUnitOfWork implements UnitOfWork {
+
+        private final FakeOrders orders;
+        private int transactions;
+
+        private InMemoryUnitOfWork(FakeOrders orders) {
+            this.orders = orders;
+        }
+
+        @Override
+        public <T> T transactional(Supplier<T> work) {
+            transactions++;
+            String status = orders.status;
+            try {
+                return work.get();
+            } catch (RuntimeException e) {
+                orders.status = status;
+                throw e;
+            }
+        }
     }
 
     private static final class FakeQueue implements ExecutionQueue {

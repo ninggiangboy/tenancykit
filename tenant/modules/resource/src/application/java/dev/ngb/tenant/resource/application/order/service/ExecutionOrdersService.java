@@ -32,7 +32,10 @@ public class ExecutionOrdersService implements ExecutionOrders {
 
     @Override
     public void markQueued(UUID orderId) {
-        save(order(orderId).resumed(clock.now()));
+        Order order = order(orderId);
+        if (order.status() == OrderStatus.RUNNING) {
+            save(order.requeued(clock.now()));
+        }
     }
 
     @Override

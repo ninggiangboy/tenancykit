@@ -55,8 +55,12 @@ class BillingViewHttpIntegrationTest extends HttpIntegrationTest {
         var wallets = world.body(world.call(HttpMethod.GET, operator, "/api/billing/wallets", null));
         String walletId = wallets.get(0).get("id").asString();
 
-        MvcResult result = world.call(HttpMethod.POST, operator, "/api/billing/top-ups",
-                HttpWorld.map("walletId", walletId, "amount", 500, "currency", "USD"));
+        MvcResult result = world.call(
+                HttpMethod.POST,
+                operator,
+                "/api/billing/top-ups",
+                HttpWorld.map("walletId", walletId, "amount", 500, "currency", "USD"),
+                java.util.Map.of("Idempotency-Key", "top-up-" + java.util.UUID.randomUUID()));
 
         world.requireStatus(result, 200);
         var payment = world.parse(result);
@@ -67,11 +71,28 @@ class BillingViewHttpIntegrationTest extends HttpIntegrationTest {
     }
 
     @Test
+    void refusesATopUpWithoutAnIdempotencyKey() {
+        String operator = world.token(Role.OPERATOR);
+        var wallets = world.body(world.call(HttpMethod.GET, operator, "/api/billing/wallets", null));
+        String walletId = wallets.get(0).get("id").asString();
+
+        MvcResult result = world.call(HttpMethod.POST, operator, "/api/billing/top-ups",
+                HttpWorld.map("walletId", walletId, "amount", 500, "currency", "USD"));
+
+        world.requireStatus(result, 400);
+        assertThat(world.parse(result).get("detail").asString()).isEqualTo("an Idempotency-Key header is required");
+    }
+
+    @Test
     void refusesATopUpForAnotherWallet() {
         String operator = world.token(Role.OPERATOR);
 
-        MvcResult result = world.call(HttpMethod.POST, operator, "/api/billing/top-ups",
-                HttpWorld.map("walletId", "wal_other", "amount", 500, "currency", "USD"));
+        MvcResult result = world.call(
+                HttpMethod.POST,
+                operator,
+                "/api/billing/top-ups",
+                HttpWorld.map("walletId", "wal_other", "amount", 500, "currency", "USD"),
+                java.util.Map.of("Idempotency-Key", "top-up-" + java.util.UUID.randomUUID()));
 
         world.requireStatus(result, 404);
         assertThat(world.parse(result).get("detail").asString()).isEqualTo("wallet not found");

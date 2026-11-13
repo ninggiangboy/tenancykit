@@ -2,6 +2,7 @@ package dev.ngb.tenant.boot.config;
 
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
+import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.tenant.resource.api.execution.ExecutionOrders;
 import dev.ngb.tenant.webhook.adapter.event.persistence.JooqCustomerPeriods;
 import dev.ngb.tenant.webhook.adapter.event.persistence.JooqDebtBook;
@@ -45,10 +46,11 @@ class WebhookConfiguration {
     ReceiveWebhookUseCase receiveWebhookUseCase(
             WebhookRepository events,
             WebhookPolicy policy,
+            UnitOfWork unitOfWork,
             Clock clock,
             IdGenerator ids,
             @Value("${tenant.webhooks.signing-secret:}") String signingSecret,
             @Value("${tenant.webhooks.tolerance:PT5M}") Duration tolerance) {
-        return new ReceiveWebhookUseCase(events, policy, clock, ids, signingSecret, tolerance);
+        return new ReceiveWebhookUseCase(events, policy, unitOfWork, clock, ids, signingSecret, tolerance);
     }
 }

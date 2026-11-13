@@ -58,6 +58,15 @@ final class Fakes {
             byId.put(user.id(), user);
         }
 
+        List<User> snapshot() {
+            return List.copyOf(byId.values());
+        }
+
+        void restore(List<User> snapshot) {
+            byId.clear();
+            snapshot.forEach(user -> byId.put(user.id(), user));
+        }
+
         private static UserView view(User user) {
             return new UserView(
                     user.id(), user.email(), user.displayName(), user.role(), user.status(), user.createdAt());

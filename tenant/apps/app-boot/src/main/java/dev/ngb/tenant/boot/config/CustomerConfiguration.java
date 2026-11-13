@@ -2,6 +2,7 @@ package dev.ngb.tenant.boot.config;
 
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
+import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.tenant.billing.api.client.BillingCustomers;
 import dev.ngb.tenant.billing.api.client.BillingInvoices;
 import dev.ngb.tenant.billing.api.client.BillingPayments;
@@ -101,8 +102,10 @@ class CustomerConfiguration {
             CustomerDirectory customers,
             WalletSettingRepository settings,
             @Qualifier("billingWallets") BillingWallets wallets,
-            Clock clock) {
-        return new ManageWalletSettingUseCase(customers, settings, wallets, clock);
+            UnitOfWork unitOfWork,
+            Clock clock,
+            @Value("${tenant.wallet.default-currency:USD}") String defaultCurrency) {
+        return new ManageWalletSettingUseCase(customers, settings, wallets, unitOfWork, clock, defaultCurrency);
     }
 
     @Bean

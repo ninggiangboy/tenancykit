@@ -1,6 +1,7 @@
 package dev.ngb.tenant.execution.application.queue.command;
 
 import dev.ngb.core.runtime.Clock;
+import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.tenant.billing.api.client.BillingCharges;
 import dev.ngb.tenant.billing.api.model.Charge;
 import dev.ngb.tenant.billing.api.model.ChargeUsageRequest;
@@ -13,8 +14,10 @@ import java.util.UUID;
 
 /**
  * Scenarios 5, 6 and 7: run a claimed order, record usage during the run, charge the cost from the
- * reservation, then release what is left. A failure before the charge is requeued up to a bound so
- * a Billing outage does not lose the order.
+ * reservation, then release what is left. The order is marked running first, so a failed attempt is
+ * requeued from a known state, and the settlement itself is one unit of work: usage, charge, release
+ * and the terminal status commit together or not at all. A failure is requeued up to a bound so a
+ * Billing outage does not lose the order.
  */
 public class ExecuteOrdersUseCase {
 
@@ -24,6 +27,7 @@ public class ExecuteOrdersUseCase {
     private final ExecutionOrders orders;
     private final UsageRecorder usage;
     private final BillingCharges charges;
+    private final UnitOfWork unitOfWork;
     private final Clock clock;
     private final int maxAttempts;
 
@@ -32,12 +36,14 @@ public class ExecuteOrdersUseCase {
             ExecutionOrders orders,
             UsageRecorder usage,
             BillingCharges charges,
+            UnitOfWork unitOfWork,
             Clock clock,
             int maxAttempts) {
         this.queue = queue;
         this.orders = orders;
         this.usage = usage;
         this.charges = charges;
+        this.unitOfWork = unitOfWork;
         this.clock = clock;
         this.maxAttempts = maxAttempts;
     }
@@ -56,17 +62,32 @@ public class ExecuteOrdersUseCase {
                 }
             } catch (RuntimeException e) {
                 if (item.attempts() < maxAttempts) {
-                    orders.markQueued(item.orderId());
-                    queue.requeue(item.orderId());
+                    requeue(item.orderId());
                     retried++;
                 } else {
-                    orders.markFailed(item.orderId(), message(e));
-                    queue.finish(item.orderId());
+                    fail(item.orderId(), e);
                     failed++;
                 }
             }
         }
         return new Report(claimed.size(), completed, failed, retried);
+    }
+
+    private void requeue(UUID orderId) {
+        unitOfWork.transactional(() -> {
+            orders.markQueued(orderId);
+            queue.requeue(orderId);
+            return null;
+        });
+    }
+
+    private void fail(UUID orderId, RuntimeException e) {
+        String reason = message(e);
+        unitOfWork.transactional(() -> {
+            orders.markFailed(orderId, reason);
+            queue.finish(orderId);
+            return null;
+        });
     }
 
     private boolean execute(UUID orderId) {
@@ -76,6 +97,11 @@ public class ExecuteOrdersUseCase {
             return false;
         }
         orders.markRunning(orderId);
+        return unitOfWork.transactional(() -> settle(order));
+    }
+
+    private boolean settle(ExecutionOrders.ExecutionOrder order) {
+        UUID orderId = order.id();
         if (!"SUBSCRIPTION".equals(order.pricingModel())) {
             usage.record(new UsageRecorder.UsageCommand(
                     order.id(),
@@ -92,8 +118,8 @@ public class ExecuteOrdersUseCase {
 
         Charge charge = charge(order);
         if (charge != null && "FAILED".equals(charge.status())) {
-            orders.markFailed(orderId, charge.failureReason());
             release(order);
+            orders.markFailed(orderId, charge.failureReason());
             queue.finish(orderId);
             return false;
         }

@@ -74,8 +74,9 @@ class ResourceConfiguration {
             OrderRepository orders,
             CustomerDirectory customers,
             @Qualifier("billingSubscriptions") BillingSubscriptions subscriptions,
+            UnitOfWork unitOfWork,
             Clock clock) {
-        return new ManageOrderUseCase(orders, customers, subscriptions, clock);
+        return new ManageOrderUseCase(orders, customers, subscriptions, unitOfWork, clock);
     }
 
     @Bean

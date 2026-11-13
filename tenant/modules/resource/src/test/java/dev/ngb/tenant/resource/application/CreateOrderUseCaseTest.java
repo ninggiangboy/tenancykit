@@ -29,10 +29,13 @@ import dev.ngb.tenant.resource.domain.order.OrderStatus;
 import dev.ngb.core.error.BadRequestException;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.error.PaymentRequiredException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -43,6 +46,10 @@ class CreateOrderUseCaseTest {
     private static final Instant NOW = Instant.parse("2026-11-11T00:00:00Z");
     private static final UUID USER = UUID.randomUUID();
     private static final UUID PLAN = UUID.randomUUID();
+    private static final UUID CUSTOMER = UUID.fromString("00000000-0000-7000-8000-0000000000c1");
+    private static final String KEY = "order-key-1";
+    private static final String REFERENCE = "ORD-" + UUID.nameUUIDFromBytes(
+            ("order:" + CUSTOMER + ":" + KEY).getBytes(StandardCharsets.UTF_8));
 
     private final FakeCatalog catalog = new FakeCatalog();
     private final FakeCustomers customers = new FakeCustomers();
@@ -51,48 +58,116 @@ class CreateOrderUseCaseTest {
     private final FakeWallets wallets = new FakeWallets();
     private final InMemoryOrders orders = new InMemoryOrders();
     private final InMemoryQueue queue = new InMemoryQueue();
-    private final UnitOfWork unitOfWork = new UnitOfWork() {
-        @Override
-        public <T> T transactional(Supplier<T> work) {
-            return work.get();
-        }
-    };
+    private final UnitOfWork unitOfWork = new InMemoryUnitOfWork(orders);
     private final CreateOrderUseCase create = new CreateOrderUseCase(
             catalog, customers, pricing, subscriptions, wallets, orders, queue, unitOfWork,
             () -> NOW, () -> UUID.randomUUID(), Duration.ofMinutes(15));
 
     @Test
-    void estimatesReservesAndOnlyThenQueuesTheOrder() {
-        Order order = create.execute(new CreateOrderUseCase.Command(USER, PLAN, "120", null));
+    void persistsAPendingOrderConfirmsItWithBillingAndThenQueuesIt() {
+        Order order = create.execute(command());
 
         assertThat(order.status()).isEqualTo(OrderStatus.QUEUED);
+        assertThat(order.reference()).isEqualTo(REFERENCE);
         assertThat(order.reservationId()).isEqualTo("res_1");
         assertThat(order.estimatedMinorUnits()).isEqualTo(1000);
         assertThat(order.metric()).isEqualTo("compute.vcpu_minute");
         assertThat(pricing.estimated).isTrue();
         assertThat(pricing.reserved).isTrue();
-        assertThat(orders.saved).containsExactly(order);
+        assertThat(orders.writes).extracting(Order::status).containsExactly(OrderStatus.PENDING, OrderStatus.QUEUED);
+        assertThat(orders.writes.getFirst().reservationId()).isNull();
+        assertThat(orders.writes.getLast()).isEqualTo(order);
         assertThat(queue.enqueued).containsExactly(order.id());
     }
 
     @Test
-    void aRefusedReservationLeavesNoOrder() {
+    void aRefusedReservationFailsThePendingOrderAndQueuesNothing() {
         pricing.refuse = true;
 
-        assertThatThrownBy(() -> create.execute(new CreateOrderUseCase.Command(USER, PLAN, "120", null)))
+        assertThatThrownBy(() -> create.execute(command()))
                 .isInstanceOf(PaymentRequiredException.class);
-        assertThat(orders.saved).isEmpty();
+
+        assertThat(orders.writes).extracting(Order::status).containsExactly(OrderStatus.PENDING, OrderStatus.FAILED);
+        assertThat(orders.writes.getLast().failureReason()).isEqualTo("The wallet cannot cover this amount.");
         assertThat(queue.enqueued).isEmpty();
+    }
+
+    @Test
+    void anEnqueueThatFailsLeavesNoQueuedOrder() {
+        queue.fail = true;
+
+        assertThatThrownBy(() -> create.execute(command())).isInstanceOf(IllegalStateException.class);
+
+        assertThat(orders.writes).extracting(Order::status).containsExactly(OrderStatus.PENDING, OrderStatus.FAILED);
+        assertThat(queue.enqueued).isEmpty();
+    }
+
+    @Test
+    void refusesAWriteWithoutAnIdempotencyKey() {
+        assertThatThrownBy(() -> create.execute(new CreateOrderUseCase.Command(USER, PLAN, "120", null, " ")))
+                .isInstanceOf(BadRequestException.class);
+
+        assertThat(orders.writes).isEmpty();
+        assertThat(queue.enqueued).isEmpty();
+    }
+
+    @Test
+    void theSameKeyReplaysTheOrderInsteadOfReservingTwice() {
+        Order first = create.execute(command());
+        pricing.reserved = false;
+
+        Order second = create.execute(command());
+
+        assertThat(second.id()).isEqualTo(first.id());
+        assertThat(second.reference()).isEqualTo(first.reference());
+        assertThat(pricing.reserved).isFalse();
+        assertThat(orders.writes).hasSize(2);
+    }
+
+    @Test
+    void itResumesAPendingOrderACrashLeftBehind() {
+        Order crashLeft = Order.pending(
+                () -> UUID.fromString("00000000-0000-7000-8000-000000000099"),
+                CUSTOMER, "cus_1", "wal_1", PLAN, "bplan_1", "TIME_BASED", "compute.vcpu_minute", "120",
+                "vCPU-minute", null, "USD", REFERENCE, NOW.minusSeconds(30));
+        orders.save(crashLeft);
+
+        Order order = create.execute(command());
+
+        assertThat(order.id()).isEqualTo(crashLeft.id());
+        assertThat(order.status()).isEqualTo(OrderStatus.QUEUED);
+        assertThat(order.reservationId()).isEqualTo("res_1");
+        assertThat(queue.enqueued).containsExactly(crashLeft.id());
+    }
+
+    @Test
+    void expiresOnlyAPendingOrderItsReservationCanNoLongerCover() {
+        Order stale = Order.pending(
+                () -> UUID.fromString("00000000-0000-7000-8000-000000000098"),
+                CUSTOMER, "cus_1", "wal_1", PLAN, "bplan_1", "TIME_BASED", "compute.vcpu_minute", "120",
+                "vCPU-minute", null, "USD", "ORD-stale", NOW.minus(Duration.ofHours(1)));
+        Order fresh = Order.pending(
+                () -> UUID.fromString("00000000-0000-7000-8000-000000000097"),
+                CUSTOMER, "cus_1", "wal_1", PLAN, "bplan_1", "TIME_BASED", "compute.vcpu_minute", "120",
+                "vCPU-minute", null, "USD", "ORD-fresh", NOW);
+        orders.save(stale);
+        orders.save(fresh);
+
+        assertThat(create.expirePending()).isEqualTo(1);
+
+        Order expired = orders.findById(stale.id()).orElseThrow();
+        assertThat(expired.status()).isEqualTo(OrderStatus.FAILED);
+        assertThat(expired.failureReason()).isEqualTo("the order was not confirmed before its reservation could expire");
+        assertThat(orders.findById(fresh.id()).orElseThrow().status()).isEqualTo(OrderStatus.PENDING);
     }
 
     @Test
     void refusesAnUnmappedCustomerBeforeEstimating() {
         customers.mapped = false;
 
-        assertThatThrownBy(() -> create.execute(new CreateOrderUseCase.Command(USER, PLAN, "120", null)))
-                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> create.execute(command())).isInstanceOf(BadRequestException.class);
         assertThat(pricing.estimated).isFalse();
-        assertThat(orders.saved).isEmpty();
+        assertThat(orders.writes).isEmpty();
         assertThat(queue.enqueued).isEmpty();
     }
 
@@ -100,31 +175,28 @@ class CreateOrderUseCaseTest {
     void refusesAPlanWithoutABillingBinding() {
         catalog.billable = false;
 
-        assertThatThrownBy(() -> create.execute(new CreateOrderUseCase.Command(USER, PLAN, "120", null)))
-                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> create.execute(command())).isInstanceOf(BadRequestException.class);
     }
 
     @Test
     void refusesWhenNoWalletHoldsThePlanCurrency() {
         wallets.currency = "EUR";
 
-        assertThatThrownBy(() -> create.execute(new CreateOrderUseCase.Command(USER, PLAN, "120", null)))
-                .isInstanceOf(NotFoundException.class);
+        assertThatThrownBy(() -> create.execute(command())).isInstanceOf(NotFoundException.class);
     }
 
     @Test
     void refusesARetiredBillingPlan() {
         pricing.status = "RETIRED";
 
-        assertThatThrownBy(() -> create.execute(new CreateOrderUseCase.Command(USER, PLAN, "120", null)))
-                .isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> create.execute(command())).isInstanceOf(BadRequestException.class);
     }
 
     @Test
     void anEventBasedOrderCarriesWholeEventsToTheEstimate() {
         catalog.model = "EVENT_BASED";
 
-        create.execute(new CreateOrderUseCase.Command(USER, PLAN, "25", null));
+        create.execute(new CreateOrderUseCase.Command(USER, PLAN, "25", null, KEY));
 
         assertThat(pricing.lastUsage).singleElement().satisfies(usage -> {
             assertThat(usage.metric()).isEqualTo("compute.vcpu_minute");
@@ -136,7 +208,7 @@ class CreateOrderUseCaseTest {
     void aSubscriptionPlanStartsASubscriptionAndSkipsTheReservation() {
         catalog.model = "SUBSCRIPTION";
 
-        Order order = create.execute(new CreateOrderUseCase.Command(USER, PLAN, "1", null));
+        Order order = create.execute(command());
 
         assertThat(order.subscriptionId()).isEqualTo("sub_1");
         assertThat(order.reservationId()).isNull();
@@ -150,10 +222,14 @@ class CreateOrderUseCaseTest {
     void aHybridPlanAlsoStartsASubscription() {
         catalog.model = "HYBRID";
 
-        Order order = create.execute(new CreateOrderUseCase.Command(USER, PLAN, "3", null));
+        Order order = create.execute(command());
 
         assertThat(order.subscriptionId()).isEqualTo("sub_1");
         assertThat(subscriptions.subscribed).isTrue();
+    }
+
+    private static CreateOrderUseCase.Command command() {
+        return new CreateOrderUseCase.Command(USER, PLAN, "120", null, KEY);
     }
 
     private static final class FakeCatalog implements CatalogLookup {
@@ -172,7 +248,7 @@ class CreateOrderUseCaseTest {
 
         @Override
         public CustomerSnapshot byUserId(UUID userId) {
-            return new CustomerSnapshot(UUID.randomUUID(), userId, mapped ? "cus_1" : null, mapped);
+            return new CustomerSnapshot(CUSTOMER, userId, mapped ? "cus_1" : null, mapped);
         }
     }
 
@@ -267,30 +343,75 @@ class CreateOrderUseCaseTest {
         }
     }
 
+    private static final class InMemoryUnitOfWork implements UnitOfWork {
+
+        private final InMemoryOrders orders;
+
+        private InMemoryUnitOfWork(InMemoryOrders orders) {
+            this.orders = orders;
+        }
+
+        @Override
+        public <T> T transactional(Supplier<T> work) {
+            List<Order> writes = List.copyOf(orders.writes);
+            Map<UUID, Order> rows = new LinkedHashMap<>(orders.rows);
+            try {
+                return work.get();
+            } catch (RuntimeException e) {
+                orders.writes.clear();
+                orders.writes.addAll(writes);
+                orders.rows.clear();
+                orders.rows.putAll(rows);
+                throw e;
+            }
+        }
+    }
+
     private static final class InMemoryOrders implements OrderRepository {
-        private final List<Order> saved = new ArrayList<>();
+        private final Map<UUID, Order> rows = new LinkedHashMap<>();
+        private final List<Order> writes = new ArrayList<>();
 
         @Override
         public void save(Order order) {
-            saved.add(order);
+            rows.put(order.id(), order);
+            writes.add(order);
         }
 
         @Override
         public Optional<Order> findById(UUID id) {
-            return saved.stream().filter(order -> order.id().equals(id)).findFirst();
+            return Optional.ofNullable(rows.get(id));
+        }
+
+        @Override
+        public Optional<Order> findByReference(String reference) {
+            return rows.values().stream().filter(order -> order.reference().equals(reference)).findFirst();
+        }
+
+        @Override
+        public List<Order> findPendingBefore(Instant createdBefore) {
+            return rows.values().stream()
+                    .filter(order -> order.status() == OrderStatus.PENDING)
+                    .filter(order -> order.createdAt().isBefore(createdBefore))
+                    .toList();
         }
 
         @Override
         public List<Order> findByBillingCustomerId(String billingCustomerId) {
-            return saved.stream().filter(order -> billingCustomerId.equals(order.billingCustomerId())).toList();
+            return rows.values().stream()
+                    .filter(order -> billingCustomerId.equals(order.billingCustomerId()))
+                    .toList();
         }
     }
 
     private static final class InMemoryQueue implements OrderQueueRepository {
         private final List<UUID> enqueued = new ArrayList<>();
+        private boolean fail;
 
         @Override
         public void enqueue(UUID orderId, Instant enqueuedAt) {
+            if (fail) {
+                throw new IllegalStateException("queue is down");
+            }
             enqueued.add(orderId);
         }
 

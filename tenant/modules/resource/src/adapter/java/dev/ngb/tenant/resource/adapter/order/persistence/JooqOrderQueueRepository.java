@@ -58,19 +58,29 @@ public class JooqOrderQueueRepository implements OrderQueueRepository {
 
     @Override
     public void finish(UUID orderId) {
-        dsl.update(EXECUTION_QUEUE)
+        int finished = dsl.update(EXECUTION_QUEUE)
                 .set(EXECUTION_QUEUE.STATUS, "DONE")
                 .set(EXECUTION_QUEUE.FINISHED_AT, clock.now())
                 .where(EXECUTION_QUEUE.ORDER_ID.eq(orderId))
+                .and(EXECUTION_QUEUE.STATUS.eq("RUNNING"))
                 .execute();
+        requireClaimed(finished, orderId);
     }
 
     @Override
     public void requeue(UUID orderId) {
-        dsl.update(EXECUTION_QUEUE)
+        int requeued = dsl.update(EXECUTION_QUEUE)
                 .set(EXECUTION_QUEUE.STATUS, "PENDING")
                 .setNull(EXECUTION_QUEUE.CLAIMED_AT)
                 .where(EXECUTION_QUEUE.ORDER_ID.eq(orderId))
+                .and(EXECUTION_QUEUE.STATUS.eq("RUNNING"))
                 .execute();
+        requireClaimed(requeued, orderId);
+    }
+
+    private static void requireClaimed(int updated, UUID orderId) {
+        if (updated != 1) {
+            throw new IllegalStateException("the queue row of order " + orderId + " is not the one this worker claimed");
+        }
     }
 }

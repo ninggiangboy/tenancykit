@@ -5,6 +5,7 @@ import static dev.ngb.tenant_jooq.Tables.ORDERS;
 import dev.ngb.tenant.resource.application.order.port.OrderRepository;
 import dev.ngb.tenant.resource.domain.order.Order;
 import dev.ngb.tenant.resource.domain.order.OrderStatus;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -68,6 +69,9 @@ public class JooqOrderRepository implements OrderRepository {
                 .onConflict(ORDERS.ID)
                 .doUpdate()
                 .set(ORDERS.STATUS, DSL.excluded(ORDERS.STATUS))
+                .set(ORDERS.ESTIMATED_MINOR_UNITS, DSL.excluded(ORDERS.ESTIMATED_MINOR_UNITS))
+                .set(ORDERS.RESERVATION_ID, DSL.excluded(ORDERS.RESERVATION_ID))
+                .set(ORDERS.SUBSCRIPTION_ID, DSL.excluded(ORDERS.SUBSCRIPTION_ID))
                 .set(ORDERS.FAILURE_REASON, DSL.excluded(ORDERS.FAILURE_REASON))
                 .set(ORDERS.UPDATED_AT, DSL.excluded(ORDERS.UPDATED_AT))
                 .execute();
@@ -76,6 +80,23 @@ public class JooqOrderRepository implements OrderRepository {
     @Override
     public Optional<Order> findById(UUID id) {
         return dsl.selectFrom(ORDERS).where(ORDERS.ID.eq(id)).fetchOptional().map(JooqOrderRepository::toDomain);
+    }
+
+    @Override
+    public Optional<Order> findByReference(String reference) {
+        return dsl.selectFrom(ORDERS)
+                .where(ORDERS.REFERENCE.eq(reference))
+                .fetchOptional()
+                .map(JooqOrderRepository::toDomain);
+    }
+
+    @Override
+    public List<Order> findPendingBefore(Instant createdBefore) {
+        return dsl.selectFrom(ORDERS)
+                .where(ORDERS.STATUS.eq(OrderStatus.PENDING.name()))
+                .and(ORDERS.CREATED_AT.lt(createdBefore))
+                .orderBy(ORDERS.CREATED_AT)
+                .fetch(JooqOrderRepository::toDomain);
     }
 
     @Override

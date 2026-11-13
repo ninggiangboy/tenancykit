@@ -105,9 +105,11 @@ class UsageHttpIntegrationTest extends HttpIntegrationTest {
                 UUID.randomUUID(), "usage-http-" + UUID.randomUUID(), "Compute",
                 ResourceType.COMPUTE, "description", "bplan_1", true, NOW);
         plans.save(plan);
-        Order order = Order.queued(
-                ids, customer.id(), customer.billingId(), "wal_test", plan.id(), "bplan_1",
-                "TIME_BASED", "compute.vcpu_minute", "120", "vCPU-minute", null, 1000, "USD", null, null, NOW);
+        Order order = Order.pending(
+                        ids, customer.id(), customer.billingId(), "wal_test", plan.id(), "bplan_1",
+                        "TIME_BASED", "compute.vcpu_minute", "120", "vCPU-minute", null, "USD",
+                        "ORD-" + UUID.randomUUID(), NOW)
+                .queued(1000, "res_1", null, NOW);
         orders.save(order);
         return order.id();
     }

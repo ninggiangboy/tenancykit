@@ -9,6 +9,7 @@ import dev.ngb.tenant.identity.api.security.Role;
 import dev.ngb.tenant.support.HttpIntegrationTest;
 import dev.ngb.tenant.support.HttpWorld;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +36,7 @@ class OrderHttpIntegrationTest extends HttpIntegrationTest {
         String operator = world.token(Role.OPERATOR);
         CatalogPlan plan = billablePlan();
 
-        MvcResult created = world.call(HttpMethod.POST, operator, "/api/orders",
-                HttpWorld.map("planId", plan.id(), "quantity", "120", "events", null));
+        MvcResult created = create(operator, plan, "order-" + UUID.randomUUID());
         world.requireStatus(created, 201);
         var order = world.parse(created);
         String id = order.get("id").asString();
@@ -65,6 +65,32 @@ class OrderHttpIntegrationTest extends HttpIntegrationTest {
     }
 
     @Test
+    void refusesAnOrderWithoutAnIdempotencyKey() {
+        String operator = world.token(Role.OPERATOR);
+        CatalogPlan plan = billablePlan();
+
+        MvcResult result = world.call(HttpMethod.POST, operator, "/api/orders",
+                HttpWorld.map("planId", plan.id(), "quantity", "120", "events", null));
+
+        world.requireStatus(result, 400);
+        assertThat(world.parse(result).get("detail").asString()).isEqualTo("an Idempotency-Key header is required");
+    }
+
+    @Test
+    void theSameKeyReplaysTheOrderItAlreadyCreated() {
+        String operator = world.token(Role.OPERATOR);
+        CatalogPlan plan = billablePlan();
+        String key = "order-" + UUID.randomUUID();
+
+        var first = world.parse(create(operator, plan, key));
+        var replay = world.body(create(operator, plan, key));
+
+        assertThat(replay.get("id").asString()).isEqualTo(first.get("id").asString());
+        assertThat(replay.get("reference").asString()).isEqualTo(first.get("reference").asString());
+        assertThat(replay.get("status").asString()).isEqualTo("QUEUED");
+    }
+
+    @Test
     void refusesAnUnboundPlan() {
         String operator = world.token(Role.OPERATOR);
         CatalogPlan plan = new CatalogPlan(
@@ -72,8 +98,7 @@ class OrderHttpIntegrationTest extends HttpIntegrationTest {
                 ResourceType.COMPUTE, "description", null, true, NOW);
         plans.save(plan);
 
-        MvcResult result = world.call(HttpMethod.POST, operator, "/api/orders",
-                HttpWorld.map("planId", plan.id(), "quantity", "1", "events", null));
+        MvcResult result = create(operator, plan, "order-" + UUID.randomUUID());
 
         world.requireStatus(result, 400);
         assertThat(world.parse(result).get("detail").asString()).isEqualTo("this plan is not bound to a Billing plan yet");
@@ -85,8 +110,7 @@ class OrderHttpIntegrationTest extends HttpIntegrationTest {
         CatalogPlan plan = billablePlan();
         billing.refuseReservation();
         try {
-            MvcResult result = world.call(HttpMethod.POST, operator, "/api/orders",
-                    HttpWorld.map("planId", plan.id(), "quantity", "120", "events", null));
+            MvcResult result = create(operator, plan, "order-" + UUID.randomUUID());
 
             world.requireStatus(result, 402);
             assertThat(world.parse(result).get("detail").asString()).isEqualTo("The wallet cannot cover this amount.");
@@ -100,7 +124,17 @@ class OrderHttpIntegrationTest extends HttpIntegrationTest {
         String operator = world.token(Role.OPERATOR);
 
         world.requireStatus(world.call(HttpMethod.POST, operator, "/api/orders",
-                HttpWorld.map("planId", UUID.randomUUID(), "quantity", "1", "events", null)), 404);
+                HttpWorld.map("planId", UUID.randomUUID(), "quantity", "1", "events", null),
+                Map.of("Idempotency-Key", "order-" + UUID.randomUUID())), 404);
         world.requireStatus(world.call(HttpMethod.GET, operator, "/api/orders/" + UUID.randomUUID(), null), 404);
+    }
+
+    private MvcResult create(String token, CatalogPlan plan, String idempotencyKey) {
+        return world.call(
+                HttpMethod.POST,
+                token,
+                "/api/orders",
+                HttpWorld.map("planId", plan.id(), "quantity", "120", "events", null),
+                Map.of("Idempotency-Key", idempotencyKey));
     }
 }
