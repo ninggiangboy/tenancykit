@@ -130,8 +130,11 @@ public final class Payment {
         return move(PaymentStatus.PROCESSING, null, now);
     }
 
-    /** Applies a verified success. The caller credits the wallet and then records the entry with {@link #recordLedgerEntry}. */
-    public Change succeed() {
+    /**
+     * What applying a verified success would do here. It changes nothing, so a caller that must credit the wallet
+     * first can ask before it does; {@link #succeed(UUID, Instant)} is the transition itself.
+     */
+    public Change wouldSucceed() {
         if (status == PaymentStatus.SUCCEEDED) {
             return Change.STALE;
         }
@@ -141,15 +144,20 @@ public final class Payment {
         return Change.APPLIED;
     }
 
-    public void recordLedgerEntry(UUID entryId, Instant now) {
-        if (status.isFinal() && status != PaymentStatus.SUCCEEDED) {
-            throw new IllegalStateException("a " + status + " payment cannot be credited");
+    /**
+     * Applies a verified success: the payment becomes SUCCEEDED and remembers the ledger entry that credited its
+     * wallet in the same step, so a caller can no longer announce a success it did not perform and a payment can
+     * never be SUCCEEDED without the entry.
+     *
+     * @throws NullPointerException when {@code ledgerEntryId} is null
+     */
+    public Change succeed(UUID ledgerEntryId, Instant now) {
+        Objects.requireNonNull(ledgerEntryId, "a succeeded payment carries the ledger entry that credited its wallet");
+        Change change = markSucceeded(now);
+        if (change == Change.APPLIED) {
+            this.ledgerEntryId = ledgerEntryId;
         }
-        this.ledgerEntryId = Objects.requireNonNull(entryId, "entryId");
-        this.status = PaymentStatus.SUCCEEDED;
-        this.failureReason = null;
-        this.completedAt = completedAt == null ? now : completedAt;
-        this.updatedAt = now;
+        return change;
     }
 
     /** True for a payment of an invoice, which never credits the wallet itself. */
@@ -161,17 +169,24 @@ public final class Payment {
      * Records that the money for an invoice arrived. The wallet is credited by invoicing from the
      * {@code payment.succeeded} event this success announces, so the payment carries no ledger entry.
      */
-    public void recordInvoiceSettlement(Instant now) {
+    public Change recordInvoiceSettlement(Instant now) {
         if (!isForInvoice()) {
             throw new IllegalStateException("only an invoice payment is settled without a ledger entry");
         }
-        if (status.isFinal() && status != PaymentStatus.SUCCEEDED) {
-            throw new IllegalStateException("a " + status + " payment cannot be settled");
+        return markSucceeded(now);
+    }
+
+    /** Moves the payment to SUCCEEDED, once, and says how the observation was received. */
+    private Change markSucceeded(Instant now) {
+        Change change = wouldSucceed();
+        if (change != Change.APPLIED) {
+            return change;
         }
         this.status = PaymentStatus.SUCCEEDED;
         this.failureReason = null;
         this.completedAt = completedAt == null ? now : completedAt;
         this.updatedAt = now;
+        return Change.APPLIED;
     }
 
     public Change fail(String reason, Instant now) {

@@ -132,9 +132,17 @@ public class RenewSubscriptionUseCase {
         }
     }
 
-    /** Renews one subscription if it is due, for example the first period of a subscription that was just created. */
-    public Outcome renewIfDue(SubscriptionId id) {
-        return unitOfWork.transactional(() -> process(subscriptions.lockById(id).orElseThrow(() -> new NotFoundException("subscription not found"))));
+    /**
+     * Renews one subscription if it is due, for example the first period of a subscription that was just created,
+     * and returns it as it stands when the transaction ends. The caller gets the updated schedule from here, so it
+     * does not have to open a transaction of its own to read the row again.
+     */
+    public Subscription renewIfDue(SubscriptionId id) {
+        return unitOfWork.transactional(() -> {
+            Subscription subscription = subscriptions.lockById(id).orElseThrow(() -> new NotFoundException("subscription not found"));
+            process(subscription);
+            return subscription;
+        });
     }
 
     private Outcome process(Subscription subscription) {

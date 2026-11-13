@@ -11,6 +11,7 @@ import dev.ngb.billing.money.api.wallet.CreditWallet;
 import dev.ngb.billing.money.api.wallet.DebitCommand;
 import dev.ngb.billing.money.api.wallet.DebitWallet;
 import dev.ngb.billing.payment.application.incident.port.IncidentRepository;
+import dev.ngb.billing.payment.application.messaging.service.PaymentActors;
 import dev.ngb.billing.payment.application.payment.port.PaymentProvider;
 import dev.ngb.billing.payment.application.payment.port.PaymentRepository;
 import dev.ngb.billing.payment.application.refund.port.RefundRepository;
@@ -185,7 +186,7 @@ public class PaymentSettlement {
             case SUCCEEDED:
                 releaseHold(refund);
                 LedgerPostingResult posted = debit.debit(new DebitCommand(payment.walletId(), refund.amount(), "refund/" + refund.id(),
-                        "Stripe refund of payment " + payment.id(), "refund:" + refund.id(), "stripe"));
+                        "Stripe refund of payment " + payment.id(), "refund:" + refund.id(), PaymentActors.STRIPE));
                 refund.succeed(posted.entryId().value(), now);
                 payment.addRefunded(refund.amount(), now);
                 refunds.update(refund);
@@ -246,11 +247,12 @@ public class PaymentSettlement {
         if (amount != payment.amount().minorUnits() || currency == null || !currency.equalsIgnoreCase(payment.amount().currency().code())) {
             return Result.rejected("Stripe collected " + amount + " " + currency + " but the payment is for " + payment.amount());
         }
-        Payment.Change change = payment.succeed();
-        if (change == Payment.Change.STALE) {
+        // The payment itself says whether this observation may move it, before anything is credited or announced.
+        Payment.Change admitted = payment.wouldSucceed();
+        if (admitted == Payment.Change.STALE) {
             return Result.stale("the payment already succeeded");
         }
-        if (change == Payment.Change.CONTRADICTION) {
+        if (admitted == Payment.Change.CONTRADICTION) {
             return Result.rejected("Stripe reports payment " + payment.id() + " as paid, but it is already " + payment.status());
         }
         if (payment.isForInvoice()) {
@@ -260,10 +262,11 @@ public class PaymentSettlement {
             events.publish(new PaymentEvents.PaymentSucceeded(ids.newId(), payment, now));
             return Result.applied("invoice payment succeeded; invoicing applies it");
         }
-        // One credit per payment, whichever event or reconciliation run gets here first.
+        // One credit per payment, whichever event or reconciliation run gets here first. The entry id and the
+        // transition are recorded together, so a payment is SUCCEEDED exactly when its wallet was credited.
         LedgerPostingResult posted = credit.credit(new CreditCommand(payment.walletId(), payment.amount(), "payment/" + payment.id(),
-                "Stripe top-up " + payment.id(), "topup:" + payment.id(), "stripe"));
-        payment.recordLedgerEntry(posted.entryId().value(), now);
+                "Stripe top-up " + payment.id(), "topup:" + payment.id(), PaymentActors.STRIPE));
+        payment.succeed(posted.entryId().value(), now);
         payments.update(payment);
         events.publish(new PaymentEvents.PaymentSucceeded(ids.newId(), payment, now));
         return Result.applied("payment succeeded; the wallet was credited");

@@ -7,6 +7,7 @@ import dev.ngb.billing.Application;
 import dev.ngb.billing.invoicing.application.subscription.command.CreateSubscriptionUseCase;
 import dev.ngb.billing.invoicing.application.subscription.command.RenewSubscriptionUseCase;
 import dev.ngb.billing.invoicing.domain.subscription.Subscription;
+import dev.ngb.billing.invoicing.domain.subscription.SubscriptionStatus;
 import dev.ngb.billing.money.MoneyTestWorld;
 import dev.ngb.billing.money.MoneyTestWorld.World;
 import dev.ngb.core.audit.Audit;
@@ -60,18 +61,25 @@ class SubscriptionIdempotencyIntegrationTest {
         return owner.count("select count(*) from charges where status = 'SUCCEEDED' and reference = ?", "subscription:" + subscription.id() + ":" + period);
     }
 
+    private long renewedRecords(Subscription subscription, int period) {
+        return owner.count("select count(*) from subscription_events where subscription_id = ? and type = 'RENEWED' and period_number = ?",
+                subscription.id().value(), period);
+    }
+
     @Test
     void renewingTheSamePeriodRepeatedlyChargesItOnce() {
         World world = worlds.prepaid(100_000);
         Subscription subscription = subscribe(world);
         aMonthPasses(subscription);
+        int chargedBefore = subscription.periodsCharged();
 
-        RenewSubscriptionUseCase.Outcome first = scopes.inTenant(world.tenant().id(), () -> renew.renewIfDue(subscription.id()));
-        RenewSubscriptionUseCase.Outcome second = scopes.inTenant(world.tenant().id(), () -> renew.renewIfDue(subscription.id()));
+        Subscription first = scopes.inTenant(world.tenant().id(), () -> renew.renewIfDue(subscription.id()));
+        Subscription second = scopes.inTenant(world.tenant().id(), () -> renew.renewIfDue(subscription.id()));
         scopes.inTenant(world.tenant().id(), renew::runDue);
 
-        assertThat(first).isEqualTo(RenewSubscriptionUseCase.Outcome.RENEWED);
-        assertThat(second).isEqualTo(RenewSubscriptionUseCase.Outcome.NOT_DUE);
+        assertThat(first.periodsCharged()).as("the renewal hands back the subscription as it now stands").isEqualTo(chargedBefore + 1);
+        assertThat(second.periodsCharged()).as("the second attempt found nothing due").isEqualTo(chargedBefore + 1);
+        assertThat(second.status()).isEqualTo(SubscriptionStatus.ACTIVE);
         assertThat(succeededCharges(subscription, 1)).isEqualTo(1);
         assertThat(balance(world)).isEqualTo(100_000 - 2 * PRICE);
     }
@@ -81,24 +89,22 @@ class SubscriptionIdempotencyIntegrationTest {
         World world = worlds.prepaid(100_000);
         Subscription subscription = subscribe(world);
         aMonthPasses(subscription);
+        int chargedBefore = subscription.periodsCharged();
 
-        Callable<RenewSubscriptionUseCase.Outcome> attempt = () -> scopes.inTenant(world.tenant().id(), () -> renew.renewIfDue(subscription.id()));
+        Callable<Subscription> attempt = () -> scopes.inTenant(world.tenant().id(), () -> renew.renewIfDue(subscription.id()));
         var pool = Executors.newFixedThreadPool(4);
         try {
-            var results = new java.util.ArrayList<java.util.concurrent.Future<RenewSubscriptionUseCase.Outcome>>();
+            var results = new java.util.ArrayList<java.util.concurrent.Future<Subscription>>();
             for (int i = 0; i < 4; i++) {
                 results.add(pool.submit(attempt));
             }
-            long renewed = 0;
             for (var result : results) {
-                if (result.get() == RenewSubscriptionUseCase.Outcome.RENEWED) {
-                    renewed++;
-                }
+                assertThat(result.get().periodsCharged()).as("every attempt sees the period charged once").isEqualTo(chargedBefore + 1);
             }
-            assertThat(renewed).isEqualTo(1);
         } finally {
             pool.shutdownNow();
         }
+        assertThat(renewedRecords(subscription, 1)).as("one renewal was recorded").isEqualTo(1);
         assertThat(succeededCharges(subscription, 1)).isEqualTo(1);
         assertThat(balance(world)).isEqualTo(100_000 - 2 * PRICE);
     }

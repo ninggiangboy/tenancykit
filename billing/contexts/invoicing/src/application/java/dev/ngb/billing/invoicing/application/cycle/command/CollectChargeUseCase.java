@@ -7,25 +7,29 @@ import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.invoicing.application.cycle.port.UnbilledLineRepository;
 import dev.ngb.billing.invoicing.application.cycle.service.CycleSettings;
 import dev.ngb.billing.invoicing.application.invoice.service.ChargeLineFactory;
+import dev.ngb.billing.invoicing.application.messaging.port.MalformedEventRecorder;
 import dev.ngb.billing.invoicing.application.messaging.service.InvoicingConsumers;
 import dev.ngb.billing.invoicing.domain.cycle.UnbilledLine;
 import dev.ngb.billing.invoicing.domain.invoice.InvoiceItem;
+import dev.ngb.billing.money.api.event.ChargeSucceededPayload;
 import dev.ngb.billing.money.api.event.MoneyEventTypes;
 import dev.ngb.billing.money.api.wallet.WalletLookup;
 import dev.ngb.billing.money.api.wallet.WalletMode;
 import dev.ngb.billing.money.api.wallet.WalletSummary;
-import dev.ngb.billing.sharedkernel.id.WalletId;
-import dev.ngb.billing.sharedkernel.money.Currency;
-import dev.ngb.billing.sharedkernel.money.Money;
+import dev.ngb.billing.sharedkernel.event.MalformedEventException;
 import java.time.Instant;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Consumes {@code charge.succeeded}: a charge on a Postpaid wallet becomes an unbilled line of the calendar period
  * it was incurred in. A charge on a Prepaid wallet is ignored, because the wallet already paid it. The inbox and the
  * unique line per charge make a repeated event a no-op.
+ *
+ * <p>A payload that is not a charge event is a malformed event. The policy is to record it once through
+ * {@link MalformedEventRecorder} (a WARN line and a counter) and treat it as handled: the inbox mark this consumer
+ * already wrote stands, and so does the rest of the transaction, which the other consumers of the same event share
+ * (the Tenant's webhook delivery among them). Failing here instead would retry an event that can never decode, and
+ * would hold back the delivery that shares its transaction.
  */
 public class CollectChargeUseCase {
 
@@ -36,10 +40,11 @@ public class CollectChargeUseCase {
     private final ChargeLineFactory lineFactory;
     private final CycleSettings settings;
     private final Clock clock;
+    private final MalformedEventRecorder malformedEvents;
 
     public CollectChargeUseCase(
             UnitOfWork unitOfWork, EventInbox inbox, WalletLookup wallets, UnbilledLineRepository lines, ChargeLineFactory lineFactory, CycleSettings settings,
-            Clock clock) {
+            Clock clock, MalformedEventRecorder malformedEvents) {
         this.unitOfWork = unitOfWork;
         this.inbox = inbox;
         this.wallets = wallets;
@@ -47,26 +52,25 @@ public class CollectChargeUseCase {
         this.lineFactory = lineFactory;
         this.settings = settings;
         this.clock = clock;
+        this.malformedEvents = malformedEvents;
     }
 
-    /** What invoicing needs from a {@code charge.succeeded} payload. */
-    private record Charged(WalletId walletId, UUID chargeId, Money amount, String source, String reference) {}
-
-    /**
-     * @return true when a line was added. A payload that does not have the shape of a charge event is ignored rather
-     *     than failing: every consumer of an event shares one transaction with the others (the webhook delivery
-     *     among them), so a consumer that throws on something it cannot read would block delivery to the Tenant.
-     */
+    /** @return true when a line was added. */
     public boolean handle(DomainEvent event) {
         if (!MoneyEventTypes.CHARGE_SUCCEEDED.equals(event.type())) {
             return false;
         }
-        return unitOfWork.transactional(() -> {
+        AtomicReference<MalformedEventException> malformed = new AtomicReference<>();
+        boolean added = unitOfWork.transactional(() -> {
             if (!inbox.firstTime(InvoicingConsumers.CYCLE, event)) {
                 return false;
             }
-            Charged charged = read(event.payload()).orElse(null);
-            if (charged == null) {
+            ChargeSucceededPayload charged;
+            try {
+                charged = ChargeSucceededPayload.parse(event.payload());
+            } catch (MalformedEventException broken) {
+                // Treated as handled: the inbox mark this transaction wrote stands, so the event is not retried.
+                malformed.set(broken);
                 return false;
             }
             WalletSummary wallet = wallets.find(charged.walletId()).orElse(null);
@@ -85,17 +89,10 @@ public class CollectChargeUseCase {
             InvoiceItem item = lineFactory.lineFor(charged.chargeId(), charged.source(), charged.reference(), charged.amount(), event.occurredAt());
             return lines.add(new UnbilledLine(event.tenantId(), wallet.customerId(), wallet.id(), item, start, settings.cycle().calendarEnd(start)));
         });
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Optional<Charged> read(Map<String, Object> data) {
-        try {
-            Map<String, Object> amount = (Map<String, Object>) data.get("amount");
-            Money money = Money.of(((Number) amount.get("minorUnits")).longValue(), Currency.of((String) amount.get("currency")));
-            return Optional.of(new Charged(WalletId.of((String) data.get("walletId")), UUID.fromString((String) data.get("chargeId")), money,
-                    (String) data.get("source"), (String) data.get("reference")));
-        } catch (NullPointerException | ClassCastException | IllegalArgumentException malformed) {
-            return Optional.empty();
+        if (malformed.get() != null) {
+            // Reported after the transaction, so the WARN line and the counter describe a drop that did happen.
+            malformedEvents.record(InvoicingConsumers.CYCLE, event, malformed.get());
         }
+        return added;
     }
 }

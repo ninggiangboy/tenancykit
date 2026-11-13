@@ -37,8 +37,7 @@ class PaymentDomainTest {
 
     private static Payment succeeded(long amount) {
         Payment p = payment(amount);
-        assertThat(p.succeed()).isEqualTo(Payment.Change.APPLIED);
-        p.recordLedgerEntry(UUID.randomUUID(), NOW);
+        assertThat(p.succeed(UUID.randomUUID(), NOW)).isEqualTo(Payment.Change.APPLIED);
         return p;
     }
 
@@ -67,14 +66,28 @@ class PaymentDomainTest {
     void successAfterFailureIsAContradictionNotARegression() {
         Payment p = payment(1000);
         p.fail("declined", NOW);
-        assertThat(p.succeed()).isEqualTo(Payment.Change.CONTRADICTION);
+        assertThat(p.succeed(UUID.randomUUID(), NOW)).isEqualTo(Payment.Change.CONTRADICTION);
         assertThat(p.status()).isEqualTo(PaymentStatus.FAILED);
     }
 
     @Test
     void successIsRepeatableWithoutChange() {
         Payment p = succeeded(1000);
-        assertThat(p.succeed()).isEqualTo(Payment.Change.STALE);
+        assertThat(p.succeed(UUID.randomUUID(), NOW)).isEqualTo(Payment.Change.STALE);
+        assertThat(p.succeed(UUID.randomUUID(), NOW)).as("a repeated success changes nothing, entry or not").isEqualTo(Payment.Change.STALE);
+    }
+
+    /** The ledger entry id is part of the transition, so no caller can announce a success it did not record. */
+    @Test
+    void aTopUpCannotSucceedWithoutTheLedgerEntryThatCreditedIt() {
+        Payment p = payment(1000);
+        assertThat(p.wouldSucceed()).isEqualTo(Payment.Change.APPLIED);
+
+        assertThatThrownBy(() -> p.succeed(null, NOW)).isInstanceOf(NullPointerException.class);
+
+        assertThat(p.status()).isEqualTo(PaymentStatus.REQUIRES_ACTION);
+        assertThat(p.ledgerEntryId()).isNull();
+        assertThat(p.completedAt()).isNull();
     }
 
     @Test
@@ -166,14 +179,13 @@ class PaymentDomainTest {
     void anInvoicePaymentSucceedsWithoutALedgerEntry() {
         Payment p = invoicePayment(1000);
         assertThat(p.isForInvoice()).isTrue();
-        assertThat(p.succeed()).isEqualTo(Payment.Change.APPLIED);
 
-        p.recordInvoiceSettlement(NOW);
+        assertThat(p.recordInvoiceSettlement(NOW)).isEqualTo(Payment.Change.APPLIED);
 
         assertThat(p.status()).isEqualTo(PaymentStatus.SUCCEEDED);
         assertThat(p.ledgerEntryId()).isNull();
         assertThat(p.completedAt()).isEqualTo(NOW);
-        assertThat(p.succeed()).isEqualTo(Payment.Change.STALE);
+        assertThat(p.recordInvoiceSettlement(NOW)).isEqualTo(Payment.Change.STALE);
     }
 
     @Test
@@ -185,7 +197,7 @@ class PaymentDomainTest {
     void aFailedInvoicePaymentCannotBeSettledLater() {
         Payment p = invoicePayment(1000);
         p.fail("declined", NOW);
-        assertThat(p.succeed()).isEqualTo(Payment.Change.CONTRADICTION);
-        assertThatThrownBy(() -> p.recordInvoiceSettlement(NOW)).isInstanceOf(IllegalStateException.class);
+        assertThat(p.recordInvoiceSettlement(NOW)).isEqualTo(Payment.Change.CONTRADICTION);
+        assertThat(p.status()).isEqualTo(PaymentStatus.FAILED);
     }
 }

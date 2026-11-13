@@ -8,6 +8,7 @@ import dev.ngb.billing.Application;
 import dev.ngb.core.messaging.outbox.OutboxRelay;
 import dev.ngb.billing.invoicing.application.cycle.command.CloseBillingCycleUseCase;
 import dev.ngb.billing.invoicing.application.cycle.command.CollectChargeUseCase;
+import dev.ngb.billing.invoicing.application.messaging.service.InvoicingConsumers;
 import dev.ngb.billing.money.MoneyTestWorld;
 import dev.ngb.billing.money.MoneyTestWorld.World;
 import dev.ngb.billing.money.api.charge.ChargeCommand;
@@ -17,6 +18,7 @@ import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
 import dev.ngb.billing.support.ScopeTestSupport;
+import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -40,6 +42,7 @@ class PostpaidCycleIntegrationTest {
     @Autowired ScopeTestSupport scopes;
     @Autowired UnitOfWork unitOfWork;
     @Autowired OwnerDatabase owner;
+    @Autowired MeterRegistry meters;
 
     private ChargeResult charge(World world, long amount) {
         return scopes.inTenant(world.tenant().id(), () -> charges.charge(new ChargeCommand(world.wallet().id(), null, Money.of(amount, MoneyTestWorld.USD),
@@ -154,12 +157,15 @@ class PostpaidCycleIntegrationTest {
     }
 
     @Test
-    void aChargeEventWithAnUnreadablePayloadIsIgnoredSoItCannotBlockTheOtherConsumers() {
+    void aChargeEventWithAnUnreadablePayloadIsRecordedAndIgnoredSoItCannotBlockTheOtherConsumers() {
         World world = worlds.postpaid(1_000_000);
         EventEnvelope garbage = new EventEnvelope(UUID.randomUUID(), world.tenant().id(), "charge.succeeded", "charge/x", Instant.now(), Map.of("n", 1));
 
         assertThat(scopes.inTenant(world.tenant().id(), () -> collect.handle(garbage))).isFalse();
         assertThat(count("select count(*) from invoice_items where tenant_id = ?", world)).isZero();
+        // The malformed event is counted, and the WARN line comes from the same recorder. The registry is shared with
+        // every other test in the run, so the counter is asserted to have moved, not to be exactly one.
+        assertThat(meters.counter("billing.events.malformed", "consumer", InvoicingConsumers.CYCLE).count()).isPositive();
     }
 
     @Test

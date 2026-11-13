@@ -12,9 +12,8 @@ import dev.ngb.billing.payment.application.payment.port.PaymentRepository;
 import dev.ngb.billing.payment.application.payment.service.PaymentSettings;
 import dev.ngb.billing.payment.application.payment.service.PaymentSettlement;
 import dev.ngb.billing.payment.application.refund.port.RefundRepository;
+import dev.ngb.billing.payment.application.refund.service.RefundGateway;
 import dev.ngb.billing.payment.application.stripe.exception.ProviderRejectedException;
-import dev.ngb.billing.payment.application.stripe.port.StripeConfigurationRepository;
-import dev.ngb.billing.payment.application.stripe.service.ProviderAccess;
 import dev.ngb.billing.payment.domain.payment.Payment;
 import dev.ngb.billing.payment.domain.payment.PaymentId;
 import dev.ngb.billing.payment.domain.payment.PaymentStatus;
@@ -52,11 +51,9 @@ public class RequestRefundUseCase {
     private final UnitOfWork unitOfWork;
     private final PaymentRepository payments;
     private final RefundRepository refunds;
-    private final StripeConfigurationRepository configurations;
     private final ReserveBudget reserve;
     private final PaymentSettlement settlement;
-    private final PaymentProvider provider;
-    private final ProviderAccess access;
+    private final RefundGateway gateway;
     private final PaymentSettings settings;
     private final AuditLog auditLog;
     private final TenantContext tenantContext;
@@ -64,17 +61,14 @@ public class RequestRefundUseCase {
     private final Clock clock;
 
     public RequestRefundUseCase(
-            UnitOfWork unitOfWork, PaymentRepository payments, RefundRepository refunds, StripeConfigurationRepository configurations,
-            ReserveBudget reserve, PaymentSettlement settlement, PaymentProvider provider, ProviderAccess access, PaymentSettings settings,
-            AuditLog auditLog, TenantContext tenantContext, IdGenerator ids, Clock clock) {
+            UnitOfWork unitOfWork, PaymentRepository payments, RefundRepository refunds, ReserveBudget reserve, PaymentSettlement settlement,
+            RefundGateway gateway, PaymentSettings settings, AuditLog auditLog, TenantContext tenantContext, IdGenerator ids, Clock clock) {
         this.unitOfWork = unitOfWork;
         this.payments = payments;
         this.refunds = refunds;
-        this.configurations = configurations;
         this.reserve = reserve;
         this.settlement = settlement;
-        this.provider = provider;
-        this.access = access;
+        this.gateway = gateway;
         this.settings = settings;
         this.auditLog = auditLog;
         this.tenantContext = tenantContext;
@@ -102,8 +96,7 @@ public class RequestRefundUseCase {
         }
         PaymentProvider.RefundObject created;
         try {
-            created = provider.createRefund(access.of(prepared.configuration()), new PaymentProvider.RefundRequest(refund.id(),
-                    prepared.payment().id(), prepared.payment().paymentIntentId(), refund.amount(), refund.reason()), "refund-" + refund.id());
+            created = gateway.refund(prepared.configuration(), refund, prepared.payment());
         } catch (ProviderRejectedException rejected) {
             unitOfWork.transactional(() -> {
                 Refund locked = refunds.lockById(refund.id()).orElseThrow(() -> new NotFoundException("no refund " + refund.id()));
@@ -123,20 +116,6 @@ public class RequestRefundUseCase {
         return new Result(attached, false);
     }
 
-    /**
-     * The configuration a payment can be refunded through: its own while connected, or the current one when the
-     * Tenant has since linked the same Stripe account again (a rotated key). A payment of an account that is no
-     * longer connected has to be refunded in the Stripe Dashboard.
-     */
-    private StripeConfiguration usable(Payment payment) {
-        StripeConfiguration own = configurations.findById(payment.configurationId()).orElseThrow(() -> new NotFoundException("no stripe configuration " + payment.configurationId()));
-        if (own.status().isLive()) {
-            return own;
-        }
-        return configurations.findLive().filter(live -> live.accountId().equals(own.accountId()))
-                .orElseThrow(() -> new ConflictException("the payment's Stripe account is no longer connected, so it cannot be refunded here"));
-    }
-
     private Prepared prepare(Command command, String key, String hash) {
         // Lock order is payment, then refund, then wallet, everywhere. The key is read after the payment lock,
         // so a concurrent duplicate waits here and then sees the refund the first request wrote.
@@ -144,7 +123,7 @@ public class RequestRefundUseCase {
         Optional<Refund> existing = refunds.findByIdempotencyKey(key);
         if (existing.isPresent()) {
             Fingerprint.requireSameRequest("refund", key, existing.get().requestHash(), hash);
-            return new Prepared(existing.get(), payment, usable(payment), true);
+            return new Prepared(existing.get(), payment, gateway.usable(payment), true);
         }
         if (payment.status() != PaymentStatus.SUCCEEDED) {
             throw new ConflictException("only a succeeded payment can be refunded; this one is " + payment.status());
@@ -156,7 +135,7 @@ public class RequestRefundUseCase {
         if (payment.paymentIntentId() == null) {
             throw new ConflictException("the payment has no Stripe payment to refund");
         }
-        StripeConfiguration configuration = usable(payment);
+        StripeConfiguration configuration = gateway.usable(payment);
         Money inFlight = Money.of(refunds.liveAmount(payment.id()), payment.amount().currency());
         Money remaining = payment.amount().minus(inFlight);
         Money amount = command.amount() == null ? remaining : command.amount();

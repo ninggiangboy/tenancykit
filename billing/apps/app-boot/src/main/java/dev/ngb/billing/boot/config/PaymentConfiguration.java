@@ -43,6 +43,7 @@ import dev.ngb.billing.payment.application.refund.command.RequestRefundUseCase;
 import dev.ngb.billing.payment.application.refund.port.RefundRepository;
 import dev.ngb.billing.payment.application.refund.query.RefundQueries;
 import dev.ngb.billing.payment.application.refund.query.RefundReadRepository;
+import dev.ngb.billing.payment.application.refund.service.RefundGateway;
 import dev.ngb.billing.payment.application.stripe.command.ManageStripeEventUseCase;
 import dev.ngb.billing.payment.application.stripe.command.ReceiveStripeWebhookUseCase;
 import dev.ngb.billing.payment.application.stripe.command.ReconcileStripeUseCase;
@@ -238,12 +239,15 @@ class PaymentConfiguration {
     }
 
     @Bean
+    RefundGateway refundGateway(StripeConfigurationRepository configurations, PaymentProvider provider, ProviderAccess access) {
+        return new RefundGateway(configurations, provider, access);
+    }
+
+    @Bean
     RequestRefundUseCase requestRefundUseCase(
-            UnitOfWork unitOfWork, PaymentRepository payments, RefundRepository refunds, StripeConfigurationRepository configurations,
-            ReserveBudget reserve, PaymentSettlement settlement, PaymentProvider provider, ProviderAccess access, PaymentSettings settings,
-            AuditLog auditLog, TenantContext tenantContext, IdGenerator ids, Clock clock) {
-        return new RequestRefundUseCase(unitOfWork, payments, refunds, configurations, reserve, settlement, provider, access, settings, auditLog,
-                tenantContext, ids, clock);
+            UnitOfWork unitOfWork, PaymentRepository payments, RefundRepository refunds, ReserveBudget reserve, PaymentSettlement settlement,
+            RefundGateway gateway, PaymentSettings settings, AuditLog auditLog, TenantContext tenantContext, IdGenerator ids, Clock clock) {
+        return new RequestRefundUseCase(unitOfWork, payments, refunds, reserve, settlement, gateway, settings, auditLog, tenantContext, ids, clock);
     }
 
     @Bean

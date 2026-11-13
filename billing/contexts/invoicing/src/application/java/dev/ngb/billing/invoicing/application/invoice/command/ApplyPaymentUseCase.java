@@ -7,6 +7,7 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.invoicing.application.invoice.port.InvoiceRepository;
+import dev.ngb.billing.invoicing.application.messaging.port.MalformedEventRecorder;
 import dev.ngb.billing.invoicing.application.messaging.service.InvoicingActors;
 import dev.ngb.billing.invoicing.application.messaging.service.InvoicingConsumers;
 import dev.ngb.billing.invoicing.domain.invoice.Invoice;
@@ -16,12 +17,12 @@ import dev.ngb.billing.money.api.ledger.LedgerPostingResult;
 import dev.ngb.billing.money.api.wallet.CreditCommand;
 import dev.ngb.billing.money.api.wallet.CreditWallet;
 import dev.ngb.billing.payment.api.payment.PaymentEventTypes;
+import dev.ngb.billing.payment.api.payment.PaymentSucceededPayload;
 import dev.ngb.core.error.NotFoundException;
-import dev.ngb.billing.sharedkernel.money.Currency;
-import dev.ngb.billing.sharedkernel.money.Money;
+import dev.ngb.billing.sharedkernel.event.MalformedEventException;
 import java.time.Instant;
 import java.util.Map;
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Consumes the verified payment results of invoice payments ({@code payment.succeeded} and {@code payment.failed}
@@ -32,6 +33,10 @@ import java.util.UUID;
  *
  * <p>Money that arrives for an invoice that cannot be paid any more (already paid by another payment, or void) is
  * still credited to the wallet, because the customer really paid it; the payment is recorded in the invoice history.
+ *
+ * <p>A payload that does not have the shape of a payment result is a malformed event: it is recorded once through
+ * {@link MalformedEventRecorder} and treated as handled, exactly as {@code CollectChargeUseCase} does with a
+ * malformed charge (see there for why the transaction is not failed).
  */
 public class ApplyPaymentUseCase {
 
@@ -42,9 +47,11 @@ public class ApplyPaymentUseCase {
     private final EventPublisher events;
     private final IdGenerator ids;
     private final Clock clock;
+    private final MalformedEventRecorder malformedEvents;
 
     public ApplyPaymentUseCase(
-            UnitOfWork unitOfWork, EventInbox inbox, InvoiceRepository invoices, CreditWallet credit, EventPublisher events, IdGenerator ids, Clock clock) {
+            UnitOfWork unitOfWork, EventInbox inbox, InvoiceRepository invoices, CreditWallet credit, EventPublisher events, IdGenerator ids, Clock clock,
+            MalformedEventRecorder malformedEvents) {
         this.unitOfWork = unitOfWork;
         this.inbox = inbox;
         this.invoices = invoices;
@@ -52,6 +59,7 @@ public class ApplyPaymentUseCase {
         this.events = events;
         this.ids = ids;
         this.clock = clock;
+        this.malformedEvents = malformedEvents;
     }
 
     /** @return true when the invoice was changed */
@@ -63,43 +71,49 @@ public class ApplyPaymentUseCase {
         if (data.get("invoiceId") == null) {
             return false;
         }
-        return unitOfWork.transactional(() -> {
+        AtomicReference<MalformedEventException> malformed = new AtomicReference<>();
+        boolean applied = unitOfWork.transactional(() -> {
             if (!inbox.firstTime(InvoicingConsumers.PAYMENT, event)) {
                 return false;
             }
-            Invoice invoice = invoices.lockById(InvoiceId.of((String) data.get("invoiceId")))
-                    .orElseThrow(() -> new NotFoundException("invoice " + data.get("invoiceId") + " of a payment was not found"));
-            UUID paymentId = UUID.fromString((String) data.get("paymentId"));
+            PaymentSucceededPayload payment;
+            try {
+                payment = PaymentSucceededPayload.parse(data);
+            } catch (MalformedEventException broken) {
+                // Treated as handled: the inbox mark this transaction wrote stands, so the event is not retried.
+                malformed.set(broken);
+                return false;
+            }
+            Invoice invoice = invoices.lockById(new InvoiceId(payment.invoiceId()))
+                    .orElseThrow(() -> new NotFoundException("invoice " + payment.invoiceId() + " of a payment was not found"));
             Instant now = clock.now();
             if (PaymentEventTypes.PAYMENT_FAILED.equals(event.type())) {
-                Invoice.Change change = invoice.recordPaymentFailed(paymentId, (String) data.get("reason"), now);
+                Invoice.Change change = invoice.recordPaymentFailed(payment.paymentId(), payment.reason(), now);
                 if (change != Invoice.Change.UNCHANGED) {
                     invoices.update(invoice);
                 }
                 return change != Invoice.Change.UNCHANGED;
             }
-            Money amount = amount(data);
-            if (!amount.currency().equals(invoice.currency())) {
+            if (!payment.amount().currency().equals(invoice.currency())) {
                 throw new IllegalStateException(
-                        "a payment of invoice %s is in %s but the invoice is in %s".formatted(invoice.id(), amount.currency(), invoice.currency()));
+                        "a payment of invoice %s is in %s but the invoice is in %s".formatted(invoice.id(), payment.amount().currency(), invoice.currency()));
             }
-            LedgerPostingResult posted = credit.credit(new CreditCommand(invoice.walletId(), amount, "invoice/" + invoice.id(),
-                    "Payment of invoice " + invoice.number(), "invoice-payoff:" + paymentId, InvoicingActors.INVOICE_PAYMENT));
-            Invoice.Change change = invoice.recordPaymentSucceeded(paymentId, posted.entryId().value(), now);
+            LedgerPostingResult posted = credit.credit(new CreditCommand(invoice.walletId(), payment.amount(), "invoice/" + invoice.id(),
+                    "Payment of invoice " + invoice.number(), "invoice-payoff:" + payment.paymentId(), InvoicingActors.INVOICE_PAYMENT));
+            Invoice.Change change = invoice.recordPaymentSucceeded(payment.paymentId(), posted.entryId().value(), now);
             if (change == Invoice.Change.UNCHANGED) {
                 return false;
             }
             invoices.update(invoice);
             if (change == Invoice.Change.PAID) {
-                events.publish(new InvoiceEvents.Paid(ids.newId(), invoice, paymentId, now));
+                events.publish(new InvoiceEvents.Paid(ids.newId(), invoice, payment.paymentId(), now));
             }
             return true;
         });
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Money amount(Map<String, Object> data) {
-        Map<String, Object> amount = (Map<String, Object>) data.get("amount");
-        return Money.of(((Number) amount.get("minorUnits")).longValue(), Currency.of((String) amount.get("currency")));
+        if (malformed.get() != null) {
+            // Reported after the transaction, so the WARN line and the counter describe a drop that did happen.
+            malformedEvents.record(InvoicingConsumers.PAYMENT, event, malformed.get());
+        }
+        return applied;
     }
 }

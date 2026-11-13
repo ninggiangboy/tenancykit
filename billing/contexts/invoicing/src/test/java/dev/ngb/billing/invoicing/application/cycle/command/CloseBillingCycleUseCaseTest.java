@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.ngb.core.event.DomainEvent;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.billing.invoicing.application.cycle.port.CycleFailureRecorder;
 import dev.ngb.billing.invoicing.application.cycle.port.UnbilledLineRepository;
 import dev.ngb.billing.invoicing.application.cycle.service.CycleSettings;
 import dev.ngb.billing.invoicing.application.invoice.port.InvoiceRepository;
@@ -40,6 +41,12 @@ class CloseBillingCycleUseCaseTest {
     private final WalletId healthy = new WalletId(UUID.randomUUID());
     private final List<Invoice> issued = new ArrayList<>();
     private final List<DomainEvent> published = new ArrayList<>();
+    private final List<Failure> failures = new ArrayList<>();
+
+    /** One report of a period that could not be closed. */
+    private record Failure(WalletId walletId, Instant cycleStart, Instant cycleEnd, RuntimeException cause) {}
+
+    private final CycleFailureRecorder recorder = (walletId, cycleStart, cycleEnd, cause) -> failures.add(new Failure(walletId, cycleStart, cycleEnd, cause));
 
     private final UnbilledLineRepository lines = new UnbilledLineRepository() {
         @Override
@@ -110,14 +117,21 @@ class CloseBillingCycleUseCaseTest {
     };
 
     @Test
-    void aPeriodThatThrowsIsCountedAndTheOthersAreStillInvoiced() {
+    void aPeriodThatThrowsIsReportedWithItsWalletAndPeriodAndTheOthersAreStillInvoiced() {
         InvoiceIssuer issuer = new InvoiceIssuer(invoices, published::add, UUID::randomUUID, () -> NOW);
-        CloseBillingCycleUseCase useCase = new CloseBillingCycleUseCase(passThrough, lines, issuer, new CycleSettings(BillingCycle.MONTHLY, 10), UUID::randomUUID, () -> NOW);
+        CloseBillingCycleUseCase useCase = new CloseBillingCycleUseCase(passThrough, lines, issuer, new CycleSettings(BillingCycle.MONTHLY, 10),
+                UUID::randomUUID, () -> NOW, recorder);
 
         CloseBillingCycleUseCase.Report report = useCase.runOnce();
 
         assertThat(report.failed()).isEqualTo(1);
         assertThat(report.invoiced()).isEqualTo(1);
+        assertThat(failures).singleElement().satisfies(failure -> {
+            assertThat(failure.walletId()).as("the cause is reported with the wallet and the period it is about").isEqualTo(broken);
+            assertThat(failure.cycleStart()).isEqualTo(START);
+            assertThat(failure.cycleEnd()).isEqualTo(END);
+            assertThat(failure.cause()).hasMessage("this period cannot be read");
+        });
         assertThat(issued).singleElement().satisfies(invoice -> {
             assertThat(invoice.walletId()).isEqualTo(healthy);
             assertThat(invoice.number()).isEqualTo("INV-000001");

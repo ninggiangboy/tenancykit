@@ -76,8 +76,8 @@ public class ChargeUseCase implements ChargeWallet {
         Fingerprint.requireKey(command.idempotencyKey());
         String hash = Fingerprint.of(command.walletId(), command.reservationId(), command.amount(), command.usageRef(), command.reference());
         return unitOfWork.transactional(() -> {
-            WalletId walletId = walletOf(command);
-            Wallet wallet = wallets.lockById(walletId).orElseThrow(() -> new NotFoundException("wallet not found"));
+            LedgerTarget target = ledgerTargetOf(command);
+            Wallet wallet = wallets.lockById(target.walletId()).orElseThrow(() -> new NotFoundException("wallet not found"));
             requireVisible(wallet, command.caller());
 
             var existing = charges.findByIdempotencyKey(command.idempotencyKey());
@@ -85,10 +85,7 @@ public class ChargeUseCase implements ChargeWallet {
                 return replay(existing.get(), hash, command);
             }
 
-            Reservation reservation = null;
-            if (command.reservationId() != null) {
-                reservation = reservations.findById(command.reservationId()).orElseThrow(() -> new NotFoundException("reservation not found"));
-            }
+            Reservation reservation = target.reservation();
             Instant now = clock.now();
             ChargeService.Outcome outcome;
             try {
@@ -114,15 +111,22 @@ public class ChargeUseCase implements ChargeWallet {
         });
     }
 
-    private WalletId walletOf(ChargeCommand command) {
+    /** The wallet the charge is against and, when it charges from a reservation, that reservation read once. */
+    private record LedgerTarget(WalletId walletId, Reservation reservation) {}
+
+    /**
+     * Resolves the wallet before it is locked, so the lock order stays wallet then reservation and the reservation
+     * is read once for the whole charge.
+     */
+    private LedgerTarget ledgerTargetOf(ChargeCommand command) {
         if (command.reservationId() == null) {
-            return command.walletId();
+            return new LedgerTarget(command.walletId(), null);
         }
         Reservation reservation = reservations.findById(command.reservationId()).orElseThrow(() -> new NotFoundException("reservation not found"));
         if (command.walletId() != null && !command.walletId().equals(reservation.walletId())) {
             throw new IllegalArgumentException("the reservation belongs to another wallet");
         }
-        return reservation.walletId();
+        return new LedgerTarget(reservation.walletId(), reservation);
     }
 
     private void requireVisible(Wallet wallet, UUID caller) {

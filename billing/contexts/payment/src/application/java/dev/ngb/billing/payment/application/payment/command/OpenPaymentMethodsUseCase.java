@@ -63,9 +63,12 @@ public class OpenPaymentMethodsUseCase {
         if (stripeCustomerId == null) {
             String created = provider.createCustomer(access.of(prepared.configuration()), command.customerId().toString(),
                     prepared.customerName(), null, "payment-methods-customer-" + command.customerId() + "-" + prepared.configuration().id());
-            unitOfWork.transactional(() -> stripeCustomers.addIfAbsent(
-                    tenantContext.requireTenant(), command.customerId(), prepared.configuration().id(), created, clock.now()));
-            stripeCustomerId = stripeCustomers.find(command.customerId(), prepared.configuration().id()).orElse(created);
+            // The row is re-read inside the same unit of work that wrote it: stripe_customers is under row level
+            // security, so a read outside the transaction sees no tenant and the row just written.
+            stripeCustomerId = unitOfWork.transactional(() -> {
+                stripeCustomers.addIfAbsent(tenantContext.requireTenant(), command.customerId(), prepared.configuration().id(), created, clock.now());
+                return stripeCustomers.find(command.customerId(), prepared.configuration().id()).orElse(created);
+            });
         }
         return new Result(provider.createBillingPortalSession(access.of(prepared.configuration()), stripeCustomerId, command.returnUrl()));
     }

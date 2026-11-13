@@ -3,6 +3,7 @@ package dev.ngb.billing.invoicing.application.cycle.command;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.billing.invoicing.application.cycle.port.CycleFailureRecorder;
 import dev.ngb.billing.invoicing.application.cycle.port.UnbilledLineRepository;
 import dev.ngb.billing.invoicing.application.cycle.port.UnbilledLineRepository.ClosedPeriod;
 import dev.ngb.billing.invoicing.application.cycle.service.CycleSettings;
@@ -19,6 +20,9 @@ import java.util.List;
  * issued invoice, announced as {@code invoice.created}. Each period is its own transaction, and it locks the lines
  * first, so running the job twice, or on two instances, bills a period once: the second run finds the lines
  * already attached, and a unique invoice per wallet and period backs that up.
+ *
+ * <p>A period that throws is reported through {@link CycleFailureRecorder} with its wallet and period and counted,
+ * and the periods behind it are still closed; it is tried again on the next run.
  */
 public class CloseBillingCycleUseCase {
 
@@ -31,15 +35,18 @@ public class CloseBillingCycleUseCase {
     private final CycleSettings settings;
     private final IdGenerator ids;
     private final Clock clock;
+    private final CycleFailureRecorder failures;
 
     public CloseBillingCycleUseCase(
-            UnitOfWork unitOfWork, UnbilledLineRepository lines, InvoiceIssuer issuer, CycleSettings settings, IdGenerator ids, Clock clock) {
+            UnitOfWork unitOfWork, UnbilledLineRepository lines, InvoiceIssuer issuer, CycleSettings settings, IdGenerator ids, Clock clock,
+            CycleFailureRecorder failures) {
         this.unitOfWork = unitOfWork;
         this.lines = lines;
         this.issuer = issuer;
         this.settings = settings;
         this.ids = ids;
         this.clock = clock;
+        this.failures = failures;
     }
 
     public Report runOnce() {
@@ -57,7 +64,9 @@ public class CloseBillingCycleUseCase {
             } catch (ConflictException billedMeanwhile) {
                 skipped++;
             } catch (RuntimeException broken) {
-                // One period that cannot be closed must not hold back the periods behind it; it is tried again next run.
+                // One period that cannot be closed must not hold back the periods behind it; it is tried again next run,
+                // and why it failed is reported with the wallet and the period rather than swallowed.
+                failures.failed(period.walletId(), period.cycleStart(), period.cycleEnd(), broken);
                 failed++;
             }
         }

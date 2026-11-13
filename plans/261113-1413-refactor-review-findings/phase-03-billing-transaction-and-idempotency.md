@@ -79,12 +79,12 @@ one typed decoder with an explicit malformed-event policy, and the payment/refun
 
 ## Success criteria
 
-- [ ] `OpenPaymentMethodsUseCase` returns the existing Stripe customer on a second call under the tenant scope.
-- [ ] A malformed `charge.succeeded`/`payment.succeeded` produces one logged, counted record and the documented
+- [x] `OpenPaymentMethodsUseCase` returns the existing Stripe customer on a second call under the tenant scope.
+- [x] A malformed `charge.succeeded`/`payment.succeeded` produces one logged, counted record and the documented
       inbox/DLQ outcome; no unchecked cast remains in production.
-- [ ] `Payment` cannot reach `SUCCEEDED` without a ledger entry id.
-- [ ] A failed wallet in the cycle is logged with its id and period; the other wallets still bill.
-- [ ] The charge use case reads the reservation once.
+- [x] `Payment` cannot reach `SUCCEEDED` without a ledger entry id.
+- [x] A failed wallet in the cycle is logged with its id and period; the other wallets still bill.
+- [x] The charge use case reads the reservation once.
 
 ## Risks
 

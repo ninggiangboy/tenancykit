@@ -13,6 +13,7 @@ import dev.ngb.billing.money.api.wallet.WalletLookup;
 import dev.ngb.billing.money.api.wallet.WalletSummary;
 import dev.ngb.core.error.ConflictException;
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.idempotency.Fingerprint;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.pricing.application.plan.port.PlanRepository;
 import dev.ngb.billing.pricing.application.rating.port.RatingRepository;
@@ -33,14 +34,10 @@ import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.usage.api.lookup.UsageLookup;
 import dev.ngb.billing.usage.api.lookup.UsageRecord;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -211,11 +208,6 @@ public class ChargeFromUsageUseCase {
     static String setKey(List<UsageRecord> records) {
         List<String> sorted = new ArrayList<>(records.stream().map(r -> r.id().toString()).toList());
         sorted.sort(Comparator.naturalOrder());
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(String.join(",", sorted).getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(digest).substring(0, 40);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is required by the Java platform", e);
-        }
+        return Fingerprint.sha256(String.join(",", sorted)).substring(0, 40);
     }
 }

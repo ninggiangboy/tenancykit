@@ -15,6 +15,7 @@ import dev.ngb.billing.invoicing.adapter.subscription.persistence.JooqSubscripti
 import dev.ngb.billing.invoicing.adapter.subscription.persistence.JooqSubscriptionRepository;
 import dev.ngb.billing.invoicing.application.cycle.command.CloseBillingCycleUseCase;
 import dev.ngb.billing.invoicing.application.cycle.command.CollectChargeUseCase;
+import dev.ngb.billing.invoicing.application.cycle.port.CycleFailureRecorder;
 import dev.ngb.billing.invoicing.application.cycle.port.UnbilledLineRepository;
 import dev.ngb.billing.invoicing.application.cycle.service.CycleSettings;
 import dev.ngb.billing.invoicing.application.invoice.command.ApplyPaymentUseCase;
@@ -26,6 +27,7 @@ import dev.ngb.billing.invoicing.application.invoice.query.InvoiceQueries;
 import dev.ngb.billing.invoicing.application.invoice.query.InvoiceReadRepository;
 import dev.ngb.billing.invoicing.application.invoice.service.ChargeLineFactory;
 import dev.ngb.billing.invoicing.application.invoice.service.InvoiceIssuer;
+import dev.ngb.billing.invoicing.application.messaging.port.MalformedEventRecorder;
 import dev.ngb.billing.invoicing.application.subscription.command.CancelSubscriptionUseCase;
 import dev.ngb.billing.invoicing.application.subscription.command.CreateSubscriptionUseCase;
 import dev.ngb.billing.invoicing.application.subscription.command.RenewSubscriptionUseCase;
@@ -44,7 +46,10 @@ import dev.ngb.billing.pricing.api.plan.BillingCycle;
 import dev.ngb.billing.pricing.api.plan.PlanPricing;
 import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.jooq.DSLContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,6 +57,8 @@ import org.springframework.context.annotation.Configuration;
 /** Wires the invoicing module. Holds no business rules. */
 @Configuration(proxyBeanMethods = false)
 class InvoicingConfiguration {
+
+    private static final Logger LOG = LoggerFactory.getLogger(InvoicingConfiguration.class);
 
     @Bean
     InvoiceRepository invoiceRepository(DSLContext dsl) {
@@ -79,17 +86,37 @@ class InvoicingConfiguration {
         return new JooqUnbilledLineRepository(dsl);
     }
 
+    /**
+     * The application layer has no logger, so the two ways a consumer reports something it could not act on live
+     * here: an event whose payload it cannot decode, and a billing period it cannot close. Both are WARN lines with
+     * the ids the failure is about, and a counter the alert listens on.
+     */
+    @Bean
+    MalformedEventRecorder malformedEventRecorder(MeterRegistry meters) {
+        return (consumer, event, malformed) -> {
+            LOG.warn("dropping event {} of type {} for {}: {}", event.eventId(), event.type(), consumer, malformed.getMessage());
+            meters.counter("billing.events.malformed", "consumer", consumer).increment();
+        };
+    }
+
+    @Bean
+    CycleFailureRecorder cycleFailureRecorder() {
+        return (walletId, cycleStart, cycleEnd, cause) -> LOG.warn(
+                "the billing period {} to {} of wallet {} could not be closed", cycleStart, cycleEnd, walletId, cause);
+    }
+
     @Bean
     CollectChargeUseCase collectChargeUseCase(
             UnitOfWork unitOfWork, EventInbox inbox, WalletLookup wallets, UnbilledLineRepository lines, ChargeLineFactory lineFactory, CycleSettings settings,
-            Clock clock) {
-        return new CollectChargeUseCase(unitOfWork, inbox, wallets, lines, lineFactory, settings, clock);
+            Clock clock, MalformedEventRecorder malformedEvents) {
+        return new CollectChargeUseCase(unitOfWork, inbox, wallets, lines, lineFactory, settings, clock, malformedEvents);
     }
 
     @Bean
     CloseBillingCycleUseCase closeBillingCycleUseCase(
-            UnitOfWork unitOfWork, UnbilledLineRepository lines, InvoiceIssuer issuer, CycleSettings settings, IdGenerator ids, Clock clock) {
-        return new CloseBillingCycleUseCase(unitOfWork, lines, issuer, settings, ids, clock);
+            UnitOfWork unitOfWork, UnbilledLineRepository lines, InvoiceIssuer issuer, CycleSettings settings, IdGenerator ids, Clock clock,
+            CycleFailureRecorder failures) {
+        return new CloseBillingCycleUseCase(unitOfWork, lines, issuer, settings, ids, clock, failures);
     }
 
     @Bean
@@ -109,8 +136,9 @@ class InvoicingConfiguration {
 
     @Bean
     ApplyPaymentUseCase applyPaymentUseCase(
-            UnitOfWork unitOfWork, EventInbox inbox, InvoiceRepository invoices, CreditWallet credit, EventPublisher events, IdGenerator ids, Clock clock) {
-        return new ApplyPaymentUseCase(unitOfWork, inbox, invoices, credit, events, ids, clock);
+            UnitOfWork unitOfWork, EventInbox inbox, InvoiceRepository invoices, CreditWallet credit, EventPublisher events, IdGenerator ids, Clock clock,
+            MalformedEventRecorder malformedEvents) {
+        return new ApplyPaymentUseCase(unitOfWork, inbox, invoices, credit, events, ids, clock, malformedEvents);
     }
 
     @Bean
