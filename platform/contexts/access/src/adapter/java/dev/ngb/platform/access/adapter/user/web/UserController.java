@@ -1,7 +1,7 @@
 package dev.ngb.platform.access.adapter.user.web;
 
-import dev.ngb.core.id.TenantId;
-import dev.ngb.core.security.PermissionScope;
+import dev.ngb.core.security.Actor;
+import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.user.command.CreateUserUseCase;
@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/users")
 class UserController {
 
-    record CreateRequest(UUID tenantId, String tenantCode, String scope, String email, String displayName, String temporaryPassword) {}
+    record CreateRequest(String tenantCode, String email, String displayName, String temporaryPassword) {}
 
     record UpdateRequest(String action, String name) {}
 
@@ -48,21 +48,25 @@ class UserController {
     private final ManageUserUseCase manageUser;
     private final ManageUserPermissionsUseCase managePermissions;
     private final UserQueries queries;
+    private final CurrentActor currentActor;
 
     UserController(
-            CreateUserUseCase createUser, ManageUserUseCase manageUser, ManageUserPermissionsUseCase managePermissions, UserQueries queries) {
+            CreateUserUseCase createUser, ManageUserUseCase manageUser, ManageUserPermissionsUseCase managePermissions, UserQueries queries,
+            CurrentActor currentActor) {
         this.createUser = createUser;
         this.manageUser = manageUser;
         this.managePermissions = managePermissions;
         this.queries = queries;
+        this.currentActor = currentActor;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission("platform:user:manage")
     UserResponse create(@RequestBody CreateRequest request) {
-        return UserResponse.of(createUser.execute(new CreateUserUseCase.Command(
-                request.tenantCode(), new TenantId(request.tenantId()), PermissionScope.valueOf(request.scope()),
+        Actor actor = currentActor.get();
+        return UserResponse.of(createUser.execute(actor, new CreateUserUseCase.Command(
+                request.tenantCode(), actor.tenantId(), actor.scope(),
                 request.email(), request.displayName(), request.temporaryPassword())));
     }
 
@@ -89,7 +93,7 @@ class UserController {
     ResponseEntity<UserResponse> setPermission(
             @PathVariable UUID id, @PathVariable String code, @RequestParam boolean grant,
             @RequestHeader(value = "If-Match", required = false) String ifMatch) {
-        User user = managePermissions.execute(new ManageUserPermissionsUseCase.Command(
+        User user = managePermissions.execute(currentActor.get(), new ManageUserPermissionsUseCase.Command(
                 new UserId(id), code, grant, ExpectedVersion.fromIfMatch(ifMatch)));
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(user.version())).body(UserResponse.of(user));
     }

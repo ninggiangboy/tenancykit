@@ -1,4 +1,5 @@
 package dev.ngb.platform.web;
+import dev.ngb.platform.support.Actors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -78,11 +79,11 @@ class ConditionalUpdateHttpIntegrationTest {
     @Test
     void roleRenameAndReplacePermissionsFollowTheConditionalMatrix() throws Exception {
         Tenant tenant = newTenant();
-        Role role = onPlatform(() -> createRole.execute(
+        Role role = onPlatform(() -> createRole.execute(Actors.PLATFORM,
                 new CreateRoleUseCase.Command(tenant.id(), PermissionScope.TENANT, "Reader-" + suffix(), Set.of("billing:invoice:read"))));
 
         assertMatrix(platformHost(), "/api/v1/roles/" + role.id().value(), "PUT", "{\"name\":\"Renamed\"}", role.version());
-        Role reloaded = onPlatform(() -> createRole.execute(new CreateRoleUseCase.Command(
+        Role reloaded = onPlatform(() -> createRole.execute(Actors.PLATFORM, new CreateRoleUseCase.Command(
                 tenant.id(), PermissionScope.TENANT, "Second-" + suffix(), Set.of("billing:invoice:read"))));
         assertMatrix(platformHost(), "/api/v1/roles/" + reloaded.id().value() + "/permissions", "PUT",
                 "{\"permissions\":[\"billing:invoice:read\",\"billing:wallet:read\"]}", reloaded.version());
@@ -206,7 +207,7 @@ class ConditionalUpdateHttpIntegrationTest {
 
     private User newUser(Tenant tenant) {
         String email = "user-" + suffix() + "@example.test";
-        return onPlatform(() -> createUser.execute(new CreateUserUseCase.Command(
+        return onPlatform(() -> createUser.execute(Actors.PLATFORM, new CreateUserUseCase.Command(
                 tenant.code().value(), tenant.id(), PermissionScope.TENANT, email, "User", "change-me")));
     }
 

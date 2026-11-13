@@ -1,7 +1,10 @@
 package dev.ngb.platform.access.application.role.command;
 
+import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.security.Actor;
+import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.access.port.AccessRepository;
 import dev.ngb.platform.access.application.access.service.AccessPublisher;
@@ -48,12 +51,12 @@ public class ManageRoleUseCase {
         this.publisher = publisher;
     }
 
-    public Role execute(Command command) {
+    public Role execute(Actor actor, Command command) {
         return unitOfWork.transactional(() -> switch (command.action()) {
             case REPLACE_PERMISSIONS -> replacePermissions(lockedForUpdate(command), command.permissions());
             case RENAME -> rename(lockedForUpdate(command), command.name());
-            case ASSIGN -> assign(lockedForShare(command.roleId()), command.userId());
-            case UNASSIGN -> unassign(lockedForShare(command.roleId()), command.userId());
+            case ASSIGN -> assign(lockedForShare(command.roleId()), command.userId(), actor);
+            case UNASSIGN -> unassign(lockedForShare(command.roleId()), command.userId(), actor);
         });
     }
 
@@ -93,17 +96,25 @@ public class ManageRoleUseCase {
         return role;
     }
 
-    private Role assign(Role role, UserId userId) {
+    private Role assign(Role role, UserId userId, Actor actor) {
+        requireNotWider(role.scope(), actor.scope());
         User user = users.lockById(userId).orElseThrow(() -> new NotFoundException("no user " + userId));
         access.assign(role.tenantId().value(), user.id().value(), role.id().value());
         publisher.publishFor(user);
         return role;
     }
 
-    private Role unassign(Role role, UserId userId) {
+    private Role unassign(Role role, UserId userId, Actor actor) {
+        requireNotWider(role.scope(), actor.scope());
         User user = users.lockById(userId).orElseThrow(() -> new NotFoundException("no user " + userId));
         access.unassign(role.tenantId().value(), user.id().value(), role.id().value());
         publisher.publishFor(user);
         return role;
+    }
+
+    private static void requireNotWider(PermissionScope roleScope, PermissionScope caller) {
+        if (roleScope == PermissionScope.PLATFORM && caller == PermissionScope.TENANT) {
+            throw new AccessDeniedException("a tenant actor cannot assign a platform-scope role");
+        }
     }
 }

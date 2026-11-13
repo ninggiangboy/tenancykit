@@ -1,7 +1,7 @@
 package dev.ngb.platform.access.adapter.role.web;
 
-import dev.ngb.core.id.TenantId;
-import dev.ngb.core.security.PermissionScope;
+import dev.ngb.core.security.Actor;
+import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.role.command.CreateRoleUseCase;
@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/roles")
 class RoleController {
 
-    record CreateRequest(UUID tenantId, String scope, String name, Set<String> permissions) {}
+    record CreateRequest(String name, Set<String> permissions) {}
 
     record PermissionsRequest(Set<String> permissions) {}
 
@@ -50,19 +50,22 @@ class RoleController {
     private final CreateRoleUseCase createRole;
     private final ManageRoleUseCase manageRole;
     private final RoleQueries queries;
+    private final CurrentActor currentActor;
 
-    RoleController(CreateRoleUseCase createRole, ManageRoleUseCase manageRole, RoleQueries queries) {
+    RoleController(CreateRoleUseCase createRole, ManageRoleUseCase manageRole, RoleQueries queries, CurrentActor currentActor) {
         this.createRole = createRole;
         this.manageRole = manageRole;
         this.queries = queries;
+        this.currentActor = currentActor;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission("platform:role:manage")
     RoleResponse create(@RequestBody CreateRequest request) {
-        return RoleResponse.of(createRole.execute(new CreateRoleUseCase.Command(
-                new TenantId(request.tenantId()), PermissionScope.valueOf(request.scope()), request.name(), request.permissions())));
+        Actor actor = currentActor.get();
+        return RoleResponse.of(createRole.execute(actor, new CreateRoleUseCase.Command(
+                actor.tenantId(), actor.scope(), request.name(), request.permissions())));
     }
 
     @GetMapping
@@ -77,7 +80,7 @@ class RoleController {
     ResponseEntity<RoleResponse> replacePermissions(
             @PathVariable UUID id, @RequestBody PermissionsRequest request,
             @RequestHeader(value = "If-Match", required = false) String ifMatch) {
-        Role role = manageRole.execute(new ManageRoleUseCase.Command(
+        Role role = manageRole.execute(currentActor.get(), new ManageRoleUseCase.Command(
                 new RoleId(id), ManageRoleUseCase.Action.REPLACE_PERMISSIONS, request.permissions(), null, null,
                 ExpectedVersion.fromIfMatch(ifMatch)));
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(role.version())).body(RoleResponse.of(role));
@@ -88,7 +91,7 @@ class RoleController {
     ResponseEntity<RoleResponse> rename(
             @PathVariable UUID id, @RequestBody RenameRequest request,
             @RequestHeader(value = "If-Match", required = false) String ifMatch) {
-        Role role = manageRole.execute(new ManageRoleUseCase.Command(
+        Role role = manageRole.execute(currentActor.get(), new ManageRoleUseCase.Command(
                 new RoleId(id), ManageRoleUseCase.Action.RENAME, Set.of(), request.name(), null,
                 ExpectedVersion.fromIfMatch(ifMatch)));
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(role.version())).body(RoleResponse.of(role));
@@ -97,14 +100,14 @@ class RoleController {
     @PostMapping("/{id}/users/{userId}")
     @RequiresPermission("platform:role:manage")
     RoleResponse assign(@PathVariable UUID id, @PathVariable UUID userId) {
-        return RoleResponse.of(manageRole.execute(new ManageRoleUseCase.Command(
+        return RoleResponse.of(manageRole.execute(currentActor.get(), new ManageRoleUseCase.Command(
                 new RoleId(id), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, new UserId(userId), ExpectedVersion.any())));
     }
 
     @DeleteMapping("/{id}/users/{userId}")
     @RequiresPermission("platform:role:manage")
     RoleResponse unassign(@PathVariable UUID id, @PathVariable UUID userId) {
-        return RoleResponse.of(manageRole.execute(new ManageRoleUseCase.Command(
+        return RoleResponse.of(manageRole.execute(currentActor.get(), new ManageRoleUseCase.Command(
                 new RoleId(id), ManageRoleUseCase.Action.UNASSIGN, Set.of(), null, new UserId(userId), ExpectedVersion.any())));
     }
 }

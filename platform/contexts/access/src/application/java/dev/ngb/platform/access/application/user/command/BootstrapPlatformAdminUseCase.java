@@ -4,6 +4,8 @@ import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.security.Actor;
+import dev.ngb.core.security.ActorType;
 import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.platform.access.application.access.port.AccessRepository;
@@ -15,6 +17,7 @@ import dev.ngb.platform.access.domain.role.Role;
 import dev.ngb.platform.access.domain.role.RoleId;
 import dev.ngb.platform.access.domain.user.User;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Creates the first Platform administrator when the deployment configures one. It is idempotent: a configured email
@@ -23,6 +26,9 @@ import java.util.Set;
 public class BootstrapPlatformAdminUseCase {
 
     private static final String ROLE_NAME = "Platform Administrator";
+
+    private static final Actor PLATFORM_ACTOR = new Actor(
+            ActorType.SERVICE, new UUID(0, 0), RequestScope.PLATFORM_TENANT_ID, PermissionScope.PLATFORM, "platform-bootstrap", Set.of());
 
     private final UnitOfWork unitOfWork;
     private final CreateUserUseCase createUser;
@@ -56,7 +62,7 @@ public class BootstrapPlatformAdminUseCase {
         if (users.findByEmail(platform, email).isPresent()) {
             return;
         }
-        User admin = createUser.execute(new CreateUserUseCase.Command(
+        User admin = createUser.execute(PLATFORM_ACTOR, new CreateUserUseCase.Command(
                 "platform", platform, PermissionScope.PLATFORM, email, "Platform Administrator", temporaryPassword));
         unitOfWork.transactional(() -> {
             Role role = roles.findByName(platform.value(), ROLE_NAME).orElseGet(() -> {

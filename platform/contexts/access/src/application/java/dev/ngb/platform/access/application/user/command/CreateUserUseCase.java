@@ -1,10 +1,12 @@
 package dev.ngb.platform.access.application.user.command;
 
+import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.core.error.ConflictException;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.PermissionScope;
 import dev.ngb.platform.access.application.access.service.AccessPublisher;
 import dev.ngb.platform.access.application.auth.port.IdentityProviderPort;
@@ -36,7 +38,8 @@ public class CreateUserUseCase {
         this.clock = clock;
     }
 
-    public User execute(Command command) {
+    public User execute(Actor actor, Command command) {
+        requireNotWider(command.scope(), actor.scope());
         return unitOfWork.transactional(() -> {
             if (users.findByEmail(command.tenantId(), command.email()).isPresent()) {
                 throw new ConflictException("a user with this email already exists: " + command.email());
@@ -50,5 +53,11 @@ public class CreateUserUseCase {
             access.publishNew(user);
             return user;
         });
+    }
+
+    private static void requireNotWider(PermissionScope requested, PermissionScope caller) {
+        if (requested == PermissionScope.PLATFORM && caller == PermissionScope.TENANT) {
+            throw new AccessDeniedException("a tenant actor cannot create a platform-scope user");
+        }
     }
 }

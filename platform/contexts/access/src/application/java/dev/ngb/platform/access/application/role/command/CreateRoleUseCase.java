@@ -1,9 +1,11 @@
 package dev.ngb.platform.access.application.role.command;
 
+import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.PermissionScope;
 import dev.ngb.platform.access.application.permission.exception.UnknownPermissionException;
 import dev.ngb.platform.access.application.permission.port.PermissionCatalog;
@@ -12,7 +14,7 @@ import dev.ngb.platform.access.domain.role.Role;
 import dev.ngb.platform.access.domain.role.RoleId;
 import java.util.Set;
 
-/** Creates a custom role; every code must be catalogued and valid in the role's scope. */
+/** Creates a custom role; every code must be catalogued and valid in the role's scope, and the role never exceeds the actor's scope. */
 public class CreateRoleUseCase {
 
     public record Command(TenantId tenantId, PermissionScope scope, String name, Set<String> permissions) {}
@@ -31,7 +33,8 @@ public class CreateRoleUseCase {
         this.clock = clock;
     }
 
-    public Role execute(Command command) {
+    public Role execute(Actor actor, Command command) {
+        requireNotWider(command.scope(), actor.scope());
         return unitOfWork.transactional(() -> {
             command.permissions().forEach(code -> requireValid(code, command.scope()));
             Role role = Role.create(
@@ -45,6 +48,12 @@ public class CreateRoleUseCase {
         var permission = catalog.find(code).orElseThrow(() -> new UnknownPermissionException(code, "is not in the catalog"));
         if (!permission.validIn(scope)) {
             throw new UnknownPermissionException(code, "is not valid in " + scope + " scope");
+        }
+    }
+
+    private static void requireNotWider(PermissionScope requested, PermissionScope caller) {
+        if (requested == PermissionScope.PLATFORM && caller == PermissionScope.TENANT) {
+            throw new AccessDeniedException("a tenant actor cannot create a platform-scope role");
         }
     }
 }

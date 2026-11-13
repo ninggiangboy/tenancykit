@@ -1,4 +1,5 @@
 package dev.ngb.platform.access;
+import dev.ngb.platform.support.Actors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +40,7 @@ class RoleFanOutIntegrationTest {
     void aRoleWithManyHoldersRepublishesEveryHolderOnce() {
         Tenant tenant = onPlatform(() -> createTenant.execute(new CreateTenantUseCase.Command(
                 "fan" + UUID.randomUUID().toString().replace("-", "").substring(0, 10), "Fan out", "user/tester", "req-1")));
-        Role role = onPlatform(() -> createRole.execute(new CreateRoleUseCase.Command(
+        Role role = onPlatform(() -> createRole.execute(Actors.PLATFORM, new CreateRoleUseCase.Command(
                 tenant.id(), PermissionScope.TENANT, "Reader", Set.of("billing:invoice:read"))));
         UUID tenantId = tenant.id().value();
         owner.jdbc().update("""
@@ -50,7 +51,7 @@ class RoleFanOutIntegrationTest {
                 "insert into role_assignments (tenant_id, user_id, role_id) select tenant_id, id, ? from users where tenant_id = ?",
                 role.id().value(), tenantId);
 
-        onPlatform(() -> manageRole.execute(new ManageRoleUseCase.Command(
+        onPlatform(() -> manageRole.execute(Actors.PLATFORM, new ManageRoleUseCase.Command(
                 role.id(), ManageRoleUseCase.Action.REPLACE_PERMISSIONS,
                 Set.of("billing:invoice:read", "billing:wallet:read"), null, null, ExpectedVersion.any())));
 

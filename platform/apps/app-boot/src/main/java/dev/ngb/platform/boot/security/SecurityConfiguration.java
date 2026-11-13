@@ -2,8 +2,10 @@ package dev.ngb.platform.boot.security;
 
 import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.core.security.Actor;
+import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.platform.access.application.user.query.MeQueries;
+import dev.ngb.platform.access.application.permission.port.PermissionCatalog;
 import dev.ngb.core.security.Authorizer;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.platform.boot.config.PlatformProperties;
@@ -79,11 +81,16 @@ class SecurityConfiguration {
     }
 
     @Bean
-    Authorizer authorizer(CurrentActor currentActor) {
+    Authorizer authorizer(CurrentActor currentActor, PermissionCatalog catalog) {
         return code -> {
             Actor actor = currentActor.get();
             if (!actor.has(code)) {
                 throw new AccessDeniedException("missing permission " + code);
+            }
+            // Defence in depth: a tenant actor may never wield a code that only exists in a wider scope.
+            if (actor.scope() == PermissionScope.TENANT
+                    && catalog.find(code).filter(permission -> permission.validIn(PermissionScope.TENANT)).isEmpty()) {
+                throw new AccessDeniedException("permission " + code + " is not valid in tenant scope");
             }
         };
     }

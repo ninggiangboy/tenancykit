@@ -1,8 +1,13 @@
 package dev.ngb.platform.access;
+import dev.ngb.platform.support.Actors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.security.Actor;
+import dev.ngb.core.security.ActorType;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.tenancy.RequestScope;
@@ -58,12 +63,12 @@ class UserAccessEventIntegrationTest {
                 "acc" + suffix(), "Access", "user/tester", "req-1")));
         User first = newUser(tenant);
         User second = newUser(tenant);
-        Role role = onPlatform(() -> createRole.execute(new CreateRoleUseCase.Command(
+        Role role = onPlatform(() -> createRole.execute(Actors.PLATFORM, new CreateRoleUseCase.Command(
                 tenant.id(), PermissionScope.TENANT, "Reader", Set.of("billing:invoice:read"))));
 
-        onPlatform(() -> manageRole.execute(new ManageRoleUseCase.Command(
+        onPlatform(() -> manageRole.execute(Actors.PLATFORM, new ManageRoleUseCase.Command(
                 role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, first.id(), ExpectedVersion.any())));
-        onPlatform(() -> manageRole.execute(new ManageRoleUseCase.Command(
+        onPlatform(() -> manageRole.execute(Actors.PLATFORM, new ManageRoleUseCase.Command(
                 role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, second.id(), ExpectedVersion.any())));
 
         assertThat(events(first.id().value())).isNotEmpty().last().satisfies(payload -> {
@@ -71,7 +76,7 @@ class UserAccessEventIntegrationTest {
             assertThat(permissions(payload)).containsExactly("billing:invoice:read");
         });
 
-        onPlatform(() -> manageRole.execute(new ManageRoleUseCase.Command(
+        onPlatform(() -> manageRole.execute(Actors.PLATFORM, new ManageRoleUseCase.Command(
                 role.id(), ManageRoleUseCase.Action.REPLACE_PERMISSIONS,
                 Set.of("billing:invoice:read", "billing:wallet:read"), null, null, ExpectedVersion.any())));
 
@@ -89,12 +94,24 @@ class UserAccessEventIntegrationTest {
                 "dir" + suffix(), "Direct", "user/tester", "req-1")));
         User user = newUser(tenant);
 
-        onPlatform(() -> managePermissions.execute(new ManageUserPermissionsUseCase.Command(
+        onPlatform(() -> managePermissions.execute(Actors.PLATFORM, new ManageUserPermissionsUseCase.Command(
                 user.id(), "billing:wallet:read", true, ExpectedVersion.any())));
 
         assertThat(events(user.id().value())).last().satisfies(payload ->
                 assertThat(permissions(payload)).containsExactly("billing:wallet:read"));
         assertThat(onPlatform(() -> queries.list(tenant.id().value()))).hasSize(1);
+    }
+
+    @Test
+    void aTenantActorCannotCreateAPlatformScopeRole() {
+        Tenant tenant = onPlatform(() -> createTenant.execute(new CreateTenantUseCase.Command(
+                "esc" + suffix(), "Escalation", "user/tester", "req-1")));
+        Actor tenantActor = new Actor(
+                ActorType.USER, UUID.randomUUID(), tenant.id(), PermissionScope.TENANT, "tenant-admin", Set.of("platform:role:manage"));
+
+        assertThatThrownBy(() -> createRole.execute(tenantActor, new CreateRoleUseCase.Command(
+                tenant.id(), PermissionScope.PLATFORM, "Escalation", Set.of("platform:entitlement:manage"))))
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
@@ -116,7 +133,7 @@ class UserAccessEventIntegrationTest {
 
     private User newUser(Tenant tenant) {
         String email = "user-" + suffix() + "@example.test";
-        return onPlatform(() -> createUser.execute(new CreateUserUseCase.Command(
+        return onPlatform(() -> createUser.execute(Actors.PLATFORM, new CreateUserUseCase.Command(
                 tenant.code().value(), tenant.id(), PermissionScope.TENANT, email, "User " + email, "change-me")));
     }
 

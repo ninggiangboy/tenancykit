@@ -2,6 +2,8 @@ package dev.ngb.platform.access.application.user.command;
 
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.security.Actor;
+import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.access.port.AccessRepository;
 import dev.ngb.platform.access.application.access.service.AccessPublisher;
@@ -31,7 +33,7 @@ public class ManageUserPermissionsUseCase {
         this.publisher = publisher;
     }
 
-    public User execute(Command command) {
+    public User execute(Actor actor, Command command) {
         return unitOfWork.transactional(() -> {
             User user = users.lockById(command.userId()).orElseThrow(() -> new NotFoundException("no user " + command.userId()));
             command.expected().check(user.version());
@@ -39,6 +41,9 @@ public class ManageUserPermissionsUseCase {
                     .orElseThrow(() -> new UnknownPermissionException(command.permissionCode(), "is not in the catalog"));
             if (!permission.validIn(user.scope())) {
                 throw new UnknownPermissionException(command.permissionCode(), "is not valid in " + user.scope() + " scope");
+            }
+            if (actor.scope() == PermissionScope.TENANT && !permission.validIn(PermissionScope.TENANT)) {
+                throw new UnknownPermissionException(command.permissionCode(), "is not valid in tenant scope");
             }
             if (command.grant()) {
                 access.grant(user.tenantId().value(), user.id().value(), command.permissionCode());
