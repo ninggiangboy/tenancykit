@@ -1,6 +1,25 @@
 # Sample Tenant System
 
-A complete reference system that verifies integration with the Core Billing System. It follows a Cloud Resource Management model and simulates a platform that rents resources. It deploys independently of Billing but needs Billing for every financial function.
+A complete reference system that verifies integration with the suite. It follows a Cloud Resource Management model and simulates a platform that rents resources. It deploys independently of Billing but needs Billing for every financial function, and it authenticates to Billing with a Platform-issued suite token.
+
+## The Platform token flow
+
+The tenant holds a Tenant System credential Platform issued: a client id and a secret, created through Platform's
+tenant-system credential management and shown once.
+
+1. On the first call to Billing, the tenant's `PlatformTokenProvider` asks Platform for a token:
+   `POST {platform}/oauth/token`, HTTP Basic `client-id:secret`, `grant_type=client_credentials`, `audience=billing`.
+2. Platform answers a 10-minute JWT whose `scope` holds the `billing:*` codes the credential was granted.
+3. The provider caches it until 60 seconds before expiry. A burst of callers shares one refresh: the first fetches,
+   the rest wait and read the new token.
+4. Every Billing call carries `Authorization: Bearer <token>`. On a 401 the provider drops the cached token, fetches a
+   fresh one and retries exactly once; a second refusal surfaces as an authentication error.
+5. Billing derives the Tenant System from the token's `tenant_system_id` and the Tenant from `tenant_id`; the tenant
+   never sends either.
+
+`tenant.billing.api-key` and `tenant.billing.tenant-system-id` no longer exist. The token is never logged. The
+webhook endpoint registration and Billing's signed deliveries are unchanged: the registration call uses the same token
+provider, and deliveries are still verified with the endpoint's signing secret.
 
 ## Business functions
 
@@ -50,11 +69,11 @@ A complete reference system that verifies integration with the Core Billing Syst
 
 ## Responsibility
 
-It owns Resources, Orders, Execution and its own users; it decides what to do with Billing's state changes. See the division rules in [overview-and-scope.md](overview-and-scope.md) and the event contract in [webhooks-and-events.md](webhooks-and-events.md).
+It owns Resources, Orders, Execution and its own users; it decides what to do with Billing's state changes. It depends only on the technical core and the contracts: `checkNoBillingDependency` fails a build that depends on Billing or Platform, and an ArchUnit rule fails one that names their packages. See the division rules in [overview-and-scope.md](overview-and-scope.md) and the event contract in [webhooks-and-events.md](webhooks-and-events.md).
 
 ## Stack
 
-Same backend and frontend toolchain as Billing, see [architecture.md](architecture.md). It builds against the same technical core as Billing (`core/`): `UnitOfWork`, `Clock` and `IdGenerator`. It plugs no `TransactionScopeHook` into `UnitOfWork` because it has no row-level security.
+Same backend and frontend toolchain as Billing, see [architecture.md](architecture.md). It builds against the same technical core as the other services (`core/`): `UnitOfWork`, `Clock` and `IdGenerator`. It plugs no `TransactionScopeHook` into `UnitOfWork` because it has no row-level security.
 
 ## Module layout
 
@@ -71,7 +90,7 @@ in Billing:
 | `usage` | `usage` | Locally recorded usage forwarded to Billing |
 | `execution` | `queue` | The worker's application layer only; the queue table is owned by `resource` |
 | `webhook` | `event` | Inbound Billing webhooks: verification, deduplication and the tenant's policy |
-| `billing-client` | `client` | The Billing REST contracts and their HTTP adapter |
+| `billing-client` | `client` | The Billing REST contracts and their HTTP adapter, and the Platform token provider that authenticates them |
 | `apps:app-boot` | | Spring wiring, security, jobs, the HTTP edge and the Flyway migrations |
 | `libs:shared-core` | | Plain-Java errors and money used by every module |
 | `libs:jooq-schema` | | jOOQ classes generated from the migrations and committed |

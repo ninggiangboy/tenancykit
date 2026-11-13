@@ -1,69 +1,100 @@
 # Authentication and Authorization
 
-Keycloak authenticates. Billing authorizes.
+Keycloak authenticates. Platform authorizes. Apps enforce.
 
 ## Authentication
 
-Keycloak is the shared Identity Provider for the whole Platform.
+Keycloak is the shared Identity Provider for the whole suite.
 
 - A single shared Keycloak Realm.
 - Integration through OAuth 2.0 and OpenID Connect.
-- Keycloak owns authentication, credentials and login session management.
-- Billing uses the OIDC Subject (`sub`) to link to its internal User.
-- A User's identity is distinguished per Tenant. Email is never the sole identifier across the Platform, and the same email may exist in several Tenants under independent identities.
+- Keycloak owns authentication, credentials, temporary passwords and login sessions.
+- Platform links a Keycloak identity to its own user through the OIDC subject; an app never does.
+- A user's identity is distinguished per Tenant. Email is never the sole identifier across the suite, and the same
+  email may exist in several Tenants under independent identities.
 
-Keycloak must be configured to allow duplicate emails. Usernames are unique within a Realm by default, so the login identifier is the Tenant-scoped username `{tenant-code}:{email}`, built by the Billing UI from the hostname. Platform Users use the reserved code `platform`. The Realm is configured by `ops/keycloak/realm-export.json`.
+Keycloak is configured to allow duplicate emails. Usernames are unique within a realm, so the login identifier is the
+Tenant-scoped username `{tenant-code}:{email}`, built from the hostname; Platform users use the reserved code
+`platform`. The realm is defined by `ops/keycloak/realm-export.json`.
 
-Every token carries a `tenant_code` claim, set from a user attribute that only an administrator can edit. Billing accepts a token only when that claim equals the Tenant the request hostname resolved to; a mismatch is a 403, so a session for one Tenant cannot be used in another. Billing creates the Keycloak identity when it creates a user, and removes it again if storing the user fails.
+Platform creates the Keycloak identity when it creates a user, and removes it again if storing the user fails. A new
+identity has a temporary password that Keycloak refuses to hand out from a direct grant until it is changed; a user
+signs in through the normal flow and is then active.
 
-## Billing Users
+## Platform Users and RBAC
 
-A Billing User is an account used to access and administer Billing.
+A Platform User is an account used to administer the suite. A Tenant User administers and operates the apps of one
+Tenant. They are not the same as a Tenant System's business user, which an app sees only as a Customer mapping (see
+[customers-and-tenant-mapping.md](customers-and-tenant-mapping.md)).
 
-- **Platform User** administers the Platform.
-- **Tenant User** administers and operates Billing within one Tenant. Not to be confused with a Tenant System's business user, see [customers-and-tenant-mapping.md](customers-and-tenant-mapping.md).
-- The same email in several Tenants gives independent accounts.
-- Each User is linked to a Keycloak identity through the OIDC Subject.
-- Roles and Permissions are managed by Billing.
-
-## Authorization: Hybrid RBAC
+Authorization is centralized RBAC in Platform:
 
 | Part | Meaning |
 |---|---|
-| User | Account of a person administering Billing |
-| Role | Customizable group of Permissions |
-| Permission | The right to perform one specific action |
-| Role Assignment | Assigns a Role to a User within a Scope |
-| Role Permission | Which Permissions belong to a Role |
-| User Permission | A Permission granted directly to a User |
-| Authorization Policy | Checks access from Permission, Scope and extra conditions when needed |
+| User | An account of a person, at `platform` or `tenant` scope |
+| Role | A customizable group of permissions |
+| Permission | The right to perform one action, named `<app>:<resource>:<action>` |
+| Role Assignment | Assigns a role to a user within a scope |
+| Role Permission | Which permissions belong to a role |
+| User Permission | A permission granted directly to a user |
+| Permission catalog | `contracts/permissions/<app>.yaml`: the codes an app declares, with the scopes that may hold them and whether a Tenant System credential may carry them |
 
-Two scopes exist:
+Two scopes exist: `platform` administers the whole suite and its Tenants; `tenant` administers one Tenant. A user can
+hold several roles and permissions in both scopes. Roles are managed dynamically through the database, never
+hardcoded; Platform seeds a Platform Administrator role and, per Tenant, a Tenant Administrator role holding every
+tenant-scope code.
 
-- **Platform Scope** administers the whole Platform and its Tenants.
-- **Tenant Scope** administers data and operations inside one Tenant.
+Platform resolves a user's effective permission set from their roles and direct grants and puts it in the suite token
+or the `/api/v1/me` answer. An app receives the codes for its own app only: a `billing`-audience token carries only
+`billing:*` codes, filtered at issuance, so a code for another app can never appear.
 
-A User can hold several Roles and Permissions in different Scopes.
+## Suite tokens (machine to machine)
 
-Roles are managed dynamically through the database and the UI and are never hardcoded. The system may ship some default Roles when a Platform or Tenant is initialized.
+A Tenant System is a third party that does not share the Platform's identity provider, so it does not authenticate
+through Keycloak. It exchanges a Platform-issued client credential for a short-lived suite token.
 
-## Tenant Systems (machine to machine)
+- Platform issues the credential: a key id and a secret, one per Tenant System, stored as a hash and shown once. A
+  Tenant User creates, rotates (with an overlap window) and revokes it; a Tenant System never creates its own.
+- A service client (`PLATFORM_SERVICE_CLIENT_ID`) works the same way for a trusted service, such as Billing's replica
+  rebuild; its secret's SHA-256 is configuration.
+- The grant is `POST /oauth/token` with HTTP Basic client authentication, `grant_type=client_credentials` and
+  `audience=<app>`. A tenant-system token carries `tenant_id`, `tenant_code` and `tenant_system_id`; its `scope` holds
+  only the granted codes for that app. The token lives 10 minutes.
+- An app derives the Tenant and the Tenant System from the token, never from a client-supplied `tenant_id`, and
+  checks the Tenant System is active in its replica. Ownership bounds what a Tenant System may see: it reaches only
+  the Customers it mapped and their wallets, reservations, charges, payments, usage and ratings; a resource owned by
+  another Tenant System in the same Tenant answers 404. A Tenant User keeps the tenant-wide view.
+- The operations a Tenant System may call are published in
+  [contracts/openapi/billing-tenant-system.yaml](../contracts/openapi/billing-tenant-system.yaml), generated from the
+  same code as the full contract. Each operation carries its required permission and its allowed callers.
+- Revocation latency: a revoked credential's existing tokens stay valid until they expire (at most 10 minutes);
+  disabling the Tenant System is immediate, because every app re-checks `tenant_systems.status` on each request.
+- Rejected: a Keycloak client per Tenant System, permissions inside Keycloak tokens, and per-request introspection of
+  every call. The suite token carries its own codes and the app enforces them from its replica, so a request costs no
+  call to Platform.
 
-A Tenant System is a third party that self-serves and does not share the Platform's identity provider, so it does not authenticate through Keycloak.
+## Enforcement from the replica
 
-- Billing issues the credential, one per Tenant System, bound to `tenant_system_id`. A Tenant User creates, rotates and revokes it in Tenant Administration; a Tenant System never creates its own credential.
-- Tenant System → Billing uses a bearer secret over TLS plus an `Idempotency-Key`. Scopes and a rate limit attach to the credential.
-- Billing derives the Tenant and the Tenant System from the credential, never from the hostname or a client-supplied `tenant_id`.
-- The credential's scopes bound what it may call; ownership bounds what it may see. A Tenant System reaches only the Customers it mapped, and the wallets, reservations, charges, payments, usage and ratings that belong to those Customers. A webhook endpoint belongs to the Tenant System that registered it. A resource owned by another Tenant System in the same Tenant answers 404, exactly like a resource that does not exist. A Tenant User keeps the tenant-wide view.
-- The operations a Tenant System may call are published in [contracts/openapi/billing-tenant-system.yaml](../contracts/openapi/billing-tenant-system.yaml), generated from the same code as the full contract. Each operation carries its required permission and its allowed callers.
-- The secret is hashed at rest, shown once, never logged and never returned by a read API. Rotation supports an overlap window; revocation is immediate. Create, rotate and revoke are audited.
-- Billing → Tenant System Webhooks are signed with a secret separate from the API credential, see [webhooks-and-events.md](webhooks-and-events.md).
-- Rejected: a Keycloak client per Tenant System, inbound HMAC on every request, and reuse of the API credential as the Webhook signing secret.
+An app does not call Platform per request. It keeps a replica of the few Platform facts it needs — `tenants`,
+`tenant_domains`, `tenant_systems`, `user_grants`, `app_entitlements` — rebuilt from the snapshot API and kept current
+by `platform.events`. On each request the app resolves the host to a Tenant, verifies the token, reads the actor's
+grants and entitlement from its replica, and enforces the `@RequiresPermission` code against them.
+
+The trade is revocation latency for a cheap request path. Revoking a role at Platform reaches an app when its
+`user-access.changed` event arrives, typically well under a second; the suite smoke test asserts it inside 5 seconds.
+The alternative, asking Platform on every request, would add a network hop and a failure mode to every call, and was
+rejected.
 
 ## Billing Session (Customer Portal)
 
-The Customer Portal has no Billing login. A Tenant System issues a Billing Session for one mapped Customer through `POST /api/v1/billing-sessions` (`billing-session:create`). The single-use token in the portal URL is exchanged for an HttpOnly, Secure, SameSite cookie; the session principal carries the Tenant, that Customer and the session permissions only. Every portal query takes the Customer from the principal, and a session issued in one Tenant is not usable in another. State-changing calls use a double-submit CSRF token, and CORS is limited to the tenant hostname. See [billing-session-and-portal.md](billing-session-and-portal.md).
+The Customer Portal has no login. A Tenant System issues a Billing Session for one mapped Customer through
+`POST /api/v1/billing-sessions` (`billing:billing-session:create`). The single-use token in the portal URL is
+exchanged for an HttpOnly, Secure, SameSite cookie; the session principal carries the Tenant, that Customer and the
+session permissions only. Every portal query takes the Customer from the principal, and a session issued in one Tenant
+is not usable in another. State-changing calls use a double-submit CSRF token, and CORS is limited to the tenant
+hostname. See [billing-session-and-portal.md](billing-session-and-portal.md).
 
 ## Token and session checks
 
-The token checks (issuer, audience, expiry, subject) and the rule that a session from one Tenant cannot be used in another are listed in [security-and-reliability.md](security-and-reliability.md).
+The token checks (issuer, audience, expiry, subject), the two issuers an app accepts, and the rule that a session from
+one Tenant cannot be used in another are listed in [security-and-reliability.md](security-and-reliability.md).

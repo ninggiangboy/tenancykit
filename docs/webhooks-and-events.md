@@ -2,7 +2,8 @@
 
 ## Tenant System to Billing
 
-Billing offers a REST API and a mechanism for receiving Events from the Tenant System. Integrated operations:
+Billing offers a REST API the Tenant System calls with a Platform-issued suite token, and a mechanism for receiving
+Events from the Tenant System. Integrated operations:
 
 - Customer Mapping
 - Pricing and Cost Estimation
@@ -39,7 +40,7 @@ This table is the specification's example list and is not complete. The event sc
 - Events are never used to impose an action on the Tenant System.
 - The Tenant System defines its own policy for handling Events. For example, on `payment.failed` it may record a debt, extend the payment period, suspend the Resource, or keep providing the service. Billing does not decide for it.
 - Supports Retry, Signature Verification and Idempotency.
-- Outbound Webhooks are signed with HMAC-SHA256 over the timestamp and the raw request body, carry the timestamp and a key id, reject a stale timestamp, and process an event id once. The signing secret is separate from the API credential a Tenant System uses to call Billing.
+- Outbound Webhooks are signed with HMAC-SHA256 over the timestamp and the raw request body, carry the timestamp and a key id, reject a stale timestamp, and process an event id once. The signing secret is separate from the suite token a Tenant System uses to call Billing.
 - Keeps delivery history and processing status, and supports resending a Webhook.
 - A Tenant configures its Webhook Endpoints and the Event types it wants to receive.
 
@@ -65,3 +66,18 @@ measured from the delivery row's creation to the completed attempt; it therefore
 the consumer transaction, and the end-to-end number is the load test's.
 
 Reliability mechanics (outbox, backoff, dead-letter queue, idempotent consumers) are in [security-and-reliability.md](security-and-reliability.md). Inbound Stripe webhooks are in [payments-and-stripe.md](payments-and-stripe.md).
+
+## Between services: `billing.events`
+
+Webhooks stay in Billing: a Tenant System still registers an endpoint and verifies Billing's signed deliveries, so
+nothing above changes for a tenant. What is new is Billing's own AMQP publication, which serves the other apps of the
+suite rather than a tenant.
+
+- Every event type with a schema under `contracts/events/billing` is exported to the `billing.events` topic exchange,
+  with the event type as the routing key. The outbox relay publishes it from the same row the webhook sender reads, so
+  a subscriber and a webhook see the same fact.
+- The envelope, the version guard, the dead-letter handling and the rebuild procedure are the suite's, not Billing's:
+  see [suite-messaging.md](suite-messaging.md).
+- `billing.events` has no consumer today. It exists so a future app (for example CRM) can react to a charge without
+  Billing changing; the routing keys and payloads are already the published event schemas, so the exchange has no
+  separate contract to keep.

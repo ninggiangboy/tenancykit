@@ -50,10 +50,10 @@ Items 1, 2, 3, 6 and 7 were confirmed by the project owner on 2026-11-09; item 4
 | 8 | [Payments and Stripe](./phase-08-payments-and-stripe.md) | 7d | 5, 6 | Completed |
 | 9 | [Invoicing and subscriptions](./phase-09-invoicing-and-subscriptions.md) | 6d | 7, 8 | Completed |
 | 10 | [Billing session and portal API](./phase-10-billing-session-and-portal-api.md) | 3d | 5, 8 | Completed |
-| 11 | [Sample Tenant System backend](./phase-11-sample-tenant-backend.md) | 8d | 7, 8, 9, 10 | Pending |
-| 12 | [Web workspace and admin apps](./phase-12-web-workspace-and-admin-apps.md) | 8d | 3, then contracts from 4-9 | Pending |
-| 13 | [Customer portal and sample tenant UI](./phase-13-customer-portal-and-sample-ui.md) | 7d | 10, 11, 12 | Pending |
-| 14 | [End-to-end scenarios, hardening and docs](./phase-14-e2e-hardening-docs.md) | 5d | all | Pending |
+| 11 | [Sample Tenant System backend](./phase-11-sample-tenant-backend.md) | 8d | 7, 8, 9, 10 | Done (`tenant/` exists; it now authenticates with a Platform-issued suite token) |
+| 12 | [Web workspace and admin apps](./phase-12-web-workspace-and-admin-apps.md) | 8d | 3, then contracts from 4-9 | Cancelled (superseded by the Suite Console follow-up plan) |
+| 13 | [Customer portal and sample tenant UI](./phase-13-customer-portal-and-sample-ui.md) | 7d | 10, 11, 12 | Cancelled (superseded by the Suite Console follow-up plan) |
+| 14 | [End-to-end scenarios, hardening and docs](./phase-14-e2e-hardening-docs.md) | 5d | all | Partly superseded: the Billing-only E2E scope moved to the suite smoke test in the enterprise-suite-foundation plan |
 
 Phases 1 to 5 are strictly sequential: they prove every architectural rule on one real money flow before the remaining contexts copy it. After phase 7, phases 8, 9 and 10 touch separate modules and can be built in parallel by file ownership; phase 12 can start once phase 3 publishes an OpenAPI contract and follows each later API. Only phase 1 needs a decision-heavy spike; the rest follow known patterns.
 

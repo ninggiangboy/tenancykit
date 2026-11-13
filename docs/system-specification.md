@@ -1,5 +1,10 @@
 # Core Billing System – System Specification
 
+> **Historical baseline.** This is the original specification, kept unchanged for reference. It predates the suite
+> split: Platform and Billing are now separate services, Platform owns tenancy, users and access, and an app enforces
+> what Platform grants. Where this document and a topic document differ, the topic document wins — see
+> [README.md](README.md) and [overview-and-scope.md](overview-and-scope.md).
+
 ## 1. System Scope
 
 Build a standalone Core Billing System that acts as the central hub for financial operations and charging across many kinds of resource-rental services.
@@ -568,7 +573,7 @@ The Sample Tenant System must be deployable independently of the Billing System,
 - Each Tenant has an independent Stripe Account Configuration, supporting Direct Integration and Stripe Connect.
 - A Customer can only access and act within the scope of the Billing Session issued to them.
 - Tenants must be fully isolated in data and access rights.
-- The two systems are independent and communicate through API and Events.
+- The services are independent and communicate through signed API calls and Events.
 
 ## 13. Relationships Between Components
 
@@ -735,7 +740,7 @@ Sample Tenant System – Cloud Resource Management
 
 A complete sample system that verifies Billing integration and simulates Compute, Storage, Bandwidth and Workload services.
 
-The two systems are deployed independently and communicate through REST API, Events and Webhooks.
+The services are deployed independently and communicate through REST API, Events and Webhooks.
 
 Final goal: the Core Billing System can be used by many different Tenant Systems regardless of service type, deployment technology or each Tenant's internal business structure.
 

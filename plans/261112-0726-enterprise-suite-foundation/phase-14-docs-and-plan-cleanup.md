@@ -1,7 +1,7 @@
 ---
 phase: 14
 title: "Docs and plan cleanup"
-status: pending
+status: done
 priority: P2
 effort: "0.5d"
 dependencies: [1, 2, 3, 4, 5, 6, 7, 8, 12, 13]
@@ -46,11 +46,11 @@ Modify plans:
 
 ## Todo
 
-- [ ] Every listed doc updated; two new docs written
-- [ ] Links verified
-- [ ] Stale-claim grep clean
-- [ ] Old plan phases 11-14 reconciled
-- [ ] Journal entry
+- [x] Every listed doc updated; two new docs written
+- [x] Links verified
+- [x] Stale-claim grep clean
+- [x] Old plan phases 11-14 reconciled
+- [ ] Journal entry (written separately)
 
 ## Verification
 

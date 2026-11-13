@@ -1,7 +1,12 @@
 # Runtime profiles and deployment
 
-One jar runs in three deployment shapes. `dev` and `test` start with no profile, which activates `api` and `worker`
-together — the all-in-one behaviour from before the split; production starts one of the profiles below.
+Each service jar runs in one shape. Billing's one jar runs in three: `api`, `worker` and `migrate`. `dev` and `test`
+start Billing with no profile, which activates `api` and `worker` together — the all-in-one behaviour from before the
+split; production starts one of the profiles below.
+
+Platform and the sample tenant have no such split; each runs as one process and migrates on start. Under `docker
+compose`, Platform and the tenant boot normally, while Billing writes its schema once through `billing-migrate` and
+its `api` and `worker` runtimes connect as `billing_app` with Flyway off.
 
 | Profile | Serves | Builds | Migrates |
 |---|---|---|---|
@@ -22,11 +27,30 @@ guard the dev/test default would load both files, and the worker would win every
 Deploy in the order `migrate`, `api`, `worker`. The migrate step is the only writer of schema; api and worker connect
 as the unprivileged application role with Flyway switched off, so a rolling start never races a migration.
 
+## The suite's processes
+
+`docker compose up` runs one reverse proxy, one PostgreSQL server (one database per service), one RabbitMQ, Keycloak,
+Platform, Billing's api and worker, and the sample tenant. The reverse proxy routes on the Host header only: it adds
+no logic, retries nothing and rewrites no body. See [suite-messaging.md](suite-messaging.md) for the broker and
+[platform-service.md](platform-service.md) for Platform's shape.
+
+| Process | Runs | Reaches |
+|---|---|---|
+| `caddy` | The route table in `ops/caddy/Caddyfile` | Platform and Billing |
+| `platform` | Tenancy, access, integration, the token endpoint, the JWKS, the snapshot API, the outbox relay | Its database, the broker, Keycloak |
+| `billing` (`api`) | HTTP, the portal and Stripe webhooks; the replica rebuild and the `platform.events` listener | Its database, the broker, Platform |
+| `billing-worker` (`worker`) | Every Billing job: outbox relay, webhook delivery, billing cycle, renewals and so on | Its database, the broker |
+| `billing-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
+| `tenant` | Its own HTTP surface, webhook verification, the Platform token provider, the execution worker | Its database, Platform, Billing |
+
 ## What each profile owns
 
 - **Jobs.** `worker` owns outbox relay, webhook delivery, subscription renewal, billing cycle close, reservation
   expiry, ledger verification, Stripe retry, Stripe reconciliation and rate-limit cleanup.
   `api` owns none of them. A test asserts both halves.
+- **The replica listener.** The `platform.events` listener lives in Billing's `worker` (a `@Profile("worker")`
+  container), started after the rebuild by `ReplicaBootstrap`, so the `api` runtime stays free of broker consumption
+  while the worker keeps the replica current. A run with no profile (dev and test) activates both.
 - **Jobs that must not run twice.** Ledger verification and Stripe reconciliation take a time-bounded lease in
   `job_leases`; a per-day `job_runs` record makes a second ledger verification the same day a no-op. Ledger
   verification runs on a short fixed delay from 03:00 UTC rather than once at 03:00: a worker that dies mid-round

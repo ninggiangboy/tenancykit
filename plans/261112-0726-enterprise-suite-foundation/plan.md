@@ -1,7 +1,7 @@
 ---
 title: "Enterprise suite foundation: Platform service and RabbitMQ"
 description: "Turn the repo into the foundation of a multi-tenant SaaS suite: extract Platform from Billing and connect the services through RabbitMQ."
-status: pending
+status: completed
 priority: P1
 effort: 29d
 branch: dev
@@ -59,9 +59,9 @@ Business apps (CRM, HR...), a Notification Hub or any email, in-app, SMS or push
 | 9 | [Notification Hub and webhook move](./phase-09-notification-hub-and-webhooks.md) | - | - | Cancelled |
 | 10 | [Email and templates](./phase-10-email-and-templates.md) | - | - | Cancelled |
 | 11 | [In-app notifications](./phase-11-in-app-notifications.md) | - | - | Cancelled |
-| 12 | [Tenant System migration](./phase-12-tenant-system-migration.md) | 1d | 6 | Pending |
-| 13 | [Suite runtime and isolation](./phase-13-suite-runtime-and-isolation.md) | 2.5d | 4-8, 12 | Pending |
-| 14 | [Docs and plan cleanup](./phase-14-docs-and-plan-cleanup.md) | 0.5d | 1-8, 12, 13 | Pending |
+| 12 | [Tenant System migration](./phase-12-tenant-system-migration.md) | 1d | 6 | Done |
+| 13 | [Suite runtime and isolation](./phase-13-suite-runtime-and-isolation.md) | 2.5d | 4-8, 12 | Done |
+| 14 | [Docs and plan cleanup](./phase-14-docs-and-plan-cleanup.md) | 0.5d | 1-8, 12, 13 | Done |
 
 ## Cross-plan dependencies
 
@@ -69,6 +69,28 @@ Business apps (CRM, HR...), a Notification Hub or any email, in-app, SMS or push
 |---|---|---|
 | Supersedes phases 11-14 in part | `261109-1625-core-billing-implementation` | Phases 12-13 (web admin, portal UI) are replaced by a Suite Console follow-up plan; phase 14 there loses the Billing-only E2E scope |
 | Supersedes one decision | `261112-0816-shared-core-extraction` | Outbox and inbox implementations move from Billing to `core/core-messaging` |
+
+## Outcome (2026-11-13)
+
+Phases 12, 13 and 14 landed on `dev`:
+
+- **12. Tenant System migration.** `tenant/` no longer holds an API key: `PlatformTokenProvider` exchanges its
+  Platform client credentials at `POST /oauth/token`, caches the token until 60 seconds before expiry, shares one
+  refresh across concurrent callers and refreshes once on a 401 (`TokenClient`). `NewCustomer`/`byExternalUser` lost
+  their `tenantSystemId`, because Billing derives it from the token. `checkNoBillingDependency` now also rejects
+  Platform and the service-only core modules, and an ArchUnit rule rejects any reference to another service's code.
+  `./gradlew build` is green and `git grep -n "api-key\|SAMPLE_TENANT_BILLING_API_KEY" tenant` returns nothing.
+- **13. Suite runtime and isolation.** Three multi-stage Dockerfiles (build context at the repo root). One PostgreSQL
+  with a database, owner role and app role per service and `revoke connect` from public; one RabbitMQ user per service
+  limited by regex; a Caddy that routes on Host only; a `billing-migrate` step and health-gated compose. `suite.yml`
+  runs the whole stack. Both scripts pass against the running suite. Two real defects surfaced and were fixed: the
+  inbox carried a foreign key to `tenants` that made a new tenant's first event impossible to record, and
+  `SuiteJwtDecoders` built its Nimbus decoder without naming ES256, so it defaulted to RS256 and refused every suite
+  token. The first now has `V25__inbox_without_tenant_fk.sql`; the second names ES256 for Platform and RS256 for the
+  user realm, with a real-JWKS regression test. `./gradlew build` is green in all four builds.
+- **14. Docs and plan cleanup.** Every listed doc rewritten for the suite model, two new docs (`platform-service.md`,
+  `suite-messaging.md`), the index updated, the specification marked as the historical baseline, and the old plan's
+  phases 11-14 reconciled. Every relative link resolves and both stale-claim greps are clean.
 
 ## Key decisions carried in
 
