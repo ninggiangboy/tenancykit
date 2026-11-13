@@ -1,9 +1,9 @@
 package dev.ngb.tenant.boot.bootstrap;
 
+import dev.ngb.core.feign.FeignSettings;
+import dev.ngb.core.feign.StaticTokenProvider;
+import dev.ngb.core.feign.TokenProvider;
 import dev.ngb.tenant.billing.adapter.client.feign.BillingFeignClientFactory;
-import dev.ngb.tenant.billing.adapter.client.http.HttpBillingSettings;
-import dev.ngb.tenant.billing.adapter.client.token.StaticTokenProvider;
-import dev.ngb.tenant.billing.adapter.client.token.TokenProvider;
 import dev.ngb.tenant.billing.api.client.BillingAdmin;
 import dev.ngb.tenant.billing.api.client.BillingWebhooks;
 import dev.ngb.tenant.billing.api.model.PricingPlan;
@@ -32,7 +32,7 @@ class BootstrapRunner implements ApplicationRunner {
 
     private final CatalogQueries catalog;
     private final AttachBillingPlanUseCase attach;
-    private final HttpBillingSettings tenantSettings;
+    private final FeignSettings tenantSettings;
     private final TokenProvider tenantTokens;
     private final String adminToken;
     private final String webhookUrl;
@@ -41,7 +41,7 @@ class BootstrapRunner implements ApplicationRunner {
     BootstrapRunner(
             CatalogQueries catalog,
             AttachBillingPlanUseCase attach,
-            HttpBillingSettings tenantSettings,
+            FeignSettings tenantSettings,
             TokenProvider tenantTokens,
             @Value("${tenant.bootstrap.admin-token:}") String adminToken,
             @Value("${tenant.bootstrap.webhook-url:http://localhost:8082/webhooks/billing}") String webhookUrl,

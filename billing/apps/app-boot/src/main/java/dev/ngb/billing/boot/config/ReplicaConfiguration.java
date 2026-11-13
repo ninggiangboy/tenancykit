@@ -1,5 +1,11 @@
 package dev.ngb.billing.boot.config;
 
+import dev.ngb.billing.boot.replica.feign.FeignSnapshotTransport;
+import dev.ngb.core.feign.ClientCredentialsTokenProvider;
+import dev.ngb.core.feign.FeignFailures;
+import dev.ngb.core.feign.FeignSettings;
+import dev.ngb.core.feign.TokenProvider;
+import dev.ngb.core.feign.TokenSettings;
 import dev.ngb.core.messaging.inbound.AmqpInboundDispatcher;
 import dev.ngb.core.messaging.inbound.InboundEventHandler;
 import dev.ngb.core.replica.ReplicaBootstrap;
@@ -11,20 +17,17 @@ import dev.ngb.core.replica.security.ReplicaActorResolver;
 import dev.ngb.core.replica.security.SuiteJwtDecoders;
 import dev.ngb.core.replica.web.ReplicaEntitlements;
 import dev.ngb.core.replica.web.ReplicaHostResolver;
+import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
-import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import org.jooq.DSLContext;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
-import org.springframework.web.client.RestClient;
 
 /**
  * Wires `core-replica` into Billing: the snapshot it is rebuilt from, the five guarded upserts, the platform-events
@@ -92,12 +95,30 @@ class ReplicaConfiguration {
     }
 
     @Bean
-    SnapshotClient snapshotClient(ReplicaProperties properties) {
-        Duration timeout = properties.replica().requestTimeout();
-        JdkClientHttpRequestFactory requests =
-                new JdkClientHttpRequestFactory(HttpClient.newBuilder().connectTimeout(timeout).build());
-        requests.setReadTimeout(timeout);
-        return new SnapshotClient(new PlatformSnapshotTransport(properties, RestClient.builder().requestFactory(requests)));
+    SnapshotClient snapshotClient(
+            ReplicaProperties properties,
+            Clock clock,
+            @Value("${suite.replica.max-attempts:3}") int maxAttempts,
+            @Value("${suite.replica.retry-backoff:PT0.5S}") Duration retryBackoff,
+            @Value("${suite.replica.refresh-skew:PT30S}") Duration refreshSkew) {
+        ReplicaProperties.Replica replica = properties.replica();
+        FeignSettings settings = new FeignSettings(
+                "Platform",
+                replica.platformBaseUrl(),
+                replica.requestTimeout(),
+                replica.requestTimeout(),
+                maxAttempts,
+                retryBackoff);
+        TokenSettings tokenSettings = TokenSettings.forBaseUrl(
+                replica.platformBaseUrl(),
+                replica.clientId(),
+                replica.clientSecret(),
+                "platform",
+                replica.requestTimeout(),
+                replica.requestTimeout(),
+                refreshSkew);
+        TokenProvider tokens = new ClientCredentialsTokenProvider(tokenSettings, clock, FeignFailures.core());
+        return new SnapshotClient(FeignSnapshotTransport.create(settings, tokens, FeignFailures.core()));
     }
 
     /**
@@ -142,62 +163,5 @@ class ReplicaConfiguration {
                 // A child row (a domain, a user's grants) can arrive before its tenant when the producer backed off on
                 // the parent, so the replica waits about a minute for the parent before dead-lettering.
                 AmqpInboundDispatcher.retry(8, 500, 20_000));
-    }
-
-    /** The Spring Web implementation of the snapshot HTTP calls, kept out of core so core stays framework-light. */
-    static final class PlatformSnapshotTransport implements SnapshotClient.SnapshotTransport {
-
-        private final ReplicaProperties properties;
-        private final RestClient.Builder builder;
-
-        PlatformSnapshotTransport(ReplicaProperties properties, RestClient.Builder builder) {
-            this.properties = properties;
-            this.builder = builder;
-        }
-
-        @Override
-        public String serviceToken() {
-            var form = new org.springframework.util.LinkedMultiValueMap<String, String>();
-            form.add("grant_type", "client_credentials");
-            form.add("audience", "platform");
-            @SuppressWarnings("unchecked")
-            Map<String, Object> token = builder.build()
-                    .post()
-                    .uri(properties.replica().platformBaseUrl() + "/oauth/token")
-                    .headers(headers -> headers.setBasicAuth(
-                            properties.replica().clientId(), properties.replica().clientSecret()))
-                    .contentType(org.springframework.http.MediaType.APPLICATION_FORM_URLENCODED)
-                    .body(form)
-                    .retrieve()
-                    .body(Map.class);
-            if (token == null || token.get("access_token") == null) {
-                throw new IllegalStateException("Platform did not answer a snapshot token");
-            }
-            return (String) token.get("access_token");
-        }
-
-        @Override
-        public SnapshotClient.Page page(String stream, String after, int limit, String bearerToken) {
-            var uri = new StringBuilder(properties.replica().platformBaseUrl())
-                    .append("/internal/replica/").append(stream)
-                    .append("?limit=").append(limit);
-            if (after != null) {
-                uri.append("&after=").append(after);
-            }
-            @SuppressWarnings("unchecked")
-            Map<String, Object> body = builder.build()
-                    .get()
-                    .uri(uri.toString())
-                    .headers(headers -> headers.setBearerAuth(bearerToken))
-                    .retrieve()
-                    .body(Map.class);
-            if (body == null) {
-                return new SnapshotClient.Page(List.of(), null);
-            }
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> items = (List<Map<String, Object>>) body.get("items");
-            Object next = body.get("next");
-            return new SnapshotClient.Page(items == null ? List.of() : items, next == null ? null : String.valueOf(next));
-        }
     }
 }

@@ -1,6 +1,5 @@
-package dev.ngb.tenant.billing.adapter.client.feign;
+package dev.ngb.core.feign;
 
-import dev.ngb.tenant.shared.error.UpstreamUnavailableException;
 import feign.RequestTemplate;
 import feign.Response;
 import feign.codec.Decoder;
@@ -12,12 +11,16 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 /** Encodes a record body and decodes a JSON answer with the one mapper the client trusts. */
-final class JacksonCodec implements Encoder, Decoder {
+public final class JacksonCodec implements Encoder, Decoder {
 
     private final ObjectMapper json;
+    private final String service;
+    private final FeignFailures failures;
 
-    JacksonCodec(ObjectMapper json) {
+    public JacksonCodec(ObjectMapper json, String service, FeignFailures failures) {
         this.json = json;
+        this.service = service;
+        this.failures = failures;
     }
 
     @Override
@@ -44,7 +47,7 @@ final class JacksonCodec implements Encoder, Decoder {
         try {
             return json.readValue(body, json.constructType(type));
         } catch (JacksonException e) {
-            throw new UpstreamUnavailableException("Billing answered with a body this client cannot read", e);
+            throw failures.unavailable(service + " answered with a body this client cannot read", e);
         }
     }
 }

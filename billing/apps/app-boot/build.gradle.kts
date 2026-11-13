@@ -8,6 +8,7 @@ dependencies {
     implementation("dev.ngb:core-spring")
     implementation("dev.ngb:core-messaging")
     implementation("dev.ngb:core-replica")
+    implementation("dev.ngb:core-feign")
     implementation(project(":contexts:customer"))
     implementation(project(":contexts:money"))
     implementation(project(":contexts:webhook"))

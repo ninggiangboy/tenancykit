@@ -26,6 +26,8 @@ dependencies {
     testImplementation(project(":testing:arch-fixtures"))
     // The replica writer proves the events Platform publishes converge in a consumer's schema.
     testImplementation("dev.ngb:core-replica")
+    // The core rules cover every shared module, including the one Platform does not call with.
+    testImplementation("dev.ngb:core-feign")
     // Generates the jOOQ schema from the migrations for the drift test.
     testImplementation("org.jooq:jooq-codegen")
     testImplementation("org.jooq:jooq-meta")

@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
-import dev.ngb.tenant.billing.adapter.client.http.HttpBillingSettings;
-import dev.ngb.tenant.billing.adapter.client.token.StaticTokenProvider;
+import dev.ngb.core.feign.FeignSettings;
+import dev.ngb.core.feign.StaticTokenProvider;
 import dev.ngb.tenant.billing.api.client.BillingCharges.CaptureRequest;
 import dev.ngb.tenant.billing.api.client.BillingCharges.ChargeRequest;
 import dev.ngb.tenant.billing.api.client.BillingCustomers.NewCustomer;
@@ -245,7 +245,7 @@ class FeignBillingClientTest {
                 """);
 
         Customer customer = BillingFeignClientFactory.create(
-                        new HttpBillingSettings(billing.baseUrl(), Duration.ofSeconds(1), Duration.ofSeconds(1), 1, Duration.ofMillis(1)),
+                        new FeignSettings("Billing", billing.baseUrl(), Duration.ofSeconds(1), Duration.ofSeconds(1), 1, Duration.ofMillis(1)),
                         new RotatingTokens())
                 .get("cus_1");
 
@@ -261,7 +261,7 @@ class FeignBillingClientTest {
         billing.respond(401, "{}");
 
         assertThatThrownBy(() -> BillingFeignClientFactory.create(
-                        new HttpBillingSettings(billing.baseUrl(), Duration.ofSeconds(1), Duration.ofSeconds(1), 1, Duration.ofMillis(1)),
+                        new FeignSettings("Billing", billing.baseUrl(), Duration.ofSeconds(1), Duration.ofSeconds(1), 1, Duration.ofMillis(1)),
                         new RotatingTokens())
                 .get("cus_1"))
                 .isInstanceOf(dev.ngb.tenant.shared.error.UnauthorizedException.class);
@@ -270,7 +270,7 @@ class FeignBillingClientTest {
     }
 
     /** Hands out a fresh token each time it is asked, like a provider whose cache keeps being invalidated. */
-    private static final class RotatingTokens implements dev.ngb.tenant.billing.adapter.client.token.TokenProvider {
+    private static final class RotatingTokens implements dev.ngb.core.feign.TokenProvider {
 
         private int issued;
 
@@ -293,7 +293,7 @@ class FeignBillingClientTest {
 
     private FeignBillingClient clientWith(String token) {
         return BillingFeignClientFactory.create(
-                new HttpBillingSettings(billing.baseUrl(), Duration.ofSeconds(1), Duration.ofSeconds(1), 2, Duration.ofMillis(1)),
+                new FeignSettings("Billing", billing.baseUrl(), Duration.ofSeconds(1), Duration.ofSeconds(1), 2, Duration.ofMillis(1)),
                 new StaticTokenProvider(token));
     }
 

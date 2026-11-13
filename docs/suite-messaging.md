@@ -90,5 +90,7 @@ row-level security still isolates it.
 
 `core-messaging` owns the outbox, the inbox, the broker relay, the envelope codec and `SuiteTopology`;
 `core-replica` owns the snapshot client, the bootstrap, the writer, the event handler, the host and actor resolvers
-and the entitlement filter. Both are shared by every service build, so a new app is a wiring exercise rather than a
-reimplementation, and ArchUnit keeps each module free of any single service's types.
+and the entitlement filter. `core-replica` stays framework-light: the snapshot HTTP transport is implemented in each
+app's boot layer over `core-feign`, which owns the one codec, retryer, token client and error-mapper base. All are
+shared by every service build, so a new app is a wiring exercise rather than a reimplementation, and ArchUnit keeps
+each module free of any single service's types.

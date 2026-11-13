@@ -7,8 +7,9 @@ A complete reference system that verifies integration with the suite. It follows
 The tenant holds a Tenant System credential Platform issued: a client id and a secret, created through Platform's
 tenant-system credential management and shown once.
 
-1. On the first call to Billing, the tenant's `PlatformTokenProvider` asks Platform for a token:
-   `POST {platform}/oauth/token`, HTTP Basic `client-id:secret`, `grant_type=client_credentials`, `audience=billing`.
+1. On the first call to Billing, `ClientCredentialsTokenProvider` from the shared `core-feign` module asks Platform
+   for a token: `POST {platform}/oauth/token`, HTTP Basic `client-id:secret`, `grant_type=client_credentials`,
+   `audience=billing`.
 2. Platform answers a 10-minute JWT whose `scope` holds the `billing:*` codes the credential was granted.
 3. The provider caches it until 60 seconds before expiry. A burst of callers shares one refresh: the first fetches,
    the rest wait and read the new token.

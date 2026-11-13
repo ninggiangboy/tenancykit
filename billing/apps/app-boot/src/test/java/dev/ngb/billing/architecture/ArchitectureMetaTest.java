@@ -83,6 +83,7 @@ class ArchitectureMetaTest {
     }
 
     private static final Map<String, String> CULPRIT_BY_CORE_RULE_ID = Map.of(
+            "core-feign-is-self-contained", "CoreFeignKnowsAnApplication",
             "core-is-self-contained", "CoreKnowsAnApplication",
             "core-spring-is-self-contained", "CoreSpringKnowsAnApplication",
             "core-messaging-is-self-contained", "CoreMessagingKnowsAnApplication");

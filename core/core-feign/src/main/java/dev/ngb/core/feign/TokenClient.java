@@ -1,6 +1,5 @@
-package dev.ngb.tenant.billing.adapter.client.token;
+package dev.ngb.core.feign;
 
-import dev.ngb.tenant.shared.error.UnauthorizedException;
 import feign.Client;
 import feign.Request;
 import feign.Response;
@@ -11,9 +10,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Adds the current token to every request and, when Billing refuses it with a 401, drops the cached token, fetches a
- * new one and retries exactly once. A refused credential that cannot be renewed surfaces as
- * {@link UnauthorizedException}, not as a generic upstream failure, so a caller sees the real cause.
+ * Adds the current token to every request and, when the upstream refuses it with a 401, drops the cached token,
+ * fetches a new one and retries exactly once. A refused credential that cannot be renewed surfaces as the caller's
+ * unauthorized error, not as a generic upstream failure, so the real cause survives.
  */
 public final class TokenClient implements Client {
 
@@ -22,16 +21,20 @@ public final class TokenClient implements Client {
 
     private final Client delegate;
     private final TokenProvider tokens;
+    private final FeignFailures failures;
+    private final String service;
 
-    public TokenClient(Client delegate, TokenProvider tokens) {
+    public TokenClient(Client delegate, TokenProvider tokens, FeignFailures failures, String service) {
         this.delegate = delegate;
         this.tokens = tokens;
+        this.failures = failures;
+        this.service = service;
     }
 
     @Override
     public Response execute(Request request, Request.Options options) throws IOException {
         if (!tokens.configured()) {
-            throw new UnauthorizedException("this Tenant System has no credential for Billing");
+            throw failures.refused("this deployment has no credential for " + service);
         }
         Response response = delegate.execute(decorate(request, tokens.token()), options);
         if (response.status() != 401 || !tokens.invalidate()) {

@@ -114,6 +114,7 @@ final class ArchitectureRules {
      */
     static List<NamedRule> core(String core) {
         return List.of(
+                new NamedRule("core-feign-is-self-contained", coreFeignIsSelfContained(core)),
                 new NamedRule("core-is-self-contained", coreIsSelfContained(core)),
                 new NamedRule("core-spring-is-self-contained", coreSpringIsSelfContained(core)));
     }
@@ -184,14 +185,22 @@ final class ArchitectureRules {
 
     /**
      * The shared core is shared by more than one application build, so it may name only the JDK and itself. The
-     * Spring implementation module also sees the Spring types its implementations are built from; neither may
-     * reach back into an application.
+     * framework modules (the Spring implementation and the Feign client) also see the framework types they are built
+     * from; neither may reach back into an application.
      */
     private static ArchRule coreIsSelfContained(String core) {
         return classes().that().resideInAnyPackage(core + "..")
-                .and().resideOutsideOfPackage(core + ".spring..")
+                .and().resideOutsideOfPackages(core + ".spring..", core + ".feign..")
                 .should().onlyDependOnClassesThat().resideInAnyPackage(concat(JDK, core + ".."))
                 .because("the core is shared by every application build and depends on nothing of theirs");
+    }
+
+    /** The shared Feign client sees the JDK, the core, Feign, Spring's MVC annotations and Jackson; never a service. */
+    private static ArchRule coreFeignIsSelfContained(String core) {
+        return classes().that().resideInAPackage(core + ".feign..")
+                .should().onlyDependOnClassesThat()
+                .resideInAnyPackage(concat(JDK, core + "..", "feign..", "org.springframework..", "tools.jackson.."))
+                .because("core-feign is shared by every service build and names no service type");
     }
 
     private static ArchRule coreSpringIsSelfContained(String core) {

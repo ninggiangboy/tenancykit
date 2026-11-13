@@ -146,6 +146,7 @@ final class ArchitectureRules {
      */
     static List<NamedRule> core(String core) {
         return List.of(
+                new NamedRule("core-feign-is-self-contained", coreFeignIsSelfContained(core)),
                 new NamedRule("core-is-self-contained", coreIsSelfContained(core)),
                 new NamedRule("core-messaging-is-self-contained", coreMessagingIsSelfContained(core)),
                 new NamedRule("core-spring-is-self-contained", coreSpringIsSelfContained(core)));
@@ -264,14 +265,23 @@ final class ArchitectureRules {
 
     /**
      * The shared core is shared by more than one application build, so it may name only the JDK and itself. The
-     * framework modules (the Spring implementations, the messaging infrastructure and the Platform replica) see the
-     * framework types they are built from; none may reach back into an application.
+     * framework modules (the Spring implementations, the messaging infrastructure, the Platform replica and the Feign
+     * client) see the framework types they are built from; none may reach back into an application.
      */
     private static ArchRule coreIsSelfContained(String core) {
         return classes().that().resideInAnyPackage(core + "..")
-                .and().resideOutsideOfPackages(core + ".spring..", core + ".messaging..", core + ".replica..")
+                .and().resideOutsideOfPackages(
+                        core + ".spring..", core + ".messaging..", core + ".replica..", core + ".feign..")
                 .should().onlyDependOnClassesThat().resideInAnyPackage(JAVA, core + "..")
                 .because("the core is shared by every application build and depends on nothing of theirs");
+    }
+
+    /** The shared Feign client sees the JDK, the core, Feign, Spring's MVC annotations and Jackson; never a service. */
+    private static ArchRule coreFeignIsSelfContained(String core) {
+        return classes().that().resideInAPackage(core + ".feign..")
+                .should().onlyDependOnClassesThat()
+                .resideInAnyPackage(JAVA, core + "..", "feign..", "org.springframework..", "tools.jackson..")
+                .because("core-feign is shared by every service build and names no service type");
     }
 
     private static ArchRule coreMessagingIsSelfContained(String core) {

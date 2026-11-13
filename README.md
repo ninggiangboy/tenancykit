@@ -8,7 +8,7 @@ Documentation lives in [docs/](docs/README.md). Code lives in:
 | `billing/` | Core Billing app (Gradle multi-module, Spring Boot): the eight billing contexts, replicating the Platform data it enforces |
 | `tenant/` | Sample Tenant System, built and deployed independently; it calls Billing over REST with a Platform-issued suite token |
 | `web/` | Web apps (Suite Console, Customer Portal, Sample Tenant UI) |
-| `core/` | The technical core every service builds against: kernel, Spring implementations, messaging (`core-messaging`) and the Platform replica (`core-replica`); the only code they share |
+| `core/` | The technical core every service builds against: kernel, Spring implementations, messaging (`core-messaging`), the Platform replica (`core-replica`) and the shared Feign client (`core-feign`); the only code they share |
 | `contracts/` | OpenAPI, event schemas, permission catalogs and the token claim list, shared between services as documents, never as code |
 | `ops/` | Local runtime: PostgreSQL init, RabbitMQ users, the Caddy route table and the smoke scripts |
 

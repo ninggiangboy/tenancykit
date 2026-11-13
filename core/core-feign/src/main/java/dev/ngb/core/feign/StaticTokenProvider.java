@@ -1,8 +1,8 @@
-package dev.ngb.tenant.billing.adapter.client.token;
+package dev.ngb.core.feign;
 
 import java.util.Objects;
 
-/** A token that is already known, such as an administrator's OIDC bearer token for the one-shot bootstrap. */
+/** A token that is already known, such as an administrator's bearer token for a one-shot bootstrap. */
 public final class StaticTokenProvider implements TokenProvider {
 
     private final String token;

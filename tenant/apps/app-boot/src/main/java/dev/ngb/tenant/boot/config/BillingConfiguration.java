@@ -1,12 +1,13 @@
 package dev.ngb.tenant.boot.config;
 
+import dev.ngb.core.feign.ClientCredentialsTokenProvider;
+import dev.ngb.core.feign.FeignSettings;
+import dev.ngb.core.feign.TokenProvider;
+import dev.ngb.core.feign.TokenSettings;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.tenant.billing.adapter.client.feign.BillingFeignClientFactory;
 import dev.ngb.tenant.billing.adapter.client.feign.FeignBillingClient;
-import dev.ngb.tenant.billing.adapter.client.http.HttpBillingSettings;
-import dev.ngb.tenant.billing.adapter.client.token.PlatformTokenProvider;
-import dev.ngb.tenant.billing.adapter.client.token.PlatformTokenSettings;
-import dev.ngb.tenant.billing.adapter.client.token.TokenProvider;
+import dev.ngb.tenant.billing.adapter.client.feign.TenantFeignFailures;
 import dev.ngb.tenant.billing.api.client.BillingCharges;
 import dev.ngb.tenant.billing.api.client.BillingCustomers;
 import dev.ngb.tenant.billing.api.client.BillingInvoices;
@@ -34,7 +35,7 @@ class BillingConfiguration {
     record BillingClientHolder(FeignBillingClient client) {}
 
     @Bean
-    PlatformTokenSettings platformTokenSettings(
+    TokenSettings platformTokenSettings(
             @Value("${tenant.platform.base-url:}") String baseUrl,
             @Value("${tenant.platform.client-id:}") String clientId,
             @Value("${tenant.platform.client-secret:}") String clientSecret,
@@ -42,26 +43,27 @@ class BillingConfiguration {
             @Value("${tenant.platform.connect-timeout:PT3S}") Duration connectTimeout,
             @Value("${tenant.platform.request-timeout:PT10S}") Duration requestTimeout,
             @Value("${tenant.platform.refresh-skew:PT60S}") Duration refreshSkew) {
-        return new PlatformTokenSettings(baseUrl, clientId, clientSecret, audience, connectTimeout, requestTimeout, refreshSkew);
+        return TokenSettings.forBaseUrl(
+                baseUrl, clientId, clientSecret, audience, connectTimeout, requestTimeout, refreshSkew);
     }
 
     @Bean
-    TokenProvider platformTokenProvider(PlatformTokenSettings settings, Clock clock) {
-        return new PlatformTokenProvider(settings, clock);
+    TokenProvider platformTokenProvider(TokenSettings settings, Clock clock) {
+        return new ClientCredentialsTokenProvider(settings, clock, TenantFeignFailures.INSTANCE);
     }
 
     @Bean
-    HttpBillingSettings httpBillingSettings(
+    FeignSettings billingSettings(
             @Value("${tenant.billing.base-url}") String baseUrl,
             @Value("${tenant.billing.connect-timeout:PT3S}") Duration connectTimeout,
             @Value("${tenant.billing.read-timeout:PT10S}") Duration readTimeout,
             @Value("${tenant.billing.max-attempts:3}") int maxAttempts,
             @Value("${tenant.billing.retry-backoff:PT0.2S}") Duration retryBackoff) {
-        return new HttpBillingSettings(baseUrl, connectTimeout, readTimeout, maxAttempts, retryBackoff);
+        return new FeignSettings("Billing", baseUrl, connectTimeout, readTimeout, maxAttempts, retryBackoff);
     }
 
     @Bean
-    BillingClientHolder billingClientHolder(HttpBillingSettings settings, TokenProvider tokens) {
+    BillingClientHolder billingClientHolder(FeignSettings settings, TokenProvider tokens) {
         return new BillingClientHolder(BillingFeignClientFactory.create(settings, tokens));
     }
 

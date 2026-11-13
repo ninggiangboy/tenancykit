@@ -1,8 +1,6 @@
-package dev.ngb.tenant.billing.adapter.client.token;
+package dev.ngb.core.feign;
 
 import dev.ngb.core.runtime.Clock;
-import dev.ngb.tenant.shared.error.UnauthorizedException;
-import dev.ngb.tenant.shared.error.UpstreamUnavailableException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -20,35 +18,37 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Exchanges this Tenant System's client credentials for a short-lived suite token at Platform, and caches it until
- * shortly before it expires. Callers share one refresh: the first one fetches while the rest wait and then read the
- * new token, so a burst of requests costs one token request.
+ * Exchanges a service client's credentials for a short-lived token, and caches it until shortly before it expires.
+ * Callers share one refresh: the first one fetches while the rest wait and then read the new token, so a burst of
+ * calls costs one token request.
  *
  * <p>The token is never logged, and the secret only ever travels in the Basic header of the token request.
  */
-public final class PlatformTokenProvider implements TokenProvider {
+public final class ClientCredentialsTokenProvider implements TokenProvider {
 
     private static final String GRANT_TYPE = "client_credentials";
 
-    private final PlatformTokenSettings settings;
+    private final TokenSettings settings;
     private final Clock clock;
+    private final FeignFailures failures;
     private final HttpClient http;
-    private final ObjectMapper json;
+    private final ObjectMapper json = FeignJson.mapper();
     private final ReentrantLock refresh = new ReentrantLock();
 
     private volatile Issued issued;
 
-    public PlatformTokenProvider(PlatformTokenSettings settings, Clock clock) {
-        this(settings, clock, HttpClient.newBuilder()
+    public ClientCredentialsTokenProvider(TokenSettings settings, Clock clock, FeignFailures failures) {
+        this(settings, clock, failures, HttpClient.newBuilder()
                 .connectTimeout(settings.connectTimeout())
                 .build());
     }
 
-    PlatformTokenProvider(PlatformTokenSettings settings, Clock clock, HttpClient http) {
+    ClientCredentialsTokenProvider(
+            TokenSettings settings, Clock clock, FeignFailures failures, HttpClient http) {
         this.settings = Objects.requireNonNull(settings, "settings");
         this.clock = Objects.requireNonNull(clock, "clock");
+        this.failures = Objects.requireNonNull(failures, "failures");
         this.http = Objects.requireNonNull(http, "http");
-        this.json = new ObjectMapper();
     }
 
     @Override
@@ -88,7 +88,7 @@ public final class PlatformTokenProvider implements TokenProvider {
 
     private Issued fetch() {
         if (!configured()) {
-            throw new UnauthorizedException("this Tenant System has no Platform client credentials");
+            throw failures.refused("no client credentials are configured for audience " + settings.audience());
         }
         HttpRequest request = HttpRequest.newBuilder(URI.create(settings.tokenUrl()))
                 .timeout(settings.requestTimeout())
@@ -101,14 +101,13 @@ public final class PlatformTokenProvider implements TokenProvider {
         try {
             response = http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         } catch (IOException e) {
-            throw new UpstreamUnavailableException("Platform could not be reached for a token", e);
+            throw failures.unavailable("the token endpoint could not be reached", e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new UpstreamUnavailableException("the token request was interrupted", e);
+            throw failures.unavailable("the token request was interrupted", e);
         }
         if (response.statusCode() != 200) {
-            throw new UpstreamUnavailableException(
-                    "Platform refused the token request with " + response.statusCode());
+            throw failures.unavailable("the token request was refused with status " + response.statusCode());
         }
         return parse(response.body());
     }
@@ -118,12 +117,12 @@ public final class PlatformTokenProvider implements TokenProvider {
         try {
             node = json.readTree(body);
         } catch (JacksonException e) {
-            throw new UpstreamUnavailableException("Platform answered the token request with a body this client cannot read", e);
+            throw failures.unavailable("the token endpoint answered with a body this client cannot read", e);
         }
         String token = node.path("access_token").asString("");
         long expiresIn = node.path("expires_in").asLong(0L);
         if (token.isBlank() || expiresIn <= 0) {
-            throw new UpstreamUnavailableException("Platform answered the token request without a usable token");
+            throw failures.unavailable("the token endpoint answered without a usable token");
         }
         Instant now = clock.now();
         Duration lifetime = Duration.ofSeconds(expiresIn).minus(settings.refreshSkew());

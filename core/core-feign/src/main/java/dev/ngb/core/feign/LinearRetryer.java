@@ -1,19 +1,23 @@
-package dev.ngb.tenant.billing.adapter.client.feign;
+package dev.ngb.core.feign;
 
-import dev.ngb.tenant.shared.error.UpstreamUnavailableException;
 import feign.RetryableException;
 import feign.Retryer;
 
-/** Waits {@code backoff * attempt} between tries, exactly as the previous client did. */
-final class LinearRetryer implements Retryer {
+/**
+ * Waits {@code backoff * attempt} between tries, so a caller sees a short, predictable pause rather than a jittered
+ * curve, and gives up after the configured number of attempts.
+ */
+public final class LinearRetryer implements Retryer {
 
     private final int maxAttempts;
     private final long backoffMillis;
+    private final FeignFailures failures;
     private int attempt = 1;
 
-    LinearRetryer(int maxAttempts, long backoffMillis) {
+    public LinearRetryer(int maxAttempts, long backoffMillis, FeignFailures failures) {
         this.maxAttempts = maxAttempts;
         this.backoffMillis = backoffMillis;
+        this.failures = failures;
     }
 
     @Override
@@ -25,13 +29,13 @@ final class LinearRetryer implements Retryer {
             Thread.sleep(backoffMillis * attempt);
         } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
-            throw new UpstreamUnavailableException("the retry wait was interrupted", interrupted);
+            throw failures.unavailable("the retry wait was interrupted", interrupted);
         }
         attempt++;
     }
 
     @Override
     public Retryer clone() {
-        return new LinearRetryer(maxAttempts, backoffMillis);
+        return new LinearRetryer(maxAttempts, backoffMillis, failures);
     }
 }

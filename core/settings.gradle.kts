@@ -9,4 +9,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "core"
 
-include("core-kernel", "core-spring", "core-messaging", "core-replica")
+include("core-kernel", "core-spring", "core-messaging", "core-replica", "core-feign")

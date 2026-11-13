@@ -26,4 +26,11 @@ class ReplicaBoundaryTest {
             .dependOnClassesThat()
             .resideInAnyPackage("dev.ngb.billing_jooq..", "dev.ngb.platform_jooq..", "dev.ngb.tenant_jooq..")
             .because("the replica tables belong to the app's schema, so the writer addresses them with plain SQL");
+
+    @ArchTest
+    static final ArchRule replicaDoesNotUseAnHttpClient = noClasses()
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("feign..", "dev.ngb.core.feign..")
+            .because("the snapshot transport belongs to the app's boot layer, so core-replica names no HTTP client");
 }

@@ -6,6 +6,7 @@ dependencies {
     implementation(platform(libs.spring.modulith.bom))
     implementation(project(":libs:shared-core"))
     implementation("dev.ngb:core-spring")
+    implementation("dev.ngb:core-feign")
     implementation(project(":modules:identity"))
     implementation(project(":modules:billing-client"))
     implementation(project(":modules:customer"))

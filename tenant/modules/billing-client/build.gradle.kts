@@ -3,9 +3,9 @@ plugins {
 }
 
 dependencies {
-    "adapterImplementation"(platform(libs.spring.cloud.bom))
-    "adapterImplementation"(libs.spring.cloud.starter.openfeign)
-    "adapterImplementation"(libs.feign.java11)
+    "adapterImplementation"("dev.ngb:core-feign")
+    // The API interface declares its paths with Spring MVC annotations, so the adapter compiles against spring-web.
+    "adapterImplementation"("org.springframework:spring-web")
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-jackson")
     testImplementation("org.assertj:assertj-core")
 }
