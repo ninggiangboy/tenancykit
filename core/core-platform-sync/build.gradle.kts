@@ -10,6 +10,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot")
     implementation("org.slf4j:slf4j-api")
     testImplementation(project(":core-spring"))
+    // The rebuild test runs the shipped reference DDL and asserts the schema contract, like an app's migration does.
+    testImplementation(testFixtures(project(":core-replica")))
     testImplementation("org.springframework:spring-jdbc")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.testcontainers:testcontainers-postgresql")

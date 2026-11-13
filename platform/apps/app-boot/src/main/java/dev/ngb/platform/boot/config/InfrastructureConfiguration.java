@@ -42,8 +42,8 @@ class InfrastructureConfiguration {
     }
 
     @Bean
-    IdGenerator idGenerator() {
-        return new UuidV7IdGenerator();
+    IdGenerator idGenerator(Clock clock) {
+        return new UuidV7IdGenerator(clock);
     }
 
     @Bean

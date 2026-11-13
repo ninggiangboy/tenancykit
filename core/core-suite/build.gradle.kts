@@ -13,6 +13,8 @@ dependencies {
     implementation("com.nimbusds:nimbus-jose-jwt")
     compileOnly("jakarta.servlet:jakarta.servlet-api")
     testImplementation(project(":core-spring"))
+    // Every suite test runs the shipped replica DDL, so its database has the shape an app's migration produces.
+    testImplementation(testFixtures(project(":core-replica")))
     testImplementation("org.springframework:spring-jdbc")
     testImplementation("org.assertj:assertj-core")
     testImplementation("org.testcontainers:testcontainers-postgresql")

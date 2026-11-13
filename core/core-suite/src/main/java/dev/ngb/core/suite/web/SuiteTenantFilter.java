@@ -7,14 +7,13 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
  * Builds the request scope once, from the hostname alone. A tenant id sent by the client in a header, path or body is
- * never consulted; an unknown host gets one generic answer. Health probes reach the pod by IP, so they run on the
- * platform scope.
+ * never consulted; an unknown host gets one generic answer, in the shape {@link SuiteProblems} writes for both suite
+ * filters. Health probes reach the pod by IP, so they run on the platform scope.
  */
 public class SuiteTenantFilter extends OncePerRequestFilter {
 
@@ -29,13 +28,12 @@ public class SuiteTenantFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        Optional<RequestScope> scope = request.getRequestURI().startsWith("/actuator/health")
+        Optional<RequestScope> scope = SuiteProblems.isHealthProbe(request)
                 ? Optional.of(RequestScope.platform())
                 : tenantContext.callAs(RequestScope.platform(), () -> hosts.resolve(request.getServerName()));
         if (scope.isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            response.setContentType("application/json");
-            response.getOutputStream().write("{\"error\":\"not_found\"}".getBytes(StandardCharsets.UTF_8));
+            SuiteProblems.write(
+                    response, HttpServletResponse.SC_NOT_FOUND, SuiteProblems.NOT_FOUND, "This hostname belongs to no tenant.");
             return;
         }
         try {

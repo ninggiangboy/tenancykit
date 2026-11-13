@@ -2,6 +2,7 @@ package dev.ngb.core.spring.runtime;
 
 import dev.ngb.core.runtime.TransactionScopeHook;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.tenancy.RequestScope;
 import java.util.function.Supplier;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -29,9 +30,9 @@ public class SpringUnitOfWork implements UnitOfWork {
 
     @Override
     public <T> T transactional(Supplier<T> work) {
-        Object scope = hook.currentScope();
+        RequestScope scope = hook.currentScope();
         return transactions.execute(status -> {
-            Object joined = TransactionSynchronizationManager.getResource(SCOPE_RESOURCE);
+            RequestScope joined = (RequestScope) TransactionSynchronizationManager.getResource(SCOPE_RESOURCE);
             if (joined != null) {
                 if (!joined.equals(scope)) {
                     throw new IllegalStateException("a nested unit of work must run in the same scope as its parent");

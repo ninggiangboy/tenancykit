@@ -21,13 +21,13 @@ public class PlatformTransactionScopeHook implements TransactionScopeHook {
     }
 
     @Override
-    public Object currentScope() {
+    public RequestScope currentScope() {
         return tenantContext.current();
     }
 
     @Override
-    public void onNewTransaction(Object scope) {
+    public void onNewTransaction(RequestScope scope) {
         jdbc.queryForObject(
-                "select set_config('app.tenant_id', ?, true)", String.class, ((RequestScope) scope).dataTenantId().toString());
+                "select set_config('app.tenant_id', ?, true)", String.class, scope.dataTenantId().toString());
     }
 }

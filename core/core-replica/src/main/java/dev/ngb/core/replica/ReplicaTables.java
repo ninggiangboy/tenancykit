@@ -9,12 +9,13 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
 /**
- * The five replica tables, addressed with plain SQL names: the table belongs to the app's generated schema, which
- * core never sees. The column contract every app's migration must satisfy lives in {@code replica-tables.sql} next
- * to this class.
+ * The replica tables, addressed with plain SQL names: a table belongs to the app's generated schema, which core never
+ * sees. The column contract every app's migration must satisfy lives in {@code replica-tables.sql} next to this class,
+ * and {@link ReplicaStream} says which stream writes which of them.
  *
- * <p>Four of the tables keep Billing's names so its foreign keys and row-level security stay untouched; the two
- * new tables are {@code user_grants} and {@code app_entitlements}.
+ * <p>Three of the tables keep the names the suite's first migrations used, so an app that already owns them keeps its
+ * foreign keys and row-level security untouched; the two tables a replica adds are {@code user_grants} and
+ * {@code app_entitlements}.
  */
 public final class ReplicaTables {
 

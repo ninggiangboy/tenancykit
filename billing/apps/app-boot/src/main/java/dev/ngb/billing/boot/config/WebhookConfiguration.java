@@ -107,7 +107,7 @@ class WebhookConfiguration {
     @Bean
     AesGcmSecretCipher secretCipher(
             @Value("${billing.secrets.master-key}") String masterKey, @Value("${billing.secrets.master-key-id:k1}") String masterKeyId) {
-        return new AesGcmSecretCipher(masterKey, masterKeyId);
+        return new AesGcmSecretCipher("billing.secrets", masterKey, masterKeyId);
     }
 
     @Bean

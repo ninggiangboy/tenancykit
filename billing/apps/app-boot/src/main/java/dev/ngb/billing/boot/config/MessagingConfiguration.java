@@ -6,6 +6,7 @@ import dev.ngb.core.messaging.config.MessagingProperties;
 import dev.ngb.core.messaging.config.MessagingProperties.Document;
 import dev.ngb.core.messaging.config.MessagingProperties.Relay;
 import dev.ngb.core.messaging.topology.SuiteTopology;
+import dev.ngb.core.replica.ReplicaStream;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -49,9 +50,7 @@ class MessagingConfiguration {
         Map<String, String> exports = new LinkedHashMap<>();
         catalog.eventTypes().forEach(type -> exports.put(type, exchange));
         List<MessagingProperties.QueueBinding> queues = List.of(new MessagingProperties.QueueBinding(
-                platformQueue,
-                platformExchange,
-                List.of("tenant.changed", "tenant-domain.changed", "tenant-system.changed", "user-access.changed", "entitlement.changed")));
+                platformQueue, platformExchange, ReplicaStream.eventTypes()));
         return new MessagingProperties(exchange, exports, queues,
                 new Relay(batchSize, maxAttempts, backoffBase, backoffCap, jitter, claimDeadline),
                 new Document(schemaVersion));

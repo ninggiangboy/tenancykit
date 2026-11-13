@@ -2,6 +2,7 @@ package dev.ngb.platform.boot.replica;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.spring.runtime.UuidV7IdGenerator;
 import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.core.tenancy.TenantContext;
@@ -30,6 +31,7 @@ class SnapshotPagingIntegrationTest {
     @Autowired SnapshotController controller;
     @Autowired TenantContext tenantContext;
     @Autowired OwnerDatabase owner;
+    @Autowired Clock clock;
 
     @Test
     void everyTenantIsPagedExactlyOnceAndTheLastPageHasNoNext() {
@@ -80,7 +82,7 @@ class SnapshotPagingIntegrationTest {
     }
 
     private void seedTenants() {
-        UuidV7IdGenerator ids = new UuidV7IdGenerator();
+        UuidV7IdGenerator ids = new UuidV7IdGenerator(clock);
         java.sql.Timestamp now = java.sql.Timestamp.from(Instant.now());
         String suffix = UUID.randomUUID().toString().replace("-", "").substring(0, 6);
         List<Object[]> rows = new ArrayList<>();

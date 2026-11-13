@@ -1,5 +1,6 @@
 package dev.ngb.platform.boot.replica;
 
+import dev.ngb.core.replica.ReplicaStream;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.platform.access.application.user.query.UserAccessView;
 import dev.ngb.platform.access.application.user.query.UserQueries;
@@ -50,14 +51,19 @@ class SnapshotController {
             @RequestParam(required = false) UUID after,
             @RequestParam(defaultValue = "100") int limit) {
         int size = Math.clamp(limit, 1, 500);
-        return switch (stream) {
-            case "tenants" -> pageOf(tenants.page(after, size), size, SnapshotController::tenantItem);
-            case "tenant-domains" -> pageOf(tenants.pageDomains(after, size), size, SnapshotController::domainItem);
-            case "tenant-systems" -> pageOf(tenantSystems.page(after, size), size, SnapshotController::tenantSystemItem);
-            case "entitlements" -> entitlementPage(entitlements.page(after, size), size);
-            case "user-access" -> pageOf(users.pageAccess(after, size), size, SnapshotController::userAccessItem);
-            default -> throw new ResponseStatusException(HttpStatus.NOT_FOUND, "unknown replica stream");
+        return switch (replicaStream(stream)) {
+            case TENANTS -> pageOf(tenants.page(after, size), size, SnapshotController::tenantItem);
+            case TENANT_DOMAINS -> pageOf(tenants.pageDomains(after, size), size, SnapshotController::domainItem);
+            case TENANT_SYSTEMS -> pageOf(tenantSystems.page(after, size), size, SnapshotController::tenantSystemItem);
+            case ENTITLEMENTS -> entitlementPage(entitlements.page(after, size), size);
+            case USER_ACCESS -> pageOf(users.pageAccess(after, size), size, SnapshotController::userAccessItem);
         };
+    }
+
+    /** The stream the path names, from the replica's one list of streams, so a stream cannot exist in only one place. */
+    private static ReplicaStream replicaStream(String stream) {
+        return ReplicaStream.byStreamName(stream)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "unknown replica stream"));
     }
 
     /** The cursor is the last tenant id, and a page holds every row of up to {@code size} tenants. */

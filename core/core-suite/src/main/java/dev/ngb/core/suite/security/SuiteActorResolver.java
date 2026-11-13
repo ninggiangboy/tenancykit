@@ -46,7 +46,9 @@ public class SuiteActorResolver {
     }
 
     /**
-     * @return the actor, or empty when the identity is not active in the host's tenant (the caller answers 401)
+     * @return the actor, or empty when the identity is not active in the host's tenant (the caller answers 401), which
+     *     includes a token whose claims cannot name one: a blank subject, a subject that is not a UUID and a
+     *     {@code tenant_id} that is not a UUID are all "no actor", never an error
      * @throws TenantMismatchException when a Tenant System token names a different tenant than the host resolved to
      */
     public Optional<Actor> resolve(Jwt jwt) {
@@ -54,7 +56,7 @@ public class SuiteActorResolver {
         if (subject.startsWith(TENANT_SYSTEM_SUBJECT)) {
             return tenantSystemActor(jwt, subject.substring(TENANT_SYSTEM_SUBJECT.length()));
         }
-        if (subject.startsWith(SERVICE_SUBJECT)) {
+        if (subject.isBlank() || subject.startsWith(SERVICE_SUBJECT)) {
             return Optional.empty();
         }
         return userActor(jwt, subject);
@@ -87,31 +89,42 @@ public class SuiteActorResolver {
     }
 
     private Optional<Actor> tenantSystemActor(Jwt jwt, String systemIdClaim) {
-        String tenantIdClaim = jwt.getClaimAsString("tenant_id");
-        if (tenantIdClaim == null) {
+        Optional<UUID> tokenTenant = uuidClaim(jwt.getClaimAsString("tenant_id"));
+        Optional<UUID> systemId = uuidClaim(systemIdClaim);
+        if (tokenTenant.isEmpty() || systemId.isEmpty()) {
             return Optional.empty();
         }
-        UUID tokenTenant = UUID.fromString(tenantIdClaim);
         UUID hostTenant = tenantContext.current().dataTenantId().value();
-        if (!tokenTenant.equals(hostTenant)) {
+        if (!tokenTenant.get().equals(hostTenant)) {
             throw new TenantMismatchException();
         }
-        UUID systemId = UUID.fromString(systemIdClaim);
         return unitOfWork.transactional(() -> dsl
                         .select(ReplicaTables.SYSTEM_STATUS, ReplicaTables.SYSTEM_NAME, ReplicaTables.SYSTEM_TENANT_ID)
                         .from(ReplicaTables.TENANT_SYSTEMS)
-                        .where(ReplicaTables.SYSTEM_ID.eq(systemId))
+                        .where(ReplicaTables.SYSTEM_ID.eq(systemId.get()))
                         .and(ReplicaTables.SYSTEM_TENANT_ID.eq(hostTenant))
                         .limit(1)
                         .fetchOptional())
                 .filter(row -> "ACTIVE".equals(row.value1()))
                 .map(row -> new Actor(
                         ActorType.TENANT_SYSTEM,
-                        systemId,
+                        systemId.get(),
                         new TenantId(row.value3()),
                         PermissionScope.TENANT,
                         row.value2(),
                         scope(jwt)));
+    }
+
+    /** The claim as a UUID, or empty when it is absent, blank or not a UUID at all. */
+    private static Optional<UUID> uuidClaim(String claim) {
+        if (claim == null || claim.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(UUID.fromString(claim));
+        } catch (IllegalArgumentException notAUuid) {
+            return Optional.empty();
+        }
     }
 
     private static Set<String> permissions(String[] codes) {

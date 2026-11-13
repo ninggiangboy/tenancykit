@@ -10,8 +10,9 @@ import org.springframework.security.oauth2.server.resource.BearerTokenErrorCodes
 
 /**
  * Links a verified token to a replica actor. Signature, issuer, audience and expiry were already checked by the
- * decoder; this adds the replica rules: an inactive user is 401, and a Tenant System token naming another tenant
- * than the host resolved to is 403.
+ * decoder; this adds the replica rules and gives every outcome a status: an identity that is not active here, or a
+ * token whose claims cannot name one at all, is 401, and a Tenant System token naming another tenant than the host
+ * resolved to is 403. No failure of the token itself ever reaches the error handler as a 500.
  */
 public class SuiteActorConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
@@ -26,14 +27,20 @@ public class SuiteActorConverter implements Converter<Jwt, AbstractAuthenticatio
         try {
             return resolver.resolve(jwt)
                     .<AbstractAuthenticationToken>map(SuiteAuthentication::new)
-                    .orElseThrow(() -> new OAuth2AuthenticationException(new BearerTokenError(
-                            BearerTokenErrorCodes.INVALID_TOKEN, HttpStatus.UNAUTHORIZED, "the actor is not active here", null)));
+                    .orElseThrow(() -> unauthorized("the actor is not active here"));
         } catch (SuiteActorResolver.TenantMismatchException mismatch) {
             throw new OAuth2AuthenticationException(new BearerTokenError(
                     BearerTokenErrorCodes.INSUFFICIENT_SCOPE,
                     HttpStatus.FORBIDDEN,
                     "the token belongs to another tenant",
                     null));
+        } catch (IllegalArgumentException malformed) {
+            throw unauthorized("the token names no usable actor");
         }
+    }
+
+    private static OAuth2AuthenticationException unauthorized(String detail) {
+        return new OAuth2AuthenticationException(new BearerTokenError(
+                BearerTokenErrorCodes.INVALID_TOKEN, HttpStatus.UNAUTHORIZED, detail, null));
     }
 }

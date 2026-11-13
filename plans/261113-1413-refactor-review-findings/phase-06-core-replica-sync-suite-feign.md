@@ -82,12 +82,12 @@ the right status, the Feign retry method-aware, and the remaining core ports typ
 
 ## Success criteria
 
-- [ ] A missing/wrong-typed `permissions` rejects the event and never clears grants.
-- [ ] One enum is the only list of replica streams; adding a stream changes one file plus a migration.
-- [ ] A rebuild applies page by page and uses bounded memory; a stuck cursor fails instead of looping.
-- [ ] A token with a malformed `tenant_id`/subject returns 401/403.
-- [ ] A POST 5xx is not retried without an idempotency key.
-- [ ] Core contains no service name in code or javadoc.
+- [x] A missing/wrong-typed `permissions` rejects the event and never clears grants.
+- [x] One enum is the only list of replica streams; adding a stream changes one file plus a migration.
+- [x] A rebuild applies page by page and uses bounded memory; a stuck cursor fails instead of looping.
+- [x] A token with a malformed `tenant_id`/subject returns 401/403.
+- [x] A POST 5xx is not retried without an idempotency key.
+- [x] Core contains no service name in code or javadoc.
 
 ## Risks
 

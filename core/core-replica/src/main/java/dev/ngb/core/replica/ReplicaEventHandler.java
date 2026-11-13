@@ -4,7 +4,7 @@ import dev.ngb.core.event.EventEnvelope;
 import dev.ngb.core.messaging.inbound.InboundEventHandler;
 import java.util.Map;
 
-/** The inbox consumer that keeps the replica current from the five {@code *.changed} streams. */
+/** The inbox consumer that keeps the replica current from every {@code *.changed} stream {@link ReplicaStream} lists. */
 public class ReplicaEventHandler implements InboundEventHandler {
 
     /** One consumer name for the replica, so a redelivery never applies twice. */
@@ -23,10 +23,7 @@ public class ReplicaEventHandler implements InboundEventHandler {
 
     @Override
     public boolean accepts(String type) {
-        return switch (type) {
-            case "tenant.changed", "tenant-domain.changed", "tenant-system.changed", "user-access.changed", "entitlement.changed" -> true;
-            default -> false;
-        };
+        return ReplicaStream.byEventType(type).isPresent();
     }
 
     @Override

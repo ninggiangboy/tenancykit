@@ -2,7 +2,6 @@ package dev.ngb.billing.boot.web;
 
 import dev.ngb.core.suite.web.SuiteEntitlementFilter;
 import dev.ngb.core.suite.web.SuiteEntitlements;
-import dev.ngb.core.tenancy.TenantContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -16,10 +15,7 @@ import org.springframework.stereotype.Component;
 @Order(Ordered.HIGHEST_PRECEDENCE + 20)
 class AppEntitlementFilter extends SuiteEntitlementFilter {
 
-    AppEntitlementFilter(
-            SuiteEntitlements entitlements,
-            @Value("${suite.app-code:billing}") String appCode,
-            TenantContext tenantContext) {
-        super(entitlements, appCode, tenantContext);
+    AppEntitlementFilter(SuiteEntitlements entitlements, @Value("${suite.app-code:billing}") String appCode) {
+        super(entitlements, appCode);
     }
 }

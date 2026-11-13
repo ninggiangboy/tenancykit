@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.replica.ReplicaSchemaAssertions;
 import dev.ngb.core.runtime.TransactionScopeHook;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.security.Actor;
@@ -11,11 +12,11 @@ import dev.ngb.core.security.ActorType;
 import dev.ngb.core.spring.runtime.SpringUnitOfWork;
 import dev.ngb.core.spring.tenancy.ScopedTenantContext;
 import dev.ngb.core.tenancy.RequestScope;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
@@ -42,28 +43,14 @@ class SuiteActorResolverIntegrationTest {
     private UUID tenantId;
 
     @BeforeEach
-    void setUp() throws SQLException {
+    void setUp() {
         dataSource = new PGSimpleDataSource();
         dataSource.setUrl(POSTGRES.getJdbcUrl());
         dataSource.setUser(POSTGRES.getUsername());
         dataSource.setPassword(POSTGRES.getPassword());
-        try (var connection = dataSource.getConnection(); var statement = connection.createStatement()) {
-            statement.execute("drop table if exists user_grants, tenant_systems, tenants");
-            statement.execute("""
-                    create table tenants (
-                        id uuid primary key, code text not null unique, name text not null,
-                        status text not null, created_at timestamptz not null, version bigint not null default 0)""");
-            statement.execute("""
-                    create table tenant_systems (
-                        id uuid primary key, tenant_id uuid not null references tenants (id), name text not null,
-                        status text not null, created_at timestamptz not null, version bigint not null default 0)""");
-            statement.execute("""
-                    create table user_grants (
-                        user_id uuid primary key, tenant_id uuid not null references tenants (id), scope text not null,
-                        keycloak_subject text not null unique, email text not null, display_name text not null,
-                        status text not null, permissions text[] not null default '{}', version bigint not null default 0)""");
-        }
-        DSLContext dsl = DSL.using(new TransactionAwareDataSourceProxy(dataSource), SQLDialect.POSTGRES);
+        DSLContext dsl = dsl();
+        dsl.execute("drop table if exists user_grants, app_entitlements, tenant_systems, tenant_domains, tenants");
+        ReplicaSchemaAssertions.applyReferenceDdl(dataSource);
         UnitOfWork unitOfWork = new SpringUnitOfWork(new DataSourceTransactionManager(dataSource), TransactionScopeHook.none());
         tenantContext = new ScopedTenantContext();
         resolver = new SuiteActorResolver(unitOfWork, dsl, tenantContext);
@@ -136,7 +123,36 @@ class SuiteActorResolverIntegrationTest {
                 .isInstanceOf(SuiteActorResolver.TenantMismatchException.class);
     }
 
-    private <T> T inTenant(java.util.function.Supplier<T> work) {
+    @Test
+    void aTenantSystemTokenWithAMalformedTenantClaimIsNotAnActor() {
+        UUID systemId = UUID.randomUUID();
+        insertSystem(systemId, tenantId, "ACTIVE");
+
+        assertThat(inTenant(() -> resolver.resolve(systemToken("tenant-system/" + systemId, "not-a-uuid"))))
+                .as("a tenant claim that is not a UUID names no actor instead of failing the request")
+                .isEmpty();
+    }
+
+    @Test
+    void aTenantSystemTokenWithoutATenantClaimIsNotAnActor() {
+        UUID systemId = UUID.randomUUID();
+        insertSystem(systemId, tenantId, "ACTIVE");
+
+        assertThat(inTenant(() -> resolver.resolve(tenantlessSystemToken(systemId.toString())))).isEmpty();
+    }
+
+    @Test
+    void aTenantSystemSubjectThatNamesNoSystemIsNotAnActor() {
+        assertThat(inTenant(() -> resolver.resolve(systemToken("tenant-system/not-a-uuid", tenantId.toString()))))
+                .isEmpty();
+    }
+
+    @Test
+    void aTenantSystemSubjectWithoutASystemIdIsNotAnActor() {
+        assertThat(inTenant(() -> resolver.resolve(systemToken("tenant-system/", tenantId.toString())))).isEmpty();
+    }
+
+    private <T> T inTenant(Supplier<T> work) {
         return tenantContext.callAs(RequestScope.tenant(new TenantId(tenantId)), work);
     }
 
@@ -167,10 +183,26 @@ class SuiteActorResolverIntegrationTest {
 
     /** A Platform Tenant System token: the subject plus the tenant claims. */
     private static Jwt systemJwt(UUID systemId, UUID tenant) {
+        return systemToken("tenant-system/" + systemId, tenant.toString());
+    }
+
+    private static Jwt systemToken(String subject, String tenantClaim) {
         return Jwt.withTokenValue("system-token")
                 .header("alg", "ES256")
+                .subject(subject)
+                .claim("tenant_id", tenantClaim)
+                .claim("scope", "billing:invoice:read")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(60))
+                .audience(List.of("billing"))
+                .build();
+    }
+
+    /** A Platform token that names no tenant at all. */
+    private static Jwt tenantlessSystemToken(String systemId) {
+        return Jwt.withTokenValue("tenantless-token")
+                .header("alg", "ES256")
                 .subject("tenant-system/" + systemId)
-                .claim("tenant_id", tenant.toString())
                 .claim("scope", "billing:invoice:read")
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(60))

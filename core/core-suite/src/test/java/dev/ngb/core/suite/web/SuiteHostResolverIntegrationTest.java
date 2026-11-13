@@ -2,12 +2,12 @@ package dev.ngb.core.suite.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import dev.ngb.core.replica.ReplicaSchemaAssertions;
 import dev.ngb.core.runtime.TransactionScopeHook;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.spring.runtime.SpringUnitOfWork;
 import dev.ngb.core.spring.tenancy.ScopedTenantContext;
 import dev.ngb.core.tenancy.RequestScope;
-import java.sql.SQLException;
 import java.util.Optional;
 import java.util.UUID;
 import org.jooq.DSLContext;
@@ -33,23 +33,14 @@ class SuiteHostResolverIntegrationTest {
     private SuiteHostResolver resolver;
 
     @BeforeEach
-    void setUp() throws SQLException {
+    void setUp() {
         PGSimpleDataSource dataSource = new PGSimpleDataSource();
         dataSource.setUrl(POSTGRES.getJdbcUrl());
         dataSource.setUser(POSTGRES.getUsername());
         dataSource.setPassword(POSTGRES.getPassword());
-        try (var connection = dataSource.getConnection(); var statement = connection.createStatement()) {
-            statement.execute("drop table if exists tenant_domains, tenants");
-            statement.execute("""
-                    create table tenants (
-                        id uuid primary key, code text not null unique, name text not null,
-                        status text not null, created_at timestamptz not null, version bigint not null default 0)""");
-            statement.execute("""
-                    create table tenant_domains (
-                        id uuid primary key, tenant_id uuid references tenants (id), hostname text not null unique,
-                        kind text not null, created_at timestamptz not null, version bigint not null default 0)""");
-        }
         dsl = DSL.using(new TransactionAwareDataSourceProxy(dataSource), SQLDialect.POSTGRES);
+        dsl.execute("drop table if exists user_grants, app_entitlements, tenant_systems, tenant_domains, tenants");
+        ReplicaSchemaAssertions.applyReferenceDdl(dataSource);
         UnitOfWork unitOfWork = new SpringUnitOfWork(new DataSourceTransactionManager(dataSource), TransactionScopeHook.none());
         resolver = new SuiteHostResolver(unitOfWork, dsl);
 

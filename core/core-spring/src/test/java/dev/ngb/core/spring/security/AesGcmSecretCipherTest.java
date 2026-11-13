@@ -8,9 +8,10 @@ import org.junit.jupiter.api.Test;
 
 class AesGcmSecretCipherTest {
 
+    private static final String PREFIX = "app.secrets";
     private static final String TEST_MASTER_KEY = "dGVzdC1tYXN0ZXIta2V5LTMyLWJ5dGVzLWxvbmctISE=";
 
-    private final AesGcmSecretCipher cipher = new AesGcmSecretCipher(TEST_MASTER_KEY, "k1");
+    private final AesGcmSecretCipher cipher = new AesGcmSecretCipher(PREFIX, TEST_MASTER_KEY, "k1");
 
     @Test
     void roundTripsAndNeverStoresThePlaintext() {
@@ -42,21 +43,37 @@ class AesGcmSecretCipherTest {
 
     @Test
     void anotherMasterKeyCannotDecrypt() {
-        AesGcmSecretCipher other = new AesGcmSecretCipher(Base64.getEncoder().encodeToString(new byte[32]), "k1");
+        AesGcmSecretCipher other = new AesGcmSecretCipher(PREFIX, Base64.getEncoder().encodeToString(new byte[32]), "k1");
         String stored = cipher.encrypt("whsec_x", "ctx");
         assertThatThrownBy(() -> other.decrypt(stored, "ctx")).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void anUnknownMasterKeyIdIsNamedInTheError() {
-        AesGcmSecretCipher rotated = new AesGcmSecretCipher(TEST_MASTER_KEY, "k2");
+        AesGcmSecretCipher rotated = new AesGcmSecretCipher(PREFIX, TEST_MASTER_KEY, "k2");
         assertThatThrownBy(() -> rotated.decrypt(cipher.encrypt("x", "c"), "c")).hasMessageContaining("'k1'");
     }
 
     @Test
     void refusesAMisconfiguredMasterKey() {
-        assertThatThrownBy(() -> new AesGcmSecretCipher("not base64 !!", "k1")).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> new AesGcmSecretCipher(Base64.getEncoder().encodeToString(new byte[16]), "k1")).hasMessageContaining("32 bytes");
-        assertThatThrownBy(() -> new AesGcmSecretCipher(null, "k1")).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> new AesGcmSecretCipher(PREFIX, "not base64 !!", "k1"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(PREFIX);
+        assertThatThrownBy(() -> new AesGcmSecretCipher(PREFIX, Base64.getEncoder().encodeToString(new byte[16]), "k1"))
+                .hasMessageContaining("32 bytes");
+        assertThatThrownBy(() -> new AesGcmSecretCipher(PREFIX, null, "k1")).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void theMessageNamesTheCallersOwnConfigurationKeys() {
+        assertThatThrownBy(() -> new AesGcmSecretCipher("suite.secrets", "not base64 !!", "k1"))
+                .as("a misconfigured key is reported under the prefix its owner configured")
+                .hasMessageContaining("suite.secrets.master-key");
+    }
+
+    @Test
+    void refusesAMissingPropertyPrefix() {
+        assertThatThrownBy(() -> new AesGcmSecretCipher(" ", TEST_MASTER_KEY, "k1"))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

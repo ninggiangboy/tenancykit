@@ -1,10 +1,8 @@
 package dev.ngb.core.replica;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -31,34 +29,14 @@ class ReplicaWriterIntegrationTest {
     private ReplicaWriter writer;
 
     @BeforeEach
-    void setUp() throws SQLException {
+    void setUp() {
         PGSimpleDataSource dataSource = new PGSimpleDataSource();
         dataSource.setUrl(POSTGRES.getJdbcUrl());
         dataSource.setUser(POSTGRES.getUsername());
         dataSource.setPassword(POSTGRES.getPassword());
         dsl = DSL.using(dataSource, SQLDialect.POSTGRES);
         dsl.execute("drop table if exists user_grants, app_entitlements, tenant_systems, tenant_domains, tenants");
-        dsl.execute("""
-                create table tenants (
-                    id uuid primary key, code text not null unique, name text not null,
-                    status text not null, created_at timestamptz not null, version bigint not null default 0)""");
-        dsl.execute("""
-                create table tenant_domains (
-                    id uuid primary key, tenant_id uuid references tenants (id), hostname text not null unique,
-                    kind text not null, created_at timestamptz not null, version bigint not null default 0)""");
-        dsl.execute("""
-                create table tenant_systems (
-                    id uuid primary key, tenant_id uuid not null references tenants (id), name text not null,
-                    status text not null, created_at timestamptz not null, version bigint not null default 0)""");
-        dsl.execute("""
-                create table user_grants (
-                    user_id uuid primary key, tenant_id uuid not null references tenants (id), scope text not null,
-                    keycloak_subject text not null unique, email text not null, display_name text not null,
-                    status text not null, permissions text[] not null default '{}', version bigint not null default 0)""");
-        dsl.execute("""
-                create table app_entitlements (
-                    tenant_id uuid not null references tenants (id), app_code text not null, enabled boolean not null,
-                    version bigint not null default 0, primary key (tenant_id, app_code))""");
+        ReplicaSchemaAssertions.applyReferenceDdl(dataSource);
         writer = new ReplicaWriter(dsl);
     }
 
@@ -118,21 +96,64 @@ class ReplicaWriterIntegrationTest {
         UUID userId = UUID.randomUUID();
         writer.apply("tenant.changed", tenant(tenantId, "acme", 1));
 
-        Map<String, Object> user = new HashMap<>();
-        user.put("user_id", userId.toString());
-        user.put("tenant_id", tenantId.toString());
-        user.put("scope", "TENANT");
-        user.put("keycloak_subject", "kc-" + userId);
-        user.put("email", "a@example.com");
-        user.put("display_name", "A");
-        user.put("status", "ACTIVE");
-        user.put("permissions", List.of("billing:invoice:read", "billing:wallet:read"));
-        user.put("version", 1);
-        assertThat(writer.apply("user-access.changed", user)).isTrue();
+        assertThat(writer.apply(
+                        "user-access.changed",
+                        user(userId, tenantId, List.of("billing:invoice:read", "billing:wallet:read"), 1)))
+                .isTrue();
 
-        String[] stored = dsl.fetchOne("select permissions from user_grants where user_id = ?", userId)
+        assertThat(storedPermissions(userId)).containsExactlyInAnyOrder("billing:invoice:read", "billing:wallet:read");
+    }
+
+    @Test
+    void aUserAccessEventWithoutPermissionsIsRejectedAndKeepsTheStoredGrants() {
+        UUID tenantId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        writer.apply("tenant.changed", tenant(tenantId, "acme", 1));
+        writer.apply("user-access.changed", user(userId, tenantId, List.of("billing:invoice:read"), 1));
+
+        Map<String, Object> withoutPermissions = user(userId, tenantId, List.of(), 2);
+        withoutPermissions.remove("permissions");
+
+        assertThatThrownBy(() -> writer.apply("user-access.changed", withoutPermissions))
+                .as("an event that never said what the user may do must never clear their rights")
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("permissions");
+        assertThat(storedPermissions(userId)).containsExactly("billing:invoice:read");
+        assertThat(dsl.fetchOne("select version from user_grants where user_id = ?", userId).get("version", Long.class))
+                .as("the refused event wrote nothing").isEqualTo(1L);
+    }
+
+    @Test
+    void aUserAccessEventWhosePermissionsAreNotAListIsRejected() {
+        UUID tenantId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        writer.apply("tenant.changed", tenant(tenantId, "acme", 1));
+        writer.apply("user-access.changed", user(userId, tenantId, List.of("billing:invoice:read"), 1));
+
+        Map<String, Object> scalar = user(userId, tenantId, "billing:invoice:read", 2);
+
+        assertThatThrownBy(() -> writer.apply("user-access.changed", scalar))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("String");
+        assertThat(storedPermissions(userId)).containsExactly("billing:invoice:read");
+    }
+
+    @Test
+    void anEmptyPermissionListIsAnEmptyGrant() {
+        UUID tenantId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        writer.apply("tenant.changed", tenant(tenantId, "acme", 1));
+        writer.apply("user-access.changed", user(userId, tenantId, List.of("billing:invoice:read"), 1));
+
+        assertThat(writer.apply("user-access.changed", user(userId, tenantId, List.of(), 2)))
+                .as("a producer that means 'no rights' says so with an empty list")
+                .isTrue();
+        assertThat(storedPermissions(userId)).isEmpty();
+    }
+
+    private String[] storedPermissions(UUID userId) {
+        return dsl.fetchOne("select permissions from user_grants where user_id = ?", userId)
                 .get("permissions", String[].class);
-        assertThat(stored).containsExactlyInAnyOrder("billing:invoice:read", "billing:wallet:read");
     }
 
     /** The reserved platform tenant, whose code is what the rebuild check looks past. */
@@ -163,6 +184,21 @@ class ReplicaWriterIntegrationTest {
         data.put("tenant_id", tenantId.toString());
         data.put("app_code", app);
         data.put("enabled", enabled);
+        data.put("version", version);
+        return data;
+    }
+
+    /** A user-access payload; {@code permissions} is an {@link Object} so a test can send the wrong type. */
+    private static Map<String, Object> user(UUID userId, UUID tenantId, Object permissions, long version) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("user_id", userId.toString());
+        data.put("tenant_id", tenantId.toString());
+        data.put("scope", "TENANT");
+        data.put("keycloak_subject", "kc-" + userId);
+        data.put("email", "a@example.com");
+        data.put("display_name", "A");
+        data.put("status", "ACTIVE");
+        data.put("permissions", permissions);
         data.put("version", version);
         return data;
     }

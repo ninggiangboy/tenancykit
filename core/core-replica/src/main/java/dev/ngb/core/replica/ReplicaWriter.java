@@ -16,6 +16,10 @@ import org.jooq.impl.DSL;
  * <p>The guard is in the {@code where} clause of the conflict update:
  * {@code insert ... on conflict (key) do update set ... where stored.version < excluded.version}. Equal versions are
  * ignored, so the snapshot pages and live messages may interleave freely.
+ *
+ * <p>Which event type belongs to which stream, and which table and columns that stream writes, is
+ * {@link ReplicaStream}'s to say; a payload that lacks a required field is refused with an
+ * {@link IllegalArgumentException} rather than stored half-populated.
  */
 public class ReplicaWriter {
 
@@ -25,15 +29,24 @@ public class ReplicaWriter {
         this.dsl = dsl;
     }
 
-    /** Applies one event payload of the five replicated types; an unknown type is ignored. */
+    /** Applies one event payload of the replicated types; a type no stream declares is ignored. */
     public boolean apply(String type, Map<String, Object> data) {
-        return switch (type) {
-            case "tenant.changed" -> tenant(data);
-            case "tenant-domain.changed" -> tenantDomain(data);
-            case "tenant-system.changed" -> tenantSystem(data);
-            case "user-access.changed" -> userAccess(data);
-            case "entitlement.changed" -> entitlement(data);
-            default -> false;
+        return ReplicaStream.byEventType(type).map(stream -> apply(stream, data)).orElse(false);
+    }
+
+    /**
+     * Applies one payload of the stream's type.
+     *
+     * @throws IllegalArgumentException when the payload lacks a field the stream requires, or carries one of a type
+     *     the stream cannot store; the caller rejects the event rather than writing a half-populated row
+     */
+    public boolean apply(ReplicaStream stream, Map<String, Object> data) {
+        return switch (stream) {
+            case TENANTS -> tenant(data);
+            case TENANT_DOMAINS -> tenantDomain(data);
+            case TENANT_SYSTEMS -> tenantSystem(data);
+            case USER_ACCESS -> userAccess(data);
+            case ENTITLEMENTS -> entitlement(data);
         };
     }
 
@@ -100,7 +113,7 @@ public class ReplicaWriter {
     public boolean userAccess(Map<String, Object> data) {
         UUID userId = uuid(data, "user_id");
         long version = version(data);
-        String[] permissions = strings(data, "permissions");
+        String[] permissions = permissions(data);
         return dsl.insertInto(ReplicaTables.USER_GRANTS)
                 .set(ReplicaTables.GRANT_USER_ID, userId)
                 .set(ReplicaTables.GRANT_TENANT_ID, uuid(data, "tenant_id"))
@@ -192,41 +205,22 @@ public class ReplicaWriter {
         return Instant.parse(String.valueOf(value)).atOffset(ZoneOffset.UTC);
     }
 
-    private static String[] strings(Map<String, Object> data, String field) {
-        Object value = data.get(field);
+    /**
+     * The permission codes an event carries. A missing or non-list field is rejected, never read as an empty set: an
+     * empty array would clear every right the user holds, which is the one thing a state-transfer event must never do
+     * by accident. A producer that means "no permissions" sends an empty list.
+     */
+    private static String[] permissions(Map<String, Object> data) {
+        Object value = data.get("permissions");
         if (!(value instanceof List<?> list)) {
-            return new String[0];
+            throw new IllegalArgumentException(
+                    "a user-access.changed event must carry permissions as a list of codes, not " + describe(value));
         }
         return list.stream().map(String::valueOf).toArray(String[]::new);
     }
 
-    /** The five streams a rebuild pages through, in the order their foreign keys require. */
-    public static List<String> streams() {
-        return List.of("tenants", "tenant-domains", "tenant-systems", "user-access", "entitlements");
-    }
-
-    /** The event type each stream's rows arrive as, so a rebuild and a live event apply the same payload. */
-    public static String eventTypeOf(String stream) {
-        return switch (stream) {
-            case "tenants" -> "tenant.changed";
-            case "tenant-domains" -> "tenant-domain.changed";
-            case "tenant-systems" -> "tenant-system.changed";
-            case "user-access" -> "user-access.changed";
-            case "entitlements" -> "entitlement.changed";
-            default -> throw new IllegalArgumentException("unknown replica stream " + stream);
-        };
-    }
-
-    /** Debug helper: the columns a stream writes, for the schema assertion test. */
-    public static List<String> columnsOf(String stream) {
-        return switch (stream) {
-            case "tenants" -> List.of("id", "code", "name", "status", "created_at", "version");
-            case "tenant-domains" -> List.of("id", "tenant_id", "hostname", "kind", "created_at", "version");
-            case "tenant-systems" -> List.of("id", "tenant_id", "name", "status", "created_at", "version");
-            case "user-access" ->
-                List.of("user_id", "tenant_id", "scope", "keycloak_subject", "email", "display_name", "status", "permissions", "version");
-            case "entitlements" -> List.of("tenant_id", "app_code", "enabled", "version");
-            default -> throw new IllegalArgumentException("unknown replica stream " + stream);
-        };
+    /** What a payload field held, for a message that must say why the event was refused. */
+    private static String describe(Object value) {
+        return value == null ? "absent" : "a " + value.getClass().getSimpleName();
     }
 }

@@ -1,5 +1,6 @@
 -- The replica tables every app that consumes platform.events must have. An app that already owns some of these
--- (Billing keeps `tenants`, `tenant_domains` and `tenant_systems` from its own migrations) adds only what it lacks.
+-- (the first app kept `tenants`, `tenant_domains` and `tenant_systems` from its own migrations) adds only what it
+-- lacks. `ReplicaStream` is the one list of the streams that write them; this script is the one DDL source.
 --
 -- The columns are exactly what ReplicaWriter upserts; the unique key on each row is what makes the upsert idempotent.
 -- Every table carries a monotonic `version` copied from the state-transfer event, so an older or duplicate message is

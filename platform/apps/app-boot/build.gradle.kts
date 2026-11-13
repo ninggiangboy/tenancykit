@@ -7,6 +7,9 @@ dependencies {
     implementation(project(":libs:shared-kernel"))
     implementation("dev.ngb:core-spring")
     implementation("dev.ngb:core-messaging")
+    // The snapshot API serves the replica's streams, so the producer names the one enum that lists them; the replica
+    // writer the tests use to prove the published events converge proves it through the same dependency.
+    implementation("dev.ngb:core-replica")
     implementation(project(":contexts:tenancy"))
     implementation(project(":contexts:access"))
     implementation(project(":contexts:integration"))
@@ -24,8 +27,6 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation(project(":testing:arch-fixtures"))
-    // The replica writer proves the events Platform publishes converge in a consumer's schema.
-    testImplementation("dev.ngb:core-replica")
     // The core rules cover every shared module, including the one Platform does not call with.
     testImplementation("dev.ngb:core-feign")
     // Generates the jOOQ schema from the migrations for the drift test.

@@ -72,8 +72,8 @@ class ReplicaConfiguration {
     }
 
     @Bean
-    SuiteEntitlements suiteEntitlements(UnitOfWork unitOfWork, DSLContext dsl) {
-        return new SuiteEntitlements(unitOfWork, dsl);
+    SuiteEntitlements suiteEntitlements(UnitOfWork unitOfWork, DSLContext dsl, TenantContext tenantContext) {
+        return new SuiteEntitlements(unitOfWork, dsl, tenantContext);
     }
 
     @Bean

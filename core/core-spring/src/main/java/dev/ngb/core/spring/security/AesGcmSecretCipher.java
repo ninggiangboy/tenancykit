@@ -19,6 +19,9 @@ import javax.crypto.spec.SecretKeySpec;
  * each being a 12-byte nonce followed by the GCM output. The webhook and payment modules each declare their own
  * port for it, so neither depends on the other's type. The master key id is stored so a later key rotation
  * can tell which key wrapped what; this class holds a single master key and refuses any other id.
+ *
+ * <p>The configuration keys belong to the app that uses the cipher, so the property prefix is a constructor
+ * argument: a misconfigured key is reported with the names that app's operator can grep for.
  */
 public class AesGcmSecretCipher implements SecretCipher {
 
@@ -32,19 +35,27 @@ public class AesGcmSecretCipher implements SecretCipher {
     private final SecretKeySpec masterKey;
     private final String masterKeyId;
 
-    /** @param masterKeyBase64 a standard base64 encoding of exactly 32 random bytes */
-    public AesGcmSecretCipher(String masterKeyBase64, String masterKeyId) {
+    /**
+     * @param propertyPrefix the configuration prefix the error messages name, such as {@code <app>.secrets}
+     * @param masterKeyBase64 a standard base64 encoding of exactly 32 random bytes
+     * @param masterKeyId a short id stored with every ciphertext, so a rotation can tell which key wrapped what
+     */
+    public AesGcmSecretCipher(String propertyPrefix, String masterKeyBase64, String masterKeyId) {
+        if (propertyPrefix == null || propertyPrefix.isBlank()) {
+            throw new IllegalStateException("the configuration prefix of the master key is required");
+        }
         byte[] key;
         try {
             key = Base64.getDecoder().decode(masterKeyBase64 == null ? "" : masterKeyBase64.strip());
         } catch (IllegalArgumentException e) {
-            throw new IllegalStateException("billing.secrets.master-key must be base64", e);
+            throw new IllegalStateException(propertyPrefix + ".master-key must be base64", e);
         }
         if (key.length != 32) {
-            throw new IllegalStateException("billing.secrets.master-key must decode to exactly 32 bytes (generate one with: openssl rand -base64 32)");
+            throw new IllegalStateException(propertyPrefix
+                    + ".master-key must decode to exactly 32 bytes (generate one with: openssl rand -base64 32)");
         }
         if (masterKeyId == null || !masterKeyId.matches("[A-Za-z0-9_-]{1,32}")) {
-            throw new IllegalStateException("billing.secrets.master-key-id must be 1-32 letters, digits, '-' or '_'");
+            throw new IllegalStateException(propertyPrefix + ".master-key-id must be 1-32 letters, digits, '-' or '_'");
         }
         this.masterKey = new SecretKeySpec(key, "AES");
         this.masterKeyId = masterKeyId;
