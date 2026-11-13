@@ -29,11 +29,12 @@ app enforces what Platform grants.
 
 ## Token issuance
 
-`IssueTokenUseCase` authenticates the caller, checks a disabled Tenant System, filters the credential's scopes to the
-audience, and asks `SuiteTokenIssuer` to sign a 10-minute JWT. The claims are documented in
-[tokens/README.md](../contracts/tokens/README.md). The token endpoint is rate-limited per client id, with a fixed set
-of shared buckets for unauthenticated attempts, so an invented client id can neither exhaust a real one's budget nor
-create an unbounded number of rows. Every failed attempt is audited.
+`IssueTokenUseCase` charges the rate-limit bucket of the claimed client id before it compares the secret, so a guess
+costs budget whether or not it is accepted. A request that did not authenticate then pays the caller's address and
+one shared anonymous bucket, which has its own, wider allowance; an invented client id therefore buys no budget of
+its own and an unbounded number of buckets cannot be created. Then the caller is authenticated: a disabled Tenant
+System is refused, the credential's scopes are filtered to the audience, and `SuiteTokenIssuer` signs a 10-minute
+JWT. The claims are documented in [tokens/README.md](../contracts/tokens/README.md). Every failed attempt is audited.
 
 The signing key is an ES256 private key in PEM form (`PLATFORM_TOKEN_SIGNING_KEY`). During rotation the previous key
 stays in the JWKS for one token lifetime. Development may use an ephemeral per-process key; that option is refused

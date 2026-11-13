@@ -63,9 +63,11 @@ class UserController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission("platform:user:manage")
-    UserResponse create(@RequestBody CreateRequest request) {
+    UserResponse create(
+            @RequestBody CreateRequest request,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         Actor actor = currentActor.get();
-        return UserResponse.of(createUser.execute(actor, new CreateUserUseCase.Command(
+        return UserResponse.of(createUser.execute(actor, requestId, new CreateUserUseCase.Command(
                 request.tenantCode(), actor.tenantId(), actor.scope(),
                 request.email(), request.displayName(), request.temporaryPassword())));
     }
@@ -81,8 +83,9 @@ class UserController {
     @RequiresPermission("platform:user:manage")
     ResponseEntity<UserResponse> update(
             @PathVariable UUID id, @RequestBody UpdateRequest request,
-            @RequestHeader(value = "If-Match", required = false) String ifMatch) {
-        User user = manageUser.execute(new ManageUserUseCase.Command(
+            @RequestHeader(value = "If-Match", required = false) String ifMatch,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+        User user = manageUser.execute(currentActor.get(), requestId, new ManageUserUseCase.Command(
                 new UserId(id), ManageUserUseCase.Action.valueOf(request.action()), request.name(),
                 ExpectedVersion.fromIfMatch(ifMatch)));
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(user.version())).body(UserResponse.of(user));
@@ -92,8 +95,9 @@ class UserController {
     @RequiresPermission("platform:user:manage")
     ResponseEntity<UserResponse> setPermission(
             @PathVariable UUID id, @PathVariable String code, @RequestParam boolean grant,
-            @RequestHeader(value = "If-Match", required = false) String ifMatch) {
-        User user = managePermissions.execute(currentActor.get(), new ManageUserPermissionsUseCase.Command(
+            @RequestHeader(value = "If-Match", required = false) String ifMatch,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+        User user = managePermissions.execute(currentActor.get(), requestId, new ManageUserPermissionsUseCase.Command(
                 new UserId(id), code, grant, ExpectedVersion.fromIfMatch(ifMatch)));
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(user.version())).body(UserResponse.of(user));
     }

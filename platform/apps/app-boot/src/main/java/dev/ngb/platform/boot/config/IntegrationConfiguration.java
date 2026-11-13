@@ -12,7 +12,7 @@ import dev.ngb.platform.boot.security.SuiteTokenIssuer;
 import dev.ngb.platform.integration.adapter.auth.service.ConfiguredServiceClients;
 import dev.ngb.platform.integration.adapter.credential.persistence.JooqCredentialReadRepository;
 import dev.ngb.platform.integration.adapter.credential.persistence.JooqCredentialRepository;
-import dev.ngb.platform.integration.adapter.token.web.PostgresRateLimiter;
+import dev.ngb.platform.integration.adapter.token.persistence.PostgresRateLimiter;
 import dev.ngb.platform.integration.adapter.tenantsystem.persistence.JooqTenantSystemReadRepository;
 import dev.ngb.platform.integration.adapter.tenantsystem.persistence.JooqTenantSystemRepository;
 import dev.ngb.platform.integration.application.auth.port.RateLimiter;
@@ -107,9 +107,11 @@ class IntegrationConfiguration {
     IssueTokenUseCase issueTokenUseCase(
             UnitOfWork unitOfWork, ServiceClientRegistry serviceClients, CredentialRepository credentials,
             TenantSystemRepository systems, TenantCodes tenantCodes, RateLimiter rateLimiter, TokenIssuer issuer,
-            AuditLog auditLog, Clock clock) {
+            AuditLog auditLog, Clock clock,
+            @Value("${platform.security.token-rate-limit.anonymous-burst:1000}") int anonymousBurst) {
         return new IssueTokenUseCase(
-                unitOfWork, serviceClients, credentials, systems, tenantCodes, rateLimiter, issuer, auditLog, clock);
+                unitOfWork, serviceClients, credentials, systems, tenantCodes, rateLimiter, issuer, auditLog, clock,
+                anonymousBurst);
     }
 
     @Bean

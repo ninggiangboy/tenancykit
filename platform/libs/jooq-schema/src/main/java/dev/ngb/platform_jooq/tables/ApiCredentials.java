@@ -116,6 +116,11 @@ public class ApiCredentials extends TableImpl<ApiCredentialsRecord> {
      */
     public final TableField<ApiCredentialsRecord, Instant> REVOKED_AT = createField(DSL.name("revoked_at"), SQLDataType.INSTANT, this, "");
 
+    /**
+     * The column <code>public.api_credentials.version</code>.
+     */
+    public final TableField<ApiCredentialsRecord, Long> VERSION = createField(DSL.name("version"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("1"), SQLDataType.BIGINT)), this, "");
+
     private ApiCredentials(Name alias, Table<ApiCredentialsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

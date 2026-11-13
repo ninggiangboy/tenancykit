@@ -50,7 +50,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @Import({PlatformContainerConfig.class, ConditionalUpdateHttpIntegrationTest.FakeIdentities.class})
 class ConditionalUpdateHttpIntegrationTest {
 
-    private static final String ADMIN = "platform:tenant:create platform:tenant:deactivate platform:tenant:read "
+    private static final String ADMIN = "platform:tenant:create platform:tenant:rename platform:tenant:deactivate platform:tenant:read "
             + "platform:role:manage platform:user:manage platform:tenant-system:manage platform:tenant-system:read "
             + "platform:entitlement:manage";
 
@@ -79,11 +79,11 @@ class ConditionalUpdateHttpIntegrationTest {
     @Test
     void roleRenameAndReplacePermissionsFollowTheConditionalMatrix() throws Exception {
         Tenant tenant = newTenant();
-        Role role = onPlatform(() -> createRole.execute(Actors.PLATFORM,
+        Role role = onPlatform(() -> createRole.execute(Actors.PLATFORM, "req-1",
                 new CreateRoleUseCase.Command(tenant.id(), PermissionScope.TENANT, "Reader-" + suffix(), Set.of("billing:invoice:read"))));
 
         assertMatrix(platformHost(), "/api/v1/roles/" + role.id().value(), "PUT", "{\"name\":\"Renamed\"}", role.version());
-        Role reloaded = onPlatform(() -> createRole.execute(Actors.PLATFORM, new CreateRoleUseCase.Command(
+        Role reloaded = onPlatform(() -> createRole.execute(Actors.PLATFORM, "req-1", new CreateRoleUseCase.Command(
                 tenant.id(), PermissionScope.TENANT, "Second-" + suffix(), Set.of("billing:invoice:read"))));
         assertMatrix(platformHost(), "/api/v1/roles/" + reloaded.id().value() + "/permissions", "PUT",
                 "{\"permissions\":[\"billing:invoice:read\",\"billing:wallet:read\"]}", reloaded.version());
@@ -207,7 +207,7 @@ class ConditionalUpdateHttpIntegrationTest {
 
     private User newUser(Tenant tenant) {
         String email = "user-" + suffix() + "@example.test";
-        return onPlatform(() -> createUser.execute(Actors.PLATFORM, new CreateUserUseCase.Command(
+        return onPlatform(() -> createUser.execute(Actors.PLATFORM, "req-1", new CreateUserUseCase.Command(
                 tenant.code().value(), tenant.id(), PermissionScope.TENANT, email, "User", "change-me")));
     }
 

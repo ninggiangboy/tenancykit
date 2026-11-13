@@ -1,6 +1,6 @@
 package dev.ngb.platform.boot.jobs;
 
-import dev.ngb.platform.integration.adapter.token.web.PostgresRateLimiter;
+import dev.ngb.platform.integration.adapter.token.persistence.PostgresRateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

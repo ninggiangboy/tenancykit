@@ -1,5 +1,6 @@
 package dev.ngb.platform.boot.config;
 
+import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -88,32 +89,34 @@ class AccessConfiguration {
     @Bean
     CreateUserUseCase createUserUseCase(
             UnitOfWork unitOfWork, UserRepository users, IdentityProviderPort identities, AccessPublisher access,
-            IdGenerator ids, Clock clock) {
-        return new CreateUserUseCase(unitOfWork, users, identities, access, ids, clock);
+            AuditLog auditLog, IdGenerator ids, Clock clock) {
+        return new CreateUserUseCase(unitOfWork, users, identities, access, auditLog, ids, clock);
     }
 
     @Bean
-    ManageUserUseCase manageUserUseCase(UnitOfWork unitOfWork, UserRepository users, AccessPublisher access) {
-        return new ManageUserUseCase(unitOfWork, users, access);
+    ManageUserUseCase manageUserUseCase(
+            UnitOfWork unitOfWork, UserRepository users, AccessPublisher access, AuditLog auditLog, Clock clock) {
+        return new ManageUserUseCase(unitOfWork, users, access, auditLog, clock);
     }
 
     @Bean
     ManageUserPermissionsUseCase manageUserPermissionsUseCase(
-            UnitOfWork unitOfWork, UserRepository users, AccessRepository access, PermissionCatalog catalog, AccessPublisher publisher) {
-        return new ManageUserPermissionsUseCase(unitOfWork, users, access, catalog, publisher);
+            UnitOfWork unitOfWork, UserRepository users, AccessRepository access, PermissionCatalog catalog,
+            AccessPublisher publisher, AuditLog auditLog, Clock clock) {
+        return new ManageUserPermissionsUseCase(unitOfWork, users, access, catalog, publisher, auditLog, clock);
     }
 
     @Bean
     CreateRoleUseCase createRoleUseCase(
-            UnitOfWork unitOfWork, RoleRepository roles, PermissionCatalog catalog, IdGenerator ids, Clock clock) {
-        return new CreateRoleUseCase(unitOfWork, roles, catalog, ids, clock);
+            UnitOfWork unitOfWork, RoleRepository roles, PermissionCatalog catalog, AuditLog auditLog, IdGenerator ids, Clock clock) {
+        return new CreateRoleUseCase(unitOfWork, roles, catalog, auditLog, ids, clock);
     }
 
     @Bean
     ManageRoleUseCase manageRoleUseCase(
             UnitOfWork unitOfWork, RoleRepository roles, UserRepository users, AccessRepository access, PermissionCatalog catalog,
-            AccessPublisher publisher) {
-        return new ManageRoleUseCase(unitOfWork, roles, users, access, catalog, publisher);
+            AccessPublisher publisher, AuditLog auditLog, Clock clock) {
+        return new ManageRoleUseCase(unitOfWork, roles, users, access, catalog, publisher, auditLog, clock);
     }
 
     @Bean

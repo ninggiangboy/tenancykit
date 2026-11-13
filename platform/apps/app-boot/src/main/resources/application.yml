@@ -53,10 +53,14 @@ platform:
     allow-ephemeral-key: ${PLATFORM_TOKEN_ALLOW_EPHEMERAL_KEY:false}
   security:
     token-rate-limit:
-      # A token bucket per client id, in PostgreSQL, shared by every instance. The anonymous buckets for unknown ids
-      # are fixed in number, so an invented id can neither exhaust a real one's budget nor create a row per try.
+      # A token bucket per client id and per caller address, in PostgreSQL, shared by every instance. A request that
+      # does not authenticate pays its claimed client id before the secret is compared, and then the caller's address
+      # and the one anonymous bucket, so an invented client id cannot buy a budget of its own.
       burst: ${PLATFORM_TOKEN_RATE_LIMIT_BURST:100}
       per-second: ${PLATFORM_TOKEN_RATE_LIMIT_PER_SECOND:20}
+      # The one anonymous bucket is the whole endpoint's backstop, so its allowance is deliberately wider than one
+      # client's: one source exhausting it must not lock out every other caller that has not authenticated either.
+      anonymous-burst: ${PLATFORM_TOKEN_RATE_LIMIT_ANONYMOUS_BURST:1000}
       cleanup-batch: ${PLATFORM_TOKEN_RATE_LIMIT_CLEANUP_BATCH:500}
       cleanup-delay: ${PLATFORM_TOKEN_RATE_LIMIT_CLEANUP_DELAY:PT5M}
   # Service clients of the suite: the secret is stored as its hex SHA-256, never in clear.

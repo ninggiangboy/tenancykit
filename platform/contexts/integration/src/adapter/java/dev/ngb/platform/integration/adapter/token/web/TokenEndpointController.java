@@ -4,6 +4,7 @@ import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.platform.integration.application.auth.exception.RateLimitExceededException;
 import dev.ngb.platform.integration.application.token.command.IssueTokenUseCase;
 import dev.ngb.platform.integration.application.token.port.TokenIssuer;
+import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
@@ -37,6 +38,7 @@ class TokenEndpointController {
     @PostMapping(path = "/oauth/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @PublicEndpoint
     ResponseEntity<Map<String, Object>> token(
+            HttpServletRequest httpRequest,
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam("grant_type") String grantType,
             @RequestParam("audience") String audience,
@@ -49,7 +51,8 @@ class TokenEndpointController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         try {
-            Optional<TokenIssuer.Issued> issued = tokens.issue(credentials[0], credentials[1], audience, requestId);
+            Optional<TokenIssuer.Issued> issued =
+                    tokens.issue(credentials[0], credentials[1], audience, requestId, httpRequest.getRemoteAddr());
             return issued
                     .<ResponseEntity<Map<String, Object>>>map(token -> ResponseEntity.ok(Map.of(
                             "access_token", token.token(),

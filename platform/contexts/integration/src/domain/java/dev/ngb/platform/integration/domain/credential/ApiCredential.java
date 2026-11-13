@@ -22,6 +22,7 @@ public final class ApiCredential {
     private CredentialStatus status;
     private Instant expiresAt;
     private Instant revokedAt;
+    private long version;
 
     private ApiCredential(
             ApiCredentialId id,
@@ -34,7 +35,8 @@ public final class ApiCredential {
             CredentialStatus status,
             Instant createdAt,
             Instant expiresAt,
-            Instant revokedAt) {
+            Instant revokedAt,
+            long version) {
         this.id = Objects.requireNonNull(id, "id");
         this.tenantId = Objects.requireNonNull(tenantId, "tenantId");
         this.tenantSystemId = Objects.requireNonNull(tenantSystemId, "tenantSystemId");
@@ -50,6 +52,7 @@ public final class ApiCredential {
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
         this.expiresAt = expiresAt;
         this.revokedAt = revokedAt;
+        this.version = version;
     }
 
     public static ApiCredential issue(
@@ -62,7 +65,7 @@ public final class ApiCredential {
             Instant now) {
         return new ApiCredential(
                 id, tenantId, tenantSystemId, key.keyId(), ApiKey.hash(key.secret()), scopes, label,
-                CredentialStatus.ACTIVE, now, null, null);
+                CredentialStatus.ACTIVE, now, null, null, 1);
     }
 
     public static ApiCredential restore(
@@ -76,9 +79,11 @@ public final class ApiCredential {
             CredentialStatus status,
             Instant createdAt,
             Instant expiresAt,
-            Instant revokedAt) {
+            Instant revokedAt,
+            long version) {
         return new ApiCredential(
-                id, tenantId, tenantSystemId, keyId, secretHash, scopes, label, status, createdAt, expiresAt, revokedAt);
+                id, tenantId, tenantSystemId, keyId, secretHash, scopes, label, status, createdAt, expiresAt, revokedAt,
+                version);
     }
 
     /** Constant-time comparison of the presented secret's digest with the stored digest. */
@@ -90,19 +95,33 @@ public final class ApiCredential {
         return status == CredentialStatus.ACTIVE && (expiresAt == null || now.isBefore(expiresAt));
     }
 
-    /** Immediate and permanent. */
-    public void revoke(Instant now) {
-        if (status == CredentialStatus.ACTIVE) {
-            status = CredentialStatus.REVOKED;
-            revokedAt = now;
+    /**
+     * Immediate and permanent.
+     *
+     * @return false when it was already revoked, so no write and no version bump happens
+     */
+    public boolean revoke(Instant now) {
+        if (status != CredentialStatus.ACTIVE) {
+            return false;
         }
+        status = CredentialStatus.REVOKED;
+        revokedAt = now;
+        version++;
+        return true;
     }
 
-    /** Ends the credential's life at {@code at} unless it already ends sooner. Used for rotation overlap. */
-    public void expireAt(Instant at) {
-        if (expiresAt == null || at.isBefore(expiresAt)) {
-            expiresAt = at;
+    /**
+     * Ends the credential's life at {@code at} unless it already ends sooner. Used for rotation overlap.
+     *
+     * @return false when the end is already at or before {@code at}, so no write and no version bump happens
+     */
+    public boolean expireAt(Instant at) {
+        if (expiresAt != null && !at.isBefore(expiresAt)) {
+            return false;
         }
+        expiresAt = at;
+        version++;
+        return true;
     }
 
     public ApiCredentialId id() {
@@ -147,6 +166,10 @@ public final class ApiCredential {
 
     public Instant revokedAt() {
         return revokedAt;
+    }
+
+    public long version() {
+        return version;
     }
 
     @Override

@@ -1,7 +1,12 @@
 package dev.ngb.platform.access.application.role.command;
 
+import dev.ngb.core.audit.Audit;
+import dev.ngb.core.audit.AuditEntry;
+import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.id.TenantId;
+import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.PermissionScope;
@@ -39,24 +44,28 @@ public class ManageRoleUseCase {
     private final AccessRepository access;
     private final PermissionCatalog catalog;
     private final AccessPublisher publisher;
+    private final AuditLog auditLog;
+    private final Clock clock;
 
     public ManageRoleUseCase(
             UnitOfWork unitOfWork, RoleRepository roles, UserRepository users, AccessRepository access, PermissionCatalog catalog,
-            AccessPublisher publisher) {
+            AccessPublisher publisher, AuditLog auditLog, Clock clock) {
         this.unitOfWork = unitOfWork;
         this.roles = roles;
         this.users = users;
         this.access = access;
         this.catalog = catalog;
         this.publisher = publisher;
+        this.auditLog = auditLog;
+        this.clock = clock;
     }
 
-    public Role execute(Actor actor, Command command) {
+    public Role execute(Actor actor, String requestId, Command command) {
         return unitOfWork.transactional(() -> switch (command.action()) {
-            case REPLACE_PERMISSIONS -> replacePermissions(lockedForUpdate(command), command.permissions());
-            case RENAME -> rename(lockedForUpdate(command), command.name());
-            case ASSIGN -> assign(lockedForShare(command.roleId()), command.userId(), actor);
-            case UNASSIGN -> unassign(lockedForShare(command.roleId()), command.userId(), actor);
+            case REPLACE_PERMISSIONS -> replacePermissions(actor, requestId, lockedForUpdate(command), command.permissions());
+            case RENAME -> rename(actor, requestId, lockedForUpdate(command), command.name());
+            case ASSIGN -> assign(actor, requestId, lockedForShare(command.roleId()), command.userId());
+            case UNASSIGN -> unassign(actor, requestId, lockedForShare(command.roleId()), command.userId());
         });
     }
 
@@ -74,7 +83,7 @@ public class ManageRoleUseCase {
         return roles.lockForShare(roleId).orElseThrow(() -> new NotFoundException("no role " + roleId));
     }
 
-    private Role replacePermissions(Role role, Set<String> permissions) {
+    private Role replacePermissions(Actor actor, String requestId, Role role, Set<String> permissions) {
         permissions.forEach(code -> {
             var permission = catalog.find(code).orElseThrow(() -> new UnknownPermissionException(code, "is not in the catalog"));
             if (!permission.validIn(role.scope())) {
@@ -86,30 +95,40 @@ public class ManageRoleUseCase {
         }
         roles.update(role);
         publisher.publishForRole(role.id());
+        audit(actor, requestId, "role.permissions-replaced", "role/" + role.id());
         return role;
     }
 
-    private Role rename(Role role, String name) {
+    private Role rename(Actor actor, String requestId, Role role, String name) {
         if (role.rename(name)) {
             roles.update(role);
+            audit(actor, requestId, "role.renamed", "role/" + role.id());
         }
         return role;
     }
 
-    private Role assign(Role role, UserId userId, Actor actor) {
+    private Role assign(Actor actor, String requestId, Role role, UserId userId) {
         requireNotWider(role.scope(), actor.scope());
         User user = users.lockById(userId).orElseThrow(() -> new NotFoundException("no user " + userId));
         access.assign(role.tenantId().value(), user.id().value(), role.id().value());
         publisher.publishFor(user);
+        audit(actor, requestId, "role.assigned", "role/" + role.id() + "/user/" + user.id());
         return role;
     }
 
-    private Role unassign(Role role, UserId userId, Actor actor) {
+    private Role unassign(Actor actor, String requestId, Role role, UserId userId) {
         requireNotWider(role.scope(), actor.scope());
         User user = users.lockById(userId).orElseThrow(() -> new NotFoundException("no user " + userId));
         access.unassign(role.tenantId().value(), user.id().value(), role.id().value());
         publisher.publishFor(user);
+        audit(actor, requestId, "role.unassigned", "role/" + role.id() + "/user/" + user.id());
         return role;
+    }
+
+    private void audit(Actor actor, String requestId, String action, String target) {
+        Audit caller = Audit.of(actor.auditName(), requestId);
+        TenantId tenantId = actor.tenantId();
+        auditLog.record(AuditEntry.tenant(tenantId, caller.actor(), action, target, caller.requestId(), clock.now()));
     }
 
     private static void requireNotWider(PermissionScope roleScope, PermissionScope caller) {

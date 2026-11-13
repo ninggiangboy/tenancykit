@@ -124,12 +124,12 @@ class ConcurrentUserAccessIntegrationTest {
     }
 
     private Role assign(Role role, User user) {
-        return manageRole.execute(Actors.PLATFORM, new ManageRoleUseCase.Command(
+        return manageRole.execute(Actors.PLATFORM, "req-1", new ManageRoleUseCase.Command(
                 role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, user.id(), ExpectedVersion.any()));
     }
 
     private Role unassign(Role role, User user) {
-        return manageRole.execute(Actors.PLATFORM, new ManageRoleUseCase.Command(
+        return manageRole.execute(Actors.PLATFORM, "req-1", new ManageRoleUseCase.Command(
                 role.id(), ManageRoleUseCase.Action.UNASSIGN, Set.of(), null, user.id(), ExpectedVersion.any()));
     }
 
@@ -140,12 +140,12 @@ class ConcurrentUserAccessIntegrationTest {
 
     private User newUser(Tenant tenant) {
         String email = "user-" + suffix() + "@example.test";
-        return onPlatform(() -> createUser.execute(Actors.PLATFORM, new CreateUserUseCase.Command(
+        return onPlatform(() -> createUser.execute(Actors.PLATFORM, "req-1", new CreateUserUseCase.Command(
                 tenant.code().value(), tenant.id(), PermissionScope.TENANT, email, "User", "change-me")));
     }
 
     private Role role(Tenant tenant, String name, Set<String> permissions) {
-        return onPlatform(() -> createRole.execute(Actors.PLATFORM, new CreateRoleUseCase.Command(
+        return onPlatform(() -> createRole.execute(Actors.PLATFORM, "req-1", new CreateRoleUseCase.Command(
                 tenant.id(), PermissionScope.TENANT, name, permissions)));
     }
 

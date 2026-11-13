@@ -1,4 +1,4 @@
-package dev.ngb.platform.integration.adapter.token.web;
+package dev.ngb.platform.integration.adapter.token.persistence;
 
 import dev.ngb.platform.integration.application.auth.port.RateLimiter;
 import java.time.Duration;
@@ -8,7 +8,7 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
- * A token bucket per client id, shared by every instance through PostgreSQL.
+ * A token bucket per key, shared by every instance through PostgreSQL.
  *
  * <p>The decision happens in one function call that locks one bucket row, and the call runs in its own short
  * transaction. The limiter therefore never extends the token-endpoint transaction. A row that has been idle past
@@ -24,9 +24,8 @@ public class PostgresRateLimiter implements RateLimiter {
 
     private final TransactionTemplate transactions;
     private final JdbcTemplate jdbc;
-    private final double burst;
+    private final int burst;
     private final double refillPerSecond;
-    private final int bucketTtlSeconds;
 
     public PostgresRateLimiter(
             PlatformTransactionManager transactionManager, JdbcTemplate jdbc, int burst, double refillPerSecond) {
@@ -36,18 +35,22 @@ public class PostgresRateLimiter implements RateLimiter {
         this.jdbc = jdbc;
         this.burst = burst;
         this.refillPerSecond = refillPerSecond;
-        this.bucketTtlSeconds = Math.toIntExact(bucketTtl(burst, refillPerSecond).toSeconds());
     }
 
     @Override
     public boolean tryAcquire(String key) {
+        return tryAcquire(key, burst);
+    }
+
+    @Override
+    public boolean tryAcquire(String key, int allowance) {
         Boolean admitted = transactions.execute(status -> jdbc.queryForObject(
                 "select try_acquire_rate_limit(?, ?, ?, ?)",
                 Boolean.class,
                 key,
-                burst,
+                (double) allowance,
                 refillPerSecond,
-                bucketTtlSeconds));
+                Math.toIntExact(bucketTtl(allowance, refillPerSecond).toSeconds())));
         return Boolean.TRUE.equals(admitted);
     }
 

@@ -63,12 +63,12 @@ class UserAccessEventIntegrationTest {
                 "acc" + suffix(), "Access", "user/tester", "req-1")));
         User first = newUser(tenant);
         User second = newUser(tenant);
-        Role role = onPlatform(() -> createRole.execute(Actors.PLATFORM, new CreateRoleUseCase.Command(
+        Role role = onPlatform(() -> createRole.execute(Actors.PLATFORM, "req-1", new CreateRoleUseCase.Command(
                 tenant.id(), PermissionScope.TENANT, "Reader", Set.of("billing:invoice:read"))));
 
-        onPlatform(() -> manageRole.execute(Actors.PLATFORM, new ManageRoleUseCase.Command(
+        onPlatform(() -> manageRole.execute(Actors.PLATFORM, "req-1", new ManageRoleUseCase.Command(
                 role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, first.id(), ExpectedVersion.any())));
-        onPlatform(() -> manageRole.execute(Actors.PLATFORM, new ManageRoleUseCase.Command(
+        onPlatform(() -> manageRole.execute(Actors.PLATFORM, "req-1", new ManageRoleUseCase.Command(
                 role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, second.id(), ExpectedVersion.any())));
 
         assertThat(events(first.id().value())).isNotEmpty().last().satisfies(payload -> {
@@ -76,7 +76,7 @@ class UserAccessEventIntegrationTest {
             assertThat(permissions(payload)).containsExactly("billing:invoice:read");
         });
 
-        onPlatform(() -> manageRole.execute(Actors.PLATFORM, new ManageRoleUseCase.Command(
+        onPlatform(() -> manageRole.execute(Actors.PLATFORM, "req-1", new ManageRoleUseCase.Command(
                 role.id(), ManageRoleUseCase.Action.REPLACE_PERMISSIONS,
                 Set.of("billing:invoice:read", "billing:wallet:read"), null, null, ExpectedVersion.any())));
 
@@ -94,7 +94,7 @@ class UserAccessEventIntegrationTest {
                 "dir" + suffix(), "Direct", "user/tester", "req-1")));
         User user = newUser(tenant);
 
-        onPlatform(() -> managePermissions.execute(Actors.PLATFORM, new ManageUserPermissionsUseCase.Command(
+        onPlatform(() -> managePermissions.execute(Actors.PLATFORM, "req-1", new ManageUserPermissionsUseCase.Command(
                 user.id(), "billing:wallet:read", true, ExpectedVersion.any())));
 
         assertThat(events(user.id().value())).last().satisfies(payload ->
@@ -109,7 +109,7 @@ class UserAccessEventIntegrationTest {
         Actor tenantActor = new Actor(
                 ActorType.USER, UUID.randomUUID(), tenant.id(), PermissionScope.TENANT, "tenant-admin", Set.of("platform:role:manage"));
 
-        assertThatThrownBy(() -> createRole.execute(tenantActor, new CreateRoleUseCase.Command(
+        assertThatThrownBy(() -> createRole.execute(tenantActor, "req-1", new CreateRoleUseCase.Command(
                 tenant.id(), PermissionScope.PLATFORM, "Escalation", Set.of("platform:entitlement:manage"))))
                 .isInstanceOf(AccessDeniedException.class);
     }
@@ -133,7 +133,7 @@ class UserAccessEventIntegrationTest {
 
     private User newUser(Tenant tenant) {
         String email = "user-" + suffix() + "@example.test";
-        return onPlatform(() -> createUser.execute(Actors.PLATFORM, new CreateUserUseCase.Command(
+        return onPlatform(() -> createUser.execute(Actors.PLATFORM, "req-1", new CreateUserUseCase.Command(
                 tenant.code().value(), tenant.id(), PermissionScope.TENANT, email, "User " + email, "change-me")));
     }
 

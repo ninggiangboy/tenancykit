@@ -27,6 +27,8 @@ public class BootstrapPlatformAdminUseCase {
 
     private static final String ROLE_NAME = "Platform Administrator";
 
+    private static final String REQUEST_ID = "platform-bootstrap";
+
     private static final Actor PLATFORM_ACTOR = new Actor(
             ActorType.SERVICE, new UUID(0, 0), RequestScope.PLATFORM_TENANT_ID, PermissionScope.PLATFORM, "platform-bootstrap", Set.of());
 
@@ -62,7 +64,7 @@ public class BootstrapPlatformAdminUseCase {
         if (users.findByEmail(platform, email).isPresent()) {
             return;
         }
-        User admin = createUser.execute(PLATFORM_ACTOR, new CreateUserUseCase.Command(
+        User admin = createUser.execute(PLATFORM_ACTOR, REQUEST_ID, new CreateUserUseCase.Command(
                 "platform", platform, PermissionScope.PLATFORM, email, "Platform Administrator", temporaryPassword));
         unitOfWork.transactional(() -> {
             Role role = roles.findByName(platform.value(), ROLE_NAME).orElseGet(() -> {

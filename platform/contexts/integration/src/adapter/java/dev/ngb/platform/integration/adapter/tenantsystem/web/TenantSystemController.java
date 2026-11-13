@@ -1,7 +1,6 @@
 package dev.ngb.platform.integration.adapter.tenantsystem.web;
 
 import dev.ngb.core.audit.Audit;
-import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
@@ -171,13 +170,8 @@ class TenantSystemController {
     CredentialResponse revoke(
             @PathVariable String systemId, @PathVariable String credentialId,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
-        TenantSystemId expected = TenantSystemId.of(systemId);
-        ApiCredentialId target = ApiCredentialId.of(credentialId);
-        boolean belongs = credentialQueries.list(expected).stream().anyMatch(c -> c.id().equals(target.value()));
-        if (!belongs) {
-            throw new NotFoundException("credential not found");
-        }
-        return CredentialResponse.of(credentials.revoke(caller(requestId), target));
+        return CredentialResponse.of(credentials.revoke(
+                caller(requestId), TenantSystemId.of(systemId), ApiCredentialId.of(credentialId)));
     }
 
     private Audit caller(String requestId) {

@@ -10,6 +10,11 @@
   scopes: [platform]
   grantable_to_tenant_system: false
 
+- code: platform:tenant:rename
+  description: Rename a Tenant.
+  scopes: [platform]
+  grantable_to_tenant_system: false
+
 - code: platform:tenant:read
   description: Read the Tenants the caller may see.
   scopes: [platform]

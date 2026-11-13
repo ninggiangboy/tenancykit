@@ -186,6 +186,21 @@ public class ApiCredentialsRecord extends UpdatableRecordImpl<ApiCredentialsReco
         return (Instant) get(10);
     }
 
+    /**
+     * Setter for <code>public.api_credentials.version</code>.
+     */
+    public ApiCredentialsRecord setVersion(Long value) {
+        set(11, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.api_credentials.version</code>.
+     */
+    public Long getVersion() {
+        return (Long) get(11);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -209,7 +224,7 @@ public class ApiCredentialsRecord extends UpdatableRecordImpl<ApiCredentialsReco
     /**
      * Create a detached, initialised ApiCredentialsRecord
      */
-    public ApiCredentialsRecord(UUID id, UUID tenantId, UUID tenantSystemId, String keyId, byte[] secretHash, String[] scopes, String label, String status, Instant createdAt, Instant expiresAt, Instant revokedAt) {
+    public ApiCredentialsRecord(UUID id, UUID tenantId, UUID tenantSystemId, String keyId, byte[] secretHash, String[] scopes, String label, String status, Instant createdAt, Instant expiresAt, Instant revokedAt, Long version) {
         super(ApiCredentials.API_CREDENTIALS);
 
         setId(id);
@@ -223,6 +238,7 @@ public class ApiCredentialsRecord extends UpdatableRecordImpl<ApiCredentialsReco
         setCreatedAt(createdAt);
         setExpiresAt(expiresAt);
         setRevokedAt(revokedAt);
+        setVersion(version);
         resetTouchedOnNotNull();
     }
 }

@@ -1,6 +1,6 @@
 package dev.ngb.platform.support;
 
-import dev.ngb.platform.boot.security.ServiceClients;
+import dev.ngb.platform.integration.adapter.auth.service.ConfiguredServiceClients;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistrar;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -44,11 +44,13 @@ public class PlatformContainerConfig {
 
     @org.springframework.context.annotation.Bean
     DynamicPropertyRegistrar platformProperties() {
-        String secretHash = ServiceClients.sha256(CLIENT_SECRET);
+        String secretHash = ConfiguredServiceClients.sha256(CLIENT_SECRET);
         return registry -> {
             registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
             registry.add("spring.datasource.username", () -> APP_ROLE);
             registry.add("spring.datasource.password", () -> APP_PASSWORD);
+            registry.add("spring.datasource.hikari.minimum-idle", () -> "1");
+            registry.add("spring.datasource.hikari.maximum-pool-size", () -> "4");
             registry.add("spring.flyway.url", POSTGRES::getJdbcUrl);
             registry.add("spring.flyway.user", POSTGRES::getUsername);
             registry.add("spring.flyway.password", POSTGRES::getPassword);

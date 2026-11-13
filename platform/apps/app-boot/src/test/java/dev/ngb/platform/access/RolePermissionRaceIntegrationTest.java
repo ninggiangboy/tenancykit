@@ -53,7 +53,7 @@ class RolePermissionRaceIntegrationTest {
     void anAssignRacingAPermissionReplacementPublishesTheNewPermissions() throws Exception {
         Tenant tenant = newTenant();
         User user = newUser(tenant);
-        Role role = onPlatform(() -> createRole.execute(Actors.PLATFORM, new CreateRoleUseCase.Command(
+        Role role = onPlatform(() -> createRole.execute(Actors.PLATFORM, "req-1", new CreateRoleUseCase.Command(
                 tenant.id(), PermissionScope.TENANT, "Operator-" + suffix(), Set.of("billing:invoice:read"))));
         long before = latestVersion(user.id().value());
 
@@ -71,12 +71,12 @@ class RolePermissionRaceIntegrationTest {
     }
 
     private Role assign(Role role, User user) {
-        return manageRole.execute(Actors.PLATFORM, new ManageRoleUseCase.Command(
+        return manageRole.execute(Actors.PLATFORM, "req-1", new ManageRoleUseCase.Command(
                 role.id(), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, user.id(), ExpectedVersion.any()));
     }
 
     private Role replacePermissions(Role role, Set<String> permissions) {
-        return manageRole.execute(Actors.PLATFORM, new ManageRoleUseCase.Command(
+        return manageRole.execute(Actors.PLATFORM, "req-1", new ManageRoleUseCase.Command(
                 role.id(), ManageRoleUseCase.Action.REPLACE_PERMISSIONS, permissions, null, null, ExpectedVersion.any()));
     }
 
@@ -87,7 +87,7 @@ class RolePermissionRaceIntegrationTest {
 
     private User newUser(Tenant tenant) {
         String email = "user-" + suffix() + "@example.test";
-        return onPlatform(() -> createUser.execute(Actors.PLATFORM, new CreateUserUseCase.Command(
+        return onPlatform(() -> createUser.execute(Actors.PLATFORM, "req-1", new CreateUserUseCase.Command(
                 tenant.code().value(), tenant.id(), PermissionScope.TENANT, email, "User", "change-me")));
     }
 

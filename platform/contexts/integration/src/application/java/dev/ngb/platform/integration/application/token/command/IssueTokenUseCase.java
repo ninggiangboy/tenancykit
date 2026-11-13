@@ -1,9 +1,7 @@
 package dev.ngb.platform.integration.application.token.command;
 
-import dev.ngb.core.audit.Audit;
 import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
-import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.platform.integration.application.auth.exception.RateLimitExceededException;
@@ -18,7 +16,6 @@ import dev.ngb.platform.integration.domain.credential.ApiKey;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystem;
 import java.security.MessageDigest;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -33,13 +30,13 @@ public class IssueTokenUseCase {
     private static final byte[] NO_SECRET = new byte[32];
 
     /**
-     * How many buckets a request that did not authenticate shares, chosen by key id. A caller can invent client
-     * ids freely, so without this every unknown id would create a rate-limit row of its own; with it the rows stay
-     * bounded. It must be a power of two.
+     * The one bucket every request that did not authenticate shares. Before it existed, an unauthenticated attempt
+     * picked one of 1024 buckets by key id, so inventing client ids multiplied the attempts a caller got.
      */
-    private static final int ANONYMOUS_BUCKETS = 1024;
+    private static final String ANONYMOUS_BUCKET = "unauthenticated";
 
-    private static final String ANONYMOUS_BUCKET_PREFIX = "unauthenticated:";
+    private static final String CLIENT_PREFIX = "client:";
+    private static final String ADDRESS_PREFIX = "address:";
 
     private final UnitOfWork unitOfWork;
     private final ServiceClientRegistry serviceClients;
@@ -50,6 +47,7 @@ public class IssueTokenUseCase {
     private final TokenIssuer issuer;
     private final AuditLog auditLog;
     private final Clock clock;
+    private final int anonymousBurst;
 
     public IssueTokenUseCase(
             UnitOfWork unitOfWork,
@@ -60,7 +58,8 @@ public class IssueTokenUseCase {
             RateLimiter rateLimiter,
             TokenIssuer issuer,
             AuditLog auditLog,
-            Clock clock) {
+            Clock clock,
+            int anonymousBurst) {
         this.unitOfWork = unitOfWork;
         this.serviceClients = serviceClients;
         this.credentials = credentials;
@@ -70,28 +69,39 @@ public class IssueTokenUseCase {
         this.issuer = issuer;
         this.auditLog = auditLog;
         this.clock = clock;
+        this.anonymousBurst = anonymousBurst;
     }
 
     /**
      * @param audience exactly one app code
-     * @throws RateLimitExceededException when the client id exceeded its rate limit
+     * @throws RateLimitExceededException when the client id or the caller's address exceeded its rate limit
      * @return empty when the client is unknown, the secret is wrong, the credential is revoked or expired, or the
      *     tenant system is disabled. The caller answers the same 401 for every one of them.
      */
-    public Optional<TokenIssuer.Issued> issue(String clientId, String secret, String audience, String requestId) {
+    public Optional<TokenIssuer.Issued> issue(
+            String clientId, String secret, String audience, String requestId, String callerAddress) {
+        // The claimed client id pays before its secret is compared: an over-limit caller never reaches the digest
+        // comparison, and a guess costs budget whether or not it is accepted.
+        if (!rateLimiter.tryAcquire(CLIENT_PREFIX + (clientId == null ? "" : clientId))) {
+            throw new RateLimitExceededException();
+        }
+
         Optional<TokenIssuer.Issued> issued = serviceClients.authenticate(clientId, secret)
                 .map(client -> issueForServiceClient(client, audience))
                 .or(() -> unitOfWork.transactional(() -> issueForTenantSystem(clientId, secret, audience)));
 
-        // A client id spends its own bucket only when it authenticated. Everything else spends one of a fixed set of
-        // shared buckets, so a wrong or invented client id cannot exhaust a real one's budget or create a row per try.
-        String bucket = issued.isPresent() ? clientId : ANONYMOUS_BUCKET_PREFIX + anonymousSlot(clientId);
-        if (!rateLimiter.tryAcquire(bucket)) {
+        if (issued.isPresent()) {
+            return issued;
+        }
+
+        // Everything that did not authenticate pays the caller's address and the one shared anonymous budget, so a
+        // caller cannot spread its attempts over a bucket per invented client id. The shared budget has its own,
+        // wider allowance: it is the endpoint's backstop, so one source must not lock out every other caller.
+        if (!rateLimiter.tryAcquire(ADDRESS_PREFIX + (callerAddress == null ? "" : callerAddress))
+                || !rateLimiter.tryAcquire(ANONYMOUS_BUCKET, anonymousBurst)) {
             throw new RateLimitExceededException();
         }
-        if (issued.isEmpty()) {
-            auditFailure(clientId, audience, requestId);
-        }
+        auditFailure(clientId, audience, requestId);
         return issued;
     }
 
@@ -135,12 +145,5 @@ public class IssueTokenUseCase {
                 "oauth/token/audience/" + audience,
                 requestId,
                 now)));
-    }
-
-    private static int anonymousSlot(String clientId) {
-        if (clientId == null || clientId.isBlank()) {
-            return 0;
-        }
-        return Math.floorMod(clientId.hashCode(), ANONYMOUS_BUCKETS);
     }
 }

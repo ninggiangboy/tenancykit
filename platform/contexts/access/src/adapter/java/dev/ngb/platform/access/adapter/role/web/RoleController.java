@@ -62,9 +62,11 @@ class RoleController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission("platform:role:manage")
-    RoleResponse create(@RequestBody CreateRequest request) {
+    RoleResponse create(
+            @RequestBody CreateRequest request,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
         Actor actor = currentActor.get();
-        return RoleResponse.of(createRole.execute(actor, new CreateRoleUseCase.Command(
+        return RoleResponse.of(createRole.execute(actor, requestId, new CreateRoleUseCase.Command(
                 actor.tenantId(), actor.scope(), request.name(), request.permissions())));
     }
 
@@ -79,8 +81,9 @@ class RoleController {
     @RequiresPermission("platform:role:manage")
     ResponseEntity<RoleResponse> replacePermissions(
             @PathVariable UUID id, @RequestBody PermissionsRequest request,
-            @RequestHeader(value = "If-Match", required = false) String ifMatch) {
-        Role role = manageRole.execute(currentActor.get(), new ManageRoleUseCase.Command(
+            @RequestHeader(value = "If-Match", required = false) String ifMatch,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+        Role role = manageRole.execute(currentActor.get(), requestId, new ManageRoleUseCase.Command(
                 new RoleId(id), ManageRoleUseCase.Action.REPLACE_PERMISSIONS, request.permissions(), null, null,
                 ExpectedVersion.fromIfMatch(ifMatch)));
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(role.version())).body(RoleResponse.of(role));
@@ -90,8 +93,9 @@ class RoleController {
     @RequiresPermission("platform:role:manage")
     ResponseEntity<RoleResponse> rename(
             @PathVariable UUID id, @RequestBody RenameRequest request,
-            @RequestHeader(value = "If-Match", required = false) String ifMatch) {
-        Role role = manageRole.execute(currentActor.get(), new ManageRoleUseCase.Command(
+            @RequestHeader(value = "If-Match", required = false) String ifMatch,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+        Role role = manageRole.execute(currentActor.get(), requestId, new ManageRoleUseCase.Command(
                 new RoleId(id), ManageRoleUseCase.Action.RENAME, Set.of(), request.name(), null,
                 ExpectedVersion.fromIfMatch(ifMatch)));
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(role.version())).body(RoleResponse.of(role));
@@ -99,15 +103,19 @@ class RoleController {
 
     @PostMapping("/{id}/users/{userId}")
     @RequiresPermission("platform:role:manage")
-    RoleResponse assign(@PathVariable UUID id, @PathVariable UUID userId) {
-        return RoleResponse.of(manageRole.execute(currentActor.get(), new ManageRoleUseCase.Command(
+    RoleResponse assign(
+            @PathVariable UUID id, @PathVariable UUID userId,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+        return RoleResponse.of(manageRole.execute(currentActor.get(), requestId, new ManageRoleUseCase.Command(
                 new RoleId(id), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, new UserId(userId), ExpectedVersion.any())));
     }
 
     @DeleteMapping("/{id}/users/{userId}")
     @RequiresPermission("platform:role:manage")
-    RoleResponse unassign(@PathVariable UUID id, @PathVariable UUID userId) {
-        return RoleResponse.of(manageRole.execute(currentActor.get(), new ManageRoleUseCase.Command(
+    RoleResponse unassign(
+            @PathVariable UUID id, @PathVariable UUID userId,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+        return RoleResponse.of(manageRole.execute(currentActor.get(), requestId, new ManageRoleUseCase.Command(
                 new RoleId(id), ManageRoleUseCase.Action.UNASSIGN, Set.of(), null, new UserId(userId), ExpectedVersion.any())));
     }
 }

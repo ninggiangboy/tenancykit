@@ -75,7 +75,7 @@ class GuardedVersionUpdateIntegrationTest {
 
     private User newUser(Tenant tenant) {
         String email = "user-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10) + "@example.test";
-        return onPlatform(() -> createUser.execute(Actors.PLATFORM, new CreateUserUseCase.Command(
+        return onPlatform(() -> createUser.execute(Actors.PLATFORM, "req-1", new CreateUserUseCase.Command(
                 tenant.code().value(), tenant.id(), PermissionScope.TENANT, email, "User", "change-me")));
     }
 

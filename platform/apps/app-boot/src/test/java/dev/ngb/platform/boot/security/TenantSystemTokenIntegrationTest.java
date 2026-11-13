@@ -91,7 +91,7 @@ class TenantSystemTokenIntegrationTest {
     @Test
     void aRevokedCredentialGets401() throws Exception {
         Setup setup = setup(Set.of("billing:invoice:read"));
-        inTenant(setup.tenantId(), () -> credentials.revoke(CALLER, setup.issued().credential().id()));
+        inTenant(setup.tenantId(), () -> credentials.revoke(CALLER, setup.system().id(), setup.issued().credential().id()));
 
         assertThat(httpStatus(setup.issued().plaintextKey())).isEqualTo(401);
     }

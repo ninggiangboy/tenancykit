@@ -95,7 +95,7 @@ public class ManageCredentialUseCase {
             TenantId tenantId = tenantContext.requireTenant();
             requireActiveSystem(systemId);
             Instant now = clock.now();
-            List<ApiCredential> live = credentials.findByTenantSystem(systemId).stream()
+            List<ApiCredential> live = credentials.lockByTenantSystem(systemId).stream()
                     .filter(credential -> credential.isUsable(now))
                     .toList();
             if (live.isEmpty()) {
@@ -106,18 +106,27 @@ public class ManageCredentialUseCase {
             }
             ApiCredential current = live.getFirst();
             Issued issued = issue(tenantId, systemId, current.label(), current.scopes());
-            current.expireAt(now.plus(overlap));
-            credentials.update(current);
+            if (current.expireAt(now.plus(overlap))) {
+                credentials.update(current);
+            }
             audit(caller, tenantId, "credential.rotated", issued.credential());
             return issued;
         });
     }
 
-    public ApiCredential revoke(Audit caller, ApiCredentialId id) {
+    /**
+     * Revokes one credential of one Tenant System. The ownership check is part of the command, not of the handler
+     * that happens to call it: a credential of another Tenant System is reported as absent.
+     */
+    public ApiCredential revoke(Audit caller, TenantSystemId systemId, ApiCredentialId id) {
         return unitOfWork.transactional(() -> {
-            ApiCredential credential = credentials.findById(id).orElseThrow(() -> new NotFoundException("credential not found"));
-            credential.revoke(clock.now());
-            credentials.update(credential);
+            ApiCredential credential = credentials.lockByTenantSystem(systemId).stream()
+                    .filter(candidate -> candidate.id().equals(id))
+                    .findFirst()
+                    .orElseThrow(() -> new NotFoundException("credential not found"));
+            if (credential.revoke(clock.now())) {
+                credentials.update(credential);
+            }
             audit(caller, credential.tenantId(), "credential.revoked", credential);
             return credential;
         });

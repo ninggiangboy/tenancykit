@@ -65,7 +65,7 @@ class TenantController {
     }
 
     @PutMapping("/{id}")
-    @RequiresPermission("platform:tenant:create")
+    @RequiresPermission("platform:tenant:rename")
     ResponseEntity<TenantResponse> rename(
             @PathVariable UUID id, @RequestBody RenameRequest request,
             @RequestHeader(value = "If-Match", required = false) String ifMatch,
