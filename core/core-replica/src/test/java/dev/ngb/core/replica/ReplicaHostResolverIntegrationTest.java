@@ -87,4 +87,11 @@ class ReplicaHostResolverIntegrationTest {
     void theComparisonIsCaseInsensitive() {
         assertThat(resolver.resolve("ACME.LocalHost")).isPresent();
     }
+
+    @Test
+    void aDeactivatedTenantsHostResolvesToNothing() {
+        dsl.execute("update tenants set status = 'DEACTIVATED' where code = 'acme'");
+
+        assertThat(resolver.resolve("acme.localhost")).isEmpty();
+    }
 }

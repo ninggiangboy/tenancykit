@@ -13,6 +13,7 @@ import dev.ngb.core.replica.web.ReplicaEntitlements;
 import dev.ngb.core.replica.web.ReplicaHostResolver;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
+import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -21,11 +22,14 @@ import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 /**
  * Wires `core-replica` into Billing: the snapshot it is rebuilt from, the five guarded upserts, the platform-events
- * listener, the hostname resolver, the actor resolver and the two-issuer token decoder.
+ * listener, the hostname resolver, the actor resolver and the two-issuer token decoder. The listener, its dispatcher
+ * and the rebuild run only in the worker profile, like every other broker consumer.
  */
 @Configuration(proxyBeanMethods = false)
 class ReplicaConfiguration {
@@ -89,7 +93,11 @@ class ReplicaConfiguration {
 
     @Bean
     SnapshotClient snapshotClient(ReplicaProperties properties) {
-        return new SnapshotClient(new PlatformSnapshotTransport(properties, RestClient.builder()));
+        Duration timeout = properties.replica().requestTimeout();
+        JdkClientHttpRequestFactory requests =
+                new JdkClientHttpRequestFactory(HttpClient.newBuilder().connectTimeout(timeout).build());
+        requests.setReadTimeout(timeout);
+        return new SnapshotClient(new PlatformSnapshotTransport(properties, RestClient.builder().requestFactory(requests)));
     }
 
     /**
@@ -97,6 +105,7 @@ class ReplicaConfiguration {
      * after the snapshot load finishes, so messages that arrive meanwhile wait in the durable queue.
      */
     @Bean
+    @Profile("worker")
     SimpleMessageListenerContainer platformEventsContainer(
             org.springframework.amqp.rabbit.connection.ConnectionFactory connectionFactory,
             AmqpInboundDispatcher dispatcher,
@@ -114,6 +123,7 @@ class ReplicaConfiguration {
      * wait until the rebuild finishes.
      */
     @Bean
+    @Profile("worker")
     ReplicaBootstrap replicaBootstrap(
             ReplicaProperties properties, ReplicaWriter writer, SnapshotClient snapshots, UnitOfWork unitOfWork,
             TenantContext tenantContext, SimpleMessageListenerContainer platformEventsContainer) {
@@ -123,12 +133,15 @@ class ReplicaConfiguration {
 
     /** The inbound handlers the dispatcher calls; only the replica consumes platform.events. */
     @Bean
+    @Profile("worker")
     AmqpInboundDispatcher inboundDispatcher(
             tools.jackson.databind.json.JsonMapper json, List<InboundEventHandler> handlers,
             dev.ngb.core.event.EventInbox inbox, UnitOfWork unitOfWork, TenantContext tenantContext) {
         return new AmqpInboundDispatcher(
                 new dev.ngb.core.messaging.broker.EnvelopeCodec(json), handlers, inbox, unitOfWork, tenantContext,
-                AmqpInboundDispatcher.defaultRetry());
+                // A child row (a domain, a user's grants) can arrive before its tenant when the producer backed off on
+                // the parent, so the replica waits about a minute for the parent before dead-lettering.
+                AmqpInboundDispatcher.retry(8, 500, 20_000));
     }
 
     /** The Spring Web implementation of the snapshot HTTP calls, kept out of core so core stays framework-light. */
