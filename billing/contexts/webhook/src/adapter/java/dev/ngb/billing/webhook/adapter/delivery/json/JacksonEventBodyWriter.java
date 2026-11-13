@@ -1,31 +1,25 @@
 package dev.ngb.billing.webhook.adapter.delivery.json;
 
-import dev.ngb.core.event.DomainEvent;
 import dev.ngb.billing.webhook.application.delivery.port.EventBodyWriter;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import dev.ngb.core.event.DomainEvent;
+import dev.ngb.core.messaging.broker.EventDocument;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * The delivered document: {@code id}, {@code type}, {@code tenantId}, {@code occurredAt} and the event's own
- * {@code data}, whose shape is owned by the schema of that event type in {@code contracts/events}.
+ * The delivered document: the one canonical {@link EventDocument} the broker also sends, so a webhook receiver gets
+ * byte for byte what a consumer sees on AMQP. `data` is the event's own payload, whose shape is owned by the schema
+ * of that event type in {@code contracts/events}.
  */
 public class JacksonEventBodyWriter implements EventBodyWriter {
 
-    private final JsonMapper json;
+    private final EventDocument document;
 
     public JacksonEventBodyWriter(JsonMapper json) {
-        this.json = json;
+        this.document = new EventDocument(json);
     }
 
     @Override
     public String write(DomainEvent event) {
-        Map<String, Object> document = new LinkedHashMap<>();
-        document.put("id", event.eventId().toString());
-        document.put("type", event.type());
-        document.put("tenantId", event.tenantId().toString());
-        document.put("occurredAt", event.occurredAt().toString());
-        document.put("data", event.payload());
-        return json.writeValueAsString(document);
+        return document.write(event);
     }
 }

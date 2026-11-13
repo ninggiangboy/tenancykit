@@ -45,6 +45,7 @@ class OutboxRelayIntegrationTest {
 
     private final List<EventEnvelope> seen = new ArrayList<>();
     private final AtomicBoolean failing = new AtomicBoolean(false);
+    private final AtomicBoolean contended = new AtomicBoolean(false);
 
     private PGSimpleDataSource dataSource;
     private DSLContext dsl;
@@ -91,6 +92,10 @@ class OutboxRelayIntegrationTest {
             if (failing.get() && envelope.type().equals("test.poison")) {
                 throw new IllegalStateException("consumer exploded");
             }
+            if (contended.get() && envelope.type().equals("test.contended")) {
+                throw new IllegalStateException("the row lock timed out",
+                        new SQLException("canceling statement due to lock timeout", "55P03"));
+            }
             dsl.insertInto(MessagingTables.EVENT_INBOX)
                     .set(MessagingTables.EVENT_INBOX_TENANT_ID, envelope.tenantId().value())
                     .set(MessagingTables.EVENT_INBOX_CONSUMER, "probe")
@@ -132,6 +137,24 @@ class OutboxRelayIntegrationTest {
         assertThat(relay.relayDue()).isEqualTo(new OutboxRelay.Result(0, 0, 1));
         assertThat(statusOf(poison)).containsEntry("status", "DEAD").containsEntry("attempts", 2);
         assertThat(seen).isEmpty();
+    }
+
+    @Test
+    void aLockTimeoutSpendsNoAttemptAndLeavesTheEventDue() {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        UUID contendedEvent = publish(tenant, "test.contended");
+        contended.set(true);
+        try {
+            assertThat(relay.relayDue()).as("contention is neither a delivery nor a failure").isEqualTo(new OutboxRelay.Result(0, 0, 0));
+            assertThat(statusOf(contendedEvent)).containsEntry("status", "PENDING").containsEntry("attempts", 0);
+            assertThat(seen).isEmpty();
+
+            contended.set(false);
+            assertThat(relay.relayDue().delivered()).as("the next poll delivers it").isEqualTo(1);
+            assertThat(statusOf(contendedEvent)).containsEntry("status", "DELIVERED");
+        } finally {
+            contended.set(false);
+        }
     }
 
     private UUID publish(TenantId tenant, String type) {

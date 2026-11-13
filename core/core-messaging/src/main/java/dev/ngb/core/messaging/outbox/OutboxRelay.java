@@ -1,27 +1,21 @@
 package dev.ngb.core.messaging.outbox;
 
-import dev.ngb.core.event.EventEnvelope;
-import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.util.Backoff;
-import dev.ngb.core.util.Causes;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
-import org.jooq.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
-import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -37,11 +31,8 @@ import tools.jackson.databind.json.JsonMapper;
 public class OutboxRelay {
 
     private static final Logger LOG = LoggerFactory.getLogger(OutboxRelay.class);
-    private static final TypeReference<Map<String, Object>> PAYLOAD = new TypeReference<>() {};
 
     public record Result(int delivered, int failed, int dead) {}
-
-    private record Row(UUID id, UUID tenantId, String aggregate, String type, String payload, Instant createdAt, int attempts) {}
 
     private enum Outcome { NONE, DELIVERED, RETRY, DEAD, CONTENDED }
 
@@ -51,9 +42,9 @@ public class OutboxRelay {
 
     private static final class DispatchFailure extends RuntimeException {
         private static final long serialVersionUID = 1L;
-        private final transient Row row;
+        private final transient OutboxRows.Row row;
 
-        DispatchFailure(Row row, RuntimeException cause) {
+        DispatchFailure(OutboxRows.Row row, RuntimeException cause) {
             super(cause);
             this.row = row;
         }
@@ -108,12 +99,8 @@ public class OutboxRelay {
                 default -> throw new IllegalStateException("unexpected outcome " + attempt.outcome());
             }
         }
-        if (delivered > 0) {
-            meters.counter(metricsPrefix + ".outbox.delivered").increment(delivered);
-        }
-        if (dead > 0) {
-            meters.counter(metricsPrefix + ".outbox.dead").increment(dead);
-        }
+        OutboxRows.delivered(meters, metricsPrefix, delivered);
+        OutboxRows.dead(meters, metricsPrefix, dead);
         return new Result(delivered, failed, dead);
     }
 
@@ -121,13 +108,13 @@ public class OutboxRelay {
         Instant now = clock.now();
         try {
             return unitOfWork.transactional(() -> {
-                Optional<Row> claimed = claim(now, excluding);
+                Optional<OutboxRows.Row> claimed = claim(now, excluding);
                 if (claimed.isEmpty()) {
                     return Attempt.NONE;
                 }
-                Row row = claimed.get();
+                OutboxRows.Row row = claimed.get();
                 try {
-                    publisher.publishEvent(toEnvelope(row));
+                    publisher.publishEvent(OutboxRows.toEnvelope(row, json));
                 } catch (RuntimeException failure) {
                     throw new DispatchFailure(row, failure);
                 }
@@ -144,46 +131,19 @@ public class OutboxRelay {
         }
     }
 
-    private Optional<Row> claim(Instant now, Set<UUID> excluding) {
+    private Optional<OutboxRows.Row> claim(Instant now, Set<UUID> excluding) {
         Condition due = MessagingTables.OUTBOX_STATUS.eq("PENDING")
                 .and(MessagingTables.OUTBOX_NEXT_ATTEMPT_AT.le(now.atOffset(ZoneOffset.UTC)));
         if (!excluding.isEmpty()) {
             due = due.and(MessagingTables.OUTBOX_ID.notIn(excluding));
         }
-        return dsl.select(
-                        MessagingTables.OUTBOX_ID,
-                        MessagingTables.OUTBOX_TENANT_ID,
-                        MessagingTables.OUTBOX_AGGREGATE,
-                        MessagingTables.OUTBOX_TYPE,
-                        MessagingTables.OUTBOX_PAYLOAD,
-                        MessagingTables.OUTBOX_CREATED_AT,
-                        MessagingTables.OUTBOX_ATTEMPTS)
-                .from(MessagingTables.OUTBOX)
-                .where(due)
-                .orderBy(MessagingTables.OUTBOX_NEXT_ATTEMPT_AT, MessagingTables.OUTBOX_ID)
-                .limit(1)
-                .forUpdate()
-                .skipLocked()
-                .fetchOptional(OutboxRelay::toRow);
+        return OutboxRows.claim(dsl, due, MessagingTables.OUTBOX_NEXT_ATTEMPT_AT, 1, MessagingTables.OUTBOX_ATTEMPTS)
+                .stream()
+                .findFirst();
     }
 
-    private static Row toRow(Record record) {
-        return new Row(
-                record.get(MessagingTables.OUTBOX_ID),
-                record.get(MessagingTables.OUTBOX_TENANT_ID),
-                record.get(MessagingTables.OUTBOX_AGGREGATE),
-                record.get(MessagingTables.OUTBOX_TYPE),
-                record.get(MessagingTables.OUTBOX_PAYLOAD).data(),
-                record.get(MessagingTables.OUTBOX_CREATED_AT).toInstant(),
-                record.get(MessagingTables.OUTBOX_ATTEMPTS));
-    }
-
-    private EventEnvelope toEnvelope(Row row) {
-        return new EventEnvelope(row.id(), new TenantId(row.tenantId()), row.type(), row.aggregate(), row.createdAt(), json.readValue(row.payload(), PAYLOAD));
-    }
-
-    private Outcome recordFailure(Row row, RuntimeException cause, Instant now) {
-        if (Causes.isRetryableContention(cause)) {
+    private Outcome recordFailure(OutboxRows.Row row, RuntimeException cause, Instant now) {
+        if (OutboxRows.contended(cause)) {
             // The lock wait timed out, so no consumer committed and no attempt was spent: the row stays due and the
             // next poll tries it again.
             LOG.warn("outbox event {} ({}) hit lock contention, retrying on the next poll", row.id(), row.type());
@@ -192,12 +152,12 @@ public class OutboxRelay {
         int failures = row.attempts() + 1;
         boolean dead = failures >= maxAttempts;
         Instant next = dead ? now : now.plus(backoff.delayAfter(failures, ThreadLocalRandom.current().nextDouble()));
-        String reason = cause.getClass().getSimpleName() + (cause.getMessage() == null ? "" : ": " + cause.getMessage());
+        String reason = OutboxRows.failureReason(cause);
         dsl.update(MessagingTables.OUTBOX)
                 .set(MessagingTables.OUTBOX_ATTEMPTS, failures)
                 .set(MessagingTables.OUTBOX_STATUS, dead ? "DEAD" : "PENDING")
                 .set(MessagingTables.OUTBOX_NEXT_ATTEMPT_AT, next.atOffset(ZoneOffset.UTC))
-                .set(MessagingTables.OUTBOX_LAST_ERROR, reason.length() > 500 ? reason.substring(0, 500) : reason)
+                .set(MessagingTables.OUTBOX_LAST_ERROR, reason)
                 .where(MessagingTables.OUTBOX_ID.eq(row.id()))
                 .execute();
         if (dead) {

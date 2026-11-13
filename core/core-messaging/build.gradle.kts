@@ -3,7 +3,7 @@ plugins {
     id("java-conventions")
 }
 
-// The jOOQ-backed shared infrastructure every service needs: the outbox, the inbox and the audit log.
+// The jOOQ-backed shared infrastructure every service needs: the outbox, the inbox and the relays.
 // Tables are addressed with plain SQL names (see MessagingTables), because a service's generated schema
 // belongs to that service and never to core.
 dependencies {

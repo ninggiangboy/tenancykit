@@ -300,8 +300,8 @@ final class ArchitectureRules {
     private static ArchRule coreSpringIsSelfContained(String core) {
         return classes().that().resideInAPackage(core + ".spring..")
                 .should().onlyDependOnClassesThat()
-                .resideInAnyPackage(JAVA, "javax..", "jakarta..", core + "..", "org.springframework..")
-                .because("the core's Spring implementation sees the JDK, the core and Spring only");
+                .resideInAnyPackage(JAVA, "javax..", "jakarta..", core + "..", "org.springframework..", "org.jooq..")
+                .because("the core's Spring implementation sees the JDK, the core, Spring and the jOOQ audit log only");
     }
 
     /** Another service's code is never named here: services meet through the broker, the replica and signed tokens. */

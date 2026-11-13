@@ -5,10 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.ngb.core.event.EventEnvelope;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.messaging.broker.EnvelopeCodec;
+import dev.ngb.core.messaging.broker.EventDocument;
 import dev.ngb.core.messaging.config.MessagingProperties;
+import dev.ngb.core.messaging.config.MessagingProperties.Document;
 import dev.ngb.core.messaging.config.MessagingProperties.QueueBinding;
 import dev.ngb.core.messaging.config.MessagingProperties.Relay;
-import dev.ngb.core.messaging.outbox.JooqEventInbox;
+import dev.ngb.core.messaging.inbox.JooqEventInbox;
 import dev.ngb.core.messaging.topology.SuiteTopology;
 import dev.ngb.core.runtime.TransactionScopeHook;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -95,7 +97,8 @@ class AmqpInboundDispatcherIntegrationTest {
 
         MessagingProperties properties = new MessagingProperties(
                 EXCHANGE, Map.of("test.event", EXCHANGE), List.of(new QueueBinding(QUEUE, EXCHANGE, List.of("#"))),
-                new Relay(10, 3, Duration.ofMillis(10), Duration.ofMillis(20)));
+                new Relay(10, 3, Duration.ofMillis(10), Duration.ofMillis(20), 0.2, Duration.ofSeconds(30)),
+                new Document(EventDocument.SCHEMA_VERSION));
         declare(properties);
 
         dispatcher = new AmqpInboundDispatcher(

@@ -23,17 +23,25 @@ fact; it never asks the receiver to do anything, and the receiver decides its ow
 
 `POST` to the endpoint URL, `Content-Type: application/json`:
 
+This is the same canonical envelope the broker carries between services (see
+[messaging/README.md](../messaging/README.md)); a consumer on AMQP and a webhook receiver get the same bytes for
+one event.
+
 ```json
 {
   "id": "0198c1a0-7b1e-7c3e-9b52-0d6f6f1c2a10",
   "type": "charge.succeeded",
+  "aggregate": "charge/42",
   "tenantId": "0198c1a0-0000-7000-8000-000000000042",
   "occurredAt": "2026-11-10T09:30:00.123456Z",
+  "schemaVersion": 2,
   "data": { "chargeId": "...", "walletId": "...", "amount": { "minorUnits": 1250, "currency": "USD" } }
 }
 ```
 
 `data` is validated by `<type>.schema.json`. Amounts are integers in minor units with an ISO 4217 code.
+`schemaVersion` is bumped only when the envelope changes incompatibly, and a receiver must reject a `schemaVersion`
+it does not understand rather than guess at the shape.
 
 ## Headers
 

@@ -1,8 +1,8 @@
 # The table contract core writes
 
-`core-messaging` addresses these tables with plain SQL names, because a service's generated jOOQ schema belongs to
-that service. Every service that uses `JooqOutboxAppender`, `JooqEventInbox`, `OutboxRelay` or `JooqAuditLog` must
-create these columns in its own migration.
+The shared core addresses these tables with plain SQL names, because a service's generated jOOQ schema belongs to
+that service. Every service that uses `JooqOutboxAppender`, `JooqEventInbox` (`dev.ngb.core.messaging.inbox`),
+`OutboxRelay`, `BrokerRelay` or `JooqAuditLog` (`core-spring`) must create these columns in its own migration.
 
 ## `outbox`
 
@@ -34,6 +34,11 @@ create index outbox_publish_pending_idx on outbox (publish_next_at)
 The last four columns are the broker relay's own cursor, independent of `status`, so publishing to RabbitMQ never
 changes what the in-process relay sees. A row written before the broker path existed is set to `SKIPPED` by the
 migration, so history is never replayed to the broker.
+
+The broker relay publishes outside any database transaction, so it leases a row rather than holding a row lock
+across the confirm: a short transaction takes the due rows and pushes `publish_next_at` past the claim deadline, and
+another worker may claim a leased row again only once that deadline passes. A crash between the claim and the mark
+therefore republishes, which is why every consumer deduplicates by event id.
 
 ## `event_inbox`
 

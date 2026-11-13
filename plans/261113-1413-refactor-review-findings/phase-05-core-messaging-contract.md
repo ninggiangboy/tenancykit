@@ -72,12 +72,12 @@ implementation, and end the snake_case/camelCase contract drift.
 
 ## Success criteria
 
-- [ ] An event encoded and decoded has the same `eventId`, `tenantId`, `type`, `aggregate`, `occurredAt` and payload.
-- [ ] A broker that never confirms does not hold a row lock longer than the claim deadline; a second worker makes
+- [x] An event encoded and decoded has the same `eventId`, `tenantId`, `type`, `aggregate`, `occurredAt` and payload.
+- [x] A broker that never confirms does not hold a row lock longer than the claim deadline; a second worker makes
       progress.
-- [ ] Both relays share one failure/contention/metrics implementation.
-- [ ] The AMQP and webhook documents for one event are byte-equal (or the documented compatibility mapping is tested).
-- [ ] Contracts and code agree on field names and `schema_version`.
+- [x] Both relays share one failure/contention/metrics implementation.
+- [x] The AMQP and webhook documents for one event are byte-equal (or the documented compatibility mapping is tested).
+- [x] Contracts and code agree on field names and `schema_version`.
 
 ## Risks
 

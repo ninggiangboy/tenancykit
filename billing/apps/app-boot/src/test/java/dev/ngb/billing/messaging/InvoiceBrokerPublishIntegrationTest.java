@@ -12,6 +12,7 @@ import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
 import dev.ngb.billing.support.ScopeTestSupport;
+import dev.ngb.billing.webhook.adapter.delivery.json.JacksonEventBodyWriter;
 import dev.ngb.core.event.EventEnvelope;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.messaging.broker.BrokerRelay;
@@ -77,10 +78,13 @@ class InvoiceBrokerPublishIntegrationTest {
             assertThat(event.type()).isEqualTo("invoice.created");
             assertThat(event.tenantId()).isEqualTo(tenant);
             assertThat(event.payload()).containsKeys("invoiceId", "number", "total");
+            assertThat(event.aggregate()).as("the aggregate survives the wire").isNotEqualTo(event.type());
 
-            JsonNode wire = json.readTree(new String(invoiceMessage.getBody(), StandardCharsets.UTF_8));
-            assertThat(keys(wire)).containsExactlyInAnyOrder("id", "type", "tenant_id", "occurred_at", "schema_version", "data");
-            assertThat(wire.get("schema_version").asInt()).isEqualTo(1);
+            String body = new String(invoiceMessage.getBody(), StandardCharsets.UTF_8);
+            JsonNode wire = json.readTree(body);
+            assertThat(keys(wire)).containsExactlyInAnyOrder("id", "type", "aggregate", "tenantId", "occurredAt", "schemaVersion", "data");
+            assertThat(wire.get("schemaVersion").asInt()).isEqualTo(2);
+            assertThat(body).as("the webhook body is the same canonical document").isEqualTo(new JacksonEventBodyWriter(json).write(event));
         } finally {
             admin.deleteQueue(queue);
         }

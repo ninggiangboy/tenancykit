@@ -206,8 +206,8 @@ final class ArchitectureRules {
     private static ArchRule coreSpringIsSelfContained(String core) {
         return classes().that().resideInAPackage(core + ".spring..")
                 .should().onlyDependOnClassesThat()
-                .resideInAnyPackage(concat(JDK, core + "..", "org.springframework..", "jakarta.servlet.."))
-                .because("the core's Spring implementation sees the JDK, the core and Spring only");
+                .resideInAnyPackage(concat(JDK, core + "..", "org.springframework..", "jakarta.servlet..", "org.jooq.."))
+                .because("the core's Spring implementation sees the JDK, the core, Spring and the jOOQ audit log only");
     }
 
     private static ArchCondition<JavaClass> notReachIntoOtherModules(String root) {

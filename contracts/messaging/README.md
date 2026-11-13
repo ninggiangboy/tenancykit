@@ -5,26 +5,33 @@ a **command** (a request one app sends to one owner); the transport is the same.
 
 ## Envelope
 
-The AMQP body is UTF-8 JSON and is exactly the document a tenant system would receive as a webhook, so a
-consumer can forward a producer's bytes without re-serialising them:
+There is **one** canonical envelope, in camelCase. The AMQP body is UTF-8 JSON and is exactly the document a tenant
+system receives as a webhook, so a consumer can forward a producer's bytes without re-serialising them and the two
+deliveries cannot drift apart:
 
 ```json
 {
   "id": "0198c1a0-7b1e-7c3e-9b52-0d6f6f1c2a10",
   "type": "invoice.created",
-  "tenant_id": "0198c1a0-0000-7000-8000-000000000042",
-  "occurred_at": "2026-11-12T07:00:00.123456Z",
-  "schema_version": 1,
+  "aggregate": "invoice/42",
+  "tenantId": "0198c1a0-0000-7000-8000-000000000042",
+  "occurredAt": "2026-11-12T07:00:00.123456Z",
+  "schemaVersion": 2,
   "data": { }
 }
 ```
 
 `data` is validated by `contracts/events/<producer>/<type>.schema.json` for an event, or
 `contracts/commands/<type>.schema.json` for a command. `id` is a UUID v7 chosen by the producer and is the
-deduplication key; `schema_version` is bumped only when the schema changes incompatibly.
+deduplication key; `aggregate` is the aggregate the event belongs to, such as `invoice/42`.
+
+**Compatibility rule.** `schemaVersion` is bumped only when the envelope itself changes incompatibly. A reader
+rejects a document whose `schemaVersion` it does not know, so a service that understands version *N* never silently
+misreads version *N+1*; a breaking change is a coordinated release (D1/D9) in which every producer, consumer and
+contract moves to the new version together, with no dual-format window.
 
 AMQP properties: `message_id` = `id`, `type` = `type`, `content_type` = `application/json`, header `tenant-id` =
-`tenant_id`, delivery mode **persistent**. A message with no schema is never published.
+`tenantId`, delivery mode **persistent**. A message with no schema is never published.
 
 ## Replicated data
 

@@ -1,4 +1,4 @@
-package dev.ngb.core.messaging.audit;
+package dev.ngb.core.spring.audit;
 
 import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;

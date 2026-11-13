@@ -7,6 +7,7 @@ import dev.ngb.core.event.EventEnvelope;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.messaging.config.MessagingProperties;
+import dev.ngb.core.messaging.config.MessagingProperties.Document;
 import dev.ngb.core.messaging.config.MessagingProperties.QueueBinding;
 import dev.ngb.core.messaging.config.MessagingProperties.Relay;
 import dev.ngb.core.messaging.outbox.JooqOutboxAppender;
@@ -22,9 +23,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
@@ -37,6 +41,7 @@ import org.springframework.amqp.core.Declarable;
 import org.springframework.amqp.core.Exchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -102,11 +107,7 @@ class BrokerRelayIntegrationTest {
         connectionFactory.setPublisherConfirmType(CachingConnectionFactory.ConfirmType.SIMPLE);
         rabbit = new RabbitTemplate(connectionFactory);
 
-        properties = new MessagingProperties(
-                "billing.events",
-                Map.of("invoice.created", "billing.events"),
-                List.of(new QueueBinding(QUEUE, "billing.events", List.of("#"))),
-                new Relay(10, 3, Duration.ofMillis(10), Duration.ofMillis(20)));
+        properties = properties(10);
         declare();
         rabbit.receive(QUEUE, 200);
     }
@@ -188,7 +189,64 @@ class BrokerRelayIntegrationTest {
         assertThat(row(broken)).containsEntry("publish_status", "DEAD");
     }
 
+    @Test
+    void aLeasedRowIsNotTakenAgainUntilTheLeaseExpires() {
+        UUID id = publish(new TenantId(UUID.randomUUID()), "invoice.created");
+        // A worker claimed the row and died before the broker confirmed, so the lease is still held.
+        dsl.execute("update outbox set publish_next_at = now() + interval '1 hour' where id = ?", id);
+
+        assertThat(relay(rabbit).relayDue()).as("a leased row is not due").isEqualTo(new BrokerRelay.Result(0, 0, 0));
+        assertThat(row(id)).containsEntry("publish_status", "PENDING");
+        assertThat(receive()).isNull();
+
+        // The lease expires; the next poll claims and publishes it, at least once.
+        dsl.execute("update outbox set publish_next_at = now() - interval '1 second' where id = ?", id);
+        assertThat(relay(rabbit).relayDue()).isEqualTo(new BrokerRelay.Result(1, 0, 0));
+        assertThat(row(id)).containsEntry("publish_status", "PUBLISHED");
+        assertThat(receive()).isNotNull();
+    }
+
+    @Test
+    void aBrokerThatNeverConfirmsHoldsNoRowLockSoASecondWorkerMakesProgress() throws Exception {
+        TenantId tenant = new TenantId(UUID.randomUUID());
+        publish(tenant, "invoice.created");
+        publish(tenant, "invoice.created");
+
+        SlowRabbitTemplate slow = new SlowRabbitTemplate(connectionFactory);
+        MessagingProperties oneRow = properties(1);
+        Thread stuck = new Thread(() -> relay(slow, oneRow).relayDue());
+        stuck.start();
+        try {
+            slow.awaitInConfirm();
+            // The first worker has claimed a row and is stuck in the confirm. It holds no row lock: the row is
+            // leased into the future, and a second worker claims and publishes another row at once.
+            assertThat(dsl.fetchCount(MessagingTables.OUTBOX,
+                    MessagingTables.OUTBOX_PUBLISH_NEXT_AT.gt(OffsetDateTime.now().plusSeconds(30))))
+                    .as("one row is leased by the stuck worker").isEqualTo(1);
+
+            assertThat(relay(rabbit, oneRow).relayDue()).as("a second worker makes progress").isEqualTo(new BrokerRelay.Result(1, 0, 0));
+        } finally {
+            slow.release();
+            stuck.join(10_000);
+        }
+        assertThat(stuck.isAlive()).isFalse();
+        assertThat(receive()).isNotNull();
+    }
+
+    private MessagingProperties properties(int batchSize) {
+        return new MessagingProperties(
+                "billing.events",
+                Map.of("invoice.created", "billing.events"),
+                List.of(new QueueBinding(QUEUE, "billing.events", List.of("#"))),
+                new Relay(batchSize, 3, Duration.ofMillis(10), Duration.ofMillis(20), 0.2, Duration.ofMinutes(1)),
+                new Document(EventDocument.SCHEMA_VERSION));
+    }
+
     private BrokerRelay relay(RabbitTemplate template) {
+        return relay(template, properties);
+    }
+
+    private BrokerRelay relay(RabbitTemplate template, MessagingProperties properties) {
         return new BrokerRelay(
                 unitOfWork, dsl, JsonMapper.builder().build(), template, new SystemClock(), new SimpleMeterRegistry(), properties, "core-test");
     }
@@ -258,6 +316,36 @@ class BrokerRelayIntegrationTest {
                     values.put("published_at", record.get(MessagingTables.OUTBOX_PUBLISHED_AT));
                     return values;
                 });
+    }
+
+    /** A RabbitTemplate whose confirm blocks until {@link #release()} is called, to model a broker that never answers. */
+    static final class SlowRabbitTemplate extends RabbitTemplate {
+
+        private final CountDownLatch inConfirm = new CountDownLatch(1);
+        private final CountDownLatch release = new CountDownLatch(1);
+
+        SlowRabbitTemplate(ConnectionFactory connectionFactory) {
+            super(connectionFactory);
+        }
+
+        @Override
+        public void waitForConfirmsOrDie(long timeout) {
+            inConfirm.countDown();
+            try {
+                release.await(30, TimeUnit.SECONDS);
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+            }
+            super.waitForConfirmsOrDie(timeout);
+        }
+
+        void awaitInConfirm() throws InterruptedException {
+            assertThat(inConfirm.await(10, TimeUnit.SECONDS)).as("the first worker reached the confirm").isTrue();
+        }
+
+        void release() {
+            release.countDown();
+        }
     }
 
     private record ProbeEvent(UUID eventId, TenantId tenantId, String type, String aggregate, Instant occurredAt) implements DomainEvent {

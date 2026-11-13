@@ -1,7 +1,8 @@
-package dev.ngb.core.messaging.outbox;
+package dev.ngb.core.messaging.inbox;
 
 import dev.ngb.core.event.DomainEvent;
 import dev.ngb.core.event.EventInbox;
+import dev.ngb.core.messaging.outbox.MessagingTables;
 import org.jooq.DSLContext;
 
 /** The primary key (tenant, consumer, event) turns a repeated event into a no-op insert. */

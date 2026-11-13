@@ -2,6 +2,7 @@ package dev.ngb.platform.boot.config;
 
 import dev.ngb.core.messaging.broker.BrokerRelay;
 import dev.ngb.core.messaging.config.MessagingProperties;
+import dev.ngb.core.messaging.config.MessagingProperties.Document;
 import dev.ngb.core.messaging.config.MessagingProperties.Relay;
 import dev.ngb.core.messaging.topology.SuiteTopology;
 import dev.ngb.core.runtime.Clock;
@@ -33,10 +34,15 @@ class MessagingConfiguration {
             @Value("${suite.messaging.relay.batch-size:50}") int batchSize,
             @Value("${suite.messaging.relay.max-attempts:10}") int maxAttempts,
             @Value("${suite.messaging.relay.backoff-base:PT10S}") Duration backoffBase,
-            @Value("${suite.messaging.relay.backoff-cap:PT1H}") Duration backoffCap) {
+            @Value("${suite.messaging.relay.backoff-cap:PT1H}") Duration backoffCap,
+            @Value("${suite.messaging.relay.jitter:0.2}") double jitter,
+            @Value("${suite.messaging.relay.claim-deadline:PT30S}") Duration claimDeadline,
+            @Value("${suite.messaging.document.schema-version:2}") int schemaVersion) {
         Map<String, String> exports = new LinkedHashMap<>();
         EXPORTED_TYPES.forEach(type -> exports.put(type, exchange));
-        return new MessagingProperties(exchange, exports, List.of(), new Relay(batchSize, maxAttempts, backoffBase, backoffCap));
+        return new MessagingProperties(exchange, exports, List.of(),
+                new Relay(batchSize, maxAttempts, backoffBase, backoffCap, jitter, claimDeadline),
+                new Document(schemaVersion));
     }
 
     @Bean
