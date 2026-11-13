@@ -170,6 +170,24 @@ class BrokerRelayIntegrationTest {
         assertThat(row(id)).containsEntry("publish_status", "DEAD").containsEntry("publish_attempts", 3);
     }
 
+    @Test
+    void aRowThatCannotBeEncodedIsDeadAtOnceAndDoesNotFailTheHealthyRowsClaimedWithIt() {
+        UUID healthy = publish(new TenantId(UUID.randomUUID()), "invoice.created");
+        UUID broken = UUID.randomUUID();
+        dsl.execute(
+                "insert into outbox (id, tenant_id, aggregate, type, payload, created_at, next_attempt_at)"
+                        + " values (?, ?, 'test/x', 'invoice.created', '\"not an object\"'::jsonb, now(), now())",
+                broken, UUID.randomUUID());
+
+        BrokerRelay.Result result = relay(rabbit).relayDue();
+
+        assertThat(result.published()).isEqualTo(1);
+        assertThat(result.dead()).isEqualTo(1);
+        assertThat(receive()).isNotNull();
+        assertThat(row(healthy)).containsEntry("publish_status", "PUBLISHED");
+        assertThat(row(broken)).containsEntry("publish_status", "DEAD");
+    }
+
     private BrokerRelay relay(RabbitTemplate template) {
         return new BrokerRelay(
                 unitOfWork, dsl, JsonMapper.builder().build(), template, new SystemClock(), new SimpleMeterRegistry(), properties, "core-test");

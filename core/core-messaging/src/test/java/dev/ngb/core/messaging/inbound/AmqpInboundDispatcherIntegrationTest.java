@@ -140,6 +140,16 @@ class AmqpInboundDispatcherIntegrationTest {
     }
 
     @Test
+    void aBodyThatIsNotAnEnvelopeIsDeadLetteredAtOnceNotRequeued() {
+        send("not json at all".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        assertThat(rabbit.receive(QUEUE + ".dlq", 10_000)).isNotNull();
+        Long queued = rabbit.execute(channel -> channel.messageCount(QUEUE));
+        assertThat(queued).isZero();
+        assertThat(handler.attempts).isZero();
+    }
+
+    @Test
     void anUnsubscribedTypeIsAcknowledgedAndIgnored() {
         send(envelope("other.event"));
 

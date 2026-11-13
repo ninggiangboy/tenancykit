@@ -42,7 +42,14 @@ public class AmqpInboundDispatcher {
 
     /** Handles one delivery. Throwing {@link AmqpRejectAndDontRequeueException} is what routes it to the DLQ. */
     public void onMessage(byte[] body) {
-        EventEnvelope event = codec.decode(body);
+        EventEnvelope event;
+        try {
+            event = codec.decode(body);
+        } catch (RuntimeException malformed) {
+            // A body that is not an envelope never becomes one on redelivery, so it goes to the DLQ at once.
+            LOG.error("rejecting a message that is not a suite envelope", malformed);
+            throw new AmqpRejectAndDontRequeueException("the message body is not a suite envelope", malformed);
+        }
         List<InboundEventHandler> accepting = handlers.stream().filter(handler -> handler.accepts(event.type())).toList();
         if (accepting.isEmpty()) {
             LOG.debug("ignoring event {} of unsubscribed type {}", event.eventId(), event.type());
@@ -72,9 +79,17 @@ public class AmqpInboundDispatcher {
 
     /** A retry template with three attempts and exponential backoff, as the suite's consumers use. */
     public static RetryTemplate defaultRetry() {
+        return retry(3, 100, 2_000);
+    }
+
+    /**
+     * A retry template with exponential backoff (doubling) between {@code initialMillis} and {@code maxMillis}. A
+     * consumer whose writes can wait for another event, such as a child row that needs its parent, retries longer.
+     */
+    public static RetryTemplate retry(int maxAttempts, long initialMillis, long maxMillis) {
         return RetryTemplate.builder()
-                .maxAttempts(3)
-                .exponentialBackoff(100, 2, 2_000)
+                .maxAttempts(maxAttempts)
+                .exponentialBackoff(initialMillis, 2, maxMillis)
                 .retryOn(RuntimeException.class)
                 .build();
     }

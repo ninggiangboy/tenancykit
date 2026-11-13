@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -49,10 +50,14 @@ public class BrokerRelay {
     private static final class PublishFailure extends RuntimeException {
         private static final long serialVersionUID = 1L;
         private final transient List<Row> rows;
+        private final transient List<Row> unencodable;
+        private final transient RuntimeException unencodableCause;
 
-        PublishFailure(List<Row> rows, RuntimeException cause) {
+        PublishFailure(List<Row> rows, RuntimeException cause, List<Row> unencodable, RuntimeException unencodableCause) {
             super(cause);
             this.rows = rows;
+            this.unencodable = unencodable;
+            this.unencodableCause = unencodableCause;
         }
     }
 
@@ -95,7 +100,11 @@ public class BrokerRelay {
         try {
             return unitOfWork.transactional(() -> publish(now));
         } catch (PublishFailure failure) {
-            return unitOfWork.transactional(() -> recordFailure(failure.rows, (RuntimeException) failure.getCause(), now));
+            return unitOfWork.transactional(() -> {
+                Result unsent = recordFailure(failure.rows, (RuntimeException) failure.getCause(), now, false);
+                Result broken = recordFailure(failure.unencodable, failure.unencodableCause, now, true);
+                return new Result(0, unsent.failed() + broken.failed(), unsent.dead() + broken.dead());
+            });
         }
     }
 
@@ -104,26 +113,45 @@ public class BrokerRelay {
         if (rows.isEmpty()) {
             return new Result(0, 0, 0);
         }
-        try {
-            rabbit.invoke(operations -> {
-                for (Row row : rows) {
-                    EventEnvelope event = toEnvelope(row);
-                    operations.send(routes.exchangeFor(row.type()).orElseThrow(), row.type(), toMessage(event, codec.encode(event)), null);
-                }
-                operations.waitForConfirmsOrDie(CONFIRM_TIMEOUT_MILLIS);
-                return null;
-            });
-        } catch (RuntimeException failure) {
-            throw new PublishFailure(rows, failure);
+        // A row that cannot be encoded can never be published; it is set aside so it cannot fail the healthy rows
+        // claimed with it, and goes straight to DEAD.
+        List<Row> sendable = new ArrayList<>();
+        List<Message> messages = new ArrayList<>();
+        List<Row> unencodable = new ArrayList<>();
+        RuntimeException unencodableCause = null;
+        for (Row row : rows) {
+            try {
+                EventEnvelope event = toEnvelope(row);
+                messages.add(toMessage(event, codec.encode(event)));
+                sendable.add(row);
+            } catch (RuntimeException failure) {
+                unencodable.add(row);
+                unencodableCause = failure;
+            }
         }
-        dsl.update(MessagingTables.OUTBOX)
-                .set(MessagingTables.OUTBOX_PUBLISHED_AT, now.atOffset(ZoneOffset.UTC))
-                .set(MessagingTables.OUTBOX_PUBLISH_STATUS, "PUBLISHED")
-                .set(MessagingTables.OUTBOX_PUBLISH_ATTEMPTS, 0)
-                .where(MessagingTables.OUTBOX_ID.in(rows.stream().map(Row::id).toList()))
-                .execute();
-        meters.counter(metricsPrefix + ".outbox.publish.delivered").increment(rows.size());
-        return new Result(rows.size(), 0, 0);
+        if (!sendable.isEmpty()) {
+            try {
+                rabbit.invoke(operations -> {
+                    for (int i = 0; i < sendable.size(); i++) {
+                        Row row = sendable.get(i);
+                        operations.send(routes.exchangeFor(row.type()).orElseThrow(), row.type(), messages.get(i), null);
+                    }
+                    operations.waitForConfirmsOrDie(CONFIRM_TIMEOUT_MILLIS);
+                    return null;
+                });
+            } catch (RuntimeException failure) {
+                throw new PublishFailure(sendable, failure, unencodable, unencodableCause);
+            }
+            dsl.update(MessagingTables.OUTBOX)
+                    .set(MessagingTables.OUTBOX_PUBLISHED_AT, now.atOffset(ZoneOffset.UTC))
+                    .set(MessagingTables.OUTBOX_PUBLISH_STATUS, "PUBLISHED")
+                    .set(MessagingTables.OUTBOX_PUBLISH_ATTEMPTS, 0)
+                    .where(MessagingTables.OUTBOX_ID.in(sendable.stream().map(Row::id).toList()))
+                    .execute();
+            meters.counter(metricsPrefix + ".outbox.publish.delivered").increment(sendable.size());
+        }
+        Result broken = recordFailure(unencodable, unencodableCause, now, true);
+        return new Result(sendable.size(), broken.failed(), broken.dead());
     }
 
     private List<Row> claim(Instant now) {
@@ -175,11 +203,15 @@ public class BrokerRelay {
                 .build();
     }
 
-    private Result recordFailure(List<Row> rows, RuntimeException cause, Instant now) {
+    /** @param permanent the failure cannot succeed on a retry, so the row is dead at once */
+    private Result recordFailure(List<Row> rows, RuntimeException cause, Instant now, boolean permanent) {
+        if (rows.isEmpty()) {
+            return new Result(0, 0, 0);
+        }
         int dead = 0;
         for (Row row : rows) {
             int attempts = row.attempts() + 1;
-            boolean isDead = attempts >= maxAttempts;
+            boolean isDead = permanent || attempts >= maxAttempts;
             if (isDead) {
                 dead++;
             }
