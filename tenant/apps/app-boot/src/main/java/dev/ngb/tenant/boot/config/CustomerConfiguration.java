@@ -46,10 +46,8 @@ class CustomerConfiguration {
 
     @Bean
     CustomerMapping customerMapping(
-            CustomerRepository customers,
-            @Qualifier("billingCustomers") BillingCustomers billing,
-            @Value("${tenant.billing.tenant-system-id:}") String tenantSystemId) {
-        return new CustomerMapping(customers, billing, tenantSystemId);
+            CustomerRepository customers, @Qualifier("billingCustomers") BillingCustomers billing) {
+        return new CustomerMapping(customers, billing);
     }
 
     @Bean

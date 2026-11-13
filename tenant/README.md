@@ -13,11 +13,18 @@ integrates with Core Billing only over REST and signed webhooks; it shares no co
 # start a database on :5433, then the service on :8082
 docker compose -f ../docker-compose.yml up -d tenant-postgres
 SAMPLE_TENANT_BILLING_URL=http://localhost:8080 \
-SAMPLE_TENANT_BILLING_API_KEY=cbk_... \
-SAMPLE_TENANT_BILLING_SYSTEM_ID=<tenant-system-id> \
+SAMPLE_TENANT_PLATFORM_URL=http://localhost:8082 \
+SAMPLE_TENANT_PLATFORM_CLIENT_ID=<credential-key-id> \
+SAMPLE_TENANT_PLATFORM_CLIENT_SECRET=<credential-secret> \
 SAMPLE_TENANT_WEBHOOK_SECRET=whsec_... \
 ./gradlew :apps:app-boot:bootRun
 ```
+
+Every call to Billing carries a short-lived suite token: the client exchanges its Platform client
+credentials at `POST {platform}/oauth/token` (`grant_type=client_credentials`, `audience=billing`),
+caches the token until a minute before it expires, and refreshes it once on a 401. Billing derives the
+Tenant System from the token, so no API key or Tenant System id is configured here. Platform issues the
+credential through tenant-system credential management; see [docs/tenant-system.md](../docs/tenant-system.md).
 
 The `billing/` deployment is only a dependency at runtime. With Billing stopped the service
 still starts and serves registration (the mapping stays `PENDING`), login, users, the catalog
@@ -39,7 +46,8 @@ separate source sets, so Spring cannot leak into the plain-Java inner layers. Pa
 by feature and then by role (`...command`, `...query`, `...port`, `...service`), adapters by
 `adapter.<feature>.<technology>`, and `api` by the capability a caller uses (`lookup`, `execution`,
 `recording`). `./gradlew checkNoBillingDependency` fails if any module declares a Gradle dependency
-on Billing (the shared `core/` is allowed), and `ArchitectureTest`, its fixture meta-test and
+on Billing or Platform, or on a service-only core module (`core-messaging`, `core-replica`); the shared
+`core-kernel` and `core-spring` are allowed, and `ArchitectureTest`, its fixture meta-test and
 `ModulithVerificationTest` re-check the same boundaries and package shape on the classpath.
 
 ### Persistence
@@ -96,7 +104,8 @@ exercised by the phase 14 end-to-end suite with a second tenant.
 | Property | Meaning |
 |---|---|
 | `SAMPLE_TENANT_DB_URL`, `SAMPLE_TENANT_DB_USER`, `SAMPLE_TENANT_DB_PASSWORD` | This system's own database |
-| `SAMPLE_TENANT_BILLING_URL`, `SAMPLE_TENANT_BILLING_API_KEY`, `SAMPLE_TENANT_BILLING_SYSTEM_ID` | The Billing deployment and this Tenant System's credential |
+| `SAMPLE_TENANT_BILLING_URL` | The Billing deployment this Tenant System calls |
+| `SAMPLE_TENANT_PLATFORM_URL`, `SAMPLE_TENANT_PLATFORM_CLIENT_ID`, `SAMPLE_TENANT_PLATFORM_CLIENT_SECRET` | Platform and the client credentials it issued to this Tenant System; the token's audience is `SAMPLE_TENANT_PLATFORM_AUDIENCE` (default `billing`) |
 | `SAMPLE_TENANT_WEBHOOK_SECRET` | Signing secret for inbound Billing webhooks |
 | `SAMPLE_TENANT_EXECUTION_ENABLED`, `SAMPLE_TENANT_EXECUTION_POLL_DELAY` | The execution worker |
 | `SAMPLE_TENANT_BOOTSTRAP_ENABLED`, `SAMPLE_TENANT_BOOTSTRAP_ADMIN_TOKEN` | One-shot reference provisioning |

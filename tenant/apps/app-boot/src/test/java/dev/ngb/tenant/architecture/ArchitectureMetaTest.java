@@ -34,6 +34,7 @@ class ArchitectureMetaTest {
         CULPRIT_BY_RULE_ID.put("no-cross-module-import", "ReachesIntoBeta");
         CULPRIT_BY_RULE_ID.put("api-exposes-no-internals", "LeaksDomain");
         CULPRIT_BY_RULE_ID.put("no-jpa", "JpaEntity");
+        CULPRIT_BY_RULE_ID.put("no-dependency-on-another-service", "ReachesAnotherService");
         CULPRIT_BY_RULE_ID.put("shared-core-is-independent", "SharedCoreKnowsAModule");
         CULPRIT_BY_RULE_ID.put("datasource-and-transactions-only-in-core-spring", "TouchesDataSource");
         CULPRIT_BY_RULE_ID.put("role-package-not-layer-root", "StrayRoleClass");

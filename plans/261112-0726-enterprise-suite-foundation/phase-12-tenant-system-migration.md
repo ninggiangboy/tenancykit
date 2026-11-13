@@ -1,7 +1,7 @@
 ---
 phase: 12
 title: "Tenant System migration"
-status: pending
+status: done
 priority: P1
 effort: "1d"
 dependencies: [6]
@@ -40,9 +40,9 @@ Modify:
 
 ## Todo
 
-- [ ] `PlatformTokenProvider` with caching and refresh
-- [ ] Billing client uses tokens; static key removed
-- [ ] Dependency check covers Platform and suite-only core modules
+- [x] `PlatformTokenProvider` with caching and refresh, and a 401 retry in the client
+- [x] Billing client uses tokens; static key removed
+- [x] Dependency check covers Platform and suite-only core modules
 
 ## Verification
 

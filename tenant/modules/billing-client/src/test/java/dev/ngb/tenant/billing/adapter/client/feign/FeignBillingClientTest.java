@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import dev.ngb.tenant.billing.adapter.client.http.HttpBillingSettings;
+import dev.ngb.tenant.billing.adapter.client.token.StaticTokenProvider;
 import dev.ngb.tenant.billing.api.client.BillingCharges.CaptureRequest;
 import dev.ngb.tenant.billing.api.client.BillingCharges.ChargeRequest;
 import dev.ngb.tenant.billing.api.client.BillingCustomers.NewCustomer;
@@ -43,7 +44,7 @@ class FeignBillingClientTest {
     @BeforeEach
     void start() throws IOException {
         billing = new FakeBilling();
-        client = clientWith("cbk_key_secret");
+        client = clientWith("suite_token");
     }
 
     @AfterEach
@@ -57,13 +58,13 @@ class FeignBillingClientTest {
                 {"id":"cus_1","displayName":"Ada","email":"ada@example.com","status":"ACTIVE","createdAt":"2026-11-11T00:00:00Z"}
                 """);
 
-        Customer customer = client.create("key-1", new NewCustomer("sys_1", "user_1", "Ada", "ada@example.com"));
+        Customer customer = client.create("key-1", new NewCustomer("user_1", "Ada", "ada@example.com"));
 
         assertThat(customer.id()).isEqualTo("cus_1");
         FakeBilling.Request request = billing.request(0);
         assertThat(request.method()).isEqualTo("POST");
         assertThat(request.path()).isEqualTo("/api/v1/customers");
-        assertThat(request.header("Authorization")).isEqualTo("Bearer cbk_key_secret");
+        assertThat(request.header("Authorization")).isEqualTo("Bearer suite_token");
         assertThat(request.header("Idempotency-Key")).isEqualTo("key-1");
         assertThat(request.header("Content-Type")).isEqualTo("application/json");
         assertThat(request.header("Accept")).isEqualTo("application/json");
@@ -169,7 +170,7 @@ class FeignBillingClientTest {
                 {"id":"cus_1","displayName":"Ada","email":"ada@example.com","status":"ACTIVE"}
                 """);
 
-        Customer customer = client.create("key-retry", new NewCustomer("sys_1", "user_1", "Ada", "ada@example.com"));
+        Customer customer = client.create("key-retry", new NewCustomer("user_1", "Ada", "ada@example.com"));
 
         assertThat(customer.id()).isEqualTo("cus_1");
         assertThat(billing.requests()).hasSize(2);
@@ -198,7 +199,7 @@ class FeignBillingClientTest {
 
     @Test
     void refusesAWriteWithoutAnIdempotencyKeyBeforeAnyRequest() {
-        NewCustomer customer = new NewCustomer("sys_1", "user_1", "Ada", "ada@example.com");
+        NewCustomer customer = new NewCustomer("user_1", "Ada", "ada@example.com");
 
         assertThatThrownBy(() -> client.create(null, customer)).isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> client.charge(null, new ChargeRequest("wal_1", 1, "USD", null, "order-1")))
@@ -211,10 +212,10 @@ class FeignBillingClientTest {
     void encodesReservedCharactersInAPathValue() {
         billing.respond(200, "{\"id\":\"cus_1\"}");
 
-        client.byExternalUser("a/b c", "sys_1");
+        client.byExternalUser("a/b c");
 
         assertThat(billing.request(0).path())
-                .isEqualTo("/api/v1/customers/by-external-user/a%2Fb%20c?tenantSystemId=sys_1");
+                .isEqualTo("/api/v1/customers/by-external-user/a%2Fb%20c");
     }
 
     @Test
@@ -229,16 +230,71 @@ class FeignBillingClientTest {
     }
 
     @Test
-    void sendsNoCredentialWhenTheKeyIsBlank() {
-        billing.respond(200, "[]");
-        clientWith("").plans(null);
+    void refusesToReachBillingWithoutACredential() {
+        assertThatThrownBy(() -> clientWith("").plans(null))
+                .isInstanceOf(dev.ngb.tenant.shared.error.UnauthorizedException.class);
 
-        assertThat(billing.request(0).header("Authorization")).isNull();
+        assertThat(billing.requests()).isEmpty();
     }
 
-    private FeignBillingClient clientWith(String apiKey) {
-        return BillingFeignClientFactory.create(new HttpBillingSettings(
-                billing.baseUrl(), apiKey, Duration.ofSeconds(1), Duration.ofSeconds(1), 2, Duration.ofMillis(1)));
+    @Test
+    void refreshesTheTokenOnceWhenBillingRefusesIt() {
+        billing.respond(401, "{}");
+        billing.respond(200, """
+                {"id":"cus_1","displayName":"Ada","status":"ACTIVE"}
+                """);
+
+        Customer customer = BillingFeignClientFactory.create(
+                        new HttpBillingSettings(billing.baseUrl(), Duration.ofSeconds(1), Duration.ofSeconds(1), 1, Duration.ofMillis(1)),
+                        new RotatingTokens())
+                .get("cus_1");
+
+        assertThat(customer.id()).isEqualTo("cus_1");
+        assertThat(billing.requests()).hasSize(2);
+        assertThat(billing.request(0).header("Authorization")).isEqualTo("Bearer tok_1");
+        assertThat(billing.request(1).header("Authorization")).isEqualTo("Bearer tok_2");
+    }
+
+    @Test
+    void givesUpAfterASecondRefusal() {
+        billing.respond(401, "{}");
+        billing.respond(401, "{}");
+
+        assertThatThrownBy(() -> BillingFeignClientFactory.create(
+                        new HttpBillingSettings(billing.baseUrl(), Duration.ofSeconds(1), Duration.ofSeconds(1), 1, Duration.ofMillis(1)),
+                        new RotatingTokens())
+                .get("cus_1"))
+                .isInstanceOf(dev.ngb.tenant.shared.error.UnauthorizedException.class);
+
+        assertThat(billing.requests()).hasSize(2);
+    }
+
+    /** Hands out a fresh token each time it is asked, like a provider whose cache keeps being invalidated. */
+    private static final class RotatingTokens implements dev.ngb.tenant.billing.adapter.client.token.TokenProvider {
+
+        private int issued;
+
+        @Override
+        public String token() {
+            return "tok_" + (issued + 1);
+        }
+
+        @Override
+        public boolean configured() {
+            return true;
+        }
+
+        @Override
+        public boolean invalidate() {
+            issued++;
+            return true;
+        }
+    }
+
+    private FeignBillingClient clientWith(String token) {
+        return BillingFeignClientFactory.create(
+                new HttpBillingSettings(billing.baseUrl(), Duration.ofSeconds(1), Duration.ofSeconds(1), 2, Duration.ofMillis(1)),
+                new StaticTokenProvider(token));
     }
 
     private static final class FakeBilling implements AutoCloseable {

@@ -51,9 +51,9 @@ interface BillingFeignApi {
     @GetMapping("/api/v1/customers/{id}")
     Customer customer(@PathVariable("id") String id);
 
+    /** The token names this Tenant System, so the lookup needs no {@code tenantSystemId}. */
     @GetMapping("/api/v1/customers/by-external-user/{externalUserId}")
-    Customer customerByExternalUser(
-            @PathVariable("externalUserId") String externalUserId, @RequestParam("tenantSystemId") String tenantSystemId);
+    Customer customerByExternalUser(@PathVariable("externalUserId") String externalUserId);
 
     @GetMapping("/api/v1/pricing-plans")
     List<PricingPlan> plans(@RequestParam(value = "status", required = false) String status);

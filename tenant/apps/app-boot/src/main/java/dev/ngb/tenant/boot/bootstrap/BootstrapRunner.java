@@ -2,6 +2,8 @@ package dev.ngb.tenant.boot.bootstrap;
 
 import dev.ngb.tenant.billing.adapter.client.feign.BillingFeignClientFactory;
 import dev.ngb.tenant.billing.adapter.client.http.HttpBillingSettings;
+import dev.ngb.tenant.billing.adapter.client.token.StaticTokenProvider;
+import dev.ngb.tenant.billing.adapter.client.token.TokenProvider;
 import dev.ngb.tenant.billing.api.client.BillingAdmin;
 import dev.ngb.tenant.billing.api.client.BillingWebhooks;
 import dev.ngb.tenant.billing.api.model.PricingPlan;
@@ -31,6 +33,7 @@ class BootstrapRunner implements ApplicationRunner {
     private final CatalogQueries catalog;
     private final AttachBillingPlanUseCase attach;
     private final HttpBillingSettings tenantSettings;
+    private final TokenProvider tenantTokens;
     private final String adminToken;
     private final String webhookUrl;
     private final List<String> eventTypes;
@@ -39,12 +42,14 @@ class BootstrapRunner implements ApplicationRunner {
             CatalogQueries catalog,
             AttachBillingPlanUseCase attach,
             HttpBillingSettings tenantSettings,
+            TokenProvider tenantTokens,
             @Value("${tenant.bootstrap.admin-token:}") String adminToken,
             @Value("${tenant.bootstrap.webhook-url:http://localhost:8082/webhooks/billing}") String webhookUrl,
             @Value("${tenant.bootstrap.webhook-event-types:}") String eventTypes) {
         this.catalog = catalog;
         this.attach = attach;
         this.tenantSettings = tenantSettings;
+        this.tenantTokens = tenantTokens;
         this.adminToken = adminToken;
         this.webhookUrl = webhookUrl;
         this.eventTypes = eventTypes.isBlank() ? List.of() : Arrays.stream(eventTypes.split(",")).map(String::trim).toList();
@@ -61,13 +66,7 @@ class BootstrapRunner implements ApplicationRunner {
             LOG.warn("tenant.bootstrap.admin-token is empty; pricing plans were not published");
             return;
         }
-        BillingAdmin admin = BillingFeignClientFactory.create(new HttpBillingSettings(
-                tenantSettings.baseUrl(),
-                adminToken,
-                tenantSettings.connectTimeout(),
-                tenantSettings.readTimeout(),
-                tenantSettings.maxAttempts(),
-                tenantSettings.retryBackoff()));
+        BillingAdmin admin = BillingFeignClientFactory.create(tenantSettings, new StaticTokenProvider(adminToken));
         List<PricingPlan> existing = admin.plans(null);
         for (PlanView plan : catalog.all()) {
             if (plan.billingPlanId() != null && !plan.billingPlanId().isBlank()) {
@@ -84,11 +83,11 @@ class BootstrapRunner implements ApplicationRunner {
     }
 
     private void registerWebhook() {
-        if (tenantSettings.apiKey().isBlank()) {
-            LOG.warn("tenant.billing.api-key is empty; the webhook endpoint was not registered");
+        if (!tenantTokens.configured()) {
+            LOG.warn("no Platform client credentials are configured; the webhook endpoint was not registered");
             return;
         }
-        BillingWebhooks tenant = BillingFeignClientFactory.create(tenantSettings);
+        BillingWebhooks tenant = BillingFeignClientFactory.create(tenantSettings, tenantTokens);
         boolean exists = tenant.endpoints().stream().anyMatch(endpoint -> endpoint.url().equals(webhookUrl));
         if (exists) {
             return;

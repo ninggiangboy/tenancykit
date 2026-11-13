@@ -20,7 +20,7 @@ class RegisterCustomerUseCaseTest {
     private final Fakes.Billing billing = new Fakes.Billing();
     private final RegisterCustomerUseCase register = new RegisterCustomerUseCase(
             customers,
-            new CustomerMapping(customers, billing, "sys_1"),
+            new CustomerMapping(customers, billing),
             () -> NOW,
             () -> UUID.randomUUID());
 
@@ -32,10 +32,8 @@ class RegisterCustomerUseCaseTest {
 
         assertThat(customer.status()).isEqualTo(CustomerStatus.MAPPED);
         assertThat(customer.billingCustomerId()).isEqualTo("cus_1");
-        assertThat(billing.created()).singleElement().satisfies(created -> {
-            assertThat(created.tenantSystemId()).isEqualTo("sys_1");
-            assertThat(created.externalUserId()).isEqualTo(userId.toString());
-        });
+        assertThat(billing.created()).singleElement().satisfies(created ->
+                assertThat(created.externalUserId()).isEqualTo(userId.toString()));
     }
 
     @Test

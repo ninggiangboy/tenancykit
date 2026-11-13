@@ -84,6 +84,7 @@ final class ArchitectureRules {
                 new NamedRule("no-cross-module-import", noCrossModuleImport(root)),
                 new NamedRule("api-exposes-no-internals", apiExposesNoInternals(root)),
                 new NamedRule("no-jpa", noJpa()),
+                new NamedRule("no-dependency-on-another-service", noDependencyOnAnotherService(root)),
                 new NamedRule("shared-core-is-independent", sharedCoreIsIndependent(root)),
                 new NamedRule("datasource-and-transactions-only-in-core-spring", datasourceOnlyInInfrastructure(root)),
                 new NamedRule("role-package-not-layer-root", rolePackageNotLayerRoot(root)),
@@ -154,6 +155,13 @@ final class ArchitectureRules {
         return noClasses().should().dependOnClassesThat().resideInAnyPackage(
                         "jakarta.persistence..", "javax.persistence..", "org.hibernate..", "org.springframework.data.jpa..")
                 .because("persistence is jOOQ only");
+    }
+
+    /** Billing and Platform are reached over HTTP and signed webhooks, never by naming their code. */
+    private static ArchRule noDependencyOnAnotherService(String root) {
+        return noClasses().that().resideInAPackage(root + "..")
+                .should().dependOnClassesThat().resideInAnyPackage("dev.ngb.billing..", "dev.ngb.platform..")
+                .because("the sample tenant shares only the core and the contracts, never another service's code");
     }
 
     private static ArchRule sharedCoreIsIndependent(String root) {

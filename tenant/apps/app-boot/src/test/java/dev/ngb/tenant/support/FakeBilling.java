@@ -102,8 +102,8 @@ public final class FakeBilling implements
     }
 
     @Override
-    public Customer byExternalUser(String externalUserId, String tenantSystemId) {
-        return create("lookup:" + externalUserId, new NewCustomer(tenantSystemId, externalUserId, "Ada", "ada@example.com"));
+    public Customer byExternalUser(String externalUserId) {
+        return create("lookup:" + externalUserId, new NewCustomer(externalUserId, "Ada", "ada@example.com"));
     }
 
     // Pricing

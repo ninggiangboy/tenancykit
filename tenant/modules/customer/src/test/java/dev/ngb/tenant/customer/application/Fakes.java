@@ -99,7 +99,7 @@ final class Fakes {
         }
 
         @Override
-        public Customer byExternalUser(String externalUserId, String tenantSystemId) {
+        public Customer byExternalUser(String externalUserId) {
             return new Customer(existingId, "Ada", "ada@example.com", "ACTIVE", null);
         }
     }

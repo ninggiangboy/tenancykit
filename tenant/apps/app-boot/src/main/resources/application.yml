@@ -7,6 +7,11 @@ spring:
     password: ${SAMPLE_TENANT_DB_PASSWORD:tenant}
   flyway:
     locations: classpath:db/migration
+    # Migrations run as the table owner; the application runs as the unprivileged role. The owner is the database
+    # owner, which alone may create in `public` since PostgreSQL 15.
+    url: ${SAMPLE_TENANT_MIGRATION_DB_URL:${SAMPLE_TENANT_DB_URL:jdbc:postgresql://localhost:5433/tenant}}
+    user: ${SAMPLE_TENANT_MIGRATION_DB_USER:${SAMPLE_TENANT_DB_USER:tenant}}
+    password: ${SAMPLE_TENANT_MIGRATION_DB_PASSWORD:${SAMPLE_TENANT_DB_PASSWORD:tenant}}
 
 server:
   port: ${SAMPLE_TENANT_PORT:8082}
@@ -18,11 +23,21 @@ management:
         include: health
 
 tenant:
+  # Platform issues the suite token Billing accepts. This Tenant System's client credentials are the
+  # tenant-system credential created through Platform's credential management.
+  platform:
+    base-url: ${SAMPLE_TENANT_PLATFORM_URL:http://localhost:8082}
+    client-id: ${SAMPLE_TENANT_PLATFORM_CLIENT_ID:}
+    client-secret: ${SAMPLE_TENANT_PLATFORM_CLIENT_SECRET:}
+    # The app this token is for: the aud claim Billing verifies.
+    audience: ${SAMPLE_TENANT_PLATFORM_AUDIENCE:billing}
+    connect-timeout: PT3S
+    request-timeout: PT10S
+    # A cached token is discarded this long before it expires, so a request never carries a nearly dead one.
+    refresh-skew: PT60S
   billing:
     # The Billing deployment this tenant integrates with. Every financial call goes here.
     base-url: ${SAMPLE_TENANT_BILLING_URL:http://localhost:8080}
-    api-key: ${SAMPLE_TENANT_BILLING_API_KEY:}
-    tenant-system-id: ${SAMPLE_TENANT_BILLING_SYSTEM_ID:}
     connect-timeout: PT3S
     read-timeout: PT10S
     max-attempts: 3

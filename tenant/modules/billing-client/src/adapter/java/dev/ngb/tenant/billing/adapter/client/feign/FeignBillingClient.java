@@ -84,8 +84,8 @@ public class FeignBillingClient
     }
 
     @Override
-    public Customer byExternalUser(String externalUserId, String tenantSystemId) {
-        return call(() -> api.customerByExternalUser(externalUserId, tenantSystemId));
+    public Customer byExternalUser(String externalUserId) {
+        return call(() -> api.customerByExternalUser(externalUserId));
     }
 
     @Override
