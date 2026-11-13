@@ -107,7 +107,7 @@ public class JooqSubscriptionRepository implements SubscriptionRepository {
 
     @Override
     public Optional<Subscription> lockNextDue(Instant now, Set<UUID> excluding) {
-        Condition due = SUBSCRIPTIONS.STATUS.in("ACTIVE", "PAST_DUE")
+        Condition due = SUBSCRIPTIONS.STATUS.in(SubscriptionStatus.ACTIVE.name(), SubscriptionStatus.PAST_DUE.name())
                 .and(SUBSCRIPTIONS.NEXT_RENEWAL_AT.le(now));
         if (!excluding.isEmpty()) {
             due = due.and(SUBSCRIPTIONS.ID.notIn(excluding));

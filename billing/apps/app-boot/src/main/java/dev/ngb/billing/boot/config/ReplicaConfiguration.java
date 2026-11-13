@@ -20,7 +20,6 @@ import dev.ngb.core.sync.SnapshotClient;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
-import java.time.Duration;
 import java.util.List;
 import org.jooq.DSLContext;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
@@ -39,16 +38,11 @@ import org.springframework.context.annotation.Profile;
 class ReplicaConfiguration {
 
     @Bean
-    ReplicaProperties replicaProperties(
-            @Value("${suite.app-code:billing}") String appCode,
-            @Value("${suite.replica.platform-base-url:http://localhost:8082}") String platformBaseUrl,
-            @Value("${suite.replica.client-id:billing}") String clientId,
-            @Value("${suite.replica.client-secret:}") String clientSecret,
-            @Value("${suite.replica.rebuild-on-start:true}") boolean rebuildOnStart,
-            @Value("${suite.replica.page-limit:200}") int pageLimit,
-            @Value("${suite.replica.request-timeout:PT10S}") Duration requestTimeout) {
-        return new ReplicaProperties(appCode, new ReplicaProperties.Replica(
-                platformBaseUrl, clientId, clientSecret, rebuildOnStart, pageLimit, requestTimeout));
+    ReplicaProperties replicaProperties(SuiteProperties suite) {
+        SuiteProperties.Replica replica = suite.replica();
+        return new ReplicaProperties(suite.appCode(), new ReplicaProperties.Replica(
+                replica.platformBaseUrl(), replica.clientId(), replica.clientSecret(),
+                replica.rebuildOnStart(), replica.pageLimit(), replica.requestTimeout()));
     }
 
     @Bean
@@ -84,11 +78,11 @@ class ReplicaConfiguration {
     @Bean
     SuiteJwtDecoders suiteJwtDecoders(
             ReplicaProperties properties,
+            SuiteProperties suite,
             @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri:}") String userIssuer,
-            @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:}") String userJwkSetUri,
-            @Value("${suite.replica.platform-issuer:http://localhost:8082}") String platformIssuer,
-            @Value("${suite.replica.platform-jwk-set-uri:http://localhost:8082/.well-known/jwks.json}") String platformJwkSetUri) {
-        SuiteJwtDecoders.Issuer platform = new SuiteJwtDecoders.Issuer(platformIssuer, platformJwkSetUri);
+            @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:}") String userJwkSetUri) {
+        SuiteJwtDecoders.Issuer platform =
+                new SuiteJwtDecoders.Issuer(suite.replica().platformIssuer(), suite.replica().platformJwkSetUri());
         SuiteJwtDecoders.Issuer user = userJwkSetUri == null || userJwkSetUri.isBlank()
                 ? null
                 : new SuiteJwtDecoders.Issuer(userIssuer, userJwkSetUri);
@@ -96,20 +90,15 @@ class ReplicaConfiguration {
     }
 
     @Bean
-    SnapshotClient snapshotClient(
-            ReplicaProperties properties,
-            Clock clock,
-            @Value("${suite.replica.max-attempts:3}") int maxAttempts,
-            @Value("${suite.replica.retry-backoff:PT0.5S}") Duration retryBackoff,
-            @Value("${suite.replica.refresh-skew:PT30S}") Duration refreshSkew) {
+    SnapshotClient snapshotClient(ReplicaProperties properties, SuiteProperties suite, Clock clock) {
         ReplicaProperties.Replica replica = properties.replica();
         FeignSettings settings = new FeignSettings(
                 "Platform",
                 replica.platformBaseUrl(),
                 replica.requestTimeout(),
                 replica.requestTimeout(),
-                maxAttempts,
-                retryBackoff);
+                suite.replica().maxAttempts(),
+                suite.replica().retryBackoff());
         TokenSettings tokenSettings = TokenSettings.forBaseUrl(
                 replica.platformBaseUrl(),
                 replica.clientId(),
@@ -117,7 +106,7 @@ class ReplicaConfiguration {
                 "platform",
                 replica.requestTimeout(),
                 replica.requestTimeout(),
-                refreshSkew);
+                suite.replica().refreshSkew());
         TokenProvider tokens = new ClientCredentialsTokenProvider(tokenSettings, clock, FeignFailures.core());
         return new SnapshotClient(FeignSnapshotTransport.create(settings, tokens, FeignFailures.core()));
     }
@@ -131,10 +120,10 @@ class ReplicaConfiguration {
     SimpleMessageListenerContainer platformEventsContainer(
             org.springframework.amqp.rabbit.connection.ConnectionFactory connectionFactory,
             AmqpInboundDispatcher dispatcher,
-            @Value("${suite.replica.queue:billing.platform-events}") String queue) {
+            SuiteProperties suite) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(connectionFactory);
         container.setBeanName("platform-events");
-        container.setQueueNames(queue);
+        container.setQueueNames(suite.replica().queue());
         container.setAutoStartup(false);
         container.setMessageListener(message -> dispatcher.onMessage(message.getBody()));
         return container;

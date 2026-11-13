@@ -3,6 +3,7 @@ package dev.ngb.billing.boot.jobs;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.core.tenancy.TenantContext;
+import dev.ngb.billing.boot.config.JobsProperties;
 import dev.ngb.billing.boot.replica.ReplicaTenants;
 import java.util.List;
 import java.util.UUID;
@@ -13,7 +14,6 @@ import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -39,11 +39,11 @@ public class TenantSweep {
     private final int parallelism;
     private final Semaphore permits;
 
-    TenantSweep(TenantContext tenantContext, ReplicaTenants tenants, @Value("${billing.jobs.tenant-parallelism:1}") int parallelism) {
+    TenantSweep(TenantContext tenantContext, ReplicaTenants tenants, JobsProperties jobs) {
         this.tenantContext = tenantContext;
         this.tenants = tenants;
-        this.parallelism = parallelism;
-        this.permits = new Semaphore(Math.max(1, parallelism));
+        this.parallelism = jobs.tenantParallelism();
+        this.permits = new Semaphore(Math.max(1, this.parallelism));
     }
 
     public void forEachActiveTenant(Consumer<TenantId> work) {

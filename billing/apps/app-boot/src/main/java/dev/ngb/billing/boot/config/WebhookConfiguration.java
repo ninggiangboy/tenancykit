@@ -65,14 +65,11 @@ class WebhookConfiguration {
     }
 
     @Bean
-    WebhookSettings webhookSettings(
-            @Value("${billing.webhooks.allow-insecure-targets:false}") boolean allowInsecureTargets,
-            @Value("${billing.webhooks.batch-size:25}") int batchSize,
-            @Value("${billing.webhooks.max-attempts:10}") int maxAttempts,
-            @Value("${billing.webhooks.backoff-base:PT30S}") Duration backoffBase,
-            @Value("${billing.webhooks.backoff-cap:PT6H}") Duration backoffCap,
-            @Value("${billing.webhooks.lease:PT2M}") Duration lease) {
-        return new WebhookSettings(allowInsecureTargets, batchSize, new DeliveryPolicy(maxAttempts, new Backoff(backoffBase, backoffCap, 0.2), lease));
+    WebhookSettings webhookSettings(WebhookProperties properties) {
+        return new WebhookSettings(
+                properties.allowInsecureTargets(),
+                properties.batchSize(),
+                new DeliveryPolicy(properties.maxAttempts(), new Backoff(properties.backoffBase(), properties.backoffCap(), 0.2), properties.lease()));
     }
 
     @Bean
@@ -122,16 +119,15 @@ class WebhookConfiguration {
     }
 
     @Bean(destroyMethod = "close")
-    HttpComponentsWebhookSender webhookSender(
-            WebhookSettings settings,
-            @Value("${billing.webhooks.max-connections:100}") int maxConnTotal,
-            @Value("${billing.webhooks.max-connections-per-route:25}") int maxConnPerRoute,
-            @Value("${billing.webhooks.connection-request-timeout:PT2S}") Duration connectionRequestTimeout,
-            @Value("${billing.webhooks.connect-timeout:PT3S}") Duration connectTimeout,
-            @Value("${billing.webhooks.read-timeout:PT10S}") Duration readTimeout,
-            @Value("${billing.webhooks.deadline:PT15S}") Duration deadline) {
+    HttpComponentsWebhookSender webhookSender(WebhookSettings settings, WebhookProperties properties) {
         return new HttpComponentsWebhookSender(
-                settings.allowInsecureTargets(), maxConnTotal, maxConnPerRoute, connectTimeout, connectionRequestTimeout, readTimeout, deadline);
+                settings.allowInsecureTargets(),
+                properties.maxConnections(),
+                properties.maxConnectionsPerRoute(),
+                properties.connectTimeout(),
+                properties.connectionRequestTimeout(),
+                properties.readTimeout(),
+                properties.deadline());
     }
 
     @Bean

@@ -19,9 +19,7 @@ import dev.ngb.billing.session.application.portal.service.PortalSessionsService;
 import dev.ngb.billing.session.application.portal.service.SessionSettings;
 import dev.ngb.billing.session.application.portal.service.SessionTokens;
 import java.security.SecureRandom;
-import java.time.Duration;
 import org.jooq.DSLContext;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -45,11 +43,8 @@ class SessionConfiguration {
     }
 
     @Bean
-    SessionSettings sessionSettings(
-            @Value("${billing.portal.session-default-ttl:PT1H}") Duration defaultTtl,
-            @Value("${billing.portal.session-min-ttl:PT1M}") Duration minTtl,
-            @Value("${billing.portal.session-max-ttl:P1D}") Duration maxTtl) {
-        return new SessionSettings(defaultTtl, minTtl, maxTtl);
+    SessionSettings sessionSettings(PortalProperties portal) {
+        return new SessionSettings(portal.sessionDefaultTtl(), portal.sessionMinTtl(), portal.sessionMaxTtl());
     }
 
     @Bean

@@ -9,6 +9,8 @@ import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.tenant.resource.api.execution.ExecutionOrders;
 import dev.ngb.core.error.UnauthorizedException;
 import dev.ngb.tenant.webhook.api.event.WebhookBodyParser;
+import dev.ngb.tenant.webhook.api.event.WebhookDecision;
+import dev.ngb.tenant.webhook.api.event.WebhookDeliveryStatus;
 import dev.ngb.tenant.webhook.api.event.WebhookEnvelope;
 import dev.ngb.tenant.webhook.application.event.port.CustomerPeriods;
 import dev.ngb.tenant.webhook.application.event.port.DebtBook;
@@ -54,10 +56,10 @@ class ReceiveWebhookUseCaseTest {
         ReceiveWebhookUseCase.Outcome outcome = receive.receive(headers(envelope, TIMESTAMP), body(), parser(envelope));
 
         assertThat(outcome.duplicate()).isFalse();
-        assertThat(outcome.decision()).isEqualTo(WebhookPolicy.Decision.RECORD_DEBT);
+        assertThat(outcome.decision()).isEqualTo(WebhookDecision.RECORD_DEBT);
         assertThat(outcome.envelope()).isEqualTo(envelope);
         assertThat(debts.recorded).hasSize(1);
-        assertThat(events.byId.get("evt_1").status()).isEqualTo("PROCESSED");
+        assertThat(events.byId.get("evt_1").status()).isEqualTo(WebhookDeliveryStatus.PROCESSED);
     }
 
     @Test
@@ -114,7 +116,7 @@ class ReceiveWebhookUseCaseTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(debts.recorded).isEmpty();
-        assertThat(events.byId.get("evt_1").status()).isEqualTo("FAILED");
+        assertThat(events.byId.get("evt_1").status()).isEqualTo(WebhookDeliveryStatus.FAILED);
     }
 
     @Test
@@ -124,7 +126,7 @@ class ReceiveWebhookUseCaseTest {
 
         ReceiveWebhookUseCase.Outcome outcome = receive.receive(headers(envelope, TIMESTAMP), body(), parser(envelope));
 
-        assertThat(outcome.decision()).isEqualTo(WebhookPolicy.Decision.SUSPEND);
+        assertThat(outcome.decision()).isEqualTo(WebhookDecision.SUSPEND);
         assertThat(orders.suspended).contains("cus_1");
     }
 
@@ -137,7 +139,7 @@ class ReceiveWebhookUseCaseTest {
 
         ReceiveWebhookUseCase.Outcome outcome = receive.receive(headers(envelope, TIMESTAMP), body(), parser(envelope));
 
-        assertThat(outcome.decision()).isEqualTo(WebhookPolicy.Decision.EXTEND_PERIOD);
+        assertThat(outcome.decision()).isEqualTo(WebhookDecision.EXTEND_PERIOD);
         assertThat(orders.resumed).contains("cus_1");
         assertThat(periods.byCustomer).containsEntry("cus_1", periodEnd);
     }
@@ -149,7 +151,7 @@ class ReceiveWebhookUseCaseTest {
 
         ReceiveWebhookUseCase.Outcome outcome = receive.receive(headers(envelope, TIMESTAMP), body(), parser(envelope));
 
-        assertThat(outcome.decision()).isEqualTo(WebhookPolicy.Decision.CONTINUE);
+        assertThat(outcome.decision()).isEqualTo(WebhookDecision.CONTINUE);
     }
 
     private static WebhookEnvelope paymentFailed() {

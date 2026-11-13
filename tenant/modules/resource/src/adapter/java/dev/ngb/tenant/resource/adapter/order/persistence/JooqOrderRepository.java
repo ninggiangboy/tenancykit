@@ -2,6 +2,7 @@ package dev.ngb.tenant.resource.adapter.order.persistence;
 
 import static dev.ngb.tenant_jooq.Tables.ORDERS;
 
+import dev.ngb.tenant.resource.api.order.PricingModel;
 import dev.ngb.tenant.resource.application.order.port.OrderRepository;
 import dev.ngb.tenant.resource.domain.order.Order;
 import dev.ngb.tenant.resource.domain.order.OrderStatus;
@@ -52,7 +53,7 @@ public class JooqOrderRepository implements OrderRepository {
                         order.walletId(),
                         order.catalogPlanId(),
                         order.billingPlanId(),
-                        order.pricingModel(),
+                        order.pricingModel().name(),
                         order.metric(),
                         order.usageQuantity(),
                         order.unit(),
@@ -115,7 +116,7 @@ public class JooqOrderRepository implements OrderRepository {
                 row.getWalletId(),
                 row.getCatalogPlanId(),
                 row.getBillingPlanId(),
-                row.getPricingModel(),
+                PricingModel.valueOf(row.getPricingModel()),
                 row.getMetric(),
                 row.getUsageQuantity(),
                 row.getUnit(),

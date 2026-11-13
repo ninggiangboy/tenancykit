@@ -10,6 +10,8 @@ import dev.ngb.tenant.execution.api.queue.ExecuteOrders;
 import dev.ngb.tenant.execution.api.queue.ExecuteOrders.Report;
 import dev.ngb.tenant.resource.api.execution.ExecutionOrders;
 import dev.ngb.tenant.resource.api.execution.ExecutionQueue;
+import dev.ngb.tenant.resource.api.order.OrderStatus;
+import dev.ngb.tenant.resource.api.order.PricingModel;
 import dev.ngb.tenant.usage.api.recording.UsageRecorder;
 import java.time.Instant;
 import java.util.List;
@@ -94,7 +96,7 @@ public class ExecuteOrdersUseCase implements ExecuteOrders {
 
     private boolean execute(UUID orderId) {
         ExecutionOrders.ExecutionOrder order = orders.find(orderId).orElse(null);
-        if (order == null || !"QUEUED".equals(order.status())) {
+        if (order == null || order.status() != OrderStatus.QUEUED) {
             queue.finish(orderId);
             return false;
         }
@@ -104,7 +106,7 @@ public class ExecuteOrdersUseCase implements ExecuteOrders {
 
     private boolean settle(ExecutionOrders.ExecutionOrder order) {
         UUID orderId = order.id();
-        if (!"SUBSCRIPTION".equals(order.pricingModel())) {
+        if (order.pricingModel() != PricingModel.SUBSCRIPTION) {
             usage.record(new UsageRecorder.UsageCommand(
                     order.id(),
                     order.billingCustomerId(),
@@ -114,7 +116,7 @@ public class ExecuteOrdersUseCase implements ExecuteOrders {
                     order.reference(),
                     clock.now()));
         }
-        if ("HYBRID".equals(order.pricingModel())) {
+        if (order.pricingModel() == PricingModel.HYBRID) {
             rateUsage(order);
         }
 

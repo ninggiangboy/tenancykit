@@ -2,6 +2,8 @@ package dev.ngb.tenant.webhook.adapter.event.persistence;
 
 import static dev.ngb.tenant_jooq.Tables.WEBHOOK_EVENTS;
 
+import dev.ngb.tenant.webhook.api.event.WebhookDecision;
+import dev.ngb.tenant.webhook.api.event.WebhookDeliveryStatus;
 import dev.ngb.tenant.webhook.application.event.port.WebhookRepository;
 import dev.ngb.tenant.webhook.domain.event.WebhookEvent;
 import java.util.Optional;
@@ -39,8 +41,8 @@ public class JooqWebhookRepository implements WebhookRepository {
                         event.occurredAt(),
                         event.payload(),
                         event.receivedAt(),
-                        event.status(),
-                        event.decision(),
+                        event.status().name(),
+                        event.decision() == null ? null : event.decision().name(),
                         event.detail())
                 .onConflict(WEBHOOK_EVENTS.BILLING_EVENT_ID)
                 .doNothing()
@@ -61,16 +63,16 @@ public class JooqWebhookRepository implements WebhookRepository {
                         row.getOccurredAt(),
                         row.getPayload(),
                         row.getReceivedAt(),
-                        row.getStatus(),
-                        row.getDecision(),
+                        WebhookDeliveryStatus.valueOf(row.getStatus()),
+                        row.getDecision() == null ? null : WebhookDecision.valueOf(row.getDecision()),
                         row.getDetail()));
     }
 
     @Override
     public void save(WebhookEvent event) {
         dsl.update(WEBHOOK_EVENTS)
-                .set(WEBHOOK_EVENTS.STATUS, event.status())
-                .set(WEBHOOK_EVENTS.DECISION, event.decision())
+                .set(WEBHOOK_EVENTS.STATUS, event.status().name())
+                .set(WEBHOOK_EVENTS.DECISION, event.decision() == null ? null : event.decision().name())
                 .set(WEBHOOK_EVENTS.DETAIL, event.detail())
                 .where(WEBHOOK_EVENTS.ID.eq(event.id()))
                 .execute();

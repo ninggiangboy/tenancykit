@@ -14,6 +14,7 @@ import dev.ngb.tenant.billing.api.model.SubscriptionDetail;
 import dev.ngb.tenant.billing.api.model.UsageInput;
 import dev.ngb.tenant.billing.api.model.Wallet;
 import dev.ngb.tenant.catalog.api.lookup.CatalogLookup;
+import dev.ngb.tenant.catalog.api.lookup.PricingModel;
 import dev.ngb.tenant.customer.api.lookup.CustomerDirectory;
 import dev.ngb.tenant.resource.application.order.port.OrderQueueRepository;
 import dev.ngb.tenant.resource.application.order.port.OrderRepository;
@@ -139,7 +140,7 @@ public class CreateOrderUseCase {
                 wallet.id(),
                 plan.id(),
                 plan.billingPlanId(),
-                plan.pricingModel(),
+                dev.ngb.tenant.resource.api.order.PricingModel.valueOf(plan.pricingModel().name()),
                 plan.metric(),
                 quantity,
                 plan.unit(),
@@ -232,18 +233,18 @@ public class CreateOrderUseCase {
     }
 
     private static boolean subscriptionPlan(CatalogLookup.PlanSnapshot plan) {
-        return "SUBSCRIPTION".equals(plan.pricingModel()) || "HYBRID".equals(plan.pricingModel());
+        return plan.pricingModel() == PricingModel.SUBSCRIPTION || plan.pricingModel() == PricingModel.HYBRID;
     }
 
     private static List<UsageInput> usage(CatalogLookup.PlanSnapshot plan, String quantity, Long events) {
-        if ("SUBSCRIPTION".equals(plan.pricingModel())) {
+        if (plan.pricingModel() == PricingModel.SUBSCRIPTION) {
             return List.of();
         }
         return List.of(new UsageInput(plan.metric(), quantity, events));
     }
 
     private static Long eventCount(CatalogLookup.PlanSnapshot plan, String quantity, Long events) {
-        if (!"EVENT_BASED".equals(plan.pricingModel())) {
+        if (plan.pricingModel() != PricingModel.EVENT_BASED) {
             return events;
         }
         if (events != null) {

@@ -3,6 +3,7 @@ package dev.ngb.tenant.webhook.application.event.service;
 import dev.ngb.core.event.SuiteEventTypes;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.tenant.resource.api.execution.ExecutionOrders;
+import dev.ngb.tenant.webhook.api.event.WebhookDecision;
 import dev.ngb.tenant.webhook.api.event.WebhookEnvelope;
 import dev.ngb.tenant.webhook.application.event.port.CustomerPeriods;
 import dev.ngb.tenant.webhook.application.event.port.DebtBook;
@@ -16,14 +17,6 @@ import java.util.Map;
  */
 public class WebhookPolicy {
 
-    public enum Decision {
-        CONTINUE,
-        RECORD_DEBT,
-        CLEAR_DEBT,
-        SUSPEND,
-        EXTEND_PERIOD
-    }
-
     private final DebtBook debts;
     private final CustomerPeriods periods;
     private final ExecutionOrders orders;
@@ -36,55 +29,55 @@ public class WebhookPolicy {
         this.clock = clock;
     }
 
-    public Decision apply(WebhookEnvelope event) {
+    public WebhookDecision apply(WebhookEnvelope event) {
         Instant now = clock.now();
         return switch (event.type()) {
             case SuiteEventTypes.PAYMENT_FAILED -> recordDebt(event, now);
             case SuiteEventTypes.INVOICE_PAID -> clearDebt(event, now);
             case SuiteEventTypes.SUBSCRIPTION_PAYMENT_FAILED -> suspend(event, now);
             case SuiteEventTypes.SUBSCRIPTION_RENEWED -> extend(event, now);
-            default -> Decision.CONTINUE;
+            default -> WebhookDecision.CONTINUE;
         };
     }
 
-    private Decision recordDebt(WebhookEnvelope event, Instant now) {
+    private WebhookDecision recordDebt(WebhookEnvelope event, Instant now) {
         String customerId = string(event.data(), "customerId");
         Map<String, Object> amount = map(event.data(), "amount");
         Long minorUnits = number(amount, "minorUnits");
         if (customerId == null || minorUnits == null) {
-            return Decision.CONTINUE;
+            return WebhookDecision.CONTINUE;
         }
         debts.recordDebt(customerId, minorUnits, string(amount, "currency"), string(event.data(), "reason"), now);
-        return Decision.RECORD_DEBT;
+        return WebhookDecision.RECORD_DEBT;
     }
 
-    private Decision clearDebt(WebhookEnvelope event, Instant now) {
+    private WebhookDecision clearDebt(WebhookEnvelope event, Instant now) {
         String customerId = string(event.data(), "customerId");
         if (customerId == null) {
-            return Decision.CONTINUE;
+            return WebhookDecision.CONTINUE;
         }
         debts.clearOpenDebts(customerId, now);
-        return Decision.CLEAR_DEBT;
+        return WebhookDecision.CLEAR_DEBT;
     }
 
-    private Decision suspend(WebhookEnvelope event, Instant now) {
+    private WebhookDecision suspend(WebhookEnvelope event, Instant now) {
         String customerId = string(event.data(), "customerId");
         if (customerId == null) {
-            return Decision.CONTINUE;
+            return WebhookDecision.CONTINUE;
         }
         orders.suspendByBillingCustomer(customerId, now);
-        return Decision.SUSPEND;
+        return WebhookDecision.SUSPEND;
     }
 
-    private Decision extend(WebhookEnvelope event, Instant now) {
+    private WebhookDecision extend(WebhookEnvelope event, Instant now) {
         String customerId = string(event.data(), "customerId");
         Instant periodEnd = instant(event.data(), "periodEnd");
         if (customerId == null || periodEnd == null) {
-            return Decision.CONTINUE;
+            return WebhookDecision.CONTINUE;
         }
         orders.resumeByBillingCustomer(customerId, now);
         periods.extend(customerId, periodEnd, now);
-        return Decision.EXTEND_PERIOD;
+        return WebhookDecision.EXTEND_PERIOD;
     }
 
     private static String string(Map<String, Object> data, String key) {

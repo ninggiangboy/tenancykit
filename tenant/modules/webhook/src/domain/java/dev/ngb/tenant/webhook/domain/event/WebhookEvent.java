@@ -2,6 +2,8 @@ package dev.ngb.tenant.webhook.domain.event;
 
 import dev.ngb.core.ddd.AggregateRoot;
 import dev.ngb.core.runtime.IdGenerator;
+import dev.ngb.tenant.webhook.api.event.WebhookDecision;
+import dev.ngb.tenant.webhook.api.event.WebhookDeliveryStatus;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
@@ -15,8 +17,8 @@ public final class WebhookEvent extends AggregateRoot<UUID> {
     private final Instant occurredAt;
     private final String payload;
     private final Instant receivedAt;
-    private final String status;
-    private final String decision;
+    private final WebhookDeliveryStatus status;
+    private final WebhookDecision decision;
     private final String detail;
 
     private WebhookEvent(
@@ -27,8 +29,8 @@ public final class WebhookEvent extends AggregateRoot<UUID> {
             Instant occurredAt,
             String payload,
             Instant receivedAt,
-            String status,
-            String decision,
+            WebhookDeliveryStatus status,
+            WebhookDecision decision,
             String detail) {
         super(id);
         this.billingEventId = Objects.requireNonNull(billingEventId, "billingEventId");
@@ -46,7 +48,7 @@ public final class WebhookEvent extends AggregateRoot<UUID> {
             IdGenerator ids,
             String billingEventId, String type, String tenantId, Instant occurredAt, String payload, Instant receivedAt) {
         return new WebhookEvent(
-                ids.newId(), billingEventId, type, tenantId, occurredAt, payload, receivedAt, "RECEIVED", null, null);
+                ids.newId(), billingEventId, type, tenantId, occurredAt, payload, receivedAt, WebhookDeliveryStatus.RECEIVED, null, null);
     }
 
     public static WebhookEvent restore(
@@ -57,18 +59,18 @@ public final class WebhookEvent extends AggregateRoot<UUID> {
             Instant occurredAt,
             String payload,
             Instant receivedAt,
-            String status,
-            String decision,
+            WebhookDeliveryStatus status,
+            WebhookDecision decision,
             String detail) {
         return new WebhookEvent(id, billingEventId, type, tenantId, occurredAt, payload, receivedAt, status, decision, detail);
     }
 
-    public WebhookEvent processed(String nextDecision) {
-        return new WebhookEvent(id(), billingEventId, type, tenantId, occurredAt, payload, receivedAt, "PROCESSED", nextDecision, detail);
+    public WebhookEvent processed(WebhookDecision nextDecision) {
+        return new WebhookEvent(id(), billingEventId, type, tenantId, occurredAt, payload, receivedAt, WebhookDeliveryStatus.PROCESSED, nextDecision, detail);
     }
 
     public WebhookEvent failed(String reason) {
-        return new WebhookEvent(id(), billingEventId, type, tenantId, occurredAt, payload, receivedAt, "FAILED", decision, reason);
+        return new WebhookEvent(id(), billingEventId, type, tenantId, occurredAt, payload, receivedAt, WebhookDeliveryStatus.FAILED, decision, reason);
     }
 
     public String billingEventId() {
@@ -95,11 +97,11 @@ public final class WebhookEvent extends AggregateRoot<UUID> {
         return receivedAt;
     }
 
-    public String status() {
+    public WebhookDeliveryStatus status() {
         return status;
     }
 
-    public String decision() {
+    public WebhookDecision decision() {
         return decision;
     }
 

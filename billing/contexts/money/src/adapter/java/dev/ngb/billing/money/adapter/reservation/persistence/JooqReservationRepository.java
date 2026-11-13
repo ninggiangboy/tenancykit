@@ -89,7 +89,7 @@ public class JooqReservationRepository implements ReservationRepository {
     public List<ReservationId> findExpired(Instant now, int limit) {
         return dsl.select(RESERVATIONS.ID)
                 .from(RESERVATIONS)
-                .where(RESERVATIONS.STATUS.eq("ACTIVE"))
+                .where(RESERVATIONS.STATUS.eq(ReservationStatus.ACTIVE.name()))
                 .and(RESERVATIONS.EXPIRES_AT.le(now))
                 .orderBy(RESERVATIONS.EXPIRES_AT)
                 .limit(limit)

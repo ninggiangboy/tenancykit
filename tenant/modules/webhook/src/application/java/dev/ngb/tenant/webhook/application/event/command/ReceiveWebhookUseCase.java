@@ -5,6 +5,7 @@ import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.error.UnauthorizedException;
 import dev.ngb.tenant.webhook.api.event.WebhookBodyParser;
+import dev.ngb.tenant.webhook.api.event.WebhookDecision;
 import dev.ngb.tenant.webhook.api.event.WebhookEnvelope;
 import dev.ngb.tenant.webhook.application.event.port.WebhookRepository;
 import dev.ngb.tenant.webhook.application.event.service.WebhookPolicy;
@@ -22,7 +23,7 @@ public class ReceiveWebhookUseCase {
 
     public record Headers(String eventId, String eventType, String timestamp, String signature) {}
 
-    public record Outcome(boolean duplicate, WebhookPolicy.Decision decision, WebhookEnvelope envelope) {}
+    public record Outcome(boolean duplicate, WebhookDecision decision, WebhookEnvelope envelope) {}
 
     private final WebhookRepository events;
     private final WebhookPolicy policy;
@@ -84,10 +85,10 @@ public class ReceiveWebhookUseCase {
         WebhookEvent event = WebhookEvent.received(
                 ids, envelope.id(), envelope.type(), envelope.tenantId(), envelope.occurredAt(), payload, clock.now());
         if (!events.saveIfAbsent(event)) {
-            return new Outcome(true, WebhookPolicy.Decision.CONTINUE, envelope);
+            return new Outcome(true, WebhookDecision.CONTINUE, envelope);
         }
-        WebhookPolicy.Decision decision = policy.apply(envelope);
-        events.save(event.processed(decision.name()));
+        WebhookDecision decision = policy.apply(envelope);
+        events.save(event.processed(decision));
         return new Outcome(false, decision, envelope);
     }
 

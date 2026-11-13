@@ -100,7 +100,7 @@ class FeignBillingClientTest {
                 "key-2", new ReserveRequest("wal_1", 1000, "USD", 3600L, "order-1"));
 
         assertThat(result.reservation().id()).isEqualTo("res_1");
-        assertThat(result.estimate().amount().money().currency()).isEqualTo("USD");
+        assertThat(result.estimate().amount().money().currency().code()).isEqualTo("USD");
         assertThat(billing.request(0).header("Idempotency-Key")).isEqualTo("key-2");
     }
 

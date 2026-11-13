@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.core.runtime.IdGenerator;
+import dev.ngb.tenant.webhook.api.event.WebhookDecision;
+import dev.ngb.tenant.webhook.api.event.WebhookDeliveryStatus;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -30,7 +32,7 @@ class WebhookEventTest {
         assertThat(event.tenantId()).isEqualTo("ten_1");
         assertThat(event.occurredAt()).isEqualTo(OCCURRED);
         assertThat(event.receivedAt()).isEqualTo(RECEIVED);
-        assertThat(event.status()).isEqualTo("RECEIVED");
+        assertThat(event.status()).isEqualTo(WebhookDeliveryStatus.RECEIVED);
         assertThat(event.decision()).isNull();
         assertThat(event.detail()).isNull();
         assertThat(event.pullEvents()).isEmpty();
@@ -40,33 +42,34 @@ class WebhookEventTest {
     void processingRecordsTheDecisionOnANewInstanceAndLeavesTheOriginalAlone() {
         WebhookEvent event = received();
 
-        WebhookEvent processed = event.processed("RESUMED");
+        WebhookEvent processed = event.processed(WebhookDecision.EXTEND_PERIOD);
 
         assertThat(processed.id()).isEqualTo(ID);
-        assertThat(processed.status()).isEqualTo("PROCESSED");
-        assertThat(processed.decision()).isEqualTo("RESUMED");
-        assertThat(event.status()).isEqualTo("RECEIVED");
+        assertThat(processed.status()).isEqualTo(WebhookDeliveryStatus.PROCESSED);
+        assertThat(processed.decision()).isEqualTo(WebhookDecision.EXTEND_PERIOD);
+        assertThat(event.status()).isEqualTo(WebhookDeliveryStatus.RECEIVED);
         assertThat(event.decision()).isNull();
     }
 
     @Test
     void failureRecordsTheReasonAndKeepsAnEarlierDecision() {
-        WebhookEvent failed = received().processed("RESUMED").failed("database down");
+        WebhookEvent failed = received().processed(WebhookDecision.EXTEND_PERIOD).failed("database down");
 
-        assertThat(failed.status()).isEqualTo("FAILED");
+        assertThat(failed.status()).isEqualTo(WebhookDeliveryStatus.FAILED);
         assertThat(failed.detail()).isEqualTo("database down");
-        assertThat(failed.decision()).isEqualTo("RESUMED");
+        assertThat(failed.decision()).isEqualTo(WebhookDecision.EXTEND_PERIOD);
     }
 
     @Test
     void restoreRebuildsAStoredEventExactly() {
         WebhookEvent restored = WebhookEvent.restore(
-                OTHER_ID, "evt_2", "invoice.failed", "ten_1", OCCURRED, "{\"a\":1}", RECEIVED, "FAILED", "SUSPENDED", "why");
+                OTHER_ID, "evt_2", "invoice.failed", "ten_1", OCCURRED, "{\"a\":1}", RECEIVED,
+                WebhookDeliveryStatus.FAILED, WebhookDecision.SUSPEND, "why");
 
         assertThat(restored.id()).isEqualTo(OTHER_ID);
         assertThat(restored.payload()).isEqualTo("{\"a\":1}");
-        assertThat(restored.status()).isEqualTo("FAILED");
-        assertThat(restored.decision()).isEqualTo("SUSPENDED");
+        assertThat(restored.status()).isEqualTo(WebhookDeliveryStatus.FAILED);
+        assertThat(restored.decision()).isEqualTo(WebhookDecision.SUSPEND);
         assertThat(restored.detail()).isEqualTo("why");
     }
 
@@ -84,10 +87,11 @@ class WebhookEventTest {
     void twoInstancesAreTheSameEventWhenTheyShareAnId() {
         WebhookEvent event = received();
 
-        assertThat(event.processed("RESUMED")).isEqualTo(event);
-        assertThat(event.processed("RESUMED").hashCode()).isEqualTo(event.hashCode());
+        assertThat(event.processed(WebhookDecision.EXTEND_PERIOD)).isEqualTo(event);
+        assertThat(event.processed(WebhookDecision.EXTEND_PERIOD).hashCode()).isEqualTo(event.hashCode());
         assertThat(WebhookEvent.restore(
-                        OTHER_ID, "evt_1", "invoice.paid", "ten_1", OCCURRED, "{}", RECEIVED, "RECEIVED", null, null))
+                        OTHER_ID, "evt_1", "invoice.paid", "ten_1", OCCURRED, "{}", RECEIVED,
+                        WebhookDeliveryStatus.RECEIVED, null, null))
                 .isNotEqualTo(event);
     }
 }

@@ -1,5 +1,7 @@
 package dev.ngb.tenant.resource.api.execution;
 
+import dev.ngb.tenant.resource.api.order.OrderStatus;
+import dev.ngb.tenant.resource.api.order.PricingModel;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,7 +15,7 @@ public interface ExecutionOrders {
             String billingCustomerId,
             String walletId,
             String billingPlanId,
-            String pricingModel,
+            PricingModel pricingModel,
             String metric,
             String usageQuantity,
             String unit,
@@ -23,7 +25,7 @@ public interface ExecutionOrders {
             String reservationId,
             String subscriptionId,
             String reference,
-            String status) {}
+            OrderStatus status) {}
 
     Optional<ExecutionOrder> find(UUID orderId);
 

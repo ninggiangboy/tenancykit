@@ -22,6 +22,7 @@ import dev.ngb.tenant.billing.api.model.SubscriptionDetail;
 import dev.ngb.tenant.billing.api.model.UsageInput;
 import dev.ngb.tenant.billing.api.model.Wallet;
 import dev.ngb.tenant.catalog.api.lookup.CatalogLookup;
+import dev.ngb.tenant.catalog.api.lookup.PricingModel;
 import dev.ngb.tenant.customer.api.lookup.CustomerDirectory;
 import dev.ngb.tenant.resource.api.execution.ExecutionQueue.Claimed;
 import dev.ngb.tenant.resource.application.order.port.OrderQueueRepository;
@@ -127,7 +128,7 @@ class CreateOrderUseCaseTest {
     void itResumesAPendingOrderACrashLeftBehind() {
         Order crashLeft = Order.pending(
                 () -> UUID.fromString("00000000-0000-7000-8000-000000000099"),
-                CUSTOMER, "cus_1", "wal_1", PLAN, "bplan_1", "TIME_BASED", "compute.vcpu_minute", "120",
+                CUSTOMER, "cus_1", "wal_1", PLAN, "bplan_1", dev.ngb.tenant.resource.api.order.PricingModel.TIME_BASED, "compute.vcpu_minute", "120",
                 "vCPU-minute", null, "USD", REFERENCE, NOW.minusSeconds(30));
         orders.save(crashLeft);
 
@@ -143,11 +144,11 @@ class CreateOrderUseCaseTest {
     void expiresOnlyAPendingOrderItsReservationCanNoLongerCover() {
         Order stale = Order.pending(
                 () -> UUID.fromString("00000000-0000-7000-8000-000000000098"),
-                CUSTOMER, "cus_1", "wal_1", PLAN, "bplan_1", "TIME_BASED", "compute.vcpu_minute", "120",
+                CUSTOMER, "cus_1", "wal_1", PLAN, "bplan_1", dev.ngb.tenant.resource.api.order.PricingModel.TIME_BASED, "compute.vcpu_minute", "120",
                 "vCPU-minute", null, "USD", "ORD-stale", NOW.minus(Duration.ofHours(1)));
         Order fresh = Order.pending(
                 () -> UUID.fromString("00000000-0000-7000-8000-000000000097"),
-                CUSTOMER, "cus_1", "wal_1", PLAN, "bplan_1", "TIME_BASED", "compute.vcpu_minute", "120",
+                CUSTOMER, "cus_1", "wal_1", PLAN, "bplan_1", dev.ngb.tenant.resource.api.order.PricingModel.TIME_BASED, "compute.vcpu_minute", "120",
                 "vCPU-minute", null, "USD", "ORD-fresh", NOW);
         orders.save(stale);
         orders.save(fresh);
@@ -193,7 +194,7 @@ class CreateOrderUseCaseTest {
 
     @Test
     void anEventBasedOrderCarriesWholeEventsToTheEstimate() {
-        catalog.model = "EVENT_BASED";
+        catalog.model = PricingModel.EVENT_BASED;
 
         create.execute(new CreateOrderUseCase.Command(USER, PLAN, "25", null, KEY));
 
@@ -205,7 +206,7 @@ class CreateOrderUseCaseTest {
 
     @Test
     void aSubscriptionPlanStartsASubscriptionAndSkipsTheReservation() {
-        catalog.model = "SUBSCRIPTION";
+        catalog.model = PricingModel.SUBSCRIPTION;
 
         Order order = create.execute(command());
 
@@ -219,7 +220,7 @@ class CreateOrderUseCaseTest {
 
     @Test
     void aHybridPlanAlsoStartsASubscription() {
-        catalog.model = "HYBRID";
+        catalog.model = PricingModel.HYBRID;
 
         Order order = create.execute(command());
 
@@ -233,7 +234,7 @@ class CreateOrderUseCaseTest {
 
     private static final class FakeCatalog implements CatalogLookup {
         private boolean billable = true;
-        private String model = "TIME_BASED";
+        private PricingModel model = PricingModel.TIME_BASED;
 
         @Override
         public PlanSnapshot get(UUID id) {

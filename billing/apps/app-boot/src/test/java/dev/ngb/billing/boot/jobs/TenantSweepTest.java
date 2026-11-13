@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.spring.tenancy.ScopedTenantContext;
+import dev.ngb.billing.boot.config.JobsProperties;
 import dev.ngb.billing.boot.replica.ReplicaTenants;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +43,7 @@ class TenantSweepTest {
                 return views;
             }
         };
-        return new TenantSweep(context, tenants, parallelism);
+        return new TenantSweep(context, tenants, new JobsProperties(true, parallelism, 200, LocalTime.of(3, 0)));
     }
 
     @Test

@@ -2,6 +2,7 @@ package dev.ngb.tenant.resource.adapter.order.persistence;
 
 import static dev.ngb.tenant_jooq.Tables.ORDERS;
 
+import dev.ngb.tenant.resource.api.order.OrderStatus;
 import dev.ngb.tenant.resource.application.order.query.OrderReadRepository;
 import dev.ngb.tenant.resource.application.order.query.OrderView;
 import java.util.List;
@@ -112,7 +113,7 @@ public class JooqOrderReadRepository implements OrderReadRepository {
                 row.get(ORDERS.REFERENCE),
                 row.get(ORDERS.CATALOG_PLAN_ID),
                 row.get(ORDERS.BILLING_PLAN_ID),
-                row.get(ORDERS.STATUS),
+                OrderStatus.valueOf(row.get(ORDERS.STATUS)),
                 row.get(ORDERS.WALLET_ID),
                 row.get(ORDERS.RESERVATION_ID),
                 row.get(ORDERS.ESTIMATED_MINOR_UNITS),

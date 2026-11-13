@@ -1,5 +1,6 @@
 package dev.ngb.billing.boot.security;
 
+import dev.ngb.billing.boot.config.PortalProperties;
 import dev.ngb.billing.boot.portal.PortalCookieSettings;
 import dev.ngb.billing.boot.web.PortalCorsConfigurationSource;
 import dev.ngb.billing.session.api.portal.CurrentPortalVisitor;
@@ -14,7 +15,6 @@ import dev.ngb.core.suite.security.SuiteJwtDecoders;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.Authorizer;
 import dev.ngb.core.security.CurrentActor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -47,7 +47,7 @@ class SecurityConfiguration {
             PortalSessions portalSessions,
             PortalCookieSettings portalCookieSettings,
             PortalCorsConfigurationSource portalCors,
-            @Value("${billing.portal.enabled:true}") boolean portalEnabled) throws Exception {
+            PortalProperties portal) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(portalCors))
                 .sessionManagement(sessions -> sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -68,7 +68,7 @@ class SecurityConfiguration {
                 .oauth2ResourceServer(resource -> resource
                         .jwt(jwt -> jwt.decoder(decoders).jwtAuthenticationConverter(new SuiteActorConverter(actorResolver))))
                 .headers(Customizer.withDefaults());
-        if (portalEnabled) {
+        if (portal.enabled()) {
             http.addFilterBefore(
                     new PortalSessionAuthenticationFilter(portalSessions, portalCookieSettings),
                     BearerTokenAuthenticationFilter.class);
@@ -102,8 +102,8 @@ class SecurityConfiguration {
     }
 
     @Bean
-    PortalCookieSettings portalCookieSettings(@Value("${billing.portal.secure-cookie:true}") boolean secure) {
-        return new PortalCookieSettings(secure);
+    PortalCookieSettings portalCookieSettings(PortalProperties portal) {
+        return new PortalCookieSettings(portal.secureCookie());
     }
 
     @Bean

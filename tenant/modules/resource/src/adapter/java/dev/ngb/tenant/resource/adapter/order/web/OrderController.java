@@ -50,7 +50,7 @@ public class OrderController {
                     order.reference(),
                     order.planId(),
                     order.billingPlanId(),
-                    order.status(),
+                    order.status().name(),
                     order.walletId(),
                     order.reservationId(),
                     order.estimatedMinorUnits(),

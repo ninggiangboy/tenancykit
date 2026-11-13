@@ -11,7 +11,7 @@ public interface CatalogLookup {
             String name,
             String billingPlanId,
             String resourceType,
-            String pricingModel,
+            PricingModel pricingModel,
             String metric,
             String unit,
             boolean billable) {}

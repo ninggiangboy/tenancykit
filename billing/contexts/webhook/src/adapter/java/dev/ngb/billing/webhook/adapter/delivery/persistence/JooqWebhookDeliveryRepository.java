@@ -70,11 +70,11 @@ public class JooqWebhookDeliveryRepository implements WebhookDeliveryRepository 
     @Override
     public int killExhausted(Instant now, int maxAttempts) {
         return dsl.update(WEBHOOK_DELIVERIES)
-                .set(WEBHOOK_DELIVERIES.STATUS, "DEAD")
+                .set(WEBHOOK_DELIVERIES.STATUS, DeliveryStatus.DEAD.name())
                 .set(WEBHOOK_DELIVERIES.COMPLETED_AT, now)
                 .set(WEBHOOK_DELIVERIES.LAST_ERROR,
                         DSL.coalesce(WEBHOOK_DELIVERIES.LAST_ERROR, DSL.val("the worker was lost during the final attempt")))
-                .where(WEBHOOK_DELIVERIES.STATUS.eq("IN_PROGRESS"))
+                .where(WEBHOOK_DELIVERIES.STATUS.eq(DeliveryStatus.IN_PROGRESS.name()))
                 .and(WEBHOOK_DELIVERIES.NEXT_ATTEMPT_AT.le(now))
                 .and(WEBHOOK_DELIVERIES.ATTEMPTS.ge(maxAttempts))
                 .execute();
@@ -151,7 +151,7 @@ public class JooqWebhookDeliveryRepository implements WebhookDeliveryRepository 
                 .set(WEBHOOK_DELIVERIES.COMPLETED_AT, completedAt)
                 .where(WEBHOOK_DELIVERIES.ID.eq(id.value()))
                 .and(WEBHOOK_DELIVERIES.ATTEMPTS.eq(claimedAttempts))
-                .and(WEBHOOK_DELIVERIES.STATUS.eq("IN_PROGRESS"))
+                .and(WEBHOOK_DELIVERIES.STATUS.eq(DeliveryStatus.IN_PROGRESS.name()))
                 .execute();
     }
 

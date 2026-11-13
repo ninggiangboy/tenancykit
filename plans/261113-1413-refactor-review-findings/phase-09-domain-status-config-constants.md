@@ -69,11 +69,11 @@ configuration record.
 
 ## Success criteria
 
-- [ ] No production `switch`/`case` compares a raw pricing-model, order-status or webhook-decision string.
-- [ ] Adapters persist enum `.name()`; no raw status literal remains in a production adapter.
-- [ ] One money type for the suite's REST and event contracts.
-- [ ] Every repeated feature flag has one properties record; no raw key outside `application.yml`/tests.
-- [ ] The wallet currency is configurable and defaults to today's `USD`.
+- [x] No production `switch`/`case` compares a raw pricing-model, order-status or webhook-decision string.
+- [x] Adapters persist enum `.name()`; no raw status literal remains in a production adapter.
+- [x] One money type for the suite's REST and event contracts.
+- [x] Every repeated feature flag has one properties record; no raw key outside `application.yml`/tests.
+- [x] The wallet currency is configurable and defaults to today's `USD`.
 
 ## Risks
 

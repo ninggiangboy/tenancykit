@@ -97,6 +97,6 @@ public class ExecutionOrdersService implements ExecutionOrders {
                 order.reservationId(),
                 order.subscriptionId(),
                 order.reference(),
-                order.status().name());
+                dev.ngb.tenant.resource.api.order.OrderStatus.valueOf(order.status().name()));
     }
 }

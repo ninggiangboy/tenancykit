@@ -6,6 +6,7 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.tenant.resource.api.execution.ExecutionQueue.Claimed;
 import dev.ngb.tenant.resource.application.order.port.OrderQueueRepository;
+import dev.ngb.tenant.resource.domain.order.QueueStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -33,7 +34,7 @@ public class JooqOrderQueueRepository implements OrderQueueRepository {
                         EXECUTION_QUEUE.STATUS,
                         EXECUTION_QUEUE.ENQUEUED_AT,
                         EXECUTION_QUEUE.ATTEMPTS)
-                .values(ids.newId(), orderId, "PENDING", enqueuedAt, 0)
+                .values(ids.newId(), orderId, QueueStatus.PENDING.name(), enqueuedAt, 0)
                 .execute();
     }
 
@@ -42,13 +43,13 @@ public class JooqOrderQueueRepository implements OrderQueueRepository {
         // skip locked: a row another worker is claiming is passed over instead of waited for.
         var next = dsl.select(EXECUTION_QUEUE.ID)
                 .from(EXECUTION_QUEUE)
-                .where(EXECUTION_QUEUE.STATUS.eq("PENDING"))
+                .where(EXECUTION_QUEUE.STATUS.eq(QueueStatus.PENDING.name()))
                 .orderBy(EXECUTION_QUEUE.ENQUEUED_AT)
                 .limit(batchSize)
                 .forUpdate()
                 .skipLocked();
         return dsl.update(EXECUTION_QUEUE)
-                .set(EXECUTION_QUEUE.STATUS, "RUNNING")
+                .set(EXECUTION_QUEUE.STATUS, QueueStatus.RUNNING.name())
                 .set(EXECUTION_QUEUE.CLAIMED_AT, clock.now())
                 .set(EXECUTION_QUEUE.ATTEMPTS, EXECUTION_QUEUE.ATTEMPTS.plus(1))
                 .where(EXECUTION_QUEUE.ID.in(next))
@@ -59,10 +60,10 @@ public class JooqOrderQueueRepository implements OrderQueueRepository {
     @Override
     public void finish(UUID orderId) {
         int finished = dsl.update(EXECUTION_QUEUE)
-                .set(EXECUTION_QUEUE.STATUS, "DONE")
+                .set(EXECUTION_QUEUE.STATUS, QueueStatus.DONE.name())
                 .set(EXECUTION_QUEUE.FINISHED_AT, clock.now())
                 .where(EXECUTION_QUEUE.ORDER_ID.eq(orderId))
-                .and(EXECUTION_QUEUE.STATUS.eq("RUNNING"))
+                .and(EXECUTION_QUEUE.STATUS.eq(QueueStatus.RUNNING.name()))
                 .execute();
         requireClaimed(finished, orderId);
     }
@@ -70,10 +71,10 @@ public class JooqOrderQueueRepository implements OrderQueueRepository {
     @Override
     public void requeue(UUID orderId) {
         int requeued = dsl.update(EXECUTION_QUEUE)
-                .set(EXECUTION_QUEUE.STATUS, "PENDING")
+                .set(EXECUTION_QUEUE.STATUS, QueueStatus.PENDING.name())
                 .setNull(EXECUTION_QUEUE.CLAIMED_AT)
                 .where(EXECUTION_QUEUE.ORDER_ID.eq(orderId))
-                .and(EXECUTION_QUEUE.STATUS.eq("RUNNING"))
+                .and(EXECUTION_QUEUE.STATUS.eq(QueueStatus.RUNNING.name()))
                 .execute();
         requireClaimed(requeued, orderId);
     }

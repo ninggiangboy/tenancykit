@@ -107,7 +107,7 @@ public class JooqRatingRepository implements RatingRepository {
 
     @Override
     public int failedAttempts(String setKey) {
-        return dsl.fetchCount(USAGE_RATINGS, USAGE_RATINGS.SET_KEY.eq(setKey).and(USAGE_RATINGS.STATUS.eq("FAILED")));
+        return dsl.fetchCount(USAGE_RATINGS, USAGE_RATINGS.SET_KEY.eq(setKey).and(USAGE_RATINGS.STATUS.eq(RatingStatus.FAILED.name())));
     }
 
     @Override

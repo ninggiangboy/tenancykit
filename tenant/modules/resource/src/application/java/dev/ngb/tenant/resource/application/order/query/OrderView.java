@@ -1,5 +1,6 @@
 package dev.ngb.tenant.resource.application.order.query;
 
+import dev.ngb.tenant.resource.api.order.OrderStatus;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -10,7 +11,7 @@ public record OrderView(
         String reference,
         UUID planId,
         String billingPlanId,
-        String status,
+        OrderStatus status,
         String walletId,
         String reservationId,
         long estimatedMinorUnits,

@@ -93,7 +93,7 @@ in Billing:
 | `webhook` | `event` | Inbound Billing webhooks: verification, deduplication and the tenant's policy |
 | `billing-client` | `client` | The Billing REST contracts and their HTTP adapter, and the Platform token provider that authenticates them |
 | `apps:app-boot` | | Spring wiring, security, jobs, the HTTP edge and the Flyway migrations |
-| `libs:shared-core` | | Plain-Java errors and money used by every module |
+| `libs:shared-core` | | Plain-Java types every module may use |
 | `libs:jooq-schema` | | jOOQ classes generated from the migrations and committed |
 | `testing:arch-fixtures` | | Deliberately violating classes that prove each ArchUnit rule can fail |
 

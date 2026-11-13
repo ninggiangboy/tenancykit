@@ -14,6 +14,7 @@ import dev.ngb.tenant.identity.api.security.Role;
 import dev.ngb.tenant.identity.application.user.command.RegisterUserUseCase;
 import dev.ngb.tenant.identity.domain.user.User;
 import dev.ngb.tenant.resource.api.execution.ExecutionQueue.Claimed;
+import dev.ngb.tenant.resource.api.order.PricingModel;
 import dev.ngb.tenant.resource.application.order.port.OrderQueueRepository;
 import dev.ngb.tenant.resource.application.order.port.OrderRepository;
 import dev.ngb.tenant.resource.domain.order.Order;
@@ -61,7 +62,7 @@ class JooqOrderQueueRepositoryIntegrationTest extends HttpIntegrationTest {
         plans.save(plan);
         Order order = Order.pending(
                         ids, customer.id(), customer.billingCustomerId(), "wal_1", plan.id(), "bplan_1",
-                        "TIME_BASED", "compute.vcpu_minute", "120", "vCPU-minute", null, "USD",
+                        PricingModel.TIME_BASED, "compute.vcpu_minute", "120", "vCPU-minute", null, "USD",
                         "ORD-" + UUID.randomUUID(), NOW)
                 .queued(1000, "res_1", null, NOW);
         orders.save(order);

@@ -13,6 +13,8 @@ import dev.ngb.tenant.billing.api.model.Reservation;
 import dev.ngb.tenant.execution.api.queue.ExecuteOrders;
 import dev.ngb.tenant.resource.api.execution.ExecutionQueue;
 import dev.ngb.tenant.resource.api.execution.ExecutionOrders;
+import dev.ngb.tenant.resource.api.order.OrderStatus;
+import dev.ngb.tenant.resource.api.order.PricingModel;
 import dev.ngb.core.error.UpstreamUnavailableException;
 import dev.ngb.tenant.usage.api.recording.UsageRecorder;
 import java.time.Instant;
@@ -41,7 +43,7 @@ class ExecuteOrdersUseCaseTest {
         ExecuteOrders.Report report = execute.run(10);
 
         assertThat(report).isEqualTo(new ExecuteOrders.Report(1, 1, 0, 0));
-        assertThat(orders.status).isEqualTo("COMPLETED");
+        assertThat(orders.status).isEqualTo(OrderStatus.COMPLETED);
         assertThat(usage.commands).hasSize(1);
         assertThat(charges.captured).isTrue();
         assertThat(charges.released).isTrue();
@@ -55,7 +57,7 @@ class ExecuteOrdersUseCaseTest {
 
         execute.run(10);
 
-        assertThat(orders.status).isEqualTo("QUEUED");
+        assertThat(orders.status).isEqualTo(OrderStatus.QUEUED);
         assertThat(usage.commands).isEmpty();
         assertThat(charges.captured).isFalse();
         assertThat(queue.requeued).isTrue();
@@ -69,7 +71,7 @@ class ExecuteOrdersUseCaseTest {
         ExecuteOrders.Report report = execute.run(10);
 
         assertThat(report).isEqualTo(new ExecuteOrders.Report(1, 0, 1, 0));
-        assertThat(orders.status).isEqualTo("FAILED");
+        assertThat(orders.status).isEqualTo(OrderStatus.FAILED);
         assertThat(orders.failureReason).isEqualTo("insufficient_funds");
         assertThat(charges.released).isTrue();
         assertThat(queue.finished).isTrue();
@@ -83,7 +85,7 @@ class ExecuteOrdersUseCaseTest {
         ExecuteOrders.Report report = execute.run(10);
 
         assertThat(report).isEqualTo(new ExecuteOrders.Report(1, 0, 0, 1));
-        assertThat(orders.status).isEqualTo("QUEUED");
+        assertThat(orders.status).isEqualTo(OrderStatus.QUEUED);
         assertThat(queue.requeued).isTrue();
     }
 
@@ -95,13 +97,13 @@ class ExecuteOrdersUseCaseTest {
         ExecuteOrders.Report report = execute.run(10);
 
         assertThat(report).isEqualTo(new ExecuteOrders.Report(1, 0, 1, 0));
-        assertThat(orders.status).isEqualTo("FAILED");
+        assertThat(orders.status).isEqualTo(OrderStatus.FAILED);
         assertThat(queue.finished).isTrue();
     }
 
     @Test
     void aSuspendedOrderIsFinishedWithoutCharging() {
-        orders.status = "SUSPENDED";
+        orders.status = OrderStatus.SUSPENDED;
 
         execute.run(10);
 
@@ -112,7 +114,7 @@ class ExecuteOrdersUseCaseTest {
 
     @Test
     void aHybridOrderRatesItsUsageWithoutAReservation() {
-        orders.pricingModel = "HYBRID";
+        orders.pricingModel = PricingModel.HYBRID;
         orders.estimated = 0;
         orders.reservationId = null;
 
@@ -122,12 +124,12 @@ class ExecuteOrdersUseCaseTest {
         assertThat(usage.commands).hasSize(1);
         assertThat(charges.rated).isTrue();
         assertThat(charges.captured).isFalse();
-        assertThat(orders.status).isEqualTo("COMPLETED");
+        assertThat(orders.status).isEqualTo(OrderStatus.COMPLETED);
     }
 
     @Test
     void aSubscriptionOrderUsesTheSubscriptionChargeAndRecordsNoUsage() {
-        orders.pricingModel = "SUBSCRIPTION";
+        orders.pricingModel = PricingModel.SUBSCRIPTION;
         orders.estimated = 0;
         orders.reservationId = null;
 
@@ -136,7 +138,7 @@ class ExecuteOrdersUseCaseTest {
         assertThat(usage.commands).isEmpty();
         assertThat(charges.rated).isFalse();
         assertThat(charges.captured).isFalse();
-        assertThat(orders.status).isEqualTo("COMPLETED");
+        assertThat(orders.status).isEqualTo(OrderStatus.COMPLETED);
     }
 
     private static final class InMemoryUnitOfWork implements UnitOfWork {
@@ -151,7 +153,7 @@ class ExecuteOrdersUseCaseTest {
         @Override
         public <T> T transactional(Supplier<T> work) {
             transactions++;
-            String status = orders.status;
+            OrderStatus status = orders.status;
             try {
                 return work.get();
             } catch (RuntimeException e) {
@@ -183,8 +185,8 @@ class ExecuteOrdersUseCaseTest {
     }
 
     private static final class FakeOrders implements ExecutionOrders {
-        private String status = "QUEUED";
-        private String pricingModel = "TIME_BASED";
+        private OrderStatus status = OrderStatus.QUEUED;
+        private PricingModel pricingModel = PricingModel.TIME_BASED;
         private long estimated = 1000;
         private String reservationId = "res_1";
         private String failureReason;
@@ -198,22 +200,22 @@ class ExecuteOrdersUseCaseTest {
 
         @Override
         public void markRunning(UUID orderId) {
-            status = "RUNNING";
+            status = OrderStatus.RUNNING;
         }
 
         @Override
         public void markQueued(UUID orderId) {
-            status = "QUEUED";
+            status = OrderStatus.QUEUED;
         }
 
         @Override
         public void markCompleted(UUID orderId) {
-            status = "COMPLETED";
+            status = OrderStatus.COMPLETED;
         }
 
         @Override
         public void markFailed(UUID orderId, String reason) {
-            status = "FAILED";
+            status = OrderStatus.FAILED;
             failureReason = reason;
         }
 

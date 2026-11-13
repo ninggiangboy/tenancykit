@@ -20,6 +20,7 @@ import dev.ngb.tenant.identity.api.security.Role;
 import dev.ngb.tenant.identity.application.user.command.RegisterUserUseCase;
 import dev.ngb.tenant.identity.domain.user.User;
 import dev.ngb.tenant.resource.api.execution.ExecutionQueue.Claimed;
+import dev.ngb.tenant.resource.api.order.OrderStatus;
 import dev.ngb.tenant.resource.application.order.command.CreateOrderUseCase;
 import dev.ngb.tenant.resource.application.order.port.OrderQueueRepository;
 import dev.ngb.tenant.resource.application.order.port.OrderRepository;
@@ -97,7 +98,7 @@ class CreateOrderUseCaseIntegrationTest extends HttpIntegrationTest {
                 .isInstanceOf(IllegalStateException.class);
 
         assertThat(read.forCustomer(customer.id())).singleElement().satisfies(order -> {
-            assertThat(order.status()).isEqualTo("FAILED");
+            assertThat(order.status()).isEqualTo(OrderStatus.FAILED);
             assertThat(order.failureReason()).isEqualTo("queue is down");
             assertThat(order.reservationId()).isEqualTo("res_1");
         });
@@ -114,7 +115,7 @@ class CreateOrderUseCaseIntegrationTest extends HttpIntegrationTest {
         OrderView replay = view(create.execute(new CreateOrderUseCase.Command(user.id(), plan.id(), "120", null, key)));
 
         assertThat(replay.id()).isEqualTo(first.id());
-        assertThat(replay.status()).isEqualTo("QUEUED");
+        assertThat(replay.status()).isEqualTo(OrderStatus.QUEUED);
         assertThat(read.forCustomer(customer.id())).hasSize(1);
     }
 

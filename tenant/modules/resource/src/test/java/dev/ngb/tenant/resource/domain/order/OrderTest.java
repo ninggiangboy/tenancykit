@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.error.BadRequestException;
+import dev.ngb.tenant.resource.api.order.PricingModel;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
@@ -43,7 +44,7 @@ class OrderTest {
                 "wal_1",
                 PLAN_ID,
                 "bplan_1",
-                "TIME_BASED",
+                PricingModel.TIME_BASED,
                 "compute_hours",
                 "10",
                 "hour",

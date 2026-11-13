@@ -80,7 +80,7 @@ public class JooqWebhookEndpointRepository implements WebhookEndpointRepository 
     @Override
     public List<WebhookEndpoint> findSubscribed(String eventType) {
         return dsl.selectFrom(WEBHOOK_ENDPOINTS)
-                .where(WEBHOOK_ENDPOINTS.STATUS.eq("ACTIVE"))
+                .where(WEBHOOK_ENDPOINTS.STATUS.eq(EndpointStatus.ACTIVE.name()))
                 .and(condition("{0} = any({1})", eventType, WEBHOOK_ENDPOINTS.EVENT_TYPES)
                         .or(condition("'*' = any({0})", WEBHOOK_ENDPOINTS.EVENT_TYPES)))
                 .orderBy(WEBHOOK_ENDPOINTS.ID)

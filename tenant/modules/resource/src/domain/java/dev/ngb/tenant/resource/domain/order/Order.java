@@ -2,6 +2,7 @@ package dev.ngb.tenant.resource.domain.order;
 
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.error.BadRequestException;
+import dev.ngb.tenant.resource.api.order.PricingModel;
 import java.time.Instant;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -23,7 +24,7 @@ public record Order(
         String walletId,
         UUID catalogPlanId,
         String billingPlanId,
-        String pricingModel,
+        PricingModel pricingModel,
         String metric,
         String usageQuantity,
         String unit,
@@ -47,7 +48,7 @@ public record Order(
             String walletId,
             UUID catalogPlanId,
             String billingPlanId,
-            String pricingModel,
+            PricingModel pricingModel,
             String metric,
             String usageQuantity,
             String unit,

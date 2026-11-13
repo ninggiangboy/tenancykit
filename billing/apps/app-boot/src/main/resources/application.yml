@@ -166,3 +166,5 @@ suite:
       max-attempts: ${BILLING_OUTBOX_BROKER_MAX_ATTEMPTS:10}
       backoff-base: PT10S
       backoff-cap: PT1H
+    document:
+      schema-version: 2

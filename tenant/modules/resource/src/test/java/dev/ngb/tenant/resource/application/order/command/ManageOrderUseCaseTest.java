@@ -10,6 +10,7 @@ import dev.ngb.tenant.billing.api.client.BillingSubscriptions;
 import dev.ngb.tenant.billing.api.model.Subscription;
 import dev.ngb.tenant.billing.api.model.SubscriptionDetail;
 import dev.ngb.tenant.customer.api.lookup.CustomerDirectory;
+import dev.ngb.tenant.resource.api.order.PricingModel;
 import dev.ngb.tenant.resource.application.order.port.OrderRepository;
 import dev.ngb.tenant.resource.domain.order.Order;
 import dev.ngb.tenant.resource.domain.order.OrderStatus;
@@ -99,7 +100,7 @@ class ManageOrderUseCaseTest {
                         "wal_1",
                         UUID.fromString("00000000-0000-7000-8000-0000000000a1"),
                         "bplan_1",
-                        "SUBSCRIPTION",
+                        PricingModel.SUBSCRIPTION,
                         "compute_hours",
                         "1",
                         "hour",

@@ -3,6 +3,7 @@ package dev.ngb.billing.boot.jobs;
 import dev.ngb.core.observability.MetricNames;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
+import dev.ngb.billing.boot.config.JobsProperties;
 import dev.ngb.billing.boot.infrastructure.coordination.JobLeases;
 import dev.ngb.billing.boot.infrastructure.coordination.JobRuns;
 import dev.ngb.billing.money.application.ledger.command.VerifyLedgerUseCase;
@@ -16,7 +17,6 @@ import java.time.ZoneOffset;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -61,8 +61,7 @@ public class MoneyJobs {
             JobRuns runs,
             Clock clock,
             MeterRegistry meters,
-            @Value("${billing.jobs.expire-reservations-batch:200}") int batchSize,
-            @Value("${billing.jobs.verify-ledger-not-before:03:00}") LocalTime verifyNotBefore) {
+            JobsProperties jobs) {
         this.sweep = sweep;
         this.expireReservations = expireReservations;
         this.verifyLedger = verifyLedger;
@@ -70,8 +69,8 @@ public class MoneyJobs {
         this.runs = runs;
         this.clock = clock;
         this.meters = meters;
-        this.batchSize = batchSize;
-        this.verifyNotBefore = verifyNotBefore;
+        this.batchSize = jobs.expireReservationsBatch();
+        this.verifyNotBefore = jobs.verifyLedgerNotBefore();
     }
 
     @Scheduled(fixedDelayString = "${billing.jobs.expire-reservations-delay:PT30S}")

@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.tenant.support.HttpIntegrationTest;
+import dev.ngb.tenant.webhook.api.event.WebhookDecision;
+import dev.ngb.tenant.webhook.api.event.WebhookDeliveryStatus;
 import dev.ngb.tenant.webhook.application.event.port.WebhookRepository;
 import dev.ngb.tenant.webhook.domain.event.WebhookEvent;
 import java.time.Instant;
@@ -40,10 +42,10 @@ class JooqWebhookRepositoryIntegrationTest extends HttpIntegrationTest {
         WebhookEvent event = received();
         events.saveIfAbsent(event);
 
-        events.save(event.processed("RECORD_DEBT"));
+        events.save(event.processed(WebhookDecision.RECORD_DEBT));
 
         WebhookEvent loaded = events.findByBillingEventId(event.billingEventId()).orElseThrow();
-        assertThat(loaded.status()).isEqualTo("PROCESSED");
-        assertThat(loaded.decision()).isEqualTo("RECORD_DEBT");
+        assertThat(loaded.status()).isEqualTo(WebhookDeliveryStatus.PROCESSED);
+        assertThat(loaded.decision()).isEqualTo(WebhookDecision.RECORD_DEBT);
     }
 }

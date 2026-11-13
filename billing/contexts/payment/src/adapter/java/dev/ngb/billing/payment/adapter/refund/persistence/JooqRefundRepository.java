@@ -96,7 +96,7 @@ public class JooqRefundRepository implements RefundRepository {
         Long sum = dsl.select(DSL.coalesce(DSL.sum(REFUNDS.AMOUNT), DSL.val(0L)))
                 .from(REFUNDS)
                 .where(REFUNDS.PAYMENT_ID.eq(paymentId.value()))
-                .and(REFUNDS.STATUS.in("PENDING", "SUCCEEDED"))
+                .and(REFUNDS.STATUS.in(RefundStatus.PENDING.name(), RefundStatus.SUCCEEDED.name()))
                 .fetchOne(0, Long.class);
         return sum == null ? 0L : sum;
     }

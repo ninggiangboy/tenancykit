@@ -1,6 +1,7 @@
 package dev.ngb.tenant.catalog.application.plan.service;
 
 import dev.ngb.tenant.catalog.api.lookup.CatalogLookup;
+import dev.ngb.tenant.catalog.api.lookup.PricingModel;
 import dev.ngb.tenant.catalog.application.plan.query.CatalogPlanReadRepository;
 import dev.ngb.tenant.catalog.application.plan.query.PlanView;
 import dev.ngb.core.error.NotFoundException;
@@ -24,7 +25,7 @@ public class CatalogLookupService implements CatalogLookup {
                 plan.name(),
                 plan.billingPlanId(),
                 plan.resourceType().name(),
-                plan.resourceType().pricingModel().name(),
+                PricingModel.valueOf(plan.resourceType().pricingModel().name()),
                 plan.resourceType().metric(),
                 plan.resourceType().unit(),
                 plan.billable());

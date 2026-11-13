@@ -7,6 +7,7 @@ import dev.ngb.tenant.catalog.application.plan.port.CatalogPlanRepository;
 import dev.ngb.tenant.catalog.domain.plan.CatalogPlan;
 import dev.ngb.tenant.catalog.domain.plan.ResourceType;
 import dev.ngb.tenant.identity.api.security.Role;
+import dev.ngb.tenant.resource.api.order.PricingModel;
 import dev.ngb.tenant.resource.application.order.port.OrderRepository;
 import dev.ngb.tenant.resource.domain.order.Order;
 import dev.ngb.tenant.support.HttpIntegrationTest;
@@ -107,7 +108,7 @@ class UsageHttpIntegrationTest extends HttpIntegrationTest {
         plans.save(plan);
         Order order = Order.pending(
                         ids, customer.id(), customer.billingId(), "wal_test", plan.id(), "bplan_1",
-                        "TIME_BASED", "compute.vcpu_minute", "120", "vCPU-minute", null, "USD",
+                        PricingModel.TIME_BASED, "compute.vcpu_minute", "120", "vCPU-minute", null, "USD",
                         "ORD-" + UUID.randomUUID(), NOW)
                 .queued(1000, "res_1", null, NOW);
         orders.save(order);

@@ -37,25 +37,28 @@ final class ReferencePlans {
 
     private static Rule tiersRule(PlanView plan) {
         return new Rule(
-                "USAGE_BASED", plan.resourceType().metric(), plan.resourceType().unit(), null, null, "GRADUATED",
-                List.of(new Tier("100", "0"), new Tier(null, "0.01")), null, null, null);
+                plan.resourceType().pricingModel().name(), plan.resourceType().metric(), plan.resourceType().unit(),
+                null, null, "GRADUATED", List.of(new Tier("100", "0"), new Tier(null, "0.01")), null, null, null);
     }
 
     private static Rule workloadRule(PlanView plan) {
         return new Rule(
-                "WORKLOAD_BASED", plan.resourceType().metric(), plan.resourceType().unit(), "0.01", null, null,
-                List.of(), "0.001", null, null);
+                plan.resourceType().pricingModel().name(), plan.resourceType().metric(), plan.resourceType().unit(),
+                "0.01", null, null, List.of(), "0.001", null, null);
     }
 
     private static Rule subscriptionRule(PlanView plan) {
         return new Rule(
-                "SUBSCRIPTION", null, plan.resourceType().unit(), null, null, null, List.of(), null, "1000", null);
+                plan.resourceType().pricingModel().name(), null, plan.resourceType().unit(), null, null, null,
+                List.of(), null, "1000", null);
     }
 
     private static Rule hybridRule(PlanView plan) {
         Rule usage = new Rule(
-                "USAGE_BASED", plan.resourceType().metric(), plan.resourceType().unit(), "0.01", null, null,
-                List.of(), null, null, null);
-        return new Rule("HYBRID", null, plan.resourceType().unit(), null, null, null, List.of(), null, "500", List.of(usage));
+                plan.resourceType().pricingModel().name(), plan.resourceType().metric(), plan.resourceType().unit(),
+                "0.01", null, null, List.of(), null, null, null);
+        return new Rule(
+                plan.resourceType().pricingModel().name(), null, plan.resourceType().unit(), null, null, null,
+                List.of(), null, "500", List.of(usage));
     }
 }
