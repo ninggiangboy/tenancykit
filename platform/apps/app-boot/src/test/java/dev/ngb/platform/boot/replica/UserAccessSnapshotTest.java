@@ -49,9 +49,7 @@ class UserAccessSnapshotTest {
                 "insert into role_assignments (tenant_id, user_id, role_id) values (?, ?, ?)",
                 UUID.fromString(PLATFORM_TENANT), userId, roleId);
 
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> items = (List<Map<String, Object>>) onPlatform(() -> controller.page("user-access", null, 500))
-                .get("items");
+        List<Map<String, Object>> items = allPages("user-access");
 
         assertThat(items).filteredOn(item -> userId.equals(item.get("user_id"))).singleElement().satisfies(item -> {
             assertThat(item.get("keycloak_subject")).isEqualTo(subject);
@@ -60,6 +58,20 @@ class UserAccessSnapshotTest {
                     .containsExactly("platform:tenant:read");
             assertThat((Long) item.get("version")).isEqualTo(1L);
         });
+    }
+
+    /** Follows the cursor to the end, because other tests leave any number of users in the shared database. */
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> allPages(String stream) {
+        List<Map<String, Object>> all = new java.util.ArrayList<>();
+        UUID after = null;
+        do {
+            UUID cursor = after;
+            Map<String, Object> page = onPlatform(() -> controller.page(stream, cursor, 500));
+            all.addAll((List<Map<String, Object>>) page.get("items"));
+            after = (UUID) page.get("next");
+        } while (after != null);
+        return all;
     }
 
     private <T> T onPlatform(Supplier<T> work) {

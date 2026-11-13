@@ -40,16 +40,20 @@ class TenantSystemSnapshotIntegrationTest {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> items = (List<Map<String, Object>>) page.get("items");
         Map<String, Object> item = items.stream().filter(row -> row.get("id").equals(id)).findFirst().orElseThrow();
+        assertThat(item.get("tenant_id")).isEqualTo(lastTenant.value());
         assertThat(item.get("version")).isEqualTo(1L);
         assertThat(item.get("status")).isEqualTo(TenantSystemStatus.ACTIVE);
         assertThat(item.get("created_at")).isNotNull();
     }
+
+    private TenantId lastTenant;
 
     private UUID create() {
         String code = "s" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         TenantId tenantId = tenantContext.callAs(
                 RequestScope.platform(),
                 () -> createTenant.execute(new CreateTenantUseCase.Command(code, "Tenant " + code, "tester", "req-1")).id());
+        lastTenant = tenantId;
         return tenantContext.callAs(
                 RequestScope.tenant(tenantId),
                 () -> systems.create(CALLER, "Sample " + UUID.randomUUID()).id().value());

@@ -19,12 +19,17 @@ public class JooqEntitlementReadRepository implements EntitlementReadRepository 
         this.dsl = dsl;
     }
 
+    /** Every entitlement of the next {@code limit} tenants, so a page boundary never splits one tenant's rows. */
     @Override
     public List<EntitlementView> page(UUID afterTenantId, int limit) {
-        return dsl.selectFrom(APP_ENTITLEMENTS)
+        var tenantIds = dsl.selectDistinct(APP_ENTITLEMENTS.TENANT_ID)
+                .from(APP_ENTITLEMENTS)
                 .where(afterTenantId == null ? DSL.noCondition() : APP_ENTITLEMENTS.TENANT_ID.gt(afterTenantId))
+                .orderBy(APP_ENTITLEMENTS.TENANT_ID)
+                .limit(limit);
+        return dsl.selectFrom(APP_ENTITLEMENTS)
+                .where(APP_ENTITLEMENTS.TENANT_ID.in(tenantIds))
                 .orderBy(APP_ENTITLEMENTS.TENANT_ID, APP_ENTITLEMENTS.APP_CODE)
-                .limit(limit)
                 .fetch(JooqEntitlementReadRepository::toView);
     }
 

@@ -54,13 +54,23 @@ class SnapshotController {
             case "tenants" -> pageOf(tenants.page(after, size), size, SnapshotController::tenantItem);
             case "tenant-domains" -> pageOf(tenants.pageDomains(after, size), size, SnapshotController::domainItem);
             case "tenant-systems" -> pageOf(tenantSystems.page(after, size), size, SnapshotController::tenantSystemItem);
-            case "entitlements" -> pageOf(entitlements.page(after, size), size, SnapshotController::entitlementItem);
+            case "entitlements" -> entitlementPage(entitlements.page(after, size), size);
             case "user-access" -> pageOf(users.pageAccess(after, size), size, SnapshotController::userAccessItem);
             default -> throw new ResponseStatusException(HttpStatus.NOT_FOUND, "unknown replica stream");
         };
     }
 
+    /** The cursor is the last tenant id, and a page holds every row of up to {@code size} tenants. */
+    private static Map<String, Object> entitlementPage(List<EntitlementView> rows, int size) {
+        long tenantsOnPage = rows.stream().map(EntitlementView::tenantId).distinct().count();
+        return pageOf(rows, tenantsOnPage == size, SnapshotController::entitlementItem);
+    }
+
     private static <T> Map<String, Object> pageOf(List<T> rows, int requested, ItemMapper<T> mapper) {
+        return pageOf(rows, rows.size() == requested, mapper);
+    }
+
+    private static <T> Map<String, Object> pageOf(List<T> rows, boolean full, ItemMapper<T> mapper) {
         List<Map<String, Object>> items = new ArrayList<>();
         UUID last = null;
         for (T row : rows) {
@@ -71,7 +81,7 @@ class SnapshotController {
         }
         Map<String, Object> answer = new LinkedHashMap<>();
         answer.put("items", items);
-        answer.put("next", rows.size() == requested ? last : null);
+        answer.put("next", full ? last : null);
         return answer;
     }
 
@@ -100,6 +110,7 @@ class SnapshotController {
     private static Map<String, Object> tenantSystemItem(TenantSystemView system) {
         Map<String, Object> item = new LinkedHashMap<>();
         item.put("id", system.id());
+        item.put("tenant_id", system.tenantId());
         item.put("name", system.name());
         item.put("status", system.status());
         item.put("created_at", system.createdAt().toString());
