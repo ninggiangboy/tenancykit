@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 
 /**
@@ -110,7 +109,7 @@ public class SuiteTokenIssuer implements TokenIssuer {
     }
 
     /** Verifies a token this issuer signed, accepting the published keys (current and, during rotation, previous). */
-    public JwtDecoder decoder() {
+    public NimbusJwtDecoder decoder() {
         ConfigurableJWTProcessor<SecurityContext> processor = new DefaultJWTProcessor<>();
         JWKSource<SecurityContext> source = new ImmutableJWKSet<>(new JWKSet(published));
         processor.setJWSKeySelector(new JWSVerificationKeySelector<>(JWSAlgorithm.ES256, source));

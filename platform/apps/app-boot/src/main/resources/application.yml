@@ -42,11 +42,15 @@ platform:
   users:
     # Keycloak's JWKS. Blank means only suite tokens are accepted, which is the state before users exist.
     jwk-set-uri: ${PLATFORM_OIDC_JWK_SET_URI:}
+    # The realm's issuer; when set, a user token's iss must equal it.
+    issuer-uri: ${PLATFORM_OIDC_ISSUER_URI:}
   tokens:
     issuer: ${PLATFORM_TOKEN_ISSUER:http://localhost:8082}
-    # ES256 private key in PEM form. Blank generates an ephemeral key, for local development only.
+    # ES256 private key in PEM form. Required unless allow-ephemeral-key is true.
     signing-key: ${PLATFORM_TOKEN_SIGNING_KEY:}
     previous-signing-key: ${PLATFORM_TOKEN_PREVIOUS_SIGNING_KEY:}
+    # Local development only: a blank signing key then generates a per-process key, which breaks with several instances.
+    allow-ephemeral-key: ${PLATFORM_TOKEN_ALLOW_EPHEMERAL_KEY:false}
   security:
     token-rate-limit:
       # A token bucket per client id, in PostgreSQL, shared by every instance. The anonymous buckets for unknown ids

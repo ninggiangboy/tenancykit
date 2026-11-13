@@ -2,6 +2,8 @@ package dev.ngb.platform.boot.security;
 
 import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.core.security.Actor;
+import dev.ngb.core.tenancy.TenantContext;
+import dev.ngb.platform.access.application.user.query.MeQueries;
 import dev.ngb.core.security.Authorizer;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.platform.boot.config.PlatformProperties;
@@ -28,7 +30,8 @@ import org.springframework.security.web.SecurityFilterChain;
 class SecurityConfiguration {
 
     @Bean
-    SecurityFilterChain apiSecurity(HttpSecurity http, PlatformJwtDecoder decoder) throws Exception {
+    SecurityFilterChain apiSecurity(
+            HttpSecurity http, PlatformJwtDecoder decoder, MeQueries users, TenantContext tenantContext) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(sessions -> sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> requests
@@ -36,23 +39,31 @@ class SecurityConfiguration {
                         .permitAll()
                         .anyRequest()
                         .authenticated())
-                .oauth2ResourceServer(resource -> resource.jwt(jwt -> jwt.decoder(decoder).jwtAuthenticationConverter(new JwtActorConverter())));
+                .oauth2ResourceServer(resource -> resource.jwt(jwt -> jwt.decoder(decoder).jwtAuthenticationConverter(new JwtActorConverter(users, tenantContext))));
         return http.build();
     }
 
     @Bean
     PlatformJwtDecoder platformJwtDecoder(
-            SuiteTokenIssuer issuer, @Value("${platform.users.jwk-set-uri:}") String userJwkSetUri) {
-        return new PlatformJwtDecoder(issuer, userJwkSetUri);
+            SuiteTokenIssuer issuer,
+            @Value("${platform.users.jwk-set-uri:}") String userJwkSetUri,
+            @Value("${platform.users.issuer-uri:}") String userIssuerUri) {
+        return new PlatformJwtDecoder(issuer, userJwkSetUri, userIssuerUri, "platform");
     }
 
     @Bean
-    SuiteTokenIssuer suiteTokenIssuer(PlatformProperties properties) {
+    SuiteTokenIssuer suiteTokenIssuer(
+            PlatformProperties properties, @Value("${platform.tokens.allow-ephemeral-key:false}") boolean allowEphemeralKey) {
         String issuer = properties.tokens() == null || properties.tokens().issuer() == null || properties.tokens().issuer().isBlank()
                 ? "http://localhost:8082"
                 : properties.tokens().issuer();
         String signingKey = properties.tokens() == null ? null : properties.tokens().signingKey();
         String previous = properties.tokens() == null ? null : properties.tokens().previousSigningKey();
+        if ((signingKey == null || signingKey.isBlank()) && !allowEphemeralKey) {
+            // An ephemeral key differs per instance, so tokens from one would fail verification at another.
+            throw new IllegalStateException(
+                    "PLATFORM_TOKEN_SIGNING_KEY is required; set PLATFORM_TOKEN_ALLOW_EPHEMERAL_KEY=true only for local development");
+        }
         return new SuiteTokenIssuer(issuer, signingKey, previous);
     }
 

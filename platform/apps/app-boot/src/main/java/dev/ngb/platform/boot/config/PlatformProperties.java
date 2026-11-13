@@ -13,7 +13,7 @@ public record PlatformProperties(Tokens tokens, Tenancy tenancy, List<ServiceCli
 
     /**
      * @param issuer the {@code iss} of every token Platform signs
-     * @param signingKey the ES256 private key in PEM form; blank generates an ephemeral key for local development
+     * @param signingKey the ES256 private key in PEM form; blank is refused unless {@code platform.tokens.allow-ephemeral-key} is set, which generates a per-process key
      * @param previousSigningKey the key kept in the JWKS for one token lifetime during rotation
      */
     public record Tokens(String issuer, String signingKey, String previousSigningKey) {}

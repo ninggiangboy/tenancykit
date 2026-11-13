@@ -61,6 +61,7 @@ public class PlatformContainerConfig {
             // MockMvc and local calls reach the app as "localhost", so that is the platform hostname in tests.
             registry.add("platform.tenancy.platform-hostname", () -> "localhost");
             registry.add("platform.tokens.issuer", () -> "http://platform.test");
+            registry.add("platform.tokens.allow-ephemeral-key", () -> "true");
             registry.add("platform.users.jwk-set-uri", () -> "");
             registry.add("platform.service-clients[0].id", () -> CLIENT_ID);
             registry.add("platform.service-clients[0].secret-hash", () -> secretHash);

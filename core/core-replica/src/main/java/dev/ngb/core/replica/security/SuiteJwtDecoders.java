@@ -27,13 +27,15 @@ public class SuiteJwtDecoders implements JwtDecoder {
     private final String platformIssuer;
     private final String appCode;
     private final JwtDecoder platform;
+    private final String userIssuer;
     private final String userJwkSetUri;
     private volatile JwtDecoder users;
 
     public SuiteJwtDecoders(Issuer platform, Issuer user, String appCode) {
         this.platformIssuer = platform.uri();
         this.appCode = appCode;
-        this.platform = decoder(platform.jwkSetUri());
+        this.platform = decoder(platform);
+        this.userIssuer = user == null ? null : user.uri();
         this.userJwkSetUri = user == null ? null : user.jwkSetUri();
     }
 
@@ -69,7 +71,7 @@ public class SuiteJwtDecoders implements JwtDecoder {
             synchronized (this) {
                 decoder = users;
                 if (decoder == null) {
-                    decoder = decoder(userJwkSetUri);
+                    decoder = decoder(new Issuer(userIssuer, userJwkSetUri));
                     users = decoder;
                 }
             }
@@ -77,10 +79,13 @@ public class SuiteJwtDecoders implements JwtDecoder {
         return decoder;
     }
 
-    private JwtDecoder decoder(String jwkSetUri) {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
-        decoder.setJwtValidator(
-                new DelegatingTokenValidator(List.of(JwtValidators.createDefault(), audience(appCode))));
+    /** Verifies the signature against the issuer's key set, then its {@code iss}, timestamps and the app audience. */
+    private JwtDecoder decoder(Issuer issuer) {
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(issuer.jwkSetUri()).build();
+        OAuth2TokenValidator<Jwt> base = issuer.uri() == null || issuer.uri().isBlank()
+                ? JwtValidators.createDefault()
+                : JwtValidators.createDefaultWithIssuer(issuer.uri());
+        decoder.setJwtValidator(new DelegatingTokenValidator(List.of(base, audience(appCode))));
         return decoder;
     }
 
