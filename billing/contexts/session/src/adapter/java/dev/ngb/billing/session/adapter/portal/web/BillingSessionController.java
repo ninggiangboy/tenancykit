@@ -1,5 +1,6 @@
 package dev.ngb.billing.session.adapter.portal.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
@@ -57,7 +58,7 @@ public class BillingSessionController {
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(BillingPermissions.BILLING_SESSION_CREATE)
     public CreateResponse create(
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId,
             @RequestBody CreateRequest request,
             HttpServletRequest http) {
         if (request.customerId() == null || request.returnUrl() == null) {
@@ -89,7 +90,7 @@ public class BillingSessionController {
     @PostMapping("/{id}/revoke")
     @RequiresPermission(BillingPermissions.BILLING_SESSION_CREATE)
     public ResponseEntity<Void> revoke(
-            @PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @PathVariable String id, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         Actor actor = currentActor.get();
         java.util.UUID tenantSystemId = currentActor.caller();
         revoke.execute(BillingSessionId.of(id), tenantSystemId, Audit.of(actor.auditName(), requestId));

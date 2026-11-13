@@ -29,7 +29,8 @@ public class PortalCorsConfigurationSource implements CorsConfigurationSource {
         configuration.setAllowedOrigins(List.of(origin));
         configuration.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
         configuration.setAllowedHeaders(List.of(
-                HttpHeaders.CONTENT_TYPE, "X-Portal-CSRF", "Idempotency-Key", "X-Request-Id"));
+                HttpHeaders.CONTENT_TYPE, "X-Portal-CSRF", dev.ngb.core.http.HttpHeaders.IDEMPOTENCY_KEY,
+                dev.ngb.core.http.HttpHeaders.REQUEST_ID));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(600L);
         return configuration;

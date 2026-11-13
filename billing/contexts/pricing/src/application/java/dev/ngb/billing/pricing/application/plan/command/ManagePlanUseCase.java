@@ -1,5 +1,6 @@
 package dev.ngb.billing.pricing.application.plan.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
@@ -98,7 +99,7 @@ public class ManagePlanUseCase {
             }
             plans.update(plan);
             events.publish(new PricingEvents.PlanRetired(ids.newId(), plan, now));
-            auditLog.record(AuditEntry.tenant(plan.tenantId(), audit.actor(), "pricing-plan.retired", "pricing-plan/" + plan.id(), audit.requestId(), now));
+            auditLog.record(AuditEntry.tenant(plan.tenantId(), audit.actor(), "pricing-plan.retired", AggregateTargets.pricingPlan(plan.id()), audit.requestId(), now));
             return plan;
         });
     }
@@ -117,6 +118,6 @@ public class ManagePlanUseCase {
 
     private void announce(PricingPlan plan, PlanVersion version, Audit audit, Instant now, String action) {
         events.publish(new PricingEvents.PlanVersionPublished(ids.newId(), plan, version, now));
-        auditLog.record(AuditEntry.tenant(plan.tenantId(), audit.actor(), action, "pricing-plan/" + plan.id() + "@" + version.number(), audit.requestId(), now));
+        auditLog.record(AuditEntry.tenant(plan.tenantId(), audit.actor(), action, AggregateTargets.versioned(AggregateTargets.pricingPlan(plan.id()), version.number()), audit.requestId(), now));
     }
 }

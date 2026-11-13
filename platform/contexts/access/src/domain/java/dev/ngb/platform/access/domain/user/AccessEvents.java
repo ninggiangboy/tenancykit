@@ -1,6 +1,8 @@
 package dev.ngb.platform.access.domain.user;
 
 import dev.ngb.core.event.DomainEvent;
+import dev.ngb.core.event.SuiteEventTypes;
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.id.TenantId;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -18,7 +20,7 @@ public final class AccessEvents {
 
     public record UserAccessChanged(UUID eventId, User user, Set<String> permissions, Instant occurredAt) implements DomainEvent {
 
-        public static final String TYPE = "user-access.changed";
+        public static final String TYPE = SuiteEventTypes.USER_ACCESS_CHANGED;
 
         public UserAccessChanged {
             permissions = Set.copyOf(permissions);
@@ -36,7 +38,7 @@ public final class AccessEvents {
 
         @Override
         public String aggregate() {
-            return "user/" + user.id();
+            return AggregateTargets.user(user.id());
         }
 
         @Override

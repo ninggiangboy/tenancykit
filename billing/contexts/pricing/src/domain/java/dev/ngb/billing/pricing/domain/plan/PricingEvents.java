@@ -1,9 +1,11 @@
 package dev.ngb.billing.pricing.domain.plan;
 
 import dev.ngb.core.event.DomainEvent;
+import dev.ngb.core.event.SuiteEventTypes;
+import dev.ngb.billing.sharedkernel.event.MoneyEventPayload;
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.names.AggregateTargets;
 import java.time.Instant;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -12,17 +14,9 @@ public final class PricingEvents {
 
     private PricingEvents() {}
 
-    private static Map<String, Object> payload(Object... keyValues) {
-        Map<String, Object> map = new LinkedHashMap<>();
-        for (int i = 0; i < keyValues.length; i += 2) {
-            map.put((String) keyValues[i], keyValues[i + 1]);
-        }
-        return map;
-    }
-
     /** A new plan version exists (the first version of a new plan, or a later one). */
     public record PlanVersionPublished(UUID eventId, PricingPlan plan, PlanVersion version, Instant occurredAt) implements DomainEvent {
-        public static final String TYPE = "pricing-plan.version-published";
+        public static final String TYPE = SuiteEventTypes.PRICING_PLAN_VERSION_PUBLISHED;
 
         @Override
         public TenantId tenantId() {
@@ -36,19 +30,19 @@ public final class PricingEvents {
 
         @Override
         public String aggregate() {
-            return "pricing-plan/" + plan.id();
+            return AggregateTargets.pricingPlan(plan.id());
         }
 
         @Override
         public Map<String, Object> payload() {
-            return PricingEvents.payload("planId", plan.id().toString(), "code", plan.code(), "model", plan.model().name(), "currency", plan.currency().code(),
+            return MoneyEventPayload.payload("planId", plan.id().toString(), "code", plan.code(), "model", plan.model().name(), "currency", plan.currency().code(),
                     "version", version.number(), "billingCycle", version.billingCycle() == null ? null : version.billingCycle().name(),
                     "validFrom", version.validFrom().toString(), "validUntil", version.validUntil() == null ? null : version.validUntil().toString());
         }
     }
 
     public record PlanRetired(UUID eventId, PricingPlan plan, Instant occurredAt) implements DomainEvent {
-        public static final String TYPE = "pricing-plan.retired";
+        public static final String TYPE = SuiteEventTypes.PRICING_PLAN_RETIRED;
 
         @Override
         public TenantId tenantId() {
@@ -62,12 +56,12 @@ public final class PricingEvents {
 
         @Override
         public String aggregate() {
-            return "pricing-plan/" + plan.id();
+            return AggregateTargets.pricingPlan(plan.id());
         }
 
         @Override
         public Map<String, Object> payload() {
-            return PricingEvents.payload("planId", plan.id().toString(), "code", plan.code());
+            return MoneyEventPayload.payload("planId", plan.id().toString(), "code", plan.code());
         }
     }
 }

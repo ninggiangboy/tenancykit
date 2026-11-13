@@ -1,5 +1,6 @@
 package dev.ngb.billing.money.application.reservation.command;
 
+import dev.ngb.billing.sharedkernel.error.Messages;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -63,10 +64,10 @@ public class ReleaseReservationUseCase implements ReleaseReservation {
 
     private ReservationResult release(ReservationId id, boolean tolerateClosed, UUID caller) {
         return unitOfWork.transactional(() -> {
-            Reservation unlocked = reservations.findById(id).orElseThrow(() -> new NotFoundException("reservation not found"));
-            Wallet wallet = wallets.lockById(unlocked.walletId()).orElseThrow(() -> new NotFoundException("wallet not found"));
+            Reservation unlocked = reservations.findById(id).orElseThrow(() -> Messages.reservationNotFound());
+            Wallet wallet = wallets.lockById(unlocked.walletId()).orElseThrow(() -> Messages.walletNotFound());
             requireVisible(wallet, caller);
-            Reservation reservation = reservations.findById(id).orElseThrow(() -> new NotFoundException("reservation not found"));
+            Reservation reservation = reservations.findById(id).orElseThrow(() -> Messages.reservationNotFound());
             if (reservation.status() == ReservationStatus.RELEASED) {
                 return ReserveBudgetUseCase.result(reservation, true);
             }
@@ -87,7 +88,7 @@ public class ReleaseReservationUseCase implements ReleaseReservation {
 
     private void requireVisible(Wallet wallet, UUID caller) {
         if (caller != null && customers.findFor(wallet.customerId(), caller).isEmpty()) {
-            throw new NotFoundException("reservation not found");
+            throw Messages.reservationNotFound();
         }
     }
 }

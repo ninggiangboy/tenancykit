@@ -1,5 +1,6 @@
 package dev.ngb.billing.boot.jobs;
 
+import dev.ngb.core.observability.MetricNames;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.billing.boot.infrastructure.coordination.JobLeases;
@@ -113,7 +114,7 @@ public class MoneyJobs {
         try {
             List<LedgerVerifier.Mismatch> mismatches = verifyLedger.execute();
             if (!mismatches.isEmpty()) {
-                meters.counter("billing.ledger.mismatch").increment(mismatches.size());
+                meters.counter(MetricNames.in("billing", MetricNames.JOB_LEDGER_MISMATCH)).increment(mismatches.size());
                 LOG.error("ledger mismatch for tenant {}: {} wallets disagree with their entries", tenant, mismatches.size());
             }
             runs.complete(VERIFY_RUN, runKey, tenant.value());

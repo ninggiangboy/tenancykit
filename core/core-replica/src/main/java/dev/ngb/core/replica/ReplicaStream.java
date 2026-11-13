@@ -1,5 +1,6 @@
 package dev.ngb.core.replica;
 
+import dev.ngb.core.event.SuiteEventTypes;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +22,7 @@ public enum ReplicaStream {
     /** One row per tenant. */
     TENANTS(
             "tenants",
-            "tenant.changed",
+            SuiteEventTypes.TENANT_CHANGED,
             "tenants",
             List.of("id", "code", "name", "status", "created_at", "version"),
             List.of("id")),
@@ -29,7 +30,7 @@ public enum ReplicaStream {
     /** One row per tenant domain, including the platform host, whose {@code tenant_id} is null. */
     TENANT_DOMAINS(
             "tenant-domains",
-            "tenant-domain.changed",
+            SuiteEventTypes.TENANT_DOMAIN_CHANGED,
             "tenant_domains",
             List.of("id", "tenant_id", "hostname", "kind", "created_at", "version"),
             List.of("id")),
@@ -37,7 +38,7 @@ public enum ReplicaStream {
     /** One row per Tenant System. */
     TENANT_SYSTEMS(
             "tenant-systems",
-            "tenant-system.changed",
+            SuiteEventTypes.TENANT_SYSTEM_CHANGED,
             "tenant_systems",
             List.of("id", "tenant_id", "name", "status", "created_at", "version"),
             List.of("id")),
@@ -45,7 +46,7 @@ public enum ReplicaStream {
     /** One row per user: the identity and the permission codes this app enforces for it. */
     USER_ACCESS(
             "user-access",
-            "user-access.changed",
+            SuiteEventTypes.USER_ACCESS_CHANGED,
             "user_grants",
             List.of("user_id", "tenant_id", "scope", "keycloak_subject", "email", "display_name", "status", "permissions",
                     "version"),
@@ -54,7 +55,7 @@ public enum ReplicaStream {
     /** One row per (tenant, app): whether the tenant may use the app at all. */
     ENTITLEMENTS(
             "entitlements",
-            "entitlement.changed",
+            SuiteEventTypes.ENTITLEMENT_CHANGED,
             "app_entitlements",
             List.of("tenant_id", "app_code", "enabled", "version"),
             List.of("tenant_id", "app_code"));

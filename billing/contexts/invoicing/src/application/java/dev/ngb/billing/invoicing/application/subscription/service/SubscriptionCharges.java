@@ -1,5 +1,6 @@
 package dev.ngb.billing.invoicing.application.subscription.service;
 
+import dev.ngb.core.names.IdempotencyKeys;
 import dev.ngb.billing.invoicing.domain.subscription.SubscriptionId;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,7 +22,7 @@ public final class SubscriptionCharges {
 
     /** The reference stored on the charge that pays period {@code number} of a subscription. */
     public static String reference(SubscriptionId subscriptionId, int number) {
-        return "subscription:" + subscriptionId + ":" + number;
+        return IdempotencyKeys.subscription(subscriptionId, number);
     }
 
     /**

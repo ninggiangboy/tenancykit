@@ -1,5 +1,6 @@
 package dev.ngb.billing.money.adapter.charge.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.money.api.charge.ChargeCommand;
 import dev.ngb.billing.money.api.charge.ChargeId;
 import dev.ngb.billing.money.api.charge.ChargeResult;
@@ -61,7 +62,7 @@ public class ChargeController {
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.CHARGE_CREATE)
     public ResponseEntity<ChargeResponse> capture(
-            @PathVariable String id, @RequestHeader("Idempotency-Key") String key, @RequestBody CaptureRequest request) {
+            @PathVariable String id, @RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String key, @RequestBody CaptureRequest request) {
         ChargeResult result = charge.charge(new ChargeCommand(
                 null, ReservationId.of(id), new MoneyDto(request.amount(), request.currency()).toMoney(), null, request.reference(), key, currentActor.caller()));
         return chargeResponse(result, currentActor.caller());
@@ -70,7 +71,7 @@ public class ChargeController {
     @PostMapping("/charges")
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.CHARGE_CREATE)
-    public ResponseEntity<ChargeResponse> charge(@RequestHeader("Idempotency-Key") String key, @RequestBody ChargeRequest request) {
+    public ResponseEntity<ChargeResponse> charge(@RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String key, @RequestBody ChargeRequest request) {
         ChargeResult result = charge.charge(new ChargeCommand(
                 WalletId.of(request.walletId()), null, new MoneyDto(request.amount(), request.currency()).toMoney(), request.usageRef(),
                 request.reference(), key, currentActor.caller()));

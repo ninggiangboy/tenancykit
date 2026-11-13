@@ -1,5 +1,7 @@
 package dev.ngb.platform.tenancy.adapter.entitlement.web;
 
+import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
@@ -42,11 +44,11 @@ class EntitlementController {
     }
 
     @PutMapping("/{appCode}")
-    @RequiresPermission("platform:entitlement:manage")
+    @RequiresPermission(PlatformPermissions.ENTITLEMENT_MANAGE)
     ResponseEntity<EntitlementResponse> set(
             @PathVariable UUID tenantId, @PathVariable String appCode, @RequestBody EntitlementRequest request,
-            @RequestHeader(value = "If-Match", required = false) String ifMatch,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String ifMatch,
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         if (request.enabled() == null) {
             throw new IllegalArgumentException("enabled is required");
         }

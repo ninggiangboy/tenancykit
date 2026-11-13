@@ -1,5 +1,6 @@
 package dev.ngb.tenant.customer.application.wallet.command;
 
+import dev.ngb.core.names.IdempotencyKeys;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.tenant.billing.api.client.BillingWallets;
@@ -72,7 +73,7 @@ public class ManageWalletSettingUseCase {
         Long limit = mode == WalletMode.POSTPAID ? creditLimit : null;
         return unitOfWork.transactional(() -> {
             Wallet wallet = wallets.open(
-                    "wallet:" + customer.billingCustomerId() + ":" + normalized,
+                    IdempotencyKeys.wallet(customer.billingCustomerId(), normalized),
                     new BillingWallets.OpenWallet(customer.billingCustomerId(), normalized, mode.name(), limit));
             CustomerWalletSetting setting = new CustomerWalletSetting(
                     customer.id(), mode, normalized, limit, wallet.id(), clock.now());

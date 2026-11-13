@@ -1,5 +1,6 @@
 package dev.ngb.billing.boot.jobs;
 
+import dev.ngb.core.observability.MetricNames;
 import org.springframework.context.annotation.Profile;
 import dev.ngb.billing.invoicing.application.cycle.command.CloseBillingCycleUseCase;
 import dev.ngb.billing.invoicing.application.subscription.command.RenewSubscriptionUseCase;
@@ -40,11 +41,11 @@ public class InvoicingJobs {
             CloseBillingCycleUseCase.Report report = closeCycle.runOnce();
             if (report.invoiced() > 0) {
                 LOG.info("closed {} billing periods for tenant {}", report.invoiced(), tenant);
-                meters.counter("billing.invoicing.cycle.invoiced").increment(report.invoiced());
+                meters.counter(MetricNames.in("billing", MetricNames.JOB_INVOICING_CYCLE_INVOICED)).increment(report.invoiced());
             }
             if (report.failed() > 0) {
                 LOG.warn("{} billing periods could not be closed for tenant {}", report.failed(), tenant);
-                meters.counter("billing.invoicing.cycle.failed").increment(report.failed());
+                meters.counter(MetricNames.in("billing", MetricNames.JOB_INVOICING_CYCLE_FAILED)).increment(report.failed());
             }
         });
     }
@@ -54,11 +55,11 @@ public class InvoicingJobs {
         sweep.forEachActiveTenant(tenant -> {
             RenewSubscriptionUseCase.Report report = renew.runDue();
             if (report.renewed() > 0) {
-                meters.counter("billing.subscription.renewed").increment(report.renewed());
+                meters.counter(MetricNames.in("billing", MetricNames.JOB_SUBSCRIPTION_RENEWED)).increment(report.renewed());
             }
             if (report.failed() > 0) {
                 LOG.warn("{} subscription renewals could not be charged for tenant {}", report.failed(), tenant);
-                meters.counter("billing.subscription.renewal.failed").increment(report.failed());
+                meters.counter(MetricNames.in("billing", MetricNames.JOB_SUBSCRIPTION_RENEWAL_FAILED)).increment(report.failed());
             }
         });
     }

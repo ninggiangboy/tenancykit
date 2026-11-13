@@ -1,5 +1,6 @@
 package dev.ngb.billing.webhook.adapter.delivery.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -92,7 +93,7 @@ public class DeliveryController {
     @PostMapping("/webhook-deliveries/{id}/resend")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @RequiresPermission(BillingPermissions.WEBHOOK_MANAGE)
-    public DeliveryResponse resend(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+    public DeliveryResponse resend(@PathVariable String id, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         return DeliveryResponse.of(deliveries.resend(Audit.of(currentActor.get().auditName(), requestId), WebhookDeliveryId.of(id), currentActor.caller()));
     }
 }

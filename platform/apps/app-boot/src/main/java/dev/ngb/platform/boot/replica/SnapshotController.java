@@ -6,6 +6,7 @@ import dev.ngb.platform.access.api.user.UserAccessView;
 import dev.ngb.platform.access.api.user.UserQueries;
 import dev.ngb.platform.integration.api.tenantsystem.TenantSystemQueries;
 import dev.ngb.platform.integration.api.tenantsystem.TenantSystemView;
+import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementQueries;
 import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementView;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantDomainView;
@@ -45,7 +46,7 @@ class SnapshotController {
     }
 
     @GetMapping("/internal/replica/{stream}")
-    @RequiresPermission("platform:replica:read")
+    @RequiresPermission(PlatformPermissions.REPLICA_READ)
     Map<String, Object> page(
             @PathVariable String stream,
             @RequestParam(required = false) UUID after,

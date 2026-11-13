@@ -1,5 +1,7 @@
 package dev.ngb.billing.payment.application.payment.command;
 
+import dev.ngb.core.names.AggregateTargets;
+import dev.ngb.core.names.IdempotencyKeys;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -83,7 +85,7 @@ public class CreateTopUpUseCase {
         if (payment.checkoutSessionId() != null || payment.status() != PaymentStatus.REQUIRES_ACTION) {
             return new Result(payment, prepared.replayed());
         }
-        return new Result(checkouts.open(payment, prepared.configuration(), "Wallet top-up", "topup-" + payment.id()), prepared.replayed());
+        return new Result(checkouts.open(payment, prepared.configuration(), "Wallet top-up", IdempotencyKeys.provider(IdempotencyKeys.TOP_UP, payment.id())), prepared.replayed());
     }
 
     private Prepared prepare(Command command, String key, String hash) {
@@ -108,7 +110,7 @@ public class CreateTopUpUseCase {
             return replay(winner, configuration, key, hash);
         }
         TenantId tenantId = tenantContext.requireTenant();
-        auditLog.record(AuditEntry.tenant(tenantId, command.audit().actor(), "payment.top-up-started", "payment/" + payment.id(),
+        auditLog.record(AuditEntry.tenant(tenantId, command.audit().actor(), "payment.top-up-started", AggregateTargets.payment(payment.id()),
                 command.audit().requestId(), now));
         return new Prepared(payment, configuration, false);
     }

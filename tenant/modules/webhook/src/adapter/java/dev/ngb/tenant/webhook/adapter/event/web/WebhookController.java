@@ -1,5 +1,6 @@
 package dev.ngb.tenant.webhook.adapter.event.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.tenant.webhook.api.event.WebhookEnvelope;
 import dev.ngb.tenant.webhook.application.event.command.ReceiveWebhookUseCase;
@@ -38,10 +39,10 @@ public class WebhookController {
     @PostMapping(value = "/webhooks/billing", consumes = "application/json")
     @PublicEndpoint
     public ResponseEntity<Void> receive(
-            @RequestHeader(value = "Billing-Event-Id", required = false) String eventId,
-            @RequestHeader(value = "Billing-Event-Type", required = false) String eventType,
-            @RequestHeader(value = "Billing-Timestamp", required = false) String timestamp,
-            @RequestHeader(value = "Billing-Signature", required = false) String signature,
+            @RequestHeader(value = HttpHeaders.BILLING_EVENT_ID, required = false) String eventId,
+            @RequestHeader(value = HttpHeaders.BILLING_EVENT_TYPE, required = false) String eventType,
+            @RequestHeader(value = HttpHeaders.BILLING_TIMESTAMP, required = false) String timestamp,
+            @RequestHeader(value = HttpHeaders.BILLING_SIGNATURE, required = false) String signature,
             @RequestBody byte[] body) {
         ReceiveWebhookUseCase.Outcome outcome = receive.receive(
                 new ReceiveWebhookUseCase.Headers(eventId, eventType, timestamp, signature),

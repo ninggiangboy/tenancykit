@@ -1,5 +1,6 @@
 package dev.ngb.platform.integration.application.tenantsystem.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
@@ -49,7 +50,7 @@ public class ManageTenantSystemUseCase {
             systems.add(system);
             publish(system);
             auditLog.record(AuditEntry.tenant(
-                    tenantId, caller.actor(), "tenant-system.created", "tenant-system/" + system.id(), caller.requestId(), clock.now()));
+                    tenantId, caller.actor(), "tenant-system.created", AggregateTargets.tenantSystem(system.id()), caller.requestId(), clock.now()));
             return system;
         });
     }
@@ -73,7 +74,7 @@ public class ManageTenantSystemUseCase {
                     tenantId,
                     caller.actor(),
                     command.action() == Action.RENAME ? "tenant-system.renamed" : "tenant-system.disabled",
-                    "tenant-system/" + system.id(),
+                    AggregateTargets.tenantSystem(system.id()),
                     caller.requestId(),
                     clock.now()));
             return system;

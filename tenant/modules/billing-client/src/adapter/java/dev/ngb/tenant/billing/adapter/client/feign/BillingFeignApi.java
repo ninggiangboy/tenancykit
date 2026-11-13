@@ -1,5 +1,6 @@
 package dev.ngb.tenant.billing.adapter.client.feign;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.tenant.billing.api.client.BillingAdmin.CreatePlanRequest;
 import dev.ngb.tenant.billing.api.client.BillingCharges.CaptureRequest;
 import dev.ngb.tenant.billing.api.client.BillingCharges.ChargeRequest;
@@ -46,7 +47,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  */
 interface BillingFeignApi {
     @PostMapping(value = "/api/v1/customers", consumes = MediaType.APPLICATION_JSON_VALUE)
-    Customer createCustomer(@RequestHeader("Idempotency-Key") String idempotencyKey, @RequestBody NewCustomer customer);
+    Customer createCustomer(@RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String idempotencyKey, @RequestBody NewCustomer customer);
 
     @GetMapping("/api/v1/customers/{id}")
     Customer customer(@PathVariable("id") String id);
@@ -65,7 +66,7 @@ interface BillingFeignApi {
     Estimate estimate(@RequestBody EstimateRequest request);
 
     @PostMapping(value = "/api/v1/pricing/reservations", consumes = MediaType.APPLICATION_JSON_VALUE)
-    ReserveResult reserve(@RequestHeader("Idempotency-Key") String idempotencyKey, @RequestBody ReserveRequest request);
+    ReserveResult reserve(@RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String idempotencyKey, @RequestBody ReserveRequest request);
 
     @GetMapping("/api/v1/wallets")
     List<Wallet> wallets(@RequestParam("customerId") String customerId);
@@ -74,14 +75,14 @@ interface BillingFeignApi {
     Wallet wallet(@PathVariable("id") String id);
 
     @PostMapping(value = "/api/v1/wallets", consumes = MediaType.APPLICATION_JSON_VALUE)
-    Wallet openWallet(@RequestHeader("Idempotency-Key") String idempotencyKey, @RequestBody OpenWallet request);
+    Wallet openWallet(@RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String idempotencyKey, @RequestBody OpenWallet request);
 
     @PostMapping(value = "/api/v1/charges", consumes = MediaType.APPLICATION_JSON_VALUE)
-    Charge charge(@RequestHeader("Idempotency-Key") String idempotencyKey, @RequestBody ChargeRequest request);
+    Charge charge(@RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String idempotencyKey, @RequestBody ChargeRequest request);
 
     @PostMapping(value = "/api/v1/reservations/{reservationId}/capture", consumes = MediaType.APPLICATION_JSON_VALUE)
     Charge capture(
-            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String idempotencyKey,
             @PathVariable("reservationId") String reservationId,
             @RequestBody CaptureRequest request);
 
@@ -121,7 +122,7 @@ interface BillingFeignApi {
     PaymentDetail payment(@PathVariable("id") String id);
 
     @PostMapping(value = "/api/v1/payments/top-ups", consumes = MediaType.APPLICATION_JSON_VALUE)
-    Payment createTopUp(@RequestHeader("Idempotency-Key") String idempotencyKey, @RequestBody TopUpRequest request);
+    Payment createTopUp(@RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String idempotencyKey, @RequestBody TopUpRequest request);
 
     @GetMapping("/api/v1/invoices")
     List<Invoice> invoices(
@@ -135,7 +136,7 @@ interface BillingFeignApi {
 
     @PostMapping(value = "/api/v1/subscriptions", consumes = MediaType.APPLICATION_JSON_VALUE)
     SubscriptionDetail subscribe(
-            @RequestHeader("Idempotency-Key") String idempotencyKey, @RequestBody SubscribeRequest request);
+            @RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String idempotencyKey, @RequestBody SubscribeRequest request);
 
     @GetMapping("/api/v1/subscriptions/{id}")
     SubscriptionDetail subscription(@PathVariable("id") String id);

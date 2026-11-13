@@ -1,5 +1,6 @@
 package dev.ngb.billing.boot.jobs;
 
+import dev.ngb.core.observability.MetricNames;
 import org.springframework.context.annotation.Profile;
 import dev.ngb.billing.webhook.application.delivery.command.DeliverWebhooksUseCase;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -31,13 +32,13 @@ public class WebhookJobs {
         sweep.forEachActiveTenant(tenant -> {
             DeliverWebhooksUseCase.Round round = deliver.runOnce();
             if (round.succeeded() > 0) {
-                meters.counter("billing.webhook.delivery", "outcome", "succeeded").increment(round.succeeded());
+                meters.counter(MetricNames.in("billing", MetricNames.WEBHOOK_DELIVERY), "outcome", "succeeded").increment(round.succeeded());
             }
             if (round.retrying() > 0) {
-                meters.counter("billing.webhook.delivery", "outcome", "retrying").increment(round.retrying());
+                meters.counter(MetricNames.in("billing", MetricNames.WEBHOOK_DELIVERY), "outcome", "retrying").increment(round.retrying());
             }
             if (round.dead() > 0) {
-                meters.counter("billing.webhook.delivery", "outcome", "dead").increment(round.dead());
+                meters.counter(MetricNames.in("billing", MetricNames.WEBHOOK_DELIVERY), "outcome", "dead").increment(round.dead());
             }
         });
     }

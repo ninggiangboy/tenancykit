@@ -1,5 +1,6 @@
 package dev.ngb.tenant.usage.application.usage.command;
 
+import dev.ngb.core.names.IdempotencyKeys;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.tenant.billing.api.client.BillingUsage;
@@ -61,6 +62,6 @@ public class RecordUsageUseCase implements UsageRecorder {
     }
 
     private static String key(UsageCommand command) {
-        return "usage:" + command.orderId() + ":" + command.metric();
+        return IdempotencyKeys.usage(command.orderId(), command.metric());
     }
 }

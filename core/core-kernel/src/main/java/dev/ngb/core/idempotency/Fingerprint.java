@@ -1,6 +1,7 @@
 package dev.ngb.core.idempotency;
 
 import dev.ngb.core.error.IdempotencyConflictException;
+import dev.ngb.core.http.HttpHeaders;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -49,7 +50,7 @@ public final class Fingerprint {
     /** @return {@code key} when it is 1-255 printable ASCII characters */
     public static String requireKey(String key) {
         if (key == null || key.isBlank() || key.length() > MAX_KEY || key.chars().anyMatch(c -> c < 33 || c > 126)) {
-            throw new IllegalArgumentException("Idempotency-Key must be 1-255 printable characters");
+            throw new IllegalArgumentException(HttpHeaders.IDEMPOTENCY_KEY + " must be 1-255 printable characters");
         }
         return key;
     }

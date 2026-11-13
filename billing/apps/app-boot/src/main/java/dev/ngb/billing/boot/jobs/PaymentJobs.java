@@ -1,5 +1,6 @@
 package dev.ngb.billing.boot.jobs;
 
+import dev.ngb.core.observability.MetricNames;
 import org.springframework.context.annotation.Profile;
 import dev.ngb.billing.boot.infrastructure.coordination.JobLeases;
 import dev.ngb.billing.payment.application.stripe.command.ReconcileStripeUseCase;
@@ -53,10 +54,10 @@ public class PaymentJobs {
         sweep.forEachActiveTenant(tenant -> {
             RetryStripeEventsUseCase.Round round = retry.runOnce();
             if (round.dead() > 0) {
-                meters.counter("billing.stripe.event", "outcome", "dead").increment(round.dead());
+                meters.counter(MetricNames.in("billing", MetricNames.JOB_STRIPE_EVENT), "outcome", "dead").increment(round.dead());
             }
             if (round.processed() > 0) {
-                meters.counter("billing.stripe.event", "outcome", "processed-on-retry").increment(round.processed());
+                meters.counter(MetricNames.in("billing", MetricNames.JOB_STRIPE_EVENT), "outcome", "processed-on-retry").increment(round.processed());
             }
         });
     }
@@ -76,7 +77,7 @@ public class PaymentJobs {
                 ReconcileStripeUseCase.Report report = reconcile.runOnce();
                 if (report.mismatches() > 0) {
                     LOG.warn("stripe reconciliation for tenant {} found {} mismatches, {} corrected", tenant, report.mismatches(), report.corrected());
-                    meters.counter("billing.stripe.reconcile.mismatch").increment(report.mismatches());
+                    meters.counter(MetricNames.in("billing", MetricNames.JOB_STRIPE_RECONCILE_MISMATCH)).increment(report.mismatches());
                 }
             });
         } finally {

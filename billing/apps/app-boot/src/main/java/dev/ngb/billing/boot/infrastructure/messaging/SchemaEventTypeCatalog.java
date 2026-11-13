@@ -1,6 +1,7 @@
 package dev.ngb.billing.boot.infrastructure.messaging;
 
 import dev.ngb.billing.webhook.application.endpoint.port.EventTypeCatalog;
+import dev.ngb.core.event.SuiteEventTypes;
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -31,6 +32,12 @@ public class SchemaEventTypeCatalog implements EventTypeCatalog {
         }
         if (found.isEmpty()) {
             throw new IllegalStateException("no event schemas were found on the classpath under events/");
+        }
+        for (String type : found) {
+            if (!SuiteEventTypes.billing().contains(type)) {
+                throw new IllegalStateException(
+                        "the schema " + type + SUFFIX + " has no constant in " + SuiteEventTypes.class.getSimpleName());
+            }
         }
         this.types = Set.copyOf(found);
     }

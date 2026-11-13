@@ -1,5 +1,6 @@
 package dev.ngb.platform.tenancy.application.tenant.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.event.EventPublisher;
@@ -55,7 +56,7 @@ public class AddTenantDomainUseCase {
             domains.add(domain);
             events.publish(new TenancyEvents.TenantDomainChanged(ids.newId(), domain, now));
             auditLog.record(AuditEntry.platform(
-                    command.actor(), "tenant.domain-added", "tenant/" + command.tenantId() + "/domain/" + hostname, command.requestId(), now));
+                    command.actor(), "tenant.domain-added", AggregateTargets.with(AggregateTargets.tenant(command.tenantId()), "domain", hostname), command.requestId(), now));
             return domain;
         });
     }

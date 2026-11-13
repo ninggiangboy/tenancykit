@@ -1,5 +1,6 @@
 package dev.ngb.billing.money.application.charge.command;
 
+import dev.ngb.billing.sharedkernel.error.Messages;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -77,7 +78,7 @@ public class ChargeUseCase implements ChargeWallet {
         String hash = Fingerprint.of(command.walletId(), command.reservationId(), command.amount(), command.usageRef(), command.reference());
         return unitOfWork.transactional(() -> {
             LedgerTarget target = ledgerTargetOf(command);
-            Wallet wallet = wallets.lockById(target.walletId()).orElseThrow(() -> new NotFoundException("wallet not found"));
+            Wallet wallet = wallets.lockById(target.walletId()).orElseThrow(() -> Messages.walletNotFound());
             requireVisible(wallet, command.caller());
 
             var existing = charges.findByIdempotencyKey(command.idempotencyKey());
@@ -122,7 +123,7 @@ public class ChargeUseCase implements ChargeWallet {
         if (command.reservationId() == null) {
             return new LedgerTarget(command.walletId(), null);
         }
-        Reservation reservation = reservations.findById(command.reservationId()).orElseThrow(() -> new NotFoundException("reservation not found"));
+        Reservation reservation = reservations.findById(command.reservationId()).orElseThrow(() -> Messages.reservationNotFound());
         if (command.walletId() != null && !command.walletId().equals(reservation.walletId())) {
             throw new IllegalArgumentException("the reservation belongs to another wallet");
         }
@@ -131,7 +132,7 @@ public class ChargeUseCase implements ChargeWallet {
 
     private void requireVisible(Wallet wallet, UUID caller) {
         if (caller != null && customers.findFor(wallet.customerId(), caller).isEmpty()) {
-            throw new NotFoundException("wallet not found");
+            throw Messages.walletNotFound();
         }
     }
 

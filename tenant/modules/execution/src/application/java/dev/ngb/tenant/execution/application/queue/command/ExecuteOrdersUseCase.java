@@ -1,5 +1,6 @@
 package dev.ngb.tenant.execution.application.queue.command;
 
+import dev.ngb.core.names.IdempotencyKeys;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.tenant.billing.api.client.BillingCharges;
@@ -153,7 +154,7 @@ public class ExecuteOrdersUseCase implements ExecuteOrders {
                             order.estimatedMinorUnits(), order.currency(), order.reference()));
         }
         return charges.charge(
-                "charge:" + order.id(),
+                IdempotencyKeys.charge(order.id()),
                 new BillingCharges.ChargeRequest(
                         order.walletId(), order.estimatedMinorUnits(), order.currency(), order.reference(), order.reference()));
     }

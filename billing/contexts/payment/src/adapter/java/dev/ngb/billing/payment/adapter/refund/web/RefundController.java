@@ -1,5 +1,6 @@
 package dev.ngb.billing.payment.adapter.refund.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.payment.application.refund.command.RequestRefundUseCase;
 import dev.ngb.billing.payment.application.refund.query.RefundQueries;
 import dev.ngb.billing.payment.application.refund.query.RefundView;
@@ -67,8 +68,8 @@ public class RefundController {
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.REFUND_CREATE)
     public ResponseEntity<RefundResponse> requestRefund(
-            @PathVariable String id, @RequestHeader("Idempotency-Key") String key,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody RefundRequest request) {
+            @PathVariable String id, @RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String key,
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId, @RequestBody RefundRequest request) {
         Money amount = null;
         if (request.amount() != null) {
             if (request.currency() == null) {

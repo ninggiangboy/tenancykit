@@ -1,6 +1,7 @@
 package dev.ngb.billing.payment.adapter.stripe.web;
 
 import org.springframework.context.annotation.Profile;
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.payment.application.stripe.command.ReceiveStripeWebhookUseCase;
 import dev.ngb.billing.payment.domain.stripe.StripeConfigurationId;
 import dev.ngb.core.error.NotFoundException;
@@ -36,7 +37,7 @@ public class StripeWebhookController {
     @PostMapping("/stripe/webhooks/direct/{configurationId}")
     @PublicEndpoint
     public Map<String, String> direct(
-            @PathVariable String configurationId, @RequestHeader(value = "Stripe-Signature", required = false) String signature,
+            @PathVariable String configurationId, @RequestHeader(value = HttpHeaders.STRIPE_SIGNATURE, required = false) String signature,
             HttpServletRequest request) throws IOException {
         StripeConfigurationId id;
         try {
@@ -50,7 +51,7 @@ public class StripeWebhookController {
     /** The Platform's Connect webhook, one endpoint for every connected account. */
     @PostMapping("/stripe/webhooks/connect")
     @PublicEndpoint
-    public Map<String, String> connect(@RequestHeader(value = "Stripe-Signature", required = false) String signature, HttpServletRequest request)
+    public Map<String, String> connect(@RequestHeader(value = HttpHeaders.STRIPE_SIGNATURE, required = false) String signature, HttpServletRequest request)
             throws IOException {
         return answer(receive.receiveConnect(text(request), signature));
     }

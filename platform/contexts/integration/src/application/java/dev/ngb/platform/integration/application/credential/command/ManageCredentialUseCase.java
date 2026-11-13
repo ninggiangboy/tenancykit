@@ -1,5 +1,6 @@
 package dev.ngb.platform.integration.application.credential.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
@@ -161,7 +162,7 @@ public class ManageCredentialUseCase {
                 tenantId,
                 caller.actor(),
                 action,
-                "tenant-system/" + credential.tenantSystemId() + "/credential/" + credential.id(),
+                AggregateTargets.sub(AggregateTargets.tenantSystem(credential.tenantSystemId()), AggregateTargets.CREDENTIAL, credential.id()),
                 caller.requestId(),
                 clock.now()));
     }

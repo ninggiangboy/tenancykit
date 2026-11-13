@@ -1,5 +1,6 @@
 package dev.ngb.billing.invoicing.application.invoice.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.invoicing.application.invoice.port.InvoiceRepository;
@@ -49,7 +50,7 @@ public class ManageInvoiceUseCase {
             }
             invoices.update(invoice);
             Instant now = clock.now();
-            auditLog.record(AuditEntry.tenant(invoice.tenantId(), audit.actor(), action, "invoice/" + invoice.id(), audit.requestId(), now));
+            auditLog.record(AuditEntry.tenant(invoice.tenantId(), audit.actor(), action, AggregateTargets.invoice(invoice.id()), audit.requestId(), now));
             return invoice;
         });
     }

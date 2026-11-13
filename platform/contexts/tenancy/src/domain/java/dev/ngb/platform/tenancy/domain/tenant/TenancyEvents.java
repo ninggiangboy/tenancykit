@@ -1,6 +1,8 @@
 package dev.ngb.platform.tenancy.domain.tenant;
 
 import dev.ngb.core.event.DomainEvent;
+import dev.ngb.core.event.SuiteEventTypes;
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.id.TenantId;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -15,7 +17,7 @@ public final class TenancyEvents {
     /** The full current state of one Tenant. A consumer upserts when {@code version} is newer. */
     public record TenantChanged(UUID eventId, Tenant tenant, Instant occurredAt) implements DomainEvent {
 
-        public static final String TYPE = "tenant.changed";
+        public static final String TYPE = SuiteEventTypes.TENANT_CHANGED;
 
         @Override
         public TenantId tenantId() {
@@ -29,7 +31,7 @@ public final class TenancyEvents {
 
         @Override
         public String aggregate() {
-            return "tenant/" + tenant.id();
+            return AggregateTargets.tenant(tenant.id());
         }
 
         @Override
@@ -48,7 +50,7 @@ public final class TenancyEvents {
     /** The full current state of one hostname mapping. */
     public record TenantDomainChanged(UUID eventId, TenantDomain domain, Instant occurredAt) implements DomainEvent {
 
-        public static final String TYPE = "tenant-domain.changed";
+        public static final String TYPE = SuiteEventTypes.TENANT_DOMAIN_CHANGED;
 
         @Override
         public TenantId tenantId() {
@@ -62,7 +64,7 @@ public final class TenancyEvents {
 
         @Override
         public String aggregate() {
-            return "tenant-domain/" + domain.id();
+            return AggregateTargets.tenantDomain(domain.id());
         }
 
         @Override

@@ -2,10 +2,10 @@ package dev.ngb.billing.payment.domain.payment;
 
 import dev.ngb.core.event.DomainEvent;
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.billing.payment.api.payment.PaymentEventTypes;
-import dev.ngb.billing.sharedkernel.money.Money;
+import dev.ngb.billing.sharedkernel.event.MoneyEventPayload;
 import java.time.Instant;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -16,20 +16,6 @@ import java.util.UUID;
 public final class PaymentEvents {
 
     private PaymentEvents() {}
-
-    private static Map<String, Object> money(Money money) {
-        return Map.of("minorUnits", money.minorUnits(), "currency", money.currency().code());
-    }
-
-    private static Map<String, Object> payload(Object... keyValues) {
-        Map<String, Object> map = new LinkedHashMap<>();
-        for (int i = 0; i < keyValues.length; i += 2) {
-            if (keyValues[i + 1] != null) {
-                map.put((String) keyValues[i], keyValues[i + 1]);
-            }
-        }
-        return map;
-    }
 
     /** A top-up was paid and the wallet credited, or an invoice payment was paid (the wallet is then credited by invoicing). */
     public record PaymentSucceeded(UUID eventId, Payment payment, Instant occurredAt) implements DomainEvent {
@@ -47,13 +33,13 @@ public final class PaymentEvents {
 
         @Override
         public String aggregate() {
-            return "payment/" + payment.id();
+            return AggregateTargets.payment(payment.id());
         }
 
         @Override
         public Map<String, Object> payload() {
-            return PaymentEvents.payload("paymentId", payment.id().toString(), "walletId", payment.walletId().toString(), "customerId",
-                    payment.customerId().toString(), "amount", money(payment.amount()), "ledgerEntryId",
+            return MoneyEventPayload.payload("paymentId", payment.id().toString(), "walletId", payment.walletId().toString(), "customerId",
+                    payment.customerId().toString(), "amount", MoneyEventPayload.money(payment.amount()), "ledgerEntryId",
                     payment.ledgerEntryId() == null ? null : payment.ledgerEntryId().toString(), "invoiceId",
                     payment.invoiceId() == null ? null : payment.invoiceId().toString());
         }
@@ -75,13 +61,13 @@ public final class PaymentEvents {
 
         @Override
         public String aggregate() {
-            return "payment/" + payment.id();
+            return AggregateTargets.payment(payment.id());
         }
 
         @Override
         public Map<String, Object> payload() {
-            return PaymentEvents.payload("paymentId", payment.id().toString(), "walletId", payment.walletId().toString(), "customerId",
-                    payment.customerId().toString(), "amount", money(payment.amount()), "reason", payment.failureReason(), "invoiceId",
+            return MoneyEventPayload.payload("paymentId", payment.id().toString(), "walletId", payment.walletId().toString(), "customerId",
+                    payment.customerId().toString(), "amount", MoneyEventPayload.money(payment.amount()), "reason", payment.failureReason(), "invoiceId",
                     payment.invoiceId() == null ? null : payment.invoiceId().toString());
         }
     }

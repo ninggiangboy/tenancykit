@@ -1,5 +1,6 @@
 package dev.ngb.billing.money.application.wallet.command;
 
+import dev.ngb.billing.sharedkernel.error.Messages;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -47,7 +48,7 @@ public class DebitWalletUseCase implements DebitWallet {
             throw new IllegalArgumentException("a debit must be positive");
         }
         return unitOfWork.transactional(() -> {
-            Wallet wallet = wallets.lockById(command.walletId()).orElseThrow(() -> new NotFoundException("wallet not found"));
+            Wallet wallet = wallets.lockById(command.walletId()).orElseThrow(() -> Messages.walletNotFound());
             var replay = posting.replay(command.idempotencyKey(), wallet, command.amount().negate());
             if (replay.isPresent()) {
                 return replay.get();

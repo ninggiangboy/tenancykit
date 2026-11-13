@@ -1,5 +1,6 @@
 package dev.ngb.billing.boot.portal;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.money.application.charge.query.ChargeView;
 import dev.ngb.billing.money.application.ledger.query.LedgerEntryView;
 import dev.ngb.billing.money.application.wallet.query.WalletView;
@@ -112,8 +113,8 @@ public class PortalMoneyController {
     @RepeatableCreate
     @RequiresPortalPermission(PortalPermission.TOP_UP)
     public ResponseEntity<TopUpResponse> topUp(
-            @RequestHeader("Idempotency-Key") String key,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            @RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String key,
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId,
             @RequestBody TopUpRequest request) {
         if (request.walletId() == null || request.currency() == null) {
             throw new IllegalArgumentException("walletId and currency are required");

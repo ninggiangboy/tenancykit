@@ -12,7 +12,6 @@
     "planVersion",
     "status",
     "amount",
-    "chargeId",
     "usageCount",
     "periodStart",
     "periodEnd"

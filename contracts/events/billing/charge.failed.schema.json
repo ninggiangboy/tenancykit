@@ -9,9 +9,7 @@
     "walletId",
     "amount",
     "source",
-    "usageRef",
-    "reason",
-    "reference"
+    "reason"
   ],
   "additionalProperties": false,
   "properties": {

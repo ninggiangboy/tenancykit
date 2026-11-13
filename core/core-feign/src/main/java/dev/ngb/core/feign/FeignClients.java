@@ -1,5 +1,6 @@
 package dev.ngb.core.feign;
 
+import dev.ngb.core.http.HttpHeaders;
 import feign.Feign;
 import feign.Request;
 import feign.codec.ErrorDecoder;
@@ -13,7 +14,7 @@ public final class FeignClients {
      * The header an unsafe call sets to tell the upstream it may see the same call twice, because it deduplicates on
      * this key. Without it a refused POST, PUT or PATCH is never replayed.
      */
-    public static final String IDEMPOTENCY_KEY = "Idempotency-Key";
+    public static final String IDEMPOTENCY_KEY = HttpHeaders.IDEMPOTENCY_KEY;
 
     private FeignClients() {}
 

@@ -1,5 +1,6 @@
 package dev.ngb.billing.invoicing.application.invoice.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
@@ -65,7 +66,7 @@ public class PayInvoiceUseCase {
                 invoices.update(locked);
                 if (!started.replayed()) {
                     auditLog.record(AuditEntry.tenant(tenantContext.requireTenant(), command.audit().actor(), "invoice.payment-started",
-                            "invoice/" + locked.id(), command.audit().requestId(), clock.now()));
+                            AggregateTargets.invoice(locked.id()), command.audit().requestId(), clock.now()));
                 }
             }
             return new Result(locked, started);

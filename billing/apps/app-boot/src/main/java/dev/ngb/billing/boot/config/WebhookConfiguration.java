@@ -8,6 +8,7 @@ import dev.ngb.core.security.SecretCipher;
 import dev.ngb.core.spring.security.AesGcmSecretCipher;
 import dev.ngb.core.util.Backoff;
 import dev.ngb.core.messaging.outbox.OutboxRelay;
+import dev.ngb.core.observability.MetricNames;
 import dev.ngb.billing.boot.infrastructure.messaging.SchemaEventTypeCatalog;
 import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.tenancy.TenantContext;
@@ -173,7 +174,7 @@ class WebhookConfiguration {
 
     @Bean
     DeliveryLagRecorder deliveryLagRecorder(MeterRegistry meters) {
-        return meters.timer("billing.webhook.lag")::record;
+        return meters.timer(MetricNames.in("billing", MetricNames.WEBHOOK_LAG))::record;
     }
 
     @Bean

@@ -1,6 +1,7 @@
 package dev.ngb.core.suite.security;
 
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.names.ActorNames;
 import dev.ngb.core.replica.ReplicaTables;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.security.Actor;
@@ -30,10 +31,10 @@ import org.springframework.security.oauth2.jwt.Jwt;
 public class SuiteActorResolver {
 
     /** The subject prefix Platform uses for a Tenant System token. */
-    public static final String TENANT_SYSTEM_SUBJECT = "tenant-system/";
+    public static final String TENANT_SYSTEM_SUBJECT = ActorNames.TENANT_SYSTEM_SUBJECT;
 
     /** The subject prefix Platform uses for a service-client token. */
-    public static final String SERVICE_SUBJECT = "service/";
+    public static final String SERVICE_SUBJECT = ActorNames.SERVICE_SUBJECT;
 
     private final UnitOfWork unitOfWork;
     private final DSLContext dsl;

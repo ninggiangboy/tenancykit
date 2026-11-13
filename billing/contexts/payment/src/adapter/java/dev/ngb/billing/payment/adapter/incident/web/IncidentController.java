@@ -1,5 +1,6 @@
 package dev.ngb.billing.payment.adapter.incident.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.payment.application.incident.query.IncidentQueries;
 import dev.ngb.billing.payment.application.incident.query.IncidentView;
 import dev.ngb.billing.payment.application.stripe.command.ManageStripeEventUseCase;
@@ -54,7 +55,7 @@ public class IncidentController {
     @PostMapping("/stripe/incidents/{id}/resolve")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequiresPermission(BillingPermissions.STRIPE_MANAGE)
-    public void resolveIncident(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+    public void resolveIncident(@PathVariable String id, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         eventAdmin.resolveIncident(Audit.of(currentActor.get().auditName(), requestId), UUID.fromString(id));
     }
 }

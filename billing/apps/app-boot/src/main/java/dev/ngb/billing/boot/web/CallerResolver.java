@@ -1,5 +1,6 @@
 package dev.ngb.billing.boot.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.security.CurrentActor;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +23,7 @@ public class CallerResolver {
     private static String suppliedRequestId() {
         if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes) {
             HttpServletRequest request = attributes.getRequest();
-            return request.getHeader("X-Request-Id");
+            return request.getHeader(HttpHeaders.REQUEST_ID);
         }
         return null;
     }

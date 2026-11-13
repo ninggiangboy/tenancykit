@@ -1,5 +1,6 @@
 package dev.ngb.billing.invoicing.application.subscription.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -88,7 +89,7 @@ public class CreateSubscriptionUseCase {
                 return new Result(winner, true);
             }
             subscriptions.appendEvent(SubscriptionHistoryEntry.created(ids.newId(), subscription, now));
-            auditLog.record(AuditEntry.tenant(subscription.tenantId(), command.audit().actor(), "subscription.created", "subscription/" + subscription.id(),
+            auditLog.record(AuditEntry.tenant(subscription.tenantId(), command.audit().actor(), "subscription.created", AggregateTargets.subscription(subscription.id()),
                     command.audit().requestId(), now));
             return new Result(subscription, false);
         });

@@ -1,5 +1,6 @@
 package dev.ngb.billing.invoicing.application.invoice.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.event.DomainEvent;
 import dev.ngb.core.event.EventInbox;
 import dev.ngb.core.event.EventPublisher;
@@ -98,7 +99,7 @@ public class ApplyPaymentUseCase {
                 throw new IllegalStateException(
                         "a payment of invoice %s is in %s but the invoice is in %s".formatted(invoice.id(), payment.amount().currency(), invoice.currency()));
             }
-            LedgerPostingResult posted = credit.credit(new CreditCommand(invoice.walletId(), payment.amount(), "invoice/" + invoice.id(),
+            LedgerPostingResult posted = credit.credit(new CreditCommand(invoice.walletId(), payment.amount(), AggregateTargets.invoice(invoice.id()),
                     "Payment of invoice " + invoice.number(), "invoice-payoff:" + payment.paymentId(), InvoicingActors.INVOICE_PAYMENT));
             Invoice.Change change = invoice.recordPaymentSucceeded(payment.paymentId(), posted.entryId().value(), now);
             if (change == Invoice.Change.UNCHANGED) {

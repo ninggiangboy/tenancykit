@@ -1,5 +1,6 @@
 package dev.ngb.platform.access.application.user.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
@@ -54,7 +55,7 @@ public class ManageUserUseCase {
                     actor.tenantId(),
                     caller.actor(),
                     action(command.action()),
-                    "user/" + user.id(),
+                    AggregateTargets.user(user.id()),
                     caller.requestId(),
                     clock.now()));
             return user;

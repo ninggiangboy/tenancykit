@@ -1,5 +1,6 @@
 package dev.ngb.billing.invoicing.application.subscription.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -57,7 +58,7 @@ public class CancelSubscriptionUseCase {
             }
             subscriptions.update(subscription);
             auditLog.record(AuditEntry.tenant(subscription.tenantId(), command.audit().actor(), "subscription.cancel-requested",
-                    "subscription/" + subscription.id(), command.audit().requestId(), now));
+                    AggregateTargets.subscription(subscription.id()), command.audit().requestId(), now));
             return subscription;
         });
     }

@@ -1,5 +1,6 @@
 package dev.ngb.platform.access.application.user.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
@@ -81,7 +82,7 @@ public class CreateUserUseCase {
             access.publishNew(user);
             Audit caller = Audit.of(actor.auditName(), requestId);
             auditLog.record(AuditEntry.tenant(
-                    actor.tenantId(), caller.actor(), "user.created", "user/" + user.id(), caller.requestId(), now));
+                    actor.tenantId(), caller.actor(), "user.created", AggregateTargets.user(user.id()), caller.requestId(), now));
             return user;
         });
     }

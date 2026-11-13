@@ -1,7 +1,10 @@
 package dev.ngb.billing.invoicing.domain.subscription;
 
 import dev.ngb.core.event.DomainEvent;
+import dev.ngb.core.event.SuiteEventTypes;
+import dev.ngb.billing.sharedkernel.event.MoneyEventPayload;
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.billing.sharedkernel.money.Money;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -16,10 +19,6 @@ public final class SubscriptionEvents {
 
     private SubscriptionEvents() {}
 
-    private static Map<String, Object> money(Money money) {
-        return Map.of("minorUnits", money.minorUnits(), "currency", money.currency().code());
-    }
-
     private static Map<String, Object> common(Subscription subscription, int periodNumber, Money amount) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("subscriptionId", subscription.id().toString());
@@ -31,7 +30,7 @@ public final class SubscriptionEvents {
         map.put("periodStart", subscription.periodStart(periodNumber).toString());
         map.put("periodEnd", subscription.periodEnd(periodNumber).toString());
         if (amount != null) {
-            map.put("amount", money(amount));
+            map.put("amount", MoneyEventPayload.money(amount));
         }
         return map;
     }
@@ -41,7 +40,7 @@ public final class SubscriptionEvents {
      * {@code chargeId} is null only for a plan whose recurring price is zero.
      */
     public record Renewed(UUID eventId, Subscription subscription, int periodNumber, Money amount, UUID chargeId, Instant occurredAt) implements DomainEvent {
-        public static final String TYPE = "subscription.renewed";
+        public static final String TYPE = SuiteEventTypes.SUBSCRIPTION_RENEWED;
 
         @Override
         public TenantId tenantId() {
@@ -55,7 +54,7 @@ public final class SubscriptionEvents {
 
         @Override
         public String aggregate() {
-            return "subscription/" + subscription.id();
+            return AggregateTargets.subscription(subscription.id());
         }
 
         @Override
@@ -77,7 +76,7 @@ public final class SubscriptionEvents {
     public record PaymentFailed(
             UUID eventId, Subscription subscription, int periodNumber, Money amount, String reason, int attempt, Instant nextAttemptAt, Instant occurredAt)
             implements DomainEvent {
-        public static final String TYPE = "subscription.payment_failed";
+        public static final String TYPE = SuiteEventTypes.SUBSCRIPTION_PAYMENT_FAILED;
 
         @Override
         public TenantId tenantId() {
@@ -91,7 +90,7 @@ public final class SubscriptionEvents {
 
         @Override
         public String aggregate() {
-            return "subscription/" + subscription.id();
+            return AggregateTargets.subscription(subscription.id());
         }
 
         @Override

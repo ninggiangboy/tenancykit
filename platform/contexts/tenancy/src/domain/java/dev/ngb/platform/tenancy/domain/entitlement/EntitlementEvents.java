@@ -1,6 +1,8 @@
 package dev.ngb.platform.tenancy.domain.entitlement;
 
 import dev.ngb.core.event.DomainEvent;
+import dev.ngb.core.event.SuiteEventTypes;
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.id.TenantId;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -14,7 +16,7 @@ public final class EntitlementEvents {
 
     public record EntitlementChanged(UUID eventId, AppEntitlement entitlement, Instant occurredAt) implements DomainEvent {
 
-        public static final String TYPE = "entitlement.changed";
+        public static final String TYPE = SuiteEventTypes.ENTITLEMENT_CHANGED;
 
         @Override
         public TenantId tenantId() {
@@ -28,7 +30,7 @@ public final class EntitlementEvents {
 
         @Override
         public String aggregate() {
-            return "entitlement/" + entitlement.tenantId() + "/" + entitlement.appCode();
+            return AggregateTargets.entitlement(entitlement.tenantId(), entitlement.appCode());
         }
 
         @Override

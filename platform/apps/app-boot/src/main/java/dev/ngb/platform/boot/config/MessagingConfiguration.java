@@ -1,5 +1,6 @@
 package dev.ngb.platform.boot.config;
 
+import dev.ngb.core.event.SuiteEventTypes;
 import dev.ngb.core.messaging.broker.BrokerRelay;
 import dev.ngb.core.messaging.config.MessagingProperties;
 import dev.ngb.core.messaging.config.MessagingProperties.Document;
@@ -24,9 +25,8 @@ import tools.jackson.databind.json.JsonMapper;
 @Configuration(proxyBeanMethods = false)
 class MessagingConfiguration {
 
-    /** Every schema under contracts/events/platform; a new schema is a deliberate addition to this list. */
-    private static final List<String> EXPORTED_TYPES =
-            List.of("tenant.changed", "tenant-domain.changed", "tenant-system.changed", "user-access.changed", "entitlement.changed");
+    /** Every {@code *.changed} type of the replica, from the one list of event types the suite shares. */
+    private static final List<String> EXPORTED_TYPES = List.copyOf(SuiteEventTypes.platform());
 
     @Bean
     MessagingProperties messagingProperties(

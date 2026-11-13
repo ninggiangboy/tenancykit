@@ -1,5 +1,7 @@
 package dev.ngb.platform.access.adapter.role.web;
 
+import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
@@ -61,28 +63,28 @@ class RoleController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresPermission("platform:role:manage")
+    @RequiresPermission(PlatformPermissions.ROLE_MANAGE)
     RoleResponse create(
             @RequestBody CreateRequest request,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         Actor actor = currentActor.get();
         return RoleResponse.of(createRole.execute(actor, requestId, new CreateRoleUseCase.Command(
                 actor.tenantId(), actor.scope(), request.name(), request.permissions())));
     }
 
     @GetMapping
-    @RequiresPermission("platform:role:read")
+    @RequiresPermission(PlatformPermissions.ROLE_READ)
     List<RoleResponse> list(@RequestParam UUID tenantId) {
         return queries.list(tenantId).stream().map(view -> new RoleResponse(
                 view.id(), view.tenantId(), view.scope(), view.name(), view.system(), view.permissions(), view.version())).toList();
     }
 
     @PutMapping("/{id}/permissions")
-    @RequiresPermission("platform:role:manage")
+    @RequiresPermission(PlatformPermissions.ROLE_MANAGE)
     ResponseEntity<RoleResponse> replacePermissions(
             @PathVariable UUID id, @RequestBody PermissionsRequest request,
-            @RequestHeader(value = "If-Match", required = false) String ifMatch,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String ifMatch,
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         Role role = manageRole.execute(currentActor.get(), requestId, new ManageRoleUseCase.Command(
                 new RoleId(id), ManageRoleUseCase.Action.REPLACE_PERMISSIONS, request.permissions(), null, null,
                 ExpectedVersion.fromIfMatch(ifMatch)));
@@ -90,11 +92,11 @@ class RoleController {
     }
 
     @PutMapping("/{id}")
-    @RequiresPermission("platform:role:manage")
+    @RequiresPermission(PlatformPermissions.ROLE_MANAGE)
     ResponseEntity<RoleResponse> rename(
             @PathVariable UUID id, @RequestBody RenameRequest request,
-            @RequestHeader(value = "If-Match", required = false) String ifMatch,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String ifMatch,
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         Role role = manageRole.execute(currentActor.get(), requestId, new ManageRoleUseCase.Command(
                 new RoleId(id), ManageRoleUseCase.Action.RENAME, Set.of(), request.name(), null,
                 ExpectedVersion.fromIfMatch(ifMatch)));
@@ -102,19 +104,19 @@ class RoleController {
     }
 
     @PostMapping("/{id}/users/{userId}")
-    @RequiresPermission("platform:role:manage")
+    @RequiresPermission(PlatformPermissions.ROLE_MANAGE)
     RoleResponse assign(
             @PathVariable UUID id, @PathVariable UUID userId,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         return RoleResponse.of(manageRole.execute(currentActor.get(), requestId, new ManageRoleUseCase.Command(
                 new RoleId(id), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, new UserId(userId), ExpectedVersion.any())));
     }
 
     @DeleteMapping("/{id}/users/{userId}")
-    @RequiresPermission("platform:role:manage")
+    @RequiresPermission(PlatformPermissions.ROLE_MANAGE)
     RoleResponse unassign(
             @PathVariable UUID id, @PathVariable UUID userId,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         return RoleResponse.of(manageRole.execute(currentActor.get(), requestId, new ManageRoleUseCase.Command(
                 new RoleId(id), ManageRoleUseCase.Action.UNASSIGN, Set.of(), null, new UserId(userId), ExpectedVersion.any())));
     }

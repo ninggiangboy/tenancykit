@@ -1,5 +1,6 @@
 package dev.ngb.billing.customer.adapter.customer.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import org.springframework.context.annotation.Profile;
 import dev.ngb.billing.customer.application.customer.command.CreateCustomerUseCase;
 import dev.ngb.billing.customer.application.customer.command.ManageCustomerUseCase;
@@ -83,8 +84,8 @@ public class CustomerController {
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.CUSTOMER_WRITE)
     public ResponseEntity<CustomerResponse> create(
-            @RequestHeader("Idempotency-Key") String idempotencyKey,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            @RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String idempotencyKey,
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId,
             @RequestBody CreateCustomerRequest request) {
         Actor actor = currentActor.get();
         TenantSystemId system = tenantSystemFor(actor, request.tenantSystemId());
@@ -122,8 +123,8 @@ public class CustomerController {
     @ConditionalUpdate
     public ResponseEntity<CustomerResponse> update(
             @PathVariable String id,
-            @RequestHeader(value = "If-Match", required = false) String ifMatch,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String ifMatch,
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId,
             @RequestBody UpdateCustomerRequest request) {
         Actor actor = currentActor.get();
         Customer customer = manage.update(
@@ -137,8 +138,8 @@ public class CustomerController {
     @ConditionalUpdate
     public ResponseEntity<CustomerResponse> deactivate(
             @PathVariable String id,
-            @RequestHeader(value = "If-Match", required = false) String ifMatch,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String ifMatch,
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         Actor actor = currentActor.get();
         Customer customer = manage.deactivate(
                 Audit.of(actor.auditName(), requestId), CustomerId.of(id), ExpectedVersion.fromIfMatch(ifMatch), currentActor.callerId());

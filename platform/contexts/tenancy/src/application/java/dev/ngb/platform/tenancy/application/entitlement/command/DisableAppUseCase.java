@@ -1,5 +1,6 @@
 package dev.ngb.platform.tenancy.application.entitlement.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.event.EventPublisher;
@@ -63,7 +64,7 @@ public class DisableAppUseCase {
             }
             events.publish(new EntitlementEvents.EntitlementChanged(ids.newId(), entitlement, now));
             auditLog.record(AuditEntry.platform(
-                    command.actor(), "entitlement.disabled", "tenant/" + command.tenantId() + "/app/" + command.appCode(),
+                    command.actor(), "entitlement.disabled", AggregateTargets.entitlement(command.tenantId(), command.appCode()),
                     command.requestId(), now));
             return entitlement;
         });

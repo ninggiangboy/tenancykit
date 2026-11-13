@@ -1,5 +1,7 @@
 package dev.ngb.billing.sharedkernel.security;
 
+import java.util.Set;
+
 /**
  * Billing's permission codes, as compile-time strings because {@code @RequiresPermission} needs a constant. The
  * codes are exactly the entries of {@code contracts/permissions/billing.yaml}; a test keeps the two in step.
@@ -52,6 +54,13 @@ public final class BillingPermissions {
     public static final String SUBSCRIPTION_READ = "billing:subscription:read";
     /** Starts and cancels subscriptions. */
     public static final String SUBSCRIPTION_MANAGE = "billing:subscription:manage";
+
+    /** Every code above, so a test can prove the constants, the endpoints and the catalog are one set. */
+    public static final Set<String> CODES = Set.of(
+            CUSTOMER_READ, CUSTOMER_WRITE, BILLING_SESSION_CREATE, PORTAL_SETTINGS_MANAGE, WALLET_READ, WALLET_MANAGE, RESERVATION_MANAGE,
+            CHARGE_CREATE, LEDGER_REVERSE, WEBHOOK_READ, WEBHOOK_MANAGE, PRICING_READ, PRICING_MANAGE, USAGE_RECORD, USAGE_READ, STRIPE_READ,
+            STRIPE_MANAGE, PAYMENT_READ, PAYMENT_CREATE, REFUND_CREATE, INVOICE_READ, INVOICE_CREATE, INVOICE_MANAGE, SUBSCRIPTION_READ,
+            SUBSCRIPTION_MANAGE);
 
     private BillingPermissions() {}
 }

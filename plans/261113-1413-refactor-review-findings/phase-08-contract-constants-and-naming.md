@@ -81,12 +81,12 @@ metrics, with a build-time or test-time check that the vocabulary matches the co
 
 ## Success criteria
 
-- [ ] The EventTypes constants, schema files, exports, queue bindings and `accepts` switches are one set.
-- [ ] One `MoneyPayload` helper; one null policy for optional payload fields.
-- [ ] All HTTP header names come from `HttpHeaders`.
-- [ ] Every `@RequiresPermission` code exists in the contract catalog (test-enforced).
-- [ ] Aggregate targets and idempotency keys are built through helpers; no inline prefix remains in application code.
-- [ ] One metric name per relay event.
+- [x] The EventTypes constants, schema files, exports, queue bindings and `accepts` switches are one set.
+- [x] One `MoneyPayload` helper; one null policy for optional payload fields.
+- [x] All HTTP header names come from `HttpHeaders`.
+- [x] Every `@RequiresPermission` code exists in the contract catalog (test-enforced).
+- [x] Aggregate targets and idempotency keys are built through helpers; no inline prefix remains in application code.
+- [x] One metric name per relay event.
 
 ## Risks
 

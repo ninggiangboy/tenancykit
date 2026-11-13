@@ -1,6 +1,7 @@
 package dev.ngb.platform.access.adapter.tenant.web;
 
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.platform.access.application.tenant.command.ProvisionTenantUseCase;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -25,7 +26,7 @@ class ProvisionTenantController {
 
     @PostMapping("/api/v1/tenants")
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresPermission("platform:tenant:create")
+    @RequiresPermission(PlatformPermissions.TENANT_CREATE)
     ProvisionedResponse create(@RequestBody ProvisionRequest request) {
         var provisioned = provision.execute(new ProvisionTenantUseCase.Command(
                 request.code(), request.name(), request.adminEmail(), request.adminTemporaryPassword()));

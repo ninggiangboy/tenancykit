@@ -1,5 +1,7 @@
 package dev.ngb.platform.access.adapter.user.web;
 
+import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
@@ -62,10 +64,10 @@ class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresPermission("platform:user:manage")
+    @RequiresPermission(PlatformPermissions.USER_MANAGE)
     UserResponse create(
             @RequestBody CreateRequest request,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         Actor actor = currentActor.get();
         return UserResponse.of(createUser.execute(actor, requestId, new CreateUserUseCase.Command(
                 request.tenantCode(), actor.tenantId(), actor.scope(),
@@ -73,18 +75,18 @@ class UserController {
     }
 
     @GetMapping
-    @RequiresPermission("platform:user:read")
+    @RequiresPermission(PlatformPermissions.USER_READ)
     List<UserResponse> list(@RequestParam UUID tenantId) {
         return queries.list(tenantId).stream().map(view -> new UserResponse(
                 view.id(), view.tenantId(), view.scope(), view.email(), view.displayName(), view.status(), view.version())).toList();
     }
 
     @PatchMapping("/{id}")
-    @RequiresPermission("platform:user:manage")
+    @RequiresPermission(PlatformPermissions.USER_MANAGE)
     ResponseEntity<UserResponse> update(
             @PathVariable UUID id, @RequestBody UpdateRequest request,
-            @RequestHeader(value = "If-Match", required = false) String ifMatch,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String ifMatch,
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         User user = manageUser.execute(currentActor.get(), requestId, new ManageUserUseCase.Command(
                 new UserId(id), ManageUserUseCase.Action.valueOf(request.action()), request.name(),
                 ExpectedVersion.fromIfMatch(ifMatch)));
@@ -92,11 +94,11 @@ class UserController {
     }
 
     @PutMapping("/{id}/permissions/{code}")
-    @RequiresPermission("platform:user:manage")
+    @RequiresPermission(PlatformPermissions.USER_MANAGE)
     ResponseEntity<UserResponse> setPermission(
             @PathVariable UUID id, @PathVariable String code, @RequestParam boolean grant,
-            @RequestHeader(value = "If-Match", required = false) String ifMatch,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String ifMatch,
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         User user = managePermissions.execute(currentActor.get(), requestId, new ManageUserPermissionsUseCase.Command(
                 new UserId(id), code, grant, ExpectedVersion.fromIfMatch(ifMatch)));
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(user.version())).body(UserResponse.of(user));

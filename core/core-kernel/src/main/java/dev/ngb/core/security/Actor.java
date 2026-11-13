@@ -1,6 +1,7 @@
 package dev.ngb.core.security;
 
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.names.ActorNames;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -28,6 +29,6 @@ public record Actor(
 
     /** The string recorded in audit entries, for example {@code user/<id>}. */
     public String auditName() {
-        return type.name().toLowerCase(java.util.Locale.ROOT) + "/" + id;
+        return ActorNames.of(type, id);
     }
 }

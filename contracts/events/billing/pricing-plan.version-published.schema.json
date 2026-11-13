@@ -10,9 +10,7 @@
     "model",
     "currency",
     "version",
-    "billingCycle",
-    "validFrom",
-    "validUntil"
+    "validFrom"
   ],
   "additionalProperties": false,
   "properties": {

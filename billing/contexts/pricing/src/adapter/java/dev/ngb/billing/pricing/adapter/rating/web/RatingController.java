@@ -1,5 +1,6 @@
 package dev.ngb.billing.pricing.adapter.rating.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.money.api.reservation.ReservationResult;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
@@ -136,7 +137,7 @@ public class RatingController {
     @PostMapping("/pricing/reservations")
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.RESERVATION_MANAGE)
-    public ResponseEntity<ReserveResponse> reserveEstimate(@RequestHeader("Idempotency-Key") String key, @RequestBody ReserveRequest request) {
+    public ResponseEntity<ReserveResponse> reserveEstimate(@RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String key, @RequestBody ReserveRequest request) {
         ReserveFromEstimateUseCase.Result result = reserve.reserve(new ReserveFromEstimateUseCase.Command(
                 WalletId.of(required(request.walletId(), "walletId")), PricingPlanId.of(required(request.planId(), "planId")), request.version(), request.at(),
                 measures(request.usage()),

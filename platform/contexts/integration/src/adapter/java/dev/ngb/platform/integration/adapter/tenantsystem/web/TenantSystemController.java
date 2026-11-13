@@ -1,5 +1,7 @@
 package dev.ngb.platform.integration.adapter.tenantsystem.web;
 
+import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.core.security.CurrentActor;
@@ -105,32 +107,32 @@ class TenantSystemController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresPermission("platform:tenant-system:manage")
+    @RequiresPermission(PlatformPermissions.TENANT_SYSTEM_MANAGE)
     SystemResponse create(
             @RequestBody CreateSystemRequest request,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         return SystemResponse.of(systems.create(caller(requestId), request.name()));
     }
 
     @GetMapping
-    @RequiresPermission("platform:tenant-system:read")
+    @RequiresPermission(PlatformPermissions.TENANT_SYSTEM_READ)
     List<SystemResponse> list() {
         return systemQueries.list().stream().map(SystemResponse::ofView).toList();
     }
 
     @GetMapping("/{id}")
-    @RequiresPermission("platform:tenant-system:read")
+    @RequiresPermission(PlatformPermissions.TENANT_SYSTEM_READ)
     ResponseEntity<SystemResponse> get(@PathVariable String id) {
         SystemResponse system = SystemResponse.ofView(systemQueries.get(TenantSystemId.of(id).value()));
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(system.version())).body(system);
     }
 
     @PutMapping("/{id}")
-    @RequiresPermission("platform:tenant-system:manage")
+    @RequiresPermission(PlatformPermissions.TENANT_SYSTEM_MANAGE)
     ResponseEntity<SystemResponse> update(
             @PathVariable String id, @RequestBody UpdateSystemRequest request,
-            @RequestHeader(value = "If-Match", required = false) String ifMatch,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.IF_MATCH, required = false) String ifMatch,
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         TenantSystem system = systems.execute(
                 caller(requestId),
                 new ManageTenantSystemUseCase.Command(
@@ -142,34 +144,34 @@ class TenantSystemController {
 
     @PostMapping("/{id}/credentials")
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresPermission("platform:credential:manage")
+    @RequiresPermission(PlatformPermissions.CREDENTIAL_MANAGE)
     IssuedCredentialResponse createCredential(
             @PathVariable String id, @RequestBody CreateCredentialRequest request,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         Set<String> scopes = request.scopes() == null ? Set.of() : Set.copyOf(request.scopes());
         return issued(credentials.create(caller(requestId), TenantSystemId.of(id), request.label(), scopes));
     }
 
     @GetMapping("/{id}/credentials")
-    @RequiresPermission("platform:credential:manage")
+    @RequiresPermission(PlatformPermissions.CREDENTIAL_MANAGE)
     List<CredentialResponse> listCredentials(@PathVariable String id) {
         return credentialQueries.list(TenantSystemId.of(id)).stream().map(CredentialResponse::ofView).toList();
     }
 
     @PostMapping("/{id}/credentials/rotate")
-    @RequiresPermission("platform:credential:manage")
+    @RequiresPermission(PlatformPermissions.CREDENTIAL_MANAGE)
     IssuedCredentialResponse rotate(
             @PathVariable String id, @RequestBody(required = false) RotateRequest request,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         long minutes = request == null || request.overlapMinutes() == null ? DEFAULT_OVERLAP_MINUTES : request.overlapMinutes();
         return issued(credentials.rotate(caller(requestId), TenantSystemId.of(id), Duration.ofMinutes(minutes)));
     }
 
     @DeleteMapping("/{systemId}/credentials/{credentialId}")
-    @RequiresPermission("platform:credential:manage")
+    @RequiresPermission(PlatformPermissions.CREDENTIAL_MANAGE)
     CredentialResponse revoke(
             @PathVariable String systemId, @PathVariable String credentialId,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         return CredentialResponse.of(credentials.revoke(
                 caller(requestId), TenantSystemId.of(systemId), ApiCredentialId.of(credentialId)));
     }

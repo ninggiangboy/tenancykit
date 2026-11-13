@@ -1,5 +1,7 @@
 package dev.ngb.billing.payment.application.refund.command;
 
+import dev.ngb.core.names.AggregateTargets;
+import dev.ngb.core.names.IdempotencyKeys;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -149,13 +151,13 @@ public class RequestRefundUseCase {
         RefundId id = new RefundId(ids.newId());
         ReservationResult hold;
         try {
-            hold = reserve.reserve(new ReserveBudgetCommand(payment.walletId(), amount, settings.refundHold(), "refund/" + id, "refund-hold:" + id, null));
+            hold = reserve.reserve(new ReserveBudgetCommand(payment.walletId(), amount, settings.refundHold(), AggregateTargets.refund(id), IdempotencyKeys.refundHold(id), null));
         } catch (InsufficientFundsException unspent) {
             throw new ConflictException("only the unspent balance of a top-up can be refunded; the wallet cannot cover " + amount);
         }
         Refund refund = Refund.request(id, payment, amount, command.reason(), hold.id().value(), command.audit().actor(), key, hash, now);
         refunds.add(refund);
-        auditLog.record(AuditEntry.tenant(tenantContext.requireTenant(), command.audit().actor(), "refund.requested", "refund/" + id,
+        auditLog.record(AuditEntry.tenant(tenantContext.requireTenant(), command.audit().actor(), "refund.requested", AggregateTargets.refund(id),
                 command.audit().requestId(), now));
         return new Prepared(refund, payment, configuration, false);
     }

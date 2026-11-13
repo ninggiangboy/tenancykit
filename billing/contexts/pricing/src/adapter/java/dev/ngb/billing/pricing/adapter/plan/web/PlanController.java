@@ -1,5 +1,6 @@
 package dev.ngb.billing.pricing.adapter.plan.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -87,7 +88,7 @@ public class PlanController {
     @PostMapping("/pricing-plans")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(BillingPermissions.PRICING_MANAGE)
-    public PlanResponse createPlan(@RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody CreatePlanRequest request) {
+    public PlanResponse createPlan(@RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId, @RequestBody CreatePlanRequest request) {
         if (request.version() == null || request.version().rule() == null || request.model() == null) {
             throw new IllegalArgumentException("model and version.rule are required");
         }
@@ -114,7 +115,7 @@ public class PlanController {
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(BillingPermissions.PRICING_MANAGE)
     public VersionResponse publishVersion(
-            @PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody VersionRequest request) {
+            @PathVariable String id, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId, @RequestBody VersionRequest request) {
         if (request.rule() == null) {
             throw new IllegalArgumentException("rule is required");
         }
@@ -124,7 +125,7 @@ public class PlanController {
 
     @PostMapping("/pricing-plans/{id}/retire")
     @RequiresPermission(BillingPermissions.PRICING_MANAGE)
-    public PlanResponse retire(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+    public PlanResponse retire(@PathVariable String id, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         return PlanResponse.of(plans.retire(Audit.of(currentActor.get().auditName(), requestId), PricingPlanId.of(id)));
     }
 

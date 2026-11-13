@@ -26,6 +26,7 @@ dependencies {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    maxHeapSize = "3g"
     testLogging {
         events("passed", "failed", "skipped")
         exceptionFormat = TestExceptionFormat.FULL

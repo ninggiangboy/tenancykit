@@ -1,7 +1,9 @@
 package dev.ngb.billing.customer.domain.customer;
 
 import dev.ngb.core.event.DomainEvent;
+import dev.ngb.core.event.SuiteEventTypes;
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.names.AggregateTargets;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -15,7 +17,7 @@ public final class CustomerEvents {
     /** A Customer now exists. The payload is the integration contract; it carries no email or other personal data. */
     public record CustomerCreated(UUID eventId, Customer customer, Instant occurredAt) implements DomainEvent {
 
-        public static final String TYPE = "customer.created";
+        public static final String TYPE = SuiteEventTypes.CUSTOMER_CREATED;
 
         @Override
         public TenantId tenantId() {
@@ -29,7 +31,7 @@ public final class CustomerEvents {
 
         @Override
         public String aggregate() {
-            return "customer/" + customer.id();
+            return AggregateTargets.customer(customer.id());
         }
 
         @Override

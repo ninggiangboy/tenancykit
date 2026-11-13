@@ -9,8 +9,7 @@
     "originalEntryId",
     "reversalEntryId",
     "amount",
-    "reason",
-    "chargeId"
+    "reason"
   ],
   "additionalProperties": false,
   "properties": {

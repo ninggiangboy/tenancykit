@@ -1,5 +1,6 @@
 package dev.ngb.tenant.resource.adapter.order.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.tenant.identity.api.security.AuthenticatedUser;
 import dev.ngb.tenant.identity.api.security.Role;
 import dev.ngb.tenant.identity.api.security.TenantPermissions;
@@ -91,7 +92,7 @@ public class OrderController {
     @RequiresPermission(TenantPermissions.ORDER_CREATE)
     public OrderResponse create(
             @AuthenticationPrincipal AuthenticatedUser principal,
-            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @RequestHeader(value = HttpHeaders.IDEMPOTENCY_KEY, required = false) String idempotencyKey,
             @RequestBody CreateOrderRequest request) {
         Order order = create.execute(new CreateOrderUseCase.Command(
                 principal.id(), request.planId(), request.quantity(), request.events(), idempotencyKey));

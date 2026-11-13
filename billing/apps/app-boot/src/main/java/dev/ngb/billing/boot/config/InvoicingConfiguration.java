@@ -1,5 +1,6 @@
 package dev.ngb.billing.boot.config;
 
+import dev.ngb.core.observability.MetricNames;
 import dev.ngb.core.event.EventInbox;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
@@ -95,7 +96,7 @@ class InvoicingConfiguration {
     MalformedEventRecorder malformedEventRecorder(MeterRegistry meters) {
         return (consumer, event, malformed) -> {
             LOG.warn("dropping event {} of type {} for {}: {}", event.eventId(), event.type(), consumer, malformed.getMessage());
-            meters.counter("billing.events.malformed", "consumer", consumer).increment();
+            meters.counter(MetricNames.in("billing", MetricNames.EVENTS_MALFORMED), "consumer", consumer).increment();
         };
     }
 

@@ -1,5 +1,6 @@
 package dev.ngb.billing.payment.application.refund.service;
 
+import dev.ngb.core.names.IdempotencyKeys;
 import dev.ngb.billing.payment.application.payment.port.PaymentProvider;
 import dev.ngb.billing.payment.application.stripe.port.StripeConfigurationRepository;
 import dev.ngb.billing.payment.application.stripe.service.ProviderAccess;
@@ -46,6 +47,6 @@ public class RefundGateway {
      */
     public PaymentProvider.RefundObject refund(StripeConfiguration configuration, Refund refund, Payment payment) {
         return provider.createRefund(access.of(configuration), new PaymentProvider.RefundRequest(
-                refund.id(), payment.id(), payment.paymentIntentId(), refund.amount(), refund.reason()), "refund-" + refund.id());
+                refund.id(), payment.id(), payment.paymentIntentId(), refund.amount(), refund.reason()), IdempotencyKeys.provider(IdempotencyKeys.REFUND, refund.id()));
     }
 }

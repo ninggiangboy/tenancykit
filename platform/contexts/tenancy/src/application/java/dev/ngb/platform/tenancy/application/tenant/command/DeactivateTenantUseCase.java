@@ -1,5 +1,6 @@
 package dev.ngb.platform.tenancy.application.tenant.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.event.EventPublisher;
@@ -47,7 +48,7 @@ public class DeactivateTenantUseCase {
             Instant now = clock.now();
             tenants.update(tenant);
             events.publish(new TenancyEvents.TenantChanged(ids.newId(), tenant, now));
-            auditLog.record(AuditEntry.platform(command.actor(), "tenant.deactivated", "tenant/" + tenant.id(), command.requestId(), now));
+            auditLog.record(AuditEntry.platform(command.actor(), "tenant.deactivated", AggregateTargets.tenant(tenant.id()), command.requestId(), now));
             return tenant;
         });
     }

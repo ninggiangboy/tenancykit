@@ -1,5 +1,6 @@
 package dev.ngb.billing.invoicing.adapter.subscription.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.invoicing.application.subscription.command.CancelSubscriptionUseCase;
 import dev.ngb.billing.invoicing.application.subscription.command.CreateSubscriptionUseCase;
 import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionHistoryEntryView;
@@ -81,7 +82,7 @@ public class SubscriptionController {
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.SUBSCRIPTION_MANAGE)
     public ResponseEntity<SubscriptionDetailResponse> subscribe(
-            @RequestHeader("Idempotency-Key") String key, @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            @RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String key, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId,
             @RequestBody SubscribeRequest request) {
         if (request.walletId() == null || request.planId() == null) {
             throw new IllegalArgumentException("walletId and planId are required");
@@ -113,7 +114,7 @@ public class SubscriptionController {
      */
     @PostMapping("/subscriptions/{id}/cancel")
     @RequiresPermission(BillingPermissions.SUBSCRIPTION_MANAGE)
-    public SubscriptionDetailResponse cancel(@PathVariable String id, @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+    public SubscriptionDetailResponse cancel(@PathVariable String id, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         Subscription canceled = cancelSubscription.execute(new CancelSubscriptionUseCase.Command(SubscriptionId.of(id), Audit.of(currentActor.get().auditName(), requestId),
                 currentActor.caller()));
         return subscriptionDetail(canceled.id().value());

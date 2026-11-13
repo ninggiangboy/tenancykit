@@ -1,5 +1,6 @@
 package dev.ngb.tenant.resource.application.order.command;
 
+import dev.ngb.core.names.IdempotencyKeys;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -221,7 +222,7 @@ public class CreateOrderUseCase {
     }
 
     private static String reference(UUID customerId, String idempotencyKey) {
-        String material = "order:" + customerId + ":" + idempotencyKey;
+        String material = IdempotencyKeys.order(customerId, idempotencyKey);
         return "ORD-" + UUID.nameUUIDFromBytes(material.getBytes(StandardCharsets.UTF_8));
     }
 

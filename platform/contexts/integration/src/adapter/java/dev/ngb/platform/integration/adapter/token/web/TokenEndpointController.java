@@ -1,5 +1,6 @@
 package dev.ngb.platform.integration.adapter.token.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.platform.integration.application.auth.exception.RateLimitExceededException;
 import dev.ngb.platform.integration.application.token.command.IssueTokenUseCase;
@@ -42,7 +43,7 @@ class TokenEndpointController {
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestParam("grant_type") String grantType,
             @RequestParam("audience") String audience,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId) {
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         if (!"client_credentials".equals(grantType) || !AUDIENCES.contains(audience)) {
             return ResponseEntity.badRequest().build();
         }

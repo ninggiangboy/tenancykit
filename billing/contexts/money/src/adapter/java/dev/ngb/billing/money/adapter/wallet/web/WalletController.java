@@ -1,5 +1,6 @@
 package dev.ngb.billing.money.adapter.wallet.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.money.api.wallet.WalletMode;
 import dev.ngb.billing.money.application.wallet.command.OpenWalletUseCase;
 import dev.ngb.billing.money.application.wallet.query.WalletQueries;
@@ -65,7 +66,7 @@ public class WalletController {
     @PostMapping("/wallets")
     @RequiresPermission(BillingPermissions.WALLET_MANAGE)
     public ResponseEntity<WalletResponse> openWallet(
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody OpenWalletRequest request) {
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId, @RequestBody OpenWalletRequest request) {
         Currency currency = Currency.of(request.currency());
         WalletMode mode = WalletMode.valueOf(request.mode());
         Money limit = request.creditLimit() == null ? null : Money.of(request.creditLimit(), currency);

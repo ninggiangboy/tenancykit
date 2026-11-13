@@ -1,5 +1,6 @@
 package dev.ngb.billing.money.adapter.reservation.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.money.api.reservation.ReservationId;
 import dev.ngb.billing.money.api.reservation.ReservationResult;
 import dev.ngb.billing.money.api.reservation.ReserveBudgetCommand;
@@ -59,7 +60,7 @@ public class ReservationController {
     @PostMapping("/reservations")
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.RESERVATION_MANAGE)
-    public ResponseEntity<ReservationResponse> reserve(@RequestHeader("Idempotency-Key") String key, @RequestBody ReserveRequest request) {
+    public ResponseEntity<ReservationResponse> reserve(@RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String key, @RequestBody ReserveRequest request) {
         ReservationResult result = reserve.reserve(new ReserveBudgetCommand(
                 WalletId.of(request.walletId()), new MoneyDto(request.amount(), request.currency()).toMoney(),
                 Duration.ofSeconds(request.ttlSeconds() == null ? 900 : request.ttlSeconds()), request.reference(), key, currentActor.caller()));

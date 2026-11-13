@@ -61,7 +61,7 @@ public class PortalSessionController {
     @PublicEndpoint
     public ExchangeResponse exchange(
             @RequestBody ExchangeRequest request,
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            @RequestHeader(value = dev.ngb.core.http.HttpHeaders.REQUEST_ID, required = false) String requestId,
             HttpServletResponse response) {
         if (request.token() == null || request.token().isBlank()) {
             throw new IllegalArgumentException("token is required");

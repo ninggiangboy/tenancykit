@@ -1,5 +1,6 @@
 package dev.ngb.billing.money.application.wallet.query;
 
+import dev.ngb.billing.sharedkernel.error.Messages;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.util.PageSize;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
@@ -87,7 +88,7 @@ public class WalletQueries {
 
     public ReservationView reservation(ReservationId id, UUID caller) {
         return unitOfWork.transactional(() -> {
-            ReservationView reservation = reservations.findById(id).orElseThrow(() -> new NotFoundException("reservation not found"));
+            ReservationView reservation = reservations.findById(id).orElseThrow(() -> Messages.reservationNotFound());
             requireVisible(reservation.walletId(), caller, "reservation not found");
             return reservation;
         });
@@ -99,23 +100,23 @@ public class WalletQueries {
 
     public ChargeView charge(ChargeId id, UUID caller) {
         return unitOfWork.transactional(() -> {
-            ChargeView charge = charges.findById(id).orElseThrow(() -> new NotFoundException("charge not found"));
+            ChargeView charge = charges.findById(id).orElseThrow(() -> Messages.chargeNotFound());
             requireVisible(charge.walletId(), caller, "charge not found");
             return charge;
         });
     }
 
     private WalletView requireVisibleWallet(WalletId id, UUID caller) {
-        WalletView wallet = wallets.findById(id).orElseThrow(() -> new NotFoundException("wallet not found"));
+        WalletView wallet = wallets.findById(id).orElseThrow(() -> Messages.walletNotFound());
         if (caller != null && customers.findFor(wallet.customerId(), caller).isEmpty()) {
-            throw new NotFoundException("wallet not found");
+            throw Messages.walletNotFound();
         }
         return wallet;
     }
 
     private void requireVisibleCustomer(CustomerId id, UUID caller) {
         if (caller != null && customers.findFor(id, caller).isEmpty()) {
-            throw new NotFoundException("customer not found");
+            throw Messages.customerNotFound();
         }
     }
 

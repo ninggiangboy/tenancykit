@@ -2,6 +2,7 @@ package dev.ngb.core.messaging.outbox;
 
 import dev.ngb.core.event.EventEnvelope;
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.observability.MetricNames;
 import dev.ngb.core.util.Causes;
 import dev.ngb.core.util.Text;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -94,28 +95,28 @@ public final class OutboxRows {
     /** {@code <prefix>.outbox.delivered}: rows the in-process relay handed to the consumers. */
     public static void delivered(MeterRegistry meters, String prefix, int count) {
         if (count > 0) {
-            meters.counter(prefix + ".outbox.delivered").increment(count);
+            meters.counter(MetricNames.in(prefix, MetricNames.OUTBOX_DELIVERED)).increment(count);
         }
     }
 
     /** {@code <prefix>.outbox.dead}: rows the in-process relay gave up on. */
     public static void dead(MeterRegistry meters, String prefix, int count) {
         if (count > 0) {
-            meters.counter(prefix + ".outbox.dead").increment(count);
+            meters.counter(MetricNames.in(prefix, MetricNames.OUTBOX_DEAD)).increment(count);
         }
     }
 
     /** {@code <prefix>.outbox.publish.delivered}: rows the broker relay confirmed. */
     public static void published(MeterRegistry meters, String prefix, int count) {
         if (count > 0) {
-            meters.counter(prefix + ".outbox.publish.delivered").increment(count);
+            meters.counter(MetricNames.in(prefix, MetricNames.OUTBOX_PUBLISH_DELIVERED)).increment(count);
         }
     }
 
     /** {@code <prefix>.outbox.publish.dead}: rows the broker relay gave up on. */
     public static void publishDead(MeterRegistry meters, String prefix, int count) {
         if (count > 0) {
-            meters.counter(prefix + ".outbox.publish.dead").increment(count);
+            meters.counter(MetricNames.in(prefix, MetricNames.OUTBOX_PUBLISH_DEAD)).increment(count);
         }
     }
 }

@@ -1,5 +1,6 @@
 package dev.ngb.tenant.webhook.application.event.service;
 
+import dev.ngb.core.event.SuiteEventTypes;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.tenant.resource.api.execution.ExecutionOrders;
 import dev.ngb.tenant.webhook.api.event.WebhookEnvelope;
@@ -38,10 +39,10 @@ public class WebhookPolicy {
     public Decision apply(WebhookEnvelope event) {
         Instant now = clock.now();
         return switch (event.type()) {
-            case "payment.failed" -> recordDebt(event, now);
-            case "invoice.paid" -> clearDebt(event, now);
-            case "subscription.payment_failed" -> suspend(event, now);
-            case "subscription.renewed" -> extend(event, now);
+            case SuiteEventTypes.PAYMENT_FAILED -> recordDebt(event, now);
+            case SuiteEventTypes.INVOICE_PAID -> clearDebt(event, now);
+            case SuiteEventTypes.SUBSCRIPTION_PAYMENT_FAILED -> suspend(event, now);
+            case SuiteEventTypes.SUBSCRIPTION_RENEWED -> extend(event, now);
             default -> Decision.CONTINUE;
         };
     }

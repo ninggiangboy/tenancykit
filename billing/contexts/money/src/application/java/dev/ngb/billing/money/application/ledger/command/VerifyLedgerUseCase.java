@@ -1,5 +1,6 @@
 package dev.ngb.billing.money.application.ledger.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.money.application.ledger.port.LedgerVerifier;
@@ -34,7 +35,7 @@ public class VerifyLedgerUseCase {
         return unitOfWork.transactional(() -> {
             List<LedgerVerifier.Mismatch> mismatches = verifier.findMismatches();
             for (LedgerVerifier.Mismatch mismatch : mismatches) {
-                auditLog.record(AuditEntry.tenant(tenantContext.requireTenant(), MoneyActors.LEDGER_VERIFY, "ledger.mismatch", "wallet/" + mismatch.walletId(), null, clock.now()));
+                auditLog.record(AuditEntry.tenant(tenantContext.requireTenant(), MoneyActors.LEDGER_VERIFY, "ledger.mismatch", AggregateTargets.wallet(mismatch.walletId()), null, clock.now()));
             }
             return mismatches;
         });

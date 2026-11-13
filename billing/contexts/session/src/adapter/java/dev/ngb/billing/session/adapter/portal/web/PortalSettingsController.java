@@ -1,5 +1,6 @@
 package dev.ngb.billing.session.adapter.portal.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -42,7 +43,7 @@ public class PortalSettingsController {
     @PutMapping
     @RequiresPermission(BillingPermissions.PORTAL_SETTINGS_MANAGE)
     public List<String> replace(
-            @RequestHeader(value = "X-Request-Id", required = false) String requestId, @RequestBody ReplaceRequest request) {
+            @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId, @RequestBody ReplaceRequest request) {
         Set<String> urls = request.urls() == null ? Set.of() : Set.copyOf(request.urls());
         return manage.replace(urls, Audit.of(currentActor.get().auditName(), requestId)).stream().sorted().toList();
     }

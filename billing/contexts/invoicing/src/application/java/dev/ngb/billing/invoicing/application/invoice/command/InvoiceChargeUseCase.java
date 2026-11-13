@@ -1,5 +1,6 @@
 package dev.ngb.billing.invoicing.application.invoice.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -103,7 +104,7 @@ public class InvoiceChargeUseCase {
         Invoice draft = Invoice.draft(new InvoiceId(ids.newId()), tenantContext.requireTenant(), wallet.customerId(), wallet.id(), wallet.currency(),
                 InvoiceOrigin.CHARGE, List.of(item), null, null, now);
         Invoice issued = issuer.issue(draft, wallet.mode() == WalletMode.PREPAID);
-        auditLog.record(AuditEntry.tenant(issued.tenantId(), command.audit().actor(), "invoice.issued-for-charge", "invoice/" + issued.id(),
+        auditLog.record(AuditEntry.tenant(issued.tenantId(), command.audit().actor(), "invoice.issued-for-charge", AggregateTargets.invoice(issued.id()),
                 command.audit().requestId(), now));
         return new Result(issued, false);
     }

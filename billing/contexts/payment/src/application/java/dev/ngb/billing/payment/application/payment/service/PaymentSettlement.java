@@ -1,5 +1,6 @@
 package dev.ngb.billing.payment.application.payment.service;
 
+import dev.ngb.core.names.IdempotencyKeys;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -186,7 +187,7 @@ public class PaymentSettlement {
             case SUCCEEDED:
                 releaseHold(refund);
                 LedgerPostingResult posted = debit.debit(new DebitCommand(payment.walletId(), refund.amount(), "refund/" + refund.id(),
-                        "Stripe refund of payment " + payment.id(), "refund:" + refund.id(), PaymentActors.STRIPE));
+                        "Stripe refund of payment " + payment.id(), IdempotencyKeys.refund(refund.id()), PaymentActors.STRIPE));
                 refund.succeed(posted.entryId().value(), now);
                 payment.addRefunded(refund.amount(), now);
                 refunds.update(refund);
@@ -265,7 +266,7 @@ public class PaymentSettlement {
         // One credit per payment, whichever event or reconciliation run gets here first. The entry id and the
         // transition are recorded together, so a payment is SUCCEEDED exactly when its wallet was credited.
         LedgerPostingResult posted = credit.credit(new CreditCommand(payment.walletId(), payment.amount(), "payment/" + payment.id(),
-                "Stripe top-up " + payment.id(), "topup:" + payment.id(), PaymentActors.STRIPE));
+                "Stripe top-up " + payment.id(), IdempotencyKeys.topUp(payment.id()), PaymentActors.STRIPE));
         payment.succeed(posted.entryId().value(), now);
         payments.update(payment);
         events.publish(new PaymentEvents.PaymentSucceeded(ids.newId(), payment, now));

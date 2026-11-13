@@ -1,5 +1,6 @@
 package dev.ngb.billing.money.application.reservation.command;
 
+import dev.ngb.billing.sharedkernel.error.Messages;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -61,7 +62,7 @@ public class ReserveBudgetUseCase implements ReserveBudget {
         }
         String hash = Fingerprint.of(command.walletId(), command.amount(), command.ttl().toSeconds(), command.reference());
         return unitOfWork.transactional(() -> {
-            Wallet wallet = wallets.lockById(command.walletId()).orElseThrow(() -> new NotFoundException("wallet not found"));
+            Wallet wallet = wallets.lockById(command.walletId()).orElseThrow(() -> Messages.walletNotFound());
             requireVisible(wallet, command.caller());
             var existing = reservations.findByIdempotencyKey(command.idempotencyKey());
             if (existing.isPresent()) {
@@ -86,7 +87,7 @@ public class ReserveBudgetUseCase implements ReserveBudget {
 
     private void requireVisible(Wallet wallet, java.util.UUID caller) {
         if (caller != null && customers.findFor(wallet.customerId(), caller).isEmpty()) {
-            throw new NotFoundException("wallet not found");
+            throw Messages.walletNotFound();
         }
     }
 }

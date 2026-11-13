@@ -1,5 +1,6 @@
 package dev.ngb.tenant.customer.adapter.billing.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.tenant.billing.api.model.BillingSession;
 import dev.ngb.tenant.billing.api.model.Invoice;
 import dev.ngb.tenant.billing.api.model.Payment;
@@ -69,7 +70,7 @@ public class BillingViewController {
     @RequiresPermission(TenantPermissions.TOPUP_CREATE)
     public Payment topUp(
             @AuthenticationPrincipal AuthenticatedUser principal,
-            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @RequestHeader(value = HttpHeaders.IDEMPOTENCY_KEY, required = false) String idempotencyKey,
             @RequestBody TopUpRequest request) {
         return topUp.execute(principal.id(), request.walletId(), request.amount(), request.currency(), idempotencyKey);
     }

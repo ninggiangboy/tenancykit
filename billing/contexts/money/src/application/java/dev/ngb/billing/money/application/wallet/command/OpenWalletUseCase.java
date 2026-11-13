@@ -1,5 +1,7 @@
 package dev.ngb.billing.money.application.wallet.command;
 
+import dev.ngb.core.names.AggregateTargets;
+import dev.ngb.billing.sharedkernel.error.Messages;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -60,7 +62,7 @@ public class OpenWalletUseCase {
         return unitOfWork.transactional(() -> {
             TenantId tenantId = tenantContext.requireTenant();
             CustomerSummary customer = customers.findFor(command.customerId(), command.caller())
-                    .orElseThrow(() -> new NotFoundException("customer not found"));
+                    .orElseThrow(() -> Messages.customerNotFound());
             if (!customer.active()) {
                 throw new ConflictException("the customer is deactivated");
             }
@@ -75,7 +77,7 @@ public class OpenWalletUseCase {
             }
             Wallet wallet = Wallet.open(new WalletId(ids.newId()), tenantId, command.customerId(), command.currency(), command.mode(), limit, clock.now());
             wallets.add(wallet);
-            auditLog.record(AuditEntry.tenant(tenantId, command.audit().actor(), "wallet.opened", "wallet/" + wallet.id(), command.audit().requestId(), clock.now()));
+            auditLog.record(AuditEntry.tenant(tenantId, command.audit().actor(), "wallet.opened", AggregateTargets.wallet(wallet.id()), command.audit().requestId(), clock.now()));
             return new Result(wallet, true);
         });
     }

@@ -3,6 +3,7 @@ package dev.ngb.billing.webhook;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.billing.Application;
+import dev.ngb.core.event.SuiteEventTypes;
 import dev.ngb.billing.money.MoneyTestWorld;
 import dev.ngb.billing.money.MoneyTestWorld.World;
 import dev.ngb.billing.money.api.charge.ChargeCommand;
@@ -55,10 +56,7 @@ import tools.jackson.databind.json.JsonMapper;
 class EventContractIntegrationTest {
 
     /** Event types this test produces through the real code; every schema must have a producer listed here. */
-    private static final Set<String> EMITTED_HERE = Set.of(
-            "reservation.created", "reservation.released", "reservation.expired", "charge.succeeded", "charge.failed", "wallet.credited",
-            "wallet.debited", "ledger.entry-reversed", "customer.created", "pricing-plan.version-published", "pricing-plan.retired", "usage.rated",
-            "payment.succeeded", "payment.failed", "refund.succeeded", "invoice.created", "invoice.paid", "subscription.renewed", "subscription.payment_failed");
+    private static final Set<String> EMITTED_HERE = SuiteEventTypes.billing();
 
     @Autowired MoneyTestWorld worlds;
     @Autowired ScopeTestSupport scopes;
@@ -223,6 +221,12 @@ class EventContractIntegrationTest {
     @Test
     void everySchemaHasAProducerAndEveryProducerHasASchema() {
         assertThat(EventSchemas.types()).containsExactlyInAnyOrderElementsOf(EMITTED_HERE);
+    }
+
+    /** The one list of types the suite shares is exactly the schemas Billing publishes. */
+    @Test
+    void theSharedEventTypesAreBillingSchemas() {
+        assertThat(SuiteEventTypes.billing()).containsExactlyInAnyOrderElementsOf(EventSchemas.types());
     }
 
     @Test

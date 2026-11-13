@@ -1,5 +1,6 @@
 package dev.ngb.billing.money.application.ledger.command;
 
+import dev.ngb.billing.sharedkernel.error.Messages;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -56,8 +57,8 @@ public class ReverseEntryUseCase {
             throw new IllegalArgumentException("a reversal needs a reason");
         }
         return unitOfWork.transactional(() -> {
-            LedgerEntry original = ledger.findById(command.entryId()).orElseThrow(() -> new NotFoundException("ledger entry not found"));
-            Wallet wallet = wallets.lockById(original.walletId()).orElseThrow(() -> new NotFoundException("wallet not found"));
+            LedgerEntry original = ledger.findById(command.entryId()).orElseThrow(() -> Messages.ledgerEntryNotFound());
+            Wallet wallet = wallets.lockById(original.walletId()).orElseThrow(() -> Messages.walletNotFound());
 
             Optional<LedgerEntry> earlier = ledger.findReversalOf(original.id());
             if (earlier.isPresent()) {

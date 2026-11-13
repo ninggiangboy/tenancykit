@@ -1,5 +1,6 @@
 package dev.ngb.platform.access.application.user.command;
 
+import dev.ngb.core.names.AggregateTargets;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
@@ -65,7 +66,7 @@ public class ManageUserPermissionsUseCase {
                     actor.tenantId(),
                     caller.actor(),
                     command.grant() ? "user.permission-granted" : "user.permission-revoked",
-                    "user/" + user.id() + "/permission/" + command.permissionCode(),
+                    AggregateTargets.sub(AggregateTargets.user(user.id()), "permission", command.permissionCode()),
                     caller.requestId(),
                     clock.now()));
             return user;

@@ -9,10 +9,7 @@
     "walletId",
     "entryId",
     "amount",
-    "source",
-    "usageRef",
-    "reservationId",
-    "reference"
+    "source"
   ],
   "additionalProperties": false,
   "properties": {

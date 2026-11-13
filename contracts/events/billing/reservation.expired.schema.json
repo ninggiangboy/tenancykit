@@ -7,8 +7,7 @@
   "required": [
     "reservationId",
     "walletId",
-    "amount",
-    "reference"
+    "amount"
   ],
   "additionalProperties": false,
   "properties": {

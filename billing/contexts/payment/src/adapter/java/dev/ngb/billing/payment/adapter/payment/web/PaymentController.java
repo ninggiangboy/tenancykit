@@ -1,5 +1,6 @@
 package dev.ngb.billing.payment.adapter.payment.web;
 
+import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.payment.adapter.refund.web.RefundController.RefundResponse;
 import dev.ngb.billing.payment.application.payment.command.CreateTopUpUseCase;
 import dev.ngb.billing.payment.application.payment.query.PaymentAttemptView;
@@ -84,7 +85,7 @@ public class PaymentController {
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.PAYMENT_CREATE)
     public ResponseEntity<PaymentResponse> createTopUp(
-            @RequestHeader("Idempotency-Key") String key, @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            @RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String key, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId,
             @RequestBody TopUpRequest request) {
         if (request.currency() == null || request.walletId() == null) {
             throw new IllegalArgumentException("walletId and currency are required");

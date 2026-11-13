@@ -1,5 +1,6 @@
 package dev.ngb.billing.money.domain.charge;
 
+import dev.ngb.core.names.IdempotencyKeys;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.billing.money.api.charge.ChargeId;
 import dev.ngb.billing.money.api.charge.ChargeSource;
@@ -69,7 +70,7 @@ public final class ChargeService {
         long sequence = wallet.post(amount.negate());
         LedgerEntry entry = LedgerEntry.debit(
                 new LedgerEntryId(ids.newId()), wallet.tenantId(), wallet.id(), sequence, amount,
-                new LedgerEntry.Source(request.reference() == null ? "charge:" + chargeId : request.reference(), reservationId, chargeId),
+                new LedgerEntry.Source(request.reference() == null ? IdempotencyKeys.charge(chargeId) : request.reference(), reservationId, chargeId),
                 new LedgerEntry.Origin(request.actor(), null, request.idempotencyKey()), request.now());
         return new Outcome(succeeded, entry);
     }
