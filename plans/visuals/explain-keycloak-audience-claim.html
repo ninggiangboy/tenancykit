@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mục 2 — Keycloak phải ghi đúng claim `aud`</title>
+<style>
+  :root {
+    --bg: #fbfbf9;
+    --surface: #ffffff;
+    --surface-2: #f4f4f0;
+    --ink: #16181d;
+    --ink-2: #4b5260;
+    --ink-3: #6f7684;
+    --line: #e2e2db;
+    --accent: #2b5bd7;
+    --accent-soft: #e8eefc;
+    --warn: #a8530f;
+    --warn-soft: #fdf1e3;
+    --danger: #b3261e;
+    --danger-soft: #fceceb;
+    --ok: #1f7a4d;
+    --ok-soft: #e6f4ec;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px -12px rgba(16,24,40,.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115;
+      --surface: #161a21;
+      --surface-2: #1c212a;
+      --ink: #eceef2;
+      --ink-2: #b3b9c6;
+      --ink-3: #8c94a3;
+      --line: #2a303b;
+      --accent: #7ea2ff;
+      --accent-soft: #1b2640;
+      --warn: #f0b45f;
+      --warn-soft: #2c2418;
+      --danger: #f2857c;
+      --danger-soft: #2f1d1c;
+      --ok: #6ed3a4;
+      --ok-soft: #14291f;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 20px 72px; }
+
+  /* Hero */
+  header.hero {
+    padding: 56px 0 36px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 40px;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-size: clamp(28px, 5vw, 40px);
+    line-height: 1.2;
+    letter-spacing: -.02em;
+    margin: 0 0 16px;
+    font-weight: 680;
+  }
+  h1 code { font-size: .92em; }
+  .lede { font-size: 17px; color: var(--ink-2); margin: 0; max-width: 68ch; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .badge {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  h2 {
+    font-size: 20px;
+    letter-spacing: -.01em;
+    margin: 44px 0 6px;
+    font-weight: 650;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  h2 .num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  h3 { font-size: 15.5px; margin: 0 0 6px; font-weight: 640; }
+  p { margin: 0 0 14px; color: var(--ink-2); }
+  p strong { color: var(--ink); }
+  .section-sub { color: var(--ink-3); font-size: 14px; margin: 0 0 20px; }
+
+  code {
+    font-family: var(--mono);
+    font-size: .875em;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 5px;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  /* Cards */
+  .grid { display: grid; gap: 14px; }
+  .grid.two { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .card .role {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 6px;
+  }
+  .card p { margin: 0; font-size: 14.5px; }
+  .card .path {
+    display: block;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-3);
+    margin-top: 10px;
+    word-break: break-all;
+    white-space: normal;
+  }
+
+  /* Diagram */
+  figure { margin: 0; }
+  .diagram-shell {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 16px 12px;
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+  }
+  svg { display: block; width: 100%; height: auto; min-width: 520px; }
+  figcaption {
+    font-size: 12.5px;
+    color: var(--ink-3);
+    padding: 10px 6px 4px;
+    font-family: var(--mono);
+  }
+
+  /* Steps */
+  ol.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+  ol.steps > li {
+    position: relative;
+    padding: 0 0 22px 52px;
+    counter-increment: step;
+    border-left: 2px solid var(--line);
+    margin-left: 15px;
+  }
+  ol.steps > li:last-child { border-left-color: transparent; padding-bottom: 0; }
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: -16px;
+    top: -2px;
+    width: 30px; height: 30px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  ol.steps h3 { margin-bottom: 4px; }
+  ol.steps p { margin: 0; font-size: 14.5px; }
+
+  /* Code blocks */
+  pre {
+    margin: 0;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--ink);
+    tab-size: 2;
+  }
+  pre .k { color: var(--accent); }
+  pre .s { color: var(--ok); }
+  pre .c { color: var(--ink-3); }
+  .trace-caption {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 8px;
+  }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 460px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); font-weight: 600; background: var(--surface-2); }
+  tr:last-child td { border-bottom: 0; }
+  td code { white-space: normal; }
+
+  /* Alerts */
+  .alert {
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-left-width: 4px;
+    margin-bottom: 12px;
+    background: var(--surface);
+  }
+  .alert h3 { display: flex; gap: 8px; align-items: baseline; }
+  .alert p { margin: 0; font-size: 14.5px; }
+  .alert p + p { margin-top: 8px; }
+  .alert.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+  .alert.warn h3 { color: var(--warn); }
+  .alert.danger { border-left-color: var(--danger); background: var(--danger-soft); }
+  .alert.danger h3 { color: var(--danger); }
+  .alert.ok { border-left-color: var(--ok); background: var(--ok-soft); }
+  .alert.ok h3 { color: var(--ok); }
+  .alert .tag {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid currentColor;
+    opacity: .85;
+    white-space: nowrap;
+  }
+
+  /* Glossary */
+  dl.glossary { margin: 0; display: grid; gap: 12px; }
+  dl.glossary div {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 13px 16px;
+  }
+  dt { font-family: var(--mono); font-size: 13.5px; color: var(--accent); margin-bottom: 3px; }
+  dd { margin: 0; font-size: 14.5px; color: var(--ink-2); }
+
+  footer {
+    margin-top: 56px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--ink-3);
+    font-family: var(--mono);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+  }
+
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+  @media (max-width: 560px) {
+    body { font-size: 15.5px; }
+    header.hero { padding-top: 36px; }
+    ol.steps > li { padding-left: 44px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">ak-explain · Keycloak · JWT audience</p>
+    <h1>Mục 2: Keycloak phải ghi đúng <code>aud</code> vào token</h1>
+    <p class="lede">
+      Tóm lại: mỗi dịch vụ chỉ chấp nhận token <em>được cấp cho chính nó</em>. Keycloak phải thêm
+      <code>platform</code> và <code>billing</code> vào claim <code>aud</code>, nếu không mọi request
+      sẽ bị 401 dù token hoàn toàn hợp lệ.
+    </p>
+    <div class="badges">
+      <span class="badge">audience claim</span>
+      <span class="badge">oidc-audience-mapper</span>
+      <span class="badge">realm-export.json</span>
+      <span class="badge">401 nếu thiếu</span>
+    </div>
+  </header>
+
+  <h2><span class="num">01</span> Bức tranh tổng thể</h2>
+  <p class="section-sub">Token đi từ Keycloak ra console, rồi tới hai cổng kiểm tra độc lập.</p>
+
+  <figure>
+    <div class="diagram-shell">
+      <svg viewBox="0 0 820 300" role="img" aria-labelledby="dg-title dg-desc">
+        <title id="dg-title">Luồng cấp và kiểm tra claim aud</title>
+        <desc id="dg-desc">
+          Người dùng đăng nhập suite-console trên Keycloak. Keycloak cấp access token có aud gồm
+          platform và billing. Console gọi Platform, Platform kiểm tra aud chứa platform. Console gọi
+          Billing, Billing kiểm tra aud chứa billing. Cả hai đều từ chối nếu thiếu.
+        </desc>
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"></path>
+          </marker>
+        </defs>
+        <g fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar)" color="var(--ink-3)">
+          <path d="M 152 92 H 218"></path>
+          <path d="M 360 92 H 424"></path>
+          <path d="M 566 92 C 640 92 640 40 700 40"></path>
+          <path d="M 566 92 C 640 92 640 152 700 152"></path>
+        </g>
+
+        <!-- User -->
+        <g>
+          <rect x="16" y="60" width="136" height="64" rx="12" fill="var(--surface-2)" stroke="var(--line)"></rect>
+          <text x="84" y="88" text-anchor="middle" font-family="var(--sans)" font-size="13.5" font-weight="600" fill="var(--ink)">Người dùng</text>
+          <text x="84" y="107" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--ink-3)">đăng nhập</text>
+        </g>
+
+        <!-- Keycloak -->
+        <g>
+          <rect x="220" y="46" width="140" height="92" rx="12" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"></rect>
+          <text x="290" y="72" text-anchor="middle" font-family="var(--sans)" font-size="13.5" font-weight="600" fill="var(--ink)">Keycloak</text>
+          <text x="290" y="90" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--ink-2)">suite-console</text>
+          <text x="290" y="112" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--ink-2)">aud = [</text>
+          <text x="290" y="128" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--accent)">"platform","billing"</text>
+        </g>
+
+        <!-- Token -->
+        <g>
+          <rect x="364" y="56" width="202" height="66" rx="10" fill="var(--surface)" stroke="var(--line)" stroke-dasharray="4 3"></rect>
+          <text x="465" y="83" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--ink)">access token (JWT)</text>
+          <text x="465" y="102" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--ink-3)">X-Forwarded · Bearer</text>
+        </g>
+
+        <!-- Platform gate -->
+        <g>
+          <rect x="604" y="12" width="200" height="60" rx="12" fill="var(--surface)" stroke="var(--line)"></rect>
+          <text x="704" y="35" text-anchor="middle" font-family="var(--sans)" font-size="13" font-weight="600" fill="var(--ink)">Platform</text>
+          <text x="704" y="54" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--ink-2)">aud.contains("platform")</text>
+        </g>
+
+        <!-- Billing gate -->
+        <g>
+          <rect x="604" y="124" width="200" height="60" rx="12" fill="var(--surface)" stroke="var(--line)"></rect>
+          <text x="704" y="147" text-anchor="middle" font-family="var(--sans)" font-size="13" font-weight="600" fill="var(--ink)">Billing</text>
+          <text x="704" y="166" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--ink-2)">aud.contains("billing")</text>
+        </g>
+
+        <!-- outcomes -->
+        <g font-family="var(--mono)" font-size="10.5">
+          <rect x="604" y="206" width="200" height="34" rx="8" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="1.2"></rect>
+          <text x="704" y="228" text-anchor="middle" fill="var(--ok)">khớp → 200 OK</text>
+          <rect x="604" y="252" width="200" height="34" rx="8" fill="var(--danger-soft)" stroke="var(--danger)" stroke-width="1.2"></rect>
+          <text x="704" y="274" text-anchor="middle" fill="var(--danger)">thiếu → 401</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption>Hai mapper trong realm-export.json bơm hai giá trị audience; mỗi dịch vụ tự kiểm tra phần của mình.</figcaption>
+  </figure>
+
+  <h2><span class="num">02</span> Ai làm gì</h2>
+  <div class="grid two">
+    <div class="card">
+      <div class="role">Cấp token</div>
+      <h3>Keycloak · <code>suite-console</code></h3>
+      <p>Public client dùng PKCE. Đây là nơi duy nhất phát token cho người dùng.</p>
+      <span class="path">ops/keycloak/realm-export.json:29</span>
+    </div>
+    <div class="card">
+      <div class="role">Ghi claim</div>
+      <h3>mapper <code>platform-audience</code></h3>
+      <p><code>included.custom.audience: "platform"</code> · <code>access.token.claim: true</code>, ID token không bị đụng.</p>
+      <span class="path">realm-export.json:62–72</span>
+    </div>
+    <div class="card">
+      <div class="role">Ghi claim</div>
+      <h3>mapper <code>billing-audience</code></h3>
+      <p><code>included.custom.audience: "billing"</code> · cùng cơ chế, chạy độc lập với mapper trên.</p>
+      <span class="path">realm-export.json:73–83</span>
+    </div>
+    <div class="card">
+      <div class="role">Kiểm tra</div>
+      <h3>Platform</h3>
+      <p>Audience hard-code là <code>"platform"</code>, gắn vào mọi decoder (kể cả token nội bộ).</p>
+      <span class="path">SecurityConfiguration.java:51 → PlatformJwtDecoder.withAudience()</span>
+    </div>
+    <div class="card">
+      <div class="role">Kiểm tra</div>
+      <h3>Billing</h3>
+      <p>So <code>aud</code> với <code>suite.app-code</code>, mặc định <code>billing</code>.</p>
+      <span class="path">SuiteJwtDecoders.audience(appCode) · application.yml:147</span>
+    </div>
+    <div class="card">
+      <div class="role">Không liên quan</div>
+      <h3><code>platform-admin</code></h3>
+      <p>Service account để Platform quản lý user trong Keycloak. Nó không gọi API Platform/Billing nên không cần audience mapper.</p>
+      <span class="path">realm-export.json:87</span>
+    </div>
+  </div>
+
+  <h2><span class="num">03</span> Một vòng request</h2>
+  <ol class="steps">
+    <li>
+      <h3>Đăng nhập</h3>
+      <p>Người dùng đăng nhập <code>suite-console</code>; Keycloak chạy luồng authorization code + PKCE.</p>
+    </li>
+    <li>
+      <h3>Cấp token và áp mapper</h3>
+      <p>Access token được tạo, hai mapper audience chạy và ghi <code>"aud": ["platform", "billing"]</code>. Token sống 300 giây (<code>accessTokenLifespan</code>).</p>
+    </li>
+    <li>
+      <h3>Gọi dịch vụ</h3>
+      <p>Console gửi token trong header <code>Authorization: Bearer …</code> tới Platform hoặc Billing.</p>
+    </li>
+    <li>
+      <h3>Xác minh chuỗi</h3>
+      <p>Chọn JWKS theo <code>iss</code> → kiểm tra chữ ký → kiểm tra <code>exp</code>/<code>iat</code> → kiểm tra <code>aud</code> → (tuỳ chọn) kiểm tra <code>iss</code> khớp cấu hình.</p>
+    </li>
+    <li>
+      <h3>Kết luận</h3>
+      <p>Thiếu giá trị audience của mình thì trả <code>401</code> với thông điệp <code>the token is not for …</code>, trước khi chạm tới bất kỳ logic nghiệp vụ nào.</p>
+    </li>
+  </ol>
+
+  <h2><span class="num">04</span> Token thật trông thế nào</h2>
+  <p class="section-sub">Phần payload sau khi decode — chỉ các claim liên quan.</p>
+  <p class="trace-caption">access token payload</p>
+<pre>{
+  <span class="k">"iss"</span>: <span class="s">"http://localhost:8081/realms/billing"</span>,
+  <span class="k">"aud"</span>: [<span class="s">"platform"</span>, <span class="s">"billing"</span>],   <span class="c">// do 2 mapper bơm vào</span>
+  <span class="k">"azp"</span>: <span class="s">"suite-console"</span>,
+  <span class="k">"sub"</span>: <span class="s">"8f3c…"</span>,
+  <span class="k">"exp"</span>: 1763030400,                 <span class="c">// iat + 300s</span>
+  <span class="k">"tenant_code"</span>: <span class="s">"acme"</span>            <span class="c">// mapper riêng của realm</span>
+}</pre>
+
+  <div class="grid two" style="margin-top:14px">
+    <div class="alert ok" style="margin-bottom:0">
+      <h3>Ví dụ qua cổng</h3>
+      <p><code>GET /api/v1/me</code> trên Platform với token trên → <code>aud</code> chứa <code>platform</code> → 200.</p>
+    </div>
+    <div class="alert danger" style="margin-bottom:0">
+      <h3>Ví dụ bị chặn</h3>
+      <p>Thêm client <code>reporting-app</code> mà quên gắn mapper → token có <code>aud</code> khác → gọi Platform lẫn Billing đều 401.</p>
+    </div>
+  </div>
+
+  <h2><span class="num">05</span> Vì sao phải kiểm tra</h2>
+  <p>
+    Không có kiểm tra <code>aud</code>, một token cấp cho dịch vụ A vẫn dùng được để gọi dịch vụ B —
+    biến mọi dịch vụ tin cậy thành bàn đạp. Kiểm tra <code>aud</code> giới hạn phạm vi sử dụng của token
+    đúng bằng nơi nó được cấp.
+  </p>
+
+  <h2><span class="num">06</span> Cảnh báo &amp; điểm chưa chứng minh</h2>
+
+  <div class="alert warn">
+    <h3><span>Chưa có test với token Keycloak thật</span> <span class="tag">CHƯA KIỂM CHỨNG</span></h3>
+    <p>
+      Test của Platform chạy với <code>platform.users.jwk-set-uri</code> rỗng (chỉ nhận suite token), test của Billing
+      dùng token tự ký. Kết luận "đăng nhập thật rồi gọi được" hiện dựa trên đọc cấu hình, chưa dựa trên một lần chạy.
+    </p>
+  </div>
+
+  <div class="alert warn">
+    <h3><span>Rủi ro issuer khi chạy trong Docker</span> <span class="tag">CẦN KIỂM TRA</span></h3>
+    <p>
+      Nếu bật <code>PLATFORM_OIDC_ISSUER_URI</code>, giá trị phải bằng đúng <code>iss</code> trong token.
+      Trong Docker, URL nội bộ (<code>http://keycloak:8080/…</code>) khác URL trình duyệt thấy
+      (<code>http://localhost:8081/…</code>), và Keycloak ghi <code>iss</code> theo URL mà client dùng.
+    </p>
+    <p><strong>Cách làm an toàn:</strong> copy nguyên giá trị <code>iss</code> từ một token thật thay vì tự ghép URL.</p>
+  </div>
+
+  <div class="alert danger">
+    <h3><span>Thêm client mới = phải thêm mapper</span> <span class="tag">BẪY VẬN HÀNH</span></h3>
+    <p>
+      Bất kỳ client nào muốn gọi Platform/Billing đều cần mapper audience riêng. Thiếu mapper thì lỗi
+      là 401 ở tầng xác thực, không phải lỗi quyền — dễ chẩn đoán nhầm thành sai mật khẩu.
+    </p>
+  </div>
+
+  <h2><span class="num">07</span> Từ điển nhanh</h2>
+  <dl class="glossary">
+    <div>
+      <dt>aud (audience)</dt>
+      <dd>Claim nói token này được cấp cho (những) dịch vụ nào. Một mảng chuỗi.</dd>
+    </div>
+    <div>
+      <dt>iss (issuer)</dt>
+      <dd>Ai phát hành token. Dùng để chọn đúng bộ khoá công khai (JWKS) khi xác minh chữ ký.</dd>
+    </div>
+    <div>
+      <dt>JWKS</dt>
+      <dd>Bộ khoá công khai để kiểm tra chữ ký JWT mà không cần chia sẻ khoá bí mật.</dd>
+    </div>
+    <div>
+      <dt>oidc-audience-mapper</dt>
+      <dd>Loại protocol mapper của Keycloak: thêm một giá trị vào <code>aud</code> khi phát token.</dd>
+    </div>
+  </dl>
+
+  <footer>
+    <span>nguồn: realm-export.json · PlatformJwtDecoder · SecurityConfiguration · SuiteJwtDecoders · application.yml</span>
+    <span>offline · không phụ thuộc mạng</span>
+  </footer>
+</div>
+</body>
+</html>
