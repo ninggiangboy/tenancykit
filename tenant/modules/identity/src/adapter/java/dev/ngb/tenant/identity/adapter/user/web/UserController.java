@@ -1,15 +1,16 @@
 package dev.ngb.tenant.identity.adapter.user.web;
 
 import dev.ngb.tenant.identity.api.security.AuthenticatedUser;
-import dev.ngb.tenant.identity.api.security.Permission;
-import dev.ngb.tenant.identity.api.security.RequiresPermission;
 import dev.ngb.tenant.identity.api.security.Role;
+import dev.ngb.tenant.identity.api.security.TenantPermissions;
 import dev.ngb.tenant.identity.application.user.command.ManageUsersUseCase;
 import dev.ngb.tenant.identity.application.user.command.RegisterUserUseCase;
 import dev.ngb.tenant.identity.application.user.query.UserReadRepository;
 import dev.ngb.tenant.identity.application.user.query.UserView;
 import dev.ngb.tenant.identity.domain.user.User;
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.security.Authenticated;
+import dev.ngb.core.security.RequiresPermission;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -54,25 +55,26 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @Authenticated
     public UserResponse me(@AuthenticationPrincipal AuthenticatedUser principal) {
         return UserResponse.of(users.byId(principal.id()).orElseThrow(() -> new NotFoundException("user not found")));
     }
 
     @GetMapping
-    @RequiresPermission(Permission.USER_MANAGE)
+    @RequiresPermission(TenantPermissions.USER_MANAGE)
     public List<UserResponse> list() {
         return users.list().stream().map(UserResponse::of).toList();
     }
 
     @GetMapping("/{id}")
-    @RequiresPermission(Permission.USER_MANAGE)
+    @RequiresPermission(TenantPermissions.USER_MANAGE)
     public UserResponse get(@PathVariable UUID id) {
         return UserResponse.of(users.byId(id).orElseThrow(() -> new NotFoundException("user not found")));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresPermission(Permission.USER_MANAGE)
+    @RequiresPermission(TenantPermissions.USER_MANAGE)
     public UserResponse create(@RequestBody CreateUserRequest request) {
         User user = register.execute(new RegisterUserUseCase.Command(
                 request.email(), request.displayName(), request.password(), request.role()));
@@ -80,13 +82,13 @@ public class UserController {
     }
 
     @PutMapping("/{id}/role")
-    @RequiresPermission(Permission.USER_MANAGE)
+    @RequiresPermission(TenantPermissions.USER_MANAGE)
     public UserResponse changeRole(@PathVariable UUID id, @RequestBody ChangeRoleRequest request) {
         return UserResponse.of(manage.changeRole(id, request.role()));
     }
 
     @PostMapping("/{id}/deactivate")
-    @RequiresPermission(Permission.USER_MANAGE)
+    @RequiresPermission(TenantPermissions.USER_MANAGE)
     public UserResponse deactivate(@PathVariable UUID id) {
         return UserResponse.of(manage.deactivate(id));
     }

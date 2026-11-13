@@ -1,7 +1,8 @@
 package dev.ngb.tenant.webhook.adapter.event.web;
 
+import dev.ngb.core.security.PublicEndpoint;
+import dev.ngb.tenant.webhook.api.event.WebhookEnvelope;
 import dev.ngb.tenant.webhook.application.event.command.ReceiveWebhookUseCase;
-import dev.ngb.tenant.webhook.application.event.service.WebhookEnvelope;
 import java.time.Instant;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -35,6 +36,7 @@ public class WebhookController {
     }
 
     @PostMapping(value = "/webhooks/billing", consumes = "application/json")
+    @PublicEndpoint
     public ResponseEntity<Void> receive(
             @RequestHeader(value = "Billing-Event-Id", required = false) String eventId,
             @RequestHeader(value = "Billing-Event-Type", required = false) String eventType,

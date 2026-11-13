@@ -1,5 +1,7 @@
 package dev.ngb.tenant.identity.adapter.session.web;
 
+import dev.ngb.core.security.Authenticated;
+import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.tenant.identity.api.security.Role;
 import dev.ngb.tenant.identity.application.session.command.AuthenticateUseCase;
 import dev.ngb.tenant.identity.application.user.command.RegisterUserUseCase;
@@ -44,6 +46,7 @@ public class AuthController {
     /** The first account of this tenant becomes its administrator; every later self-registration is a viewer. */
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
+    @PublicEndpoint
     public UserView register(@RequestBody RegisterRequest request) {
         User user = register.execute(new RegisterUserUseCase.Command(
                 request.email(), request.displayName(), request.password(), null));
@@ -51,6 +54,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @PublicEndpoint
     public LoginResponse login(@RequestBody LoginRequest request) {
         AuthenticateUseCase.Result result = authenticate.execute(request.email(), request.password());
         return new LoginResponse(result.token(), result.expiresAt(), UserView.of(result.user()));
@@ -58,6 +62,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Authenticated
     public void logout(@RequestHeader(value = "Authorization", required = false) String authorization) {
         sessions.logout(bearer(authorization));
     }

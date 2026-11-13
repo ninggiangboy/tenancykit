@@ -11,6 +11,7 @@ import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.tenancy.application.entitlement.exception.UnknownAppException;
 import dev.ngb.platform.tenancy.application.entitlement.port.AppCatalog;
 import dev.ngb.platform.tenancy.application.entitlement.port.AppEntitlementRepository;
+import dev.ngb.platform.tenancy.application.entitlement.service.EntitlementRows;
 import dev.ngb.platform.tenancy.application.tenant.exception.TenantNotFoundException;
 import dev.ngb.platform.tenancy.application.tenant.port.TenantRepository;
 import dev.ngb.platform.tenancy.domain.entitlement.AppEntitlement;

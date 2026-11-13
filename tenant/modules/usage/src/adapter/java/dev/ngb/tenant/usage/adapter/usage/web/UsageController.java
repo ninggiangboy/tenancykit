@@ -2,8 +2,8 @@ package dev.ngb.tenant.usage.adapter.usage.web;
 
 import dev.ngb.tenant.customer.api.lookup.CustomerDirectory;
 import dev.ngb.tenant.identity.api.security.AuthenticatedUser;
-import dev.ngb.tenant.identity.api.security.Permission;
-import dev.ngb.tenant.identity.api.security.RequiresPermission;
+import dev.ngb.tenant.identity.api.security.TenantPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.tenant.usage.application.usage.query.UsageQueries;
 import dev.ngb.tenant.usage.application.usage.query.UsageRecordView;
 import java.time.Instant;
@@ -50,7 +50,7 @@ public class UsageController {
     }
 
     @GetMapping
-    @RequiresPermission(Permission.USAGE_READ)
+    @RequiresPermission(TenantPermissions.USAGE_READ)
     public List<UsageResponse> usage(@AuthenticationPrincipal AuthenticatedUser principal) {
         String billingCustomerId = customers.byUserId(principal.id()).billingCustomerId();
         if (billingCustomerId == null) {

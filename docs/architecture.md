@@ -167,6 +167,7 @@ and `tenant/` include with `includeBuild("../core")`:
 | `core-platform-sync` | `SnapshotClient`, `ReplicaBootstrap` and `ReplicaProperties`: pages Platform's snapshot and rebuilds the replica from it |
 | `core-suite` | `SuiteJwtDecoders`, `SuiteHostResolver`, `SuiteActorResolver`, `SuiteTenantFilter`, `SuiteEntitlementFilter` and `SuiteEntitlements`: what a request must satisfy to be a member of the suite |
 | `core-feign` | The shared HTTP client plumbing: `FeignClients`, the `JacksonCodec`, the `LinearRetryer`, the `TokenProvider` and its client-credentials implementation, the contract and the `StatusFeignErrorMapper` base |
+| `core-arch` | The shared architecture rule set, `ArchitectureRules`, parameterised by a per-service profile; it exports `archunit-junit5` so a service writes its own tests against the same rules |
 
 Its root package is `dev.ngb.core`, outside every service's root, so Modulith does not see it. ArchUnit holds each
 core module to "the JDK, the core and (for the framework modules) the framework", and none may name a service type.
@@ -177,7 +178,7 @@ Decisions:
 - The Java root packages are `dev.ngb.platform`, `dev.ngb.billing` and `dev.ngb.tenant`; each build's Modulith
   discovers its modules by that root. The Gradle group is `dev.ngb` everywhere; the core is found by its coordinates
   (`dev.ngb:core-kernel`, `dev.ngb:core-spring`, `dev.ngb:core-messaging`, `dev.ngb:core-replica`,
-  `dev.ngb:core-platform-sync`, `dev.ngb:core-suite`, `dev.ngb:core-feign`).
+  `dev.ngb:core-platform-sync`, `dev.ngb:core-suite`, `dev.ngb:core-feign`, `dev.ngb:core-arch`).
 - `money` owns Wallet, Ledger, Reservation and Charge, so the whole money path commits in one transaction that
   includes its outbox row.
 - `shared-kernel` holds only a service's business value objects and stays small; a growing kernel is split, not
@@ -190,8 +191,24 @@ Decisions:
   business rules. Persistence types live in the adapter; a domain type never names a jOOQ type. A read repository
   selects directly into an immutable view and never builds an aggregate. An ArchUnit rule keeps a context's adapters
   on the tables it owns.
-- A module exposes a public `api` package. Another context may depend only on that package, and only the money path
-  may call another context's business operations synchronously.
+- A module exposes a public `api` package: an interface or a read model that another module and `app-boot`'s
+  non-wiring adapters bind to. Another context may depend only on that package, and only the money path may call
+  another context's business operations synchronously. `billing/contexts/invoicing` and `billing/contexts/webhook`
+  are the documented exception: their read models carry the context's domain vocabulary (status enums, money) and the
+  pricing api, so moving them behind `api` would either leak the domain into the contract or make the contract layer
+  see another module. Their read side stays in `application...query` until the read model is reshaped for its callers.
+  `platform/contexts/access`, `platform/contexts/integration`, `tenant/modules/execution` and `tenant/modules/webhook`
+  were moved in phase 7 of the refactor review.
+- The architecture rule set itself is shared: `core-arch` holds the generic rules parameterised by each service's
+  profile (root package, context or module, kernel, generated jOOQ package, table owners, allowed query domain types,
+  the packages persistence may appear in, and the two dated allowlists below), and every service runs those rule ids
+  plus its own documented extras. `ArchitectureMetaTest` in each service proves each rule still fails on its fixture
+  in `testing/arch-fixtures`, so a rule cannot be weakened or removed from one service alone.
+- Two dated allowlists exist in phase 7, both with a 2026-01-31 follow-up: Platform's `ResolveHostUseCase` reads
+  through the tenancy read side while it moves onto a port of its own
+  (`write-side-does-not-depend-on-query`), and the sample tenant system's seven use cases that do not open a unit of
+  work while they are wrapped or recorded as read-only (`use-case-opens-a-unit-of-work`). Both are named on the
+  service's `ArchitectureRules` profile.
 
 ## Text conventions
 

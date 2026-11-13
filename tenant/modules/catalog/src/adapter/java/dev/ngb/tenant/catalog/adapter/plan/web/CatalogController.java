@@ -3,8 +3,8 @@ package dev.ngb.tenant.catalog.adapter.plan.web;
 import dev.ngb.tenant.catalog.application.plan.query.CatalogQueries;
 import dev.ngb.tenant.catalog.application.plan.query.PlanView;
 import dev.ngb.tenant.catalog.domain.plan.ResourceType;
-import dev.ngb.tenant.identity.api.security.Permission;
-import dev.ngb.tenant.identity.api.security.RequiresPermission;
+import dev.ngb.tenant.identity.api.security.TenantPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** The offer catalog the ordering screens read. */
+/** The offer catalog the ordering screens read. Every endpoint declares its own access rule, because only a method
+ * annotation is enforced; a class-level one would leave each endpoint open. */
 @RestController
 @RequestMapping("/api/catalog")
-@RequiresPermission(Permission.ORDER_READ)
 public class CatalogController {
 
     public record PlanResponse(
@@ -60,16 +60,19 @@ public class CatalogController {
     }
 
     @GetMapping("/plans")
+    @RequiresPermission(TenantPermissions.ORDER_READ)
     public List<PlanResponse> plans() {
         return queries.listActive().stream().map(PlanResponse::of).toList();
     }
 
     @GetMapping("/plans/{id}")
+    @RequiresPermission(TenantPermissions.ORDER_READ)
     public PlanResponse plan(@PathVariable UUID id) {
         return PlanResponse.of(queries.plan(id));
     }
 
     @GetMapping("/resource-types")
+    @RequiresPermission(TenantPermissions.ORDER_READ)
     public List<ResourceTypeResponse> resourceTypes() {
         return Arrays.stream(ResourceType.values()).map(ResourceTypeResponse::of).toList();
     }

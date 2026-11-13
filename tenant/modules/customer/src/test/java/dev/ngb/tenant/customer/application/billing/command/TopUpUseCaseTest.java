@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.tenant.billing.api.model.Payment;
-import dev.ngb.tenant.customer.application.billing.BillingFakes;
+import dev.ngb.tenant.customer.application.billing.command.BillingFakes;
 import dev.ngb.core.error.BadRequestException;
 import dev.ngb.core.error.NotFoundException;
 import org.junit.jupiter.api.Test;

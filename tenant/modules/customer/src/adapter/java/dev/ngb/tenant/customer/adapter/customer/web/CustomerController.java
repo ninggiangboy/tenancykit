@@ -5,8 +5,9 @@ import dev.ngb.tenant.customer.application.customer.query.CustomerQueries;
 import dev.ngb.tenant.customer.application.customer.query.CustomerView;
 import dev.ngb.tenant.customer.domain.customer.Customer;
 import dev.ngb.tenant.identity.api.security.AuthenticatedUser;
-import dev.ngb.tenant.identity.api.security.Permission;
-import dev.ngb.tenant.identity.api.security.RequiresPermission;
+import dev.ngb.tenant.identity.api.security.TenantPermissions;
+import dev.ngb.core.security.Authenticated;
+import dev.ngb.core.security.RequiresPermission;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -62,24 +63,25 @@ public class CustomerController {
     }
 
     @GetMapping("/me")
+    @Authenticated
     public CustomerResponse me(@AuthenticationPrincipal AuthenticatedUser principal) {
         return CustomerResponse.of(queries.byUser(principal.id()));
     }
 
     @GetMapping
-    @RequiresPermission(Permission.USER_MANAGE)
+    @RequiresPermission(TenantPermissions.USER_MANAGE)
     public List<CustomerResponse> list() {
         return queries.list().stream().map(CustomerResponse::of).toList();
     }
 
     @GetMapping("/{id}")
-    @RequiresPermission(Permission.CUSTOMER_MANAGE)
+    @RequiresPermission(TenantPermissions.CUSTOMER_MANAGE)
     public CustomerResponse get(@PathVariable UUID id) {
         return CustomerResponse.of(queries.byId(id));
     }
 
     @PostMapping("/{id}/mapping")
-    @RequiresPermission(Permission.CUSTOMER_MANAGE)
+    @RequiresPermission(TenantPermissions.CUSTOMER_MANAGE)
     public CustomerResponse retryMapping(@PathVariable UUID id) {
         return CustomerResponse.of(register.retry(id));
     }

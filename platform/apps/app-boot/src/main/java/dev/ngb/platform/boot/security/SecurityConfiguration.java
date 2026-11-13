@@ -4,7 +4,7 @@ import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.tenancy.TenantContext;
-import dev.ngb.platform.access.application.user.query.MeQueries;
+import dev.ngb.platform.access.api.user.MeQueries;
 import dev.ngb.platform.access.application.permission.port.PermissionCatalog;
 import dev.ngb.core.security.Authorizer;
 import dev.ngb.core.security.CurrentActor;

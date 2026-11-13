@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.tenant.billing.api.model.Invoice;
 import dev.ngb.tenant.billing.api.model.Payment;
-import dev.ngb.tenant.customer.application.billing.BillingFakes;
+import dev.ngb.tenant.customer.application.billing.command.BillingFakes;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 

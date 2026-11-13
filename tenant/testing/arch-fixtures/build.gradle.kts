@@ -9,4 +9,5 @@ dependencies {
     compileOnly("jakarta.persistence:jakarta.persistence-api")
     compileOnly("org.jooq:jooq")
     compileOnly(project(":libs:jooq-schema"))
+    compileOnly("dev.ngb:core-kernel")
 }

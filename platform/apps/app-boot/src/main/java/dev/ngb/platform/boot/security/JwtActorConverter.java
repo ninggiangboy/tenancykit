@@ -6,7 +6,7 @@ import dev.ngb.core.security.ActorType;
 import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.core.tenancy.TenantContext;
-import dev.ngb.platform.access.application.user.query.MeQueries;
+import dev.ngb.platform.access.api.user.MeQueries;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Set;

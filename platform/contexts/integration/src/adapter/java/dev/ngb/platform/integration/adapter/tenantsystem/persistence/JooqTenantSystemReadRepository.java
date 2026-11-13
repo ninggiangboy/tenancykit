@@ -2,9 +2,8 @@ package dev.ngb.platform.integration.adapter.tenantsystem.persistence;
 
 import static dev.ngb.platform_jooq.Tables.TENANT_SYSTEMS;
 
-import dev.ngb.platform.integration.application.tenantsystem.query.TenantSystemReadRepository;
-import dev.ngb.platform.integration.application.tenantsystem.query.TenantSystemView;
-import dev.ngb.platform.integration.domain.tenantsystem.TenantSystemStatus;
+import dev.ngb.platform.integration.api.tenantsystem.TenantSystemReadRepository;
+import dev.ngb.platform.integration.api.tenantsystem.TenantSystemView;
 import dev.ngb.platform_jooq.tables.records.TenantSystemsRecord;
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +45,6 @@ public class JooqTenantSystemReadRepository implements TenantSystemReadRepositor
 
     private static TenantSystemView toView(TenantSystemsRecord row) {
         return new TenantSystemView(
-                row.getId(), row.getTenantId(), row.getName(), TenantSystemStatus.valueOf(row.getStatus()), row.getCreatedAt(), row.getVersion());
+                row.getId(), row.getTenantId(), row.getName(), row.getStatus(), row.getCreatedAt(), row.getVersion());
     }
 }

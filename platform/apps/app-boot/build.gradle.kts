@@ -27,6 +27,8 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation(project(":testing:arch-fixtures"))
+    // The shared architecture rule set every service runs, so the three services cannot drift apart.
+    testImplementation("dev.ngb:core-arch")
     // The core rules cover every shared module, including the one Platform does not call with.
     testImplementation("dev.ngb:core-feign")
     // Generates the jOOQ schema from the migrations for the drift test.

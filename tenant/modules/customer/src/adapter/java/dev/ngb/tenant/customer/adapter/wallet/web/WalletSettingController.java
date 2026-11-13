@@ -4,8 +4,8 @@ import dev.ngb.tenant.customer.application.wallet.command.ManageWalletSettingUse
 import dev.ngb.tenant.customer.domain.wallet.CustomerWalletSetting;
 import dev.ngb.tenant.customer.domain.wallet.WalletMode;
 import dev.ngb.tenant.identity.api.security.AuthenticatedUser;
-import dev.ngb.tenant.identity.api.security.Permission;
-import dev.ngb.tenant.identity.api.security.RequiresPermission;
+import dev.ngb.tenant.identity.api.security.TenantPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,13 +42,13 @@ public class WalletSettingController {
     }
 
     @GetMapping
-    @RequiresPermission(Permission.BILLING_READ)
+    @RequiresPermission(TenantPermissions.BILLING_READ)
     public SettingResponse current(@AuthenticationPrincipal AuthenticatedUser principal) {
         return SettingResponse.of(settings.current(principal.id()));
     }
 
     @PutMapping
-    @RequiresPermission(Permission.SETTINGS_MANAGE)
+    @RequiresPermission(TenantPermissions.SETTINGS_MANAGE)
     public SettingResponse update(
             @AuthenticationPrincipal AuthenticatedUser principal, @RequestBody UpdateRequest request) {
         return SettingResponse.of(

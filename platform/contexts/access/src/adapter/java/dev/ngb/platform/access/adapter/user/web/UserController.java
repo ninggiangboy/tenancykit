@@ -7,7 +7,7 @@ import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.user.command.CreateUserUseCase;
 import dev.ngb.platform.access.application.user.command.ManageUserPermissionsUseCase;
 import dev.ngb.platform.access.application.user.command.ManageUserUseCase;
-import dev.ngb.platform.access.application.user.query.UserQueries;
+import dev.ngb.platform.access.api.user.UserQueries;
 import dev.ngb.platform.access.domain.user.User;
 import dev.ngb.platform.access.domain.user.UserId;
 import java.util.List;

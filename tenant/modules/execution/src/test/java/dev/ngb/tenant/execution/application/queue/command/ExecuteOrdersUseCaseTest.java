@@ -10,6 +10,7 @@ import dev.ngb.tenant.billing.api.model.Charge;
 import dev.ngb.tenant.billing.api.model.ChargeUsageRequest;
 import dev.ngb.tenant.billing.api.model.Rating;
 import dev.ngb.tenant.billing.api.model.Reservation;
+import dev.ngb.tenant.execution.api.queue.ExecuteOrders;
 import dev.ngb.tenant.resource.api.execution.ExecutionQueue;
 import dev.ngb.tenant.resource.api.execution.ExecutionOrders;
 import dev.ngb.core.error.UpstreamUnavailableException;
@@ -37,9 +38,9 @@ class ExecuteOrdersUseCaseTest {
 
     @Test
     void runsRecordsUsageCapturesReleasesAndCompletes() {
-        ExecuteOrdersUseCase.Report report = execute.run(10);
+        ExecuteOrders.Report report = execute.run(10);
 
-        assertThat(report).isEqualTo(new ExecuteOrdersUseCase.Report(1, 1, 0, 0));
+        assertThat(report).isEqualTo(new ExecuteOrders.Report(1, 1, 0, 0));
         assertThat(orders.status).isEqualTo("COMPLETED");
         assertThat(usage.commands).hasSize(1);
         assertThat(charges.captured).isTrue();
@@ -65,9 +66,9 @@ class ExecuteOrdersUseCaseTest {
     void aFailedChargeMarksTheOrderFailedAndReleasesTheHold() {
         charges.failCharge = true;
 
-        ExecuteOrdersUseCase.Report report = execute.run(10);
+        ExecuteOrders.Report report = execute.run(10);
 
-        assertThat(report).isEqualTo(new ExecuteOrdersUseCase.Report(1, 0, 1, 0));
+        assertThat(report).isEqualTo(new ExecuteOrders.Report(1, 0, 1, 0));
         assertThat(orders.status).isEqualTo("FAILED");
         assertThat(orders.failureReason).isEqualTo("insufficient_funds");
         assertThat(charges.released).isTrue();
@@ -79,9 +80,9 @@ class ExecuteOrdersUseCaseTest {
         usage.fail = true;
         queue.claimed.add(new ExecutionQueue.Claimed(ORDER_ID, 1));
 
-        ExecuteOrdersUseCase.Report report = execute.run(10);
+        ExecuteOrders.Report report = execute.run(10);
 
-        assertThat(report).isEqualTo(new ExecuteOrdersUseCase.Report(1, 0, 0, 1));
+        assertThat(report).isEqualTo(new ExecuteOrders.Report(1, 0, 0, 1));
         assertThat(orders.status).isEqualTo("QUEUED");
         assertThat(queue.requeued).isTrue();
     }
@@ -91,9 +92,9 @@ class ExecuteOrdersUseCaseTest {
         usage.fail = true;
         queue.claimed.add(new ExecutionQueue.Claimed(ORDER_ID, 3));
 
-        ExecuteOrdersUseCase.Report report = execute.run(10);
+        ExecuteOrders.Report report = execute.run(10);
 
-        assertThat(report).isEqualTo(new ExecuteOrdersUseCase.Report(1, 0, 1, 0));
+        assertThat(report).isEqualTo(new ExecuteOrders.Report(1, 0, 1, 0));
         assertThat(orders.status).isEqualTo("FAILED");
         assertThat(queue.finished).isTrue();
     }
@@ -115,7 +116,7 @@ class ExecuteOrdersUseCaseTest {
         orders.estimated = 0;
         orders.reservationId = null;
 
-        ExecuteOrdersUseCase.Report report = execute.run(10);
+        ExecuteOrders.Report report = execute.run(10);
 
         assertThat(report.completed()).isEqualTo(1);
         assertThat(usage.commands).hasSize(1);

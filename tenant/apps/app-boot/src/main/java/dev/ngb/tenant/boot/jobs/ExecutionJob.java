@@ -1,6 +1,6 @@
 package dev.ngb.tenant.boot.jobs;
 
-import dev.ngb.tenant.execution.application.queue.command.ExecuteOrdersUseCase;
+import dev.ngb.tenant.execution.api.queue.ExecuteOrders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,17 +15,17 @@ class ExecutionJob {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExecutionJob.class);
 
-    private final ExecuteOrdersUseCase execute;
+    private final ExecuteOrders execute;
     private final int batchSize;
 
-    ExecutionJob(ExecuteOrdersUseCase execute, @Value("${tenant.execution.batch-size:10}") int batchSize) {
+    ExecutionJob(ExecuteOrders execute, @Value("${tenant.execution.batch-size:10}") int batchSize) {
         this.execute = execute;
         this.batchSize = batchSize;
     }
 
     @Scheduled(fixedDelayString = "${tenant.execution.poll-delay:PT2S}")
     public void tick() {
-        ExecuteOrdersUseCase.Report report = execute.run(batchSize);
+        ExecuteOrders.Report report = execute.run(batchSize);
         if (report.claimed() > 0) {
             LOG.info(
                     "execution: claimed {}, completed {}, failed {}, retried {}",

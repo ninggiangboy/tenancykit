@@ -5,6 +5,8 @@ import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.tenant.billing.api.client.BillingCharges;
 import dev.ngb.tenant.billing.api.model.Charge;
 import dev.ngb.tenant.billing.api.model.ChargeUsageRequest;
+import dev.ngb.tenant.execution.api.queue.ExecuteOrders;
+import dev.ngb.tenant.execution.api.queue.ExecuteOrders.Report;
 import dev.ngb.tenant.resource.api.execution.ExecutionOrders;
 import dev.ngb.tenant.resource.api.execution.ExecutionQueue;
 import dev.ngb.tenant.usage.api.recording.UsageRecorder;
@@ -19,9 +21,7 @@ import java.util.UUID;
  * and the terminal status commit together or not at all. A failure is requeued up to a bound so a
  * Billing outage does not lose the order.
  */
-public class ExecuteOrdersUseCase {
-
-    public record Report(int claimed, int completed, int failed, int retried) {}
+public class ExecuteOrdersUseCase implements ExecuteOrders {
 
     private final ExecutionQueue queue;
     private final ExecutionOrders orders;
@@ -48,6 +48,7 @@ public class ExecuteOrdersUseCase {
         this.maxAttempts = maxAttempts;
     }
 
+    @Override
     public Report run(int batchSize) {
         List<ExecutionQueue.Claimed> claimed = queue.claim(batchSize);
         int completed = 0;

@@ -5,9 +5,9 @@ import static dev.ngb.platform_jooq.Tables.ROLE_PERMISSIONS;
 import static dev.ngb.platform_jooq.Tables.USERS;
 import static dev.ngb.platform_jooq.Tables.USER_PERMISSIONS;
 
-import dev.ngb.platform.access.application.user.query.UserAccessView;
-import dev.ngb.platform.access.application.user.query.UserReadRepository;
-import dev.ngb.platform.access.application.user.query.UserView;
+import dev.ngb.platform.access.api.user.UserAccessView;
+import dev.ngb.platform.access.api.user.UserReadRepository;
+import dev.ngb.platform.access.api.user.UserView;
 import dev.ngb.platform_jooq.tables.records.UsersRecord;
 import java.util.HashSet;
 import java.util.List;

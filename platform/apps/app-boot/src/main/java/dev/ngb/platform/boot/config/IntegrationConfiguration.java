@@ -24,8 +24,8 @@ import dev.ngb.platform.integration.application.credential.query.CredentialQueri
 import dev.ngb.platform.integration.application.credential.query.CredentialReadRepository;
 import dev.ngb.platform.integration.application.tenantsystem.command.ManageTenantSystemUseCase;
 import dev.ngb.platform.integration.application.tenantsystem.port.TenantSystemRepository;
-import dev.ngb.platform.integration.application.tenantsystem.query.TenantSystemQueries;
-import dev.ngb.platform.integration.application.tenantsystem.query.TenantSystemReadRepository;
+import dev.ngb.platform.integration.api.tenantsystem.TenantSystemQueries;
+import dev.ngb.platform.integration.api.tenantsystem.TenantSystemReadRepository;
 import dev.ngb.platform.integration.application.token.command.IssueTokenUseCase;
 import dev.ngb.platform.integration.application.token.port.TenantCodes;
 import dev.ngb.platform.integration.application.token.port.TokenIssuer;

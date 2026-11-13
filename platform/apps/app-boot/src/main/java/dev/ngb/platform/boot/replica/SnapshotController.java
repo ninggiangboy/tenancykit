@@ -2,10 +2,10 @@ package dev.ngb.platform.boot.replica;
 
 import dev.ngb.core.replica.ReplicaStream;
 import dev.ngb.core.security.RequiresPermission;
-import dev.ngb.platform.access.application.user.query.UserAccessView;
-import dev.ngb.platform.access.application.user.query.UserQueries;
-import dev.ngb.platform.integration.application.tenantsystem.query.TenantSystemQueries;
-import dev.ngb.platform.integration.application.tenantsystem.query.TenantSystemView;
+import dev.ngb.platform.access.api.user.UserAccessView;
+import dev.ngb.platform.access.api.user.UserQueries;
+import dev.ngb.platform.integration.api.tenantsystem.TenantSystemQueries;
+import dev.ngb.platform.integration.api.tenantsystem.TenantSystemView;
 import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementQueries;
 import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementView;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantDomainView;

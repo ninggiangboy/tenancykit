@@ -19,7 +19,7 @@ import dev.ngb.platform.access.application.role.command.ManageRoleUseCase;
 import dev.ngb.platform.access.application.tenant.command.ProvisionTenantUseCase;
 import dev.ngb.platform.access.application.user.command.CreateUserUseCase;
 import dev.ngb.platform.access.application.user.command.ManageUserPermissionsUseCase;
-import dev.ngb.platform.access.application.user.query.UserQueries;
+import dev.ngb.platform.access.api.user.UserQueries;
 import dev.ngb.platform.access.domain.role.Role;
 import dev.ngb.platform.access.domain.user.User;
 import dev.ngb.platform.support.OwnerDatabase;

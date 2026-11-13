@@ -39,6 +39,8 @@ dependencies {
     testImplementation(libs.spring.modulith.core)
     testImplementation(libs.spring.modulith.docs)
     testImplementation(project(":testing:arch-fixtures"))
+    // The shared architecture rule set every service runs, so the three services cannot drift apart.
+    testImplementation("dev.ngb:core-arch")
 }
 
 tasks.test {

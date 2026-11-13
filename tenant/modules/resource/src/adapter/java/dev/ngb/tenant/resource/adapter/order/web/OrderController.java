@@ -1,9 +1,9 @@
 package dev.ngb.tenant.resource.adapter.order.web;
 
 import dev.ngb.tenant.identity.api.security.AuthenticatedUser;
-import dev.ngb.tenant.identity.api.security.Permission;
-import dev.ngb.tenant.identity.api.security.RequiresPermission;
 import dev.ngb.tenant.identity.api.security.Role;
+import dev.ngb.tenant.identity.api.security.TenantPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.tenant.resource.application.order.command.CreateOrderUseCase;
 import dev.ngb.tenant.resource.application.order.command.ManageOrderUseCase;
 import dev.ngb.tenant.resource.application.order.query.OrderQueries;
@@ -88,7 +88,7 @@ public class OrderController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @RequiresPermission(Permission.ORDER_CREATE)
+    @RequiresPermission(TenantPermissions.ORDER_CREATE)
     public OrderResponse create(
             @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
@@ -99,20 +99,20 @@ public class OrderController {
     }
 
     @GetMapping
-    @RequiresPermission(Permission.ORDER_READ)
+    @RequiresPermission(TenantPermissions.ORDER_READ)
     public List<OrderResponse> list(@AuthenticationPrincipal AuthenticatedUser principal) {
         List<OrderView> orders = principal.role() == Role.ADMIN ? queries.all() : queries.forUser(principal.id());
         return orders.stream().map(OrderResponse::of).toList();
     }
 
     @GetMapping("/{id}")
-    @RequiresPermission(Permission.ORDER_READ)
+    @RequiresPermission(TenantPermissions.ORDER_READ)
     public OrderResponse get(@AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
         return OrderResponse.of(queries.forUser(id, principal.id(), principal.role() == Role.ADMIN));
     }
 
     @PostMapping("/{id}/cancel")
-    @RequiresPermission(Permission.ORDER_MANAGE)
+    @RequiresPermission(TenantPermissions.ORDER_MANAGE)
     public OrderResponse cancel(@AuthenticationPrincipal AuthenticatedUser principal, @PathVariable UUID id) {
         return OrderResponse.of(manage.cancel(id, principal.id(), principal.role() == Role.ADMIN));
     }

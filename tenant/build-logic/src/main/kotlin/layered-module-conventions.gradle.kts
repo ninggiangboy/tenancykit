@@ -48,6 +48,9 @@ dependencies {
     // Lets an adapter-side package-info.java declare the module's `api` package a Spring Modulith
     // named interface without putting a framework annotation into the plain-Java application layer.
     add(adapter.implementationConfigurationName, catalog.findLibrary("spring-modulith-api").get())
+    // `@NamedInterface` meta-annotates with spring-core's @AliasFor, so the adapter layer needs spring-core even
+    // in a module with no web/jdbc adapter dependency of its own (e.g. the execution worker).
+    add(adapter.implementationConfigurationName, "org.springframework:spring-core")
 }
 
 // Test configurations inherit the adapter's framework dependencies so adapter tests compile.

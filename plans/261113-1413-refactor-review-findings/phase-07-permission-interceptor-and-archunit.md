@@ -82,11 +82,11 @@ exposing its contract through `api` or documenting the exception.
 
 ## Success criteria
 
-- [ ] One generic rule implementation exists; the three services run the same rule IDs plus documented extras.
-- [ ] Every rule fails on its fixture; the meta test lists every rule.
-- [ ] Every tenant endpoint declares an access rule; an unannotated endpoint fails closed.
-- [ ] Six modules have an `api` package or a documented exception in `docs/architecture.md`.
-- [ ] `web` packages contain no jOOQ/JdbcTemplate type; `command` packages contain only `*UseCase` (or the helper has
+- [x] One generic rule implementation exists; the three services run the same rule IDs plus documented extras.
+- [x] Every rule fails on its fixture; the meta test lists every rule.
+- [x] Every tenant endpoint declares an access rule; an unannotated endpoint fails closed.
+- [x] Six modules have an `api` package or a documented exception in `docs/architecture.md`.
+- [x] `web` packages contain no jOOQ/JdbcTemplate type; `command` packages contain only `*UseCase` (or the helper has
       moved to `service`).
 
 ## Risks

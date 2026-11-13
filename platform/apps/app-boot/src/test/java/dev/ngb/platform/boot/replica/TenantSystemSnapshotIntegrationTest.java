@@ -8,7 +8,6 @@ import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.platform.Application;
 import dev.ngb.platform.integration.application.tenantsystem.command.ManageTenantSystemUseCase;
-import dev.ngb.platform.integration.domain.tenantsystem.TenantSystemStatus;
 import dev.ngb.platform.support.PlatformContainerConfig;
 import dev.ngb.platform.tenancy.application.tenant.command.CreateTenantUseCase;
 import java.util.List;
@@ -42,7 +41,7 @@ class TenantSystemSnapshotIntegrationTest {
         Map<String, Object> item = items.stream().filter(row -> row.get("id").equals(id)).findFirst().orElseThrow();
         assertThat(item.get("tenant_id")).isEqualTo(lastTenant.value());
         assertThat(item.get("version")).isEqualTo(1L);
-        assertThat(item.get("status")).isEqualTo(TenantSystemStatus.ACTIVE);
+        assertThat(item.get("status")).isEqualTo("ACTIVE");
         assertThat(item.get("created_at")).isNotNull();
     }
 

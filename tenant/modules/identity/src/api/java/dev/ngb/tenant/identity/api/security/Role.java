@@ -10,7 +10,6 @@ public enum Role {
             Permission.ORDER_CREATE,
             Permission.ORDER_MANAGE,
             Permission.ORDER_READ,
-            Permission.USAGE_RECORD,
             Permission.USAGE_READ,
             Permission.BILLING_READ,
             Permission.TOPUP_CREATE)),

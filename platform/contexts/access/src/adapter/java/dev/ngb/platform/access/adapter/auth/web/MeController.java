@@ -3,7 +3,7 @@ package dev.ngb.platform.access.adapter.auth.web;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.security.Authenticated;
 import dev.ngb.core.security.CurrentActor;
-import dev.ngb.platform.access.application.user.query.MeQueries;
+import dev.ngb.platform.access.api.user.MeQueries;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;

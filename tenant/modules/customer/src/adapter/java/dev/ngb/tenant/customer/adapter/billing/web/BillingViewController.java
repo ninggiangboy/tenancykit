@@ -8,8 +8,8 @@ import dev.ngb.tenant.customer.application.billing.command.OpenBillingSessionUse
 import dev.ngb.tenant.customer.application.billing.command.TopUpUseCase;
 import dev.ngb.tenant.customer.application.billing.query.CustomerBillingQueries;
 import dev.ngb.tenant.identity.api.security.AuthenticatedUser;
-import dev.ngb.tenant.identity.api.security.Permission;
-import dev.ngb.tenant.identity.api.security.RequiresPermission;
+import dev.ngb.tenant.identity.api.security.TenantPermissions;
+import dev.ngb.core.security.RequiresPermission;
 import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,7 +40,7 @@ public class BillingViewController {
     }
 
     @PostMapping("/session")
-    @RequiresPermission(Permission.BILLING_READ)
+    @RequiresPermission(TenantPermissions.BILLING_READ)
     public BillingSession session(
             @AuthenticationPrincipal AuthenticatedUser principal, @RequestBody SessionRequest request) {
         return openSession.execute(
@@ -48,25 +48,25 @@ public class BillingViewController {
     }
 
     @GetMapping("/wallets")
-    @RequiresPermission(Permission.BILLING_READ)
+    @RequiresPermission(TenantPermissions.BILLING_READ)
     public List<Wallet> wallets(@AuthenticationPrincipal AuthenticatedUser principal) {
         return queries.wallets(principal.id());
     }
 
     @GetMapping("/invoices")
-    @RequiresPermission(Permission.BILLING_READ)
+    @RequiresPermission(TenantPermissions.BILLING_READ)
     public List<Invoice> invoices(@AuthenticationPrincipal AuthenticatedUser principal) {
         return queries.invoices(principal.id());
     }
 
     @GetMapping("/payments")
-    @RequiresPermission(Permission.BILLING_READ)
+    @RequiresPermission(TenantPermissions.BILLING_READ)
     public List<Payment> payments(@AuthenticationPrincipal AuthenticatedUser principal) {
         return queries.payments(principal.id());
     }
 
     @PostMapping("/top-ups")
-    @RequiresPermission(Permission.TOPUP_CREATE)
+    @RequiresPermission(TenantPermissions.TOPUP_CREATE)
     public Payment topUp(
             @AuthenticationPrincipal AuthenticatedUser principal,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,

@@ -9,8 +9,8 @@ import dev.ngb.platform.integration.application.credential.command.ManageCredent
 import dev.ngb.platform.integration.application.credential.query.CredentialQueries;
 import dev.ngb.platform.integration.application.credential.query.CredentialView;
 import dev.ngb.platform.integration.application.tenantsystem.command.ManageTenantSystemUseCase;
-import dev.ngb.platform.integration.application.tenantsystem.query.TenantSystemQueries;
-import dev.ngb.platform.integration.application.tenantsystem.query.TenantSystemView;
+import dev.ngb.platform.integration.api.tenantsystem.TenantSystemQueries;
+import dev.ngb.platform.integration.api.tenantsystem.TenantSystemView;
 import dev.ngb.platform.integration.domain.credential.ApiCredential;
 import dev.ngb.platform.integration.domain.credential.ApiCredentialId;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystem;
@@ -53,7 +53,7 @@ class TenantSystemController {
 
         static SystemResponse ofView(TenantSystemView system) {
             return new SystemResponse(
-                    system.id().toString(), system.name(), system.status().name(), system.createdAt(), system.version());
+                    system.id().toString(), system.name(), system.status(), system.createdAt(), system.version());
         }
     }
 

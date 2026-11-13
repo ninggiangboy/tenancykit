@@ -1,5 +1,6 @@
 package dev.ngb.tenant.boot.security;
 
+import dev.ngb.core.security.Authorizer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +18,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 class SecurityConfiguration {
+
+    /** The tenant's roles answer the core permission interceptor, which every endpoint must satisfy. */
+    @Bean
+    Authorizer authorizer() {
+        return new TenantAuthorizer();
+    }
 
     @Bean
     SecurityFilterChain apiSecurity(HttpSecurity http, SessionAuthenticationFilter sessionFilter) throws Exception {

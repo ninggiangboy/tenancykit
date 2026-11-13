@@ -10,11 +10,8 @@ import dev.ngb.platform.integration.application.tenantsystem.port.TenantSystemRe
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystem;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystemStatus;
 import dev.ngb.platform_jooq.tables.records.TenantSystemsRecord;
-import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
 import org.springframework.dao.DuplicateKeyException;
 
 public class JooqTenantSystemRepository implements TenantSystemRepository {
@@ -72,15 +69,6 @@ public class JooqTenantSystemRepository implements TenantSystemRepository {
                 .where(TENANT_SYSTEMS.ID.eq(id.value()))
                 .forNoKeyUpdate()
                 .fetchOptional(JooqTenantSystemRepository::toDomain);
-    }
-
-    @Override
-    public List<TenantSystem> page(UUID after, int limit) {
-        return dsl.selectFrom(TENANT_SYSTEMS)
-                .where(after == null ? DSL.noCondition() : TENANT_SYSTEMS.ID.gt(after))
-                .orderBy(TENANT_SYSTEMS.ID)
-                .limit(limit)
-                .fetch(JooqTenantSystemRepository::toDomain);
     }
 
     private static TenantSystem toDomain(TenantSystemsRecord row) {

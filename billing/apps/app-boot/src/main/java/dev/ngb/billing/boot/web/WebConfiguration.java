@@ -5,6 +5,7 @@ import dev.ngb.core.security.Authorizer;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.security.PermissionInterceptor;
 import dev.ngb.billing.boot.catalog.BillingPermissionCatalog;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.core.version.ConditionalUpdate;
@@ -44,7 +45,8 @@ class WebConfiguration implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new PermissionInterceptor(authorizer, portalAuthorizer));
+        registry.addInterceptor(
+                new PermissionInterceptor(authorizer, List.of(new PortalPermissionCheck(portalAuthorizer))));
     }
 
     @Bean
