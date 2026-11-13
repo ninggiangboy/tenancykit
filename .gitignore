@@ -2,6 +2,7 @@
 build/
 .gradle/
 out/
+bin/
 *.class
 # IDE
 .idea/
