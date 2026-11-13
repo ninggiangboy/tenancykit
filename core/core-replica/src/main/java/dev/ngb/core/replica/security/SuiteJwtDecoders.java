@@ -6,6 +6,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.BadJwtException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -24,6 +25,12 @@ public class SuiteJwtDecoders implements JwtDecoder {
     /** The minimum the decoder needs to know about one issuer. */
     public record Issuer(String uri, String jwkSetUri) {}
 
+    /**
+     * The suite's own signature algorithm. Platform signs ES256, and a decoder built without naming it defaults to
+     * RS256 and refuses every Platform token; a Keycloak realm signs RS256, so the user realm keeps the default.
+     */
+    private static final SignatureAlgorithm PLATFORM_ALGORITHM = SignatureAlgorithm.ES256;
+
     private final String platformIssuer;
     private final String appCode;
     private final JwtDecoder platform;
@@ -34,7 +41,7 @@ public class SuiteJwtDecoders implements JwtDecoder {
     public SuiteJwtDecoders(Issuer platform, Issuer user, String appCode) {
         this.platformIssuer = platform.uri();
         this.appCode = appCode;
-        this.platform = decoder(platform);
+        this.platform = decoder(platform, PLATFORM_ALGORITHM);
         this.userIssuer = user == null ? null : user.uri();
         this.userJwkSetUri = user == null ? null : user.jwkSetUri();
     }
@@ -71,7 +78,8 @@ public class SuiteJwtDecoders implements JwtDecoder {
             synchronized (this) {
                 decoder = users;
                 if (decoder == null) {
-                    decoder = decoder(new Issuer(userIssuer, userJwkSetUri));
+                    // A Keycloak realm signs RS256, the Nimbus default.
+                    decoder = decoder(new Issuer(userIssuer, userJwkSetUri), SignatureAlgorithm.RS256);
                     users = decoder;
                 }
             }
@@ -80,8 +88,10 @@ public class SuiteJwtDecoders implements JwtDecoder {
     }
 
     /** Verifies the signature against the issuer's key set, then its {@code iss}, timestamps and the app audience. */
-    private JwtDecoder decoder(Issuer issuer) {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(issuer.jwkSetUri()).build();
+    private JwtDecoder decoder(Issuer issuer, SignatureAlgorithm algorithm) {
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(issuer.jwkSetUri())
+                .jwsAlgorithm(algorithm)
+                .build();
         OAuth2TokenValidator<Jwt> base = issuer.uri() == null || issuer.uri().isBlank()
                 ? JwtValidators.createDefault()
                 : JwtValidators.createDefaultWithIssuer(issuer.uri());

@@ -9,26 +9,83 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.sun.net.httpserver.HttpServer;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
-import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtException;
 
-/** The two-issuer decoder refuses a token minted for another audience, whichever issuer signed it. */
+/**
+ * The two-issuer decoder. Platform signs its suite tokens with ES256, and a decoder built without naming that
+ * algorithm defaults to RS256 and refuses every Platform token; the first test proves the decoder accepts the
+ * algorithm Platform actually uses, against a real JWKS served over HTTP.
+ */
 class SuiteJwtDecodersTest {
 
+    private HttpServer jwks;
+    private ECKey platformKey;
+
+    @BeforeEach
+    void servePlatformJwks() throws Exception {
+        platformKey = new ECKeyGenerator(Curve.P_256).generate();
+        String body = new JWKSet(platformKey.toPublicJWK()).toString();
+        jwks = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        jwks.createContext("/jwks", exchange -> {
+            byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, bytes.length);
+            exchange.getResponseBody().write(bytes);
+            exchange.close();
+        });
+        jwks.start();
+    }
+
+    @AfterEach
+    void stop() {
+        jwks.stop(0);
+    }
+
     @Test
-    void onlyThePlatformIssuerIsRecognised() throws Exception {
-        SuiteJwtDecoders decoders = new SuiteJwtDecoders(
-                new SuiteJwtDecoders.Issuer("http://platform.test", "http://platform.test/jwks"),
-                new SuiteJwtDecoders.Issuer("http://keycloak.test/realms/billing", "http://keycloak.test/certs"),
-                "billing");
+    void verifiesAnEs256PlatformTokenAgainstItsJwks() throws Exception {
+        SuiteJwtDecoders decoders = decoders();
+
+        Jwt jwt = decoders.decode(signed(platformKey, "http://platform.test", "billing"));
+
+        assertThat(jwt.getAudience()).contains("billing");
+        assertThat(decoders.isPlatformIssuer(jwt.getClaimAsString("iss"))).isTrue();
+    }
+
+    @Test
+    void rejectsAPlatformTokenMintedForAnotherAudience() throws Exception {
+        SuiteJwtDecoders decoders = decoders();
+
+        assertThatThrownBy(() -> decoders.decode(signed(platformKey, "http://platform.test", "platform")))
+                .isInstanceOf(JwtException.class)
+                .hasMessageContaining("billing");
+    }
+
+    @Test
+    void rejectsAPlatformTokenSignedByAnotherKey() throws Exception {
+        SuiteJwtDecoders decoders = decoders();
+
+        assertThatThrownBy(() ->
+                        decoders.decode(signed(new ECKeyGenerator(Curve.P_256).generate(), "http://platform.test", "billing")))
+                .isInstanceOf(JwtException.class);
+    }
+
+    @Test
+    void onlyThePlatformIssuerIsRecognised() {
+        SuiteJwtDecoders decoders = decoders();
 
         assertThat(decoders.isPlatformIssuer("http://platform.test")).isTrue();
         assertThat(decoders.isPlatformIssuer("http://keycloak.test/realms/billing")).isFalse();
@@ -37,34 +94,22 @@ class SuiteJwtDecodersTest {
 
     @Test
     void aMalformedTokenIsABadJwt() {
-        SuiteJwtDecoders decoders = new SuiteJwtDecoders(
-                new SuiteJwtDecoders.Issuer("http://platform.test", "http://platform.test/jwks"), null, "billing");
+        SuiteJwtDecoders decoders = decoders();
 
         assertThatThrownBy(() -> decoders.decode("not-a-jwt")).isInstanceOf(JwtException.class);
     }
 
     @Test
-    void aTokenWithAnotherAudienceFailsTheAudienceValidator() throws Exception {
-        // The decoder cannot verify a signature without a JWKS, so this checks the audience rule itself through the
-        // public @Jwt shape the validator sees.
-        Jwt forPlatform = Jwt.withTokenValue("token")
-                .header("alg", "ES256")
-                .issuer("http://platform.test")
-                .subject("tenant-system/" + UUID.randomUUID())
-                .audience(List.of("platform"))
-                .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plusSeconds(60))
-                .build();
-
-        assertThat(forPlatform.getAudience()).doesNotContain("billing");
+    void issuerOfReadsTheClaimBeforeVerification() throws Exception {
+        assertThat(SuiteJwtDecoders.issuerOf(signed(platformKey, "http://platform.test", "billing")))
+                .isEqualTo("http://platform.test");
     }
 
-    @Test
-    void issuerOfReadsTheClaimBeforeVerification() throws Exception {
-        ECKey key = new ECKeyGenerator(Curve.P_256).generate();
-        String token = signed(key, "http://platform.test", "billing");
-
-        assertThat(SuiteJwtDecoders.issuerOf(token)).isEqualTo("http://platform.test");
+    private SuiteJwtDecoders decoders() {
+        return new SuiteJwtDecoders(
+                new SuiteJwtDecoders.Issuer("http://platform.test", "http://127.0.0.1:" + jwks.getAddress().getPort() + "/jwks"),
+                new SuiteJwtDecoders.Issuer("http://keycloak.test/realms/billing", "http://keycloak.test/certs"),
+                "billing");
     }
 
     private static String signed(ECKey key, String issuer, String audience) throws Exception {

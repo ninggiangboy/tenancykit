@@ -1,5 +1,44 @@
-// Root project holds no code. Shared build logic lives in build-logic/.
+import org.gradle.api.artifacts.ExternalModuleDependency
+import org.gradle.api.artifacts.ProjectDependency
 
-allprojects {
-    group = "dev.ngb"
+/*
+ * Services meet through the broker, the replica and signed tokens, never through each other's code. This check
+ * fails the build when a Platform project declares a Gradle dependency on Billing or the sample tenant. Platform
+ * shares `core-messaging` and `core-replica` with Billing by design; what a service may not do is reach another
+ * service.
+ */
+val foreignServices = listOf("billing", "tenant")
+
+val checkNoForeignServiceDependency = tasks.register("checkNoForeignServiceDependency") {
+    group = "verification"
+    description = "Fails when a Platform project depends on another service's code."
+    doLast {
+        val offenders = allprojects.flatMap { project ->
+            project.configurations.flatMap { configuration ->
+                configuration.dependencies.mapNotNull { dependency ->
+                    when (dependency) {
+                        is ProjectDependency ->
+                            dependency.takeIf { it.path.split(":").any(foreignServices::contains) }
+                                ?.let { "${project.path}:${configuration.name} -> ${it.path}" }
+                        is ExternalModuleDependency ->
+                            dependency.takeIf { it.group in setOf("dev.ngb.billing", "dev.ngb.tenant") }
+                                ?.let { "${project.path}:${configuration.name} -> ${it.group}:${it.name}" }
+                        else -> null
+                    }
+                }
+            }
+        }
+        if (offenders.isNotEmpty()) {
+            throw GradleException(
+                "A service must not depend on another service's code:\n" + offenders.joinToString("\n"),
+            )
+        }
+    }
+}
+
+// `./gradlew check` runs the suite's isolation gate with every other verification task.
+subprojects {
+    plugins.withId("java") {
+        tasks.named("check") { dependsOn(checkNoForeignServiceDependency) }
+    }
 }

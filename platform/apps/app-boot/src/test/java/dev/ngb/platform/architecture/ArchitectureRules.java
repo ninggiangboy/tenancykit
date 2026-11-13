@@ -65,6 +65,7 @@ final class ArchitectureRules {
                 new NamedRule("context-uses-only-own-tables", contextUsesOnlyItsOwnTables(root)),
                 new NamedRule("adapter-classes-in-feature-then-technology", adapterClassesInFeatureThenTechnology(root)),
                 new NamedRule("web-does-not-depend-on-persistence", webDoesNotDependOnPersistence(root)),
+                new NamedRule("no-dependency-on-another-service", noDependencyOnAnotherService(root)),
                 new NamedRule("domain-events-live-in-an-events-holder", domainEventsLiveInAnEventsHolder(root)));
     }
 
@@ -289,6 +290,13 @@ final class ArchitectureRules {
                 .should().onlyDependOnClassesThat()
                 .resideInAnyPackage(JAVA, "javax..", "jakarta..", core + "..", "org.springframework..")
                 .because("the core's Spring implementation sees the JDK, the core and Spring only");
+    }
+
+    /** Another service's code is never named here: services meet through the broker, the replica and signed tokens. */
+    private static ArchRule noDependencyOnAnotherService(String root) {
+        return noClasses().that().resideInAPackage(root + "..")
+                .should().dependOnClassesThat().resideInAnyPackage("dev.ngb.billing..", "dev.ngb.tenant..")
+                .because("services share only the core and the contracts, never each other's code");
     }
 
     private static DescribedPredicate<JavaClass> areTopLevel() {

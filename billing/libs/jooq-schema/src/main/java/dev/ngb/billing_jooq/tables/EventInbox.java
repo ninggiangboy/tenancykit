@@ -6,24 +6,17 @@ package dev.ngb.billing_jooq.tables;
 
 import dev.ngb.billing_jooq.Keys;
 import dev.ngb.billing_jooq.Public;
-import dev.ngb.billing_jooq.tables.Tenants.TenantsPath;
 import dev.ngb.billing_jooq.tables.records.EventInboxRecord;
 
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Stringly;
@@ -108,39 +101,6 @@ public class EventInbox extends TableImpl<EventInboxRecord> {
         this(DSL.name("event_inbox"), null);
     }
 
-    public <O extends Record> EventInbox(Table<O> path, ForeignKey<O, EventInboxRecord> childPath, InverseForeignKey<O, EventInboxRecord> parentPath) {
-        super(path, childPath, parentPath, EVENT_INBOX);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class EventInboxPath extends EventInbox implements Path<EventInboxRecord> {
-
-        private static final long serialVersionUID = 1L;
-        public <O extends Record> EventInboxPath(Table<O> path, ForeignKey<O, EventInboxRecord> childPath, InverseForeignKey<O, EventInboxRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private EventInboxPath(Name alias, Table<EventInboxRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public EventInboxPath as(String alias) {
-            return new EventInboxPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public EventInboxPath as(Name alias) {
-            return new EventInboxPath(alias, this);
-        }
-
-        @Override
-        public EventInboxPath as(Table<?> alias) {
-            return new EventInboxPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Public.PUBLIC;
@@ -149,23 +109,6 @@ public class EventInbox extends TableImpl<EventInboxRecord> {
     @Override
     public UniqueKey<EventInboxRecord> getPrimaryKey() {
         return Keys.EVENT_INBOX_PKEY;
-    }
-
-    @Override
-    public List<ForeignKey<EventInboxRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.EVENT_INBOX__EVENT_INBOX_TENANT_ID_FKEY);
-    }
-
-    private transient TenantsPath _tenants;
-
-    /**
-     * Get the implicit join path to the <code>public.tenants</code> table.
-     */
-    public TenantsPath tenants() {
-        if (_tenants == null)
-            _tenants = new TenantsPath(this, Keys.EVENT_INBOX__EVENT_INBOX_TENANT_ID_FKEY, null);
-
-        return _tenants;
     }
 
     @Override

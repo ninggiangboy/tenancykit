@@ -11,7 +11,6 @@ import dev.ngb.billing_jooq.tables.AuditLog.AuditLogPath;
 import dev.ngb.billing_jooq.tables.BillingSessions.BillingSessionsPath;
 import dev.ngb.billing_jooq.tables.Charges.ChargesPath;
 import dev.ngb.billing_jooq.tables.Customers.CustomersPath;
-import dev.ngb.billing_jooq.tables.EventInbox.EventInboxPath;
 import dev.ngb.billing_jooq.tables.InvoiceCounters.InvoiceCountersPath;
 import dev.ngb.billing_jooq.tables.InvoiceItems.InvoiceItemsPath;
 import dev.ngb.billing_jooq.tables.InvoicePayments.InvoicePaymentsPath;
@@ -267,19 +266,6 @@ public class Tenants extends TableImpl<TenantsRecord> {
             _customers = new CustomersPath(this, null, Keys.CUSTOMERS__CUSTOMERS_TENANT_ID_FKEY.getInverseKey());
 
         return _customers;
-    }
-
-    private transient EventInboxPath _eventInbox;
-
-    /**
-     * Get the implicit to-many join path to the <code>public.event_inbox</code>
-     * table
-     */
-    public EventInboxPath eventInbox() {
-        if (_eventInbox == null)
-            _eventInbox = new EventInboxPath(this, null, Keys.EVENT_INBOX__EVENT_INBOX_TENANT_ID_FKEY.getInverseKey());
-
-        return _eventInbox;
     }
 
     private transient InvoiceCountersPath _invoiceCounters;
