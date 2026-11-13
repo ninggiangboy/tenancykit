@@ -5,6 +5,7 @@ import static dev.ngb.billing_jooq.Tables.USAGE_EVENTS;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.usage.api.lookup.UsageEventId;
 import dev.ngb.billing.usage.application.usage.port.UsageEventRepository;
 import dev.ngb.billing.usage.domain.usage.UsageEvent;
@@ -61,8 +62,7 @@ public class JooqUsageEventRepository implements UsageEventRepository {
                 row.getUnit(),
                 row.getOccurredAt(),
                 row.getRecordedAt(),
-                row.getIdempotencyKey(),
-                row.getRequestHash(),
+                new ReplayIdentity(row.getIdempotencyKey(), row.getRequestHash()),
                 new UsageTrace(
                         row.getTenantSystemId() == null ? null : new TenantSystemId(row.getTenantSystemId()),
                         row.getResourceRef(),

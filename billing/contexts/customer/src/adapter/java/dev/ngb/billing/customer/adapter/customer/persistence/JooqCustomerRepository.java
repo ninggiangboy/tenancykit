@@ -12,6 +12,7 @@ import dev.ngb.billing.customer.domain.customer.ExternalIdentity;
 import dev.ngb.core.error.ConflictException;
 import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -102,8 +103,7 @@ public class JooqCustomerRepository implements CustomerRepository {
                 row.get(CUSTOMERS.EMAIL),
                 CustomerStatus.valueOf(row.get(CUSTOMERS.STATUS)),
                 row.get(CUSTOMERS.CREATED_AT),
-                row.get(CUSTOMERS.IDEMPOTENCY_KEY),
-                row.get(CUSTOMERS.REQUEST_HASH),
+                new ReplayIdentity(row.get(CUSTOMERS.IDEMPOTENCY_KEY), row.get(CUSTOMERS.REQUEST_HASH)),
                 identities,
                 row.get(CUSTOMERS.VERSION));
     }

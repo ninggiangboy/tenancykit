@@ -6,6 +6,7 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.customer.application.customer.port.CustomerRepository;
+import dev.ngb.billing.customer.application.customer.service.TenantSystems;
 import dev.ngb.billing.customer.domain.customer.Customer;
 import dev.ngb.billing.customer.domain.customer.CustomerEvents.CustomerCreated;
 import dev.ngb.billing.customer.domain.customer.ExternalIdentity;
@@ -16,6 +17,7 @@ import dev.ngb.core.idempotency.Fingerprint;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import java.time.Instant;
 
 /**
@@ -27,7 +29,8 @@ public class CreateCustomerUseCase {
 
     /** {@code tenantSystemId} and {@code externalUserId} are both present (a mapped customer) or both absent. */
     public record Command(
-            TenantSystemId tenantSystemId, String externalUserId, String displayName, String email, String idempotencyKey, Audit audit) {}
+            TenantSystemId caller, String tenantSystemId, String externalUserId, String displayName, String email, String idempotencyKey,
+            Audit audit) {}
 
     /** {@code replayed} is true when the key had already been used and the original customer is returned. */
     public record Result(Customer customer, boolean replayed) {}
@@ -59,17 +62,19 @@ public class CreateCustomerUseCase {
 
     public Result execute(Command command) {
         Fingerprint.requireKey(command.idempotencyKey());
-        if ((command.tenantSystemId() == null) != (command.externalUserId() == null)) {
+        TenantSystemId system = TenantSystems.actingFor(command.caller(), command.tenantSystemId());
+        if ((system == null) != (command.externalUserId() == null)) {
             throw new IllegalArgumentException("a tenant system and an external user id must be given together");
         }
-        String hash = fingerprint(command);
+        String hash = fingerprint(system, command.externalUserId(), command.displayName(), command.email());
         return unitOfWork.transactional(() -> {
             TenantId tenantId = tenantContext.requireTenant();
             Instant now = clock.now();
             Customer customer = Customer.create(
-                    new CustomerId(ids.newId()), tenantId, command.displayName(), command.email(), command.idempotencyKey(), hash, now);
-            if (command.tenantSystemId() != null) {
-                customer.mapTo(new ExternalIdentity(command.tenantSystemId(), command.externalUserId()));
+                    new CustomerId(ids.newId()), tenantId, command.displayName(), command.email(), new ReplayIdentity(command.idempotencyKey(), hash),
+                    now);
+            if (system != null) {
+                customer.mapTo(new ExternalIdentity(system, command.externalUserId()));
             }
             if (!customers.addIfAbsent(customer)) {
                 Customer original = customers.findByIdempotencyKey(command.idempotencyKey())
@@ -84,9 +89,9 @@ public class CreateCustomerUseCase {
     }
 
     /** A digest of the request, so reusing a key for a different request is detected instead of replayed. */
-    private static String fingerprint(Command c) {
+    private static String fingerprint(TenantSystemId system, String externalUserId, String displayName, String email) {
         return Fingerprint.sha256(String.join("\u0000",
-                String.valueOf(c.tenantSystemId()), String.valueOf(c.externalUserId()), c.displayName() == null ? "" : c.displayName().strip(),
-                c.email() == null ? "" : c.email().strip()));
+                String.valueOf(system), String.valueOf(externalUserId), displayName == null ? "" : displayName.strip(),
+                email == null ? "" : email.strip()));
     }
 }

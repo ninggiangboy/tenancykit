@@ -40,16 +40,22 @@ public class WalletController {
     public record WalletResponse(
             String id, String customerId, String currency, String mode, MoneyDto balance, MoneyDto held, MoneyDto available, MoneyDto creditLimit,
             MoneyDto outstanding, long lastSequence, Instant createdAt) {
+
         static WalletResponse of(Wallet w) {
-            return new WalletResponse(w.id().toString(), w.customerId().toString(), w.currency().code(), w.mode().name(), MoneyDto.of(w.balance()),
-                    MoneyDto.of(w.held()), MoneyDto.of(w.available()), MoneyDto.of(w.creditLimit()), MoneyDto.of(w.outstanding()), w.lastSequence(),
-                    w.createdAt());
+            return of(w.id().toString(), w.customerId().toString(), w.currency().code(), w.mode().name(), w.balance(), w.held(),
+                    w.available(), w.creditLimit(), w.outstanding(), w.lastSequence(), w.createdAt());
         }
 
         static WalletResponse ofView(WalletView w) {
-            return new WalletResponse(w.id().toString(), w.customerId().toString(), w.currency().code(), w.mode().name(), MoneyDto.of(w.balance()),
-                    MoneyDto.of(w.held()), MoneyDto.of(w.available()), MoneyDto.of(w.creditLimit()), MoneyDto.of(w.outstanding()), w.lastSequence(),
-                    w.createdAt());
+            return of(w.id().toString(), w.customerId().toString(), w.currency().code(), w.mode().name(), w.balance(), w.held(),
+                    w.available(), w.creditLimit(), w.outstanding(), w.lastSequence(), w.createdAt());
+        }
+
+        private static WalletResponse of(
+                String id, String customerId, String currency, String mode, Money balance, Money held, Money available, Money creditLimit,
+                Money outstanding, long lastSequence, Instant createdAt) {
+            return new WalletResponse(id, customerId, currency, mode, MoneyDto.of(balance), MoneyDto.of(held), MoneyDto.of(available),
+                    MoneyDto.of(creditLimit), MoneyDto.of(outstanding), lastSequence, createdAt);
         }
     }
 

@@ -191,10 +191,7 @@ public class RatingController {
             if (input.metric() == null || input.quantity() == null) {
                 throw new IllegalArgumentException("each usage entry needs a metric and a quantity");
             }
-            BigDecimal quantity = new BigDecimal(input.quantity().strip());
-            long events = input.events() != null ? input.events() : quantity.signum() > 0 ? 1 : 0;
-            Measure added = new Measure(quantity, events);
-            result.merge(input.metric(), added, (a, b) -> new Measure(a.quantity().add(b.quantity()), a.events() + b.events()));
+            result.merge(input.metric(), Measure.of(new BigDecimal(input.quantity().strip()), input.events()), Measure::plus);
         }
         return result;
     }

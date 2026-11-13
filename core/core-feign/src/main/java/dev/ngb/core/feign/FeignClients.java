@@ -67,10 +67,6 @@ public final class FeignClients {
                 .errorDecoder(errors)
                 .retryer(new LinearRetryer(settings.maxAttempts(), settings.retryBackoff().toMillis(), failures))
                 .options(new Request.Options(settings.connectTimeout(), settings.readTimeout(), false))
-                .target(api, stripTrailingSlash(settings.baseUrl()));
-    }
-
-    private static String stripTrailingSlash(String value) {
-        return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
+                .target(api, BaseUrls.withoutTrailingSlash(settings.baseUrl()));
     }
 }

@@ -5,6 +5,7 @@ import dev.ngb.billing.payment.domain.stripe.StripeConfiguration;
 import dev.ngb.billing.payment.domain.stripe.StripeConfigurationId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Money;
 import java.time.Instant;
 import java.util.Objects;
@@ -42,8 +43,7 @@ public final class Payment {
     private String failureReason;
     private UUID ledgerEntryId;
     private final UUID invoiceId;
-    private final String idempotencyKey;
-    private final String requestHash;
+    private final ReplayIdentity replay;
     private final Instant createdAt;
     private Instant updatedAt;
     private Instant completedAt;
@@ -51,7 +51,7 @@ public final class Payment {
     private Payment(
             PaymentId id, TenantId tenantId, StripeConfigurationId configurationId, WalletId walletId, CustomerId customerId, Money amount,
             Money refunded, PaymentStatus status, String checkoutSessionId, String paymentIntentId, String checkoutUrl, String failureReason,
-            UUID ledgerEntryId, UUID invoiceId, String idempotencyKey, String requestHash, Instant createdAt, Instant updatedAt, Instant completedAt) {
+            UUID ledgerEntryId, UUID invoiceId, ReplayIdentity replay, Instant createdAt, Instant updatedAt, Instant completedAt) {
         this.id = Objects.requireNonNull(id, "id");
         this.tenantId = Objects.requireNonNull(tenantId, "tenantId");
         this.configurationId = Objects.requireNonNull(configurationId, "configurationId");
@@ -66,8 +66,7 @@ public final class Payment {
         this.failureReason = failureReason;
         this.ledgerEntryId = ledgerEntryId;
         this.invoiceId = invoiceId;
-        this.idempotencyKey = Objects.requireNonNull(idempotencyKey, "idempotencyKey");
-        this.requestHash = Objects.requireNonNull(requestHash, "requestHash");
+        this.replay = Objects.requireNonNull(replay, "replay");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
         this.completedAt = completedAt;
@@ -77,10 +76,10 @@ public final class Payment {
     }
 
     public static Payment start(
-            PaymentId id, StripeConfiguration configuration, WalletId walletId, CustomerId customerId, Money amount, String idempotencyKey,
-            String requestHash, Instant now) {
+            PaymentId id, StripeConfiguration configuration, WalletId walletId, CustomerId customerId, Money amount, ReplayIdentity replay,
+            Instant now) {
         return new Payment(id, configuration.tenantId(), configuration.id(), walletId, customerId, amount, Money.zero(amount.currency()),
-                PaymentStatus.REQUIRES_ACTION, null, null, null, null, null, null, idempotencyKey, requestHash, now, now, null);
+                PaymentStatus.REQUIRES_ACTION, null, null, null, null, null, null, replay, now, now, null);
     }
 
     /**
@@ -89,18 +88,18 @@ public final class Payment {
      */
     public static Payment startForInvoice(
             PaymentId id, StripeConfiguration configuration, UUID invoiceId, WalletId walletId, CustomerId customerId, Money amount,
-            String idempotencyKey, String requestHash, Instant now) {
+            ReplayIdentity replay, Instant now) {
         return new Payment(id, configuration.tenantId(), configuration.id(), walletId, customerId, amount, Money.zero(amount.currency()),
-                PaymentStatus.REQUIRES_ACTION, null, null, null, null, null, Objects.requireNonNull(invoiceId, "invoiceId"), idempotencyKey, requestHash,
+                PaymentStatus.REQUIRES_ACTION, null, null, null, null, null, Objects.requireNonNull(invoiceId, "invoiceId"), replay,
                 now, now, null);
     }
 
     public static Payment restore(
             PaymentId id, TenantId tenantId, StripeConfigurationId configurationId, WalletId walletId, CustomerId customerId, Money amount,
             Money refunded, PaymentStatus status, String checkoutSessionId, String paymentIntentId, String checkoutUrl, String failureReason,
-            UUID ledgerEntryId, UUID invoiceId, String idempotencyKey, String requestHash, Instant createdAt, Instant updatedAt, Instant completedAt) {
+            UUID ledgerEntryId, UUID invoiceId, ReplayIdentity replay, Instant createdAt, Instant updatedAt, Instant completedAt) {
         return new Payment(id, tenantId, configurationId, walletId, customerId, amount, refunded, status, checkoutSessionId, paymentIntentId,
-                checkoutUrl, failureReason, ledgerEntryId, invoiceId, idempotencyKey, requestHash, createdAt, updatedAt, completedAt);
+                checkoutUrl, failureReason, ledgerEntryId, invoiceId, replay, createdAt, updatedAt, completedAt);
     }
 
     /** Remembers the Stripe objects once Stripe has created them. Safe to repeat with the same values. */
@@ -285,12 +284,17 @@ public final class Payment {
         return invoiceId;
     }
 
+    /** The key and the digest of the request this payment was started under. */
+    public ReplayIdentity replay() {
+        return replay;
+    }
+
     public String idempotencyKey() {
-        return idempotencyKey;
+        return replay.idempotencyKey();
     }
 
     public String requestHash() {
-        return requestHash;
+        return replay.requestHash();
     }
 
     public Instant createdAt() {

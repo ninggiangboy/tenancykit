@@ -21,7 +21,9 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
@@ -148,8 +150,8 @@ class WebConfiguration implements WebMvcConfigurer {
             RequiresPermission required = handlerMethod.getMethodAnnotation(RequiresPermission.class);
             if (required != null) {
                 BillingPermissionCatalog.Entry entry = catalog.find(required.value()).orElse(
-                        new BillingPermissionCatalog.Entry(required.value(), java.util.Set.of(), false));
-                List<String> callers = new java.util.ArrayList<>();
+                        new BillingPermissionCatalog.Entry(required.value(), Set.of(), false));
+                List<String> callers = new ArrayList<>();
                 if (entry.scopes().contains("platform")) {
                     callers.add("platform-user");
                 }

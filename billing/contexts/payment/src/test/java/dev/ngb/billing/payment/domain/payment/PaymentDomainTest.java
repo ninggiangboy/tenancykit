@@ -13,6 +13,7 @@ import dev.ngb.billing.payment.domain.stripe.StripeConfigurationId;
 import dev.ngb.billing.payment.domain.stripe.StripeEnvironment;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import java.time.Instant;
@@ -32,7 +33,7 @@ class PaymentDomainTest {
 
     private static Payment payment(long amount) {
         return Payment.start(new PaymentId(UUID.randomUUID()), activeDirect(), new WalletId(UUID.randomUUID()), new CustomerId(UUID.randomUUID()),
-                Money.of(amount, USD), "key-1", "hash", NOW);
+                Money.of(amount, USD), new ReplayIdentity("key-1", "hash"), NOW);
     }
 
     private static Payment succeeded(long amount) {
@@ -112,14 +113,15 @@ class PaymentDomainTest {
     @Test
     void onlyASucceededPaymentCanBeRefunded() {
         Payment open = payment(1000);
-        assertThatThrownBy(() -> Refund.request(new RefundId(UUID.randomUUID()), open, Money.of(100, USD), null, null, "user/1", "k", "h", NOW))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> Refund.request(new RefundId(UUID.randomUUID()), open, Money.of(100, USD), null, null, "user/1",
+                new ReplayIdentity("k", "h"), NOW)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void aRefundSettlesOnce() {
         Payment p = succeeded(1000);
-        Refund refund = Refund.request(new RefundId(UUID.randomUUID()), p, Money.of(100, USD), "  duplicate  ", UUID.randomUUID(), "user/1", "k", "h", NOW);
+        Refund refund = Refund.request(new RefundId(UUID.randomUUID()), p, Money.of(100, USD), "  duplicate  ", UUID.randomUUID(), "user/1",
+                new ReplayIdentity("k", "h"), NOW);
         assertThat(refund.reason()).isEqualTo("duplicate");
         assertThat(refund.succeed(UUID.randomUUID(), NOW)).isTrue();
         assertThat(refund.succeed(UUID.randomUUID(), NOW)).as("a repeat changes nothing").isFalse();
@@ -172,7 +174,7 @@ class PaymentDomainTest {
 
     private static Payment invoicePayment(long amount) {
         return Payment.startForInvoice(new PaymentId(UUID.randomUUID()), activeDirect(), UUID.randomUUID(), new WalletId(UUID.randomUUID()),
-                new CustomerId(UUID.randomUUID()), Money.of(amount, USD), "key-inv", "hash", NOW);
+                new CustomerId(UUID.randomUUID()), Money.of(amount, USD), new ReplayIdentity("key-inv", "hash"), NOW);
     }
 
     @Test

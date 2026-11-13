@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -100,7 +101,7 @@ public class UsageController {
         if (request.events() == null) {
             throw new IllegalArgumentException("events is required");
         }
-        java.util.UUID caller = currentActor.caller();
+        UUID caller = currentActor.caller();
         return new BatchResponse(record.record(request.events().stream().map(e -> toItem(e, caller)).toList(), caller).stream()
                 .map(RecordedResponse::of).toList());
     }
@@ -124,7 +125,7 @@ public class UsageController {
         return queries.totals(CustomerId.of(customerId), metrics, from, to, currentActor.caller()).stream().map(TotalResponse::of).toList();
     }
 
-    private static RecordUsageUseCase.Item toItem(UsageEventRequest r, java.util.UUID caller) {
+    private static RecordUsageUseCase.Item toItem(UsageEventRequest r, UUID caller) {
         if (r == null) {
             throw new IllegalArgumentException("a usage event is required");
         }

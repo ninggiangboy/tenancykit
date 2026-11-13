@@ -14,4 +14,17 @@ public record Measure(BigDecimal quantity, long events) {
             throw new IllegalArgumentException("a measure cannot be negative");
         }
     }
+
+    /**
+     * What one input reports of a metric. An omitted event count is one event for a positive quantity and none for
+     * a zero one, so a count-based price counts a reported quantity and a usage price is unaffected.
+     */
+    public static Measure of(BigDecimal quantity, Long events) {
+        return new Measure(quantity, events != null ? events : quantity.signum() > 0 ? 1 : 0);
+    }
+
+    /** Two inputs of the same metric add up: both their quantities and their events. */
+    public Measure plus(Measure other) {
+        return new Measure(quantity.add(other.quantity()), events + other.events());
+    }
 }

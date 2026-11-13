@@ -6,6 +6,7 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
+import dev.ngb.billing.customer.api.lookup.CustomerVisibility;
 import dev.ngb.billing.money.api.reservation.ReleaseReservation;
 import dev.ngb.billing.money.api.reservation.ReservationId;
 import dev.ngb.billing.money.api.reservation.ReservationResult;
@@ -16,7 +17,7 @@ import dev.ngb.billing.money.domain.event.MoneyEvents;
 import dev.ngb.billing.money.domain.reservation.Reservation;
 import dev.ngb.billing.money.domain.wallet.Wallet;
 import dev.ngb.core.error.ConflictException;
-import dev.ngb.core.error.NotFoundException;
+import java.util.Locale;
 import java.util.UUID;
 
 /** Gives a held budget back to the wallet. Releasing an already released reservation changes nothing. */
@@ -26,7 +27,7 @@ public class ReleaseReservationUseCase implements ReleaseReservation {
     private final WalletRepository wallets;
     private final ReservationRepository reservations;
     private final EventPublisher events;
-    private final CustomerLookup customers;
+    private final CustomerVisibility visibility;
     private final IdGenerator ids;
     private final Clock clock;
 
@@ -37,7 +38,7 @@ public class ReleaseReservationUseCase implements ReleaseReservation {
         this.wallets = wallets;
         this.reservations = reservations;
         this.events = events;
-        this.customers = customers;
+        this.visibility = new CustomerVisibility(customers);
         this.ids = ids;
         this.clock = clock;
     }
@@ -66,7 +67,7 @@ public class ReleaseReservationUseCase implements ReleaseReservation {
         return unitOfWork.transactional(() -> {
             Reservation unlocked = reservations.findById(id).orElseThrow(() -> Messages.reservationNotFound());
             Wallet wallet = wallets.lockById(unlocked.walletId()).orElseThrow(() -> Messages.walletNotFound());
-            requireVisible(wallet, caller);
+            visibility.requireVisible(wallet.customerId(), caller, Messages::reservationNotFound);
             Reservation reservation = reservations.findById(id).orElseThrow(() -> Messages.reservationNotFound());
             if (reservation.status() == ReservationStatus.RELEASED) {
                 return ReserveBudgetUseCase.result(reservation, true);
@@ -75,7 +76,7 @@ public class ReleaseReservationUseCase implements ReleaseReservation {
                 return ReserveBudgetUseCase.result(reservation, true);
             }
             if (!reservation.isActive()) {
-                throw new ConflictException("the reservation is already " + reservation.status().name().toLowerCase(java.util.Locale.ROOT));
+                throw new ConflictException("the reservation is already " + reservation.status().name().toLowerCase(Locale.ROOT));
             }
             var now = clock.now();
             reservation.release(wallet, now);
@@ -84,11 +85,5 @@ public class ReleaseReservationUseCase implements ReleaseReservation {
             events.publish(new MoneyEvents.ReservationReleased(ids.newId(), reservation, false, now));
             return ReserveBudgetUseCase.result(reservation, false);
         });
-    }
-
-    private void requireVisible(Wallet wallet, UUID caller) {
-        if (caller != null && customers.findFor(wallet.customerId(), caller).isEmpty()) {
-            throw Messages.reservationNotFound();
-        }
     }
 }

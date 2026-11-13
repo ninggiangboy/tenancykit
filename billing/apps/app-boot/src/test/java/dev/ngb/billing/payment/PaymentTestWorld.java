@@ -13,6 +13,7 @@ import dev.ngb.billing.payment.domain.payment.PaymentId;
 import dev.ngb.billing.payment.domain.stripe.StripeConfiguration;
 import dev.ngb.billing.payment.domain.stripe.StripeConfigurationId;
 import dev.ngb.billing.payment.domain.stripe.StripeEnvironment;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.support.ScopeTestSupport;
 import java.util.UUID;
@@ -90,7 +91,7 @@ public class PaymentTestWorld {
     public Payment openPayment(PayWorld world, PaymentId id, long amount) {
         return scopes.inTenant(world.money().tenant().id(), () -> unitOfWork.transactional(() -> {
             Payment payment = Payment.start(id, world.configuration(), world.money().wallet().id(), world.money().customerId(),
-                    Money.of(amount, world.money().wallet().currency()), "key-" + id, "hash-" + id, clock.now());
+                    Money.of(amount, world.money().wallet().currency()), new ReplayIdentity("key-" + id, "hash-" + id), clock.now());
             payments.addIfAbsent(payment);
             return payment;
         }));

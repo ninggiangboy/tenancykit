@@ -11,6 +11,7 @@ import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.idempotency.Fingerprint;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.usage.api.lookup.UsageEventId;
 import dev.ngb.billing.usage.application.usage.port.MetricUnits;
 import dev.ngb.billing.usage.application.usage.port.UsageEventRepository;
@@ -118,7 +119,7 @@ public class RecordUsageUseCase {
         String hash = Fingerprint.of(item.customerId(), item.metric(), quantity.toPlainString(), item.unit(), item.occurredAt(),
                 item.trace().tenantSystemId(), item.trace().resourceRef(), item.trace().sourceEventId());
         return UsageEvent.record(new UsageEventId(ids.newId()), tenantId, item.customerId(), item.metric(), quantity, item.unit(), item.occurredAt(),
-                item.idempotencyKey(), hash, item.trace(), now);
+                new ReplayIdentity(item.idempotencyKey(), hash), item.trace(), now);
     }
 
     private Recorded store(UsageEvent event) {

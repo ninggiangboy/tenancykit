@@ -4,6 +4,7 @@ import dev.ngb.billing.sharedkernel.error.Messages;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.util.PageSize;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
+import dev.ngb.billing.customer.api.lookup.CustomerVisibility;
 import dev.ngb.billing.money.api.charge.ChargeId;
 import dev.ngb.billing.money.api.reservation.ReservationId;
 import dev.ngb.billing.money.application.charge.query.ChargeReadRepository;
@@ -17,6 +18,7 @@ import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /** Read side of the money module, within the current tenant. */
 public class WalletQueries {
@@ -27,7 +29,7 @@ public class WalletQueries {
     private final LedgerReadRepository ledger;
     private final ReservationReadRepository reservations;
     private final ChargeReadRepository charges;
-    private final CustomerLookup customers;
+    private final CustomerVisibility visibility;
 
     public WalletQueries(
             UnitOfWork unitOfWork, WalletReadRepository wallets, LedgerReadRepository ledger, ReservationReadRepository reservations,
@@ -37,7 +39,7 @@ public class WalletQueries {
         this.ledger = ledger;
         this.reservations = reservations;
         this.charges = charges;
-        this.customers = customers;
+        this.visibility = new CustomerVisibility(customers);
     }
 
     public WalletView wallet(WalletId id) {
@@ -45,7 +47,11 @@ public class WalletQueries {
     }
 
     public WalletView wallet(WalletId id, UUID caller) {
-        return unitOfWork.transactional(() -> requireVisibleWallet(id, caller));
+        return unitOfWork.transactional(() -> {
+            WalletView wallet = wallets.findById(id).orElseThrow(() -> Messages.walletNotFound());
+            visibility.requireVisible(wallet.customerId(), caller, Messages::walletNotFound);
+            return wallet;
+        });
     }
 
     public List<WalletView> walletsOf(CustomerId customerId) {
@@ -54,7 +60,7 @@ public class WalletQueries {
 
     public List<WalletView> walletsOf(CustomerId customerId, UUID caller) {
         return unitOfWork.transactional(() -> {
-            requireVisibleCustomer(customerId, caller);
+            visibility.requireVisible(customerId, caller, Messages::customerNotFound);
             return wallets.listByCustomer(customerId);
         });
     }
@@ -77,7 +83,7 @@ public class WalletQueries {
             throw new IllegalArgumentException("afterSequence must not be negative");
         }
         return unitOfWork.transactional(() -> {
-            requireVisibleWallet(walletId, caller);
+            visibleWallet(walletId, caller, Messages::walletNotFound);
             return ledger.page(walletId, afterSequence, PageSize.of(limit));
         });
     }
@@ -89,7 +95,7 @@ public class WalletQueries {
     public ReservationView reservation(ReservationId id, UUID caller) {
         return unitOfWork.transactional(() -> {
             ReservationView reservation = reservations.findById(id).orElseThrow(() -> Messages.reservationNotFound());
-            requireVisible(reservation.walletId(), caller, "reservation not found");
+            visibleWallet(reservation.walletId(), caller, Messages::reservationNotFound);
             return reservation;
         });
     }
@@ -101,32 +107,19 @@ public class WalletQueries {
     public ChargeView charge(ChargeId id, UUID caller) {
         return unitOfWork.transactional(() -> {
             ChargeView charge = charges.findById(id).orElseThrow(() -> Messages.chargeNotFound());
-            requireVisible(charge.walletId(), caller, "charge not found");
+            visibleWallet(charge.walletId(), caller, Messages::chargeNotFound);
             return charge;
         });
     }
 
-    private WalletView requireVisibleWallet(WalletId id, UUID caller) {
-        WalletView wallet = wallets.findById(id).orElseThrow(() -> Messages.walletNotFound());
-        if (caller != null && customers.findFor(wallet.customerId(), caller).isEmpty()) {
-            throw Messages.walletNotFound();
-        }
-        return wallet;
-    }
-
-    private void requireVisibleCustomer(CustomerId id, UUID caller) {
-        if (caller != null && customers.findFor(id, caller).isEmpty()) {
-            throw Messages.customerNotFound();
-        }
-    }
-
-    private void requireVisible(WalletId id, UUID caller, String notFound) {
-        if (caller == null) {
-            return;
-        }
-        WalletView wallet = wallets.findById(id).orElseThrow(() -> new NotFoundException(notFound));
-        if (customers.findFor(wallet.customerId(), caller).isEmpty()) {
-            throw new NotFoundException(notFound);
+    /**
+     * A Tenant System sees the wallet of a row only when it mapped the wallet's customer; the row is then reported
+     * with the same {@code notFound} error as a row that is not there. A Tenant User sees the whole tenant.
+     */
+    private void visibleWallet(WalletId id, UUID caller, Supplier<NotFoundException> notFound) {
+        WalletView wallet = wallets.findById(id).orElseThrow(notFound);
+        if (caller != null) {
+            visibility.requireVisible(wallet.customerId(), caller, notFound);
         }
     }
 }

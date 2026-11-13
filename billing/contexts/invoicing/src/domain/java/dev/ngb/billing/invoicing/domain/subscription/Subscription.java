@@ -4,6 +4,7 @@ import dev.ngb.core.id.TenantId;
 import dev.ngb.billing.pricing.api.plan.BillingCycle;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import java.time.Instant;
 import java.util.Objects;
@@ -37,8 +38,7 @@ public final class Subscription {
     private final BillingCycle cycle;
     private final Instant anchor;
     private final Instant createdAt;
-    private final String idempotencyKey;
-    private final String requestHash;
+    private final ReplayIdentity replay;
     private int periodsCharged;
     private SubscriptionStatus status;
     private boolean cancelAtPeriodEnd;
@@ -50,7 +50,7 @@ public final class Subscription {
     private Subscription(
             SubscriptionId id, TenantId tenantId, CustomerId customerId, WalletId walletId, Currency currency, UUID planId, String planCode,
             BillingCycle cycle, Instant anchor, int periodsCharged, SubscriptionStatus status, boolean cancelAtPeriodEnd, Instant canceledAt,
-            Instant nextRenewalAt, int renewalAttempts, Instant createdAt, Instant updatedAt, String idempotencyKey, String requestHash) {
+            Instant nextRenewalAt, int renewalAttempts, Instant createdAt, Instant updatedAt, ReplayIdentity replay) {
         this.id = Objects.requireNonNull(id, "id");
         this.tenantId = Objects.requireNonNull(tenantId, "tenantId");
         this.customerId = Objects.requireNonNull(customerId, "customerId");
@@ -68,8 +68,7 @@ public final class Subscription {
         this.renewalAttempts = renewalAttempts;
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
-        this.idempotencyKey = Objects.requireNonNull(idempotencyKey, "idempotencyKey");
-        this.requestHash = Objects.requireNonNull(requestHash, "requestHash");
+        this.replay = Objects.requireNonNull(replay, "replay");
         if (periodsCharged < 0 || renewalAttempts < 0) {
             throw new IllegalArgumentException("counters cannot be negative");
         }
@@ -78,17 +77,17 @@ public final class Subscription {
     /** A new subscription anchored at {@code now}. Its first period is due at once; the caller charges it. */
     public static Subscription create(
             SubscriptionId id, TenantId tenantId, CustomerId customerId, WalletId walletId, Currency currency, UUID planId, String planCode, BillingCycle cycle,
-            String idempotencyKey, String requestHash, Instant now) {
+            ReplayIdentity replay, Instant now) {
         return new Subscription(id, tenantId, customerId, walletId, currency, planId, planCode, cycle, now, 0, SubscriptionStatus.ACTIVE, false, null, now, 0,
-                now, now, idempotencyKey, requestHash);
+                now, now, replay);
     }
 
     public static Subscription restore(
             SubscriptionId id, TenantId tenantId, CustomerId customerId, WalletId walletId, Currency currency, UUID planId, String planCode, BillingCycle cycle,
             Instant anchor, int periodsCharged, SubscriptionStatus status, boolean cancelAtPeriodEnd, Instant canceledAt, Instant nextRenewalAt,
-            int renewalAttempts, Instant createdAt, Instant updatedAt, String idempotencyKey, String requestHash) {
+            int renewalAttempts, Instant createdAt, Instant updatedAt, ReplayIdentity replay) {
         return new Subscription(id, tenantId, customerId, walletId, currency, planId, planCode, cycle, anchor, periodsCharged, status, cancelAtPeriodEnd,
-                canceledAt, nextRenewalAt, renewalAttempts, createdAt, updatedAt, idempotencyKey, requestHash);
+                canceledAt, nextRenewalAt, renewalAttempts, createdAt, updatedAt, replay);
     }
 
     /** Start of period {@code number}, counted from the anchor so month ends never drift. */
@@ -250,11 +249,16 @@ public final class Subscription {
         return updatedAt;
     }
 
+    /** The key and the digest of the request this subscription was created under. */
+    public ReplayIdentity replay() {
+        return replay;
+    }
+
     public String idempotencyKey() {
-        return idempotencyKey;
+        return replay.idempotencyKey();
     }
 
     public String requestHash() {
-        return requestHash;
+        return replay.requestHash();
     }
 }

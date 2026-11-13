@@ -45,35 +45,22 @@ public class OrderController {
             Instant createdAt,
             Instant updatedAt) {
         static OrderResponse of(OrderView order) {
-            return new OrderResponse(
-                    order.id(),
-                    order.reference(),
-                    order.planId(),
-                    order.billingPlanId(),
-                    order.status().name(),
-                    order.walletId(),
-                    order.reservationId(),
-                    order.estimatedMinorUnits(),
-                    order.currency(),
-                    order.failureReason(),
-                    order.createdAt(),
+            return of(order.id(), order.reference(), order.planId(), order.billingPlanId(), order.status().name(), order.walletId(),
+                    order.reservationId(), order.estimatedMinorUnits(), order.currency(), order.failureReason(), order.createdAt(),
                     order.updatedAt());
         }
 
         static OrderResponse of(Order order) {
-            return new OrderResponse(
-                    order.id(),
-                    order.reference(),
-                    order.catalogPlanId(),
-                    order.billingPlanId(),
-                    order.status().name(),
-                    order.walletId(),
-                    order.reservationId(),
-                    order.estimatedMinorUnits(),
-                    order.currency(),
-                    order.failureReason(),
-                    order.createdAt(),
+            return of(order.id(), order.reference(), order.catalogPlanId(), order.billingPlanId(), order.status().name(), order.walletId(),
+                    order.reservationId(), order.estimatedMinorUnits(), order.currency(), order.failureReason(), order.createdAt(),
                     order.updatedAt());
+        }
+
+        private static OrderResponse of(
+                UUID id, String reference, UUID planId, String billingPlanId, String status, String walletId, String reservationId,
+                long estimatedMinorUnits, String currency, String failureReason, Instant createdAt, Instant updatedAt) {
+            return new OrderResponse(id, reference, planId, billingPlanId, status, walletId, reservationId, estimatedMinorUnits, currency,
+                    failureReason, createdAt, updatedAt);
         }
     }
 

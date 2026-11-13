@@ -13,6 +13,7 @@ import dev.ngb.billing.money.api.wallet.DebitCommand;
 import dev.ngb.billing.money.api.wallet.DebitWallet;
 import dev.ngb.billing.payment.api.payment.PaymentEventTypes;
 import dev.ngb.billing.payment.application.incident.port.IncidentRepository;
+import dev.ngb.billing.payment.application.incident.service.IncidentRecorder;
 import dev.ngb.billing.payment.application.messaging.service.PaymentActors;
 import dev.ngb.billing.payment.application.payment.port.PaymentProvider;
 import dev.ngb.billing.payment.application.payment.port.PaymentRepository;
@@ -30,10 +31,12 @@ import dev.ngb.billing.payment.domain.stripe.StripeConfigurationId;
 import dev.ngb.billing.payment.domain.stripe.StripeEnvironment;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.core.event.DomainEvent;
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.runtime.UnitOfWork;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -180,11 +183,21 @@ class PaymentSettlementTest {
 
     private final ReleaseReservation release = id -> new ReservationResult(id, ReservationStatus.RELEASED, Money.zero(USD), NOW, false);
 
-    private final PaymentSettlement settlement = new PaymentSettlement(payments, refunds, incidents, configurations, credit, debit, release,
+    private final UnitOfWork passThrough = new UnitOfWork() {
+        @Override
+        public <T> T transactional(java.util.function.Supplier<T> work) {
+            return work.get();
+        }
+    };
+    private final IncidentRecorder incidentRecorder = new IncidentRecorder(passThrough, incidents, UUID::randomUUID, () -> NOW);
+    private final WalletMovements movements = new WalletMovements(credit, debit, release);
+
+    private final PaymentSettlement settlement = new PaymentSettlement(payments, refunds, incidentRecorder, configurations, movements,
             published::add, UUID::randomUUID, () -> NOW);
 
     private Payment topUp(long minorUnits) {
-        Payment payment = Payment.start(new PaymentId(UUID.randomUUID()), configuration, walletId, customerId, Money.of(minorUnits, USD), "key-1", "hash", NOW);
+        Payment payment = Payment.start(new PaymentId(UUID.randomUUID()), configuration, walletId, customerId, Money.of(minorUnits, USD),
+                new ReplayIdentity("key-1", "hash"), NOW);
         stored.put(payment.id(), payment);
         return payment;
     }
@@ -245,7 +258,7 @@ class PaymentSettlementTest {
     @Test
     void anInvoicePaymentSucceedsWithoutCreditingTheWallet() {
         Payment payment = Payment.startForInvoice(new PaymentId(UUID.randomUUID()), configuration, UUID.randomUUID(), walletId, customerId,
-                Money.of(9_900, USD), "key-2", "hash", NOW);
+                Money.of(9_900, USD), new ReplayIdentity("key-2", "hash"), NOW);
         stored.put(payment.id(), payment);
 
         PaymentSettlement.Result result = settlement.intent(configuration, intent(payment, PaymentProvider.IntentState.SUCCEEDED, 9_900, "USD"), "evt_4");

@@ -13,6 +13,7 @@ import dev.ngb.billing.payment.domain.payment.PaymentStatus;
 import dev.ngb.billing.payment.domain.stripe.StripeConfigurationId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing_jooq.tables.records.PaymentsRecord;
@@ -184,8 +185,7 @@ public class JooqPaymentRepository implements PaymentRepository {
                 row.getFailureReason(),
                 row.getLedgerEntryId(),
                 row.getInvoiceId(),
-                row.getIdempotencyKey(),
-                row.getRequestHash(),
+                new ReplayIdentity(row.getIdempotencyKey(), row.getRequestHash()),
                 row.getCreatedAt(),
                 row.getUpdatedAt(),
                 row.getCompletedAt());

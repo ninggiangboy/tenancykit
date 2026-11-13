@@ -77,11 +77,11 @@ collaborators, and settle the DDD base-type question with one convention.
 
 ## Success criteria
 
-- [ ] One customer-visibility implementation.
-- [ ] Controllers contain no business decision; they map, validate shape and call a use case.
-- [ ] No use-case constructor exceeds eight dependencies without a documented reason.
-- [ ] D3 is documented: the two base-type users, the unused `register`/`pullEvents`, and the plain-class convention.
-- [ ] No inline FQN remains in production controllers/config.
+- [x] One customer-visibility implementation.
+- [x] Controllers contain no business decision; they map, validate shape and call a use case.
+- [x] No use-case constructor exceeds eight dependencies without a documented reason.
+- [x] D3 is documented: the two base-type users, the unused `register`/`pullEvents`, and the plain-class convention.
+- [x] No inline FQN remains in production controllers/config.
 
 ## Risks
 

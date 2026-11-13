@@ -9,6 +9,7 @@ import dev.ngb.billing.money.api.reservation.ReservationId;
 import dev.ngb.billing.money.domain.ledger.LedgerEntry;
 import dev.ngb.billing.money.domain.reservation.Reservation;
 import dev.ngb.billing.money.domain.wallet.Wallet;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Money;
 import java.time.Instant;
 import java.util.Objects;
@@ -27,7 +28,7 @@ public final class ChargeService {
     /** What the caller supplies for one charge. {@code reservation} is non-null only when charging from one. */
     public record Request(
             Wallet wallet, Reservation reservation, Money amount, ChargeSource source, String usageRef, String reference,
-            String idempotencyKey, String requestHash, String actor, Instant now) {
+            ReplayIdentity replay, String actor, Instant now) {
         public Request {
             Objects.requireNonNull(wallet, "wallet");
             Objects.requireNonNull(amount, "amount");
@@ -61,17 +62,17 @@ public final class ChargeService {
             request.reservation().capture(wallet, amount, request.now());
         } else if (!wallet.canSpend(amount)) {
             Charge failed = Charge.failed(chargeId, wallet, amount, request.source(), null, request.usageRef(), request.reference(),
-                    request.idempotencyKey(), request.requestHash(), INSUFFICIENT_FUNDS, request.now());
+                    request.replay(), INSUFFICIENT_FUNDS, request.now());
             return new Outcome(failed, null);
         }
 
         Charge succeeded = Charge.succeeded(chargeId, wallet, amount, request.source(), reservationId, request.usageRef(), request.reference(),
-                request.idempotencyKey(), request.requestHash(), request.now());
+                request.replay(), request.now());
         long sequence = wallet.post(amount.negate());
         LedgerEntry entry = LedgerEntry.debit(
                 new LedgerEntryId(ids.newId()), wallet.tenantId(), wallet.id(), sequence, amount,
                 new LedgerEntry.Source(request.reference() == null ? IdempotencyKeys.charge(chargeId) : request.reference(), reservationId, chargeId),
-                new LedgerEntry.Origin(request.actor(), null, request.idempotencyKey()), request.now());
+                new LedgerEntry.Origin(request.actor(), null, request.replay().idempotencyKey()), request.now());
         return new Outcome(succeeded, entry);
     }
 }

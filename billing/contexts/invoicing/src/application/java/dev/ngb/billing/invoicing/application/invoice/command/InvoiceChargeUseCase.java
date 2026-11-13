@@ -1,35 +1,19 @@
 package dev.ngb.billing.invoicing.application.invoice.command;
 
-import dev.ngb.core.names.AggregateTargets;
-import dev.ngb.core.runtime.Clock;
-import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
-import dev.ngb.billing.invoicing.application.cycle.port.UnbilledLineRepository;
+import dev.ngb.billing.customer.api.lookup.CustomerVisibility;
 import dev.ngb.billing.invoicing.application.invoice.port.InvoiceRepository;
-import dev.ngb.billing.invoicing.application.invoice.service.ChargeLineFactory;
-import dev.ngb.billing.invoicing.application.invoice.service.InvoiceIssuer;
-import dev.ngb.billing.invoicing.domain.cycle.UnbilledLine;
+import dev.ngb.billing.invoicing.application.invoice.service.ChargeInvoiceIssuer;
 import dev.ngb.billing.invoicing.domain.invoice.Invoice;
-import dev.ngb.billing.invoicing.domain.invoice.InvoiceId;
-import dev.ngb.billing.invoicing.domain.invoice.InvoiceItem;
-import dev.ngb.billing.invoicing.domain.invoice.InvoiceOrigin;
 import dev.ngb.billing.money.api.charge.ChargeId;
 import dev.ngb.billing.money.api.charge.ChargeLookup;
-import dev.ngb.billing.money.api.charge.ChargeStatus;
 import dev.ngb.billing.money.api.charge.ChargeSummary;
 import dev.ngb.billing.money.api.wallet.WalletLookup;
-import dev.ngb.billing.money.api.wallet.WalletMode;
 import dev.ngb.billing.money.api.wallet.WalletSummary;
 import dev.ngb.core.audit.Audit;
-import dev.ngb.core.audit.AuditEntry;
-import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.error.ConflictException;
 import dev.ngb.core.error.NotFoundException;
-import dev.ngb.core.tenancy.TenantContext;
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -48,32 +32,19 @@ public class InvoiceChargeUseCase {
     private final UnitOfWork unitOfWork;
     private final ChargeLookup charges;
     private final WalletLookup wallets;
-    private final CustomerLookup customers;
+    private final CustomerVisibility visibility;
     private final InvoiceRepository invoices;
-    private final UnbilledLineRepository unbilled;
-    private final InvoiceIssuer issuer;
-    private final ChargeLineFactory lineFactory;
-    private final AuditLog auditLog;
-    private final TenantContext tenantContext;
-    private final IdGenerator ids;
-    private final Clock clock;
+    private final ChargeInvoiceIssuer issuer;
 
     public InvoiceChargeUseCase(
             UnitOfWork unitOfWork, ChargeLookup charges, WalletLookup wallets, CustomerLookup customers, InvoiceRepository invoices,
-            UnbilledLineRepository unbilled, InvoiceIssuer issuer, ChargeLineFactory lineFactory, AuditLog auditLog, TenantContext tenantContext,
-            IdGenerator ids, Clock clock) {
+            ChargeInvoiceIssuer issuer) {
         this.unitOfWork = unitOfWork;
         this.charges = charges;
         this.wallets = wallets;
-        this.customers = customers;
+        this.visibility = new CustomerVisibility(customers);
         this.invoices = invoices;
-        this.unbilled = unbilled;
         this.issuer = issuer;
-        this.lineFactory = lineFactory;
-        this.auditLog = auditLog;
-        this.tenantContext = tenantContext;
-        this.ids = ids;
-        this.clock = clock;
     }
 
     public Result execute(Command command) {
@@ -89,23 +60,8 @@ public class InvoiceChargeUseCase {
     private Result invoice(Command command) {
         ChargeSummary charge = charges.find(command.chargeId()).orElseThrow(() -> new NotFoundException("charge not found"));
         WalletSummary wallet = wallets.find(charge.walletId()).orElseThrow(() -> new NotFoundException("charge not found"));
-        customers.findFor(wallet.customerId(), command.caller()).orElseThrow(() -> new NotFoundException("charge not found"));
-        Optional<Invoice> existing = invoices.findByCharge(command.chargeId().value());
-        if (existing.isPresent()) {
-            return new Result(existing.get(), true);
-        }
-        if (charge.status() != ChargeStatus.SUCCEEDED) {
-            throw new ConflictException("a failed charge cannot be invoiced");
-        }
-        Instant now = clock.now();
-        Optional<UnbilledLine> waiting = unbilled.lockByCharge(charge.id().value());
-        InvoiceItem item = waiting.map(UnbilledLine::item).orElseGet(() -> lineFactory.lineFor(charge.id().value(), charge.source().name(), charge.reference(),
-                charge.amount(), charge.createdAt()));
-        Invoice draft = Invoice.draft(new InvoiceId(ids.newId()), tenantContext.requireTenant(), wallet.customerId(), wallet.id(), wallet.currency(),
-                InvoiceOrigin.CHARGE, List.of(item), null, null, now);
-        Invoice issued = issuer.issue(draft, wallet.mode() == WalletMode.PREPAID);
-        auditLog.record(AuditEntry.tenant(issued.tenantId(), command.audit().actor(), "invoice.issued-for-charge", AggregateTargets.invoice(issued.id()),
-                command.audit().requestId(), now));
-        return new Result(issued, false);
+        visibility.requireVisible(wallet.customerId(), command.caller(), () -> new NotFoundException("charge not found"));
+        ChargeInvoiceIssuer.Issued issued = issuer.issue(charge, wallet, command.audit());
+        return new Result(issued.invoice(), issued.replayed());
     }
 }

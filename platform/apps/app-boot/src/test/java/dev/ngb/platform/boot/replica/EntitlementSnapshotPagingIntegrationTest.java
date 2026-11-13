@@ -8,7 +8,7 @@ import dev.ngb.core.tenancy.RequestScope;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.platform.Application;
 import dev.ngb.platform.support.PlatformContainerConfig;
-import dev.ngb.platform.tenancy.application.entitlement.command.EnableAppUseCase;
+import dev.ngb.platform.tenancy.application.entitlement.command.SetAppEntitlementUseCase;
 import dev.ngb.platform.tenancy.application.tenant.command.CreateTenantUseCase;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ class EntitlementSnapshotPagingIntegrationTest {
     @Autowired SnapshotController controller;
     @Autowired TenantContext tenantContext;
     @Autowired CreateTenantUseCase createTenant;
-    @Autowired EnableAppUseCase enableApp;
+    @Autowired SetAppEntitlementUseCase setApp;
 
     @Test
     @SuppressWarnings("unchecked")
@@ -40,8 +40,8 @@ class EntitlementSnapshotPagingIntegrationTest {
                     RequestScope.platform(),
                     () -> createTenant.execute(new CreateTenantUseCase.Command(code, "Tenant " + code, "tester", "req-1")).id());
             for (String app : List.of("billing", "platform")) {
-                tenantContext.callAs(RequestScope.platform(), () -> enableApp.execute(
-                        new EnableAppUseCase.Command(tenantId, app, "tester", "req-2", ExpectedVersion.any())));
+                tenantContext.callAs(RequestScope.platform(), () -> setApp.execute(
+                        new SetAppEntitlementUseCase.Command(tenantId, app, true, "tester", "req-2", ExpectedVersion.any())));
                 expected.add(tenantId.value() + "/" + app);
             }
         }

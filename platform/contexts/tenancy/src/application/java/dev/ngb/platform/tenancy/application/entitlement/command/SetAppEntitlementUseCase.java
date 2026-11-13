@@ -19,10 +19,14 @@ import dev.ngb.platform.tenancy.domain.entitlement.AppEntitlement;
 import dev.ngb.platform.tenancy.domain.entitlement.EntitlementEvents;
 import java.time.Instant;
 
-/** Disables one app of the suite for one Tenant. Disabling twice is a no-op that publishes nothing. */
-public class DisableAppUseCase {
+/**
+ * Enables or disables one app of the suite for one Tenant. Setting the state it already has is a no-op that
+ * publishes nothing, and the audit entry names the action that was asked for.
+ */
+public class SetAppEntitlementUseCase {
 
-    public record Command(TenantId tenantId, String appCode, String actor, String requestId, ExpectedVersion expected) {}
+    /** {@code enabled} is the state the app must end in, whichever it had before. */
+    public record Command(TenantId tenantId, String appCode, boolean enabled, String actor, String requestId, ExpectedVersion expected) {}
 
     private final UnitOfWork unitOfWork;
     private final TenantRepository tenants;
@@ -33,7 +37,7 @@ public class DisableAppUseCase {
     private final IdGenerator ids;
     private final Clock clock;
 
-    public DisableAppUseCase(
+    public SetAppEntitlementUseCase(
             UnitOfWork unitOfWork, TenantRepository tenants, AppEntitlementRepository entitlements, AppCatalog apps, EventPublisher events,
             AuditLog auditLog, IdGenerator ids, Clock clock) {
         this.unitOfWork = unitOfWork;
@@ -53,10 +57,12 @@ public class DisableAppUseCase {
                 throw new UnknownAppException(command.appCode());
             }
             Instant now = clock.now();
-            EntitlementRows.Locked locked = EntitlementRows.lockOrInsert(
-                    entitlements, AppEntitlement.disable(command.tenantId(), command.appCode(), now), command.expected());
+            AppEntitlement firstVersion = command.enabled()
+                    ? AppEntitlement.enable(command.tenantId(), command.appCode(), now)
+                    : AppEntitlement.disable(command.tenantId(), command.appCode(), now);
+            EntitlementRows.Locked locked = EntitlementRows.lockOrInsert(entitlements, firstVersion, command.expected());
             AppEntitlement entitlement = locked.entitlement();
-            if (!locked.inserted() && !entitlement.setEnabled(false, now)) {
+            if (!locked.inserted() && !entitlement.setEnabled(command.enabled(), now)) {
                 return entitlement;
             }
             if (!locked.inserted()) {
@@ -64,8 +70,8 @@ public class DisableAppUseCase {
             }
             events.publish(new EntitlementEvents.EntitlementChanged(ids.newId(), entitlement, now));
             auditLog.record(AuditEntry.platform(
-                    command.actor(), "entitlement.disabled", AggregateTargets.entitlement(command.tenantId(), command.appCode()),
-                    command.requestId(), now));
+                    command.actor(), command.enabled() ? "entitlement.enabled" : "entitlement.disabled",
+                    AggregateTargets.entitlement(command.tenantId(), command.appCode()), command.requestId(), now));
             return entitlement;
         });
     }

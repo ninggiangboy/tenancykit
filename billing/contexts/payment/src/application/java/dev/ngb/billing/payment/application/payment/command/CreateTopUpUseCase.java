@@ -16,6 +16,7 @@ import dev.ngb.billing.payment.domain.payment.Payment;
 import dev.ngb.billing.payment.domain.payment.PaymentId;
 import dev.ngb.billing.payment.domain.payment.PaymentStatus;
 import dev.ngb.billing.payment.domain.stripe.StripeConfiguration;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
@@ -103,7 +104,8 @@ public class CreateTopUpUseCase {
             throw new IllegalArgumentException("the top-up is in %s but the wallet is in %s".formatted(command.amount().currency(), wallet.currency()));
         }
         Instant now = clock.now();
-        Payment payment = Payment.start(new PaymentId(ids.newId()), configuration, wallet.id(), wallet.customerId(), command.amount(), key, hash, now);
+        Payment payment = Payment.start(new PaymentId(ids.newId()), configuration, wallet.id(), wallet.customerId(), command.amount(),
+                new ReplayIdentity(key, hash), now);
         if (!payments.addIfAbsent(payment)) {
             Payment winner = payments.findByIdempotencyKey(key)
                     .orElseThrow(() -> new IllegalStateException("a payment vanished after a key conflict"));

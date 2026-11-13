@@ -3,6 +3,7 @@ package dev.ngb.billing.payment.application.payment.query;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.util.PageSize;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
+import dev.ngb.billing.customer.api.lookup.CustomerVisibility;
 import dev.ngb.billing.payment.application.refund.query.RefundReadRepository;
 import dev.ngb.billing.payment.application.refund.query.RefundView;
 import dev.ngb.billing.payment.domain.payment.PaymentStatus;
@@ -21,12 +22,14 @@ public class PaymentQueries {
     private final PaymentReadRepository payments;
     private final RefundReadRepository refunds;
     private final CustomerLookup customers;
+    private final CustomerVisibility visibility;
 
     public PaymentQueries(UnitOfWork unitOfWork, PaymentReadRepository payments, RefundReadRepository refunds, CustomerLookup customers) {
         this.unitOfWork = unitOfWork;
         this.payments = payments;
         this.refunds = refunds;
         this.customers = customers;
+        this.visibility = new CustomerVisibility(customers);
     }
 
     public List<PaymentView> list(WalletId walletId, PaymentStatus status, UUID before, int limit) {
@@ -68,15 +71,9 @@ public class PaymentQueries {
     public PaymentDetail payment(UUID id, UUID caller) {
         return unitOfWork.transactional(() -> payments.findById(id)
                 .map(payment -> {
-                    requireVisible(payment, caller);
+                    visibility.requireVisible(payment.customerId(), caller, () -> new NotFoundException("payment not found"));
                     return new PaymentDetail(payment, refunds.byPayment(id), payments.attempts(id));
                 })
                 .orElseThrow(() -> new NotFoundException("payment not found")));
-    }
-
-    private void requireVisible(PaymentView payment, UUID caller) {
-        if (caller != null && customers.findFor(payment.customerId(), caller).isEmpty()) {
-            throw new NotFoundException("payment not found");
-        }
     }
 }

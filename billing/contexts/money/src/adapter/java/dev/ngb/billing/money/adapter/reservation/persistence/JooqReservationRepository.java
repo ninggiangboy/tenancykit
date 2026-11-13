@@ -10,6 +10,7 @@ import dev.ngb.billing.money.application.reservation.port.ReservationRepository;
 import dev.ngb.billing.money.domain.reservation.Reservation;
 import dev.ngb.core.error.IdempotencyConflictException;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing_jooq.Keys;
@@ -112,7 +113,6 @@ public class JooqReservationRepository implements ReservationRepository {
                 row.getCreatedAt(),
                 row.getClosedAt(),
                 row.getReference(),
-                row.getIdempotencyKey(),
-                row.getRequestHash());
+                new ReplayIdentity(row.getIdempotencyKey(), row.getRequestHash()));
     }
 }

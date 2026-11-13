@@ -7,6 +7,7 @@ import dev.ngb.billing.money.api.charge.ChargeStatus;
 import dev.ngb.billing.money.api.reservation.ReservationId;
 import dev.ngb.billing.money.domain.wallet.Wallet;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Money;
 import java.time.Instant;
 import java.util.Objects;
@@ -24,8 +25,7 @@ public final class Charge {
     private final ReservationId reservationId;
     private final String usageRef;
     private final String reference;
-    private final String idempotencyKey;
-    private final String requestHash;
+    private final ReplayIdentity replay;
     private final Instant createdAt;
 
     private Charge(
@@ -39,8 +39,7 @@ public final class Charge {
             ReservationId reservationId,
             String usageRef,
             String reference,
-            String idempotencyKey,
-            String requestHash,
+            ReplayIdentity replay,
             Instant createdAt) {
         this.id = Objects.requireNonNull(id, "id");
         this.tenantId = Objects.requireNonNull(tenantId, "tenantId");
@@ -52,8 +51,7 @@ public final class Charge {
         this.reservationId = reservationId;
         this.usageRef = usageRef;
         this.reference = reference;
-        this.idempotencyKey = Objects.requireNonNull(idempotencyKey, "idempotencyKey");
-        this.requestHash = Objects.requireNonNull(requestHash, "requestHash");
+        this.replay = Objects.requireNonNull(replay, "replay");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
         if (!amount.isPositive()) {
             throw new IllegalArgumentException("a charge must be positive");
@@ -65,23 +63,22 @@ public final class Charge {
 
     public static Charge succeeded(
             ChargeId id, Wallet wallet, Money amount, ChargeSource source, ReservationId reservationId, String usageRef, String reference,
-            String idempotencyKey, String requestHash, Instant now) {
+            ReplayIdentity replay, Instant now) {
         return new Charge(id, wallet.tenantId(), wallet.id(), amount, source, ChargeStatus.SUCCEEDED, null, reservationId, usageRef, reference,
-                idempotencyKey, requestHash, now);
+                replay, now);
     }
 
     public static Charge failed(
             ChargeId id, Wallet wallet, Money amount, ChargeSource source, ReservationId reservationId, String usageRef, String reference,
-            String idempotencyKey, String requestHash, String failureReason, Instant now) {
+            ReplayIdentity replay, String failureReason, Instant now) {
         return new Charge(id, wallet.tenantId(), wallet.id(), amount, source, ChargeStatus.FAILED, failureReason, reservationId, usageRef,
-                reference, idempotencyKey, requestHash, now);
+                reference, replay, now);
     }
 
     public static Charge restore(
             ChargeId id, TenantId tenantId, WalletId walletId, Money amount, ChargeSource source, ChargeStatus status, String failureReason,
-            ReservationId reservationId, String usageRef, String reference, String idempotencyKey, String requestHash, Instant createdAt) {
-        return new Charge(id, tenantId, walletId, amount, source, status, failureReason, reservationId, usageRef, reference, idempotencyKey,
-                requestHash, createdAt);
+            ReservationId reservationId, String usageRef, String reference, ReplayIdentity replay, Instant createdAt) {
+        return new Charge(id, tenantId, walletId, amount, source, status, failureReason, reservationId, usageRef, reference, replay, createdAt);
     }
 
     public ChargeId id() {
@@ -124,12 +121,17 @@ public final class Charge {
         return reference;
     }
 
+    /** The key and the digest of the request this charge was accepted under. */
+    public ReplayIdentity replay() {
+        return replay;
+    }
+
     public String idempotencyKey() {
-        return idempotencyKey;
+        return replay.idempotencyKey();
     }
 
     public String requestHash() {
-        return requestHash;
+        return replay.requestHash();
     }
 
     public Instant createdAt() {

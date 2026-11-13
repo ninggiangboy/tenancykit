@@ -2,7 +2,7 @@ package dev.ngb.tenant.identity.adapter.session.web;
 
 import dev.ngb.core.security.Authenticated;
 import dev.ngb.core.security.PublicEndpoint;
-import dev.ngb.tenant.identity.api.security.Role;
+import dev.ngb.tenant.identity.adapter.user.web.UserResponse;
 import dev.ngb.tenant.identity.application.session.command.AuthenticateUseCase;
 import dev.ngb.tenant.identity.application.user.command.RegisterUserUseCase;
 import dev.ngb.tenant.identity.application.session.service.SessionService;
@@ -25,13 +25,7 @@ public class AuthController {
 
     public record LoginRequest(String email, String password) {}
 
-    public record LoginResponse(String token, Instant expiresAt, UserView user) {}
-
-    public record UserView(java.util.UUID id, String email, String displayName, Role role, String status, Instant createdAt) {
-        static UserView of(User user) {
-            return new UserView(user.id(), user.email(), user.displayName(), user.role(), user.status().name(), user.createdAt());
-        }
-    }
+    public record LoginResponse(String token, Instant expiresAt, UserResponse user) {}
 
     private final RegisterUserUseCase register;
     private final AuthenticateUseCase authenticate;
@@ -47,17 +41,17 @@ public class AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     @PublicEndpoint
-    public UserView register(@RequestBody RegisterRequest request) {
+    public UserResponse register(@RequestBody RegisterRequest request) {
         User user = register.execute(new RegisterUserUseCase.Command(
                 request.email(), request.displayName(), request.password(), null));
-        return UserView.of(user);
+        return UserResponse.of(user);
     }
 
     @PostMapping("/login")
     @PublicEndpoint
     public LoginResponse login(@RequestBody LoginRequest request) {
         AuthenticateUseCase.Result result = authenticate.execute(request.email(), request.password());
-        return new LoginResponse(result.token(), result.expiresAt(), UserView.of(result.user()));
+        return new LoginResponse(result.token(), result.expiresAt(), UserResponse.of(result.user()));
     }
 
     @PostMapping("/logout")

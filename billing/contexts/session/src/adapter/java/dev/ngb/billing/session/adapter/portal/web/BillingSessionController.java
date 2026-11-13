@@ -6,7 +6,6 @@ import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
-import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.application.portal.command.OpenBillingSessionUseCase;
 import dev.ngb.billing.session.application.portal.command.RevokeBillingSessionUseCase;
@@ -18,6 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -65,18 +65,12 @@ public class BillingSessionController {
             throw new IllegalArgumentException("customerId and returnUrl are required");
         }
         Actor actor = currentActor.get();
-        String tenantSystemId = currentActor.caller() == null
-                ? null
-                : currentActor.caller().toString();
-        if (tenantSystemId == null) {
-            throw new AccessDeniedException("only a tenant system can create a billing session");
-        }
         Set<PortalPermission> permissions = request.permissions() == null
                 ? null
                 : PortalPermission.fromCodes(Set.copyOf(request.permissions()));
         Duration ttl = request.expiresInSeconds() == null ? null : Duration.ofSeconds(request.expiresInSeconds());
         OpenBillingSessionUseCase.Result result = open.execute(new OpenBillingSessionUseCase.Command(
-                CustomerId.of(request.customerId()), request.returnUrl(), permissions, ttl, java.util.UUID.fromString(tenantSystemId),
+                CustomerId.of(request.customerId()), request.returnUrl(), permissions, ttl, currentActor.caller(),
                 Audit.of(actor.auditName(), requestId)));
         BillingSession session = result.session();
         return new CreateResponse(
@@ -92,7 +86,7 @@ public class BillingSessionController {
     public ResponseEntity<Void> revoke(
             @PathVariable String id, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         Actor actor = currentActor.get();
-        java.util.UUID tenantSystemId = currentActor.caller();
+        UUID tenantSystemId = currentActor.caller();
         revoke.execute(BillingSessionId.of(id), tenantSystemId, Audit.of(actor.auditName(), requestId));
         return ResponseEntity.noContent().build();
     }

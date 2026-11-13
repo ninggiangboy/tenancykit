@@ -14,6 +14,7 @@ import dev.ngb.core.error.ConflictException;
 import dev.ngb.billing.pricing.api.plan.BillingCycle;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing_jooq.tables.records.SubscriptionsRecord;
 import java.time.Instant;
@@ -164,7 +165,6 @@ public class JooqSubscriptionRepository implements SubscriptionRepository {
                 row.getRenewalAttempts(),
                 row.getCreatedAt(),
                 row.getUpdatedAt(),
-                row.getIdempotencyKey(),
-                row.getRequestHash());
+                new ReplayIdentity(row.getIdempotencyKey(), row.getRequestHash()));
     }
 }

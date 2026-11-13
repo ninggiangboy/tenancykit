@@ -19,6 +19,7 @@ import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -44,12 +45,13 @@ class WalletDomainTest {
     }
 
     private static Reservation hold(Wallet wallet, long amount, Instant expiresAt) {
-        return Reservation.hold(new ReservationId(UUID.randomUUID()), wallet, usd(amount), expiresAt, "run-1", UUID.randomUUID().toString(), "h", NOW);
+        return Reservation.hold(new ReservationId(UUID.randomUUID()), wallet, usd(amount), expiresAt, "run-1",
+                new ReplayIdentity(UUID.randomUUID().toString(), "h"), NOW);
     }
 
     private ChargeService.Request request(Wallet wallet, Reservation reservation, long amount) {
         return new ChargeService.Request(wallet, reservation, usd(amount), reservation == null ? ChargeSource.STANDALONE : ChargeSource.RESERVATION,
-                null, null, UUID.randomUUID().toString(), "h", "user/test", NOW);
+                null, null, new ReplayIdentity(UUID.randomUUID().toString(), "h"), "user/test", NOW);
     }
 
     @Test
@@ -109,7 +111,8 @@ class WalletDomainTest {
         assertThatThrownBy(() -> wallet.post(dong)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> wallet.hold(dong)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> wallet.canSpend(dong)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> charges.charge(new ChargeService.Request(wallet, null, dong, ChargeSource.STANDALONE, null, null, "k", "h", "a", NOW)))
+        assertThatThrownBy(() -> charges.charge(new ChargeService.Request(wallet, null, dong, ChargeSource.STANDALONE, null, null,
+                new ReplayIdentity("k", "h"), "a", NOW)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -143,7 +146,8 @@ class WalletDomainTest {
         assertThatThrownBy(() -> charges.charge(request(wallet, reservation, 1))).isInstanceOf(IllegalStateException.class);
 
         Reservation late = hold(wallet, 100, NOW.plusSeconds(1));
-        ChargeService.Request afterExpiry = new ChargeService.Request(wallet, late, usd(50), ChargeSource.RESERVATION, null, null, "k", "h", "a", NOW.plusSeconds(2));
+        ChargeService.Request afterExpiry = new ChargeService.Request(wallet, late, usd(50), ChargeSource.RESERVATION, null, null,
+                new ReplayIdentity("k", "h"), "a", NOW.plusSeconds(2));
         assertThatThrownBy(() -> charges.charge(afterExpiry)).isInstanceOf(IllegalStateException.class).hasMessageContaining("expired");
     }
 

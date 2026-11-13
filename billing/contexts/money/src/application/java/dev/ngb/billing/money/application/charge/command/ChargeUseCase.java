@@ -6,6 +6,7 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
+import dev.ngb.billing.customer.api.lookup.CustomerVisibility;
 import dev.ngb.billing.money.api.charge.ChargeCommand;
 import dev.ngb.billing.money.api.charge.ChargeResult;
 import dev.ngb.billing.money.api.charge.ChargeWallet;
@@ -21,12 +22,10 @@ import dev.ngb.billing.money.domain.event.MoneyEvents;
 import dev.ngb.billing.money.domain.reservation.Reservation;
 import dev.ngb.billing.money.domain.wallet.Wallet;
 import dev.ngb.core.error.ConflictException;
-import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.idempotency.Fingerprint;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import java.time.Instant;
-
-import java.util.UUID;
 
 /**
  * Records the actual cost incurred, from usage, from a reservation or on its own, once per idempotency key.
@@ -46,7 +45,7 @@ public class ChargeUseCase implements ChargeWallet {
     private final LedgerRepository ledger;
     private final EventPublisher events;
     private final ChargeService chargeService;
-    private final CustomerLookup customers;
+    private final CustomerVisibility visibility;
     private final IdGenerator ids;
     private final Clock clock;
 
@@ -67,7 +66,7 @@ public class ChargeUseCase implements ChargeWallet {
         this.ledger = ledger;
         this.events = events;
         this.chargeService = new ChargeService(ids);
-        this.customers = customers;
+        this.visibility = new CustomerVisibility(customers);
         this.ids = ids;
         this.clock = clock;
     }
@@ -79,7 +78,7 @@ public class ChargeUseCase implements ChargeWallet {
         return unitOfWork.transactional(() -> {
             LedgerTarget target = ledgerTargetOf(command);
             Wallet wallet = wallets.lockById(target.walletId()).orElseThrow(() -> Messages.walletNotFound());
-            requireVisible(wallet, command.caller());
+            visibility.requireVisible(wallet.customerId(), command.caller(), Messages::walletNotFound);
 
             var existing = charges.findByIdempotencyKey(command.idempotencyKey());
             if (existing.isPresent()) {
@@ -92,7 +91,7 @@ public class ChargeUseCase implements ChargeWallet {
             try {
                 outcome = chargeService.charge(new ChargeService.Request(
                         wallet, reservation, command.amount(), command.source(), command.usageRef(), command.reference(),
-                        command.idempotencyKey(), hash, MoneyActors.CHARGE, now));
+                        new ReplayIdentity(command.idempotencyKey(), hash), MoneyActors.CHARGE, now));
             } catch (IllegalStateException reservationNotUsable) {
                 throw new ConflictException(reservationNotUsable.getMessage());
             }
@@ -128,12 +127,6 @@ public class ChargeUseCase implements ChargeWallet {
             throw new IllegalArgumentException("the reservation belongs to another wallet");
         }
         return new LedgerTarget(reservation.walletId(), reservation);
-    }
-
-    private void requireVisible(Wallet wallet, UUID caller) {
-        if (caller != null && customers.findFor(wallet.customerId(), caller).isEmpty()) {
-            throw Messages.walletNotFound();
-        }
     }
 
     private ChargeResult replay(Charge original, String hash, ChargeCommand command) {

@@ -1,17 +1,15 @@
 package dev.ngb.billing.payment.application.stripe.command;
 
 import dev.ngb.core.runtime.Clock;
-import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.util.Causes;
-import dev.ngb.billing.payment.application.incident.port.IncidentRepository;
+import dev.ngb.billing.payment.application.incident.service.IncidentRecorder;
 import dev.ngb.billing.payment.application.payment.port.PaymentProvider;
 import dev.ngb.billing.payment.application.payment.port.PaymentRepository;
 import dev.ngb.billing.payment.application.payment.service.PaymentSettings;
 import dev.ngb.billing.payment.application.payment.service.PaymentSettlement;
 import dev.ngb.billing.payment.application.refund.port.RefundRepository;
-import dev.ngb.billing.payment.application.stripe.port.StripeConfigurationRepository;
-import dev.ngb.billing.payment.application.stripe.service.ProviderAccess;
+import dev.ngb.billing.payment.application.stripe.service.StripeEventPrefetch;
 import dev.ngb.billing.payment.domain.incident.IncidentKind;
 import dev.ngb.billing.payment.domain.payment.Payment;
 import dev.ngb.billing.payment.domain.payment.PaymentId;
@@ -36,45 +34,37 @@ public class ReconcileStripeUseCase {
     public record Report(int checked, int corrected, int mismatches) {}
 
     private final UnitOfWork unitOfWork;
-    private final StripeConfigurationRepository configurations;
     private final PaymentRepository payments;
     private final RefundRepository refunds;
-    private final IncidentRepository incidents;
-    private final PaymentProvider provider;
-    private final ProviderAccess access;
     private final PaymentSettlement settlement;
     private final PaymentSettings settings;
-    private final IdGenerator ids;
+    private final StripeEventPrefetch prefetch;
+    private final IncidentRecorder incidents;
     private final Clock clock;
 
     public ReconcileStripeUseCase(
-            UnitOfWork unitOfWork, StripeConfigurationRepository configurations, PaymentRepository payments, RefundRepository refunds,
-            IncidentRepository incidents, PaymentProvider provider, ProviderAccess access, PaymentSettlement settlement, PaymentSettings settings,
-            IdGenerator ids, Clock clock) {
+            UnitOfWork unitOfWork, PaymentRepository payments, RefundRepository refunds, PaymentSettlement settlement, PaymentSettings settings,
+            StripeEventPrefetch prefetch, IncidentRecorder incidents, Clock clock) {
         this.unitOfWork = unitOfWork;
-        this.configurations = configurations;
         this.payments = payments;
         this.refunds = refunds;
-        this.incidents = incidents;
-        this.provider = provider;
-        this.access = access;
         this.settlement = settlement;
         this.settings = settings;
-        this.ids = ids;
+        this.prefetch = prefetch;
+        this.incidents = incidents;
         this.clock = clock;
     }
 
     public Report runOnce() {
-        Optional<StripeConfiguration> found = unitOfWork.transactional(configurations::findLive);
+        Optional<StripeConfiguration> found = prefetch.liveConfiguration();
         if (found.isEmpty()) {
             return new Report(0, 0, 0);
         }
         StripeConfiguration configuration = found.get();
-        PaymentProvider.Access credentials = access.of(configuration);
         Instant since = clock.now().minus(settings.reconcileLookback());
         // The provider is read first, outside any transaction; the comparison and corrections follow in short ones.
-        List<PaymentProvider.Checkout> checkouts = provider.recentCheckouts(credentials, since);
-        List<PaymentProvider.RefundObject> refundObjects = provider.recentRefunds(credentials, since);
+        List<PaymentProvider.Checkout> checkouts = prefetch.recentCheckouts(configuration, since);
+        List<PaymentProvider.RefundObject> refundObjects = prefetch.recentRefunds(configuration, since);
 
         int checked = 0;
         int corrected = 0;
@@ -88,7 +78,7 @@ public class ReconcileStripeUseCase {
                 // A completed session that is not yet paid needs its intent; it is read here, before any transaction.
                 PaymentProvider.Intent intent = checkout.status() == PaymentProvider.CheckoutStatus.COMPLETE
                         && checkout.payment() == PaymentProvider.CheckoutPayment.UNPAID && checkout.paymentIntentId() != null
-                        ? provider.retrievePayment(credentials, checkout.paymentIntentId())
+                        ? prefetch.retrievePayment(configuration, checkout.paymentIntentId())
                         : null;
                 int[] outcome = unitOfWork.transactional(() -> reconcileCheckout(configuration, checkout, intent));
                 corrected += outcome[0];
@@ -114,7 +104,7 @@ public class ReconcileStripeUseCase {
 
     /** @return {corrected, mismatches} */
     private int[] reconcileCheckout(StripeConfiguration configuration, PaymentProvider.Checkout checkout, PaymentProvider.Intent intent) {
-        Optional<Payment> local = parse(checkout.paymentRef()).flatMap(id -> payments.findById(new dev.ngb.billing.payment.domain.payment.PaymentId(id)));
+        Optional<Payment> local = parse(checkout.paymentRef()).flatMap(id -> payments.findById(new PaymentId(id)));
         if (local.isEmpty()) {
             return new int[] {0, 0};
         }
@@ -143,7 +133,7 @@ public class ReconcileStripeUseCase {
     private int[] reconcileRefund(StripeConfiguration configuration, PaymentProvider.RefundObject observed) {
         Optional<Refund> local = observed.refundRef() == null
                 ? refunds.findByStripeRefundId(observed.refundId())
-                : parse(observed.refundRef()).flatMap(id -> refunds.findById(new dev.ngb.billing.payment.domain.refund.RefundId(id)));
+                : parse(observed.refundRef()).flatMap(id -> refunds.findById(new RefundId(id)));
         if (local.isEmpty()) {
             // Not ours to account for unless it refunds one of our payments; the settlement flags that case.
             if (observed.intentId() == null || payments.lockByPaymentIntent(observed.intentId()).isEmpty()) {
@@ -178,13 +168,13 @@ public class ReconcileStripeUseCase {
             // it again.
             return 0;
         }
-        unitOfWork.transactional(() -> flag(configuration, subject,
-                "Reconciliation could not examine this: %s: %s".formatted(failure.getClass().getSimpleName(), failure.getMessage())));
+        flag(configuration, subject,
+                "Reconciliation could not examine this: %s: %s".formatted(failure.getClass().getSimpleName(), failure.getMessage()));
         return 1;
     }
 
     private void flag(StripeConfiguration configuration, String subject, String detail) {
-        incidents.record(ids.newId(), configuration.tenantId(), configuration.id(), IncidentKind.RECONCILIATION_MISMATCH, subject, detail, clock.now());
+        incidents.record(configuration.tenantId(), configuration.id(), IncidentKind.RECONCILIATION_MISMATCH, subject, detail);
     }
 
     private static Optional<UUID> parse(String text) {

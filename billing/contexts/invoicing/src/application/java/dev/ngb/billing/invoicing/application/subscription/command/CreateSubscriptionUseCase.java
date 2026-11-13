@@ -16,6 +16,7 @@ import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.error.ConflictException;
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.core.idempotency.Fingerprint;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.pricing.api.plan.PlanPricing;
@@ -81,7 +82,7 @@ public class CreateSubscriptionUseCase {
                 throw new IllegalArgumentException("the wallet is in %s but the plan is priced in %s".formatted(wallet.currency(), terms.currency()));
             }
             Subscription subscription = Subscription.create(new SubscriptionId(ids.newId()), tenantContext.requireTenant(), wallet.customerId(), wallet.id(),
-                    wallet.currency(), terms.planId(), terms.planCode(), terms.cycle(), key, hash, now);
+                    wallet.currency(), terms.planId(), terms.planCode(), terms.cycle(), new ReplayIdentity(key, hash), now);
             if (!subscriptions.addIfAbsent(subscription)) {
                 Subscription winner = subscriptions.findByIdempotencyKey(key)
                         .orElseThrow(() -> new IllegalStateException("a subscription vanished after a key conflict"));

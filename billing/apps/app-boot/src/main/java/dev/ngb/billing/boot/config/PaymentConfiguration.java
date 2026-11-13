@@ -28,6 +28,7 @@ import dev.ngb.billing.payment.adapter.stripe.provider.StripePaymentProvider;
 import dev.ngb.billing.payment.application.incident.port.IncidentRepository;
 import dev.ngb.billing.payment.application.incident.query.IncidentQueries;
 import dev.ngb.billing.payment.application.incident.query.IncidentReadRepository;
+import dev.ngb.billing.payment.application.incident.service.IncidentRecorder;
 import dev.ngb.billing.payment.application.payment.command.CreateInvoicePaymentUseCase;
 import dev.ngb.billing.payment.application.payment.command.CreateTopUpUseCase;
 import dev.ngb.billing.payment.application.payment.command.OpenPaymentMethodsUseCase;
@@ -39,11 +40,13 @@ import dev.ngb.billing.payment.application.payment.query.PaymentReadRepository;
 import dev.ngb.billing.payment.application.payment.service.CheckoutOpener;
 import dev.ngb.billing.payment.application.payment.service.PaymentSettings;
 import dev.ngb.billing.payment.application.payment.service.PaymentSettlement;
+import dev.ngb.billing.payment.application.payment.service.WalletMovements;
 import dev.ngb.billing.payment.application.refund.command.RequestRefundUseCase;
 import dev.ngb.billing.payment.application.refund.port.RefundRepository;
 import dev.ngb.billing.payment.application.refund.query.RefundQueries;
 import dev.ngb.billing.payment.application.refund.query.RefundReadRepository;
 import dev.ngb.billing.payment.application.refund.service.RefundGateway;
+import dev.ngb.billing.payment.application.refund.service.RefundRequests;
 import dev.ngb.billing.payment.application.stripe.command.ManageStripeEventUseCase;
 import dev.ngb.billing.payment.application.stripe.command.ReceiveStripeWebhookUseCase;
 import dev.ngb.billing.payment.application.stripe.command.ReconcileStripeUseCase;
@@ -57,7 +60,10 @@ import dev.ngb.billing.payment.application.stripe.query.StripeEventQueries;
 import dev.ngb.billing.payment.application.stripe.query.StripeEventReadRepository;
 import dev.ngb.billing.payment.application.stripe.service.ProviderAccess;
 import dev.ngb.billing.payment.application.stripe.service.StripeConfigurationService;
+import dev.ngb.billing.payment.application.stripe.service.StripeEventPrefetch;
 import dev.ngb.billing.payment.application.stripe.service.StripeEventProcessor;
+import dev.ngb.billing.payment.application.stripe.service.StripeEventStore;
+import dev.ngb.core.audit.AuditPreamble;
 import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.tenancy.TenantContext;
 import java.time.Duration;
@@ -168,27 +174,47 @@ class PaymentConfiguration {
     }
 
     @Bean
+    IncidentRecorder incidentRecorder(UnitOfWork unitOfWork, IncidentRepository incidents, IdGenerator ids, Clock clock) {
+        return new IncidentRecorder(unitOfWork, incidents, ids, clock);
+    }
+
+    @Bean
+    StripeEventPrefetch stripeEventPrefetch(
+            UnitOfWork unitOfWork, StripeConfigurationRepository configurations, PaymentProvider provider, ProviderAccess access,
+            SecretCipher cipher) {
+        return new StripeEventPrefetch(unitOfWork, configurations, provider, access, cipher);
+    }
+
+    @Bean
+    StripeEventStore stripeEventStore(StripeEventRepository events, IdGenerator ids, Clock clock) {
+        return new StripeEventStore(events, ids, clock);
+    }
+
+    @Bean
+    WalletMovements walletMovements(CreditWallet credit, DebitWallet debit, ReleaseReservation release) {
+        return new WalletMovements(credit, debit, release);
+    }
+
+    @Bean
     PaymentSettlement paymentSettlement(
-            PaymentRepository payments, RefundRepository refunds, IncidentRepository incidents, StripeConfigurationRepository configurations,
-            CreditWallet credit, DebitWallet debit, ReleaseReservation release, EventPublisher events, IdGenerator ids, Clock clock) {
-        return new PaymentSettlement(payments, refunds, incidents, configurations, credit, debit, release, events, ids, clock);
+            PaymentRepository payments, RefundRepository refunds, IncidentRecorder incidents, StripeConfigurationRepository configurations,
+            WalletMovements movements, EventPublisher events, IdGenerator ids, Clock clock) {
+        return new PaymentSettlement(payments, refunds, incidents, configurations, movements, events, ids, clock);
     }
 
     @Bean
     StripeEventProcessor stripeEventProcessor(
-            UnitOfWork unitOfWork, StripeEventRepository events, StripeConfigurationRepository configurations, IncidentRepository incidents,
-            PaymentProvider provider, ProviderAccess access, PaymentSettlement settlement, PaymentSettings settings, IdGenerator ids, Clock clock) {
-        return new StripeEventProcessor(unitOfWork, events, configurations, incidents, provider, access, settlement, settings, ids, clock,
+            UnitOfWork unitOfWork, StripeEventRepository events, IncidentRecorder incidents, PaymentSettlement settlement,
+            StripeEventPrefetch prefetch, PaymentSettings settings, Clock clock) {
+        return new StripeEventProcessor(unitOfWork, events, incidents, settlement, prefetch, settings, clock,
                 () -> ThreadLocalRandom.current().nextDouble());
     }
 
     @Bean
     ReceiveStripeWebhookUseCase receiveStripeWebhookUseCase(
-            UnitOfWork unitOfWork, TenantContext tenantContext, StripeRoutes routes, StripeConfigurationRepository configurations,
-            StripeEventRepository events, IncidentRepository incidents, PaymentProvider provider, StripeEventProcessor processor, SecretCipher cipher,
-            PaymentSettings settings, IdGenerator ids, Clock clock) {
-        return new ReceiveStripeWebhookUseCase(unitOfWork, tenantContext, routes, configurations, events, incidents, provider, processor, cipher,
-                settings, ids, clock);
+            UnitOfWork unitOfWork, TenantContext tenantContext, StripeRoutes routes, PaymentSettings settings, StripeEventProcessor processor,
+            StripeEventPrefetch prefetch, StripeEventStore store, IncidentRecorder incidents) {
+        return new ReceiveStripeWebhookUseCase(unitOfWork, tenantContext, routes, settings, processor, prefetch, store, incidents);
     }
 
     @Bean
@@ -244,18 +270,24 @@ class PaymentConfiguration {
     }
 
     @Bean
+    RefundRequests refundRequests(
+            PaymentRepository payments, RefundRepository refunds, ReserveBudget reserve, RefundGateway gateway, PaymentSettings settings,
+            AuditPreamble audit, IdGenerator ids, Clock clock) {
+        return new RefundRequests(payments, refunds, reserve, gateway, settings, audit, ids, clock);
+    }
+
+    @Bean
     RequestRefundUseCase requestRefundUseCase(
-            UnitOfWork unitOfWork, PaymentRepository payments, RefundRepository refunds, ReserveBudget reserve, PaymentSettlement settlement,
-            RefundGateway gateway, PaymentSettings settings, AuditLog auditLog, TenantContext tenantContext, IdGenerator ids, Clock clock) {
-        return new RequestRefundUseCase(unitOfWork, payments, refunds, reserve, settlement, gateway, settings, auditLog, tenantContext, ids, clock);
+            UnitOfWork unitOfWork, RefundRepository refunds, RefundGateway gateway, RefundRequests requests, PaymentSettlement settlement,
+            Clock clock) {
+        return new RequestRefundUseCase(unitOfWork, refunds, gateway, requests, settlement, clock);
     }
 
     @Bean
     ReconcileStripeUseCase reconcileStripeUseCase(
-            UnitOfWork unitOfWork, StripeConfigurationRepository configurations, PaymentRepository payments, RefundRepository refunds,
-            IncidentRepository incidents, PaymentProvider provider, ProviderAccess access, PaymentSettlement settlement, PaymentSettings settings,
-            IdGenerator ids, Clock clock) {
-        return new ReconcileStripeUseCase(unitOfWork, configurations, payments, refunds, incidents, provider, access, settlement, settings, ids, clock);
+            UnitOfWork unitOfWork, PaymentRepository payments, RefundRepository refunds, PaymentSettlement settlement, PaymentSettings settings,
+            StripeEventPrefetch prefetch, IncidentRecorder incidents, Clock clock) {
+        return new ReconcileStripeUseCase(unitOfWork, payments, refunds, settlement, settings, prefetch, incidents, clock);
     }
 
     @Bean

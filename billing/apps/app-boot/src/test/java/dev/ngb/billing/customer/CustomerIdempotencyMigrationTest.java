@@ -62,7 +62,7 @@ class CustomerIdempotencyMigrationTest {
                         .containsExactly("legacy:" + unrecordedId, "legacy");
 
                 CreateCustomerUseCase.Result replay = createCustomer(owner, new TenantId(tenantId)).execute(
-                        new CreateCustomerUseCase.Command(null, null, "Acme", null, KEY, new Audit("user/test", "req-1")));
+                        new CreateCustomerUseCase.Command(null, null, null, "Acme", null, KEY, new Audit("user/test", "req-1")));
                 assertThat(replay.replayed()).isTrue();
                 assertThat(replay.customer().id().value()).isEqualTo(customerId);
 

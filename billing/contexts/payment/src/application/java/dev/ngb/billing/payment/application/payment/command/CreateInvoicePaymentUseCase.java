@@ -15,6 +15,7 @@ import dev.ngb.billing.payment.domain.payment.Payment;
 import dev.ngb.billing.payment.domain.payment.PaymentId;
 import dev.ngb.billing.payment.domain.payment.PaymentStatus;
 import dev.ngb.billing.payment.domain.stripe.StripeConfiguration;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.core.error.ConflictException;
 import dev.ngb.core.error.IdempotencyConflictException;
 import dev.ngb.core.error.NotFoundException;
@@ -84,7 +85,7 @@ public class CreateInvoicePaymentUseCase implements StartInvoicePayment {
             throw new IllegalArgumentException("the payment is in %s but the wallet is in %s".formatted(command.amount().currency(), wallet.currency()));
         }
         Payment payment = Payment.startForInvoice(new PaymentId(ids.newId()), configuration, command.invoiceId(), wallet.id(), wallet.customerId(),
-                command.amount(), key, hash, clock.now());
+                command.amount(), new ReplayIdentity(key, hash), clock.now());
         if (!payments.addIfAbsent(payment)) {
             Payment winner = payments.findByIdempotencyKey(key)
                     .orElseThrow(() -> new IllegalStateException("a payment vanished after a key conflict"));

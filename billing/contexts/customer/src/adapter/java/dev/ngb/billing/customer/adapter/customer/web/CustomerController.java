@@ -6,7 +6,9 @@ import dev.ngb.billing.customer.application.customer.command.CreateCustomerUseCa
 import dev.ngb.billing.customer.application.customer.command.ManageCustomerUseCase;
 import dev.ngb.billing.customer.application.customer.query.CustomerQueries;
 import dev.ngb.billing.customer.application.customer.query.CustomerView;
+import dev.ngb.billing.customer.application.customer.query.CustomerIdentityView;
 import dev.ngb.billing.customer.domain.customer.Customer;
+import dev.ngb.billing.customer.domain.customer.ExternalIdentity;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
@@ -14,11 +16,10 @@ import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
-import dev.ngb.core.error.AccessDeniedException;
-import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,25 +46,32 @@ public class CustomerController {
 
     public record UpdateCustomerRequest(String displayName, String email) {}
 
-    public record IdentityResponse(String tenantSystemId, String externalUserId) {}
+    public record IdentityResponse(String tenantSystemId, String externalUserId) {
+        static IdentityResponse of(CustomerIdentityView identity) {
+            return new IdentityResponse(identity.tenantSystemId().toString(), identity.externalUserId());
+        }
+
+        static IdentityResponse of(ExternalIdentity identity) {
+            return new IdentityResponse(identity.tenantSystemId().toString(), identity.externalUserId());
+        }
+    }
 
     public record CustomerResponse(String id, String displayName, String email, String status, Instant createdAt, List<IdentityResponse> identities) {
+
         static CustomerResponse of(Customer customer) {
-            return new CustomerResponse(
-                    customer.id().toString(), customer.displayName(), customer.email(), customer.status().name(), customer.createdAt(),
-                    customer.identities().stream()
-                            .map(i -> new IdentityResponse(i.tenantSystemId().toString(), i.externalUserId()))
-                            .sorted(java.util.Comparator.comparing(IdentityResponse::externalUserId))
-                            .toList());
+            return of(customer.id().toString(), customer.displayName(), customer.email(), customer.status().name(), customer.createdAt(),
+                    customer.identities().stream().map(IdentityResponse::of).toList());
         }
 
         static CustomerResponse ofView(CustomerView customer) {
-            return new CustomerResponse(
-                    customer.id().toString(), customer.displayName(), customer.email(), customer.status().name(), customer.createdAt(),
-                    customer.identities().stream()
-                            .map(i -> new IdentityResponse(i.tenantSystemId().toString(), i.externalUserId()))
-                            .sorted(java.util.Comparator.comparing(IdentityResponse::externalUserId))
-                            .toList());
+            return of(customer.id().toString(), customer.displayName(), customer.email(), customer.status().name(), customer.createdAt(),
+                    customer.identities().stream().map(IdentityResponse::of).toList());
+        }
+
+        private static CustomerResponse of(
+                String id, String displayName, String email, String status, Instant createdAt, List<IdentityResponse> identities) {
+            return new CustomerResponse(id, displayName, email, status, createdAt,
+                    identities.stream().sorted(Comparator.comparing(IdentityResponse::externalUserId)).toList());
         }
     }
 
@@ -88,9 +96,9 @@ public class CustomerController {
             @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId,
             @RequestBody CreateCustomerRequest request) {
         Actor actor = currentActor.get();
-        TenantSystemId system = tenantSystemFor(actor, request.tenantSystemId());
         CreateCustomerUseCase.Result result = create.execute(new CreateCustomerUseCase.Command(
-                system, request.externalUserId(), request.displayName(), request.email(), idempotencyKey, Audit.of(actor.auditName(), requestId)));
+                currentActor.callerId(), request.tenantSystemId(), request.externalUserId(), request.displayName(), request.email(),
+                idempotencyKey, Audit.of(actor.auditName(), requestId)));
         HttpStatus status = result.replayed() ? HttpStatus.OK : HttpStatus.CREATED;
         return ResponseEntity.status(status).body(CustomerResponse.of(result.customer()));
     }
@@ -104,11 +112,7 @@ public class CustomerController {
     @GetMapping("/by-external-user/{externalUserId}")
     @RequiresPermission(BillingPermissions.CUSTOMER_READ)
     public CustomerResponse byExternalUser(@PathVariable String externalUserId, @RequestParam(required = false) String tenantSystemId) {
-        TenantSystemId system = tenantSystemFor(currentActor.get(), tenantSystemId);
-        if (system == null) {
-            throw new IllegalArgumentException("tenantSystemId is required");
-        }
-        return CustomerResponse.ofView(queries.getByExternalUser(system, externalUserId));
+        return CustomerResponse.ofView(queries.getByExternalUser(currentActor.callerId(), tenantSystemId, externalUserId));
     }
 
     @GetMapping("/{id}")
@@ -144,20 +148,5 @@ public class CustomerController {
         Customer customer = manage.deactivate(
                 Audit.of(actor.auditName(), requestId), CustomerId.of(id), ExpectedVersion.fromIfMatch(ifMatch), currentActor.callerId());
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(customer.version())).body(CustomerResponse.of(customer));
-    }
-
-    /**
-     * A Tenant System always acts for itself and may not name another one; a Tenant User names the system (or
-     * none, to create an unmapped customer).
-     */
-    private TenantSystemId tenantSystemFor(Actor actor, String requested) {
-        TenantSystemId acting = currentActor.callerId();
-        if (acting != null) {
-            if (requested != null && !TenantSystemId.of(requested).equals(acting)) {
-                throw new AccessDeniedException("a tenant system can only act for itself");
-            }
-            return acting;
-        }
-        return requested == null ? null : TenantSystemId.of(requested);
     }
 }

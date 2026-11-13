@@ -2,6 +2,7 @@ package dev.ngb.billing.usage.domain.usage;
 
 import dev.ngb.core.id.TenantId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.usage.api.lookup.UsageEventId;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -31,13 +32,12 @@ public final class UsageEvent {
     private final String unit;
     private final Instant occurredAt;
     private final Instant recordedAt;
-    private final String idempotencyKey;
-    private final String requestHash;
+    private final ReplayIdentity replay;
     private final UsageTrace trace;
 
     private UsageEvent(
             UsageEventId id, TenantId tenantId, CustomerId customerId, String metric, BigDecimal quantity, String unit, Instant occurredAt,
-            Instant recordedAt, String idempotencyKey, String requestHash, UsageTrace trace) {
+            Instant recordedAt, ReplayIdentity replay, UsageTrace trace) {
         this.id = Objects.requireNonNull(id, "id");
         this.tenantId = Objects.requireNonNull(tenantId, "tenantId");
         this.customerId = Objects.requireNonNull(customerId, "customerId");
@@ -46,14 +46,13 @@ public final class UsageEvent {
         this.unit = Objects.requireNonNull(unit, "unit");
         this.occurredAt = Objects.requireNonNull(occurredAt, "occurredAt");
         this.recordedAt = Objects.requireNonNull(recordedAt, "recordedAt");
-        this.idempotencyKey = Objects.requireNonNull(idempotencyKey, "idempotencyKey");
-        this.requestHash = Objects.requireNonNull(requestHash, "requestHash");
+        this.replay = Objects.requireNonNull(replay, "replay");
         this.trace = Objects.requireNonNull(trace, "trace");
     }
 
     public static UsageEvent record(
             UsageEventId id, TenantId tenantId, CustomerId customerId, String metric, BigDecimal quantity, String unit, Instant occurredAt,
-            String idempotencyKey, String requestHash, UsageTrace trace, Instant now) {
+            ReplayIdentity replay, UsageTrace trace, Instant now) {
         requireMetric(metric);
         requireUnit(unit);
         BigDecimal normalized = normalize(quantity);
@@ -63,13 +62,13 @@ public final class UsageEvent {
         if (occurredAt.isAfter(now.plus(MAX_CLOCK_SKEW))) {
             throw new IllegalArgumentException("occurredAt is in the future");
         }
-        return new UsageEvent(id, tenantId, customerId, metric, normalized, unit, occurredAt, now, idempotencyKey, requestHash, trace);
+        return new UsageEvent(id, tenantId, customerId, metric, normalized, unit, occurredAt, now, replay, trace);
     }
 
     public static UsageEvent restore(
             UsageEventId id, TenantId tenantId, CustomerId customerId, String metric, BigDecimal quantity, String unit, Instant occurredAt,
-            Instant recordedAt, String idempotencyKey, String requestHash, UsageTrace trace) {
-        return new UsageEvent(id, tenantId, customerId, metric, quantity, unit, occurredAt, recordedAt, idempotencyKey, requestHash, trace);
+            Instant recordedAt, ReplayIdentity replay, UsageTrace trace) {
+        return new UsageEvent(id, tenantId, customerId, metric, quantity, unit, occurredAt, recordedAt, replay, trace);
     }
 
     public static void requireMetric(String metric) {
@@ -134,12 +133,17 @@ public final class UsageEvent {
         return recordedAt;
     }
 
+    /** The key and the digest of the request this event was recorded under. */
+    public ReplayIdentity replay() {
+        return replay;
+    }
+
     public String idempotencyKey() {
-        return idempotencyKey;
+        return replay.idempotencyKey();
     }
 
     public String requestHash() {
-        return requestHash;
+        return replay.requestHash();
     }
 
     public UsageTrace trace() {

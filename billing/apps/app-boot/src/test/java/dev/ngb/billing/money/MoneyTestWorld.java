@@ -49,7 +49,7 @@ public class MoneyTestWorld {
     public World anotherWallet(World base, long initialBalance) {
         ReplicaFixtures.TenantSeed tenant = base.tenant();
         CustomerId customerId = scopes.inTenant(tenant.id(), () -> createCustomer.execute(new CreateCustomerUseCase.Command(
-                null, null, "Customer " + UUID.randomUUID(), null, UUID.randomUUID().toString(), new Audit("user/test", "req"))).customer().id());
+                null, null, null, "Customer " + UUID.randomUUID(), null, UUID.randomUUID().toString(), new Audit("user/test", "req"))).customer().id());
         Wallet wallet = scopes.inTenant(tenant.id(), () -> openWallet.execute(new OpenWalletUseCase.Command(
                 customerId, USD, WalletMode.PREPAID, null, new Audit("user/test", "req"))).wallet());
         credit(tenant, wallet, initialBalance);
@@ -59,7 +59,7 @@ public class MoneyTestWorld {
     private World world(WalletMode mode, long limit, long initialBalance) {
         ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
         CustomerId customerId = scopes.inTenant(tenant.id(), () -> createCustomer.execute(new CreateCustomerUseCase.Command(
-                null, null, "Customer " + UUID.randomUUID(), null, UUID.randomUUID().toString(), new Audit("user/test", "req"))).customer().id());
+                null, null, null, "Customer " + UUID.randomUUID(), null, UUID.randomUUID().toString(), new Audit("user/test", "req"))).customer().id());
         Wallet wallet = scopes.inTenant(tenant.id(), () -> openWallet.execute(new OpenWalletUseCase.Command(
                 customerId, USD, mode, mode == WalletMode.POSTPAID ? Money.of(limit, USD) : null, new Audit("user/test", "req"))).wallet());
         if (initialBalance > 0) {

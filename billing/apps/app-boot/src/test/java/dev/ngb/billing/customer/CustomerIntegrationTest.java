@@ -60,7 +60,7 @@ class CustomerIntegrationTest {
     }
 
     private CreateCustomerUseCase.Command command(TenantSystemId system, String externalUserId, String name, String key) {
-        return new CreateCustomerUseCase.Command(system, externalUserId, name, null, key, AUDIT);
+        return new CreateCustomerUseCase.Command(null, system == null ? null : system.toString(), externalUserId, name, null, key, AUDIT);
     }
 
     @Test
@@ -68,7 +68,8 @@ class CustomerIntegrationTest {
         ReplicaFixtures.TenantSeed tenant = scopes.newTenant();
         TenantSystemId system = newSystem(tenant);
         Customer created = scopes.inTenant(tenant.id(),
-                () -> createCustomer.execute(new CreateCustomerUseCase.Command(system, "user_001", "Acme", "billing@acme.test", "key-1", AUDIT))).customer();
+                () -> createCustomer.execute(new CreateCustomerUseCase.Command(
+                        null, system.toString(), "user_001", "Acme", "billing@acme.test", "key-1", AUDIT))).customer();
 
         Customer reloaded = scopes.inTenant(tenant.id(), () -> unitOfWork.transactional(() -> customers.findById(created.id()))).orElseThrow();
         assertThat(reloaded).usingRecursiveComparison().isEqualTo(created);
@@ -96,8 +97,8 @@ class CustomerIntegrationTest {
         Customer inB = scopes.inTenant(b.id(), () -> createCustomer.execute(command(systemB, "user_001", "B's customer", "k1"))).customer();
 
         assertThat(inA.id()).isNotEqualTo(inB.id());
-        assertThat(scopes.inTenant(a.id(), () -> customerQueries.getByExternalUser(systemA, "user_001")).id()).isEqualTo(inA.id());
-        assertThat(scopes.inTenant(b.id(), () -> customerQueries.getByExternalUser(systemB, "user_001")).id()).isEqualTo(inB.id());
+        assertThat(scopes.inTenant(a.id(), () -> customerQueries.getByExternalUser(null, systemA.toString(), "user_001")).id()).isEqualTo(inA.id());
+        assertThat(scopes.inTenant(b.id(), () -> customerQueries.getByExternalUser(null, systemB.toString(), "user_001")).id()).isEqualTo(inB.id());
         assertThatThrownBy(() -> scopes.inTenant(b.id(), () -> customerQueries.get(inA.id()))).isInstanceOf(NotFoundException.class);
         assertThat(scopes.inTenant(b.id(), () -> lookup.find(inA.id()))).as("another tenant's customer is invisible to the lookup").isEmpty();
         assertThat(scopes.inTenant(a.id(), () -> lookup.find(inA.id())).orElseThrow().displayName()).isEqualTo("A's customer");

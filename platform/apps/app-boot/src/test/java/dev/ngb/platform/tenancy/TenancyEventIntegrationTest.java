@@ -8,7 +8,7 @@ import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.platform.Application;
 import dev.ngb.platform.support.OwnerDatabase;
 import dev.ngb.platform.support.PlatformContainerConfig;
-import dev.ngb.platform.tenancy.application.entitlement.command.EnableAppUseCase;
+import dev.ngb.platform.tenancy.application.entitlement.command.SetAppEntitlementUseCase;
 import dev.ngb.platform.tenancy.application.tenant.command.CreateTenantUseCase;
 import dev.ngb.platform.tenancy.application.tenant.command.DeactivateTenantUseCase;
 import dev.ngb.platform.tenancy.application.tenant.command.RenameTenantUseCase;
@@ -28,7 +28,7 @@ class TenancyEventIntegrationTest {
     @Autowired CreateTenantUseCase createTenant;
     @Autowired RenameTenantUseCase renameTenant;
     @Autowired DeactivateTenantUseCase deactivateTenant;
-    @Autowired EnableAppUseCase enableApp;
+    @Autowired SetAppEntitlementUseCase setApp;
     @Autowired TenantContext tenantContext;
     @Autowired OwnerDatabase owner;
 
@@ -71,7 +71,7 @@ class TenancyEventIntegrationTest {
         Tenant tenant = onPlatform(() -> createTenant.execute(new CreateTenantUseCase.Command(
                 "ent" + suffix(), "Entitled", "user/tester", "req-1")));
 
-        onPlatform(() -> enableApp.execute(new EnableAppUseCase.Command(tenant.id(), "billing", "user/tester", "req-2", ExpectedVersion.any())));
+        onPlatform(() -> setApp.execute(new SetAppEntitlementUseCase.Command(tenant.id(), "billing", true, "user/tester", "req-2", ExpectedVersion.any())));
 
         List<tools.jackson.databind.JsonNode> published = payloads("entitlement.changed", tenant.id().value());
         assertThat(published).hasSize(1);

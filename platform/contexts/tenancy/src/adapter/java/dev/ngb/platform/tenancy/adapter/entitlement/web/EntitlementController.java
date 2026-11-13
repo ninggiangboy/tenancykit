@@ -6,8 +6,7 @@ import dev.ngb.core.id.TenantId;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ExpectedVersion;
-import dev.ngb.platform.tenancy.application.entitlement.command.DisableAppUseCase;
-import dev.ngb.platform.tenancy.application.entitlement.command.EnableAppUseCase;
+import dev.ngb.platform.tenancy.application.entitlement.command.SetAppEntitlementUseCase;
 import dev.ngb.platform.tenancy.domain.entitlement.AppEntitlement;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
@@ -33,13 +32,11 @@ class EntitlementController {
         }
     }
 
-    private final EnableAppUseCase enableApp;
-    private final DisableAppUseCase disableApp;
+    private final SetAppEntitlementUseCase setApp;
     private final CurrentActor currentActor;
 
-    EntitlementController(EnableAppUseCase enableApp, DisableAppUseCase disableApp, CurrentActor currentActor) {
-        this.enableApp = enableApp;
-        this.disableApp = disableApp;
+    EntitlementController(SetAppEntitlementUseCase setApp, CurrentActor currentActor) {
+        this.setApp = setApp;
         this.currentActor = currentActor;
     }
 
@@ -55,9 +52,8 @@ class EntitlementController {
         TenantId tenant = new TenantId(tenantId);
         String actor = currentActor.get().auditName();
         ExpectedVersion expected = ExpectedVersion.fromIfMatch(ifMatch);
-        AppEntitlement entitlement = request.enabled()
-                ? enableApp.execute(new EnableAppUseCase.Command(tenant, appCode, actor, requestId, expected))
-                : disableApp.execute(new DisableAppUseCase.Command(tenant, appCode, actor, requestId, expected));
+        AppEntitlement entitlement = setApp.execute(
+                new SetAppEntitlementUseCase.Command(tenant, appCode, request.enabled(), actor, requestId, expected));
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(entitlement.version())).body(EntitlementResponse.of(entitlement));
     }
 }

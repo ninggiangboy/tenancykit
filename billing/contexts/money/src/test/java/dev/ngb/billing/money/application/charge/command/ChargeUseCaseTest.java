@@ -25,6 +25,7 @@ import dev.ngb.billing.money.domain.reservation.Reservation;
 import dev.ngb.billing.money.domain.wallet.Wallet;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.core.event.DomainEvent;
@@ -53,7 +54,7 @@ class ChargeUseCaseTest {
     private final Wallet wallet = Wallet.restore(new WalletId(UUID.randomUUID()), TENANT, customerId, USD, WalletMode.PREPAID,
             Money.zero(USD), Money.of(1_000, USD), Money.of(500, USD), 1, NOW);
     private final Reservation reservation = Reservation.restore(new ReservationId(UUID.randomUUID()), TENANT, wallet.id(), Money.of(500, USD),
-            Money.zero(USD), ReservationStatus.ACTIVE, NOW.plusSeconds(600), NOW, null, "plan:pro@v1", "hold-1", "hash");
+            Money.zero(USD), ReservationStatus.ACTIVE, NOW.plusSeconds(600), NOW, null, "plan:pro@v1", new ReplayIdentity("hold-1", "hash"));
 
     private final Map<WalletId, Wallet> walletsById = new LinkedHashMap<>(Map.of(wallet.id(), wallet));
     private final Map<String, Charge> chargesByKey = new LinkedHashMap<>();

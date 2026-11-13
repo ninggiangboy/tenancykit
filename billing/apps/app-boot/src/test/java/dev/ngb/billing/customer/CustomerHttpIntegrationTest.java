@@ -141,6 +141,22 @@ class CustomerHttpIntegrationTest {
     }
 
     @Test
+    void theCustomerOfTheAggregateAndTheCustomerOfTheViewAreTheSameBody() throws Exception {
+        String externalUser = "user_" + UUID.randomUUID();
+        MvcResult created = post(acme, acmeKey, "k-" + UUID.randomUUID(),
+                HttpWorld.Map2.of("externalUserId", externalUser, "displayName", "Rendered Ltd", "email", "render@acme.test"));
+        String id = parse(created).get("id").asString();
+
+        MvcResult read = world.call(HttpMethod.GET, acme.host(), acmeKey, "/api/v1/customers/" + id, null);
+
+        assertThat(created.getResponse().getStatus()).isEqualTo(201);
+        assertThat(read.getResponse().getStatus()).isEqualTo(200);
+        assertThat(read.getResponse().getContentAsString())
+                .as("the create body (from the aggregate) and the read body (from the view) are byte for byte the same")
+                .isEqualTo(created.getResponse().getContentAsString());
+    }
+
+    @Test
     void aTenantUserAdministersCustomersWithTheRightPermissions() throws Exception {
         String viewer = world.newUserToken(acme, Set.of("billing:customer:read"));
         String nobody = world.newUserToken(acme, Set.of());

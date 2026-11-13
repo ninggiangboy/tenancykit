@@ -6,12 +6,10 @@ import dev.ngb.tenant.identity.api.security.TenantPermissions;
 import dev.ngb.tenant.identity.application.user.command.ManageUsersUseCase;
 import dev.ngb.tenant.identity.application.user.command.RegisterUserUseCase;
 import dev.ngb.tenant.identity.application.user.query.UserReadRepository;
-import dev.ngb.tenant.identity.application.user.query.UserView;
 import dev.ngb.tenant.identity.domain.user.User;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.security.Authenticated;
 import dev.ngb.core.security.RequiresPermission;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -29,16 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
-
-    public record UserResponse(UUID id, String email, String displayName, Role role, String status, Instant createdAt) {
-        static UserResponse of(User user) {
-            return new UserResponse(user.id(), user.email(), user.displayName(), user.role(), user.status().name(), user.createdAt());
-        }
-
-        static UserResponse of(UserView user) {
-            return new UserResponse(user.id(), user.email(), user.displayName(), user.role(), user.status().name(), user.createdAt());
-        }
-    }
 
     public record CreateUserRequest(String email, String displayName, String password, Role role) {}
 

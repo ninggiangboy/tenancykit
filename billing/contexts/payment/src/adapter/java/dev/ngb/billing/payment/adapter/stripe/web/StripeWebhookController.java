@@ -9,6 +9,7 @@ import dev.ngb.core.security.PublicEndpoint;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Map;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -66,6 +67,6 @@ public class StripeWebhookController {
     }
 
     private static Map<String, String> answer(ReceiveStripeWebhookUseCase.Receipt receipt) {
-        return Map.of("status", receipt.disposition().name().toLowerCase(java.util.Locale.ROOT));
+        return Map.of("status", receipt.disposition().name().toLowerCase(Locale.ROOT));
     }
 }

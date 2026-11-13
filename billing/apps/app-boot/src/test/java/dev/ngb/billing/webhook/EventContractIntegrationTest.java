@@ -27,6 +27,7 @@ import dev.ngb.billing.pricing.PricingTestWorld;
 import dev.ngb.billing.pricing.application.plan.command.ManagePlanUseCase;
 import dev.ngb.billing.pricing.application.rating.command.ChargeFromUsageUseCase;
 import dev.ngb.billing.pricing.domain.rule.EventBased;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.support.EventSchemas;
 import dev.ngb.billing.support.OwnerDatabase;
@@ -148,7 +149,8 @@ class EventContractIntegrationTest {
         var settled = scopes.inTenant(tenant, () -> unitOfWork.transactional(() -> paymentRepository.findById(ok.id()).orElseThrow()));
         var refund = scopes.inTenant(tenant, () -> unitOfWork.transactional(() -> {
             var r = dev.ngb.billing.payment.domain.refund.Refund.request(new dev.ngb.billing.payment.domain.refund.RefundId(UUID.randomUUID()), settled,
-                    Money.of(1000, settled.amount().currency()), null, null, "user/test", "refund-" + UUID.randomUUID(), "hash", Instant.now());
+                    Money.of(1000, settled.amount().currency()), null, null, "user/test",
+                    new ReplayIdentity("refund-" + UUID.randomUUID(), "hash"), Instant.now());
             refundRepository.add(r);
             return r;
         }));
@@ -177,7 +179,8 @@ class EventContractIntegrationTest {
         UUID invoiceId = owner.jdbc().queryForObject("select id from invoices where tenant_id = ?", UUID.class, tenant.value());
         var paymentId = new dev.ngb.billing.payment.domain.payment.PaymentId(UUID.randomUUID());
         scopes.runInTenant(tenant, () -> unitOfWork.transactional(() -> paymentRepository.addIfAbsent(dev.ngb.billing.payment.domain.payment.Payment.startForInvoice(paymentId,
-                w.configuration(), invoiceId, postpaid.wallet().id(), postpaid.customerId(), Money.of(1000, money), "key-" + paymentId, "hash-" + paymentId, Instant.now()))));
+                w.configuration(), invoiceId, postpaid.wallet().id(), postpaid.customerId(), Money.of(1000, money),
+                new ReplayIdentity("key-" + paymentId, "hash-" + paymentId), Instant.now()))));
         deliver(w, dev.ngb.billing.support.StripeEvents.paidCheckout(dev.ngb.billing.support.StripeEvents.newEventId(), null, "cs_" + paymentId, "pi_" + paymentId,
                 paymentId.toString(), 1000));
         scopes.runInTenant(tenant, relay::relayDue);

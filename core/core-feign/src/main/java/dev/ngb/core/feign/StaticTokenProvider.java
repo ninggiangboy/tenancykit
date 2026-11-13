@@ -1,7 +1,5 @@
 package dev.ngb.core.feign;
 
-import java.util.Objects;
-
 /** A token that is already known, such as an administrator's bearer token for a one-shot bootstrap. */
 public final class StaticTokenProvider implements TokenProvider {
 
@@ -27,15 +25,5 @@ public final class StaticTokenProvider implements TokenProvider {
     @Override
     public boolean invalidate() {
         return false;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        return other instanceof StaticTokenProvider provider && Objects.equals(token, provider.token);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(token);
     }
 }

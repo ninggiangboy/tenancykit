@@ -5,6 +5,7 @@ import dev.ngb.billing.money.api.reservation.ReservationId;
 import dev.ngb.billing.money.api.reservation.ReservationStatus;
 import dev.ngb.billing.money.domain.wallet.Wallet;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Money;
 import java.time.Instant;
 import java.util.Objects;
@@ -23,8 +24,7 @@ public final class Reservation {
     private final Instant expiresAt;
     private final Instant createdAt;
     private final String reference;
-    private final String idempotencyKey;
-    private final String requestHash;
+    private final ReplayIdentity replay;
     private ReservationStatus status;
     private Money captured;
     private Instant closedAt;
@@ -40,8 +40,7 @@ public final class Reservation {
             Instant createdAt,
             Instant closedAt,
             String reference,
-            String idempotencyKey,
-            String requestHash) {
+            ReplayIdentity replay) {
         this.id = Objects.requireNonNull(id, "id");
         this.tenantId = Objects.requireNonNull(tenantId, "tenantId");
         this.walletId = Objects.requireNonNull(walletId, "walletId");
@@ -52,20 +51,19 @@ public final class Reservation {
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
         this.closedAt = closedAt;
         this.reference = reference;
-        this.idempotencyKey = Objects.requireNonNull(idempotencyKey, "idempotencyKey");
-        this.requestHash = Objects.requireNonNull(requestHash, "requestHash");
+        this.replay = Objects.requireNonNull(replay, "replay");
     }
 
     /** Holds {@code amount} on {@code wallet}, which must be able to spend it. */
     public static Reservation hold(
-            ReservationId id, Wallet wallet, Money amount, Instant expiresAt, String reference, String idempotencyKey, String requestHash, Instant now) {
+            ReservationId id, Wallet wallet, Money amount, Instant expiresAt, String reference, ReplayIdentity replay, Instant now) {
         if (!expiresAt.isAfter(now)) {
             throw new IllegalArgumentException("a reservation must expire in the future");
         }
         wallet.hold(amount);
         return new Reservation(
                 id, wallet.tenantId(), wallet.id(), amount, Money.zero(amount.currency()), ReservationStatus.ACTIVE, expiresAt, now, null,
-                reference, idempotencyKey, requestHash);
+                reference, replay);
     }
 
     public static Reservation restore(
@@ -79,9 +77,8 @@ public final class Reservation {
             Instant createdAt,
             Instant closedAt,
             String reference,
-            String idempotencyKey,
-            String requestHash) {
-        return new Reservation(id, tenantId, walletId, amount, captured, status, expiresAt, createdAt, closedAt, reference, idempotencyKey, requestHash);
+            ReplayIdentity replay) {
+        return new Reservation(id, tenantId, walletId, amount, captured, status, expiresAt, createdAt, closedAt, reference, replay);
     }
 
     /**
@@ -176,11 +173,16 @@ public final class Reservation {
         return reference;
     }
 
+    /** The key and the digest of the request this reservation was held under. */
+    public ReplayIdentity replay() {
+        return replay;
+    }
+
     public String idempotencyKey() {
-        return idempotencyKey;
+        return replay.idempotencyKey();
     }
 
     public String requestHash() {
-        return requestHash;
+        return replay.requestHash();
     }
 }

@@ -7,6 +7,7 @@ import dev.ngb.billing.customer.api.lookup.CustomerLookup;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.audit.AuditEntry;
 import dev.ngb.core.audit.AuditLog;
+import dev.ngb.core.error.AccessDeniedException;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.core.id.TenantSystemId;
@@ -21,7 +22,7 @@ import dev.ngb.billing.session.domain.portal.BillingSessionId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Objects;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -63,7 +64,9 @@ public class OpenBillingSessionUseCase {
     }
 
     public Result execute(Command command) {
-        Objects.requireNonNull(command.tenantSystemId(), "tenantSystemId");
+        if (command.tenantSystemId() == null) {
+            throw new AccessDeniedException("only a tenant system can create a billing session");
+        }
         Duration ttl = command.ttl() == null ? settings.defaultTtl() : command.ttl();
         if (ttl.compareTo(settings.minTtl()) < 0 || ttl.compareTo(settings.maxTtl()) > 0) {
             throw new IllegalArgumentException("the session lifetime must be between " + settings.minTtl() + " and " + settings.maxTtl());
@@ -71,7 +74,7 @@ public class OpenBillingSessionUseCase {
         Set<PortalPermission> requested = command.permissions() == null || command.permissions().isEmpty()
                 ? PortalPermission.defaultReads()
                 : Set.copyOf(command.permissions());
-        java.util.EnumSet<PortalPermission> permissions = java.util.EnumSet.noneOf(PortalPermission.class);
+        EnumSet<PortalPermission> permissions = EnumSet.noneOf(PortalPermission.class);
         permissions.addAll(requested);
         // A session may always read its own metadata, whatever else it was narrowed to.
         permissions.add(PortalPermission.SESSION_VIEW);

@@ -1,18 +1,10 @@
 package dev.ngb.billing.payment.application.payment.service;
 
-import dev.ngb.core.names.IdempotencyKeys;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.billing.money.api.ledger.LedgerPostingResult;
-import dev.ngb.billing.money.api.reservation.ReleaseReservation;
-import dev.ngb.billing.money.api.reservation.ReservationId;
-import dev.ngb.billing.money.api.wallet.CreditCommand;
-import dev.ngb.billing.money.api.wallet.CreditWallet;
-import dev.ngb.billing.money.api.wallet.DebitCommand;
-import dev.ngb.billing.money.api.wallet.DebitWallet;
-import dev.ngb.billing.payment.application.incident.port.IncidentRepository;
-import dev.ngb.billing.payment.application.messaging.service.PaymentActors;
+import dev.ngb.billing.payment.application.incident.service.IncidentRecorder;
 import dev.ngb.billing.payment.application.payment.port.PaymentProvider;
 import dev.ngb.billing.payment.application.payment.port.PaymentRepository;
 import dev.ngb.billing.payment.application.refund.port.RefundRepository;
@@ -65,25 +57,21 @@ public class PaymentSettlement {
 
     private final PaymentRepository payments;
     private final RefundRepository refunds;
-    private final IncidentRepository incidents;
+    private final IncidentRecorder incidents;
     private final StripeConfigurationRepository configurations;
-    private final CreditWallet credit;
-    private final DebitWallet debit;
-    private final ReleaseReservation release;
+    private final WalletMovements movements;
     private final EventPublisher events;
-    private final IdGenerator ids;
     private final Clock clock;
+    private final IdGenerator ids;
 
     public PaymentSettlement(
-            PaymentRepository payments, RefundRepository refunds, IncidentRepository incidents, StripeConfigurationRepository configurations,
-            CreditWallet credit, DebitWallet debit, ReleaseReservation release, EventPublisher events, IdGenerator ids, Clock clock) {
+            PaymentRepository payments, RefundRepository refunds, IncidentRecorder incidents, StripeConfigurationRepository configurations,
+            WalletMovements movements, EventPublisher events, IdGenerator ids, Clock clock) {
         this.payments = payments;
         this.refunds = refunds;
         this.incidents = incidents;
         this.configurations = configurations;
-        this.credit = credit;
-        this.debit = debit;
-        this.release = release;
+        this.movements = movements;
         this.events = events;
         this.ids = ids;
         this.clock = clock;
@@ -159,8 +147,8 @@ public class PaymentSettlement {
         if (known.isEmpty()) {
             // The Tenant may use the same Stripe account for other things; only a refund of a Billing payment is Billing's business.
             if (observed.intentId() != null && payments.lockByPaymentIntent(observed.intentId()).isPresent()) {
-                incidents.record(ids.newId(), configuration.tenantId(), configuration.id(), IncidentKind.RECONCILIATION_MISMATCH,
-                        "refund/" + observed.refundId(), "Stripe refunded a Billing payment outside Billing; the wallet was not changed", clock.now());
+                incidents.record(configuration.tenantId(), configuration.id(), IncidentKind.RECONCILIATION_MISMATCH,
+                        "refund/" + observed.refundId(), "Stripe refunded a Billing payment outside Billing; the wallet was not changed");
             }
             return Result.stale("refund " + observed.refundId() + " was not created by Billing");
         }
@@ -186,8 +174,7 @@ public class PaymentSettlement {
         switch (observed.state()) {
             case SUCCEEDED:
                 releaseHold(refund);
-                LedgerPostingResult posted = debit.debit(new DebitCommand(payment.walletId(), refund.amount(), "refund/" + refund.id(),
-                        "Stripe refund of payment " + payment.id(), IdempotencyKeys.refund(refund.id()), PaymentActors.STRIPE));
+                LedgerPostingResult posted = movements.debit(payment, refund);
                 refund.succeed(posted.entryId().value(), now);
                 payment.addRefunded(refund.amount(), now);
                 refunds.update(refund);
@@ -208,9 +195,7 @@ public class PaymentSettlement {
 
     /** Gives the held balance back; a hold that already expired is reported by the money context, not thrown. */
     public void releaseHold(Refund refund) {
-        if (refund.reservationId() != null) {
-            release.release(new ReservationId(refund.reservationId()));
-        }
+        movements.releaseHold(refund);
     }
 
     private Result intent(Payment payment, PaymentProvider.Intent intent, String evidenceId, boolean sessionCompleted, Instant now) {
@@ -265,8 +250,7 @@ public class PaymentSettlement {
         }
         // One credit per payment, whichever event or reconciliation run gets here first. The entry id and the
         // transition are recorded together, so a payment is SUCCEEDED exactly when its wallet was credited.
-        LedgerPostingResult posted = credit.credit(new CreditCommand(payment.walletId(), payment.amount(), "payment/" + payment.id(),
-                "Stripe top-up " + payment.id(), IdempotencyKeys.topUp(payment.id()), PaymentActors.STRIPE));
+        LedgerPostingResult posted = movements.credit(payment);
         payment.succeed(posted.entryId().value(), now);
         payments.update(payment);
         events.publish(new PaymentEvents.PaymentSucceeded(ids.newId(), payment, now));

@@ -40,8 +40,7 @@ public record TokenSettings(
             Duration connectTimeout,
             Duration requestTimeout,
             Duration refreshSkew) {
-        String base = baseUrl == null ? "" : baseUrl;
-        String trimmed = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+        String trimmed = BaseUrls.withoutTrailingSlash(baseUrl);
         return new TokenSettings(
                 trimmed.isBlank() ? "" : trimmed + "/oauth/token",
                 clientId,

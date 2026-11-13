@@ -2,6 +2,7 @@ package dev.ngb.billing.customer.domain.customer;
 
 import dev.ngb.core.id.TenantId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Objects;
@@ -16,8 +17,7 @@ public final class Customer {
     private final CustomerId id;
     private final TenantId tenantId;
     private final Instant createdAt;
-    private final String idempotencyKey;
-    private final String requestHash;
+    private final ReplayIdentity replay;
     private final Set<ExternalIdentity> identities;
     private String displayName;
     private String email;
@@ -31,8 +31,7 @@ public final class Customer {
             String email,
             CustomerStatus status,
             Instant createdAt,
-            String idempotencyKey,
-            String requestHash,
+            ReplayIdentity replay,
             Set<ExternalIdentity> identities,
             long version) {
         this.id = Objects.requireNonNull(id, "id");
@@ -41,21 +40,20 @@ public final class Customer {
         this.email = normalizeEmail(email);
         this.status = Objects.requireNonNull(status, "status");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
-        this.idempotencyKey = Objects.requireNonNull(idempotencyKey, "idempotencyKey");
-        this.requestHash = Objects.requireNonNull(requestHash, "requestHash");
+        this.replay = Objects.requireNonNull(replay, "replay");
         this.identities = new HashSet<>(identities);
         this.version = version;
     }
 
     public static Customer create(
-            CustomerId id, TenantId tenantId, String displayName, String email, String idempotencyKey, String requestHash, Instant now) {
-        return new Customer(id, tenantId, displayName, email, CustomerStatus.ACTIVE, now, idempotencyKey, requestHash, Set.of(), 1);
+            CustomerId id, TenantId tenantId, String displayName, String email, ReplayIdentity replay, Instant now) {
+        return new Customer(id, tenantId, displayName, email, CustomerStatus.ACTIVE, now, replay, Set.of(), 1);
     }
 
     public static Customer restore(
             CustomerId id, TenantId tenantId, String displayName, String email, CustomerStatus status, Instant createdAt,
-            String idempotencyKey, String requestHash, Set<ExternalIdentity> identities, long version) {
-        return new Customer(id, tenantId, displayName, email, status, createdAt, idempotencyKey, requestHash, identities, version);
+            ReplayIdentity replay, Set<ExternalIdentity> identities, long version) {
+        return new Customer(id, tenantId, displayName, email, status, createdAt, replay, identities, version);
     }
 
     /** Maps a Tenant System's user to this customer. The database enforces that one such user maps to one customer. */
@@ -116,12 +114,17 @@ public final class Customer {
         return createdAt;
     }
 
+    /** The key and the digest of the request this customer was created under. */
+    public ReplayIdentity replay() {
+        return replay;
+    }
+
     public String idempotencyKey() {
-        return idempotencyKey;
+        return replay.idempotencyKey();
     }
 
     public String requestHash() {
-        return requestHash;
+        return replay.requestHash();
     }
 
     public Set<ExternalIdentity> identities() {

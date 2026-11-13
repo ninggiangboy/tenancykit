@@ -13,8 +13,7 @@ import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
-import dev.ngb.platform.tenancy.application.entitlement.command.DisableAppUseCase;
-import dev.ngb.platform.tenancy.application.entitlement.command.EnableAppUseCase;
+import dev.ngb.platform.tenancy.application.entitlement.command.SetAppEntitlementUseCase;
 import dev.ngb.platform.tenancy.application.entitlement.port.AppCatalog;
 import dev.ngb.platform.tenancy.application.entitlement.port.AppEntitlementRepository;
 import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementQueries;
@@ -121,16 +120,9 @@ class TenancyConfiguration {
     }
 
     @Bean
-    EnableAppUseCase enableAppUseCase(
+    SetAppEntitlementUseCase setAppEntitlementUseCase(
             UnitOfWork unitOfWork, TenantRepository tenants, AppEntitlementRepository entitlements, AppCatalog apps,
             EventPublisher events, AuditLog auditLog, IdGenerator ids, Clock clock) {
-        return new EnableAppUseCase(unitOfWork, tenants, entitlements, apps, events, auditLog, ids, clock);
-    }
-
-    @Bean
-    DisableAppUseCase disableAppUseCase(
-            UnitOfWork unitOfWork, TenantRepository tenants, AppEntitlementRepository entitlements, AppCatalog apps,
-            EventPublisher events, AuditLog auditLog, IdGenerator ids, Clock clock) {
-        return new DisableAppUseCase(unitOfWork, tenants, entitlements, apps, events, auditLog, ids, clock);
+        return new SetAppEntitlementUseCase(unitOfWork, tenants, entitlements, apps, events, auditLog, ids, clock);
     }
 }

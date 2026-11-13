@@ -16,6 +16,7 @@ import dev.ngb.core.spring.audit.JooqAuditLog;
 import dev.ngb.billing.boot.infrastructure.tenancy.BillingTransactionScopeHook;
 import dev.ngb.core.spring.tenancy.ScopedTenantContext;
 import dev.ngb.core.audit.AuditLog;
+import dev.ngb.core.audit.AuditPreamble;
 import dev.ngb.core.tenancy.TenantContext;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,6 +63,11 @@ class InfrastructureConfiguration {
     @Bean
     AuditLog auditLog(DSLContext dsl, IdGenerator ids) {
         return new JooqAuditLog(dsl, ids);
+    }
+
+    @Bean
+    AuditPreamble auditPreamble(AuditLog auditLog, TenantContext tenantContext) {
+        return new AuditPreamble(auditLog, tenantContext);
     }
 
     @Bean

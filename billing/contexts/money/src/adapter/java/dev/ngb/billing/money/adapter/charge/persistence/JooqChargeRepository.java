@@ -12,6 +12,7 @@ import dev.ngb.billing.money.application.charge.port.ChargeRepository;
 import dev.ngb.billing.money.domain.charge.Charge;
 import dev.ngb.core.error.IdempotencyConflictException;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing_jooq.Keys;
@@ -82,8 +83,7 @@ public class JooqChargeRepository implements ChargeRepository {
                 row.getReservationId() == null ? null : new ReservationId(row.getReservationId()),
                 row.getUsageRef(),
                 row.getReference(),
-                row.getIdempotencyKey(),
-                row.getRequestHash(),
+                new ReplayIdentity(row.getIdempotencyKey(), row.getRequestHash()),
                 row.getCreatedAt());
     }
 }

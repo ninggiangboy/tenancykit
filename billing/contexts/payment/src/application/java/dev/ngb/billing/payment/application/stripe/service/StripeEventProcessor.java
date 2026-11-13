@@ -1,14 +1,12 @@
 package dev.ngb.billing.payment.application.stripe.service;
 
 import dev.ngb.core.runtime.Clock;
-import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.util.Causes;
-import dev.ngb.billing.payment.application.incident.port.IncidentRepository;
+import dev.ngb.billing.payment.application.incident.service.IncidentRecorder;
 import dev.ngb.billing.payment.application.payment.port.PaymentProvider;
 import dev.ngb.billing.payment.application.payment.service.PaymentSettings;
 import dev.ngb.billing.payment.application.payment.service.PaymentSettlement;
-import dev.ngb.billing.payment.application.stripe.port.StripeConfigurationRepository;
 import dev.ngb.billing.payment.application.stripe.port.StripeEventRepository;
 import dev.ngb.billing.payment.domain.incident.IncidentKind;
 import dev.ngb.billing.payment.domain.stripe.EventStatus;
@@ -34,36 +32,24 @@ public class StripeEventProcessor {
      */
     public record Outcome(EventStatus status, String detail, boolean attempted) {}
 
-    /** What an event needs from Stripe, read before the transaction opens so no row lock is held across a network call. */
-    private record Prefetch(PaymentProvider.Intent intent, PaymentProvider.AccountState account) {
-        static final Prefetch NONE = new Prefetch(null, null);
-    }
-
     private final UnitOfWork unitOfWork;
     private final StripeEventRepository events;
-    private final StripeConfigurationRepository configurations;
-    private final IncidentRepository incidents;
-    private final PaymentProvider provider;
-    private final ProviderAccess access;
+    private final IncidentRecorder incidents;
     private final PaymentSettlement settlement;
+    private final StripeEventPrefetch prefetch;
     private final PaymentSettings settings;
-    private final IdGenerator ids;
     private final Clock clock;
     private final DoubleSupplier random;
 
     public StripeEventProcessor(
-            UnitOfWork unitOfWork, StripeEventRepository events, StripeConfigurationRepository configurations, IncidentRepository incidents,
-            PaymentProvider provider, ProviderAccess access, PaymentSettlement settlement, PaymentSettings settings, IdGenerator ids, Clock clock,
-            DoubleSupplier random) {
+            UnitOfWork unitOfWork, StripeEventRepository events, IncidentRecorder incidents, PaymentSettlement settlement,
+            StripeEventPrefetch prefetch, PaymentSettings settings, Clock clock, DoubleSupplier random) {
         this.unitOfWork = unitOfWork;
         this.events = events;
-        this.configurations = configurations;
         this.incidents = incidents;
-        this.provider = provider;
-        this.access = access;
         this.settlement = settlement;
+        this.prefetch = prefetch;
         this.settings = settings;
-        this.ids = ids;
         this.clock = clock;
         this.random = random;
     }
@@ -71,8 +57,9 @@ public class StripeEventProcessor {
     /** Makes one attempt at the event and returns where it stands afterwards. Never throws for a processing failure. */
     public Outcome attempt(StripeEventId id) {
         try {
-            Prefetch fetched = prefetch(id);
-            return unitOfWork.transactional(() -> process(id, fetched));
+            StripeEvent opening = unitOfWork.transactional(() -> events.findById(id))
+                    .orElseThrow(() -> new NotFoundException("stripe event not found"));
+            return unitOfWork.transactional(() -> process(id, prefetch.fetch(opening)));
         } catch (RuntimeException failure) {
             if (Causes.isRetryableContention(failure)) {
                 // The lock wait timed out, so nothing was applied and nothing was attempted: the event stays due
@@ -89,38 +76,7 @@ public class StripeEventProcessor {
                 .orElseThrow(() -> new NotFoundException("stripe event not found")));
     }
 
-    /**
-     * Reads from Stripe what applying the event will need: the payment intent of a completed session that is not
-     * yet paid (a delayed payment method), and the state of a connected account. Everything else is in the event.
-     */
-    private Prefetch prefetch(StripeEventId id) {
-        StripeEvent event = unitOfWork.transactional(() -> events.findById(id)).orElseThrow(() -> new NotFoundException("stripe event not found"));
-        if (event.status().isFinal()) {
-            return Prefetch.NONE;
-        }
-        PaymentProvider.ProviderEvent observed = provider.interpret(event.payload());
-        PaymentProvider.Subject subject = observed.subject();
-        boolean unpaidSession = subject instanceof PaymentProvider.Checkout c && c.status() == PaymentProvider.CheckoutStatus.COMPLETE
-                && c.payment() == PaymentProvider.CheckoutPayment.UNPAID && c.paymentIntentId() != null && !isAsyncFailure(observed);
-        if (!unpaidSession && !(subject instanceof PaymentProvider.AccountObject)) {
-            return Prefetch.NONE;
-        }
-        StripeConfiguration configuration = unitOfWork.transactional(() -> configurations.findById(event.configurationId()))
-                .orElseThrow(() -> new IllegalStateException("the event's configuration is missing"));
-        if (unpaidSession) {
-            return new Prefetch(provider.retrievePayment(access.of(configuration), ((PaymentProvider.Checkout) subject).paymentIntentId()), null);
-        }
-        if (configuration.mode() == IntegrationMode.CONNECT && configuration.accountId().equals(((PaymentProvider.AccountObject) subject).accountId())) {
-            return new Prefetch(null, provider.retrieveAccount(access.platformKey(), configuration.accountId()));
-        }
-        return Prefetch.NONE;
-    }
-
-    private static boolean isAsyncFailure(PaymentProvider.ProviderEvent observed) {
-        return "checkout.session.async_payment_failed".equals(observed.type());
-    }
-
-    private Outcome process(StripeEventId id, Prefetch fetched) {
+    private Outcome process(StripeEventId id, StripeEventPrefetch.Prefetch fetched) {
         StripeEvent event = events.lockById(id).orElseThrow(() -> new NotFoundException("stripe event not found"));
         if (event.status().isFinal()) {
             return new Outcome(event.status(), "already " + event.status(), false);
@@ -131,9 +87,8 @@ public class StripeEventProcessor {
             return new Outcome(event.status(), "not due until " + event.nextAttemptAt(), false);
         }
         int number = event.beginAttempt();
-        StripeConfiguration configuration = configurations.findById(event.configurationId())
-                .orElseThrow(() -> new IllegalStateException("the event's configuration is missing"));
-        PaymentProvider.ProviderEvent observed = provider.interpret(event.payload());
+        StripeConfiguration configuration = prefetch.configurationOf(event);
+        PaymentProvider.ProviderEvent observed = prefetch.interpret(event.payload());
         PaymentSettlement.Result result = dispatch(configuration, observed, fetched);
 
         switch (result.kind()) {
@@ -148,14 +103,14 @@ public class StripeEventProcessor {
             case REJECTED:
                 event.dead(result.detail(), now);
                 events.addAttempt(event, number, "REJECTED", result.detail(), now);
-                reject(event, result.detail(), now);
+                reject(event, result.detail());
                 break;
             case DEFERRED:
             default:
                 if (number >= settings.eventMaxAttempts()) {
                     event.dead(result.detail(), now);
                     events.addAttempt(event, number, "DEFERRED", result.detail() + " (gave up)", now);
-                    reject(event, result.detail(), now);
+                    reject(event, result.detail());
                 } else {
                     event.failed(result.detail(), now.plus(settings.eventBackoff().delayAfter(number, random.getAsDouble())), now);
                     events.addAttempt(event, number, "DEFERRED", result.detail(), now);
@@ -166,10 +121,11 @@ public class StripeEventProcessor {
         return new Outcome(event.status(), result.detail(), true);
     }
 
-    private PaymentSettlement.Result dispatch(StripeConfiguration configuration, PaymentProvider.ProviderEvent observed, Prefetch fetched) {
+    private PaymentSettlement.Result dispatch(
+            StripeConfiguration configuration, PaymentProvider.ProviderEvent observed, StripeEventPrefetch.Prefetch fetched) {
         PaymentProvider.Subject subject = observed.subject();
         if (subject instanceof PaymentProvider.Checkout checkout) {
-            return settlement.checkout(configuration, checkout, observed.id(), isAsyncFailure(observed), fetched.intent());
+            return settlement.checkout(configuration, checkout, observed.id(), StripeEventPrefetch.isAsyncFailure(observed), fetched.intent());
         }
         if (subject instanceof PaymentProvider.Intent intent) {
             return settlement.intent(configuration, intent, observed.id());
@@ -184,15 +140,15 @@ public class StripeEventProcessor {
     }
 
     /** A connected account changed: apply what Stripe says it can do now, read beforehand, rather than the event's own snapshot. */
-    private PaymentSettlement.Result account(StripeConfiguration configuration, PaymentProvider.AccountObject account, Prefetch fetched) {
+    private PaymentSettlement.Result account(
+            StripeConfiguration configuration, PaymentProvider.AccountObject account, StripeEventPrefetch.Prefetch fetched) {
         if (fetched.account() == null || configuration.mode() != IntegrationMode.CONNECT || !configuration.accountId().equals(account.accountId())) {
             return new PaymentSettlement.Result(PaymentSettlement.Kind.STALE, "not the configured account");
         }
         if (!configuration.status().isLive()) {
             return new PaymentSettlement.Result(PaymentSettlement.Kind.STALE, "the configuration is disconnected");
         }
-        configuration.observeAccount(fetched.account().cardPaymentsActive(), clock.now());
-        configurations.update(configuration);
+        prefetch.observeAccount(configuration, fetched.account(), clock.now());
         return new PaymentSettlement.Result(PaymentSettlement.Kind.APPLIED, "account is " + configuration.status());
     }
 
@@ -209,13 +165,13 @@ public class StripeEventProcessor {
         events.addAttempt(event, number, "FAILED", why, now);
         events.update(event);
         if (event.status() == EventStatus.DEAD) {
-            reject(event, why, now);
+            reject(event, why);
         }
         return new Outcome(event.status(), why, true);
     }
 
-    private void reject(StripeEvent event, String detail, Instant now) {
-        incidents.record(ids.newId(), event.tenantId(), event.configurationId(), IncidentKind.EVENT_REJECTED, "event/" + event.eventId(),
-                "%s: %s".formatted(event.type(), detail), now);
+    private void reject(StripeEvent event, String detail) {
+        incidents.record(event.tenantId(), event.configurationId(), IncidentKind.EVENT_REJECTED, "event/" + event.eventId(),
+                "%s: %s".formatted(event.type(), detail));
     }
 }

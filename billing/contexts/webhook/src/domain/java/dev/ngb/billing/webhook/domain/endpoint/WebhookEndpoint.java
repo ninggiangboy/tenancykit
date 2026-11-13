@@ -4,6 +4,7 @@ import dev.ngb.core.id.TenantId;
 import dev.ngb.core.id.TenantSystemId;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -110,7 +111,7 @@ public final class WebhookEndpoint {
         if (types.isEmpty()) {
             throw new IllegalArgumentException("subscribe to at least one event type");
         }
-        return java.util.Collections.unmodifiableSet(new TreeSet<>(types));
+        return Collections.unmodifiableSet(new TreeSet<>(types));
     }
 
     private static String cleanDescription(String text) {

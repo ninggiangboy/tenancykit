@@ -2,6 +2,8 @@ package dev.ngb.core.event;
 
 import dev.ngb.core.id.TenantId;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -19,6 +21,6 @@ public record EventEnvelope(UUID eventId, TenantId tenantId, String type, String
         Objects.requireNonNull(type, "type");
         Objects.requireNonNull(aggregate, "aggregate");
         Objects.requireNonNull(occurredAt, "occurredAt");
-        payload = java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(payload));
+        payload = Collections.unmodifiableMap(new LinkedHashMap<>(payload));
     }
 }

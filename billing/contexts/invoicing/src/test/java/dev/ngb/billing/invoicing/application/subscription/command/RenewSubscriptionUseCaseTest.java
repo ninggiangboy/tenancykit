@@ -24,6 +24,7 @@ import dev.ngb.billing.pricing.api.plan.PlanPricing;
 import dev.ngb.billing.pricing.api.plan.SubscriptionTerms;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import java.sql.SQLException;
@@ -132,7 +133,7 @@ class RenewSubscriptionUseCaseTest {
 
     private Subscription due(UUID plan, Instant dueAt) {
         Subscription s = Subscription.create(new SubscriptionId(UUID.randomUUID()), TENANT, new CustomerId(UUID.randomUUID()), new WalletId(UUID.randomUUID()), USD, plan,
-                "pro", BillingCycle.MONTHLY, "key-" + UUID.randomUUID(), "hash", dueAt);
+                "pro", BillingCycle.MONTHLY, new ReplayIdentity("key-" + UUID.randomUUID(), "hash"), dueAt);
         store.put(s.id(), s);
         return s;
     }

@@ -4,6 +4,7 @@ import dev.ngb.core.id.TenantId;
 import dev.ngb.billing.payment.domain.payment.Payment;
 import dev.ngb.billing.payment.domain.payment.PaymentId;
 import dev.ngb.billing.payment.domain.payment.PaymentStatus;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Money;
 import java.time.Instant;
 import java.util.Objects;
@@ -26,15 +27,14 @@ public final class Refund {
     private UUID ledgerEntryId;
     private String failureReason;
     private final String actor;
-    private final String idempotencyKey;
-    private final String requestHash;
+    private final ReplayIdentity replay;
     private final Instant createdAt;
     private Instant updatedAt;
     private Instant completedAt;
 
     private Refund(
             RefundId id, TenantId tenantId, PaymentId paymentId, Money amount, RefundStatus status, String reason, String stripeRefundId,
-            UUID reservationId, UUID ledgerEntryId, String failureReason, String actor, String idempotencyKey, String requestHash,
+            UUID reservationId, UUID ledgerEntryId, String failureReason, String actor, ReplayIdentity replay,
             Instant createdAt, Instant updatedAt, Instant completedAt) {
         this.id = Objects.requireNonNull(id, "id");
         this.tenantId = Objects.requireNonNull(tenantId, "tenantId");
@@ -47,8 +47,7 @@ public final class Refund {
         this.ledgerEntryId = ledgerEntryId;
         this.failureReason = failureReason;
         this.actor = Objects.requireNonNull(actor, "actor");
-        this.idempotencyKey = Objects.requireNonNull(idempotencyKey, "idempotencyKey");
-        this.requestHash = Objects.requireNonNull(requestHash, "requestHash");
+        this.replay = Objects.requireNonNull(replay, "replay");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
         this.completedAt = completedAt;
@@ -61,21 +60,21 @@ public final class Refund {
     }
 
     public static Refund request(
-            RefundId id, Payment payment, Money amount, String reason, UUID reservationId, String actor, String idempotencyKey, String requestHash,
+            RefundId id, Payment payment, Money amount, String reason, UUID reservationId, String actor, ReplayIdentity replay,
             Instant now) {
         if (payment.status() != PaymentStatus.SUCCEEDED) {
             throw new IllegalStateException("only a succeeded payment can be refunded");
         }
         return new Refund(id, payment.tenantId(), payment.id(), amount, RefundStatus.PENDING, blankToNull(reason), null, reservationId, null, null,
-                actor, idempotencyKey, requestHash, now, now, null);
+                actor, replay, now, now, null);
     }
 
     public static Refund restore(
             RefundId id, TenantId tenantId, PaymentId paymentId, Money amount, RefundStatus status, String reason, String stripeRefundId,
-            UUID reservationId, UUID ledgerEntryId, String failureReason, String actor, String idempotencyKey, String requestHash,
+            UUID reservationId, UUID ledgerEntryId, String failureReason, String actor, ReplayIdentity replay,
             Instant createdAt, Instant updatedAt, Instant completedAt) {
         return new Refund(id, tenantId, paymentId, amount, status, reason, stripeRefundId, reservationId, ledgerEntryId, failureReason, actor,
-                idempotencyKey, requestHash, createdAt, updatedAt, completedAt);
+                replay, createdAt, updatedAt, completedAt);
     }
 
     public void attachStripeRefund(String stripeId, Instant now) {
@@ -158,12 +157,17 @@ public final class Refund {
         return actor;
     }
 
+    /** The key and the digest of the request this refund was asked for under. */
+    public ReplayIdentity replay() {
+        return replay;
+    }
+
     public String idempotencyKey() {
-        return idempotencyKey;
+        return replay.idempotencyKey();
     }
 
     public String requestHash() {
-        return requestHash;
+        return replay.requestHash();
     }
 
     public Instant createdAt() {

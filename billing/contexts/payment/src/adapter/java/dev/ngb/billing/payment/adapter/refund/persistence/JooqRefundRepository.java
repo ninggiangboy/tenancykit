@@ -10,6 +10,7 @@ import dev.ngb.billing.payment.domain.refund.Refund;
 import dev.ngb.billing.payment.domain.refund.RefundId;
 import dev.ngb.billing.payment.domain.refund.RefundStatus;
 import dev.ngb.core.error.IdempotencyConflictException;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing_jooq.Keys;
@@ -135,8 +136,7 @@ public class JooqRefundRepository implements RefundRepository {
                 row.getLedgerEntryId(),
                 row.getFailureReason(),
                 row.getActor(),
-                row.getIdempotencyKey(),
-                row.getRequestHash(),
+                new ReplayIdentity(row.getIdempotencyKey(), row.getRequestHash()),
                 row.getCreatedAt(),
                 row.getUpdatedAt(),
                 row.getCompletedAt());

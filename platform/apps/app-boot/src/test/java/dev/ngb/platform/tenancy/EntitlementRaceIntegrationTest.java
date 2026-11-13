@@ -11,8 +11,7 @@ import dev.ngb.platform.support.OwnerDatabase;
 import dev.ngb.platform.support.PlatformContainerConfig;
 import dev.ngb.platform.support.ReplicaHarness;
 import dev.ngb.platform.support.UncommittedRace;
-import dev.ngb.platform.tenancy.application.entitlement.command.DisableAppUseCase;
-import dev.ngb.platform.tenancy.application.entitlement.command.EnableAppUseCase;
+import dev.ngb.platform.tenancy.application.entitlement.command.SetAppEntitlementUseCase;
 import dev.ngb.platform.tenancy.application.tenant.command.CreateTenantUseCase;
 import dev.ngb.platform.tenancy.domain.entitlement.AppEntitlement;
 import dev.ngb.platform.tenancy.domain.tenant.Tenant;
@@ -40,8 +39,7 @@ class EntitlementRaceIntegrationTest {
     private final JsonMapper json = JsonMapper.builder().build();
 
     @Autowired CreateTenantUseCase createTenant;
-    @Autowired EnableAppUseCase enableApp;
-    @Autowired DisableAppUseCase disableApp;
+    @Autowired SetAppEntitlementUseCase setApp;
     @Autowired TenantContext tenantContext;
     @Autowired UnitOfWork unitOfWork;
     @Autowired OwnerDatabase owner;
@@ -81,11 +79,11 @@ class EntitlementRaceIntegrationTest {
     }
 
     private AppEntitlement enable(Tenant tenant) {
-        return enableApp.execute(new EnableAppUseCase.Command(tenant.id(), APP, "user/tester", "req-enable", ExpectedVersion.any()));
+        return setApp.execute(new SetAppEntitlementUseCase.Command(tenant.id(), APP, true, "user/tester", "req-enable", ExpectedVersion.any()));
     }
 
     private AppEntitlement disable(Tenant tenant) {
-        return disableApp.execute(new DisableAppUseCase.Command(tenant.id(), APP, "user/tester", "req-disable", ExpectedVersion.any()));
+        return setApp.execute(new SetAppEntitlementUseCase.Command(tenant.id(), APP, false, "user/tester", "req-disable", ExpectedVersion.any()));
     }
 
     private List<JsonNode> events(Tenant tenant) {

@@ -14,6 +14,7 @@ import dev.ngb.billing.money.domain.ledger.LedgerEntry;
 import dev.ngb.billing.money.domain.reservation.Reservation;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import java.time.Instant;
@@ -86,7 +87,7 @@ class WalletInvariantsTest {
         void reserve(long amount) {
             try {
                 active.add(Reservation.hold(new ReservationId(UUID.randomUUID()), wallet, usd(amount), now.plusSeconds(1 + random.nextInt(120)),
-                        null, UUID.randomUUID().toString(), "h", now));
+                        null, new ReplayIdentity(UUID.randomUUID().toString(), "h"), now));
             } catch (InsufficientFundsException expected) {
                 // rejected: the hold must not exist
             }
@@ -103,7 +104,8 @@ class WalletInvariantsTest {
             }
             long cost = 1 + random.nextInt((int) reservation.amount().minorUnits());
             ChargeService.Outcome outcome = charges.charge(new ChargeService.Request(
-                    wallet, reservation, usd(cost), ChargeSource.RESERVATION, null, null, UUID.randomUUID().toString(), "h", "sim", now));
+                    wallet, reservation, usd(cost), ChargeSource.RESERVATION, null, null,
+                    new ReplayIdentity(UUID.randomUUID().toString(), "h"), "sim", now));
             assertThat(outcome.charge().status()).isEqualTo(ChargeStatus.SUCCEEDED);
             ledger.add(outcome.entry());
         }
@@ -121,7 +123,8 @@ class WalletInvariantsTest {
 
         void standaloneCharge(long amount) {
             ChargeService.Outcome outcome = charges.charge(new ChargeService.Request(
-                    wallet, null, usd(amount), ChargeSource.STANDALONE, null, null, UUID.randomUUID().toString(), "h", "sim", now));
+                    wallet, null, usd(amount), ChargeSource.STANDALONE, null, null,
+                    new ReplayIdentity(UUID.randomUUID().toString(), "h"), "sim", now));
             if (outcome.entry() != null) {
                 ledger.add(outcome.entry());
             }

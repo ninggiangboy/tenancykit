@@ -26,6 +26,7 @@ import dev.ngb.billing.invoicing.application.invoice.command.PayInvoiceUseCase;
 import dev.ngb.billing.invoicing.application.invoice.port.InvoiceRepository;
 import dev.ngb.billing.invoicing.application.invoice.query.InvoiceQueries;
 import dev.ngb.billing.invoicing.application.invoice.query.InvoiceReadRepository;
+import dev.ngb.billing.invoicing.application.invoice.service.ChargeInvoiceIssuer;
 import dev.ngb.billing.invoicing.application.invoice.service.ChargeLineFactory;
 import dev.ngb.billing.invoicing.application.invoice.service.InvoiceIssuer;
 import dev.ngb.billing.invoicing.application.messaging.port.MalformedEventRecorder;
@@ -42,6 +43,7 @@ import dev.ngb.billing.money.api.wallet.CreditWallet;
 import dev.ngb.billing.money.api.wallet.WalletLookup;
 import dev.ngb.billing.payment.api.invoice.StartInvoicePayment;
 import dev.ngb.core.audit.AuditLog;
+import dev.ngb.core.audit.AuditPreamble;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.billing.pricing.api.plan.BillingCycle;
 import dev.ngb.billing.pricing.api.plan.PlanPricing;
@@ -128,11 +130,17 @@ class InvoicingConfiguration {
     }
 
     @Bean
+    ChargeInvoiceIssuer chargeInvoiceIssuer(
+            InvoiceRepository invoices, UnbilledLineRepository unbilled, InvoiceIssuer issuer, ChargeLineFactory lineFactory, AuditPreamble audit,
+            TenantContext tenantContext, IdGenerator ids, Clock clock) {
+        return new ChargeInvoiceIssuer(invoices, unbilled, issuer, lineFactory, audit, tenantContext, ids, clock);
+    }
+
+    @Bean
     InvoiceChargeUseCase invoiceChargeUseCase(
             UnitOfWork unitOfWork, ChargeLookup charges, WalletLookup wallets, CustomerLookup customers, InvoiceRepository invoices,
-            UnbilledLineRepository unbilled, InvoiceIssuer issuer, ChargeLineFactory lineFactory, AuditLog auditLog, TenantContext tenantContext,
-            IdGenerator ids, Clock clock) {
-        return new InvoiceChargeUseCase(unitOfWork, charges, wallets, customers, invoices, unbilled, issuer, lineFactory, auditLog, tenantContext, ids, clock);
+            ChargeInvoiceIssuer issuer) {
+        return new InvoiceChargeUseCase(unitOfWork, charges, wallets, customers, invoices, issuer);
     }
 
     @Bean

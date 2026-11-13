@@ -6,6 +6,7 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
+import dev.ngb.billing.customer.api.lookup.CustomerVisibility;
 import dev.ngb.billing.money.api.reservation.ReservationId;
 import dev.ngb.billing.money.api.reservation.ReservationResult;
 import dev.ngb.billing.money.api.reservation.ReserveBudget;
@@ -15,10 +16,9 @@ import dev.ngb.billing.money.application.wallet.port.WalletRepository;
 import dev.ngb.billing.money.domain.event.MoneyEvents;
 import dev.ngb.billing.money.domain.reservation.Reservation;
 import dev.ngb.billing.money.domain.wallet.Wallet;
-import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.idempotency.Fingerprint;
+import dev.ngb.billing.sharedkernel.idempotency.ReplayIdentity;
 import java.time.Duration;
-
 import java.time.Instant;
 
 /**
@@ -38,7 +38,7 @@ public class ReserveBudgetUseCase implements ReserveBudget {
     private final WalletRepository wallets;
     private final ReservationRepository reservations;
     private final EventPublisher events;
-    private final CustomerLookup customers;
+    private final CustomerVisibility visibility;
     private final IdGenerator ids;
     private final Clock clock;
 
@@ -49,7 +49,7 @@ public class ReserveBudgetUseCase implements ReserveBudget {
         this.wallets = wallets;
         this.reservations = reservations;
         this.events = events;
-        this.customers = customers;
+        this.visibility = new CustomerVisibility(customers);
         this.ids = ids;
         this.clock = clock;
     }
@@ -63,7 +63,7 @@ public class ReserveBudgetUseCase implements ReserveBudget {
         String hash = Fingerprint.of(command.walletId(), command.amount(), command.ttl().toSeconds(), command.reference());
         return unitOfWork.transactional(() -> {
             Wallet wallet = wallets.lockById(command.walletId()).orElseThrow(() -> Messages.walletNotFound());
-            requireVisible(wallet, command.caller());
+            visibility.requireVisible(wallet.customerId(), command.caller(), Messages::walletNotFound);
             var existing = reservations.findByIdempotencyKey(command.idempotencyKey());
             if (existing.isPresent()) {
                 Reservation reservation = existing.get();
@@ -73,7 +73,7 @@ public class ReserveBudgetUseCase implements ReserveBudget {
             Instant now = clock.now();
             Reservation reservation = Reservation.hold(
                     new ReservationId(ids.newId()), wallet, command.amount(), now.plus(command.ttl()), command.reference(),
-                    command.idempotencyKey(), hash, now);
+                    new ReplayIdentity(command.idempotencyKey(), hash), now);
             wallets.update(wallet);
             reservations.add(reservation);
             events.publish(new MoneyEvents.ReservationCreated(ids.newId(), reservation, now));
@@ -83,11 +83,5 @@ public class ReserveBudgetUseCase implements ReserveBudget {
 
     static ReservationResult result(Reservation reservation, boolean replayed) {
         return new ReservationResult(reservation.id(), reservation.status(), reservation.amount(), reservation.expiresAt(), replayed);
-    }
-
-    private void requireVisible(Wallet wallet, java.util.UUID caller) {
-        if (caller != null && customers.findFor(wallet.customerId(), caller).isEmpty()) {
-            throw Messages.walletNotFound();
-        }
     }
 }
