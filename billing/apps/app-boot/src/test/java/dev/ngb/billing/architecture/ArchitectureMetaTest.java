@@ -40,6 +40,7 @@ class ArchitectureMetaTest {
         CULPRIT_BY_RULE_ID.put("outbound-http-only-through-the-guarded-sender", "OpensItsOwnHttpConnection");
         CULPRIT_BY_RULE_ID.put("stripe-types-stay-in-the-stripe-adapter", "UsesStripeDirectly");
         CULPRIT_BY_RULE_ID.put("no-jpa", "JpaEntity");
+        CULPRIT_BY_RULE_ID.put("no-dependency-on-another-service", "ReachesAnotherService");
         CULPRIT_BY_RULE_ID.put("shared-kernel-is-independent", "KernelKnowsAContext");
         CULPRIT_BY_RULE_ID.put("role-package-not-layer-root", "StrayRoleClass");
         CULPRIT_BY_RULE_ID.put("use-cases-and-queries-in-command-or-query", "MisplacedUseCase");

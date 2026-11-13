@@ -114,6 +114,7 @@ final class ArchitectureRules {
                 new NamedRule("outbound-http-only-through-the-guarded-sender", outboundHttpOnlyThroughTheGuardedSender(root)),
                 new NamedRule("stripe-types-stay-in-the-stripe-adapter", stripeTypesStayInTheStripeAdapter(root)),
                 new NamedRule("no-jpa", noJpa()),
+                new NamedRule("no-dependency-on-another-service", noDependencyOnAnotherService(root)),
                 new NamedRule("shared-kernel-is-independent", sharedKernelIsIndependent(root)),
                 new NamedRule("role-package-not-layer-root", rolePackageNotLayerRoot(root)),
                 new NamedRule("use-cases-and-queries-in-command-or-query", useCasesAndQueriesInCommandOrQuery(root)),
@@ -246,6 +247,13 @@ final class ArchitectureRules {
         return noClasses().should().dependOnClassesThat().resideInAnyPackage(
                         "jakarta.persistence..", "javax.persistence..", "org.hibernate..", "org.springframework.data.jpa..")
                 .because("persistence is jOOQ only");
+    }
+
+    /** Services meet through the broker, the replica and signed tokens; none reaches into another service's code. */
+    private static ArchRule noDependencyOnAnotherService(String root) {
+        return noClasses().that().resideInAPackage(root + "..")
+                .should().dependOnClassesThat().resideInAnyPackage("dev.ngb.platform..", "dev.ngb.notification..", "dev.ngb.tenant..")
+                .because("services share only the core and the contracts, never each other's code");
     }
 
     private static ArchRule sharedKernelIsIndependent(String root) {
