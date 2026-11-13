@@ -101,6 +101,41 @@
         "basic",
         "email"
       ]
+    },
+    {
+      "clientId": "suite-smoke",
+      "name": "Suite smoke test (development only)",
+      "description": "Lets ops/smoke/suite-smoke.sh obtain user tokens with a direct grant. It exists only in this development realm export and must never be imported into a real deployment.",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "${SMOKE_CLIENT_SECRET}",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "protocolMappers": [
+        {
+          "name": "platform-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "platform",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "billing-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "billing",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [

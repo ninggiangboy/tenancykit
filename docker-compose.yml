@@ -1,54 +1,314 @@
-# Local development services. Integration tests use Testcontainers and do not need this file.
-# Copy .env.example to .env and fill the values in before running `docker compose up`.
+# The suite, locally. `docker compose up -d --build --wait` starts Platform, Billing (api and worker) and the
+# sample tenant, each with its own database and broker user, behind one reverse proxy that only routes.
+#
+# Infrastructure only: `docker compose up -d postgres rabbitmq keycloak` and run the apps with bootRun.
+# Copy .env.example to .env and fill every placeholder before starting.
+#
+# Billing's schema is written once by the `billing-migrate` step, which runs Flyway as the table owner and exits; its
+# api and worker runtimes connect as the unprivileged role with Flyway off. Platform and the tenant migrate on start.
+
+# Billing's settings, shared by its migrate step, api and worker. The migrate profile switches Flyway on and web and
+# jobs off, but the context still reads every setting at startup, so all three runtimes read the same values.
+x-billing-environment: &billing-environment
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50"
+  BILLING_DB_URL: jdbc:postgresql://postgres:5432/billing
+  BILLING_DB_USER: billing_app
+  BILLING_DB_PASSWORD: ${BILLING_DB_PASSWORD:?set it in .env}
+  BILLING_MIGRATION_DB_USER: billing_owner
+  BILLING_MIGRATION_DB_PASSWORD: ${BILLING_MIGRATION_DB_PASSWORD:?set it in .env}
+  BILLING_RABBITMQ_HOST: rabbitmq
+  BILLING_RABBITMQ_USER: billing
+  BILLING_RABBITMQ_PASSWORD: ${BILLING_RABBITMQ_PASSWORD:?set it in .env}
+  # The issuer must equal what Keycloak writes into a token, which is the address the user signs in at (the published
+  # one); the JWKS URI is fetched server-to-server and uses the internal container name.
+  BILLING_OIDC_ISSUER_URI: ${BILLING_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
+  BILLING_OIDC_JWK_SET_URI: ${BILLING_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  BILLING_PLATFORM_BASE_URL: http://platform.localhost:8080
+  BILLING_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
+  BILLING_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
+  BILLING_REPLICA_CLIENT_ID: ${PLATFORM_SERVICE_CLIENT_ID:-billing}
+  BILLING_REPLICA_CLIENT_SECRET: ${BILLING_REPLICA_CLIENT_SECRET:?set it in .env}
+  BILLING_BASE_DOMAIN: ${BASE_DOMAIN:-localhost}
+  BILLING_SECRETS_MASTER_KEY: ${BILLING_SECRETS_MASTER_KEY:?set it in .env}
+  BILLING_WEBHOOKS_ALLOW_INSECURE_TARGETS: "true"
+  BILLING_PORTAL_SECURE_COOKIE: "false"
+  BILLING_PUBLIC_BASE_URL: ${BILLING_PUBLIC_BASE_URL:-http://localhost:8090}
+
+x-app-environment: &app-environment
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50"
+
+x-app: &app
+  restart: unless-stopped
+  mem_limit: 512m
+
 services:
   postgres:
     image: postgres:18
     environment:
-      POSTGRES_DB: billing
-      POSTGRES_USER: billing
-      POSTGRES_PASSWORD: ${BILLING_MIGRATION_DB_PASSWORD:?set it in .env}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?set it in .env}
+      # The init script creates one owner role and one app role per service, so it reads their passwords here.
+      PLATFORM_MIGRATION_DB_PASSWORD: ${PLATFORM_MIGRATION_DB_PASSWORD:?set it in .env}
+      PLATFORM_DB_PASSWORD: ${PLATFORM_DB_PASSWORD:?set it in .env}
+      BILLING_MIGRATION_DB_PASSWORD: ${BILLING_MIGRATION_DB_PASSWORD:?set it in .env}
+      BILLING_DB_PASSWORD: ${BILLING_DB_PASSWORD:?set it in .env}
+      TENANT_MIGRATION_DB_PASSWORD: ${TENANT_MIGRATION_DB_PASSWORD:?set it in .env}
+      TENANT_DB_PASSWORD: ${TENANT_DB_PASSWORD:?set it in .env}
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql
+      # One database, one owner role and one app role per service; only they can connect to it.
       - ./ops/postgres/init:/docker-entrypoint-initdb.d:ro
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.8.2
-    command: ["start-dev", "--import-realm"]
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME:?set it in .env}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD:?set it in .env}
-      # Substituted into ops/keycloak/realm-export.json when the realm is imported.
-      PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET: ${PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET:?set it in .env}
-    ports:
-      - "8081:8080"
-    volumes:
-      - ./ops/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d billing"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   rabbitmq:
     image: rabbitmq:4.1-management
     environment:
-      RABBITMQ_DEFAULT_USER: ${BILLING_RABBITMQ_USER:-billing}
-      RABBITMQ_DEFAULT_PASS: ${BILLING_RABBITMQ_PASSWORD:-billing}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_ADMIN_USER:-rabbitmq}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_ADMIN_PASSWORD:?set it in .env}
     ports:
       - "5672:5672"
       - "15672:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
 
-  tenant-postgres:
-    image: postgres:18
+  # One broker user per service, limited to its own exchanges and queues, declared once the broker is healthy.
+  rabbitmq-users:
+    image: curlimages/curl:8.11.1
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     environment:
-      POSTGRES_DB: tenant
-      POSTGRES_USER: tenant
-      POSTGRES_PASSWORD: ${SAMPLE_TENANT_DB_PASSWORD:-tenant}
-    ports:
-      - "5433:5432"
+      BROKER_URL: http://rabbitmq:15672
+      ADMIN_USER: ${RABBITMQ_ADMIN_USER:-rabbitmq}
+      ADMIN_PASSWORD: ${RABBITMQ_ADMIN_PASSWORD:?set it in .env}
+      PLATFORM_BROKER_PASSWORD: ${PLATFORM_RABBITMQ_PASSWORD:?set it in .env}
+      BILLING_BROKER_PASSWORD: ${BILLING_RABBITMQ_PASSWORD:?set it in .env}
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["sh /ops/rabbitmq/declare-users.sh"]
     volumes:
-      - tenant-postgres-data:/var/lib/postgresql
+      - ./ops/rabbitmq:/ops/rabbitmq:ro
+    restart: "no"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.2
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD:?set it in .env}
+      # Substituted into ops/keycloak/realm-export.json when the realm is imported.
+      PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET: ${PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET:?set it in .env}
+      SMOKE_CLIENT_SECRET: ${SMOKE_CLIENT_SECRET:?set it in .env}
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./ops/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /realms/master HTTP/1.0\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q '200'"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+
+  platform:
+    <<: *app
+    build:
+      context: .
+      dockerfile: platform/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+    environment:
+      <<: *app-environment
+      PLATFORM_DB_URL: jdbc:postgresql://postgres:5432/platform
+      PLATFORM_DB_USER: platform_app
+      PLATFORM_DB_PASSWORD: ${PLATFORM_DB_PASSWORD:?set it in .env}
+      PLATFORM_MIGRATION_DB_USER: platform_owner
+      PLATFORM_MIGRATION_DB_PASSWORD: ${PLATFORM_MIGRATION_DB_PASSWORD:?set it in .env}
+      PLATFORM_RABBITMQ_HOST: rabbitmq
+      PLATFORM_RABBITMQ_USER: platform
+      PLATFORM_RABBITMQ_PASSWORD: ${PLATFORM_RABBITMQ_PASSWORD:?set it in .env}
+      PLATFORM_KEYCLOAK_URL: http://keycloak:8080
+      PLATFORM_KEYCLOAK_REALM: ${KEYCLOAK_REALM:-billing}
+      PLATFORM_KEYCLOAK_ADMIN_CLIENT_ID: platform-admin
+      PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET: ${PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET:?set it in .env}
+      PLATFORM_BASE_DOMAIN: ${BASE_DOMAIN:-localhost}
+      PLATFORM_HOSTNAME: ${PLATFORM_HOSTNAME:-platform.localhost}
+      PLATFORM_TOKEN_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform:8080}
+      PLATFORM_TOKEN_SIGNING_KEY: ${PLATFORM_TOKEN_SIGNING_KEY:-}
+      PLATFORM_TOKEN_ALLOW_EPHEMERAL_KEY: ${PLATFORM_TOKEN_ALLOW_EPHEMERAL_KEY:-true}
+      PLATFORM_OIDC_ISSUER_URI: ${PLATFORM_OIDC_ISSUER_URI:-}
+      PLATFORM_OIDC_JWK_SET_URI: ${PLATFORM_OIDC_JWK_SET_URI:-}
+      PLATFORM_BOOTSTRAP_ADMIN_EMAIL: ${PLATFORM_BOOTSTRAP_ADMIN_EMAIL:-}
+      PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD: ${PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD:-}
+      PLATFORM_SERVICE_CLIENT_ID: ${PLATFORM_SERVICE_CLIENT_ID:-billing}
+      PLATFORM_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
+    ports:
+      - "8082:8080"
+    networks:
+      default:
+        # Platform resolves the tenant from the Host, so internal callers must reach it by its own hostname and send
+        # that same Host. The alias makes `platform.localhost` resolve to this container inside the network.
+        aliases:
+          - platform.localhost
+    healthcheck:
+      # The JRE image has neither curl nor wget, so a plain bash /dev/tcp probe does the readiness check.
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # Writes Billing's schema once, as the table owner, then exits.
+  billing-migrate:
+    <<: *app
+    restart: "no"
+    build:
+      context: .
+      dockerfile: billing/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+    # The migrate profile switches Flyway on and web and jobs off, but the context still reads every other
+    # setting at startup, so the step shares the api runtime's environment.
+    environment:
+      <<: *billing-environment
+      SPRING_PROFILES_ACTIVE: migrate
+
+  # Billing's HTTP edge: it serves the API, the portal and Stripe webhooks.
+  billing:
+    <<: *app
+    build:
+      context: .
+      dockerfile: billing/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+      platform:
+        condition: service_healthy
+      billing-migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *billing-environment
+      SPRING_PROFILES_ACTIVE: api
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # Billing's background edge: every job, no business controller.
+  billing-worker:
+    <<: *app
+    build:
+      context: .
+      dockerfile: billing/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+      platform:
+        condition: service_healthy
+      billing-migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *billing-environment
+      SPRING_PROFILES_ACTIVE: worker
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # The sample tenant app: its own database, calling Billing with a Platform-issued suite token.
+  tenant:
+    <<: *app
+    build:
+      context: .
+      dockerfile: tenant/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      platform:
+        condition: service_healthy
+      billing:
+        condition: service_healthy
+    environment:
+      <<: *app-environment
+      SAMPLE_TENANT_DB_URL: jdbc:postgresql://postgres:5432/tenant
+      SAMPLE_TENANT_DB_USER: tenant_app
+      SAMPLE_TENANT_DB_PASSWORD: ${TENANT_DB_PASSWORD:?set it in .env}
+      # Flyway migrates as the owner; the app connects as tenant_app.
+      SAMPLE_TENANT_MIGRATION_DB_USER: tenant_owner
+      SAMPLE_TENANT_MIGRATION_DB_PASSWORD: ${TENANT_MIGRATION_DB_PASSWORD:?set it in .env}
+      SAMPLE_TENANT_PORT: "8080"
+      SAMPLE_TENANT_BILLING_URL: http://billing:8080
+      SAMPLE_TENANT_PLATFORM_URL: http://platform.localhost:8080
+      SAMPLE_TENANT_PLATFORM_CLIENT_ID: ${SAMPLE_TENANT_PLATFORM_CLIENT_ID:-}
+      SAMPLE_TENANT_PLATFORM_CLIENT_SECRET: ${SAMPLE_TENANT_PLATFORM_CLIENT_SECRET:-}
+      SAMPLE_TENANT_WEBHOOK_SECRET: ${SAMPLE_TENANT_WEBHOOK_SECRET:-}
+      SAMPLE_TENANT_EXECUTION_ENABLED: "false"
+    ports:
+      - "8083:8080"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # Routes on the Host header alone; see ops/caddy/Caddyfile.
+  caddy:
+    image: caddy:2.9
+    depends_on:
+      platform:
+        condition: service_healthy
+      billing:
+        condition: service_healthy
+      tenant:
+        condition: service_healthy
+    ports:
+      - "8090:80"
+    volumes:
+      - ./ops/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    healthcheck:
+      test: ["CMD", "caddy", "version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres-data:
   rabbitmq-data:
-  tenant-postgres-data:

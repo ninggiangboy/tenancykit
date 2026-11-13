@@ -1,0 +1,8 @@
+# Build output and caches are rebuilt inside the image; copying them only slows the context down.
+**/build/
+**/.gradle/
+**/.git/
+**/node_modules/
+web/
+plans/
+docs/

@@ -1,7 +1,7 @@
 ---
 phase: 13
 title: "Suite runtime and isolation"
-status: pending
+status: done
 priority: P1
 effort: "2.5d"
 dependencies: [4, 5, 6, 7, 8, 12]
@@ -60,12 +60,12 @@ Modify:
 
 ## Todo
 
-- [ ] Three Dockerfiles
-- [ ] Per-service databases, roles, broker users
-- [ ] Compose with every service, health checks, proxy
-- [ ] `suite-smoke.sh` and `isolation.sh` green locally
-- [ ] Foreign-service ArchUnit and Gradle checks in every build
-- [ ] `suite.yml` workflow
+- [x] Three Dockerfiles
+- [x] Per-service databases, roles, broker users
+- [x] Compose with every service, health checks, proxy
+- [x] `suite-smoke.sh` and `isolation.sh` green locally
+- [x] Foreign-service ArchUnit and Gradle checks in every build
+- [x] `suite.yml` workflow
 
 ## Verification
 

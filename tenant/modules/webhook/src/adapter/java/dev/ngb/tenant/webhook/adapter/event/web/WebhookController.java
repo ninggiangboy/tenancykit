@@ -5,6 +5,8 @@ import dev.ngb.tenant.webhook.application.event.service.WebhookEnvelope;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,9 +17,14 @@ import tools.jackson.databind.json.JsonMapper;
 /**
  * Billing's signed delivery endpoint. The signature is checked over the raw bytes before the body
  * is parsed, and a repeated event id answers 200 without applying the policy again.
+ *
+ * <p>An accepted delivery logs one fixed line, {@code webhook-accepted type=...}, so the suite smoke test can
+ * assert the tenant really recorded a verified event without needing a read API of its own.
  */
 @RestController
 public class WebhookController {
+
+    private static final Logger LOG = LoggerFactory.getLogger(WebhookController.class);
 
     public record EventBody(String id, String type, String tenantId, Instant occurredAt, Map<String, Object> data) {}
 
@@ -36,11 +43,14 @@ public class WebhookController {
             @RequestHeader(value = "Billing-Signature", required = false) String signature,
             @RequestBody byte[] body) {
         EventBody parsed = json.readValue(body, EventBody.class);
-        receive.receive(
+        ReceiveWebhookUseCase.Outcome outcome = receive.receive(
                 new ReceiveWebhookUseCase.Headers(eventId, eventType, timestamp, signature),
                 body,
                 new String(body, StandardCharsets.UTF_8),
                 new WebhookEnvelope(parsed.id(), parsed.type(), parsed.tenantId(), parsed.occurredAt(), parsed.data()));
+        LOG.info(
+                "webhook-accepted type={} id={} decision={} duplicate={}",
+                parsed.type(), parsed.id(), outcome.decision(), outcome.duplicate());
         return ResponseEntity.ok().build();
     }
 }

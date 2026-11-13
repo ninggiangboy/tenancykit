@@ -1,0 +1,44 @@
+# The suite's reverse proxy. It only routes; it adds no logic, retries nothing and rewrites no body.
+#
+# Tenant resolution stays hostname-based, so the proxy must forward the original Host header — Caddy does by
+# default. Billing reads `<tenant-code>.<base-domain>` to pick the tenant, so a proxy that rewrote Host to the
+# upstream name would break every tenant request.
+#
+# Routes:
+#   /platform/*    -> Platform, with the /platform prefix stripped, on every host. The Host is kept, so a request
+#                     to acme.localhost/platform/... is a tenant-scoped Platform call for tenant acme.
+#   everything else -> Billing (/api/*, /portal/*, /stripe/*), unchanged.
+#   platform.localhost also serves Platform at its root, because an administrator works from that one host.
+#
+# The listener is plain HTTP on port 80 with automatic TLS off: this is a local stack, and `*.localhost` resolves to
+# 127.0.0.1, where a self-signed certificate would only get in the way. A named host would otherwise make Caddy
+# redirect every request to https.
+
+{
+	admin off
+	auto_https off
+	servers {
+		protocols h1 h2c
+	}
+	log {
+		output stdout
+		format console
+	}
+}
+
+http://:80 {
+	@platformPath path /platform/*
+	handle @platformPath {
+		uri strip_prefix /platform
+		reverse_proxy platform:8080
+	}
+
+	@platformHost host platform.localhost
+	handle @platformHost {
+		reverse_proxy platform:8080
+	}
+
+	handle {
+		reverse_proxy billing:8080
+	}
+}
