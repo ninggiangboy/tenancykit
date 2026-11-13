@@ -1,7 +1,7 @@
 ---
 title: "Refactor review findings: security, transactions, core contracts and consistency"
 description: "Fix every verified finding from the codebase review, then centralize the scattered strings, event types, names and constants and enforce the conventions in the build."
-status: pending
+status: completed
 priority: P1
 effort: L
 branch: dev
