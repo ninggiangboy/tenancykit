@@ -100,7 +100,7 @@ class OpenApiContractTest {
         }
 
         ObjectNode info = (ObjectNode) tenant.get("info");
-        info.put("title", "Core Billing API - Tenant Systems");
+        info.put("title", "Billing API - Tenant Systems");
         info.put("description", String.join("\n",
                 "The API a Tenant System calls with the credential Billing issued to it.",
                 "Base URL: https://{tenant-code}.{base-domain} - the hostname selects the Tenant.",

@@ -3,7 +3,7 @@
 resource "aws_ecr_repository" "this" {
   for_each = toset(["platform", "billing", "keycloak"])
 
-  name                 = "core-billing/${var.environment}/${each.key}"
+  name                 = "${var.suite_name}/${var.environment}/${each.key}"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 

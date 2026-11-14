@@ -1,7 +1,7 @@
 ---
 openapi: "3.1.0"
 info:
-  title: "Core Billing API - Tenant Systems"
+  title: "Billing API - Tenant Systems"
   version: "v1"
   description: "The API a Tenant System calls with the credential Billing issued to\
     \ it.\nBase URL: https://{tenant-code}.{base-domain} - the hostname selects the\

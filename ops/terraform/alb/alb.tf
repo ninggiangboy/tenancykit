@@ -1,5 +1,5 @@
 resource "aws_lb" "this" {
-  name               = "${var.environment}-core-billing"
+  name               = var.name_prefix
   internal           = false
   load_balancer_type = "application"
   security_groups    = [var.alb_security_group_id]

@@ -21,7 +21,7 @@ flowchart LR
         PDB[("platform DB")]
     end
 
-    subgraph BILLING["Core Billing app"]
+    subgraph BILLING["Billing app"]
         BAPI["REST API, Portal, Stripe webhooks"]
         BPERM["Enforcement from the replica"]
         BCTX["Pricing, Usage, Money, Invoicing, Payment, Webhook"]
@@ -132,7 +132,7 @@ own the dependency rules.
 | `apps/` | `app-boot` | Spring wiring, security and the token issuer, the snapshot API, the JWKS endpoint, jobs, migrations |
 | `testing/` | `arch-fixtures` | Deliberately violating classes that prove each ArchUnit rule can fail |
 
-**Core Billing** (`billing/`) — the suite's first app, grouped by role (each Gradle project path follows its
+**Billing** (`billing/`) — the suite's first app, grouped by role (each Gradle project path follows its
 directory: `:contexts:money`, `:libs:jooq-schema`, `:apps:app-boot`):
 
 | Directory | Module | Holds |

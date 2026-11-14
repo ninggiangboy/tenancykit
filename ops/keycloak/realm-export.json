@@ -1,6 +1,6 @@
 {
   "realm": "billing",
-  "displayName": "Core Billing",
+  "displayName": "TenancyKit",
   "enabled": true,
   "sslRequired": "external",
   "registrationAllowed": false,

@@ -19,7 +19,7 @@ variable "public_domain" {
 variable "service_connect_namespace" {
   description = "Cloud Map namespace for Service Connect. Internal FQDNs take the form <service>.<namespace>."
   type        = string
-  default     = "core-billing.local"
+  default     = "tenancykit.local"
 }
 
 variable "vpc_cidr" {

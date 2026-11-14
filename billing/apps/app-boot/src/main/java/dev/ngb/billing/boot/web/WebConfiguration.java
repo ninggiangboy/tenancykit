@@ -59,7 +59,7 @@ class WebConfiguration implements WebMvcConfigurer {
     @Bean
     OpenAPI billingOpenApi() {
         return new OpenAPI()
-                .info(new Info().title("Core Billing API").version("v1"))
+                .info(new Info().title("Billing API").version("v1"))
                 .servers(List.of(new Server().url("/").description("Any Billing hostname: platform.<base-domain> or <tenant-code>.<base-domain>")))
                 .components(new Components()
                         .addSecuritySchemes("oidc", new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")

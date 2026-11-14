@@ -34,7 +34,7 @@ jobs:
       TF_VAR_region: ${{ vars.AWS_REGION }}
       TF_VAR_image_tag: ${{ inputs.image_tag }}
       TF_VAR_public_domain: ${{ vars.PUBLIC_DOMAIN }}
-      TF_VAR_service_connect_namespace: ${{ vars.SERVICE_CONNECT_NAMESPACE || 'core-billing.local' }}
+      TF_VAR_service_connect_namespace: ${{ vars.SERVICE_CONNECT_NAMESPACE || 'tenancykit.local' }}
       TF_VAR_certificate_arn: ${{ vars.CERTIFICATE_ARN }}
     defaults:
       run:

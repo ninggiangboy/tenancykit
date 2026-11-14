@@ -17,7 +17,7 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.environment}-core-billing-public-${count.index + 1}"
+    Name = "${var.name_prefix}-public-${count.index + 1}"
     Tier = "public"
   }
 }
@@ -30,7 +30,7 @@ resource "aws_subnet" "private" {
   availability_zone = local.availability_zones[count.index]
 
   tags = {
-    Name = "${var.environment}-core-billing-private-${count.index + 1}"
+    Name = "${var.name_prefix}-private-${count.index + 1}"
     Tier = "private"
   }
 }
@@ -44,7 +44,7 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "${var.environment}-core-billing-public"
+    Name = "${var.name_prefix}-public"
   }
 }
 
@@ -61,7 +61,7 @@ resource "aws_eip" "nat" {
   domain = "vpc"
 
   tags = {
-    Name = "${var.environment}-core-billing-nat"
+    Name = "${var.name_prefix}-nat"
   }
 }
 
@@ -70,7 +70,7 @@ resource "aws_nat_gateway" "this" {
   subnet_id     = aws_subnet.public[0].id
 
   tags = {
-    Name = "${var.environment}-core-billing"
+    Name = var.name_prefix
   }
 
   depends_on = [aws_internet_gateway.this]
@@ -85,7 +85,7 @@ resource "aws_route_table" "private" {
   }
 
   tags = {
-    Name = "${var.environment}-core-billing-private"
+    Name = "${var.name_prefix}-private"
   }
 }
 

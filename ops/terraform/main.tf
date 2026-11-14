@@ -22,7 +22,7 @@ terraform {
   #
   # backend "s3" {
   #   bucket         = "<state-bucket>"
-  #   key            = "core-billing/terraform.tfstate"
+  #   key            = "tenancykit/terraform.tfstate"
   #   region         = "<region>"
   #   dynamodb_table = "<lock-table>"
   #   encrypt        = true
@@ -35,7 +35,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project     = "core-billing"
+      Project     = "tenancykit"
       Environment = var.environment
       ManagedBy   = "terraform"
     }
@@ -45,19 +45,22 @@ provider "aws" {
 module "network" {
   source = "./network"
 
-  environment = var.environment
+  name_prefix = local.name_prefix
   vpc_cidr    = var.vpc_cidr
 }
 
 module "secrets" {
   source = "./secrets"
 
+  suite_name  = local.suite_name
   environment = var.environment
 }
 
 module "ecs" {
   source = "./ecs"
 
+  name_prefix        = local.name_prefix
+  suite_name         = local.suite_name
   environment        = var.environment
   secret_arns        = module.secrets.arns
   log_group_names    = local.log_group_names
@@ -73,6 +76,7 @@ module "service_discovery" {
 module "alb" {
   source = "./alb"
 
+  name_prefix           = local.name_prefix
   environment           = var.environment
   vpc_id                = module.network.vpc_id
   public_subnet_ids     = module.network.public_subnet_ids
@@ -83,6 +87,7 @@ module "alb" {
 module "rds" {
   source = "./rds"
 
+  name_prefix            = local.name_prefix
   environment            = var.environment
   region                 = var.region
   private_subnet_ids     = module.network.private_subnet_ids
@@ -101,6 +106,7 @@ module "rds" {
 module "mq" {
   source = "./mq"
 
+  name_prefix            = local.name_prefix
   environment            = var.environment
   region                 = var.region
   private_subnet_ids     = module.network.private_subnet_ids

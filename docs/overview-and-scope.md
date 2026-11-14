@@ -15,7 +15,7 @@ The goal is that a new business app (CRM, HR, …) joins the suite by adding a b
 | System | Owns | Reached at |
 |---|---|---|
 | **Platform** (`platform/`) | Tenants, tenant domains, users, centralized RBAC, app entitlement, Tenant Systems, API credentials and the suite's signed tokens | `platform.<base-domain>` |
-| **Core Billing** (`billing/`) | Pricing, Wallet, Ledger, Reservation, Charge, Invoice, Payment, Refund, Subscription, Webhook, the Billing Session and the Customer Portal. It keeps a **replica** of the Platform data it enforces and owns no tenant, user or role logic | `<tenant-code>.<base-domain>` |
+| **Billing** (`billing/`) | Pricing, Wallet, Ledger, Reservation, Charge, Invoice, Payment, Refund, Subscription, Webhook, the Billing Session and the Customer Portal. It keeps a **replica** of the Platform data it enforces and owns no tenant, user or role logic | `<tenant-code>.<base-domain>` |
 | **Sample Tenant System** (`tenant/`) | Its own users, catalog, orders, usage and the policy it applies to Billing's state changes. It proves the integration and deploys without Billing | its own host |
 
 They are separate Gradle builds, separate databases and separate processes. They meet three ways, never by sharing
@@ -62,7 +62,7 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 - Issues the suite's tokens: service clients and Tenant Systems get one at `POST /oauth/token`.
 - Publishes the state-transfer events every app replicates.
 
-**Core Billing**
+**Billing**
 - Owns pricing, cost calculation and estimation, balance checks, budget holds and deductions.
 - Records Usage and owns every financial transaction: Wallet, Ledger, Reservation, Charge, Invoice, Payment,
   Refund, Subscription.

@@ -1,7 +1,7 @@
 # tenant
 
 A reference Cloud Resource Management tenant. It is its own Gradle build and database and
-integrates with Core Billing only over REST and signed webhooks; it shares no code with
+integrates with Billing only over REST and signed webhooks; it shares no code with
 `billing/` and builds against the technical `core/` beside it. See [docs/tenant-system.md](../docs/tenant-system.md).
 
 ## Build and run

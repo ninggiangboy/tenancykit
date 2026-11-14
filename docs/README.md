@@ -1,6 +1,6 @@
-# Core Billing Documentation
+# TenancyKit Documentation
 
-Documentation for the suite: the **Platform** service, the **Core Billing** app and the **Sample Tenant System** (a Cloud Resource Management reference tenant), each independently deployable. It is written for people and AI collaborators who need to know what the systems must do, why they are shaped this way, and where each rule is owned.
+Documentation for the suite: the **Platform** service, the **Billing** app and the **Sample Tenant System** (a Cloud Resource Management reference tenant), each independently deployable. It is written for people and AI collaborators who need to know what the systems must do, why they are shaped this way, and where each rule is owned.
 
 ## Authority
 

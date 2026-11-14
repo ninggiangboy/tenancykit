@@ -1,5 +1,15 @@
+variable "name_prefix" {
+  description = "Prefix of every resource name, already carrying the environment and the suite name."
+  type        = string
+}
+
+variable "suite_name" {
+  description = "Suite name, the first segment of every ECR repository path."
+  type        = string
+}
+
 variable "environment" {
-  description = "Deployment environment. Prefixes every resource name."
+  description = "Deployment environment, the second segment of every ECR repository path."
   type        = string
 }
 

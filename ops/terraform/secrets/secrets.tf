@@ -57,7 +57,7 @@ resource "tls_private_key" "platform_signing" {
 resource "aws_secretsmanager_secret" "this" {
   for_each = local.secret_names
 
-  name = "core-billing/${var.environment}/${lower(each.key)}"
+  name = "tenancykit/${var.environment}/${lower(each.key)}"
   # Development: destroying the stack releases the names at once instead of holding them for a recovery window.
   recovery_window_in_days = 0
 }

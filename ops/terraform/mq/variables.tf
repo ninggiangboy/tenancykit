@@ -1,5 +1,10 @@
+variable "name_prefix" {
+  description = "Prefix of every resource name, already carrying the environment and the suite name."
+  type        = string
+}
+
 variable "environment" {
-  description = "Deployment environment. Prefixes every resource name."
+  description = "Deployment environment. Part of the broker-users task family name."
   type        = string
 }
 

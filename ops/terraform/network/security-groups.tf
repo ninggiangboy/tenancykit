@@ -2,32 +2,32 @@
 # without a cycle.
 
 resource "aws_security_group" "alb" {
-  name        = "${var.environment}-core-billing-alb"
+  name        = "${var.name_prefix}-alb"
   description = "Public entry point: HTTP and HTTPS from the internet, forwarding to tasks on 8080."
   vpc_id      = aws_vpc.this.id
 
   tags = {
-    Name = "${var.environment}-core-billing-alb"
+    Name = "${var.name_prefix}-alb"
   }
 }
 
 resource "aws_security_group" "task" {
-  name        = "${var.environment}-core-billing-task"
+  name        = "${var.name_prefix}-task"
   description = "Fargate tasks: 8080 from the ALB and from each other (Service Connect)."
   vpc_id      = aws_vpc.this.id
 
   tags = {
-    Name = "${var.environment}-core-billing-task"
+    Name = "${var.name_prefix}-task"
   }
 }
 
 resource "aws_security_group" "data" {
-  name        = "${var.environment}-core-billing-data"
+  name        = "${var.name_prefix}-data"
   description = "RDS and Amazon MQ: reachable only from the tasks."
   vpc_id      = aws_vpc.this.id
 
   tags = {
-    Name = "${var.environment}-core-billing-data"
+    Name = "${var.name_prefix}-data"
   }
 }
 

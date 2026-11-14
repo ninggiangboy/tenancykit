@@ -1,5 +1,5 @@
 resource "aws_mq_broker" "this" {
-  broker_name         = "${var.environment}-core-billing"
+  broker_name         = var.name_prefix
   engine_type         = "RabbitMQ"
   engine_version      = var.engine_version
   host_instance_type  = var.instance_type

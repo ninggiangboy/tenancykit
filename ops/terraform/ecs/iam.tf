@@ -11,7 +11,7 @@ data "aws_iam_policy_document" "assume_tasks" {
 
 # Pulls images from ECR and writes container logs. The workloads call no AWS API themselves, so there is no task role.
 resource "aws_iam_role" "execution" {
-  name               = "${var.environment}-core-billing-task-execution"
+  name               = "${var.name_prefix}-task-execution"
   assume_role_policy = data.aws_iam_policy_document.assume_tasks.json
 }
 

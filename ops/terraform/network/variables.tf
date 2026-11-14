@@ -1,5 +1,5 @@
-variable "environment" {
-  description = "Deployment environment. Prefixes every resource name."
+variable "name_prefix" {
+  description = "Prefix of every resource name, already carrying the environment and the suite name."
   type        = string
 }
 

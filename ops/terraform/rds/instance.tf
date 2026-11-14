@@ -1,7 +1,7 @@
 # One managed PostgreSQL server hosts a database per service, exactly as the compose stack does. The master account
 # creates the roles; every service then connects as its own owner or app role.
 resource "aws_db_instance" "this" {
-  identifier = "${var.environment}-core-billing"
+  identifier = var.name_prefix
 
   engine               = "postgres"
   engine_version       = var.engine_version

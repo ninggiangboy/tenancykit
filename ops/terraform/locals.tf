@@ -1,5 +1,6 @@
 locals {
-  name_prefix = "${var.environment}-core-billing"
+  suite_name  = "tenancykit"
+  name_prefix = "${var.environment}-${local.suite_name}"
   realm       = "billing"
 
   # The single source of truth for internal addresses. Service Connect registers each service under the DNS name

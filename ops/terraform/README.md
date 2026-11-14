@@ -69,7 +69,7 @@ Every value with a sensible development default lives in `variables.tf`. Overrid
 region                    = "us-west-2"
 environment               = "dev"
 public_domain             = "billing.example.com"
-service_connect_namespace = "core-billing.local"
+service_connect_namespace = "tenancykit.local"
 certificate_arn           = "" # an ACM ARN enables the HTTPS listener
 image_tag                 = "2026-11-14"
 platform_admin_email      = "admin@billing.example.com"

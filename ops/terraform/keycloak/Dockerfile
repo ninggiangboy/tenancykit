@@ -1,6 +1,6 @@
 # Build context is the repository root:
 #
-#   docker build -f ops/terraform/keycloak/Dockerfile -t <ecr>/core-billing/<env>/keycloak:<tag> .
+#   docker build -f ops/terraform/keycloak/Dockerfile -t <ecr>/tenancykit/<env>/keycloak:<tag> .
 #
 # Terraform does not build images; CI (or a manual command in ops/terraform/README.md) builds and pushes this one.
 FROM quay.io/keycloak/keycloak:26.8.2

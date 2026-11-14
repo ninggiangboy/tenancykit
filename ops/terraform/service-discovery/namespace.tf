@@ -4,5 +4,5 @@
 # locals.
 resource "aws_service_discovery_http_namespace" "this" {
   name        = var.namespace
-  description = "Service Connect namespace for the core-billing suite"
+  description = "Service Connect namespace for the tenancykit suite"
 }

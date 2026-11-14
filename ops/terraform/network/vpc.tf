@@ -8,7 +8,7 @@ resource "aws_vpc" "this" {
   enable_dns_hostnames = true
 
   tags = {
-    Name = "${var.environment}-core-billing"
+    Name = var.name_prefix
   }
 }
 
@@ -16,6 +16,6 @@ resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
 
   tags = {
-    Name = "${var.environment}-core-billing"
+    Name = var.name_prefix
   }
 }
