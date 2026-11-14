@@ -21,3 +21,10 @@ node_modules/
 .commandcode/
 # kotlin tool cache
 .kotlin/
+# Terraform local state and variable overrides. The lock file is committed.
+*.tfvars
+*.tfstate
+*.tfstate.*
+.terraform/
+crash.log
+

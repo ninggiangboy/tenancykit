@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Platform workload"
-status: pending
+status: completed
 priority: P2
 effort: M
 dependencies: [1, 2, 3]
@@ -58,12 +58,12 @@ path `/platform/*`, và `PLATFORM_INTERNAL_HOSTNAMES` khai báo đúng FQDN nộ
 
 ## Success criteria
 
-- [ ] Platform RUNNING + healthy trên Fargate (2 replica).
-- [ ] Service Connect name `platform.<namespace>`.
-- [ ] `PLATFORM_INTERNAL_HOSTNAMES` đúng FQDN nội bộ.
-- [ ] Issuer (public) và JWKS (internal) đúng; `PLATFORM_TOKEN_ISSUER` giữ public.
-- [ ] `PLATFORM_TOKEN_ALLOW_EPHEMERAL_KEY=false` và signing key từ Secret.
-- [ ] ALB không rewrite Host header.
+- [ ] Platform RUNNING + healthy trên Fargate (2 replica). (Cần apply để chứng minh.)
+- [x] Service Connect name `platform.<namespace>`.
+- [x] `PLATFORM_INTERNAL_HOSTNAMES` đúng FQDN nội bộ.
+- [x] Issuer (public) và JWKS (internal) đúng; `PLATFORM_TOKEN_ISSUER` giữ public.
+- [x] `PLATFORM_TOKEN_ALLOW_EPHEMERAL_KEY=false` và signing key từ Secret.
+- [x] ALB không rewrite Host header.
 
 ## Risks
 

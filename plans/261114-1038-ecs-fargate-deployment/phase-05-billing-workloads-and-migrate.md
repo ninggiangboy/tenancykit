@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Billing workloads and migrate"
-status: pending
+status: completed
 priority: P2
 effort: L
 dependencies: [1, 2, 3, 4]
@@ -61,12 +61,12 @@ Service Connect FQDN nội bộ.
 
 ## Success criteria
 
-- [ ] migrate one-shot task, api + worker service riêng, profile đúng.
-- [ ] Migrate chạy trước api/worker (pipeline), Flyway re-run an toàn.
-- [ ] `BILLING_PLATFORM_BASE_URL`/`BILLING_PLATFORM_JWK_SET_URI` trỏ DNS nội bộ; issuer giữ public.
-- [ ] `BILLING_WEBHOOKS_ALLOW_INSECURE_TARGETS=false`, `BILLING_PORTAL_SECURE_COOKIE=true`.
-- [ ] Worker không bật virtual threads.
-- [ ] `terraform validate` sạch.
+- [x] migrate one-shot task, api + worker service riêng, profile đúng.
+- [x] Migrate chạy trước api/worker (pipeline), Flyway re-run an toàn.
+- [x] `BILLING_PLATFORM_BASE_URL`/`BILLING_PLATFORM_JWK_SET_URI` trỏ DNS nội bộ; issuer giữ public.
+- [x] `BILLING_WEBHOOKS_ALLOW_INSECURE_TARGETS=false`, `BILLING_PORTAL_SECURE_COOKIE=true`.
+- [x] Worker không bật virtual threads.
+- [x] `terraform validate` sạch.
 
 ## Risks
 

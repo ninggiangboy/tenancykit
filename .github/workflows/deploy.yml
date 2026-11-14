@@ -1,0 +1,158 @@
+name: deploy
+
+# Builds the three images, applies the Terraform stack, runs Billing's Flyway migrate to completion, and only then
+# rolls the services onto the new revision. Gated on repository variables so an unconfigured fork skips it:
+#
+#   AWS_ROLE_ARN   OIDC role with ECS, ECR, RDS, MQ, IAM, EC2 and Secrets Manager permissions
+#   AWS_REGION     e.g. us-west-2
+#   PUBLIC_DOMAIN  e.g. billing.example.com
+#
+# It also requires the S3 state backend described in ops/terraform/README.md; local state cannot be shared between
+# CI runs.
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Image tag to build and deploy
+        type: string
+        default: latest
+      bootstrap_data:
+        description: Run the one-shot database and broker init tasks (first deploy only)
+        type: boolean
+        default: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    if: vars.AWS_ROLE_ARN != '' && vars.AWS_REGION != '' && vars.PUBLIC_DOMAIN != ''
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      TF_VAR_region: ${{ vars.AWS_REGION }}
+      TF_VAR_image_tag: ${{ inputs.image_tag }}
+      TF_VAR_public_domain: ${{ vars.PUBLIC_DOMAIN }}
+      TF_VAR_service_connect_namespace: ${{ vars.SERVICE_CONNECT_NAMESPACE || 'core-billing.local' }}
+      TF_VAR_certificate_arn: ${{ vars.CERTIFICATE_ARN }}
+    defaults:
+      run:
+        working-directory: ops/terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Init
+        run: terraform init -input=false
+
+      # Creates the ECS cluster, ECR repositories, RDS, MQ and the service definitions. The services may start before
+      # their images exist on a first deploy; the rollout at the end replaces every task once the images are pushed.
+      - name: Apply
+        run: terraform apply -input=false -auto-approve -no-color
+
+      - name: Log in to ECR
+        run: |
+          registry="$(aws sts get-caller-identity --query Account --output text).dkr.ecr.${AWS_REGION}.amazonaws.com"
+          aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$registry"
+
+      - name: Build and push the images
+        working-directory: .
+        env:
+          TAG: ${{ inputs.image_tag }}
+        run: |
+          platform_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .platform)"
+          billing_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .billing)"
+          keycloak_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .keycloak)"
+
+          docker build -f platform/apps/app-boot/Dockerfile -t "${platform_repo}:${TAG}" .
+          docker push "${platform_repo}:${TAG}"
+
+          docker build -f billing/apps/app-boot/Dockerfile -t "${billing_repo}:${TAG}" .
+          docker push "${billing_repo}:${TAG}"
+
+          docker build -f ops/terraform/keycloak/Dockerfile -t "${keycloak_repo}:${TAG}" .
+          docker push "${keycloak_repo}:${TAG}"
+
+      - name: Bootstrap the database and broker (first deploy only)
+        if: ${{ inputs.bootstrap_data }}
+        run: |
+          set -euo pipefail
+          cluster="$(terraform output -raw cluster_name)"
+          subnets="$(terraform output -json private_subnet_ids | jq -r 'join(",")')"
+          security_group="$(terraform output -raw task_security_group_id)"
+
+          run_once() {
+            local key="$1"
+            local definition task exit_code
+            definition="$(terraform output -json task_definition_arns | jq -r --arg key "$key" '.[$key]')"
+            task="$(aws ecs run-task \
+              --cluster "$cluster" \
+              --task-definition "$definition" \
+              --launch-type FARGATE \
+              --network-configuration "awsvpcConfiguration={subnets=[$subnets],securityGroups=[$security_group],assignPublicIp=DISABLED}" \
+              --query 'tasks[0].taskArn' --output text)"
+            aws ecs wait tasks-stopped --cluster "$cluster" --tasks "$task"
+            exit_code="$(aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+              --query 'tasks[0].containers[0].exitCode' --output text)"
+            if [ "$exit_code" != "0" ]; then
+              aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+                --query 'tasks[0].containers[0].reason' --output text
+              exit 1
+            fi
+          }
+
+          run_once rds_init
+          run_once mq_users
+
+      - name: Migrate Billing
+        run: |
+          set -euo pipefail
+          cluster="$(terraform output -raw cluster_name)"
+          subnets="$(terraform output -json private_subnet_ids | jq -r 'join(",")')"
+          security_group="$(terraform output -raw task_security_group_id)"
+          definition="$(terraform output -json task_definition_arns | jq -r .billing_migrate)"
+
+          task="$(aws ecs run-task \
+            --cluster "$cluster" \
+            --task-definition "$definition" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$subnets],securityGroups=[$security_group],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' --output text)"
+          aws ecs wait tasks-stopped --cluster "$cluster" --tasks "$task"
+          exit_code="$(aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+            --query 'tasks[0].containers[0].exitCode' --output text)"
+          if [ "$exit_code" != "0" ]; then
+            aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+              --query 'tasks[0].containers[0].reason' --output text
+            exit 1
+          fi
+
+      # The services are pinned to the previous revision by `ignore_changes = [task_definition]`, so the update is
+      # explicit and ordered after migrate.
+      - name: Roll the services
+        run: |
+          set -euo pipefail
+          cluster="$(terraform output -raw cluster_name)"
+          roll() {
+            local key="$1" service="$2"
+            local definition name
+            definition="$(terraform output -json task_definition_arns | jq -r --arg key "$key" '.[$key]')"
+            name="$(terraform output -json service_names | jq -r --arg key "$service" '.[$key]')"
+            aws ecs update-service --cluster "$cluster" --service "$name" \
+              --task-definition "$definition" --force-new-deployment > /dev/null
+            aws ecs wait services-stable --cluster "$cluster" --services "$name"
+          }
+
+          roll keycloak keycloak
+          roll platform platform
+          roll billing_api billing_api
+          roll billing_worker billing_worker

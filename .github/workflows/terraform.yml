@@ -1,0 +1,74 @@
+name: terraform
+
+# Validates the ECS deployment on every change. `fmt` and `validate` need no AWS credentials; `plan` runs only when
+# the repository has an OIDC role configured, because it needs the state backend and the provider.
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "ops/terraform/**"
+      - ".github/workflows/terraform.yml"
+  pull_request:
+    paths:
+      - "ops/terraform/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ops/terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Format
+        run: terraform fmt -check -recursive .
+
+      - name: Init
+        run: terraform init -backend=false -input=false
+
+      - name: Validate
+        run: terraform validate
+
+  plan:
+    # Set the repository variable AWS_ROLE_ARN to enable. Without it the job is skipped instead of failing.
+    if: vars.AWS_ROLE_ARN != '' && vars.AWS_REGION != ''
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: ops/terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Init
+        run: terraform init -input=false
+
+      - name: Plan
+        env:
+          TF_VAR_region: ${{ vars.AWS_REGION }}
+          TF_VAR_public_domain: ${{ vars.PUBLIC_DOMAIN }}
+          TF_VAR_service_connect_namespace: ${{ vars.SERVICE_CONNECT_NAMESPACE || 'core-billing.local' }}
+          TF_VAR_certificate_arn: ${{ vars.CERTIFICATE_ARN }}
+        run: terraform plan -input=false -no-color

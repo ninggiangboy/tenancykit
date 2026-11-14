@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# RDS does not run ops/postgres/init/00-databases.sh, so this one-shot task recreates its model on the managed server:
+# one owner role and one app role per service, a database per service owned by its owner, and the default grants
+# Flyway relies on. Isolation is unchanged: `revoke connect ... from public` plus a grant to the two roles of the same
+# database keeps one service out of another's database.
+#
+# Two details are RDS-specific. The master account creates roles and databases, but PostgreSQL refuses
+# `alter default privileges for role <other>` unless the session can act as that role, so each owner connects as
+# itself and sets its own defaults. The Keycloak database is owned by one role with no app role: Keycloak creates its
+# schema at start and needs the privileges to do it.
+#
+# Passwords arrive as environment variables injected from Secrets Manager; nothing is committed.
+set -euo pipefail
+
+: "${PGHOST:?set PGHOST}" "${PGUSER:?set PGUSER}" "${PGPASSWORD:?set PGPASSWORD}"
+
+psql --set=ON_ERROR_STOP=1 \
+  --set=platform_owner_password="${PLATFORM_MIGRATION_DB_PASSWORD:?set the platform owner password}" \
+  --set=platform_app_password="${PLATFORM_DB_PASSWORD:?set the platform app password}" \
+  --set=billing_owner_password="${BILLING_MIGRATION_DB_PASSWORD:?set the billing owner password}" \
+  --set=billing_app_password="${BILLING_DB_PASSWORD:?set the billing app password}" \
+  --set=tenant_owner_password="${TENANT_MIGRATION_DB_PASSWORD:?set the tenant owner password}" \
+  --set=tenant_app_password="${TENANT_DB_PASSWORD:?set the tenant app password}" \
+  --set=keycloak_owner_password="${KEYCLOAK_DB_PASSWORD:?set the keycloak owner password}" \
+  --dbname postgres <<'SQL'
+create role platform_owner login password :'platform_owner_password' nocreatedb nocreaterole;
+create role platform_app login password :'platform_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+
+create role billing_owner login password :'billing_owner_password' nocreatedb nocreaterole;
+create role billing_app login password :'billing_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+
+create role tenant_owner login password :'tenant_owner_password' nocreatedb nocreaterole;
+create role tenant_app login password :'tenant_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+
+create role keycloak_owner login password :'keycloak_owner_password' nocreatedb nocreaterole;
+
+create database platform owner platform_owner;
+create database billing owner billing_owner;
+create database tenant owner tenant_owner;
+create database keycloak owner keycloak_owner;
+
+revoke connect, temporary on database platform from public;
+revoke connect, temporary on database billing from public;
+revoke connect, temporary on database tenant from public;
+revoke connect, temporary on database keycloak from public;
+
+grant connect, temporary on database platform to platform_owner, platform_app;
+grant connect, temporary on database billing to billing_owner, billing_app;
+grant connect, temporary on database tenant to tenant_owner, tenant_app;
+grant connect, temporary on database keycloak to keycloak_owner;
+SQL
+
+apply_default_privileges() {
+  local owner="$1" password="$2" database="$3" app="$4"
+  PGPASSWORD="$password" psql --set=ON_ERROR_STOP=1 \
+    --host "$PGHOST" --username "$owner" --dbname "$database" <<SQL
+alter default privileges in schema public
+    grant select, insert, update, delete on tables to $app;
+alter default privileges in schema public
+    grant usage, select on sequences to $app;
+SQL
+}
+
+apply_default_privileges platform_owner "${PLATFORM_MIGRATION_DB_PASSWORD}" platform platform_app
+apply_default_privileges billing_owner "${BILLING_MIGRATION_DB_PASSWORD}" billing billing_app
+apply_default_privileges tenant_owner "${TENANT_MIGRATION_DB_PASSWORD}" tenant tenant_app
+
+echo "created platform, billing, tenant and keycloak databases with their owner and app roles"

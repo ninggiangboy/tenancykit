@@ -99,6 +99,36 @@ The exact values live in `application-api.yml`, `application-worker.yml` and `ap
 starting points measured by the deadlock stress test, not constants to defend: raise the api timeout before raising
 the worker's.
 
+## ECS Fargate
+
+`ops/terraform/` deploys the same profiles to AWS and keeps `docker compose` as the local path; neither replaces the
+other. The deployment has four long-running workloads and three one-shot tasks:
+
+| ECS workload | Profile | Notes |
+|---|---|---|
+| `keycloak` | Keycloak `start` | Self-hosted, RDS-backed, realm export baked into the image. |
+| `platform` | none | 2 replicas; migrates on start; Service Connect name `platform`. |
+| `billing-api` | `api` | 2 replicas; the ALB's default target; Service Connect name `billing`. |
+| `billing-worker` | `worker` | 2 replicas; no ALB target; no virtual threads. |
+| `billing-migrate` | `migrate` | One-shot task run to exit 0 before api and worker roll. |
+| `rds-init` | n/a | One-shot task that creates the databases and owner/app roles RDS does not provision. |
+| `mq-users` | n/a | One-shot task that applies the broker's per-user exchange/queue permissions. |
+
+ECS has no `depends_on: service_completed_successfully`, so ordering is the pipeline's job: `rds-init` and `mq-users`
+run once, `billing-migrate` runs on every deploy, and only then are the services pointed at the new task definitions.
+Billing's api and worker services pin their task definition in Terraform, which is what makes that ordering possible;
+`terraform apply` alone never moves them.
+
+RDS and Amazon MQ replace the postgres and rabbitmq containers, with the same one-owner-one-app role split per
+database. Service Connect replaces the compose network alias for service-to-service calls. It does not solve Host
+header routing: Platform still resolves a tenant from `request.getServerName()`, so `PLATFORM_INTERNAL_HOSTNAMES`
+must list `platform.<namespace>` or Billing's internal call 404s.
+
+The issuer rule is unchanged and is the easiest thing to break: the issuer is the public address a user signs in at,
+while JWKS and Platform's replica calls use the internal Service Connect address. See
+[`ops/terraform/README.md`](../ops/terraform/README.md) for the full address table, ALB rule priorities and the
+deployment steps.
+
 ## Related
 
 Lock order and coordination rules: [concurrency-and-locking.md](concurrency-and-locking.md). Reliability requirements:

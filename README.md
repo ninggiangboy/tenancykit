@@ -68,6 +68,10 @@ set -a; source .env; set +a
 cd billing && ./gradlew :apps:app-boot:bootRun
 ```
 
+The same suite also deploys to AWS ECS Fargate with managed RDS and Amazon MQ, in parallel with compose rather than
+instead of it. The infrastructure lives in [`ops/terraform/`](ops/terraform/README.md); `docker-compose.yml` is
+untouched by that path.
+
 ## Verify the suite
 
 Two scripts prove the Done-means end states against the running stack; CI runs both:

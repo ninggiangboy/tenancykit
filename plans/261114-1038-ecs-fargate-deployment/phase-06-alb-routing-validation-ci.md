@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "ALB routing, validation and CI"
-status: pending
+status: completed
 priority: P2
 effort: M
 dependencies: [3, 4, 5]
@@ -59,11 +59,11 @@ ghi tài liệu hai đường deploy song song, và chạy smoke test chứng mi
 
 ## Success criteria
 
-- [ ] ALB default action → Billing; rules → Platform/Keycloak đúng thứ tự.
-- [ ] CI validate Terraform (`fmt -check` + `init` + `validate`).
-- [ ] Pipeline deploy (migrate → deploy) hoặc hướng dẫn tay tương đương trong README.
-- [ ] `docs/runtime-profiles.md` + `README.md` mô tả hai đường deploy song song.
-- [ ] `docker-compose.yml` không đổi.
+- [x] ALB default action → Billing; rules → Platform/Keycloak đúng thứ tự.
+- [x] CI validate Terraform (`fmt -check` + `init` + `validate`).
+- [x] Pipeline deploy (migrate → deploy) hoặc hướng dẫn tay tương đương trong README.
+- [x] `docs/runtime-profiles.md` + `README.md` mô tả hai đường deploy song song.
+- [x] `docker-compose.yml` không đổi.
 - [ ] Smoke test pass trên stack thật (khi có sandbox).
 
 ## Risks

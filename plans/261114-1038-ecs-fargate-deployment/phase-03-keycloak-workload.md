@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Keycloak workload"
-status: pending
+status: completed
 priority: P2
 effort: M
 dependencies: [1, 2]
@@ -60,11 +60,11 @@ nội bộ qua Service Connect (`keycloak.<namespace>`) và công khai qua ALB (
 
 ## Success criteria
 
-- [ ] Keycloak RUNNING + healthy trên Fargate, RDS-backed.
-- [ ] Realm `billing` import thành công, issuer = public ALB host.
-- [ ] Reachable nội bộ `keycloak.<namespace>:8080` và công khai `auth.<domain>`.
-- [ ] `start` production mode (không `start-dev`), `KC_PROXY` đúng (edge).
-- [ ] Issuer public vs JWKS internal được phân biệt rõ qua local, không hardcode.
+- [ ] Keycloak RUNNING + healthy trên Fargate, RDS-backed. (Cần apply để chứng minh.)
+- [ ] Realm `billing` import thành công, issuer = public ALB host. (Cần apply để chứng minh.)
+- [ ] Reachable nội bộ `keycloak.<namespace>:8080` và công khai `auth.<domain>`. (Cần apply để chứng minh.)
+- [x] `start` production mode (không dùng dev entrypoint), proxy headers đúng (`KC_PROXY_HEADERS=xforwarded`).
+- [x] Issuer public vs JWKS internal được phân biệt rõ qua local, không hardcode.
 
 ## Risks
 

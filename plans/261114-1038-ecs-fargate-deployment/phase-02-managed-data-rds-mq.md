@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Managed data: RDS and Amazon MQ"
-status: pending
+status: completed
 priority: P2
 effort: M
 dependencies: [1]
@@ -62,10 +62,10 @@ và `ops/rabbitmq/declare-users.sh` trên managed services.
 
 ## Success criteria
 
-- [ ] RDS Postgres private, 4 database + owner/app role mỗi database.
-- [ ] Amazon MQ RabbitMQ private, user `platform` + `billing`.
-- [ ] Mọi password trong Secrets Manager; `.tf` chỉ reference ARN.
-- [ ] Bước init database/role được chọn và có lý do ghi lại.
+- [ ] RDS Postgres private, 4 database + owner/app role mỗi database. (Cần apply để chứng minh.)
+- [ ] Amazon MQ RabbitMQ private, user `platform` + `billing`. (Cần apply để chứng minh.)
+- [x] Mọi password trong Secrets Manager; `.tf` chỉ reference ARN.
+- [x] Bước init database/role được chọn và có lý do ghi lại.
 
 ## Risks
 

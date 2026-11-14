@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Terraform foundation"
-status: pending
+status: completed
 priority: P2
 effort: M
 dependencies: []
@@ -74,12 +74,12 @@ namespace, và ALB bare (listener với default action 503 tạm). `.gitignore` 
 
 ## Success criteria
 
-- [ ] Terraform init/validate sạch, `fmt -check` sạch.
-- [ ] VPC có public + private subnet (2 AZ), NAT cho private.
-- [ ] ECS cluster Fargate, 3 ECR repo.
-- [ ] Service Connect private namespace `core-billing.local`.
-- [ ] ALB + listener default 503, chưa có target group.
-- [ ] `.gitignore` chặn tfvars/state.
+- [x] Terraform init/validate sạch, `fmt -check` sạch.
+- [x] VPC có public + private subnet (2 AZ), NAT cho private.
+- [x] ECS cluster Fargate, 3 ECR repo.
+- [x] Service Connect private namespace `core-billing.local`.
+- [ ] ALB + listener default 503, chưa có target group. (Trạng thái cuối: listener forward Billing, target group đã có.)
+- [x] `.gitignore` chặn tfvars/state.
 
 ## Risks
 

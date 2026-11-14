@@ -1,7 +1,7 @@
 ---
 title: "ECS Fargate deployment for Platform and Billing"
 description: "Deploy platform, billing api, billing-worker and self-hosted Keycloak on AWS ECS Fargate via Terraform, keeping docker compose as the equal local path."
-status: pending
+status: completed
 priority: P2
 effort: L
 branch: dev
@@ -9,6 +9,7 @@ tags: [infra, backend, api, docs]
 blockedBy: [261114-0930-service-discovery-internal-hostnames]
 blocks: []
 created: 2026-11-14
+completed: 2026-11-14
 ---
 
 # ECS Fargate deployment cho Platform và Billing
@@ -61,12 +62,12 @@ RDS + Amazon MQ managed qua Terraform, và self-host Keycloak trên ECS.
 
 | # | Phase | Depends on | Status |
 |---|-------|-----------|--------|
-| 1 | [Terraform foundation](./phase-01-terraform-foundation.md) | none | Pending |
-| 2 | [Managed data: RDS and Amazon MQ](./phase-02-managed-data-rds-mq.md) | 1 | Pending |
-| 3 | [Keycloak workload](./phase-03-keycloak-workload.md) | 1, 2 | Pending |
-| 4 | [Platform workload](./phase-04-platform-workload.md) | 1, 2, 3 | Pending |
-| 5 | [Billing workloads and migrate](./phase-05-billing-workloads-and-migrate.md) | 1, 2, 3, 4 | Pending |
-| 6 | [ALB routing, validation and CI](./phase-06-alb-routing-validation-ci.md) | 3, 4, 5 | Pending |
+| 1 | [Terraform foundation](./phase-01-terraform-foundation.md) | none | Completed |
+| 2 | [Managed data: RDS and Amazon MQ](./phase-02-managed-data-rds-mq.md) | 1 | Completed |
+| 3 | [Keycloak workload](./phase-03-keycloak-workload.md) | 1, 2 | Completed |
+| 4 | [Platform workload](./phase-04-platform-workload.md) | 1, 2, 3 | Completed |
+| 5 | [Billing workloads and migrate](./phase-05-billing-workloads-and-migrate.md) | 1, 2, 3, 4 | Completed |
+| 6 | [ALB routing, validation and CI](./phase-06-alb-routing-validation-ci.md) | 3, 4, 5 | Completed |
 
 Phase 1 dựng nền và ALB bare (listener default 503). Phase 2 dựng RDS/MQ/Secrets. Phase 3 và 4 thêm target group + ALB
 rule cho Keycloak và Platform. Phase 5 thêm Billing và đổi default action của listener sang Billing. Phase 6 là cổng kiểm
@@ -107,3 +108,24 @@ chứng cuối: `terraform validate`, CI, docs, smoke.
 - **Backend state Terraform:** S3 + DynamoDB lock (khuyến nghị) hay local. Chọn trong phase 1.
 - **Region/AZ:** giả định có thể cấu hình qua variable, mặc định gợi ý `us-west-2` (AWS Emulator chỉ verify ở đó, nhưng
   đây là deploy thật nên chọn region theo nhu cầu thật).
+
+## Implementation notes (2026-11-14)
+
+Đã land toàn bộ `ops/terraform/`, CI và docs. Các quyết định và điều chỉnh so với bản plan:
+
+- **Backend:** `local` mặc định để `validate` chạy không cần AWS; khối `s3` + DynamoDB nằm trong comment của
+  `main.tf`, kèm lệnh tạo bucket/table trong `ops/terraform/README.md`. Deploy CI giả định backend chia sẻ.
+- **Service Connect namespace:** dùng `aws_service_discovery_http_namespace` thay cho private DNS namespace, vì
+  Service Connect chỉ chấp nhận HTTP namespace. Tên và dạng FQDN `<service>.<namespace>` không đổi.
+- **Billing target group** được tạo trong module `alb` thay vì module `billing`: default action của listener phải tham
+  chiếu TG, nếu TG nằm ở module billing thì đồ thị module thành vòng. Billing service nhận ARN qua biến.
+- **RDS init** dùng script riêng `rds/init-databases.sh` thay vì chạy nguyên `ops/postgres/init/00-databases.sh`:
+  RDS master không được `alter default privileges for role <khác>`, nên mỗi owner tự set default privileges của mình.
+  Mô hình role/database giữ nguyên.
+- **Kích thước task:** Platform/Billing dùng cpu 512 + memory 1024 (Fargate không cho 512 CPU với 512 MiB).
+- **ALB path:** ALB không strip prefix; rule `/platform/*` forward nguyên path. Host admin `platform.<domain>` là đường
+  tương đương compose. Ghi trong `platform/alb.tf` và README.
+- **Chưa chứng minh end-to-end:** `terraform fmt -check`, `init -backend=false`, `validate` sạch; grep gates đạt. Smoke
+  trên stack thật vẫn cần AWS sandbox. Plan 0930 chưa land nên `PLATFORM_INTERNAL_HOSTNAMES` chưa có trong code
+  Platform — Terraform đúng nhưng lời gọi nội bộ sẽ 404 cho tới khi 0930 xong.
+
