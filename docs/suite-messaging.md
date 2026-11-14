@@ -51,8 +51,11 @@ redelivery matters. The five streams and their target tables are in [platform-se
 
 An app's replica is rebuilt by paging the snapshot API, never by replaying history:
 
-1. `ReplicaBootstrap` checks whether the replica holds any tenant other than the platform pseudo-tenant. If it does
-   not, it rebuilds.
+1. `ReplicaBootstrap` checks the replica's completion marker: a rebuild is needed until a full one has finished at
+   least once, or when the `tenants` table has lost every row but the platform pseudo-tenant. The marker is a single
+   `replica_state` row written only after every stream finished, so a rebuild that dies partway is retried in full on
+   the next boot instead of being mistaken for a complete replica. Deleting that row forces a rebuild after a partial
+   restore; a rebuild is not detected when only a child table loses its rows while `tenants` stays populated.
 2. It pages each stream in order — `tenants`, `tenant-domains`, `tenant-systems`, `user-access`, `entitlements` —
    through `SnapshotClient`, and upserts each row with the same `ReplicaWriter` a live event uses.
 3. The `platform.events` listener is created with `autoStartup=false` and started only after the rebuild, so messages

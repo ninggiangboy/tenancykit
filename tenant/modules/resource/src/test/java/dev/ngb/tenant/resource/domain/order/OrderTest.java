@@ -28,10 +28,15 @@ class OrderTest {
 
     private static final Map<OrderStatus, Set<OrderStatus>> DOCUMENTED = Map.of(
             OrderStatus.PENDING, Set.of(OrderStatus.QUEUED, OrderStatus.FAILED, OrderStatus.CANCELED),
-            OrderStatus.QUEUED, Set.of(OrderStatus.RUNNING, OrderStatus.SUSPENDED, OrderStatus.FAILED, OrderStatus.CANCELED),
+            OrderStatus.QUEUED, Set.of(
+                    OrderStatus.RUNNING, OrderStatus.SUSPENDED, OrderStatus.FAILED, OrderStatus.CANCELING,
+                    OrderStatus.CANCELED),
             OrderStatus.RUNNING, Set.of(
-                    OrderStatus.QUEUED, OrderStatus.COMPLETED, OrderStatus.SUSPENDED, OrderStatus.FAILED, OrderStatus.CANCELED),
-            OrderStatus.SUSPENDED, Set.of(OrderStatus.QUEUED, OrderStatus.FAILED, OrderStatus.CANCELED),
+                    OrderStatus.QUEUED, OrderStatus.COMPLETED, OrderStatus.SUSPENDED, OrderStatus.FAILED,
+                    OrderStatus.CANCELING, OrderStatus.CANCELED),
+            OrderStatus.SUSPENDED, Set.of(
+                    OrderStatus.QUEUED, OrderStatus.FAILED, OrderStatus.CANCELING, OrderStatus.CANCELED),
+            OrderStatus.CANCELING, Set.of(OrderStatus.CANCELED, OrderStatus.FAILED),
             OrderStatus.COMPLETED, Set.of(),
             OrderStatus.FAILED, Set.of(),
             OrderStatus.CANCELED, Set.of());
@@ -63,6 +68,7 @@ class OrderTest {
             case COMPLETED -> pending.queued(500L, "res_1", null, LATER).running(LATER).completed(LATER);
             case FAILED -> pending.failed("wallet empty", LATER);
             case SUSPENDED -> pending.queued(500L, "res_1", null, LATER).running(LATER).suspended(LATER);
+            case CANCELING -> pending.queued(500L, "res_1", null, LATER).canceling(LATER);
             case CANCELED -> pending.canceled(LATER);
         };
     }
@@ -155,6 +161,30 @@ class OrderTest {
         assertThat(in(OrderStatus.CANCELED).terminal()).isTrue();
         assertThat(in(OrderStatus.PENDING).terminal()).isFalse();
         assertThat(in(OrderStatus.SUSPENDED).terminal()).isFalse();
+        assertThat(in(OrderStatus.CANCELING).terminal())
+                .as("canceling still has somewhere to go, so a reaper can finish it")
+                .isFalse();
+    }
+
+    @Test
+    void aQueuedRunningOrSuspendedOrderReachesCanceledThroughCanceling() {
+        assertThat(in(OrderStatus.QUEUED).canceling(LATER).status()).isEqualTo(OrderStatus.CANCELING);
+        assertThat(in(OrderStatus.RUNNING).canceling(LATER).status()).isEqualTo(OrderStatus.CANCELING);
+        assertThat(in(OrderStatus.SUSPENDED).canceling(LATER).status()).isEqualTo(OrderStatus.CANCELING);
+        assertThat(in(OrderStatus.CANCELING).canceled(LATER).status()).isEqualTo(OrderStatus.CANCELED);
+    }
+
+    @Test
+    void aPendingOrderCannotEnterCancelingBecauseItHasNothingToTellBilling() {
+        assertThatThrownBy(() -> pending().canceling(LATER)).isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void aCancelingOrderRecordsWhyTheLastAttemptFailed() {
+        Order canceling = in(OrderStatus.CANCELING).cancelFailed("billing is down", LATER);
+
+        assertThat(canceling.status()).isEqualTo(OrderStatus.CANCELING);
+        assertThat(canceling.failureReason()).isEqualTo("billing is down");
     }
 
     @Test
@@ -218,6 +248,7 @@ class OrderTest {
             case FAILED -> order.failed("late", LATER);
             case SUSPENDED -> order.suspended(LATER);
             case CANCELED -> order.canceled(LATER);
+            case CANCELING -> order.canceling(LATER);
         };
     }
 }

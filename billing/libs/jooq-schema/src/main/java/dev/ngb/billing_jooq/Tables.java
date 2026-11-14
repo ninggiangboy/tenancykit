@@ -26,6 +26,7 @@ import dev.ngb.billing_jooq.tables.PricingMetrics;
 import dev.ngb.billing_jooq.tables.PricingPlanVersions;
 import dev.ngb.billing_jooq.tables.PricingPlans;
 import dev.ngb.billing_jooq.tables.Refunds;
+import dev.ngb.billing_jooq.tables.ReplicaState;
 import dev.ngb.billing_jooq.tables.Reservations;
 import dev.ngb.billing_jooq.tables.StripeConfigurations;
 import dev.ngb.billing_jooq.tables.StripeCustomers;
@@ -163,6 +164,11 @@ public class Tables {
      * The table <code>public.refunds</code>.
      */
     public static final Refunds REFUNDS = Refunds.REFUNDS;
+
+    /**
+     * The table <code>public.replica_state</code>.
+     */
+    public static final ReplicaState REPLICA_STATE = ReplicaState.REPLICA_STATE;
 
     /**
      * The table <code>public.reservations</code>.

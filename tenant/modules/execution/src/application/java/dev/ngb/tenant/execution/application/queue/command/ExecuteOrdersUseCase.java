@@ -18,11 +18,14 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Scenarios 5, 6 and 7: run a claimed order, record usage during the run, charge the cost from the
- * reservation, then release what is left. The order is marked running first, so a failed attempt is
- * requeued from a known state, and the settlement itself is one unit of work: usage, charge, release
- * and the terminal status commit together or not at all. A failure is requeued up to a bound so a
- * Billing outage does not lose the order.
+ * Scenarios 5, 6 and 7: run a claimed order, record usage during the run and charge the cost from the
+ * reservation. The order is marked running first, so a failed attempt is requeued from a known state,
+ * and the settlement itself is one unit of work: usage, charge and the terminal status commit together
+ * or not at all. A failure is requeued up to a bound so a Billing outage does not lose the order.
+ *
+ * <p>Settlement never releases the hold after charging. Capturing a reservation already returns the
+ * unused part of the hold and closes it, so a release would only ask Billing for something that no
+ * longer exists: a captured reservation cannot be released, and it does not need to be.
  */
 public class ExecuteOrdersUseCase implements ExecuteOrders {
 
@@ -122,12 +125,10 @@ public class ExecuteOrdersUseCase implements ExecuteOrders {
 
         Charge charge = charge(order);
         if (charge != null && "FAILED".equals(charge.status())) {
-            release(order);
             orders.markFailed(orderId, charge.failureReason());
             queue.finish(orderId);
             return false;
         }
-        release(order);
         orders.markCompleted(orderId);
         queue.finish(orderId);
         return true;
@@ -145,6 +146,8 @@ public class ExecuteOrdersUseCase implements ExecuteOrders {
     }
 
     private Charge charge(ExecutionOrders.ExecutionOrder order) {
+        // A reservation always comes with a positive estimate: the hold exists because the estimate was
+        // charged up front. So a capture path always settles the hold and there is never one left to release.
         if (order.estimatedMinorUnits() <= 0) {
             return null;
         }
@@ -159,12 +162,6 @@ public class ExecuteOrdersUseCase implements ExecuteOrders {
                 IdempotencyKeys.charge(order.id()),
                 new BillingCharges.ChargeRequest(
                         order.walletId(), order.estimatedMinorUnits(), order.currency(), order.reference(), order.reference()));
-    }
-
-    private void release(ExecutionOrders.ExecutionOrder order) {
-        if (order.reservationId() != null) {
-            charges.release(order.reservationId());
-        }
     }
 
     private static String message(RuntimeException e) {

@@ -15,7 +15,8 @@ import org.jooq.impl.SQLDataType;
  *
  * <p>Three of the tables keep the names the suite's first migrations used, so an app that already owns them keeps its
  * foreign keys and row-level security untouched; the two tables a replica adds are {@code user_grants} and
- * {@code app_entitlements}.
+ * {@code app_entitlements}, plus {@code replica_state}, which is the replica's own rebuild marker rather than a
+ * replicated stream.
  */
 public final class ReplicaTables {
 
@@ -73,6 +74,16 @@ public final class ReplicaTables {
 
     /** The reserved Platform tenant's code; a rebuild ignores it when deciding whether the replica is empty. */
     public static final String PLATFORM_TENANT_CODE = "platform";
+
+    /**
+     * Local rebuild state, not a replicated stream: one row says when a full rebuild last finished every stream,
+     * which lets the bootstrap tell "never built" apart from "built halfway".
+     */
+    public static final Table<Record> REPLICA_STATE = DSL.table(DSL.name("replica_state"));
+    public static final Field<Short> REPLICA_STATE_ID =
+            DSL.field(DSL.name("replica_state", "id"), SQLDataType.SMALLINT);
+    public static final Field<OffsetDateTime> REPLICA_STATE_REBUILT_AT =
+            DSL.field(DSL.name("replica_state", "rebuilt_at"), SQLDataType.TIMESTAMPWITHTIMEZONE);
 
     private ReplicaTables() {}
 }

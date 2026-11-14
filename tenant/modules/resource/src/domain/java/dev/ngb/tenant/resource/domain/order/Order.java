@@ -120,6 +120,47 @@ public record Order(
         return next(OrderStatus.SUSPENDED, failureReason, estimatedMinorUnits, reservationId, subscriptionId, now);
     }
 
+    /**
+     * Records that the order is being cancelled before Billing is told. The cancel then either moves it to
+     * {@link OrderStatus#CANCELED} or leaves it here for the reaper, which retries the idempotent remote cancel.
+     */
+    public Order canceling(Instant now) {
+        return next(OrderStatus.CANCELING, failureReason, estimatedMinorUnits, reservationId, subscriptionId, now);
+    }
+
+    /**
+     * Keeps the order in {@link OrderStatus#CANCELING} and records why the remote cancel failed, so the next attempt and
+     * the operator both see the reason. It stays here rather than failing because Billing may have cancelled already:
+     * only the reaper's successful retry can tell.
+     */
+    public Order cancelFailed(String reason, Instant now) {
+        if (status != OrderStatus.CANCELING) {
+            throw new BadRequestException("order " + id + " is not canceling but " + status);
+        }
+        // No status edge is taken: this only replaces the recorded reason of the state the order is already in.
+        return new Order(
+                id,
+                customerId,
+                billingCustomerId,
+                walletId,
+                catalogPlanId,
+                billingPlanId,
+                pricingModel,
+                metric,
+                usageQuantity,
+                unit,
+                eventCount,
+                estimatedMinorUnits,
+                currency,
+                reservationId,
+                subscriptionId,
+                OrderStatus.CANCELING,
+                reference,
+                reason,
+                createdAt,
+                now);
+    }
+
     public Order canceled(Instant now) {
         return next(OrderStatus.CANCELED, failureReason, estimatedMinorUnits, reservationId, subscriptionId, now);
     }
@@ -166,7 +207,9 @@ public record Order(
         allowed.put(OrderStatus.PENDING, EnumSet.of(OrderStatus.QUEUED, OrderStatus.FAILED, OrderStatus.CANCELED));
         allowed.put(
                 OrderStatus.QUEUED,
-                EnumSet.of(OrderStatus.RUNNING, OrderStatus.SUSPENDED, OrderStatus.FAILED, OrderStatus.CANCELED));
+                EnumSet.of(
+                        OrderStatus.RUNNING, OrderStatus.SUSPENDED, OrderStatus.FAILED, OrderStatus.CANCELING,
+                        OrderStatus.CANCELED));
         allowed.put(
                 OrderStatus.RUNNING,
                 EnumSet.of(
@@ -174,10 +217,12 @@ public record Order(
                         OrderStatus.COMPLETED,
                         OrderStatus.SUSPENDED,
                         OrderStatus.FAILED,
+                        OrderStatus.CANCELING,
                         OrderStatus.CANCELED));
         allowed.put(
                 OrderStatus.SUSPENDED,
-                EnumSet.of(OrderStatus.QUEUED, OrderStatus.FAILED, OrderStatus.CANCELED));
+                EnumSet.of(OrderStatus.QUEUED, OrderStatus.FAILED, OrderStatus.CANCELING, OrderStatus.CANCELED));
+        allowed.put(OrderStatus.CANCELING, EnumSet.of(OrderStatus.CANCELED, OrderStatus.FAILED));
         allowed.put(OrderStatus.COMPLETED, EnumSet.noneOf(OrderStatus.class));
         allowed.put(OrderStatus.FAILED, EnumSet.noneOf(OrderStatus.class));
         allowed.put(OrderStatus.CANCELED, EnumSet.noneOf(OrderStatus.class));

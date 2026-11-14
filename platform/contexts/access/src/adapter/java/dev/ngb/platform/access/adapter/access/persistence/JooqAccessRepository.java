@@ -48,6 +48,8 @@ public class JooqAccessRepository implements AccessRepository {
 
     @Override
     public void assign(UUID tenantId, UUID userId, UUID roleId) {
+        // doNothing keeps the assignment idempotent: the platform administrator bootstrap re-assigns its role on every
+        // boot to repair a boot that failed halfway, and an insert that conflicted would make that repair fail instead.
         dsl.insertInto(ROLE_ASSIGNMENTS)
                 .set(ROLE_ASSIGNMENTS.TENANT_ID, tenantId)
                 .set(ROLE_ASSIGNMENTS.USER_ID, userId)

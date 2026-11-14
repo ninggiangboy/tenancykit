@@ -26,6 +26,8 @@ import java.util.UUID;
  */
 public class ProvisionTenantUseCase {
 
+    private static final System.Logger LOG = System.getLogger(ProvisionTenantUseCase.class.getName());
+
     public record Command(String code, String name, String adminEmail, String adminTemporaryPassword) {}
 
     public record Provisioned(TenantId tenantId, String adminEmail) {}
@@ -67,8 +69,25 @@ public class ProvisionTenantUseCase {
         try {
             return provision(command, subject);
         } catch (RuntimeException e) {
-            createUser.deleteIdentity(subject);
+            compensate(subject, e);
             throw e;
+        }
+    }
+
+    /**
+     * Removes the identity and keeps the original failure as the one the caller sees. A failure while compensating is
+     * attached as suppressed and logged rather than replacing the reason provisioning stopped.
+     */
+    private void compensate(String subject, RuntimeException cause) {
+        try {
+            createUser.deleteIdentity(subject);
+        } catch (RuntimeException compensation) {
+            cause.addSuppressed(compensation);
+            LOG.log(
+                    System.Logger.Level.WARNING,
+                    "the identity " + subject
+                            + " is orphaned in Keycloak: provisioning failed and removing it failed too ("
+                            + compensation.getMessage() + ")");
         }
     }
 

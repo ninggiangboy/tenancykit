@@ -63,3 +63,14 @@ create table if not exists app_entitlements (
     version   bigint  not null default 0,
     primary key (tenant_id, app_code)
 );
+
+-- One row: when a full rebuild last finished every stream. `ReplicaBootstrap` reads it to decide whether the replica
+-- is complete; a rebuild that starts (the first stream lands) but never finishes must be retried on the next boot,
+-- which a row count per stream cannot tell apart from "already built".
+--
+-- No version column: this row is local state, not a replicated stream, so no event ever upserts into it.
+create table if not exists replica_state (
+    id         smallint primary key default 1,
+    rebuilt_at timestamptz not null,
+    check (id = 1)
+);

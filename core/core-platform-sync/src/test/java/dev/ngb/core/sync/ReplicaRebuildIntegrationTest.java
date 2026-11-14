@@ -1,8 +1,10 @@
 package dev.ngb.core.sync;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.core.replica.ReplicaSchemaAssertions;
+import dev.ngb.core.replica.ReplicaState;
 import dev.ngb.core.replica.ReplicaWriter;
 import dev.ngb.core.runtime.TransactionScopeHook;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -41,6 +43,7 @@ class ReplicaRebuildIntegrationTest {
     private UnitOfWork unitOfWork;
     private ScopedTenantContext tenantContext;
     private ReplicaWriter writer;
+    private ReplicaState state;
     private final RecordingTransport transport = new RecordingTransport();
 
     @BeforeEach
@@ -50,11 +53,12 @@ class ReplicaRebuildIntegrationTest {
         dataSource.setUser(POSTGRES.getUsername());
         dataSource.setPassword(POSTGRES.getPassword());
         dsl = DSL.using(new TransactionAwareDataSourceProxy(dataSource), SQLDialect.POSTGRES);
-        dsl.execute("drop table if exists user_grants, app_entitlements, tenant_systems, tenant_domains, tenants");
+        dsl.execute("drop table if exists replica_state, user_grants, app_entitlements, tenant_systems, tenant_domains, tenants");
         ReplicaSchemaAssertions.applyReferenceDdl(dataSource);
         unitOfWork = new SpringUnitOfWork(new DataSourceTransactionManager(dataSource), TransactionScopeHook.none());
         tenantContext = new ScopedTenantContext();
         writer = new ReplicaWriter(dsl);
+        state = new ReplicaState(dsl);
     }
 
     @Test
@@ -95,19 +99,77 @@ class ReplicaRebuildIntegrationTest {
         seedSnapshot();
         AtomicBoolean started = new AtomicBoolean();
         ReplicaBootstrap bootstrap = new ReplicaBootstrap(
-                properties(), writer, new SnapshotClient(transport), unitOfWork, tenantContext, () -> {
+                properties(), writer, state, new SnapshotClient(transport), unitOfWork, tenantContext, () -> {
                     started.set(true);
                     assertThat(transport.calls).as("the snapshot is paged before the listener starts").isNotEmpty();
-                });
+                }, Instant::now);
 
         bootstrap.run(null);
 
         assertThat(started).isTrue();
     }
 
+    /**
+     * The bug: a rebuild that fails after the tenants stream has already written rows must still be retried. Counting
+     * tenants called that replica complete, so the boot skipped the remaining streams and every host answered 404.
+     */
+    @Test
+    void aRebuildInterruptedAfterTheFirstStreamIsRetriedOnTheNextBoot() {
+        Snapshot snapshot = seedSnapshot();
+        transport.failOn("tenant-domains", 0);
+        ReplicaBootstrap bootstrap = bootstrap();
+
+        assertThatThrownBy(bootstrap::rebuild).isInstanceOf(IllegalStateException.class);
+
+        assertThat(rowCount("tenants")).as("the first stream committed").isEqualTo(3);
+        assertThat(rowCount("tenant_domains")).as("the second stream never finished").isZero();
+        assertThat(dsl.fetchCount(DSL.table(DSL.name("replica_state"))))
+                .as("a failed rebuild must not leave a completion marker")
+                .isZero();
+        assertThat(bootstrap.needsRebuild())
+                .as("the next boot must rebuild even though tenants is populated")
+                .isTrue();
+
+        transport.recover();
+        bootstrap.rebuild();
+
+        assertThat(rowCount("tenants")).isEqualTo(3);
+        assertThat(rowCount("tenant_domains")).isEqualTo(2);
+        assertThat(rowCount("tenant_systems")).isEqualTo(1);
+        assertThat(rowCount("user_grants")).isEqualTo(2);
+        assertThat(rowCount("app_entitlements")).isEqualTo(2);
+        assertThat(dsl.fetchOne("select rebuilt_at from replica_state").get("rebuilt_at"))
+                .as("the marker is written only after every stream finished")
+                .isNotNull();
+        assertThat(snapshot.tenantIds()).hasSize(3);
+    }
+
+    @Test
+    void aRebuiltReplicaWithLostTenantRowsIsRebuiltAgain() {
+        seedSnapshot();
+        ReplicaBootstrap bootstrap = bootstrap();
+        bootstrap.rebuild();
+        transport.reset();
+
+        dsl.execute("delete from tenant_domains");
+        assertThat(bootstrap.needsRebuild())
+                .as("losing a child table only is the documented blind spot")
+                .isFalse();
+
+        dsl.execute("delete from user_grants");
+        dsl.execute("delete from app_entitlements");
+        dsl.execute("delete from tenant_systems");
+        dsl.execute("delete from tenant_domains");
+        dsl.execute("delete from tenants");
+        assertThat(bootstrap.needsRebuild()).as("an emptied tenants table forces a rebuild").isTrue();
+        bootstrap.rebuild();
+        assertThat(rowCount("tenant_domains")).as("a forced rebuild restores the child rows too").isEqualTo(2);
+    }
+
     private ReplicaBootstrap bootstrap() {
         return new ReplicaBootstrap(
-                properties(), writer, new SnapshotClient(transport), unitOfWork, tenantContext, () -> {});
+                properties(), writer, state, new SnapshotClient(transport), unitOfWork, tenantContext, () -> {},
+                Instant::now);
     }
 
     private ReplicaProperties properties() {
@@ -142,6 +204,10 @@ class ReplicaRebuildIntegrationTest {
 
         UUID firstTenantId() {
             return tenantIds.get(1);
+        }
+
+        List<UUID> tenantIds() {
+            return List.copyOf(tenantIds);
         }
 
         List<SnapshotClient.Page> tenantPages() {
@@ -249,14 +315,27 @@ class ReplicaRebuildIntegrationTest {
         private final Map<String, java.util.function.Supplier<List<SnapshotClient.Page>>> pages = new HashMap<>();
         private final Map<String, Integer> cursors = new HashMap<>();
         private final List<String> calls = new ArrayList<>();
+        private String failingStream;
+        private int failingCalls;
 
         void on(String stream, java.util.function.Supplier<List<SnapshotClient.Page>> pageSupplier) {
             pages.put(stream, pageSupplier);
         }
 
+        /** Fails the stream after this many answered calls, which is how a rebuild dies mid-stream. */
+        void failOn(String stream, int afterCalls) {
+            failingStream = stream;
+            failingCalls = afterCalls;
+        }
+
+        void recover() {
+            failingStream = null;
+        }
+
         void reset() {
             calls.clear();
             cursors.clear();
+            recover();
         }
 
         @Override
@@ -266,6 +345,9 @@ class ReplicaRebuildIntegrationTest {
 
         @Override
         public SnapshotClient.Page page(String stream, String after, int limit, String bearerToken) {
+            if (stream.equals(failingStream) && failingCalls-- <= 0) {
+                throw new IllegalStateException("the snapshot server stopped answering " + stream);
+            }
             calls.add(stream + "@" + after);
             List<SnapshotClient.Page> all = pages.get(stream).get();
             int index = after == null ? 0 : cursors.merge(stream, 1, Integer::sum);

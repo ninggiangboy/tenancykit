@@ -60,6 +60,31 @@ class CreateUserCompensationIntegrationTest {
         assertThat(owner.count("select count(*) from users where email = ?", email)).isZero();
     }
 
+    /**
+     * A Keycloak that is down while compensating must not hide why the write failed: the insert failure stays the
+     * thrown exception, and the compensation failure rides along suppressed.
+     */
+    @Test
+    void aFailedCompensationDoesNotReplaceTheOriginalFailure() {
+        Tenant tenant = newTenant();
+        String email = "user-" + suffix() + "@example.test";
+        identities.failDeletion();
+        try {
+            assertThatThrownBy(() -> onPlatform(() -> createUser.execute(Actors.PLATFORM, "req-1", new CreateUserUseCase.Command(
+                    tenant.code().value(), tenant.id(), PermissionScope.TENANT, email, "User", "change-me"))))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("the user insert failed")
+                    .satisfies(thrown -> assertThat(thrown.getSuppressed())
+                            .singleElement()
+                            .isInstanceOfSatisfying(IllegalStateException.class,
+                                    suppressed -> assertThat(suppressed).hasMessage("Keycloak is unreachable")));
+        } finally {
+            identities.allowDeletion();
+        }
+
+        assertThat(owner.count("select count(*) from users where email = ?", email)).isZero();
+    }
+
     private Tenant newTenant() {
         String code = "cmp" + suffix();
         return onPlatform(() -> createTenant.execute(new CreateTenantUseCase.Command(code, "Compensation " + code, "user/tester", "req-1")));
@@ -77,6 +102,7 @@ class CreateUserCompensationIntegrationTest {
     static class RecordingIdentities implements IdentityProviderPort {
 
         private final List<String> deleted = new CopyOnWriteArrayList<>();
+        private volatile boolean deletionFails;
 
         @Override
         public String createUser(String username, String email, String displayName, String temporaryPassword) {
@@ -85,7 +111,18 @@ class CreateUserCompensationIntegrationTest {
 
         @Override
         public void deleteUser(String keycloakSubject) {
+            if (deletionFails) {
+                throw new IllegalStateException("Keycloak is unreachable");
+            }
             deleted.add(keycloakSubject);
+        }
+
+        void failDeletion() {
+            deletionFails = true;
+        }
+
+        void allowDeletion() {
+            deletionFails = false;
         }
 
         List<String> deleted() {

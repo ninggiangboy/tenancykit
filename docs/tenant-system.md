@@ -118,6 +118,10 @@ The sample persists with jOOQ, not Spring Data JDBC, and splits command from que
   updates and the queue's `for update skip locked ... returning` are statements, never `store()`.
 - `CreateOrderUseCase` opens core's `UnitOfWork` around the order and its queue row, so both commit
   or neither does. `execution` reaches the queue only through `resource.api.execution.ExecutionQueue`.
+- No transaction wraps a Billing call. `CreateOrderUseCase`, `ManageOrderUseCase` and
+  `ManageWalletSettingUseCase` write a local row, call Billing, then write the result; each step that
+  can be retried safely is, because the order state (`CANCELING`, `PENDING`) records what is left to
+  finish and `OrderExpiryJob` retries from it.
 
 Decisions:
 

@@ -52,8 +52,11 @@ public final class FakeBilling implements
     private final Map<String, Customer> byExternalUser = new LinkedHashMap<>();
     private final List<String> topUpKeys = new ArrayList<>();
     private final List<String> chargedReservations = new ArrayList<>();
+    private final List<String> releasedReservations = new ArrayList<>();
+    private final List<String> canceledSubscriptions = new ArrayList<>();
     private boolean customersUnavailable;
     private boolean refuseReservation;
+    private boolean refuseCancel;
     private boolean chargeFails;
 
     public void customersUnavailable() {
@@ -82,6 +85,22 @@ public final class FakeBilling implements
 
     public List<String> chargedReservations() {
         return chargedReservations;
+    }
+
+    public List<String> releasedReservations() {
+        return releasedReservations;
+    }
+
+    public List<String> canceledSubscriptions() {
+        return canceledSubscriptions;
+    }
+
+    public void refuseCancel() {
+        refuseCancel = true;
+    }
+
+    public void acceptCancel() {
+        refuseCancel = false;
     }
 
     // Customers
@@ -160,6 +179,7 @@ public final class FakeBilling implements
 
     @Override
     public Reservation release(String reservationId) {
+        releasedReservations.add(reservationId);
         return new Reservation(
                 reservationId, "wal_1", "RELEASED", new Amount(0, CURRENCY), null, NOW, "ORD-1", NOW, NOW, false);
     }
@@ -258,6 +278,10 @@ public final class FakeBilling implements
 
     @Override
     public SubscriptionDetail cancel(String id) {
+        if (refuseCancel) {
+            throw new IllegalStateException("billing is down");
+        }
+        canceledSubscriptions.add(id);
         return subscriptionDetail();
     }
 

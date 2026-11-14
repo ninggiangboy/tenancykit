@@ -25,6 +25,8 @@ import java.time.Instant;
  */
 public class CreateUserUseCase {
 
+    private static final System.Logger LOG = System.getLogger(CreateUserUseCase.class.getName());
+
     public record Command(
             String tenantCode, TenantId tenantId, PermissionScope scope, String email, String displayName, String temporaryPassword) {}
 
@@ -55,7 +57,7 @@ public class CreateUserUseCase {
         try {
             return persist(actor, requestId, command, subject);
         } catch (RuntimeException e) {
-            deleteIdentity(subject);
+            compensate(subject, e);
             throw e;
         }
     }
@@ -90,6 +92,24 @@ public class CreateUserUseCase {
     /** Removes an identity created by {@link #createIdentity} whose user was never persisted. */
     public void deleteIdentity(String keycloakSubject) {
         identities.deleteUser(keycloakSubject);
+    }
+
+    /**
+     * Removes the identity and keeps the original failure as the one the caller sees. A Keycloak that is unreachable
+     * while compensating must not replace the reason the write failed, so its failure is attached as suppressed and
+     * logged: the identity is then orphaned and has to be removed by hand, which the log names by subject.
+     */
+    private void compensate(String keycloakSubject, RuntimeException cause) {
+        try {
+            deleteIdentity(keycloakSubject);
+        } catch (RuntimeException compensation) {
+            cause.addSuppressed(compensation);
+            LOG.log(
+                    System.Logger.Level.WARNING,
+                    "the identity " + keycloakSubject
+                            + " is orphaned in Keycloak: the write it belonged to failed and removing it failed too ("
+                            + compensation.getMessage() + ")");
+        }
     }
 
     private static void requireNotWider(PermissionScope requested, PermissionScope caller) {

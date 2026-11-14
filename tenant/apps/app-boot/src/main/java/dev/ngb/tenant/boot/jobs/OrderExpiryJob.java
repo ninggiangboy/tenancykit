@@ -7,7 +7,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-/** Fails a PENDING order a crash left behind once its reservation can no longer be live. */
+/**
+ * Finishes what a crash left behind: a PENDING order whose reservation can no longer be live, and a CANCELING order
+ * whose Billing cancel never completed.
+ */
 @Component
 @ConditionalOnProperty(name = "tenant.resource.expiry-enabled", havingValue = "true", matchIfMissing = true)
 class OrderExpiryJob {
@@ -22,9 +25,9 @@ class OrderExpiryJob {
 
     @Scheduled(fixedDelayString = "${tenant.resource.expiry-delay:PT1M}")
     public void tick() {
-        int expired = create.expirePending();
-        if (expired > 0) {
-            LOG.info("execution: expired {} pending orders", expired);
+        int reaped = create.reapStaleOrders();
+        if (reaped > 0) {
+            LOG.info("execution: reaped {} stale orders", reaped);
         }
     }
 }

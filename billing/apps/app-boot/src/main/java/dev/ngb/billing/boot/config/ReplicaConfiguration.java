@@ -9,6 +9,7 @@ import dev.ngb.core.feign.TokenSettings;
 import dev.ngb.core.messaging.inbound.AmqpInboundDispatcher;
 import dev.ngb.core.messaging.inbound.InboundEventHandler;
 import dev.ngb.core.replica.ReplicaEventHandler;
+import dev.ngb.core.replica.ReplicaState;
 import dev.ngb.core.replica.ReplicaWriter;
 import dev.ngb.core.suite.security.SuiteActorResolver;
 import dev.ngb.core.suite.security.SuiteJwtDecoders;
@@ -48,6 +49,11 @@ class ReplicaConfiguration {
     @Bean
     ReplicaWriter replicaWriter(DSLContext dsl) {
         return new ReplicaWriter(dsl);
+    }
+
+    @Bean
+    ReplicaState replicaState(DSLContext dsl) {
+        return new ReplicaState(dsl);
     }
 
     @Bean
@@ -136,10 +142,11 @@ class ReplicaConfiguration {
     @Bean
     @Profile("worker")
     ReplicaBootstrap replicaBootstrap(
-            ReplicaProperties properties, ReplicaWriter writer, SnapshotClient snapshots, UnitOfWork unitOfWork,
-            TenantContext tenantContext, SimpleMessageListenerContainer platformEventsContainer) {
+            ReplicaProperties properties, ReplicaWriter writer, ReplicaState state, SnapshotClient snapshots,
+            UnitOfWork unitOfWork, TenantContext tenantContext, SimpleMessageListenerContainer platformEventsContainer,
+            Clock clock) {
         return new ReplicaBootstrap(
-                properties, writer, snapshots, unitOfWork, tenantContext, platformEventsContainer::start);
+                properties, writer, state, snapshots, unitOfWork, tenantContext, platformEventsContainer::start, clock);
     }
 
     /** The inbound handlers the dispatcher calls; only the replica consumes platform.events. */

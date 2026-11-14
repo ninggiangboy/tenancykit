@@ -26,6 +26,7 @@ import dev.ngb.billing_jooq.tables.PricingMetrics;
 import dev.ngb.billing_jooq.tables.PricingPlanVersions;
 import dev.ngb.billing_jooq.tables.PricingPlans;
 import dev.ngb.billing_jooq.tables.Refunds;
+import dev.ngb.billing_jooq.tables.ReplicaState;
 import dev.ngb.billing_jooq.tables.Reservations;
 import dev.ngb.billing_jooq.tables.StripeConfigurations;
 import dev.ngb.billing_jooq.tables.StripeCustomers;
@@ -180,6 +181,11 @@ public class Public extends SchemaImpl {
     public final Refunds REFUNDS = Refunds.REFUNDS;
 
     /**
+     * The table <code>public.replica_state</code>.
+     */
+    public final ReplicaState REPLICA_STATE = ReplicaState.REPLICA_STATE;
+
+    /**
      * The table <code>public.reservations</code>.
      */
     public final Reservations RESERVATIONS = Reservations.RESERVATIONS;
@@ -317,6 +323,7 @@ public class Public extends SchemaImpl {
             PricingPlanVersions.PRICING_PLAN_VERSIONS,
             PricingPlans.PRICING_PLANS,
             Refunds.REFUNDS,
+            ReplicaState.REPLICA_STATE,
             Reservations.RESERVATIONS,
             StripeConfigurations.STRIPE_CONFIGURATIONS,
             StripeCustomers.STRIPE_CUSTOMERS,

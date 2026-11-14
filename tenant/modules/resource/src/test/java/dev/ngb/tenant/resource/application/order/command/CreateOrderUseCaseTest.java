@@ -153,7 +153,7 @@ class CreateOrderUseCaseTest {
         orders.save(stale);
         orders.save(fresh);
 
-        assertThat(create.expirePending()).isEqualTo(1);
+        assertThat(create.reapStaleOrders()).isEqualTo(1);
 
         Order expired = orders.findById(stale.id()).orElseThrow();
         assertThat(expired.status()).isEqualTo(OrderStatus.FAILED);
@@ -392,6 +392,14 @@ class CreateOrderUseCaseTest {
             return rows.values().stream()
                     .filter(order -> order.status() == OrderStatus.PENDING)
                     .filter(order -> order.createdAt().isBefore(createdBefore))
+                    .toList();
+        }
+
+        @Override
+        public List<Order> findCancelingBefore(Instant updatedBefore) {
+            return rows.values().stream()
+                    .filter(order -> order.status() == OrderStatus.CANCELING)
+                    .filter(order -> order.updatedAt().isBefore(updatedBefore))
                     .toList();
         }
 

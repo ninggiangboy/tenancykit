@@ -34,13 +34,13 @@ class ManageOrderUseCaseTest {
 
     private final InMemoryOrders orders = new InMemoryOrders();
     private final FakeCustomers customers = new FakeCustomers();
-    private final FakeSubscriptions subscriptions = new FakeSubscriptions();
     private final InMemoryUnitOfWork unitOfWork = new InMemoryUnitOfWork(orders);
+    private final FakeSubscriptions subscriptions = new FakeSubscriptions(unitOfWork);
     private final ManageOrderUseCase manage =
             new ManageOrderUseCase(orders, customers, subscriptions, unitOfWork, () -> NOW);
 
     @Test
-    void cancelsTheOrderAndItsSubscriptionInOneUnitOfWork() {
+    void cancelsTheOrderAndItsSubscriptionWithTheRemoteCallOutsideTheTransactions() {
         orders.save(subscribed(CUSTOMER));
 
         Order canceled = manage.cancel(ORDER_ID, USER, false);
@@ -49,7 +49,10 @@ class ManageOrderUseCaseTest {
         assertThat(canceled.subscriptionId()).isEqualTo("sub_1");
         assertThat(subscriptions.canceled).containsExactly("sub_1");
         assertThat(orders.findById(ORDER_ID).orElseThrow().status()).isEqualTo(OrderStatus.CANCELED);
-        assertThat(unitOfWork.transactions).isEqualTo(1);
+        assertThat(unitOfWork.transactions)
+                .as("one transaction writes CANCELING, one records a failure if any, one closes the order")
+                .isEqualTo(2);
+        assertThat(subscriptions.cancelCallsWhileTransactionOpen).isZero();
     }
 
     @Test
@@ -82,14 +85,30 @@ class ManageOrderUseCaseTest {
     }
 
     @Test
-    void aLocalSaveThatFailsRollsTheLocalOrderBack() {
+    void aLocalSaveThatFailsLeavesTheOrderCancelingForTheReaper() {
         orders.save(subscribed(CUSTOMER));
-        orders.failSaves = true;
+        orders.failSavesFor(OrderStatus.CANCELED);
 
         assertThatThrownBy(() -> manage.cancel(ORDER_ID, USER, false)).isInstanceOf(IllegalStateException.class);
 
         assertThat(subscriptions.canceled).containsExactly("sub_1");
-        assertThat(orders.findById(ORDER_ID).orElseThrow().status()).isEqualTo(OrderStatus.QUEUED);
+        assertThat(orders.findById(ORDER_ID).orElseThrow().status())
+                .as("Billing was already told, so the local row must not look untouched")
+                .isEqualTo(OrderStatus.CANCELING);
+    }
+
+    @Test
+    void aFailedRemoteCancelLeavesTheOrderCancelingWithTheReason() {
+        orders.save(subscribed(CUSTOMER));
+        subscriptions.fail = true;
+
+        assertThatThrownBy(() -> manage.cancel(ORDER_ID, USER, false))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("billing is down");
+
+        Order stuck = orders.findById(ORDER_ID).orElseThrow();
+        assertThat(stuck.status()).isEqualTo(OrderStatus.CANCELING);
+        assertThat(stuck.failureReason()).isEqualTo("billing is down");
     }
 
     private static Order subscribed(UUID customerId) {
@@ -115,32 +134,44 @@ class ManageOrderUseCaseTest {
 
         private final InMemoryOrders orders;
         private int transactions;
+        private boolean open;
 
         private InMemoryUnitOfWork(InMemoryOrders orders) {
             this.orders = orders;
+        }
+
+        boolean open() {
+            return open;
         }
 
         @Override
         public <T> T transactional(Supplier<T> work) {
             transactions++;
             Map<UUID, Order> rows = new LinkedHashMap<>(orders.rows);
+            open = true;
             try {
                 return work.get();
             } catch (RuntimeException e) {
                 orders.rows.clear();
                 orders.rows.putAll(rows);
                 throw e;
+            } finally {
+                open = false;
             }
         }
     }
 
     private static final class InMemoryOrders implements OrderRepository {
         private final Map<UUID, Order> rows = new LinkedHashMap<>();
-        private boolean failSaves;
+        private OrderStatus failSavesFor;
+
+        void failSavesFor(OrderStatus status) {
+            failSavesFor = status;
+        }
 
         @Override
         public void save(Order order) {
-            if (failSaves) {
+            if (order.status() == failSavesFor) {
                 throw new IllegalStateException("the order row could not be written");
             }
             rows.put(order.id(), order);
@@ -165,6 +196,14 @@ class ManageOrderUseCaseTest {
         }
 
         @Override
+        public List<Order> findCancelingBefore(Instant updatedBefore) {
+            return rows.values().stream()
+                    .filter(order -> order.status() == OrderStatus.CANCELING)
+                    .filter(order -> order.updatedAt().isBefore(updatedBefore))
+                    .toList();
+        }
+
+        @Override
         public List<Order> findByBillingCustomerId(String billingCustomerId) {
             return rows.values().stream()
                     .filter(order -> billingCustomerId.equals(order.billingCustomerId()))
@@ -181,6 +220,13 @@ class ManageOrderUseCaseTest {
 
     private static final class FakeSubscriptions implements BillingSubscriptions {
         private final List<String> canceled = new ArrayList<>();
+        private final InMemoryUnitOfWork unitOfWork;
+        private boolean fail;
+        private int cancelCallsWhileTransactionOpen;
+
+        private FakeSubscriptions(InMemoryUnitOfWork unitOfWork) {
+            this.unitOfWork = unitOfWork;
+        }
 
         @Override
         public SubscriptionDetail subscribe(String idempotencyKey, String walletId, String planId) {
@@ -194,6 +240,12 @@ class ManageOrderUseCaseTest {
 
         @Override
         public SubscriptionDetail cancel(String id) {
+            if (unitOfWork != null && unitOfWork.open()) {
+                cancelCallsWhileTransactionOpen++;
+            }
+            if (fail) {
+                throw new IllegalStateException("billing is down");
+            }
             canceled.add(id);
             return detail();
         }

@@ -17,5 +17,8 @@ public interface OrderRepository {
 
     List<Order> findPendingBefore(Instant createdBefore);
 
+    /** Orders a cancel left in {@code CANCELING} and last touched before the cutoff, so the reaper can finish them. */
+    List<Order> findCancelingBefore(Instant updatedBefore);
+
     List<Order> findByBillingCustomerId(String billingCustomerId);
 }

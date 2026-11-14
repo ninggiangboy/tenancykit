@@ -101,6 +101,15 @@ public class JooqOrderRepository implements OrderRepository {
     }
 
     @Override
+    public List<Order> findCancelingBefore(Instant updatedBefore) {
+        return dsl.selectFrom(ORDERS)
+                .where(ORDERS.STATUS.eq(OrderStatus.CANCELING.name()))
+                .and(ORDERS.UPDATED_AT.lt(updatedBefore))
+                .orderBy(ORDERS.UPDATED_AT)
+                .fetch(JooqOrderRepository::toDomain);
+    }
+
+    @Override
     public List<Order> findByBillingCustomerId(String billingCustomerId) {
         return dsl.selectFrom(ORDERS)
                 .where(ORDERS.BILLING_CUSTOMER_ID.eq(billingCustomerId))

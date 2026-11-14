@@ -35,9 +35,11 @@ import java.util.UUID;
  *
  * <p>The remote call stays outside the final transaction. A failure after the order exists fails the
  * pending row instead of leaving it half-applied, and a crash that leaves the row pending is expired
- * by {@link #expirePending()} once the reservation can no longer be live.
+ * by {@link #reapStaleOrders()} once the reservation can no longer be live.
  */
 public class CreateOrderUseCase {
+
+    private static final System.Logger LOG = System.getLogger(CreateOrderUseCase.class.getName());
 
     private static final String EXPIRED_REASON = "the order was not confirmed before its reservation could expire";
 
@@ -111,18 +113,40 @@ public class CreateOrderUseCase {
         return confirm(pending, plan, wallet, quantity, events, currency);
     }
 
-    public int expirePending() {
+    /**
+     * Finishes the orders a crash left half-done. A {@code PENDING} order whose reservation can no longer be live is
+     * failed, and a {@code CANCELING} order is pushed through the same Billing cancel a client asked for.
+     *
+     * <p>Cancelling a subscription twice answers {@code UNCHANGED} rather than failing, so retrying a stuck cancel every
+     * tick is safe until it works. An order that stays {@code CANCELING} because Billing is still down is left exactly
+     * as it is for the next tick: turning it into a failure would claim Billing did not cancel, which it may have.
+     */
+    public int reapStaleOrders() {
         Instant now = clock.now();
-        List<Order> stale = orders.findPendingBefore(now.minus(reservationTtl));
-        int expired = 0;
-        for (Order order : stale) {
+        Instant cutoff = now.minus(reservationTtl);
+        int reaped = 0;
+        for (Order order : orders.findPendingBefore(cutoff)) {
+            reaped++;
             unitOfWork.transactional(() -> {
                 orders.save(order.failed(EXPIRED_REASON, now));
                 return null;
             });
-            expired++;
         }
-        return expired;
+        for (Order order : orders.findCancelingBefore(cutoff)) {
+            try {
+                if (order.subscriptionId() != null) {
+                    subscriptions.cancel(order.subscriptionId());
+                }
+                unitOfWork.transactional(() -> {
+                    orders.save(order.canceled(now));
+                    return null;
+                });
+                reaped++;
+            } catch (RuntimeException e) {
+                LOG.log(System.Logger.Level.WARNING, "order " + order.id() + " is still canceling: " + reason(e));
+            }
+        }
+        return reaped;
     }
 
     private Order persist(

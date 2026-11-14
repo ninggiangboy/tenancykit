@@ -39,14 +39,14 @@ class ExecuteOrdersUseCaseTest {
             new ExecuteOrdersUseCase(queue, orders, usage, charges, unitOfWork, () -> NOW, 3);
 
     @Test
-    void runsRecordsUsageCapturesReleasesAndCompletes() {
+    void runsRecordsUsageCapturesAndCompletes() {
         ExecuteOrders.Report report = execute.run(10);
 
         assertThat(report).isEqualTo(new ExecuteOrders.Report(1, 1, 0, 0));
         assertThat(orders.status).isEqualTo(OrderStatus.COMPLETED);
         assertThat(usage.commands).hasSize(1);
         assertThat(charges.captured).isTrue();
-        assertThat(charges.released).isTrue();
+        assertThat(charges.released).isFalse();
         assertThat(queue.finished).isTrue();
         assertThat(unitOfWork.transactions).isEqualTo(1);
     }
@@ -65,7 +65,10 @@ class ExecuteOrdersUseCaseTest {
     }
 
     @Test
-    void aFailedChargeMarksTheOrderFailedAndReleasesTheHold() {
+    void aFailedChargeMarksTheOrderFailedAndLeavesNoHoldToRelease() {
+        // Billing only returns FAILED on the standalone charge path: a capture always succeeds. So the
+        // failure below models an order without a reservation, which is the only state that can produce it.
+        orders.reservationId = null;
         charges.failCharge = true;
 
         ExecuteOrders.Report report = execute.run(10);
@@ -73,7 +76,7 @@ class ExecuteOrdersUseCaseTest {
         assertThat(report).isEqualTo(new ExecuteOrders.Report(1, 0, 1, 0));
         assertThat(orders.status).isEqualTo(OrderStatus.FAILED);
         assertThat(orders.failureReason).isEqualTo("insufficient_funds");
-        assertThat(charges.released).isTrue();
+        assertThat(charges.released).isFalse();
         assertThat(queue.finished).isTrue();
     }
 

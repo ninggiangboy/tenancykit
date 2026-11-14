@@ -20,8 +20,12 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Creates the first Platform administrator when the deployment configures one. It is idempotent: a configured email
- * that already has a user changes nothing.
+ * Ensures the configured first Platform administrator exists with its role. It runs on every start and is a repair,
+ * not a one-shot create: a boot that failed between creating the user and assigning its role would otherwise leave an
+ * administrator who can sign in but holds no permission, and every later boot would skip it.
+ *
+ * <p>Running it again is harmless. The role is found by name instead of being created twice, and the assignment inserts
+ * only when it is missing, so a repeated boot rewrites nothing.
  */
 public class BootstrapPlatformAdminUseCase {
 
@@ -61,22 +65,35 @@ public class BootstrapPlatformAdminUseCase {
             return;
         }
         TenantId platform = RequestScope.PLATFORM_TENANT_ID;
-        if (users.findByEmail(platform, email).isPresent()) {
-            return;
-        }
-        User admin = createUser.execute(PLATFORM_ACTOR, REQUEST_ID, new CreateUserUseCase.Command(
-                "platform", platform, PermissionScope.PLATFORM, email, "Platform Administrator", temporaryPassword));
+        // The lookup is its own unit of work: row-level security reads the tenant from the transaction, so a query
+        // outside one sees no user and every boot would try to create the identity again.
+        User admin = unitOfWork.transactional(() -> users.findByEmail(platform, email))
+                .orElseGet(() -> createUser.execute(PLATFORM_ACTOR, REQUEST_ID, new CreateUserUseCase.Command(
+                        "platform", platform, PermissionScope.PLATFORM, email, "Platform Administrator", temporaryPassword)));
+        ensureAccess(admin);
+    }
+
+    /**
+     * Writes the role, the assignment and the published access state in one unit of work, so a failure leaves none of
+     * them behind and the next boot retries all three.
+     */
+    private void ensureAccess(User admin) {
         unitOfWork.transactional(() -> {
-            Role role = roles.findByName(platform.value(), ROLE_NAME).orElseGet(() -> {
-                Role created = Role.create(
-                        new RoleId(ids.newId()), platform, PermissionScope.PLATFORM, ROLE_NAME, true,
-                        catalog.codesValidIn(PermissionScope.PLATFORM), clock.now());
-                roles.add(created);
-                return created;
-            });
-            access.assign(platform.value(), admin.id().value(), role.id().value());
+            Role role = ensureRole();
+            access.assign(RequestScope.PLATFORM_TENANT_ID.value(), admin.id().value(), role.id().value());
             publisher.publishFor(admin.id());
             return null;
+        });
+    }
+
+    private Role ensureRole() {
+        TenantId platform = RequestScope.PLATFORM_TENANT_ID;
+        return roles.findByName(platform.value(), ROLE_NAME).orElseGet(() -> {
+            Role created = Role.create(
+                    new RoleId(ids.newId()), platform, PermissionScope.PLATFORM, ROLE_NAME, true,
+                    catalog.codesValidIn(PermissionScope.PLATFORM), clock.now());
+            roles.add(created);
+            return created;
         });
     }
 }

@@ -31,9 +31,9 @@ class ManageWalletSettingUseCaseTest {
     private static final UUID USER = UUID.randomUUID();
 
     private final Fakes.Customers customers = new Fakes.Customers();
-    private final InMemorySettings settings = new InMemorySettings();
-    private final FakeWallets wallets = new FakeWallets();
     private final RecordingUnitOfWork unitOfWork = new RecordingUnitOfWork();
+    private final InMemorySettings settings = new InMemorySettings();
+    private final FakeWallets wallets = new FakeWallets(unitOfWork);
     private final IdGenerator ids = () -> UUID.randomUUID();
     private final ManageWalletSettingUseCase useCase = new ManageWalletSettingUseCase(
             new CustomerDirectoryService(customers), settings, wallets, unitOfWork, () -> NOW, "USD");
@@ -121,22 +121,56 @@ class ManageWalletSettingUseCaseTest {
         assertThat(settings.byCustomer).isEmpty();
     }
 
+    @Test
+    void theWalletIsOpenedOutsideTheTransactionThatSavesTheSetting() {
+        mapped();
+
+        useCase.update(USER, WalletMode.PREPAID, "USD", null);
+
+        assertThat(wallets.openedWhileTransactionOpen)
+                .as("a slow Billing must not hold a connection or a row lock")
+                .isZero();
+    }
+
+    @Test
+    void aSaveThatFailsAfterBillingOpenedTheWalletWritesNoSetting() {
+        mapped();
+        settings.fail = true;
+
+        assertThatThrownBy(() -> useCase.update(USER, WalletMode.PREPAID, "USD", null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(wallets.opened).as("Billing keeps the wallet the idempotency key names").hasSize(1);
+        assertThat(settings.byCustomer).isEmpty();
+    }
+
     private void mapped() {
         customers.save(Customer.pending(ids, USER, "Ada", "ada@example.com", NOW).mapped("cus_1"));
     }
 
     private static final class RecordingUnitOfWork implements UnitOfWork {
         private int transactions;
+        private boolean open;
+
+        boolean open() {
+            return open;
+        }
 
         @Override
         public <T> T transactional(Supplier<T> work) {
             transactions++;
-            return work.get();
+            open = true;
+            try {
+                return work.get();
+            } finally {
+                open = false;
+            }
         }
     }
 
-    private static final class InMemorySettings implements WalletSettingRepository {
+    private final class InMemorySettings implements WalletSettingRepository {
         private final Map<UUID, CustomerWalletSetting> byCustomer = new LinkedHashMap<>();
+        private boolean fail;
 
         @Override
         public Optional<CustomerWalletSetting> findByCustomerId(UUID customerId) {
@@ -145,14 +179,23 @@ class ManageWalletSettingUseCaseTest {
 
         @Override
         public void save(CustomerWalletSetting setting) {
+            if (fail) {
+                throw new IllegalStateException("the setting row could not be written");
+            }
             byCustomer.put(setting.customerId(), setting);
         }
     }
 
-    private static final class FakeWallets implements BillingWallets {
+    private final class FakeWallets implements BillingWallets {
         private final List<OpenWallet> opened = new java.util.ArrayList<>();
+        private final RecordingUnitOfWork unitOfWork;
         private OpenWallet last;
         private boolean unavailable;
+        private int openedWhileTransactionOpen;
+
+        private FakeWallets(RecordingUnitOfWork unitOfWork) {
+            this.unitOfWork = unitOfWork;
+        }
 
         void unavailable() {
             unavailable = true;
@@ -172,6 +215,9 @@ class ManageWalletSettingUseCaseTest {
         public Wallet open(String idempotencyKey, OpenWallet request) {
             if (unavailable) {
                 throw new UpstreamUnavailableException("billing is down");
+            }
+            if (unitOfWork.open()) {
+                openedWhileTransactionOpen++;
             }
             opened.add(request);
             last = request;

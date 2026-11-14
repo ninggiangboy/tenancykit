@@ -23,6 +23,10 @@ import java.util.regex.Pattern;
  * <p>The currency a customer starts in comes from configuration, and a wallet Billing refuses to open
  * at registration is logged against the account: the customer stays PENDING, and an explicit
  * wallet-settings update opens the wallet later.
+ *
+ * <p>The Billing call runs outside the transaction that writes the setting, so a slow Billing never holds a
+ * connection or a row lock. A save that fails after Billing opened the wallet is recovered by calling again, which
+ * uses the same idempotency key.
  */
 public class ManageWalletSettingUseCase {
 
@@ -71,12 +75,14 @@ public class ManageWalletSettingUseCase {
             throw new BadRequestException("a credit limit cannot be negative");
         }
         Long limit = mode == WalletMode.POSTPAID ? creditLimit : null;
+        // The Billing call stays outside the transaction. Opening the wallet is safe to repeat: the idempotency key is
+        // deterministic per (customer, currency), so a retry after a failed save returns the same wallet, never a second.
+        Wallet wallet = wallets.open(
+                IdempotencyKeys.wallet(customer.billingCustomerId(), normalized),
+                new BillingWallets.OpenWallet(customer.billingCustomerId(), normalized, mode.name(), limit));
+        CustomerWalletSetting setting = new CustomerWalletSetting(
+                customer.id(), mode, normalized, limit, wallet.id(), clock.now());
         return unitOfWork.transactional(() -> {
-            Wallet wallet = wallets.open(
-                    IdempotencyKeys.wallet(customer.billingCustomerId(), normalized),
-                    new BillingWallets.OpenWallet(customer.billingCustomerId(), normalized, mode.name(), limit));
-            CustomerWalletSetting setting = new CustomerWalletSetting(
-                    customer.id(), mode, normalized, limit, wallet.id(), clock.now());
             settings.save(setting);
             return setting;
         });
