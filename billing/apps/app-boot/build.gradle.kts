@@ -61,6 +61,11 @@ tasks.processResources {
         include("*.schema.json")
         into("events")
     }
+    // The permission catalogs drive x-allowed-callers in the OpenAPI document, so they must be on the classpath too.
+    from(layout.projectDirectory.dir("../../../contracts/permissions")) {
+        include("*.yaml")
+        into("permissions")
+    }
 }
 
 tasks.test {

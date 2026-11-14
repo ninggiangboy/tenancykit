@@ -1,0 +1,976 @@
+openapi: 3.1.0
+info:
+  title: Platform API
+  version: v1
+servers:
+- url: /
+  description: "The Platform hostname, e.g. platform.<base-domain>"
+paths:
+  /api/v1/users/{id}/permissions/{code}:
+    put:
+      tags:
+      - user-controller
+      operationId: setPermission
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: grant
+        in: query
+        required: true
+        schema:
+          type: boolean
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+  /api/v1/tenants/{tenantId}/apps/{appCode}:
+    put:
+      tags:
+      - entitlement-controller
+      operationId: set
+      parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: appCode
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntitlementRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EntitlementResponse"
+  /api/v1/tenants/{id}:
+    put:
+      tags:
+      - tenant-controller
+      operationId: rename
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenameRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TenantResponse"
+  /api/v1/tenant-systems/{id}:
+    get:
+      tags:
+      - tenant-system-controller
+      operationId: get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SystemResponse"
+    put:
+      tags:
+      - tenant-system-controller
+      operationId: update
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSystemRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SystemResponse"
+  /api/v1/roles/{id}:
+    put:
+      tags:
+      - role-controller
+      operationId: rename_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenameRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+  /api/v1/roles/{id}/permissions:
+    put:
+      tags:
+      - role-controller
+      operationId: replacePermissions
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PermissionsRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+  /oauth/token:
+    post:
+      tags:
+      - token-endpoint-controller
+      operationId: token
+      parameters:
+      - name: Authorization
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                audience:
+                  type: string
+              required:
+              - audience
+              - grant_type
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties: {}
+  /api/v1/users:
+    get:
+      tags:
+      - user-controller
+      operationId: list
+      parameters:
+      - name: tenantId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserResponse"
+    post:
+      tags:
+      - user-controller
+      operationId: create
+      parameters:
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+  /api/v1/tenants:
+    get:
+      tags:
+      - tenant-controller
+      operationId: list_1
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TenantResponse"
+    post:
+      tags:
+      - provision-tenant-controller
+      operationId: create_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvisionRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ProvisionedResponse"
+  /api/v1/tenants/{id}/domains:
+    post:
+      tags:
+      - tenant-controller
+      operationId: addDomain
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DomainRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+  /api/v1/tenants/{id}/deactivate:
+    post:
+      tags:
+      - tenant-controller
+      operationId: deactivate
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TenantResponse"
+  /api/v1/tenant-systems:
+    get:
+      tags:
+      - tenant-system-controller
+      operationId: list_2
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SystemResponse"
+    post:
+      tags:
+      - tenant-system-controller
+      operationId: create_2
+      parameters:
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSystemRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SystemResponse"
+  /api/v1/tenant-systems/{id}/credentials:
+    get:
+      tags:
+      - tenant-system-controller
+      operationId: listCredentials
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CredentialResponse"
+    post:
+      tags:
+      - tenant-system-controller
+      operationId: createCredential
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCredentialRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/IssuedCredentialResponse"
+  /api/v1/tenant-systems/{id}/credentials/rotate:
+    post:
+      tags:
+      - tenant-system-controller
+      operationId: rotate
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RotateRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/IssuedCredentialResponse"
+  /api/v1/roles:
+    get:
+      tags:
+      - role-controller
+      operationId: list_3
+      parameters:
+      - name: tenantId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoleResponse"
+    post:
+      tags:
+      - role-controller
+      operationId: create_3
+      parameters:
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+  /api/v1/roles/{id}/users/{userId}:
+    post:
+      tags:
+      - role-controller
+      operationId: assign
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+    delete:
+      tags:
+      - role-controller
+      operationId: unassign
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RoleResponse"
+  /api/v1/users/{id}:
+    patch:
+      tags:
+      - user-controller
+      operationId: update_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+  /internal/replica/{stream}:
+    get:
+      tags:
+      - snapshot-controller
+      operationId: page
+      parameters:
+      - name: stream
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: after
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 100
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties: {}
+  /api/v1/me:
+    get:
+      tags:
+      - me-controller
+      operationId: me
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/MeResponse"
+  /.well-known/jwks.json:
+    get:
+      tags:
+      - jwks-controller
+      operationId: jwks
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties: {}
+  /api/v1/tenant-systems/{systemId}/credentials/{credentialId}:
+    delete:
+      tags:
+      - tenant-system-controller
+      operationId: revoke
+      parameters:
+      - name: systemId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: credentialId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CredentialResponse"
+components:
+  schemas:
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        scope:
+          type: string
+        email:
+          type: string
+        displayName:
+          type: string
+        status:
+          type: string
+        version:
+          type: integer
+          format: int64
+    EntitlementRequest:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+    EntitlementResponse:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          format: uuid
+        appCode:
+          type: string
+        enabled:
+          type: boolean
+        version:
+          type: integer
+          format: int64
+    RenameRequest:
+      type: object
+      properties:
+        name:
+          type: string
+    TenantResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+        version:
+          type: integer
+          format: int64
+    UpdateSystemRequest:
+      type: object
+      properties:
+        action:
+          type: string
+        name:
+          type: string
+    SystemResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int64
+    RoleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        scope:
+          type: string
+        name:
+          type: string
+        system:
+          type: boolean
+        permissions:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        version:
+          type: integer
+          format: int64
+    PermissionsRequest:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+    CreateRequest:
+      type: object
+      properties:
+        tenantCode:
+          type: string
+        email:
+          type: string
+        displayName:
+          type: string
+        temporaryPassword:
+          type: string
+    ProvisionRequest:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        adminEmail:
+          type: string
+        adminTemporaryPassword:
+          type: string
+    ProvisionedResponse:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          format: uuid
+        adminEmail:
+          type: string
+    DomainRequest:
+      type: object
+      properties:
+        hostname:
+          type: string
+    CreateSystemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+    CreateCredentialRequest:
+      type: object
+      properties:
+        label:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+    CredentialResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        keyId:
+          type: string
+        label:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        revokedAt:
+          type: string
+          format: date-time
+    IssuedCredentialResponse:
+      type: object
+      properties:
+        credential:
+          $ref: "#/components/schemas/CredentialResponse"
+        key:
+          type: string
+    RotateRequest:
+      type: object
+      properties:
+        overlapMinutes:
+          type: integer
+          format: int64
+    UpdateRequest:
+      type: object
+      properties:
+        action:
+          type: string
+        name:
+          type: string
+    MeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        scope:
+          type: string
+        email:
+          type: string
+        displayName:
+          type: string
+        status:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string

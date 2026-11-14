@@ -7,18 +7,18 @@ Documentation lives in [docs/](docs/README.md). Code lives in:
 | `platform/` | Platform service (Gradle multi-module, Spring Boot): tenants, users, centralized RBAC, app entitlement, tenant systems and the suite's tokens |
 | `billing/` | Core Billing app (Gradle multi-module, Spring Boot): the eight billing contexts, replicating the Platform data it enforces |
 | `tenant/` | Sample Tenant System, built and deployed independently; it calls Billing over REST with a Platform-issued suite token |
-| `web/` | Web apps (Suite Console, Customer Portal, Sample Tenant UI) |
-| `core/` | The technical core every service builds against: kernel, Spring implementations, messaging (`core-messaging`), the Platform replica (`core-replica`), snapshot sync (`core-platform-sync`), suite policy (`core-suite`) and the shared Feign client (`core-feign`); the only code they share |
-| `contracts/` | OpenAPI, event schemas, permission catalogs and the token claim list, shared between services as documents, never as code |
-| `ops/` | Local runtime: PostgreSQL init, RabbitMQ users, the Caddy route table and the smoke scripts |
+| `web/` | Placeholder for the frontends (Platform Admin, Tenant Admin, Customer Portal, Sample Tenant UI); no code yet |
+| `core/` | The technical core every service builds against: kernel, Spring implementations, messaging (`core-messaging`), the Platform replica (`core-replica`), snapshot sync (`core-platform-sync`), suite policy (`core-suite`), the shared Feign client (`core-feign`) and the shared architecture rule set (`core-arch`); the only code they share |
+| `contracts/` | OpenAPI, event schemas, the messaging contract, permission catalogs and the token claim list, shared between services as documents, never as code |
+| `ops/` | Local runtime: PostgreSQL init, RabbitMQ users, the Keycloak realm import, the Caddy route table, the load-test entry and the smoke scripts |
 
 Each service is its own Gradle build. Inside a service the modules are grouped by role, and each Gradle project
 path follows its directory:
 
 | Directory | Contents |
 |---|---|
-| `contexts/` | The bounded contexts of that service (Billing: eight; Platform: `tenancy`, `access`, `integration`) |
-| `libs/` | `shared-kernel` (the service's value objects) and `jooq-schema` |
+| `contexts/` | The bounded contexts of that service (Billing: eight; Platform: `tenancy`, `access`, `integration`); the sample tenant names the same group `modules/` |
+| `libs/` | `shared-kernel` (the service's value objects; `shared-core` in the sample tenant) and `jooq-schema` |
 | `apps/` | `app-boot`, which wires the contexts and holds the migrations |
 | `testing/` | `arch-fixtures`, the deliberately violating classes the architecture rules are tested against |
 

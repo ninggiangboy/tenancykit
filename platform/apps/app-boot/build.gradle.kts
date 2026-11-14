@@ -22,6 +22,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
+    implementation(libs.springdoc.webmvc)
+    implementation("tools.jackson.dataformat:jackson-dataformat-yaml")
     implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
@@ -54,6 +56,8 @@ tasks.processResources {
 }
 
 tasks.test {
+    // `./gradlew :apps:app-boot:test -Dopenapi.update=true` rewrites contracts/openapi/platform.yaml.
+    systemProperty("openapi.update", System.getProperty("openapi.update", "false"))
     // `./gradlew :apps:app-boot:test --tests '*JooqSchemaTest' -Djooq.update=true` regenerates the committed jOOQ schema.
     systemProperty("jooq.update", System.getProperty("jooq.update", "false"))
 }

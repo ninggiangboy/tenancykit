@@ -19,7 +19,1581 @@ servers:
       default: "tenant-a"
     base-domain:
       default: "base-domain.com"
-paths: {}
+paths:
+  /api/v1/customers/{id}:
+    get:
+      tags:
+      - "customer-controller"
+      operationId: "get"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CustomerResponse"
+      x-required-permission: "billing:customer:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+    put:
+      tags:
+      - "customer-controller"
+      operationId: "update"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCustomerRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          headers:
+            ETag:
+              description: "The resource version after this change, as a strong tag"
+              schema:
+                type: "string"
+                example: "\"3\""
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CustomerResponse"
+        "412":
+          description: "The resource changed since the caller read it; the current\
+            \ ETag is returned in the header"
+          headers:
+            ETag:
+              description: "The current version"
+              schema:
+                type: "string"
+                example: "\"3\""
+      x-required-permission: "billing:customer:write"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/webhook-endpoints:
+    get:
+      tags:
+      - "endpoint-controller"
+      operationId: "listEndpoints"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/EndpointResponse"
+      x-required-permission: "billing:webhook:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+    post:
+      tags:
+      - "endpoint-controller"
+      operationId: "createEndpoint"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEndpointRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointWithSecretResponse"
+      x-required-permission: "billing:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/webhook-endpoints/{id}/rotate-secret:
+    post:
+      tags:
+      - "endpoint-controller"
+      operationId: "rotateSecret"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointWithSecretResponse"
+      x-required-permission: "billing:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/webhook-deliveries/{id}/resend:
+    post:
+      tags:
+      - "delivery-controller"
+      operationId: "resend"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "202":
+          description: "Accepted"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DeliveryResponse"
+      x-required-permission: "billing:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/wallets:
+    get:
+      tags:
+      - "wallet-controller"
+      operationId: "wallets"
+      parameters:
+      - name: "customerId"
+        in: "query"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/WalletResponse"
+      x-required-permission: "billing:wallet:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+    post:
+      tags:
+      - "wallet-controller"
+      operationId: "openWallet"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenWalletRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WalletResponse"
+      x-required-permission: "billing:wallet:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/usage-events:
+    get:
+      tags:
+      - "usage-controller"
+      operationId: "history"
+      parameters:
+      - name: "customerId"
+        in: "query"
+        required: true
+        schema:
+          type: "string"
+      - name: "metric"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "from"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "to"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "before"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/UsageEventResponse"
+      x-required-permission: "billing:usage:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+    post:
+      tags:
+      - "usage-controller"
+      operationId: "recordOne"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsageEventRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RecordedResponse"
+        "200":
+          description: "The same event was already recorded; the recorded event is\
+            \ returned"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RecordedResponse"
+      x-required-permission: "billing:usage:record"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/usage-events/batch:
+    post:
+      tags:
+      - "usage-controller"
+      operationId: "recordBatch"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BatchResponse"
+      x-required-permission: "billing:usage:record"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/subscriptions:
+    get:
+      tags:
+      - "subscription-controller"
+      operationId: "subscriptions"
+      parameters:
+      - name: "customerId"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "walletId"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "status"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "before"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/SubscriptionResponse"
+      x-required-permission: "billing:subscription:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+    post:
+      tags:
+      - "subscription-controller"
+      operationId: "subscribe"
+      parameters:
+      - name: "Idempotency-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscribeRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SubscriptionDetailResponse"
+        "200":
+          description: "An earlier identical request already created it; that resource\
+            \ is returned"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SubscriptionDetailResponse"
+      x-required-permission: "billing:subscription:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/subscriptions/{id}/cancel:
+    post:
+      tags:
+      - "subscription-controller"
+      operationId: "cancel"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SubscriptionDetailResponse"
+      x-required-permission: "billing:subscription:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/reservations:
+    post:
+      tags:
+      - "reservation-controller"
+      operationId: "reserve"
+      parameters:
+      - name: "Idempotency-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReserveRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReservationResponse"
+        "200":
+          description: "An earlier identical request already created it; that resource\
+            \ is returned"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReservationResponse"
+      x-required-permission: "billing:reservation:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/reservations/{id}/release:
+    post:
+      tags:
+      - "reservation-controller"
+      operationId: "release"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReservationResponse"
+      x-required-permission: "billing:reservation:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/reservations/{id}/capture:
+    post:
+      tags:
+      - "charge-controller"
+      operationId: "capture"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "Idempotency-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaptureRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ChargeResponse"
+        "200":
+          description: "An earlier identical request already created it; that resource\
+            \ is returned"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ChargeResponse"
+      x-required-permission: "billing:charge:create"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/pricing/usage-charges:
+    post:
+      tags:
+      - "rating-controller"
+      operationId: "chargeUsage"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChargeUsageRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RatingResponse"
+        "200":
+          description: "The usage was already charged and that rating is returned,\
+            \ or there was nothing to charge"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RatingResponse"
+      x-required-permission: "billing:charge:create"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/pricing/reservations:
+    post:
+      tags:
+      - "rating-controller"
+      operationId: "reserveEstimate"
+      parameters:
+      - name: "Idempotency-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReserveRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReserveResponse"
+        "200":
+          description: "An earlier identical request already created it; that resource\
+            \ is returned"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReserveResponse"
+      x-required-permission: "billing:reservation:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/pricing/estimates:
+    post:
+      tags:
+      - "rating-controller"
+      operationId: "estimate"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EstimateRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EstimateResponse"
+      x-required-permission: "billing:pricing:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/pricing-plans:
+    get:
+      tags:
+      - "plan-controller"
+      operationId: "listPlans"
+      parameters:
+      - name: "status"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/PlanResponse"
+      x-required-permission: "billing:pricing:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/payments/top-ups:
+    post:
+      tags:
+      - "payment-controller"
+      operationId: "createTopUp"
+      parameters:
+      - name: "Idempotency-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TopUpRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+        "200":
+          description: "An earlier identical request already created it; that resource\
+            \ is returned"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PaymentResponse"
+      x-required-permission: "billing:payment:create"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/invoices:
+    get:
+      tags:
+      - "invoice-controller"
+      operationId: "invoices"
+      parameters:
+      - name: "customerId"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "walletId"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "status"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "before"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/InvoiceResponse"
+      x-required-permission: "billing:invoice:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+    post:
+      tags:
+      - "invoice-controller"
+      operationId: "invoiceCharge"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvoiceChargeRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InvoiceDetailResponse"
+        "200":
+          description: "The charge already had an invoice; that invoice is returned"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InvoiceDetailResponse"
+      x-required-permission: "billing:invoice:create"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/invoices/{id}/payments:
+    post:
+      tags:
+      - "invoice-controller"
+      operationId: "pay"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "Idempotency-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PayInvoiceResponse"
+        "200":
+          description: "An earlier identical request already created it; that resource\
+            \ is returned"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PayInvoiceResponse"
+      x-required-permission: "billing:payment:create"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/customers:
+    get:
+      tags:
+      - "customer-controller"
+      operationId: "list_1"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/CustomerResponse"
+      x-required-permission: "billing:customer:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+    post:
+      tags:
+      - "customer-controller"
+      operationId: "create"
+      parameters:
+      - name: "Idempotency-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CustomerResponse"
+        "200":
+          description: "An earlier identical request already created it; that resource\
+            \ is returned"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CustomerResponse"
+      x-required-permission: "billing:customer:write"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/customers/{id}/deactivate:
+    post:
+      tags:
+      - "customer-controller"
+      operationId: "deactivate"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          headers:
+            ETag:
+              description: "The resource version after this change, as a strong tag"
+              schema:
+                type: "string"
+                example: "\"3\""
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CustomerResponse"
+        "412":
+          description: "The resource changed since the caller read it; the current\
+            \ ETag is returned in the header"
+          headers:
+            ETag:
+              description: "The current version"
+              schema:
+                type: "string"
+                example: "\"3\""
+      x-required-permission: "billing:customer:write"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/charges:
+    post:
+      tags:
+      - "charge-controller"
+      operationId: "charge"
+      parameters:
+      - name: "Idempotency-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChargeRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ChargeResponse"
+        "200":
+          description: "An earlier identical request already created it; that resource\
+            \ is returned"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ChargeResponse"
+      x-required-permission: "billing:charge:create"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/billing-sessions:
+    post:
+      tags:
+      - "billing-session-controller"
+      operationId: "create_1"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CreateResponse"
+      x-required-permission: "billing:billing-session:create"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/billing-sessions/{id}/revoke:
+    post:
+      tags:
+      - "billing-session-controller"
+      operationId: "revoke"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+      x-required-permission: "billing:billing-session:create"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/webhook-endpoints/{id}:
+    get:
+      tags:
+      - "endpoint-controller"
+      operationId: "getEndpoint"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointResponse"
+      x-required-permission: "billing:webhook:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+    patch:
+      tags:
+      - "endpoint-controller"
+      operationId: "updateEndpoint"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEndpointRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          headers:
+            ETag:
+              description: "The resource version after this change, as a strong tag"
+              schema:
+                type: "string"
+                example: "\"3\""
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointResponse"
+        "412":
+          description: "The resource changed since the caller read it; the current\
+            \ ETag is returned in the header"
+          headers:
+            ETag:
+              description: "The current version"
+              schema:
+                type: "string"
+                example: "\"3\""
+      x-required-permission: "billing:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/webhook-deliveries:
+    get:
+      tags:
+      - "delivery-controller"
+      operationId: "listDeliveries"
+      parameters:
+      - name: "status"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "endpointId"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "before"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/DeliveryResponse"
+      x-required-permission: "billing:webhook:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/webhook-deliveries/{id}:
+    get:
+      tags:
+      - "delivery-controller"
+      operationId: "getDelivery"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DeliveryDetailResponse"
+      x-required-permission: "billing:webhook:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/wallets/{id}:
+    get:
+      tags:
+      - "wallet-controller"
+      operationId: "wallet_1"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WalletResponse"
+      x-required-permission: "billing:wallet:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/wallets/{id}/ledger:
+    get:
+      tags:
+      - "ledger-controller"
+      operationId: "ledger_1"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "afterSequence"
+        in: "query"
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+          default: 0
+      - name: "limit"
+        in: "query"
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/LedgerEntryResponse"
+      x-required-permission: "billing:wallet:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/usage-aggregates:
+    get:
+      tags:
+      - "usage-controller"
+      operationId: "aggregates"
+      parameters:
+      - name: "customerId"
+        in: "query"
+        required: true
+        schema:
+          type: "string"
+      - name: "metric"
+        in: "query"
+        required: false
+        schema:
+          type: "array"
+          items:
+            type: "string"
+      - name: "from"
+        in: "query"
+        required: true
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "to"
+        in: "query"
+        required: true
+        schema:
+          type: "string"
+          format: "date-time"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/TotalResponse"
+      x-required-permission: "billing:usage:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/subscriptions/{id}:
+    get:
+      tags:
+      - "subscription-controller"
+      operationId: "subscription_1"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SubscriptionDetailResponse"
+      x-required-permission: "billing:subscription:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/reservations/{id}:
+    get:
+      tags:
+      - "reservation-controller"
+      operationId: "reservation"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReservationResponse"
+      x-required-permission: "billing:wallet:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/refunds/{id}:
+    get:
+      tags:
+      - "refund-controller"
+      operationId: "getRefund"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RefundResponse"
+      x-required-permission: "billing:payment:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/pricing/usage-charges/{id}:
+    get:
+      tags:
+      - "rating-controller"
+      operationId: "getRating"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RatingResponse"
+      x-required-permission: "billing:pricing:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/pricing-plans/{id}:
+    get:
+      tags:
+      - "plan-controller"
+      operationId: "getPlan"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PlanResponse"
+      x-required-permission: "billing:pricing:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/payments:
+    get:
+      tags:
+      - "payment-controller"
+      operationId: "payments_1"
+      parameters:
+      - name: "walletId"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "status"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "before"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/PaymentResponse"
+      x-required-permission: "billing:payment:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/payments/{id}:
+    get:
+      tags:
+      - "payment-controller"
+      operationId: "payment_1"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PaymentDetailResponse"
+      x-required-permission: "billing:payment:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/invoices/{id}:
+    get:
+      tags:
+      - "invoice-controller"
+      operationId: "invoice_1"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InvoiceDetailResponse"
+      x-required-permission: "billing:invoice:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/customers/by-external-user/{externalUserId}:
+    get:
+      tags:
+      - "customer-controller"
+      operationId: "byExternalUser"
+      parameters:
+      - name: "externalUserId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "tenantSystemId"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CustomerResponse"
+      x-required-permission: "billing:customer:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
+  /api/v1/charges/{id}:
+    get:
+      tags:
+      - "charge-controller"
+      operationId: "getCharge"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ChargeResponse"
+      x-required-permission: "billing:wallet:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
 components:
   schemas:
     WebhookSecretRequest:

@@ -37,7 +37,8 @@ class SecurityConfiguration {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(sessions -> sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/oauth/token", "/.well-known/jwks.json", "/actuator/health", "/actuator/health/**")
+                        .requestMatchers("/oauth/token", "/.well-known/jwks.json", "/actuator/health", "/actuator/health/**",
+                                "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml")
                         .permitAll()
                         .anyRequest()
                         .authenticated())
