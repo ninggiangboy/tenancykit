@@ -141,7 +141,7 @@ module "mq" {
   billing_password       = module.secrets.values["BILLING_RABBITMQ_PASSWORD"]
   mailer_password        = module.secrets.values["MAILER_RABBITMQ_PASSWORD"]
   notification_password  = module.secrets.values["NOTIFICATION_RABBITMQ_PASSWORD"]
-  email_password         = module.secrets.values["EMAIL_RABBITMQ_PASSWORD"]
+  mailroom_password         = module.secrets.values["MAILROOM_RABBITMQ_PASSWORD"]
   secret_arns            = module.secrets.arns
 }
 
@@ -289,8 +289,8 @@ module "notification" {
   secret_arns            = module.secrets.arns
 }
 
-module "email" {
-  source = "./email"
+module "mailroom" {
+  source = "./mailroom"
 
   environment                   = var.environment
   region                        = var.region
@@ -301,15 +301,15 @@ module "email" {
   vpc_id                        = module.network.vpc_id
   service_connect_namespace_arn = module.service_discovery.namespace_arn
   log_group_names = {
-    api     = module.ecs.log_group_names["email_api"]
-    worker  = module.ecs.log_group_names["email"]
-    migrate = module.ecs.log_group_names["email_migrate"]
+    api     = module.ecs.log_group_names["mailroom_api"]
+    worker  = module.ecs.log_group_names["mailroom"]
+    migrate = module.ecs.log_group_names["mailroom_migrate"]
   }
-  image                  = "${module.ecs.ecr_repository_urls["email"]}:${var.image_tag}"
-  api_desired_count      = var.email_api_desired_count
-  worker_desired_count   = var.email_worker_desired_count
+  image                  = "${module.ecs.ecr_repository_urls["mailroom"]}:${var.image_tag}"
+  api_desired_count      = var.mailroom_api_desired_count
+  worker_desired_count   = var.mailroom_worker_desired_count
   listener_arn           = module.alb.listener_arn
-  email_public_base_url  = local.email_public_url
+  mailroom_public_base_url  = local.mailroom_public_url
   platform_internal_url  = local.platform_internal_url
   platform_internal_jwks = local.platform_internal_jwks
   platform_public_issuer = local.platform_public_issuer

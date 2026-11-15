@@ -83,8 +83,8 @@ variable "notification_password" {
   sensitive   = true
 }
 
-variable "email_password" {
-  description = "Email broker user password."
+variable "mailroom_password" {
+  description = "Mailroom broker user password."
   type        = string
   sensitive   = true
 }

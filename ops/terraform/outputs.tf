@@ -46,9 +46,9 @@ output "task_definition_arns" {
     notification_api      = module.notification.api_task_definition_arn
     notification_worker   = module.notification.worker_task_definition_arn
     notification_migrate  = module.notification.migrate_task_definition_arn
-    email_api             = module.email.api_task_definition_arn
-    email_worker          = module.email.worker_task_definition_arn
-    email_migrate         = module.email.migrate_task_definition_arn
+    mailroom_api     = module.mailroom.api_task_definition_arn
+    mailroom_worker  = module.mailroom.worker_task_definition_arn
+    mailroom_migrate = module.mailroom.migrate_task_definition_arn
     rds_init        = module.rds.init_task_definition_arn
     mq_users        = module.mq.users_task_definition_arn
   }
@@ -64,8 +64,8 @@ output "service_names" {
     mailer         = module.mailer.service_name
     notification_api    = module.notification.api_service_name
     notification_worker = module.notification.worker_service_name
-    email_api           = module.email.api_service_name
-    email_worker        = module.email.worker_service_name
+    mailroom_api    = module.mailroom.api_service_name
+    mailroom_worker = module.mailroom.worker_service_name
   }
 }
 

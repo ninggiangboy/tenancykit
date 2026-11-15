@@ -8,7 +8,7 @@ Documentation lives in [docs/](docs/README.md). Code lives in:
 | `billing/` | Billing app (Gradle multi-module, Spring Boot): the eight billing contexts, replicating the Platform data it enforces |
 | `mailer/` | Mailer service (Gradle multi-module, Spring Boot): consumes `email.send` commands and delivers already-rendered email through SESv2 or SMTP, with a per-recipient delivery ledger |
 | `notification/` | Notification service: the suite's in-app inbox and transactional email for Platform users, a replica consumer that publishes `email.send` |
-| `email/` | Email app: a Tenant's own templates, receivers, groups, segments, campaigns and tracking, a replica consumer that publishes `email.send` and consumes `email-delivery.changed` |
+| `mailroom/` | Mailroom app: a Tenant's own templates, receivers, groups, segments, campaigns and tracking, a replica consumer that publishes `email.send` and consumes `email-delivery.changed` |
 | `tenant/` | Sample Tenant System, built and deployed independently; it calls Billing over REST with a Platform-issued suite token |
 | `web/` | Placeholder for the frontends (Platform Admin, Tenant Admin, Customer Portal, Sample Tenant UI); no code yet |
 | `core/` | The technical core every service builds against: kernel, Spring implementations, messaging (`core-messaging`), the Platform replica (`core-replica`), snapshot sync (`core-platform-sync`), suite policy (`core-suite`), the shared Feign client (`core-feign`) and the shared architecture rule set (`core-arch`); the only code they share |
@@ -38,7 +38,7 @@ cd platform && ./gradlew build
 cd billing && ./gradlew build
 cd mailer && ./gradlew build
 cd notification && ./gradlew build
-cd email && ./gradlew build
+cd mailroom && ./gradlew build
 cd tenant && ./gradlew build
 ```
 

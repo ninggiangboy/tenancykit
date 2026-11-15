@@ -49,9 +49,9 @@ no logic, retries nothing and rewrites no body. See [suite-messaging.md](suite-m
 | `notification-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
 | `notification-api` (`api`) | The user's inbox and preferences, the suite's templates, the tenant's settings and dispatch ledger | Its database, the broker, Platform (replica snapshots) |
 | `notification-worker` (`worker`) | The `platform.events` listener, the outbox relay and housekeeping; the replica rebuild on start | Its database, the broker, Platform (replica snapshots) |
-| `email-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
-| `email-api` (`api`) | Templates, receivers, groups, segments, suppressions, emails, campaigns, settings and the public `/t/*` tracking endpoints | Its database, Platform (replica snapshots) |
-| `email-worker` (`worker`) | The `platform.events` and `email.mailer-events` listeners, the outbox relay, the campaign scheduler and publisher, housekeeping; the replica rebuild on start | Its database, the broker, Platform (replica snapshots) |
+| `mailroom-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
+| `mailroom-api` (`api`) | Templates, receivers, groups, segments, suppressions, emails, campaigns, settings and the public `/t/*` tracking endpoints | Its database, Platform (replica snapshots) |
+| `mailroom-worker` (`worker`) | The `platform.events` and `mailroom.mailer-events` listeners, the outbox relay, the campaign scheduler and publisher, housekeeping; the replica rebuild on start | Its database, the broker, Platform (replica snapshots) |
 | `mailpit` | SMTP on 1025 and an HTTP API/UI on 8025, for local development only | Nothing |
 | `tenant` | Its own HTTP surface, webhook verification, the Platform token provider, the execution worker | Its database, Platform, Billing |
 
@@ -126,9 +126,9 @@ other. The deployment has four long-running workloads and three one-shot tasks:
 | `notification-migrate` | `migrate` | One-shot task run to exit 0 before notification's services roll. |
 | `notification-api` | `api` | 2 replicas; ALB rule priority 40. |
 | `notification-worker` | `worker` | 2 replicas; no ALB target. |
-| `email-migrate` | `migrate` | One-shot task run to exit 0 before email's services roll. |
-| `email-api` | `api` | 2 replicas; ALB rule priority 50. |
-| `email-worker` | `worker` | 2 replicas; no ALB target. |
+| `mailroom-migrate` | `migrate` | One-shot task run to exit 0 before mailroom's services roll. |
+| `mailroom-api` | `api` | 2 replicas; ALB rule priority 50. |
+| `mailroom-worker` | `worker` | 2 replicas; no ALB target. |
 | `rds-init` | n/a | One-shot task that creates the databases and owner/app roles RDS does not provision. |
 | `mq-users` | n/a | One-shot task that applies the broker's per-user exchange/queue permissions. |
 

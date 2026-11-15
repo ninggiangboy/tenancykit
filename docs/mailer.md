@@ -12,7 +12,7 @@ SES in a deployment, SMTP (Mailpit) locally. It is a separate deployable (`maile
 | The owner of a delivery ledger, per tenant and per recipient | A template engine: recipients, subject and both bodies arrive in the command |
 | A sender through the suite's own SES identity, or through a Tenant's own AWS role | A mailbox, or a bounce and complaint processor: SES's asynchronous events are not consumed |
 | A producer of one event, `email-delivery.changed`, the terminal outcome it already computes | A business service: the event reports a delivery, it never asks the consumer to do anything |
-| The only transport: every app's mail leaves through it | A notification service, a template engine, or a campaign sender: [notification.md](notification.md) and [email.md](email.md) own those decisions |
+| The only transport: every app's mail leaves through it | A notification service, a template engine, or a campaign sender: [notification.md](notification.md) and [mailroom.md](mailroom.md) own those decisions |
 
 Who is notified, which event notifies them, the templates and their translations stay outside mailer. Notification
 notifies Platform tenant users and Email notifies a Tenant's own customers: each produces the `email.send` command with

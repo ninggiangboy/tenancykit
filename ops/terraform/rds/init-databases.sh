@@ -25,8 +25,8 @@ psql --set=ON_ERROR_STOP=1 \
   --set=mailer_app_password="${MAILER_DB_PASSWORD:?set the mailer app password}" \
   --set=notification_owner_password="${NOTIFICATION_MIGRATION_DB_PASSWORD:?set the notification owner password}" \
   --set=notification_app_password="${NOTIFICATION_DB_PASSWORD:?set the notification app password}" \
-  --set=email_owner_password="${EMAIL_MIGRATION_DB_PASSWORD:?set the email owner password}" \
-  --set=email_app_password="${EMAIL_DB_PASSWORD:?set the email app password}" \
+  --set=mailroom_owner_password="${MAILROOM_MIGRATION_DB_PASSWORD:?set the mailroom owner password}" \
+  --set=mailroom_app_password="${MAILROOM_DB_PASSWORD:?set the mailroom app password}" \
   --set=keycloak_owner_password="${KEYCLOAK_DB_PASSWORD:?set the keycloak owner password}" \
   --dbname postgres <<'SQL'
 create role platform_owner login password :'platform_owner_password' nocreatedb nocreaterole;
@@ -44,8 +44,8 @@ create role mailer_app login password :'mailer_app_password' nosuperuser nocreat
 create role notification_owner login password :'notification_owner_password' nocreatedb nocreaterole;
 create role notification_app login password :'notification_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
-create role email_owner login password :'email_owner_password' nocreatedb nocreaterole;
-create role email_app login password :'email_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+create role mailroom_owner login password :'mailroom_owner_password' nocreatedb nocreaterole;
+create role mailroom_app login password :'mailroom_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
 create role keycloak_owner login password :'keycloak_owner_password' nocreatedb nocreaterole;
 
@@ -54,7 +54,7 @@ create database billing owner billing_owner;
 create database tenant owner tenant_owner;
 create database mailer owner mailer_owner;
 create database notification owner notification_owner;
-create database email owner email_owner;
+create database mailroom owner mailroom_owner;
 create database keycloak owner keycloak_owner;
 
 revoke connect, temporary on database platform from public;
@@ -62,7 +62,7 @@ revoke connect, temporary on database billing from public;
 revoke connect, temporary on database tenant from public;
 revoke connect, temporary on database mailer from public;
 revoke connect, temporary on database notification from public;
-revoke connect, temporary on database email from public;
+revoke connect, temporary on database mailroom from public;
 revoke connect, temporary on database keycloak from public;
 
 grant connect, temporary on database platform to platform_owner, platform_app;
@@ -70,7 +70,7 @@ grant connect, temporary on database billing to billing_owner, billing_app;
 grant connect, temporary on database tenant to tenant_owner, tenant_app;
 grant connect, temporary on database mailer to mailer_owner, mailer_app;
 grant connect, temporary on database notification to notification_owner, notification_app;
-grant connect, temporary on database email to email_owner, email_app;
+grant connect, temporary on database mailroom to mailroom_owner, mailroom_app;
 grant connect, temporary on database keycloak to keycloak_owner;
 SQL
 
@@ -90,6 +90,6 @@ apply_default_privileges billing_owner "${BILLING_MIGRATION_DB_PASSWORD}" billin
 apply_default_privileges tenant_owner "${TENANT_MIGRATION_DB_PASSWORD}" tenant tenant_app
 apply_default_privileges mailer_owner "${MAILER_MIGRATION_DB_PASSWORD}" mailer mailer_app
 apply_default_privileges notification_owner "${NOTIFICATION_MIGRATION_DB_PASSWORD}" notification notification_app
-apply_default_privileges email_owner "${EMAIL_MIGRATION_DB_PASSWORD}" email email_app
+apply_default_privileges mailroom_owner "${MAILROOM_MIGRATION_DB_PASSWORD}" mailroom mailroom_app
 
-echo "created platform, billing, tenant, mailer, notification, email and keycloak databases with their owner and app roles"
+echo "created platform, billing, tenant, mailer, notification, mailroom and keycloak databases with their owner and app roles"

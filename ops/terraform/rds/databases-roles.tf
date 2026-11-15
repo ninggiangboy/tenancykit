@@ -18,8 +18,8 @@ locals {
     { name = "MAILER_DB_PASSWORD", valueFrom = var.secret_arns["MAILER_DB_PASSWORD"] },
     { name = "NOTIFICATION_MIGRATION_DB_PASSWORD", valueFrom = var.secret_arns["NOTIFICATION_MIGRATION_DB_PASSWORD"] },
     { name = "NOTIFICATION_DB_PASSWORD", valueFrom = var.secret_arns["NOTIFICATION_DB_PASSWORD"] },
-    { name = "EMAIL_MIGRATION_DB_PASSWORD", valueFrom = var.secret_arns["EMAIL_MIGRATION_DB_PASSWORD"] },
-    { name = "EMAIL_DB_PASSWORD", valueFrom = var.secret_arns["EMAIL_DB_PASSWORD"] },
+    { name = "MAILROOM_MIGRATION_DB_PASSWORD", valueFrom = var.secret_arns["MAILROOM_MIGRATION_DB_PASSWORD"] },
+    { name = "MAILROOM_DB_PASSWORD", valueFrom = var.secret_arns["MAILROOM_DB_PASSWORD"] },
     { name = "KEYCLOAK_DB_PASSWORD", valueFrom = var.secret_arns["KEYCLOAK_DB_PASSWORD"] },
   ]
 }

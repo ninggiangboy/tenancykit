@@ -93,12 +93,12 @@
           }
         },
         {
-          "name": "email-audience",
+          "name": "mailroom-audience",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "consentRequired": false,
           "config": {
-            "included.custom.audience": "email",
+            "included.custom.audience": "mailroom",
             "id.token.claim": "false",
             "access.token.claim": "true"
           }
@@ -169,12 +169,12 @@
           }
         },
         {
-          "name": "email-audience",
+          "name": "mailroom-audience",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "consentRequired": false,
           "config": {
-            "included.custom.audience": "email",
+            "included.custom.audience": "mailroom",
             "id.token.claim": "false",
             "access.token.claim": "true"
           }

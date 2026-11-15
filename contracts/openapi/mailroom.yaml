@@ -1,0 +1,844 @@
+openapi: 3.1.0
+info:
+  title: Mailroom API
+  version: v1
+  description: |
+    The API a Tenant System uses to email a Tenant's own customers, plus the public tracking endpoints a recipient's
+    mail client calls without credentials.
+
+    This is a resource skeleton: every path carries its operation, the permission it requires and the shape it will
+    settle on. Each phase fills the schema it owns. `x-required-permission` names a code from
+    contracts/permissions/mailroom.yaml; a public operation carries `x-public: true` instead and requires no suite token.
+servers:
+- url: /
+  description: "Any tenant hostname: <tenant-code>.<base-domain>/mailroom"
+paths:
+  /mailroom/api/v1/templates:
+    get:
+      tags:
+      - template-controller
+      operationId: list
+      x-required-permission: mailroom:template:read
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+      - template-controller
+      operationId: create
+      x-required-permission: mailroom:template:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TemplateRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateView"
+  /mailroom/api/v1/templates/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - template-controller
+      operationId: get
+      x-required-permission: mailroom:template:read
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateView"
+    put:
+      tags:
+      - template-controller
+      operationId: update
+      x-required-permission: mailroom:template:manage
+      parameters:
+      - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TemplateRequest"
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+      - template-controller
+      operationId: delete
+      x-required-permission: mailroom:template:manage
+      responses:
+        "204":
+          description: No Content
+  /mailroom/api/v1/templates/{id}/revisions:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - template-controller
+      operationId: revisions
+      x-required-permission: mailroom:template:read
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/templates/{id}/preview:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - template-controller
+      operationId: preview
+      x-required-permission: mailroom:template:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreviewRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RenderedEmail"
+  /mailroom/api/v1/receivers:
+    get:
+      tags:
+      - receiver-controller
+      operationId: listReceivers
+      x-required-permission: mailroom:receiver:read
+      responses:
+        "200":
+          description: OK
+    put:
+      tags:
+      - receiver-controller
+      operationId: upsertReceiver
+      x-required-permission: mailroom:receiver:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceiverRequest"
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/receivers/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - receiver-controller
+      operationId: getReceiver
+      x-required-permission: mailroom:receiver:read
+      responses:
+        "200":
+          description: OK
+    patch:
+      tags:
+      - receiver-controller
+      operationId: patchReceiver
+      x-required-permission: mailroom:receiver:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceiverRequest"
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+      - receiver-controller
+      operationId: deleteReceiver
+      x-required-permission: mailroom:receiver:manage
+      responses:
+        "204":
+          description: No Content
+  /mailroom/api/v1/receivers/bulk:
+    post:
+      tags:
+      - receiver-controller
+      operationId: bulkReceivers
+      x-required-permission: mailroom:receiver:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkReceiverRequest"
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/groups:
+    get:
+      tags:
+      - group-controller
+      operationId: listGroups
+      x-required-permission: mailroom:receiver:read
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+      - group-controller
+      operationId: createGroup
+      x-required-permission: mailroom:receiver:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupRequest"
+      responses:
+        "201":
+          description: Created
+  /mailroom/api/v1/groups/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    put:
+      tags:
+      - group-controller
+      operationId: updateGroup
+      x-required-permission: mailroom:receiver:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupRequest"
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+      - group-controller
+      operationId: deleteGroup
+      x-required-permission: mailroom:receiver:manage
+      responses:
+        "204":
+          description: No Content
+  /mailroom/api/v1/groups/{id}/members:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - group-controller
+      operationId: listMembers
+      x-required-permission: mailroom:receiver:read
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+      - group-controller
+      operationId: addMembers
+      x-required-permission: mailroom:receiver:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberIds"
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+      - group-controller
+      operationId: removeMembers
+      x-required-permission: mailroom:receiver:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberIds"
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/suppressions:
+    get:
+      tags:
+      - suppression-controller
+      operationId: listSuppressions
+      x-required-permission: mailroom:receiver:read
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+      - suppression-controller
+      operationId: addSuppression
+      x-required-permission: mailroom:receiver:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuppressionRequest"
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+      - suppression-controller
+      operationId: removeSuppression
+      x-required-permission: mailroom:receiver:manage
+      responses:
+        "204":
+          description: No Content
+  /mailroom/api/v1/segments:
+    get:
+      tags:
+      - segment-controller
+      operationId: listSegments
+      x-required-permission: mailroom:receiver:read
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+      - segment-controller
+      operationId: createSegment
+      x-required-permission: mailroom:receiver:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SegmentRequest"
+      responses:
+        "201":
+          description: Created
+  /mailroom/api/v1/segments/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - segment-controller
+      operationId: getSegment
+      x-required-permission: mailroom:receiver:read
+      responses:
+        "200":
+          description: OK
+    put:
+      tags:
+      - segment-controller
+      operationId: updateSegment
+      x-required-permission: mailroom:receiver:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SegmentRequest"
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+      - segment-controller
+      operationId: deleteSegment
+      x-required-permission: mailroom:receiver:manage
+      responses:
+        "204":
+          description: No Content
+  /mailroom/api/v1/segments/{id}/preview:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - segment-controller
+      operationId: previewSegment
+      x-required-permission: mailroom:receiver:read
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/emails:
+    get:
+      tags:
+      - email-controller
+      operationId: listEmails
+      x-required-permission: mailroom:email:read
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+      - email-controller
+      operationId: sendEmail
+      x-required-permission: mailroom:email:send
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendEmailRequest"
+      responses:
+        "201":
+          description: Created
+  /mailroom/api/v1/emails/batch:
+    post:
+      tags:
+      - email-controller
+      operationId: sendBatch
+      x-required-permission: mailroom:email:send
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchRequest"
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/emails/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - email-controller
+      operationId: getEmail
+      x-required-permission: mailroom:email:read
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/campaigns:
+    get:
+      tags:
+      - campaign-controller
+      operationId: listCampaigns
+      x-required-permission: mailroom:campaign:read
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+      - campaign-controller
+      operationId: createCampaign
+      x-required-permission: mailroom:campaign:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignRequest"
+      responses:
+        "201":
+          description: Created
+  /mailroom/api/v1/campaigns/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - campaign-controller
+      operationId: getCampaign
+      x-required-permission: mailroom:campaign:read
+      responses:
+        "200":
+          description: OK
+    put:
+      tags:
+      - campaign-controller
+      operationId: updateCampaign
+      x-required-permission: mailroom:campaign:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignRequest"
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/campaigns/{id}/schedule:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - campaign-controller
+      operationId: scheduleCampaign
+      x-required-permission: mailroom:campaign:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScheduleRequest"
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/campaigns/{id}/send:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - campaign-controller
+      operationId: sendCampaign
+      x-required-permission: mailroom:campaign:manage
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/campaigns/{id}/pause:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - campaign-controller
+      operationId: pauseCampaign
+      x-required-permission: mailroom:campaign:manage
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/campaigns/{id}/resume:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - campaign-controller
+      operationId: resumeCampaign
+      x-required-permission: mailroom:campaign:manage
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/campaigns/{id}/cancel:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - campaign-controller
+      operationId: cancelCampaign
+      x-required-permission: mailroom:campaign:manage
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/campaigns/{id}/test:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - campaign-controller
+      operationId: testCampaign
+      x-required-permission: mailroom:campaign:manage
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/campaigns/{id}/stats:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - campaign-controller
+      operationId: campaignStats
+      x-required-permission: mailroom:campaign:read
+      responses:
+        "200":
+          description: OK
+  /mailroom/api/v1/settings:
+    get:
+      tags:
+      - settings-controller
+      operationId: currentSettings
+      x-required-permission: mailroom:email:read
+      responses:
+        "200":
+          description: OK
+    put:
+      tags:
+      - settings-controller
+      operationId: saveSettings
+      x-required-permission: mailroom:settings:manage
+      responses:
+        "200":
+          description: OK
+  /mailroom/t/o/{token}.gif:
+    get:
+      tags:
+      - public-tracking-controller
+      operationId: open
+      x-public: true
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: A 1x1 GIF, whatever the token says
+  /mailroom/t/c/{token}:
+    get:
+      tags:
+      - public-tracking-controller
+      operationId: click
+      x-public: true
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "302":
+          description: Redirect to the URL recorded at render time
+        "200":
+          description: The static "link expired" page
+  /mailroom/t/u/{token}:
+    get:
+      tags:
+      - public-tracking-controller
+      operationId: unsubscribePage
+      x-public: true
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: A static confirmation page
+    post:
+      tags:
+      - public-tracking-controller
+      operationId: unsubscribe
+      x-public: true
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Idempotent unsubscribe
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IfMatch:
+      name: If-Match
+      in: header
+      required: false
+      schema:
+        type: string
+  schemas:
+    TemplateRequest:
+      type: object
+      additionalProperties: false
+      required: [key, name, subject, html]
+      properties:
+        key:
+          type: string
+          maxLength: 64
+          pattern: "^[a-z0-9][a-z0-9._-]*$"
+        name:
+          type: string
+          maxLength: 200
+        subject:
+          type: string
+          maxLength: 998
+          pattern: "^[^\\r\\n]*$"
+        html:
+          type: string
+          maxLength: 262144
+        text:
+          type: string
+          maxLength: 262144
+    TemplateView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        name:
+          type: string
+        revision:
+          type: integer
+        version:
+          type: integer
+    PreviewRequest:
+      type: object
+      properties:
+        variables:
+          type: object
+          additionalProperties: true
+    RenderedEmail:
+      type: object
+      properties:
+        subject:
+          type: string
+        html:
+          type: string
+        text:
+          type: string
+    ReceiverRequest:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+        firstName:
+          type: string
+          maxLength: 200
+        lastName:
+          type: string
+          maxLength: 200
+        attributes:
+          type: object
+          additionalProperties: true
+    BulkReceiverRequest:
+      type: object
+      additionalProperties: false
+      required: [receivers]
+      properties:
+        receivers:
+          type: array
+          maxItems: 1000
+          items:
+            $ref: "#/components/schemas/ReceiverRequest"
+    GroupRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 200
+    MemberIds:
+      type: object
+      additionalProperties: false
+      required: [receiverIds]
+      properties:
+        receiverIds:
+          type: array
+          maxItems: 1000
+          items:
+            type: string
+            format: uuid
+    SuppressionRequest:
+      type: object
+      additionalProperties: false
+      required: [email, scope]
+      properties:
+        email:
+          type: string
+          format: email
+        scope:
+          type: string
+          enum: [MARKETING, ALL]
+    SegmentRequest:
+      type: object
+      additionalProperties: false
+      required: [name, filter]
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        filter:
+          type: object
+          additionalProperties: true
+    SendEmailRequest:
+      type: object
+      additionalProperties: false
+      required: [to, kind, fromKey]
+      properties:
+        to:
+          type: string
+          format: email
+        kind:
+          type: string
+          enum: [TRANSACTIONAL, MARKETING]
+        fromKey:
+          type: string
+          maxLength: 64
+        templateKey:
+          type: string
+          maxLength: 64
+        variables:
+          type: object
+          additionalProperties: true
+        subject:
+          type: string
+          maxLength: 998
+        html:
+          type: string
+          maxLength: 262144
+        text:
+          type: string
+          maxLength: 262144
+        idempotencyKey:
+          type: string
+          maxLength: 194
+          description: >-
+            A batch item's own idempotency key, so a client retrying a whole batch after a timeout does not send every
+            item twice. It namespaces the request id exactly as the single-send `Idempotency-Key` header does; omitted,
+            the item's generated id is the key. 194 is the longest value that fits mailer's 200-character request id
+            after the `email/` namespace.
+    BatchRequest:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/SendEmailRequest"
+    CampaignRequest:
+      type: object
+      additionalProperties: false
+      required: [name, templateKey, targetType, targetId, fromKey]
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        templateKey:
+          type: string
+          maxLength: 64
+        targetType:
+          type: string
+          enum: [GROUP, SEGMENT]
+        targetId:
+          type: string
+          format: uuid
+        fromKey:
+          type: string
+          maxLength: 64
+    ScheduleRequest:
+      type: object
+      additionalProperties: false
+      required: [scheduledAt]
+      properties:
+        scheduledAt:
+          type: string
+          format: date-time

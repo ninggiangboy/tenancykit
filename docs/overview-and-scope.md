@@ -17,7 +17,7 @@ The goal is that a new business app (CRM, HR, …) joins the suite by adding a b
 | **Platform** (`platform/`) | Tenants, tenant domains, users, centralized RBAC, app entitlement, Tenant Systems, API credentials and the suite's signed tokens | `platform.<base-domain>` |
 | **Billing** (`billing/`) | Pricing, Wallet, Ledger, Reservation, Charge, Invoice, Payment, Refund, Subscription, Webhook, the Billing Session and the Customer Portal. It keeps a **replica** of the Platform data it enforces and owns no tenant, user or role logic | `<tenant-code>.<base-domain>` |
 | **Notification** (`notification/`) | Notification types, suite-wide templates, locale and user preferences, the stored in-app notification list, the email dispatch ledger and the outbox that produces `email.send`. It keeps the Platform replica, notifies the suite's own users (tenant users and Platform administrators), and reads no other app's business data; delivery stays with `mailer/` | `<tenant-code>.<base-domain>` and `platform.<base-domain>`, through the `/notification` prefix |
-| **Email** (`email/`) | A Tenant's templates, receivers, groups, segments, suppressions, the sent-email ledger, campaigns and tracking events for the Tenant's **own customers**. It keeps the Platform replica, renders with a sandboxed Mustache and publishes `email.send`; delivery stays with `mailer/`, which reports the outcome back on `mailer.events` | `<tenant-code>.<base-domain>` through the `/email` prefix; `/email/t/*` is public for recipients |
+| **Mailroom** (`mailroom/`) | A Tenant's templates, receivers, groups, segments, suppressions, the sent-email ledger, campaigns and tracking events for the Tenant's **own customers**. It keeps the Platform replica, renders with a sandboxed Mustache and publishes `email.send`; delivery stays with `mailer/`, which reports the outcome back on `mailer.events` | `<tenant-code>.<base-domain>` through the `/mailroom` prefix; `/mailroom/t/*` is public for recipients |
 | **Sample Tenant System** (`tenant/`) | Its own users, catalog, orders, usage and the policy it applies to Billing's state changes. It proves the integration and deploys without Billing | its own host |
 
 `notification/` is the suite's app for **notifying the suite's own users** about platform-side state changes. It
@@ -29,16 +29,16 @@ This supersedes the cancelled phase 10 of `261112-0726-enterprise-suite-foundati
 (the dated reversal, 2026-11-15, moves notification from a non-goal to a deployable because recipients are the suite's
 own users, so no business data crosses a boundary).
 
-`email/` is the suite's app for letting a **Tenant email its own customers**. It owns that tenant's templates,
+`mailroom/` is the suite's app for letting a **Tenant email its own customers**. It owns that tenant's templates,
 receivers, groups, segments, suppressions, sent-email ledger, campaigns and tracking events; it keeps the Platform
 replica, renders with a sandboxed Mustache and publishes `email.send`, while delivery stays with `mailer/`. Unlike
 notification, it is tenant-facing and stores personal data of the Tenant's customers, so it has its own database and
 its own retention and deletion rules. Its own customers are the Tenant's, not the suite's: the data is stored on the
 Tenant's behalf, never read by Platform or another app, and a hard delete removes the customer while keeping the
-suppression that says the address must not be mailed again. It is `email/` and not a module of `notification/`
+suppression that says the address must not be mailed again. It is `mailroom/` and not a module of `notification/`
 because the two have different recipients, different data-protection obligations and different runtimes.
 
-The dated reversal of 2026-11-15 (recorded with the email app plan) moves "notifying a Tenant's customers" and
+The dated reversal of 2026-11-15 (recorded with the mailroom app plan) moves "notifying a Tenant's customers" and
 "bulk/marketing campaigns" from non-goals to scope: the recipient is the Tenant's customer, the data is the Tenant's
 own, and the suite stores it on the Tenant's behalf under explicit retention and deletion rules. Everything else in
 those two non-goal bullets still stands — no SMS, push, Slack, Telegram or real-time stream; no tenant-configurable
@@ -123,15 +123,15 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 - Custom domains. Only the domain-mapping seam is designed.
 - Platform or an app managing a Tenant System's own users, passwords, roles or permissions.
 - Billing operating on resources or deciding on a Tenant System's behalf.
-- **Reversed (2026-11-15):** notifying a Tenant's **customers**. `email/` now serves them, under the decisions recorded
-  in [email.md](email.md): the recipient is the Tenant's customer, the data is the Tenant's own, and the suite stores it
+- **Reversed (2026-11-15):** notifying a Tenant's **customers**. `mailroom/` now serves them, under the decisions recorded
+  in [mailroom.md](mailroom.md): the recipient is the Tenant's customer, the data is the Tenant's own, and the suite stores it
   on the Tenant's behalf with retention and deletion rules. The notification app still serves Platform tenant users
   only and reads no Billing data.
 - SMS, push, Slack, Telegram or a real-time SSE stream; a tenant-configurable rules engine, a template editor;
   attachments, bounce and complaint processing, digest scheduling, or a second email retry loop. Email **delivery**
   stays with `mailer/`, which sends an email a producer has already rendered and owns no template, no rule about who is
   notified and no localisation. Webhooks stay in Billing. **Reversed (2026-11-15):** bulk/marketing campaigns are now in
-  scope for `email/`, which owns the campaign state machine, suppression and tracking; mailer still owns delivery.
+  scope for `mailroom/`, which owns the campaign state machine, suppression and tracking; mailer still owns delivery.
 - A second **business app** beyond Billing in the sense of an app that owns commercial data. The suite's first app
   beyond Billing is `notification/`, a platform-facing app rather than a business app; the extension trace — a build, a
   permission catalog, an entitlement and a proxy route, with no Platform code change — is now proven rather than

@@ -9,7 +9,7 @@ in-app notifications and publishes **already-rendered** `email.send` commands to
 
 "Platform user" means a user of this suite, at either scope: a Tenant User, and a Platform Administrator whose rows live
 under the reserved Platform tenant. It never means a Tenant's own customer: emailing a Tenant's own customers is
-[email.md](email.md)'s job, with its own database, suppression rules and retention obligations.
+[mailroom.md](mailroom.md)'s job, with its own database, suppression rules and retention obligations.
 
 ## What it is, and what it is not
 

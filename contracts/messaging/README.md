@@ -74,14 +74,14 @@ version guard drops any the snapshot already covered. Platform never hard-delete
 
 | Exchange (topic, durable) | Producer | Routing key | Queues (one per consuming app) |
 |---|---|---|---|
-| `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events`, `notification.platform-events`, `email.platform-events` |
+| `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events`, `notification.platform-events`, `mailroom.platform-events` |
 | `billing.events` | Billing | event type | none yet; an app that wants Billing's public events declares its own queue |
 | `mailer.commands` | any producer | command type, today `email.send` | `mailer.commands` (and its `mailer.commands.dlq`) |
-| `mailer.events` | Mailer | event type, today `email-delivery.changed` | `email.mailer-events` (and its `email.mailer-events.dlq`) |
+| `mailer.events` | Mailer | event type, today `email-delivery.changed` | `mailroom.mailer-events` (and its `mailroom.mailer-events.dlq`) |
 
-`notification.platform-events` and `email.platform-events` bind to `platform.events` with the five state-transfer
+`notification.platform-events` and `mailroom.platform-events` bind to `platform.events` with the five state-transfer
 routing keys, declare `x-dead-letter-exchange: suite.dlx`, and have a matching `.dlq`. Notification declares no
-exchange: it produces `email.send` into `mailer.commands` and exports no event of its own. Email declares no exchange
+exchange: it produces `email.send` into `mailer.commands` and exports no event of its own. Mailroom declares no exchange
 either: it produces `email.send` and consumes `email-delivery.changed` from mailer's `mailer.events`, which is the
 suite's first exchange owned by a service that is otherwise a pure consumer.
 

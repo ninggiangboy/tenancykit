@@ -91,13 +91,13 @@ declare_user notification \
   '^(notification\\.platform-events|notification\\.platform-events\\.dlq|suite\\.dlx|mailer\\.commands)$' \
   '^(platform\\.events|notification\\.platform-events|notification\\.platform-events\\.dlq|suite\\.dlx)$'
 
-# Email consumes platform.events and mailer.events on its own queues and publishes exactly one command to
+# Mailroom consumes platform.events and mailer.events on its own queues and publishes exactly one command to
 # mailer.commands. It declares no exchange of its own. `write` covers its two queues, their DLQs, suite.dlx and
 # mailer.commands (publishing checks write on the exchange). `read` covers both source exchanges (a queue.bind checks
 # read on the source) and its own queues (consuming checks read on the queue). It has no write grant on mailer.events,
 # which is what the isolation smoke proves.
-declare_user email \
-  "${EMAIL_BROKER_PASSWORD:?set the email broker password}" \
-  '^(email\\.platform-events|email\\.platform-events\\.dlq|email\\.mailer-events|email\\.mailer-events\\.dlq|suite\\.dlx|mailer\\.commands)$' \
-  '^(email\\.platform-events|email\\.platform-events\\.dlq|email\\.mailer-events|email\\.mailer-events\\.dlq|suite\\.dlx|mailer\\.commands)$' \
-  '^(platform\\.events|mailer\\.events|email\\.platform-events|email\\.platform-events\\.dlq|email\\.mailer-events|email\\.mailer-events\\.dlq|suite\\.dlx)$'
+declare_user mailroom \
+  "${MAILROOM_BROKER_PASSWORD:?set the mailroom broker password}" \
+  '^(mailroom\\.platform-events|mailroom\\.platform-events\\.dlq|mailroom\\.mailer-events|mailroom\\.mailer-events\\.dlq|suite\\.dlx|mailer\\.commands)$' \
+  '^(mailroom\\.platform-events|mailroom\\.platform-events\\.dlq|mailroom\\.mailer-events|mailroom\\.mailer-events\\.dlq|suite\\.dlx|mailer\\.commands)$' \
+  '^(platform\\.events|mailer\\.events|mailroom\\.platform-events|mailroom\\.platform-events\\.dlq|mailroom\\.mailer-events|mailroom\\.mailer-events\\.dlq|suite\\.dlx)$'

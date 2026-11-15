@@ -80,32 +80,32 @@ x-notification-environment: &notification-environment
   PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET: ${NOTIFICATION_REPLICA_CLIENT_SECRET:?set it in .env}
   NOTIFICATION_PORT: "8080"
 
-# Email's settings, shared by its migrate step, api and worker. It consumes platform.events and mailer.events on its
+# Mailroom's settings, shared by its migrate step, api and worker. It consumes platform.events and mailer.events on its
 # own queues and publishes one command to mailer.commands; it declares no exchange of its own.
-x-email-environment: &email-environment
+x-mailroom-environment: &mailroom-environment
   JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50"
-  EMAIL_DB_URL: jdbc:postgresql://postgres:5432/email
-  EMAIL_DB_USER: email_app
-  EMAIL_DB_PASSWORD: ${EMAIL_DB_PASSWORD:?set it in .env}
-  EMAIL_MIGRATION_DB_USER: email_owner
-  EMAIL_MIGRATION_DB_PASSWORD: ${EMAIL_MIGRATION_DB_PASSWORD:?set it in .env}
-  EMAIL_RABBITMQ_HOST: rabbitmq
-  EMAIL_RABBITMQ_USER: email
-  EMAIL_RABBITMQ_PASSWORD: ${EMAIL_RABBITMQ_PASSWORD:?set it in .env}
+  MAILROOM_DB_URL: jdbc:postgresql://postgres:5432/mailroom
+  MAILROOM_DB_USER: mailroom_app
+  MAILROOM_DB_PASSWORD: ${MAILROOM_DB_PASSWORD:?set it in .env}
+  MAILROOM_MIGRATION_DB_USER: mailroom_owner
+  MAILROOM_MIGRATION_DB_PASSWORD: ${MAILROOM_MIGRATION_DB_PASSWORD:?set it in .env}
+  MAILROOM_RABBITMQ_HOST: rabbitmq
+  MAILROOM_RABBITMQ_USER: mailroom
+  MAILROOM_RABBITMQ_PASSWORD: ${MAILROOM_RABBITMQ_PASSWORD:?set it in .env}
   # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
-  EMAIL_OIDC_ISSUER_URI: ${EMAIL_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
-  EMAIL_OIDC_JWK_SET_URI: ${EMAIL_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
-  EMAIL_PLATFORM_BASE_URL: http://platform.localhost:8080
-  EMAIL_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
-  EMAIL_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
+  MAILROOM_OIDC_ISSUER_URI: ${MAILROOM_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
+  MAILROOM_OIDC_JWK_SET_URI: ${MAILROOM_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  MAILROOM_PLATFORM_BASE_URL: http://platform.localhost:8080
+  MAILROOM_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
+  MAILROOM_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
   # The replica's own service client, never shared with Billing or Notification.
-  PLATFORM_EMAIL_SERVICE_CLIENT_ID: email
-  PLATFORM_EMAIL_SERVICE_CLIENT_SECRET: ${EMAIL_REPLICA_CLIENT_SECRET:?set it in .env}
-  EMAIL_TRACKING_KEY_ID: ${EMAIL_TRACKING_KEY_ID:-k1}
-  EMAIL_TRACKING_SECRET: ${EMAIL_TRACKING_SECRET:?set it in .env}
-  # The public host a recipient reaches /email/t/... from; it must be a hostname Caddy serves.
-  EMAIL_PUBLIC_BASE_URL: ${EMAIL_PUBLIC_BASE_URL:-http://localhost:8090/email}
-  EMAIL_PORT: "8080"
+  PLATFORM_MAILROOM_SERVICE_CLIENT_ID: mailroom
+  PLATFORM_MAILROOM_SERVICE_CLIENT_SECRET: ${MAILROOM_REPLICA_CLIENT_SECRET:?set it in .env}
+  MAILROOM_TRACKING_KEY_ID: ${MAILROOM_TRACKING_KEY_ID:-k1}
+  MAILROOM_TRACKING_SECRET: ${MAILROOM_TRACKING_SECRET:?set it in .env}
+  # The public host a recipient reaches /mailroom/t/... from; it must be a hostname Caddy serves.
+  MAILROOM_PUBLIC_BASE_URL: ${MAILROOM_PUBLIC_BASE_URL:-http://localhost:8090/mailroom}
+  MAILROOM_PORT: "8080"
 
 x-app: &app
   restart: unless-stopped
@@ -128,8 +128,8 @@ services:
       MAILER_DB_PASSWORD: ${MAILER_DB_PASSWORD:?set it in .env}
       NOTIFICATION_MIGRATION_DB_PASSWORD: ${NOTIFICATION_MIGRATION_DB_PASSWORD:?set it in .env}
       NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:?set it in .env}
-      EMAIL_MIGRATION_DB_PASSWORD: ${EMAIL_MIGRATION_DB_PASSWORD:?set it in .env}
-      EMAIL_DB_PASSWORD: ${EMAIL_DB_PASSWORD:?set it in .env}
+      MAILROOM_MIGRATION_DB_PASSWORD: ${MAILROOM_MIGRATION_DB_PASSWORD:?set it in .env}
+      MAILROOM_DB_PASSWORD: ${MAILROOM_DB_PASSWORD:?set it in .env}
     ports:
       - "5432:5432"
     volumes:
@@ -172,7 +172,7 @@ services:
       BILLING_BROKER_PASSWORD: ${BILLING_RABBITMQ_PASSWORD:?set it in .env}
       MAILER_BROKER_PASSWORD: ${MAILER_RABBITMQ_PASSWORD:?set it in .env}
       NOTIFICATION_BROKER_PASSWORD: ${NOTIFICATION_RABBITMQ_PASSWORD:?set it in .env}
-      EMAIL_BROKER_PASSWORD: ${EMAIL_RABBITMQ_PASSWORD:?set it in .env}
+      MAILROOM_BROKER_PASSWORD: ${MAILROOM_RABBITMQ_PASSWORD:?set it in .env}
     entrypoint: ["/bin/sh", "-c"]
     command: ["sh /ops/rabbitmq/declare-users.sh"]
     volumes:
@@ -252,8 +252,8 @@ services:
       PLATFORM_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
       PLATFORM_NOTIFICATION_SERVICE_CLIENT_ID: notification
       PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
-      PLATFORM_EMAIL_SERVICE_CLIENT_ID: email
-      PLATFORM_EMAIL_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_EMAIL_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
+      PLATFORM_MAILROOM_SERVICE_CLIENT_ID: mailroom
+      PLATFORM_MAILROOM_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_MAILROOM_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
     ports:
       - "8082:8080"
     networks:
@@ -476,16 +476,16 @@ services:
       timeout: 5s
       retries: 60
 
-  # Email's background edge: the platform-events and mailer-events listeners, the outbox relay, the campaign
+  # Mailroom's background edge: the platform-events and mailer-events listeners, the outbox relay, the campaign
   # scheduler and publisher, housekeeping and the replica rebuild.
   #
-  # Mailpit is deliberately not a dependency: mailer owns SMTP, and a dead mail server must not stop email from
+  # Mailpit is deliberately not a dependency: mailer owns SMTP, and a dead mail server must not stop mailroom from
   # accepting a request or queueing a command.
-  email-worker:
+  mailroom-worker:
     <<: *app
     build:
       context: .
-      dockerfile: email/apps/app-boot/Dockerfile
+      dockerfile: mailroom/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -495,10 +495,10 @@ services:
         condition: service_completed_successfully
       platform:
         condition: service_healthy
-      email-migrate:
+      mailroom-migrate:
         condition: service_completed_successfully
     environment:
-      <<: *email-environment
+      <<: *mailroom-environment
       SPRING_PROFILES_ACTIVE: worker
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
@@ -506,13 +506,13 @@ services:
       timeout: 5s
       retries: 60
 
-  # Writes Email's schema once, as the table owner, then exits.
-  email-migrate:
+  # Writes Mailroom's schema once, as the table owner, then exits.
+  mailroom-migrate:
     <<: *app
     restart: "no"
     build:
       context: .
-      dockerfile: email/apps/app-boot/Dockerfile
+      dockerfile: mailroom/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -523,16 +523,16 @@ services:
       platform:
         condition: service_healthy
     environment:
-      <<: *email-environment
+      <<: *mailroom-environment
       SPRING_PROFILES_ACTIVE: migrate
 
-  # Email's HTTP edge: templates, receivers, groups, segments, suppressions, emails, campaigns, settings and the
+  # Mailroom's HTTP edge: templates, receivers, groups, segments, suppressions, emails, campaigns, settings and the
   # public tracking endpoints.
-  email-api:
+  mailroom-api:
     <<: *app
     build:
       context: .
-      dockerfile: email/apps/app-boot/Dockerfile
+      dockerfile: mailroom/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -542,10 +542,10 @@ services:
         condition: service_completed_successfully
       platform:
         condition: service_healthy
-      email-migrate:
+      mailroom-migrate:
         condition: service_completed_successfully
     environment:
-      <<: *email-environment
+      <<: *mailroom-environment
       SPRING_PROFILES_ACTIVE: api
     ports:
       - "8086:8080"
@@ -601,7 +601,7 @@ services:
         condition: service_healthy
       notification-api:
         condition: service_healthy
-      email-api:
+      mailroom-api:
         condition: service_healthy
       tenant:
         condition: service_healthy

@@ -28,8 +28,8 @@ jobs:
               -e 's/^MAILER_DB_PASSWORD=.*/MAILER_DB_PASSWORD=ci-mailer-app/' \
               -e 's/^NOTIFICATION_MIGRATION_DB_PASSWORD=.*/NOTIFICATION_MIGRATION_DB_PASSWORD=ci-notification-owner/' \
               -e 's/^NOTIFICATION_DB_PASSWORD=.*/NOTIFICATION_DB_PASSWORD=ci-notification-app/' \
-              -e 's/^EMAIL_MIGRATION_DB_PASSWORD=.*/EMAIL_MIGRATION_DB_PASSWORD=ci-email-owner/' \
-              -e 's/^EMAIL_DB_PASSWORD=.*/EMAIL_DB_PASSWORD=ci-email-app/' \
+              -e 's/^MAILROOM_MIGRATION_DB_PASSWORD=.*/MAILROOM_MIGRATION_DB_PASSWORD=ci-mailroom-owner/' \
+              -e 's/^MAILROOM_DB_PASSWORD=.*/MAILROOM_DB_PASSWORD=ci-mailroom-app/' \
               -e 's/^KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD=.*/KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD=ci-keycloak-admin/' \
               -e 's/^PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET=.*/PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET=ci-keycloak-client/' \
               -e 's/^SMOKE_CLIENT_SECRET=.*/SMOKE_CLIENT_SECRET=ci-smoke-client/' \
@@ -38,7 +38,7 @@ jobs:
               -e 's/^BILLING_RABBITMQ_PASSWORD=.*/BILLING_RABBITMQ_PASSWORD=ci-billing-broker/' \
               -e 's/^MAILER_RABBITMQ_PASSWORD=.*/MAILER_RABBITMQ_PASSWORD=ci-mailer-broker/' \
               -e 's/^NOTIFICATION_RABBITMQ_PASSWORD=.*/NOTIFICATION_RABBITMQ_PASSWORD=ci-notification-broker/' \
-              -e 's/^EMAIL_RABBITMQ_PASSWORD=.*/EMAIL_RABBITMQ_PASSWORD=ci-email-broker/' \
+              -e 's/^MAILROOM_RABBITMQ_PASSWORD=.*/MAILROOM_RABBITMQ_PASSWORD=ci-mailroom-broker/' \
               -e 's/^BILLING_REPLICA_CLIENT_SECRET=.*/BILLING_REPLICA_CLIENT_SECRET=ci-replica-secret/' \
               -e 's/^PLATFORM_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_SERVICE_CLIENT_SECRET_HASH=ci-replica-hash/' \
               .env.example > .env
@@ -49,10 +49,10 @@ jobs:
           NOTIFICATION_HASH=$(printf %s 'ci-notification-replica-secret' | sha256sum | cut -d' ' -f1)
           sed -i "s/^NOTIFICATION_REPLICA_CLIENT_SECRET=.*/NOTIFICATION_REPLICA_CLIENT_SECRET=ci-notification-replica-secret/" .env
           sed -i "s/^PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH=${NOTIFICATION_HASH}/" .env
-          EMAIL_HASH=$(printf %s 'ci-email-replica-secret' | sha256sum | cut -d' ' -f1)
-          sed -i "s/^EMAIL_REPLICA_CLIENT_SECRET=.*/EMAIL_REPLICA_CLIENT_SECRET=ci-email-replica-secret/" .env
-          sed -i "s/^PLATFORM_EMAIL_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_EMAIL_SERVICE_CLIENT_SECRET_HASH=${EMAIL_HASH}/" .env
-          sed -i 's/^EMAIL_TRACKING_SECRET=.*/EMAIL_TRACKING_SECRET=ci-tracking-secret/' .env
+          MAILROOM_HASH=$(printf %s 'ci-mailroom-replica-secret' | sha256sum | cut -d' ' -f1)
+          sed -i "s/^MAILROOM_REPLICA_CLIENT_SECRET=.*/MAILROOM_REPLICA_CLIENT_SECRET=ci-mailroom-replica-secret/" .env
+          sed -i "s/^PLATFORM_MAILROOM_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_MAILROOM_SERVICE_CLIENT_SECRET_HASH=${MAILROOM_HASH}/" .env
+          sed -i 's/^MAILROOM_TRACKING_SECRET=.*/MAILROOM_TRACKING_SECRET=ci-tracking-secret/' .env
           MASTER_KEY=$(openssl rand -base64 32)
           sed -i "s|^BILLING_SECRETS_MASTER_KEY=.*|BILLING_SECRETS_MASTER_KEY=${MASTER_KEY}|" .env
           # Mailer's master key protects tenant credentials and must decode to exactly 32 bytes too; the cipher refuses

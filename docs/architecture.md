@@ -173,7 +173,7 @@ reads no Billing data: recipients are Platform tenant users. The `platform`/`dis
 keeps, and it is what lets `context-uses-only-own-tables` hold while replica tables and notification tables
 coexist in one service. Notification produces `email.send` and no event another app consumes.
 
-**Email** (`email/`) — the suite's app for letting a Tenant email its own customers, in four contexts:
+**Mailroom** (`mailroom/`) — the suite's app for letting a Tenant email its own customers, in four contexts:
 
 | Directory | Module | Holds |
 |---|---|---|
@@ -189,11 +189,11 @@ coexist in one service. Notification produces `email.send` and no event another 
 It owns a tenant's customer data, which notification deliberately does not, so it is a separate database rather than a
 notification module. `sending` reaches `content` and `audience` only through their `api` ports, which is what keeps
 `context-uses-only-own-tables` true while the four contexts share one database. It produces `email.send` and consumes
-`email-delivery.changed` from `mailer.events`; mailer is the only transport. The public `/email/t/*` endpoints are the
+`email-delivery.changed` from `mailer.events`; mailer is the only transport. The public `/mailroom/t/*` endpoints are the
 suite's first unauthenticated surface, isolated in one controller and one ArchUnit rule.
 
 **The shared core** sits beside the services, in `core/`. It is its own Gradle build that `platform/`, `billing/`,
-`notification/`, `mailer/`, `email/` and `tenant/` include with `includeBuild("../core")`:
+`notification/`, `mailer/`, `mailroom/` and `tenant/` include with `includeBuild("../core")`:
 
 | Module | Holds |
 |---|---|

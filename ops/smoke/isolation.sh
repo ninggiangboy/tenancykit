@@ -83,13 +83,13 @@ require_refused "notification_app connecting to billing" psql_as notification_ap
 require_refused "notification_app connecting to platform" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" platform
 require_refused "notification_app connecting to tenant" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" tenant
 require_refused "notification_app connecting to mailer" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" mailer
-require_refused "email_app connecting to billing" psql_as email_app "${EMAIL_DB_PASSWORD:?}" billing
-require_refused "email_app connecting to platform" psql_as email_app "${EMAIL_DB_PASSWORD:?}" platform
-require_refused "email_app connecting to tenant" psql_as email_app "${EMAIL_DB_PASSWORD:?}" tenant
-require_refused "email_app connecting to mailer" psql_as email_app "${EMAIL_DB_PASSWORD:?}" mailer
-require_refused "email_app connecting to notification" psql_as email_app "${EMAIL_DB_PASSWORD:?}" notification
-require_refused "notification_app connecting to email" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" email
-require_refused "mailer_app connecting to email" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" email
+require_refused "mailroom_app connecting to billing" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" billing
+require_refused "mailroom_app connecting to platform" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" platform
+require_refused "mailroom_app connecting to tenant" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" tenant
+require_refused "mailroom_app connecting to mailer" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" mailer
+require_refused "mailroom_app connecting to notification" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" notification
+require_refused "notification_app connecting to mailroom" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" mailroom
+require_refused "mailer_app connecting to mailroom" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" mailroom
 
 # ------------------------------ broker ------------------------------
 step "cross-exchange publishing must be refused"
@@ -157,6 +157,12 @@ billing_read_notification_queue() {
     get queue=notification.platform-events count=1 ackmode=reject_requeue_true > /dev/null 2>&1
 }
 
+billing_read_mailroom_queue() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username billing --password "${BILLING_RABBITMQ_PASSWORD:?}" \
+    get queue=mailroom.platform-events count=1 ackmode=reject_requeue_true > /dev/null 2>&1
+}
+
 # The positive control: notification is the one service user with a cross-service publish grant, and a script that only
 # proved denials would keep passing if the grant vanished.
 notification_publish_email_command() {
@@ -165,35 +171,35 @@ notification_publish_email_command() {
     publish exchange=mailer.commands routing_key=email.send payload='{}' > /dev/null 2>&1
 }
 
-# Email may publish only to mailer.commands and read only its own queues. In particular it may not publish to
+# Mailroom may publish only to mailer.commands and read only its own queues. In particular it may not publish to
 # mailer.events: a consumer of mailer's results that could also write them would make its own ledger.
-email_publish_to_platform() {
+mailroom_publish_to_platform() {
   docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username email --password "${EMAIL_RABBITMQ_PASSWORD:?}" \
+    rabbitmqadmin --host rabbitmq --username mailroom --password "${MAILROOM_RABBITMQ_PASSWORD:?}" \
     publish exchange=platform.events routing_key=tenant.changed payload='{}' > /dev/null 2>&1
 }
 
-email_publish_to_billing() {
+mailroom_publish_to_billing() {
   docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username email --password "${EMAIL_RABBITMQ_PASSWORD:?}" \
+    rabbitmqadmin --host rabbitmq --username mailroom --password "${MAILROOM_RABBITMQ_PASSWORD:?}" \
     publish exchange=billing.events routing_key=customer.created payload='{}' > /dev/null 2>&1
 }
 
-email_publish_to_mailer_events() {
+mailroom_publish_to_mailer_events() {
   docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username email --password "${EMAIL_RABBITMQ_PASSWORD:?}" \
+    rabbitmqadmin --host rabbitmq --username mailroom --password "${MAILROOM_RABBITMQ_PASSWORD:?}" \
     publish exchange=mailer.events routing_key=email-delivery.changed payload='{}' > /dev/null 2>&1
 }
 
-email_read_billing_queue() {
+mailroom_read_billing_queue() {
   docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username email --password "${EMAIL_RABBITMQ_PASSWORD:?}" \
+    rabbitmqadmin --host rabbitmq --username mailroom --password "${MAILROOM_RABBITMQ_PASSWORD:?}" \
     get queue=billing.platform-events count=1 ackmode=reject_requeue_true > /dev/null 2>&1
 }
 
-email_publish_email_command() {
+mailroom_publish_email_command() {
   docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username email --password "${EMAIL_RABBITMQ_PASSWORD:?}" \
+    rabbitmqadmin --host rabbitmq --username mailroom --password "${MAILROOM_RABBITMQ_PASSWORD:?}" \
     publish exchange=mailer.commands routing_key=email.send payload='{}' > /dev/null 2>&1
 }
 
@@ -214,14 +220,15 @@ if ! notification_publish_email_command; then
   fail "the notification user cannot publish email.send to mailer.commands; the one cross-service grant is missing"
 fi
 echo "allowed: the notification user publishing email.send to mailer.commands"
-require_refused "the email user publishing to platform.events" email_publish_to_platform
-require_refused "the email user publishing to billing.events" email_publish_to_billing
-require_refused "the email user publishing to mailer.events" email_publish_to_mailer_events
-require_refused "the email user reading billing.platform-events" email_read_billing_queue
-if ! email_publish_email_command; then
-  fail "the email user cannot publish email.send to mailer.commands; its only publish grant is missing"
+require_refused "the mailroom user publishing to platform.events" mailroom_publish_to_platform
+require_refused "the mailroom user publishing to billing.events" mailroom_publish_to_billing
+require_refused "the mailroom user publishing to mailer.events" mailroom_publish_to_mailer_events
+require_refused "the mailroom user reading billing.platform-events" mailroom_read_billing_queue
+require_refused "the billing user reading mailroom.platform-events" billing_read_mailroom_queue
+if ! mailroom_publish_email_command; then
+  fail "the mailroom user cannot publish email.send to mailer.commands; its only publish grant is missing"
 fi
-echo "allowed: the email user publishing email.send to mailer.commands"
+echo "allowed: the mailroom user publishing email.send to mailer.commands"
 
 # ------------------------------ row-level security ------------------------------
 step "a Platform user's notification row stays inside the Platform tenant"
@@ -264,25 +271,25 @@ echo "refused: another tenant reading the Platform user's notification row"
 
 # The email ledger is a tenant's own data: a row under one tenant is invisible to another even though both connect as
 # the same app role. This is the same policy every email table uses.
-sql_as_owner email "insert into emails (
+sql_as_owner mailroom "insert into emails (
     id, tenant_id, kind, to_address, from_key, subject, status, request_id, created_at, updated_at)
   values ('55555555-5555-7555-8555-555555555555', '${PLATFORM_TENANT_ID}', 'TRANSACTIONAL', 'a@example.com',
     'noreply', 'T', 'QUEUED', 'r', now(), now())
   on conflict do nothing" > /dev/null
 
-email_visible_from_platform=$(
-  sql_as_tenant email_app "${EMAIL_DB_PASSWORD:?}" email "${PLATFORM_TENANT_ID}" \
+mailroom_visible_from_platform=$(
+  sql_as_tenant mailroom_app "${MAILROOM_DB_PASSWORD:?}" mailroom "${PLATFORM_TENANT_ID}" \
     "select count(*) from emails"
 )
-email_visible_from_another=$(
-  sql_as_tenant email_app "${EMAIL_DB_PASSWORD:?}" email "${OTHER_TENANT_ID}" \
+mailroom_visible_from_another=$(
+  sql_as_tenant mailroom_app "${MAILROOM_DB_PASSWORD:?}" mailroom "${OTHER_TENANT_ID}" \
     "select count(*) from emails"
 )
-[ "${email_visible_from_platform}" = "1" ] ||
-  fail "the Platform tenant cannot read its own email row (saw ${email_visible_from_platform})"
-[ "${email_visible_from_another}" = "0" ] ||
-  fail "another tenant can read the Platform tenant's email row (saw ${email_visible_from_another})"
-sql_as_owner email "delete from emails where id = '55555555-5555-7555-8555-555555555555'" > /dev/null
+[ "${mailroom_visible_from_platform}" = "1" ] ||
+  fail "the Platform tenant cannot read its own email row (saw ${mailroom_visible_from_platform})"
+[ "${mailroom_visible_from_another}" = "0" ] ||
+  fail "another tenant can read the Platform tenant's email row (saw ${mailroom_visible_from_another})"
+sql_as_owner mailroom "delete from emails where id = '55555555-5555-7555-8555-555555555555'" > /dev/null
 echo "refused: another tenant reading the Platform tenant's email row"
 
 # ------------------------------ a control ------------------------------
@@ -303,9 +310,9 @@ if ! psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" notification; then
 fi
 echo "allowed: notification_app connecting to notification"
 
-if ! psql_as email_app "${EMAIL_DB_PASSWORD:?}" email; then
-  fail "email_app cannot reach its own database; the isolation checks are not meaningful"
+if ! psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" mailroom; then
+  fail "mailroom_app cannot reach its own database; the isolation checks are not meaningful"
 fi
-echo "allowed: email_app connecting to email"
+echo "allowed: mailroom_app connecting to mailroom"
 
 echo "PASS: no service can reach another service's database or exchange"

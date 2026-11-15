@@ -74,7 +74,7 @@ jobs:
           keycloak_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .keycloak)"
           mailer_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .mailer)"
           notification_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .notification)"
-          email_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .email)"
+          mailroom_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .mailroom)"
 
           docker build -f platform/apps/app-boot/Dockerfile -t "${platform_repo}:${TAG}" .
           docker push "${platform_repo}:${TAG}"
@@ -91,8 +91,8 @@ jobs:
           docker build -f notification/apps/app-boot/Dockerfile -t "${notification_repo}:${TAG}" .
           docker push "${notification_repo}:${TAG}"
 
-          docker build -f email/apps/app-boot/Dockerfile -t "${email_repo}:${TAG}" .
-          docker push "${email_repo}:${TAG}"
+          docker build -f mailroom/apps/app-boot/Dockerfile -t "${mailroom_repo}:${TAG}" .
+          docker push "${mailroom_repo}:${TAG}"
 
       - name: Bootstrap the database and broker (first deploy only)
         if: ${{ inputs.bootstrap_data }}
@@ -202,7 +202,7 @@ jobs:
           cluster="$(terraform output -raw cluster_name)"
           subnets="$(terraform output -json private_subnet_ids | jq -r 'join(",")')"
           security_group="$(terraform output -raw task_security_group_id)"
-          definition="$(terraform output -json task_definition_arns | jq -r .email_migrate)"
+          definition="$(terraform output -json task_definition_arns | jq -r .mailroom_migrate)"
 
           task="$(aws ecs run-task \
             --cluster "$cluster" \
@@ -240,5 +240,5 @@ jobs:
           roll mailer mailer
           roll notification_api notification_api
           roll notification_worker notification_worker
-          roll email_api email_api
-          roll email_worker email_worker
+          roll mailroom_api mailroom_api
+          roll mailroom_worker mailroom_worker

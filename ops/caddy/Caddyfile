@@ -8,7 +8,7 @@
 #   /platform/*    -> Platform, with the /platform prefix stripped, on every host. The Host is kept, so a request
 #                     to acme.localhost/platform/... is a tenant-scoped Platform call for tenant acme.
 #   /notification/* -> Notification, prefix stripped.
-#   /email/*       -> Email, prefix stripped; /email/t/* is the public tracking surface.
+#   /mailroom/*    -> Mailroom, prefix stripped; /mailroom/t/* is the public tracking surface.
 #   everything else -> Billing (/api/*, /portal/*, /stripe/*), unchanged.
 #   platform.localhost also serves Platform at its root, because an administrator works from that one host.
 #
@@ -45,14 +45,14 @@ http://:80 {
 		reverse_proxy notification-api:8080
 	}
 
-	# Email is the fifth app, reached through its own prefix on every tenant host. The public tracking paths live under
-	# the same prefix (`/email/t/...`); they need no credentials because the proxy adds none, and the HMAC-signed token
+	# Mailroom is the fifth app, reached through its own prefix on every tenant host. The public tracking paths live under
+	# the same prefix (`/mailroom/t/...`); they need no credentials because the proxy adds none, and the HMAC-signed token
 	# in the path is their proof. A per-IP rate limit belongs here in a deployment that needs one; the stock Caddy image
 	# has no rate-limit directive, so the application's own per-email-per-minute cap is the bound this stack ships.
-	@emailPath path /email/*
-	handle @emailPath {
-		uri strip_prefix /email
-		reverse_proxy email-api:8080
+	@mailroomPath path /mailroom/*
+	handle @mailroomPath {
+		uri strip_prefix /mailroom
+		reverse_proxy mailroom-api:8080
 	}
 
 	@platformHost host platform.localhost
