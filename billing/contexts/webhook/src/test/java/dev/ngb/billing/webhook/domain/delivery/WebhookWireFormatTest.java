@@ -2,8 +2,9 @@ package dev.ngb.billing.webhook.domain.delivery;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import dev.ngb.billing.webhook.adapter.delivery.crypto.HmacSha256Signer;
+import dev.ngb.billing.webhook.adapter.delivery.crypto.SharedPayloadSigner;
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.webhook.WebhookHeaderSet;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -25,45 +26,45 @@ class WebhookWireFormatTest {
 
     @Test
     void aFixedKeyTimestampAndBodyProduceAFixedSignature() {
-        String signature = new HmacSha256Signer().sign(SECRET, TIMESTAMP, BODY);
+        String signature = new SharedPayloadSigner().sign(SECRET, TIMESTAMP, BODY);
 
         assertThat(signature).isEqualTo("v1=d74d6a31a2e176ab3744f4865f6cf7c70ff5d01140cc5669da15c9a47bcabb47");
     }
 
     @Test
     void theSignatureCoversTheTimestampBeforeTheDot() {
-        String other = new HmacSha256Signer().sign(SECRET, TIMESTAMP + 1, BODY);
+        String other = new SharedPayloadSigner().sign(SECRET, TIMESTAMP + 1, BODY);
 
-        assertThat(other).isNotEqualTo(new HmacSha256Signer().sign(SECRET, TIMESTAMP, BODY));
+        assertThat(other).isNotEqualTo(new SharedPayloadSigner().sign(SECRET, TIMESTAMP, BODY));
     }
 
     @Test
     void theSecretIsUsedWholeIncludingItsPrefix() {
-        String withoutPrefix = new HmacSha256Signer().sign("test_golden_secret", TIMESTAMP, BODY);
+        String withoutPrefix = new SharedPayloadSigner().sign("test_golden_secret", TIMESTAMP, BODY);
 
-        assertThat(withoutPrefix).isNotEqualTo(new HmacSha256Signer().sign(SECRET, TIMESTAMP, BODY));
+        assertThat(withoutPrefix).isNotEqualTo(new SharedPayloadSigner().sign(SECRET, TIMESTAMP, BODY));
     }
 
     @Test
     void theSixHeaderNamesAreTheDocumentedOnes() {
-        assertThat(WebhookHeaders.EVENT_ID).isEqualTo("Billing-Event-Id");
-        assertThat(WebhookHeaders.EVENT_TYPE).isEqualTo("Billing-Event-Type");
-        assertThat(WebhookHeaders.TIMESTAMP).isEqualTo("Billing-Timestamp");
-        assertThat(WebhookHeaders.KEY_ID).isEqualTo("Billing-Key-Id");
-        assertThat(WebhookHeaders.SIGNATURE).isEqualTo("Billing-Signature");
-        assertThat(WebhookHeaders.ATTEMPT).isEqualTo("Billing-Attempt");
+        assertThat(WebhookHeaderSet.BILLING.eventId()).isEqualTo("Billing-Event-Id");
+        assertThat(WebhookHeaderSet.BILLING.eventType()).isEqualTo("Billing-Event-Type");
+        assertThat(WebhookHeaderSet.BILLING.timestamp()).isEqualTo("Billing-Timestamp");
+        assertThat(WebhookHeaderSet.BILLING.keyId()).isEqualTo("Billing-Key-Id");
+        assertThat(WebhookHeaderSet.BILLING.signature()).isEqualTo("Billing-Signature");
+        assertThat(WebhookHeaderSet.BILLING.attempt()).isEqualTo("Billing-Attempt");
     }
 
     /** The header constants and {@code HttpHeaders} are one source, so a rename cannot touch only one of them. */
     @Test
     void theHeaderNamesComeFromTheSharedConstants() {
         Map<String, String> expected = new LinkedHashMap<>();
-        expected.put(WebhookHeaders.EVENT_ID, HttpHeaders.BILLING_EVENT_ID);
-        expected.put(WebhookHeaders.EVENT_TYPE, HttpHeaders.BILLING_EVENT_TYPE);
-        expected.put(WebhookHeaders.TIMESTAMP, HttpHeaders.BILLING_TIMESTAMP);
-        expected.put(WebhookHeaders.KEY_ID, HttpHeaders.BILLING_KEY_ID);
-        expected.put(WebhookHeaders.SIGNATURE, HttpHeaders.BILLING_SIGNATURE);
-        expected.put(WebhookHeaders.ATTEMPT, HttpHeaders.BILLING_ATTEMPT);
+        expected.put(WebhookHeaderSet.BILLING.eventId(), HttpHeaders.BILLING_EVENT_ID);
+        expected.put(WebhookHeaderSet.BILLING.eventType(), HttpHeaders.BILLING_EVENT_TYPE);
+        expected.put(WebhookHeaderSet.BILLING.timestamp(), HttpHeaders.BILLING_TIMESTAMP);
+        expected.put(WebhookHeaderSet.BILLING.keyId(), HttpHeaders.BILLING_KEY_ID);
+        expected.put(WebhookHeaderSet.BILLING.signature(), HttpHeaders.BILLING_SIGNATURE);
+        expected.put(WebhookHeaderSet.BILLING.attempt(), HttpHeaders.BILLING_ATTEMPT);
 
         expected.forEach((fromWebhookHeaders, fromHttpHeaders) -> assertThat(fromWebhookHeaders).isEqualTo(fromHttpHeaders));
     }

@@ -1,13 +1,13 @@
-package dev.ngb.billing.webhook.domain.delivery;
+package dev.ngb.core.webhook;
 
 import dev.ngb.core.util.Backoff;
 import java.time.Duration;
 import java.util.Objects;
 
 /** How often a delivery is tried, how long between tries, and how long a worker may hold one. */
-public record DeliveryPolicy(int maxAttempts, Backoff backoff, Duration lease) {
+public record RetrySchedule(int maxAttempts, Backoff backoff, Duration lease) {
 
-    public DeliveryPolicy {
+    public RetrySchedule {
         Objects.requireNonNull(backoff, "backoff");
         Objects.requireNonNull(lease, "lease");
         if (maxAttempts < 1) {

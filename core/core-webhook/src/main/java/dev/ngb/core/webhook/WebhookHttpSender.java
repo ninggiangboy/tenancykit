@@ -1,6 +1,5 @@
-package dev.ngb.billing.webhook.adapter.delivery.http;
+package dev.ngb.core.webhook;
 
-import dev.ngb.billing.webhook.application.delivery.port.WebhookSender;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,16 +26,29 @@ import org.apache.hc.core5.util.Timeout;
  * Posts a webhook with the safeguards an outbound call to a Tenant-chosen URL needs: addresses are checked
  * by the resolver the connection itself uses, redirects are never followed, connect and read timeouts and an
  * overall deadline bound the time, and only the first bytes of the response are read.
+ *
+ * <p>It never throws for a refused destination, a timeout or a bad status: those are a {@link Result}, so the caller
+ * records them like any other failed attempt. The user agent is an input so an app keeps the one it already sends.
  */
-public final class HttpComponentsWebhookSender implements WebhookSender, AutoCloseable {
+public final class WebhookHttpSender implements AutoCloseable {
 
     private static final int EXCERPT_BYTES = 1024;
+
+    /** One POST: the URL, the headers to set and the exact body bytes to sign and send. */
+    public record Request(String url, Map<String, String> headers, byte[] body) {}
+
+    /** {@code statusCode} is null when no response arrived; {@code error} then says why. */
+    public record Result(Integer statusCode, String error, String responseExcerpt, long latencyMs) {}
 
     private final CloseableHttpClient client;
     private final long deadlineNanos;
 
-    public HttpComponentsWebhookSender(
-            boolean allowNonPublicTargets, int maxConnTotal, int maxConnPerRoute, Duration connectTimeout,
+    /**
+     * @param allowNonPublicTargets development only: allows loopback and private destinations
+     * @param userAgent the agent this app sends, so an extraction into the core does not change its bytes
+     */
+    public WebhookHttpSender(
+            boolean allowNonPublicTargets, String userAgent, int maxConnTotal, int maxConnPerRoute, Duration connectTimeout,
             Duration connectionRequestTimeout, Duration readTimeout, Duration deadline) {
         this.deadlineNanos = deadline.toNanos();
         ConnectionConfig connection = ConnectionConfig.custom()
@@ -57,11 +69,10 @@ public final class HttpComponentsWebhookSender implements WebhookSender, AutoClo
                 .disableRedirectHandling()
                 .disableAutomaticRetries()
                 .disableCookieManagement()
-                .setUserAgent("CoreBilling-Webhooks/1")
+                .setUserAgent(userAgent)
                 .build();
     }
 
-    @Override
     public Result send(Request request) {
         long started = System.nanoTime();
         try {

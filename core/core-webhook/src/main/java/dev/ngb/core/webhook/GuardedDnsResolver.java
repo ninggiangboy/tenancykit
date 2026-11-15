@@ -1,6 +1,5 @@
-package dev.ngb.billing.webhook.adapter.delivery.http;
+package dev.ngb.core.webhook;
 
-import dev.ngb.billing.webhook.domain.endpoint.AddressPolicy;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import org.apache.hc.client5.http.DnsResolver;
@@ -11,11 +10,11 @@ import org.apache.hc.client5.http.SystemDefaultDnsResolver;
  * addresses this resolver returns, so there is no gap between the check and the connection in which a DNS
  * answer could change (DNS rebinding).
  */
-final class GuardedDnsResolver implements DnsResolver {
+public final class GuardedDnsResolver implements DnsResolver {
 
     private final boolean allowNonPublic;
 
-    GuardedDnsResolver(boolean allowNonPublic) {
+    public GuardedDnsResolver(boolean allowNonPublic) {
         this.allowNonPublic = allowNonPublic;
     }
 
@@ -24,7 +23,7 @@ final class GuardedDnsResolver implements DnsResolver {
         InetAddress[] addresses = SystemDefaultDnsResolver.INSTANCE.resolve(host);
         if (!allowNonPublic) {
             for (InetAddress address : addresses) {
-                if (!AddressPolicy.isPublic(address)) {
+                if (!DestinationPolicy.isPublic(address)) {
                     throw new BlockedDestinationException(host);
                 }
             }

@@ -48,7 +48,8 @@ class ArchitectureRulesTest {
             "core-feign-is-self-contained",
             "core-is-self-contained",
             "core-messaging-is-self-contained",
-            "core-spring-is-self-contained");
+            "core-spring-is-self-contained",
+            "core-webhook-is-self-contained");
 
     @Test
     void theGenericRuleSetIsExactlyTheExpectedOne() {

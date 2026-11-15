@@ -11,6 +11,8 @@ dependencies {
     implementation("dev.ngb:core-platform-sync")
     implementation("dev.ngb:core-suite")
     implementation("dev.ngb:core-feign")
+    // The wiring builds the shared signer and HTTP sender, so boot sees the module the webhook context delegates to.
+    implementation("dev.ngb:core-webhook")
     implementation(project(":contexts:customer"))
     implementation(project(":contexts:money"))
     implementation(project(":contexts:webhook"))

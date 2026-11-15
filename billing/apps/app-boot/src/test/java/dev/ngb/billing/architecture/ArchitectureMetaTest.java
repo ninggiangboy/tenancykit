@@ -78,7 +78,8 @@ class ArchitectureMetaTest {
             "core-feign-is-self-contained", "CoreFeignKnowsAnApplication",
             "core-is-self-contained", "CoreKnowsAnApplication",
             "core-messaging-is-self-contained", "CoreMessagingKnowsAnApplication",
-            "core-spring-is-self-contained", "CoreSpringKnowsAnApplication");
+            "core-spring-is-self-contained", "CoreSpringKnowsAnApplication",
+            "core-webhook-is-self-contained", "CoreWebhookKnowsAnApplication");
 
     private static JavaClasses fixtures;
 

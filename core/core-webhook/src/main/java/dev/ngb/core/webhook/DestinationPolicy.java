@@ -1,18 +1,17 @@
-package dev.ngb.billing.webhook.domain.endpoint;
+package dev.ngb.core.webhook;
 
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 
 /**
- * Which addresses a webhook may be sent to. Anything that is not on the public internet is refused, so a
- * Tenant cannot make Billing call its own network: loopback, link-local (including the cloud metadata
- * address), private ranges, carrier-grade NAT, multicast, reserved space and IPv6 forms that embed an IPv4
- * address are all blocked.
+ * Which addresses a webhook may be sent to. Anything that is not on the public internet is refused, so a Tenant
+ * cannot make an app call its own network: loopback, link-local (including the cloud metadata address), private
+ * ranges, carrier-grade NAT, multicast, reserved space and IPv6 forms that embed an IPv4 address are all blocked.
  */
-public final class AddressPolicy {
+public final class DestinationPolicy {
 
-    private AddressPolicy() {}
+    private DestinationPolicy() {}
 
     public static boolean isPublic(InetAddress address) {
         if (address.isAnyLocalAddress() || address.isLoopbackAddress() || address.isLinkLocalAddress() || address.isSiteLocalAddress()

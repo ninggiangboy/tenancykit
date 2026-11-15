@@ -1,4 +1,4 @@
-package dev.ngb.billing.webhook.domain.endpoint;
+package dev.ngb.core.webhook;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

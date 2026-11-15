@@ -1,7 +1,7 @@
 package dev.ngb.billing.webhook.application.endpoint.service;
 
 import dev.ngb.billing.webhook.domain.endpoint.WebhookEndpoint;
-import dev.ngb.billing.webhook.domain.endpoint.WebhookUrl;
+import dev.ngb.core.webhook.WebhookUrl;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;

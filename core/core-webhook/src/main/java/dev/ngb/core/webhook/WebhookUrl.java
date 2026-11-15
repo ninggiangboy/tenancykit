@@ -1,15 +1,15 @@
-package dev.ngb.billing.webhook.domain.endpoint;
+package dev.ngb.core.webhook;
 
-import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Locale;
 
 /**
  * The syntax rules for a destination: an absolute https URL with a host, no credentials and no fragment.
  * Plain http is accepted only when the deployment says it is a development one. Which addresses a host may
- * resolve to is checked again at send time by {@link AddressPolicy}, because DNS can change.
+ * resolve to is checked again at send time by {@link DestinationPolicy}, because DNS can change.
  */
 public final class WebhookUrl {
 
@@ -62,7 +62,7 @@ public final class WebhookUrl {
     private static boolean publicLiteral(String host) {
         try {
             // A literal never triggers a DNS lookup.
-            return AddressPolicy.isPublic(InetAddress.getByName(host));
+            return DestinationPolicy.isPublic(InetAddress.getByName(host));
         } catch (UnknownHostException e) {
             return false;
         }

@@ -148,7 +148,8 @@ public final class ArchitectureRules {
                 new NamedRule("core-feign-is-self-contained", coreFeignIsSelfContained(core)),
                 new NamedRule("core-is-self-contained", coreIsSelfContained(core)),
                 new NamedRule("core-messaging-is-self-contained", coreMessagingIsSelfContained(core)),
-                new NamedRule("core-spring-is-self-contained", coreSpringIsSelfContained(core)));
+                new NamedRule("core-spring-is-self-contained", coreSpringIsSelfContained(core)),
+                new NamedRule("core-webhook-is-self-contained", coreWebhookIsSelfContained(core)));
     }
 
     /** adapter -> application -> domain; never the other way. */
@@ -587,7 +588,7 @@ public final class ArchitectureRules {
         return classes().that().resideInAnyPackage(core + "..")
                 .and().resideOutsideOfPackages(
                         core + ".spring..", core + ".messaging..", core + ".replica..", core + ".sync..",
-                        core + ".suite..", core + ".feign..", core + ".arch..")
+                        core + ".suite..", core + ".feign..", core + ".webhook..", core + ".arch..")
                 .should().onlyDependOnClassesThat().resideInAnyPackage(concat(JDK, core + ".."))
                 .because("the core is shared by every application build and depends on nothing of theirs")
                 .allowEmptyShould(true);
@@ -616,6 +617,15 @@ public final class ArchitectureRules {
                 .should().onlyDependOnClassesThat()
                 .resideInAnyPackage(concat(JDK, "jakarta..", core + "..", "org.springframework..", "org.jooq.."))
                 .because("the core's Spring implementation sees the JDK, the core, Spring and the jOOQ audit log only")
+                .allowEmptyShould(true);
+    }
+
+    /** The shared webhook mechanics see the JDK, the core, HttpClient 5 and SLF4J; never a service, never Spring. */
+    private static ArchRule coreWebhookIsSelfContained(String core) {
+        return classes().that().resideInAPackage(core + ".webhook..")
+                .should().onlyDependOnClassesThat()
+                .resideInAnyPackage(concat(JDK, core + "..", "org.apache.hc..", "org.slf4j.."))
+                .because("core-webhook is shared by every app that delivers a webhook and names no app's type")
                 .allowEmptyShould(true);
     }
 

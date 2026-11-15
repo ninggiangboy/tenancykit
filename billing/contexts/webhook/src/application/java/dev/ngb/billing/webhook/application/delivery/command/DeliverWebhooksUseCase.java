@@ -10,9 +10,9 @@ import dev.ngb.billing.webhook.application.delivery.port.WebhookDeliveryReposito
 import dev.ngb.billing.webhook.application.delivery.port.WebhookSender;
 import dev.ngb.billing.webhook.application.endpoint.service.WebhookSettings;
 import dev.ngb.billing.webhook.domain.delivery.DeliveryAttempt;
-import dev.ngb.billing.webhook.domain.delivery.DeliveryPolicy;
+import dev.ngb.core.webhook.RetrySchedule;
 import dev.ngb.billing.webhook.domain.delivery.DeliveryStatus;
-import dev.ngb.billing.webhook.domain.delivery.WebhookHeaders;
+import dev.ngb.core.webhook.WebhookHeaderSet;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -45,6 +45,8 @@ public class DeliverWebhooksUseCase {
         public static final Round NONE = new Round(0, 0, 0, 0);
     }
 
+    private static final WebhookHeaderSet BILLING = WebhookHeaderSet.BILLING;
+
     private final UnitOfWork unitOfWork;
     private final WebhookDeliveryRepository deliveries;
     private final SecretCipher cipher;
@@ -70,7 +72,7 @@ public class DeliverWebhooksUseCase {
     }
 
     public Round runOnce() {
-        DeliveryPolicy policy = settings.policy();
+        RetrySchedule policy = settings.policy();
         List<ClaimedDelivery> claimed = unitOfWork.transactional(() -> {
             Instant now = clock.now();
             deliveries.killExhausted(now, policy.maxAttempts());
@@ -147,12 +149,12 @@ public class DeliverWebhooksUseCase {
             String secret = cipher.decrypt(item.secretCiphertext(), item.delivery().endpointId().toString());
             Map<String, String> headers = new LinkedHashMap<>();
             headers.put("Content-Type", "application/json");
-            headers.put(WebhookHeaders.EVENT_ID, item.delivery().eventId().toString());
-            headers.put(WebhookHeaders.EVENT_TYPE, item.delivery().eventType());
-            headers.put(WebhookHeaders.TIMESTAMP, Long.toString(timestamp));
-            headers.put(WebhookHeaders.KEY_ID, item.keyId());
-            headers.put(WebhookHeaders.SIGNATURE, signer.sign(secret, timestamp, body));
-            headers.put(WebhookHeaders.ATTEMPT, Integer.toString(item.delivery().attempts()));
+            headers.put(BILLING.eventId(), item.delivery().eventId().toString());
+            headers.put(BILLING.eventType(), item.delivery().eventType());
+            headers.put(BILLING.timestamp(), Long.toString(timestamp));
+            headers.put(BILLING.keyId(), item.keyId());
+            headers.put(BILLING.signature(), signer.sign(secret, timestamp, body));
+            headers.put(BILLING.attempt(), Integer.toString(item.delivery().attempts()));
             result = sender.send(new WebhookSender.Request(item.url(), headers, body));
         } catch (RuntimeException failure) {
             result = new WebhookSender.Result(null, "could not prepare the request: " + failure.getClass().getSimpleName(), null, 0);

@@ -12,8 +12,8 @@ import dev.ngb.core.observability.MetricNames;
 import dev.ngb.billing.boot.infrastructure.messaging.SchemaEventTypeCatalog;
 import dev.ngb.core.audit.AuditLog;
 import dev.ngb.core.tenancy.TenantContext;
-import dev.ngb.billing.webhook.adapter.delivery.crypto.HmacSha256Signer;
-import dev.ngb.billing.webhook.adapter.delivery.http.HttpComponentsWebhookSender;
+import dev.ngb.billing.webhook.adapter.delivery.crypto.SharedPayloadSigner;
+import dev.ngb.billing.webhook.adapter.delivery.http.SharedWebhookSender;
 import dev.ngb.billing.webhook.adapter.delivery.json.JacksonEventBodyWriter;
 import dev.ngb.billing.webhook.adapter.delivery.messaging.WebhookEventListener;
 import dev.ngb.billing.webhook.adapter.delivery.persistence.JooqWebhookDeliveryReadRepository;
@@ -39,7 +39,7 @@ import dev.ngb.billing.webhook.application.endpoint.port.WebhookEndpointReposito
 import dev.ngb.billing.webhook.application.endpoint.query.EndpointQueries;
 import dev.ngb.billing.webhook.application.endpoint.query.EndpointReadRepository;
 import dev.ngb.billing.webhook.application.endpoint.service.WebhookSettings;
-import dev.ngb.billing.webhook.domain.delivery.DeliveryPolicy;
+import dev.ngb.core.webhook.RetrySchedule;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
@@ -69,7 +69,7 @@ class WebhookConfiguration {
         return new WebhookSettings(
                 properties.allowInsecureTargets(),
                 properties.batchSize(),
-                new DeliveryPolicy(properties.maxAttempts(), new Backoff(properties.backoffBase(), properties.backoffCap(), 0.2), properties.lease()));
+                new RetrySchedule(properties.maxAttempts(), new Backoff(properties.backoffBase(), properties.backoffCap(), 0.2), properties.lease()));
     }
 
     @Bean
@@ -115,12 +115,12 @@ class WebhookConfiguration {
 
     @Bean
     PayloadSigner payloadSigner() {
-        return new HmacSha256Signer();
+        return new SharedPayloadSigner();
     }
 
     @Bean(destroyMethod = "close")
-    HttpComponentsWebhookSender webhookSender(WebhookSettings settings, WebhookProperties properties) {
-        return new HttpComponentsWebhookSender(
+    SharedWebhookSender webhookSender(WebhookSettings settings, WebhookProperties properties) {
+        return new SharedWebhookSender(
                 settings.allowInsecureTargets(),
                 properties.maxConnections(),
                 properties.maxConnectionsPerRoute(),

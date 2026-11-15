@@ -8,7 +8,8 @@ package dev.ngb.core.http;
  * compares against. {@code Stripe-Signature} is the signature Stripe puts on the webhooks it sends Billing.
  *
  * <p>The six {@code Billing-*} headers are the delivery headers Billing sets on an outbound webhook and
- * Tenant verifies on its signed endpoint.
+ * Tenant verifies on its signed endpoint. The six {@code Survey-*} headers are the same set for Survey's own
+ * deliveries, so a receiver distinguishes the two apps' webhooks by the header prefix alone.
  */
 public final class HttpHeaders {
 
@@ -41,6 +42,24 @@ public final class HttpHeaders {
 
     /** Which attempt this delivery is, starting at 1. */
     public static final String BILLING_ATTEMPT = "Billing-Attempt";
+
+    /** The id of the event a Survey delivery carries; a receiver treats a repeated id as a duplicate. */
+    public static final String SURVEY_EVENT_ID = "Survey-Event-Id";
+
+    /** The event type a Survey delivery carries. */
+    public static final String SURVEY_EVENT_TYPE = "Survey-Event-Type";
+
+    /** The epoch second the Survey delivery was signed at. */
+    public static final String SURVEY_TIMESTAMP = "Survey-Timestamp";
+
+    /** The id of the Survey signing key the signature was made with. */
+    public static final String SURVEY_KEY_ID = "Survey-Key-Id";
+
+    /** The HMAC-SHA256 of {@code timestamp + "." + rawBody}, keyed with the Survey endpoint's secret. */
+    public static final String SURVEY_SIGNATURE = "Survey-Signature";
+
+    /** Which attempt this Survey delivery is, starting at 1. */
+    public static final String SURVEY_ATTEMPT = "Survey-Attempt";
 
     private HttpHeaders() {}
 }

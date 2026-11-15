@@ -67,6 +67,19 @@ the consumer transaction, and the end-to-end number is the load test's.
 
 Reliability mechanics (outbox, backoff, dead-letter queue, idempotent consumers) are in [security-and-reliability.md](security-and-reliability.md). Inbound Stripe webhooks are in [payments-and-stripe.md](payments-and-stripe.md).
 
+## The shared mechanics
+
+The parts of a signed delivery that are identical in every app live in `core/core-webhook`: `WebhookSigner` (the
+`v1=` HMAC rule), `WebhookHeaderSet` (`BILLING` and `SURVEY`, the two header sets), `DestinationPolicy` (which
+addresses are public), `GuardedDnsResolver` (the check inside the connection's own resolution, so a changed DNS answer
+cannot slip past it), `WebhookHttpSender` (no redirects, bounded connect/read timeouts, a bounded response excerpt)
+and `RetrySchedule` (attempts, exponential backoff and the worker lease). `WebhookUrl` holds the URL syntax rules.
+
+What stays in each app is everything that makes its deliveries its own: the endpoint and delivery tables, the
+repositories and use cases, the event-type catalog, the signing secrets and the delivery history. Billing and Survey
+share the mechanics and never each other's state, and `core-webhook` names no service type — the ArchUnit rule
+`core-webhook-is-self-contained` fails the build if it ever does.
+
 ## Survey to Tenant System
 
 Survey reports its own facts the same way Billing does, with its own header set and its own endpoints and deliveries:
