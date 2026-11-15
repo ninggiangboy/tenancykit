@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PREVIEW (proposed end state, not implemented): survey app v1, API only, link-based and channel-agnostic</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #05070c;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="ak-diagram-root" data-instance-id="238155ef" data-preset="blueprint" data-theme="dark" data-animation="trace">
+    <style>/* AgentKit Diagram Reader Styles & Presets (Archify-informed) */
+
+.ak-diagram-root {
+  --ak-bg: #ffffff;
+  --ak-surface: #f8fafc;
+  --ak-surface-border: #e2e8f0;
+  --ak-text-primary: #0f172a;
+  --ak-text-secondary: #475569;
+  --ak-text-muted: #94a3b8;
+  --ak-accent: #2563eb;
+  --ak-accent-light: #dbeafe;
+  --ak-node-bg: #ffffff;
+  --ak-node-border: #cbd5e1;
+  --ak-edge-stroke: #64748b;
+  --ak-edge-active: #2563eb;
+  --ak-badge-bg: #f1f5f9;
+  --ak-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --ak-font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ak-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  
+  font-family: var(--ak-font-sans);
+  background-color: var(--ak-bg);
+  color: var(--ak-text-primary);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ak-surface-border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* Preset: Classic (Light / Dark) */
+.ak-diagram-root[data-preset="classic"][data-theme="light"],
+.ak-diagram-root[data-preset="classic"]:not([data-theme="dark"]) {
+  --ak-bg: #ffffff;
+  --ak-surface: #f8fafc;
+  --ak-surface-border: #e2e8f0;
+  --ak-text-primary: #0f172a;
+  --ak-text-secondary: #475569;
+  --ak-node-bg: #ffffff;
+  --ak-node-border: #cbd5e1;
+  --ak-edge-stroke: #64748b;
+  --ak-edge-active: #2563eb;
+}
+.ak-diagram-root[data-preset="classic"][data-theme="dark"] {
+  --ak-bg: #090d16;
+  --ak-surface: #0f172a;
+  --ak-surface-border: #1e293b;
+  --ak-text-primary: #f8fafc;
+  --ak-text-secondary: #94a3b8;
+  --ak-node-bg: #0f172a;
+  --ak-node-border: #334155;
+  --ak-edge-stroke: #475569;
+  --ak-edge-active: #38bdf8;
+}
+
+/* Preset: Signal Flow (Light / Dark) */
+.ak-diagram-root[data-preset="signal-flow"][data-theme="light"],
+.ak-diagram-root[data-preset="signal-flow"]:not([data-theme="dark"]) {
+  --ak-bg: #f0fdf4;
+  --ak-surface: #dcfce7;
+  --ak-surface-border: #86efac;
+  --ak-text-primary: #14532d;
+  --ak-text-secondary: #166534;
+  --ak-accent: #059669;
+  --ak-node-bg: #ffffff;
+  --ak-node-border: #10b981;
+  --ak-edge-stroke: #059669;
+  --ak-edge-active: #047857;
+}
+.ak-diagram-root[data-preset="signal-flow"][data-theme="dark"] {
+  --ak-bg: #031c18;
+  --ak-surface: #064e3b;
+  --ak-surface-border: #047857;
+  --ak-text-primary: #ecfdf5;
+  --ak-text-secondary: #a7f3d0;
+  --ak-accent: #34d399;
+  --ak-node-bg: #064e3b;
+  --ak-node-border: #10b981;
+  --ak-edge-stroke: #34d399;
+  --ak-edge-active: #6ee7b7;
+}
+
+/* Preset: Blueprint (Light / Dark) */
+.ak-diagram-root[data-preset="blueprint"][data-theme="light"],
+.ak-diagram-root[data-preset="blueprint"]:not([data-theme="dark"]) {
+  --ak-bg: #f0f9ff;
+  --ak-surface: #e0f2fe;
+  --ak-surface-border: #7dd3fc;
+  --ak-text-primary: #0369a1;
+  --ak-text-secondary: #0284c7;
+  --ak-accent: #0284c7;
+  --ak-node-bg: #ffffff;
+  --ak-node-border: #0ea5e9;
+  --ak-edge-stroke: #0284c7;
+  --ak-edge-active: #0369a1;
+  --ak-font-sans: var(--ak-font-mono);
+}
+.ak-diagram-root[data-preset="blueprint"][data-theme="dark"] {
+  --ak-bg: #081d33;
+  --ak-surface: #0c2a4a;
+  --ak-surface-border: #1e4976;
+  --ak-text-primary: #e0f2fe;
+  --ak-text-secondary: #bae6fd;
+  --ak-accent: #38bdf8;
+  --ak-node-bg: #0c213a;
+  --ak-node-border: #38bdf8;
+  --ak-edge-stroke: #7dd3fc;
+  --ak-edge-active: #38bdf8;
+  --ak-font-sans: var(--ak-font-mono);
+}
+
+/* Preset: Editorial (Light / Dark) */
+.ak-diagram-root[data-preset="editorial"][data-theme="light"],
+.ak-diagram-root[data-preset="editorial"]:not([data-theme="dark"]) {
+  --ak-bg: #faf8f5;
+  --ak-surface: #f3efe6;
+  --ak-surface-border: #e2dacb;
+  --ak-text-primary: #1c1917;
+  --ak-text-secondary: #57534e;
+  --ak-accent: #991b1b;
+  --ak-node-bg: #ffffff;
+  --ak-node-border: #d6cfc4;
+  --ak-edge-stroke: #78716c;
+  --ak-edge-active: #991b1b;
+}
+.ak-diagram-root[data-preset="editorial"][data-theme="dark"] {
+  --ak-bg: #1c1917;
+  --ak-surface: #292524;
+  --ak-surface-border: #44403c;
+  --ak-text-primary: #fafaf9;
+  --ak-text-secondary: #d6d3d1;
+  --ak-accent: #ef4444;
+  --ak-node-bg: #292524;
+  --ak-node-border: #78716c;
+  --ak-edge-stroke: #a8a29e;
+  --ak-edge-active: #f87171;
+}
+
+/* Toolbar & Reader Controls */
+.ak-diagram-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: var(--ak-surface);
+  border-bottom: 1px solid var(--ak-surface-border);
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ak-diagram-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ak-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ak-diagram-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ak-chapter-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--ak-bg);
+  border: 1px solid var(--ak-surface-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.ak-chapter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ak-text-secondary);
+}
+
+.ak-diagram-btn {
+  background: var(--ak-bg);
+  border: 1px solid var(--ak-surface-border);
+  color: var(--ak-text-primary);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+.ak-diagram-btn:hover {
+  background-color: var(--ak-surface);
+  border-color: var(--ak-accent);
+}
+.ak-diagram-btn:focus-visible {
+  outline: 2px solid var(--ak-accent);
+  outline-offset: 1px;
+}
+
+.ak-diagram-search-input {
+  background: var(--ak-bg);
+  border: 1px solid var(--ak-surface-border);
+  color: var(--ak-text-primary);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  width: 140px;
+}
+.ak-diagram-search-input:focus {
+  outline: 2px solid var(--ak-accent);
+  border-color: transparent;
+}
+
+/* Main Viewport */
+.ak-diagram-viewport {
+  position: relative;
+  overflow: auto;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--ak-bg);
+}
+
+.ak-diagram-svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Node, Boundary & Edge Styling */
+.ak-node {
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+.ak-node:hover {
+  transform: translateY(-2px);
+}
+.ak-node.is-dimmed {
+  opacity: 0.25;
+}
+.ak-node.is-focused rect,
+.ak-node.is-focused circle {
+  stroke: var(--ak-accent) !important;
+  stroke-width: 3px !important;
+}
+
+.ak-edge path,
+.ak-edge line,
+.ak-edge polyline {
+  transition: stroke 0.2s ease, opacity 0.2s ease;
+}
+.ak-edge.is-dimmed {
+  opacity: 0.15;
+}
+.ak-edge.is-highlighted path,
+.ak-edge.is-highlighted line,
+.ak-edge.is-highlighted polyline {
+  stroke: var(--ak-edge-active) !important;
+  stroke-width: 2.5px !important;
+}
+.ak-edge text {
+  stroke: none !important;
+  stroke-width: 0 !important;
+  stroke-dasharray: none !important;
+  animation: none !important;
+  fill: var(--ak-text-secondary);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Trace Motion Animation (Finite, <= 8s) */
+@keyframes ak-trace-stroke {
+  from {
+    stroke-dashoffset: 200;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.ak-diagram-root[data-animation="trace"] .ak-edge.is-active-trace path,
+.ak-diagram-root[data-animation="trace"] .ak-edge.is-active-trace line,
+.ak-diagram-root[data-animation="trace"] .ak-edge.is-active-trace polyline {
+  stroke-dasharray: 6 4;
+  animation: ak-trace-stroke 2.5s ease-in-out forwards;
+}
+
+/* Presentation Stage (F) */
+.ak-diagram-root.is-presentation {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  border-radius: 0;
+  border: none;
+  height: 100vh;
+  width: 100vw;
+}
+.ak-diagram-root.is-presentation .ak-diagram-viewport {
+  height: calc(100vh - 48px);
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  .ak-node, .ak-edge, .ak-diagram-btn {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+.ak-diagram-root,svg.ak-diagram-svg{--ak-role-client-stroke:#0e7490;--ak-role-client-fill:rgba(14,116,144,0.1);--ak-role-service-stroke:#4f46e5;--ak-role-service-fill:rgba(79,70,229,0.1);--ak-role-data-stroke:#b45309;--ak-role-data-fill:rgba(180,83,9,0.1);--ak-role-queue-stroke:#7c3aed;--ak-role-queue-fill:rgba(124,58,237,0.1);--ak-role-cache-stroke:#c2410c;--ak-role-cache-fill:rgba(194,65,12,0.1);--ak-role-gateway-stroke:#0369a1;--ak-role-gateway-fill:rgba(3,105,161,0.1);--ak-role-security-stroke:#be123c;--ak-role-security-fill:rgba(190,18,60,0.1);--ak-role-external-stroke:#475569;--ak-role-external-fill:rgba(71,85,105,0.1);--ak-role-worker-stroke:#0f766e;--ak-role-worker-fill:rgba(15,118,110,0.1);--ak-role-start-stroke:#047857;--ak-role-start-fill:rgba(4,120,87,0.1);--ak-role-success-stroke:#059669;--ak-role-success-fill:rgba(5,150,105,0.1);--ak-role-failure-stroke:#b91c1c;--ak-role-failure-fill:rgba(185,28,28,0.1);--ak-role-waiting-stroke:#a16207;--ak-role-waiting-fill:rgba(161,98,7,0.1);--ak-role-decision-stroke:#a21caf;--ak-role-decision-fill:rgba(162,28,175,0.1);--ak-role-process-stroke:#1d4ed8;--ak-role-process-fill:rgba(29,78,216,0.1);--ak-role-governance-stroke:#6d28d9;--ak-role-governance-fill:rgba(109,40,217,0.1);--ak-role-transform-stroke:#4338ca;--ak-role-transform-fill:rgba(67,56,202,0.1);--ak-role-filter-stroke:#4d7c0f;--ak-role-filter-fill:rgba(77,124,15,0.1);}
+.ak-diagram-root[data-theme="dark"],svg.ak-diagram-svg[data-theme="dark"]{--ak-role-client-stroke:#22d3ee;--ak-role-client-fill:rgba(34,211,238,0.16);--ak-role-service-stroke:#818cf8;--ak-role-service-fill:rgba(129,140,248,0.16);--ak-role-data-stroke:#fbbf24;--ak-role-data-fill:rgba(251,191,36,0.16);--ak-role-queue-stroke:#a78bfa;--ak-role-queue-fill:rgba(167,139,250,0.16);--ak-role-cache-stroke:#fb923c;--ak-role-cache-fill:rgba(251,146,60,0.16);--ak-role-gateway-stroke:#38bdf8;--ak-role-gateway-fill:rgba(56,189,248,0.16);--ak-role-security-stroke:#fb7185;--ak-role-security-fill:rgba(251,113,133,0.16);--ak-role-external-stroke:#94a3b8;--ak-role-external-fill:rgba(148,163,184,0.16);--ak-role-worker-stroke:#2dd4bf;--ak-role-worker-fill:rgba(45,212,191,0.16);--ak-role-start-stroke:#34d399;--ak-role-start-fill:rgba(52,211,153,0.16);--ak-role-success-stroke:#34d399;--ak-role-success-fill:rgba(52,211,153,0.16);--ak-role-failure-stroke:#f87171;--ak-role-failure-fill:rgba(248,113,113,0.16);--ak-role-waiting-stroke:#facc15;--ak-role-waiting-fill:rgba(250,204,21,0.16);--ak-role-decision-stroke:#e879f9;--ak-role-decision-fill:rgba(232,121,249,0.16);--ak-role-process-stroke:#60a5fa;--ak-role-process-fill:rgba(96,165,250,0.16);--ak-role-governance-stroke:#c4b5fd;--ak-role-governance-fill:rgba(196,181,253,0.16);--ak-role-transform-stroke:#a5b4fc;--ak-role-transform-fill:rgba(165,180,252,0.16);--ak-role-filter-stroke:#a3e635;--ak-role-filter-fill:rgba(163,230,53,0.16);}
+.ak-node[data-family="client"]{--ak-node-stroke:var(--ak-role-client-stroke);--ak-node-fill:var(--ak-role-client-fill);}.ak-legend-item[data-family="client"] .ak-legend-swatch{fill:var(--ak-role-client-fill);stroke:var(--ak-role-client-stroke);}
+.ak-node[data-family="service"]{--ak-node-stroke:var(--ak-role-service-stroke);--ak-node-fill:var(--ak-role-service-fill);}.ak-legend-item[data-family="service"] .ak-legend-swatch{fill:var(--ak-role-service-fill);stroke:var(--ak-role-service-stroke);}
+.ak-node[data-family="data"]{--ak-node-stroke:var(--ak-role-data-stroke);--ak-node-fill:var(--ak-role-data-fill);}.ak-legend-item[data-family="data"] .ak-legend-swatch{fill:var(--ak-role-data-fill);stroke:var(--ak-role-data-stroke);}
+.ak-node[data-family="queue"]{--ak-node-stroke:var(--ak-role-queue-stroke);--ak-node-fill:var(--ak-role-queue-fill);}.ak-legend-item[data-family="queue"] .ak-legend-swatch{fill:var(--ak-role-queue-fill);stroke:var(--ak-role-queue-stroke);}
+.ak-node[data-family="cache"]{--ak-node-stroke:var(--ak-role-cache-stroke);--ak-node-fill:var(--ak-role-cache-fill);}.ak-legend-item[data-family="cache"] .ak-legend-swatch{fill:var(--ak-role-cache-fill);stroke:var(--ak-role-cache-stroke);}
+.ak-node[data-family="gateway"]{--ak-node-stroke:var(--ak-role-gateway-stroke);--ak-node-fill:var(--ak-role-gateway-fill);}.ak-legend-item[data-family="gateway"] .ak-legend-swatch{fill:var(--ak-role-gateway-fill);stroke:var(--ak-role-gateway-stroke);}
+.ak-node[data-family="security"]{--ak-node-stroke:var(--ak-role-security-stroke);--ak-node-fill:var(--ak-role-security-fill);}.ak-legend-item[data-family="security"] .ak-legend-swatch{fill:var(--ak-role-security-fill);stroke:var(--ak-role-security-stroke);}
+.ak-node[data-family="external"]{--ak-node-stroke:var(--ak-role-external-stroke);--ak-node-fill:var(--ak-role-external-fill);}.ak-legend-item[data-family="external"] .ak-legend-swatch{fill:var(--ak-role-external-fill);stroke:var(--ak-role-external-stroke);}
+.ak-node[data-family="worker"]{--ak-node-stroke:var(--ak-role-worker-stroke);--ak-node-fill:var(--ak-role-worker-fill);}.ak-legend-item[data-family="worker"] .ak-legend-swatch{fill:var(--ak-role-worker-fill);stroke:var(--ak-role-worker-stroke);}
+.ak-node[data-family="start"]{--ak-node-stroke:var(--ak-role-start-stroke);--ak-node-fill:var(--ak-role-start-fill);}.ak-legend-item[data-family="start"] .ak-legend-swatch{fill:var(--ak-role-start-fill);stroke:var(--ak-role-start-stroke);}
+.ak-node[data-family="success"]{--ak-node-stroke:var(--ak-role-success-stroke);--ak-node-fill:var(--ak-role-success-fill);}.ak-legend-item[data-family="success"] .ak-legend-swatch{fill:var(--ak-role-success-fill);stroke:var(--ak-role-success-stroke);}
+.ak-node[data-family="failure"]{--ak-node-stroke:var(--ak-role-failure-stroke);--ak-node-fill:var(--ak-role-failure-fill);}.ak-legend-item[data-family="failure"] .ak-legend-swatch{fill:var(--ak-role-failure-fill);stroke:var(--ak-role-failure-stroke);}
+.ak-node[data-family="waiting"]{--ak-node-stroke:var(--ak-role-waiting-stroke);--ak-node-fill:var(--ak-role-waiting-fill);}.ak-legend-item[data-family="waiting"] .ak-legend-swatch{fill:var(--ak-role-waiting-fill);stroke:var(--ak-role-waiting-stroke);}
+.ak-node[data-family="decision"]{--ak-node-stroke:var(--ak-role-decision-stroke);--ak-node-fill:var(--ak-role-decision-fill);}.ak-legend-item[data-family="decision"] .ak-legend-swatch{fill:var(--ak-role-decision-fill);stroke:var(--ak-role-decision-stroke);}
+.ak-node[data-family="process"]{--ak-node-stroke:var(--ak-role-process-stroke);--ak-node-fill:var(--ak-role-process-fill);}.ak-legend-item[data-family="process"] .ak-legend-swatch{fill:var(--ak-role-process-fill);stroke:var(--ak-role-process-stroke);}
+.ak-node[data-family="governance"]{--ak-node-stroke:var(--ak-role-governance-stroke);--ak-node-fill:var(--ak-role-governance-fill);}.ak-legend-item[data-family="governance"] .ak-legend-swatch{fill:var(--ak-role-governance-fill);stroke:var(--ak-role-governance-stroke);}
+.ak-node[data-family="transform"]{--ak-node-stroke:var(--ak-role-transform-stroke);--ak-node-fill:var(--ak-role-transform-fill);}.ak-legend-item[data-family="transform"] .ak-legend-swatch{fill:var(--ak-role-transform-fill);stroke:var(--ak-role-transform-stroke);}
+.ak-node[data-family="filter"]{--ak-node-stroke:var(--ak-role-filter-stroke);--ak-node-fill:var(--ak-role-filter-fill);}.ak-legend-item[data-family="filter"] .ak-legend-swatch{fill:var(--ak-role-filter-fill);stroke:var(--ak-role-filter-stroke);}
+/* ak-diagram core SVG styles: shared by the reader fragment and standalone SVG.
+   Colour comes from --ak-* palette variables and --ak-role-* family tokens. */
+
+.ak-diagram-svg { font-family: var(--ak-font-sans); display: block; }
+.ak-diagram-svg text { user-select: none; }
+
+.ak-canvas { fill: var(--ak-bg); }
+.ak-grid-dot { fill: var(--ak-text-muted); opacity: 0.28; }
+
+.ak-title { font-size: 16px; font-weight: 700; fill: var(--ak-text-primary); letter-spacing: -0.01em; }
+.ak-subtitle { font-size: 11px; font-weight: 500; fill: var(--ak-text-secondary); }
+
+/* Frames: boundaries, lanes, stages */
+.ak-frame { fill: var(--ak-surface); stroke: var(--ak-surface-border); stroke-width: 1; }
+.ak-frame-boundary { fill: transparent; stroke-dasharray: 6 4; stroke-width: 1.5; }
+.ak-frame-stage { stroke-dasharray: 4 3; }
+.ak-frame-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; fill: var(--ak-text-secondary); }
+.ak-frame-role { font-size: 10px; fill: var(--ak-text-muted); }
+
+/* Nodes */
+.ak-node { cursor: pointer; }
+.ak-node-mask { fill: var(--ak-node-bg); }
+.ak-node-card { fill: var(--ak-node-fill, var(--ak-node-bg)); stroke: var(--ak-node-stroke, var(--ak-node-border)); stroke-width: 1.5; transition: stroke-width 160ms ease; }
+.ak-node[data-shape="notch"] .ak-node-card { stroke-width: 2; }
+.ak-node-accent { fill: var(--ak-node-stroke, var(--ak-accent)); }
+.ak-sigil path { fill: none; stroke: var(--ak-node-stroke, var(--ak-accent)); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ak-node-label { font-size: 13px; font-weight: 600; fill: var(--ak-text-primary); }
+.ak-node-sub { font-size: 9.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; fill: var(--ak-text-muted); }
+.ak-node:hover .ak-node-card, .ak-node:focus-visible .ak-node-card { stroke-width: 2.5; }
+.ak-node:focus-visible { outline: none; }
+
+/* Edges */
+.ak-edge-path { fill: none; stroke: var(--ak-edge-stroke); stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; transition: stroke 160ms ease, stroke-width 160ms ease; }
+.ak-edge-dashed { stroke-dasharray: 5 4; }
+.ak-edge[data-tone="failure"] .ak-edge-path { stroke: var(--ak-role-failure-stroke); }
+.ak-edge[data-tone="decision"] .ak-edge-path { stroke: var(--ak-role-decision-stroke); }
+.ak-edge-flow { fill: none; stroke: var(--ak-edge-active); stroke-width: 2.25; stroke-linecap: round; opacity: 0; pointer-events: none; }
+.ak-edge-label-mask { fill: var(--ak-bg); stroke: var(--ak-surface-border); stroke-width: 1; }
+.ak-edge-label text { font-size: 10.5px; font-weight: 500; fill: var(--ak-text-secondary); }
+.ak-arrowhead { fill: var(--ak-edge-stroke); }
+.ak-arrowhead-open { fill: none; stroke: var(--ak-edge-stroke); stroke-width: 1.25; }
+
+/* Sequence extras */
+.ak-lifeline { stroke: var(--ak-edge-stroke); stroke-width: 1.25; stroke-dasharray: 4 4; opacity: 0.55; }
+.ak-activation { fill: var(--ak-accent-light); stroke: var(--ak-accent); stroke-width: 1; }
+
+/* Legend */
+.ak-legend-swatch { stroke-width: 1.5; }
+.ak-legend-item text { font-size: 10.5px; font-weight: 500; fill: var(--ak-text-secondary); }
+
+/* Motion: staggered entrance, edge draw, optional finite trace pass.
+   Total budget stays under 8 s because --step is capped at 40 by the compiler. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-motion="play"] [data-animate="node"] {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: ak-node-in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(var(--step, 0) * 110ms);
+  }
+  [data-motion="play"] [data-animate="edge"] .ak-edge-path {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: ak-edge-draw 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: calc(var(--step, 0) * 110ms + 140ms);
+  }
+  [data-motion="play"] [data-animate="edge"] .ak-edge-dashed {
+    animation-name: ak-edge-draw-dashed;
+  }
+  [data-motion="play"] [data-animate="edge"] .ak-edge-label {
+    opacity: 0;
+    animation: ak-fade-in 0.4s ease forwards;
+    animation-delay: calc(var(--step, 0) * 110ms + 520ms);
+  }
+  [data-motion="play"] [data-animate="frame"] {
+    opacity: 0;
+    animation: ak-fade-in 0.5s ease forwards;
+  }
+  [data-motion="play"][data-animation="trace"] [data-animate="edge"] .ak-edge-flow,
+  [data-motion="play"] [data-animation="trace"] [data-animate="edge"] .ak-edge-flow {
+    stroke-dasharray: 5 9;
+    animation: ak-edge-flow 1.3s linear 3;
+    animation-delay: calc(var(--step, 0) * 110ms + 900ms);
+  }
+  [data-motion="play"][data-animation="trace"] [data-animate="node"] .ak-node-card,
+  [data-motion="play"] [data-animation="trace"] [data-animate="node"] .ak-node-card {
+    animation: ak-node-pulse 1.6s ease-in-out 1;
+    animation-delay: calc(var(--step, 0) * 110ms + 900ms);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ak-diagram-svg *, .ak-diagram-svg { animation: none !important; transition: none !important; }
+}
+
+@keyframes ak-node-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ak-edge-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes ak-edge-draw-dashed {
+  to { stroke-dashoffset: 0; stroke-dasharray: 5 4; }
+}
+@keyframes ak-fade-in {
+  to { opacity: 1; }
+}
+@keyframes ak-edge-flow {
+  0% { stroke-dashoffset: 28; opacity: 0; }
+  15% { opacity: 0.9; }
+  85% { opacity: 0.9; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+@keyframes ak-node-pulse {
+  0%, 100% { stroke-width: 1.5; }
+  50% { stroke-width: 3; }
+}
+</style>
+    <div class="ak-diagram-toolbar">
+      <h4 class="ak-diagram-title"><span>&#128202;</span> PREVIEW (proposed end state, not implemented): survey app v1, API only, link-based and channel-agnostic</h4>
+      <div class="ak-diagram-controls">
+        <input type="text" class="ak-diagram-search-input" placeholder="Search (/) ..." aria-label="Search diagram nodes and descriptions" />
+        <button type="button" class="ak-diagram-btn ak-btn-reach-down" title="Downstream Reach">&#8595; Reach</button>
+        <button type="button" class="ak-diagram-btn ak-btn-reach-up" title="Upstream Reach">&#8593; Reach</button>
+        <button type="button" class="ak-diagram-btn ak-btn-route" title="Route Inspection (R)">&#128205; Route</button>
+        <button type="button" class="ak-diagram-btn ak-btn-lens" title="Role Lens (L)">&#128269; Lens</button>
+        <div class="ak-chapter-controls">
+    <button type="button" class="ak-diagram-btn ak-btn-prev-chapter" title="Previous Chapter ([)">&#8249;</button>
+    <span class="ak-chapter-label">1/4</span>
+    <button type="button" class="ak-diagram-btn ak-btn-next-chapter" title="Next Chapter (])">&#8250;</button>
+  </div>
+        <button type="button" class="ak-diagram-btn ak-btn-motion" title="Replay motion (M)">&#9654; Replay</button>
+        <button type="button" class="ak-diagram-btn ak-btn-theme" title="Toggle Light/Dark">&#9728;&#65039;</button>
+        <button type="button" class="ak-diagram-btn ak-btn-present" title="Presentation Stage (F)">&#9974;</button>
+        <button type="button" class="ak-diagram-btn ak-btn-share" title="Export 1200x630 Share Card">&#128228; Card</button>
+      </div>
+    </div>
+    <div class="ak-diagram-viewport">
+      <svg class="ak-diagram-svg" viewBox="-4 0 2308 534" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PREVIEW (proposed end state, not implemented): survey app v1, API only, link-based and channel-agnostic" data-diagram-type="architecture" data-preset="blueprint" data-theme="dark" data-animation="trace" data-motion="play"><title>PREVIEW (proposed end state, not implemented): survey app v1, API only, link-based and channel-agnostic</title><defs><marker id="ak-arrowhead-238155ef" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path class="ak-arrowhead" d="M0 0L9 3.5L0 7z"/></marker><marker id="ak-arrowhead-open-238155ef" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path class="ak-arrowhead-open" d="M0 0L8 3.5L0 7"/></marker><pattern id="ak-grid-238155ef" width="24" height="24" patternUnits="userSpaceOnUse"><circle class="ak-grid-dot" cx="1" cy="1" r="1"/></pattern></defs><rect class="ak-canvas" x="-4" y="0" width="2308" height="534"/><rect class="ak-canvas-grid" x="-4" y="0" width="2308" height="534" fill="url(#ak-grid-238155ef)"/><g class="ak-header"><text class="ak-title" x="36" y="34">PREVIEW (proposed end state, not implemented): survey app v1, API only, link-based and channel-agnostic</text></g><g class="ak-boundary" data-boundary-id="b-survey" data-animate="frame"><rect class="ak-frame ak-frame-boundary" x="708" y="92" width="1230" height="308" rx="12"/><text class="ak-frame-label" x="722" y="113">survey/ (new deployable, own DB)</text><text class="ak-frame-role" x="973" y="113">cluster</text></g><g class="ak-boundary" data-boundary-id="b-outside" data-animate="frame"><rect class="ak-frame ak-frame-boundary" x="24" y="176" width="282" height="182" rx="12"/><text class="ak-frame-label" x="38" y="197">Outside the suite</text><text class="ak-frame-role" x="175.1" y="197">external-zone</text></g><g class="ak-edge" data-from="tenant-system" data-to="proxy" data-edge-id="e0" data-kind="forward" data-animate="edge" data-route="290,310 336,310 336,282 382,282" style="--step:1"><path class="ak-edge-path" d="M290 310 L326 310 Q336 310 336 300 L336 292 Q336 282 346 282 L382 282" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M290 310 L326 310 Q336 310 336 300 L336 292 Q336 282 346 282 L382 282" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="279.9" y="289" width="66.3" height="18" rx="9"/><text x="313" y="301.5" text-anchor="middle">suite token</text></g></g><g class="ak-edge" data-from="tenant-system" data-to="mailroom" data-edge-id="e1" data-kind="forward" data-animate="edge" data-route="290,324 348,324 348,359 382,359" style="--step:1"><path class="ak-edge-path" d="M290 324 L338 324 Q348 324 348 334 L348 349 Q348 359 358 359 L382 359" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M290 324 L338 324 Q348 324 348 334 L348 349 Q348 359 358 359 L382 359" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="211.5" y="325" width="215" height="18" rx="9"/><text x="319" y="337.5" text-anchor="middle">manual resend: group, segment, campaign</text></g></g><g class="ak-edge" data-from="respondent" data-to="proxy" data-edge-id="e2" data-kind="forward" data-animate="edge" data-route="290,233 324,233 324,268 382,268" style="--step:1"><path class="ak-edge-path" d="M290 233 L314 233 Q324 233 324 243 L324 258 Q324 268 334 268 L382 268" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M290 233 L314 233 Q324 233 324 243 L324 258 Q324 268 334 268 L382 268" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="295" y="247" width="116.1" height="18" rx="9"/><text x="353" y="259.5" text-anchor="middle">public / personal link</text></g></g><g class="ak-edge" data-from="proxy" data-to="survey-admin-api" data-edge-id="e3" data-kind="forward" data-animate="edge" data-route="632,261 678,261 678,191 724,191" style="--step:2"><path class="ak-edge-path" d="M632 261 L668 261 Q678 261 678 251 L678 201 Q678 191 688 191 L724 191" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M632 261 L668 261 Q678 261 678 251 L678 201 Q678 191 688 191 L724 191" pathLength="100"/></g><g class="ak-edge" data-from="proxy" data-to="survey-public-api" data-edge-id="e4" data-kind="forward" data-animate="edge" data-route="632,289 690,289 690,359 724,359" style="--step:2"><path class="ak-edge-path" d="M632 289 L680 289 Q690 289 690 299 L690 349 Q690 359 700 359 L724 359" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M632 289 L680 289 Q690 289 690 299 L690 349 Q690 359 700 359 L724 359" pathLength="100"/></g><g class="ak-edge" data-from="proxy" data-to="analytics-api" data-edge-id="e5" data-kind="forward" data-animate="edge" data-route="632,275 724,275" style="--step:2"><path class="ak-edge-path" d="M632 275 L724 275" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M632 275 L724 275" pathLength="100"/></g><g class="ak-edge" data-from="platform" data-to="replica" data-edge-id="e6" data-kind="forward" data-animate="edge" data-route="632,191 666,191 666,138 984,138 984,233 1066,233" style="--step:2"><path class="ak-edge-path" d="M632 191 L656 191 Q666 191 666 181 L666 148 Q666 138 676 138 L974 138 Q984 138 984 148 L984 223 Q984 233 994 233 L1066 233" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M632 191 L656 191 Q666 191 666 181 L666 148 Q666 138 676 138 L974 138 Q984 138 984 148 L984 223 Q984 233 994 233 L1066 233" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="754" y="117" width="142.1" height="18" rx="9"/><text x="825" y="129.5" text-anchor="middle">platform.events + snapshot</text></g></g><g class="ak-edge" data-from="survey-admin-api" data-to="survey-db" data-edge-id="e7" data-kind="forward" data-animate="edge" data-route="974,184 996,184 996,135 1066,135" style="--step:3"><path class="ak-edge-path" d="M974 184 L986 184 Q996 184 996 174 L996 145 Q996 135 1006 135 L1066 135" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M974 184 L986 184 Q996 184 996 174 L996 145 Q996 135 1006 135 L1066 135" pathLength="100"/></g><g class="ak-edge" data-from="survey-public-api" data-to="geoip" data-edge-id="e8" data-kind="forward" data-animate="edge" data-route="974,365.3 1044,365.3 1044,317 1066,317" style="--step:3"><path class="ak-edge-path" d="M974 365.3 L1034 365.3 Q1044 365.3 1044 355.3 L1044 327 Q1044 317 1054 317 L1066 317" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M974 365.3 L1034 365.3 Q1044 365.3 1044 355.3 L1044 327 Q1044 317 1054 317 L1066 317" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="967.4" y="344.3" width="83.3" height="18" rx="9"/><text x="1009" y="356.8" text-anchor="middle">country lookup</text></g></g><g class="ak-edge" data-from="survey-public-api" data-to="survey-db" data-edge-id="e9" data-kind="forward" data-animate="edge" data-route="974,340 1032,340 1032,163 1066,163" style="--step:3"><path class="ak-edge-path" d="M974 340 L1022 340 Q1032 340 1032 330 L1032 173 Q1032 163 1042 163 L1066 163" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M974 340 L1022 340 Q1032 340 1032 330 L1032 173 Q1032 163 1042 163 L1066 163" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="951.9" y="319" width="102.2" height="18" rx="9"/><text x="1003" y="331.5" text-anchor="middle">visit, validate path</text></g></g><g class="ak-edge" data-from="survey-public-api" data-to="object-store" data-edge-id="e10" data-kind="forward" data-animate="edge" data-route="974,378 1056,378 1056,401 1066,401" style="--step:3"><path class="ak-edge-path" d="M974 378 L1046 378 Q1056 378 1056 388 L1056 396 Q1056 401 1061 401 L1066 401" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M974 378 L1046 378 Q1056 378 1056 388 L1056 396 Q1056 401 1061 401 L1066 401" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="973" y="379" width="83.9" height="18" rx="9"/><text x="1015" y="391.5" text-anchor="middle">presigned PUT</text></g></g><g class="ak-edge" data-from="analytics-api" data-to="survey-db" data-edge-id="e11" data-kind="forward" data-animate="edge" data-route="974,275 1020,275 1020,149 1066,149" style="--step:3"><path class="ak-edge-path" d="M974 275 L1010 275 Q1020 275 1020 265 L1020 159 Q1020 149 1030 149 L1066 149" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M974 275 L1010 275 Q1020 275 1020 265 L1020 159 Q1020 149 1030 149 L1066 149" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="979.9" y="254" width="34.2" height="18" rx="9"/><text x="997" y="266.5" text-anchor="middle">read</text></g></g><g class="ak-edge" data-from="survey-public-api" data-to="outbox" data-edge-id="e12" data-kind="forward" data-animate="edge" data-route="974,352.7 1368,352.7 1368,317 1408,317" style="--step:3"><path class="ak-edge-path" d="M974 352.7 L1358 352.7 Q1368 352.7 1368 342.7 L1368 327 Q1368 317 1378 317 L1408 317" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M974 352.7 L1358 352.7 Q1368 352.7 1368 342.7 L1368 327 Q1368 317 1378 317 L1408 317" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="1123.3" y="331.7" width="95.5" height="18" rx="9"/><text x="1171" y="344.2" text-anchor="middle">same transaction</text></g></g><g class="ak-edge" data-from="survey-admin-api" data-to="export-worker" data-edge-id="e13" data-kind="forward" data-animate="edge" data-route="974,198 1008,198 1008,96 1356,96 1356,233 1408,233" style="--step:3"><path class="ak-edge-path" d="M974 198 L998 198 Q1008 198 1008 188 L1008 106 Q1008 96 1018 96 L1346 96 Q1356 96 1356 106 L1356 223 Q1356 233 1366 233 L1408 233" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M974 198 L998 198 Q1008 198 1008 188 L1008 106 Q1008 96 1018 96 L1346 96 Q1356 96 1356 106 L1356 223 Q1356 233 1366 233 L1408 233" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="1151.7" y="75" width="60.6" height="18" rx="9"/><text x="1182" y="87.5" text-anchor="middle">export job</text></g></g><g class="ak-edge" data-from="outbox" data-to="survey-events" data-edge-id="e14" data-kind="forward" data-animate="edge" data-route="1580,310 1620,310 1620,233 1672,233" style="--step:5"><path class="ak-edge-path" d="M1580 310 L1610 310 Q1620 310 1620 300 L1620 243 Q1620 233 1630 233 L1672 233" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M1580 310 L1610 310 Q1620 310 1620 300 L1620 243 Q1620 233 1630 233 L1672 233" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="1627.4" y="212" width="37.3" height="18" rx="9"/><text x="1646" y="224.5" text-anchor="middle">relay</text></g></g><g class="ak-edge" data-from="outbox" data-to="webhook-worker" data-edge-id="e15" data-kind="forward" data-animate="edge" data-route="1580,324 1632,324 1632,317 1672,317" style="--step:5"><path class="ak-edge-path" d="M1580 324 L1628.5 324 Q1632 324 1632 320.5 L1632 320.5 Q1632 317 1635.5 317 L1672 317" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M1580 324 L1628.5 324 Q1632 324 1632 320.5 L1632 320.5 Q1632 317 1635.5 317 L1672 317" pathLength="100"/></g><g class="ak-edge" data-from="webhook-worker" data-to="core-webhook" data-edge-id="e16" data-kind="forward" data-animate="edge" data-route="1922,310 1962,310 1962,233 2014,233" style="--step:6"><path class="ak-edge-path" d="M1922 310 L1952 310 Q1962 310 1962 300 L1962 243 Q1962 233 1972 233 L2014 233" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M1922 310 L1952 310 Q1962 310 1962 300 L1962 243 Q1962 233 1972 233 L2014 233" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="1969.7" y="212" width="36.7" height="18" rx="9"/><text x="1988" y="224.5" text-anchor="middle">uses</text></g></g><g class="ak-edge" data-from="billing" data-to="core-webhook" data-edge-id="e17" data-kind="same" data-animate="edge" data-route="2139,290 2139,260" style="--step:7"><path class="ak-edge-path" d="M2139 290 L2139 260" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M2139 290 L2139 260" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="2147" y="266" width="36.7" height="18" rx="9"/><text x="2165.4" y="278.5" text-anchor="middle">uses</text></g></g><g class="ak-edge" data-from="webhook-worker" data-to="tenant-system" data-edge-id="e18" data-kind="back" data-animate="edge" data-route="1922,324 1974,324 1974,454 12,454 12,317 40,317" style="--step:6"><path class="ak-edge-path" d="M1922 324 L1964 324 Q1974 324 1974 334 L1974 444 Q1974 454 1964 454 L22 454 Q12 454 12 444 L12 327 Q12 317 22 317 L40 317" pathLength="100" marker-end="url(#ak-arrowhead-238155ef)"/><path class="ak-edge-flow" d="M1922 324 L1964 324 Q1974 324 1974 334 L1974 444 Q1974 454 1964 454 L22 454 Q12 454 12 444 L12 327 Q12 317 22 317 L40 317" pathLength="100"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="947.2" y="433" width="91.7" height="18" rx="9"/><text x="993" y="445.5" text-anchor="middle">signed webhook</text></g></g><g class="ak-node" data-node-id="respondent" data-label="Tenant&apos;s customer (fill UI later)" data-role="frontend" data-desc="" data-family="client" data-shape="card" tabindex="0" data-animate="node" style="--step:0"><rect class="ak-node-mask" x="40" y="206" width="250" height="54" rx="10"/><rect class="ak-node-card" x="40" y="206" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="41" y="216" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(54 225)"><path d="M2 3h12v8H2zM6 14h4M8 11v3"/></g><text class="ak-node-label" x="80" y="231">Tenant&apos;s customer (fill UI later)</text><text class="ak-node-sub" x="80" y="246">Client</text></g><g class="ak-node" data-node-id="tenant-system" data-label="Tenant System (builder UI later)" data-role="external" data-desc="" data-family="external" data-shape="card" tabindex="0" data-animate="node" style="--step:0"><rect class="ak-node-mask" x="40" y="290" width="250" height="54" rx="10"/><rect class="ak-node-card" x="40" y="290" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="41" y="300" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(54 309)"><path d="M3 8a5 5 0 0 1 10 0 5 5 0 0 1-10 0zM3 8h10M8 3c-2 2-2 8 0 10M8 3c2 2 2 8 0 10"/></g><text class="ak-node-label" x="80" y="315">Tenant System (builder UI later)</text><text class="ak-node-sub" x="80" y="330">External</text></g><g class="ak-node" data-node-id="proxy" data-label="Reverse proxy /survey" data-role="gateway" data-desc="" data-family="gateway" data-shape="card" tabindex="0" data-animate="node" style="--step:1"><rect class="ak-node-mask" x="382" y="248" width="250" height="54" rx="10"/><rect class="ak-node-card" x="382" y="248" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="383" y="258" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(396 267)"><path d="M8 2v12M3 6l5-4 5 4M3 10l5 4 5-4"/></g><text class="ak-node-label" x="422" y="273">Reverse proxy /survey</text><text class="ak-node-sub" x="422" y="288">Gateway</text></g><g class="ak-node" data-node-id="platform" data-label="Platform (unchanged)" data-role="auth" data-desc="" data-family="security" data-shape="card" tabindex="0" data-animate="node" style="--step:1"><rect class="ak-node-mask" x="382" y="164" width="250" height="54" rx="10"/><rect class="ak-node-card" x="382" y="164" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="383" y="174" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(396 183)"><path d="M8 2l5 2v4c0 3-2 5-5 6-3-1-5-3-5-6V4zM5.5 8l2 2 3-3"/></g><text class="ak-node-label" x="422" y="189">Platform (unchanged)</text><text class="ak-node-sub" x="422" y="204">Auth / security</text></g><g class="ak-node" data-node-id="mailroom" data-label="mailroom (unchanged): groups, segments, campaigns carry the link" data-role="backend" data-desc="" data-family="service" data-shape="card" tabindex="0" data-animate="node" style="--step:1"><rect class="ak-node-mask" x="382" y="332" width="250" height="54" rx="10"/><rect class="ak-node-card" x="382" y="332" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="383" y="342" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(396 351)"><path d="M3 3h10v10H3zM6 6h4M6 8h4M6 10h2"/></g><text class="ak-node-label" x="422" y="357">mailroom (unchanged): groups…</text><text class="ak-node-sub" x="422" y="372">Service</text></g><g class="ak-node" data-node-id="survey-admin-api" data-label="Admin API: drafts, preview, simulate, publish, links, responses, respondents" data-role="backend" data-desc="" data-family="service" data-shape="card" tabindex="0" data-animate="node" style="--step:2"><rect class="ak-node-mask" x="724" y="164" width="250" height="54" rx="10"/><rect class="ak-node-card" x="724" y="164" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="725" y="174" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(738 183)"><path d="M3 3h10v10H3zM6 6h4M6 8h4M6 10h2"/></g><text class="ak-node-label" x="764" y="189">Admin API: drafts, preview, si…</text><text class="ak-node-sub" x="764" y="204">Service</text></g><g class="ak-node" data-node-id="survey-public-api" data-label="Public API /survey/p/*: open visit, schema, page events, draft, upload URL, submit" data-role="backend" data-desc="" data-family="service" data-shape="card" tabindex="0" data-animate="node" style="--step:2"><rect class="ak-node-mask" x="724" y="332" width="250" height="54" rx="10"/><rect class="ak-node-card" x="724" y="332" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="725" y="342" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(738 351)"><path d="M3 3h10v10H3zM6 6h4M6 8h4M6 10h2"/></g><text class="ak-node-label" x="764" y="357">Public API /survey/p/*: open…</text><text class="ak-node-sub" x="764" y="372">Service</text></g><g class="ak-node" data-node-id="analytics-api" data-label="Analytics: aggregate, filter, cross-tab, trend, funnel by source" data-role="backend" data-desc="" data-family="service" data-shape="card" tabindex="0" data-animate="node" style="--step:2"><rect class="ak-node-mask" x="724" y="248" width="250" height="54" rx="10"/><rect class="ak-node-card" x="724" y="248" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="725" y="258" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(738 267)"><path d="M3 3h10v10H3zM6 6h4M6 8h4M6 10h2"/></g><text class="ak-node-label" x="764" y="273">Analytics: aggregate, filter, cr…</text><text class="ak-node-sub" x="764" y="288">Service</text></g><g class="ak-node" data-node-id="geoip" data-label="Offline GeoIP database" data-role="storage" data-desc="" data-family="data" data-shape="card" tabindex="0" data-animate="node" style="--step:3"><rect class="ak-node-mask" x="1066" y="290" width="250" height="54" rx="10"/><rect class="ak-node-card" x="1066" y="290" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="1067" y="300" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1080 309)"><path d="M3 4c0-1.5 10-1.5 10 0v8c0 1.5-10 1.5-10 0zM3 4c0 1.5 10 1.5 10 0M3 8c0 1.5 10 1.5 10 0"/></g><text class="ak-node-label" x="1106" y="315">Offline GeoIP database</text><text class="ak-node-sub" x="1106" y="330">Data store</text></g><g class="ak-node" data-node-id="object-store" data-label="MinIO / S3 (new infra)" data-role="storage" data-desc="" data-family="data" data-shape="card" tabindex="0" data-animate="node" style="--step:3"><rect class="ak-node-mask" x="1066" y="374" width="250" height="54" rx="10"/><rect class="ak-node-card" x="1066" y="374" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="1067" y="384" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1080 393)"><path d="M3 4c0-1.5 10-1.5 10 0v8c0 1.5-10 1.5-10 0zM3 4c0 1.5 10 1.5 10 0M3 8c0 1.5 10 1.5 10 0"/></g><text class="ak-node-label" x="1106" y="399">MinIO / S3 (new infra)</text><text class="ak-node-sub" x="1106" y="414">Data store</text></g><g class="ak-node" data-node-id="survey-db" data-label="survey DB (RLS): versions JSONB + i18n, links, visits, responses, answers" data-role="database" data-desc="" data-family="data" data-shape="card" tabindex="0" data-animate="node" style="--step:3"><rect class="ak-node-mask" x="1066" y="122" width="250" height="54" rx="10"/><rect class="ak-node-card" x="1066" y="122" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="1067" y="132" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1080 141)"><path d="M3 4c0-1.5 10-1.5 10 0v8c0 1.5-10 1.5-10 0zM3 4c0 1.5 10 1.5 10 0M3 8c0 1.5 10 1.5 10 0"/></g><text class="ak-node-label" x="1106" y="147">survey DB (RLS): versions JS…</text><text class="ak-node-sub" x="1106" y="162">Data store</text></g><g class="ak-node" data-node-id="replica" data-label="Platform replica" data-role="database" data-desc="" data-family="data" data-shape="card" tabindex="0" data-animate="node" style="--step:3"><rect class="ak-node-mask" x="1066" y="206" width="250" height="54" rx="10"/><rect class="ak-node-card" x="1066" y="206" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="1067" y="216" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1080 225)"><path d="M3 4c0-1.5 10-1.5 10 0v8c0 1.5-10 1.5-10 0zM3 4c0 1.5 10 1.5 10 0M3 8c0 1.5 10 1.5 10 0"/></g><text class="ak-node-label" x="1106" y="231">Platform replica</text><text class="ak-node-sub" x="1106" y="246">Data store</text></g><g class="ak-node" data-node-id="outbox" data-label="Outbox" data-role="database" data-desc="" data-family="data" data-shape="card" tabindex="0" data-animate="node" style="--step:4"><rect class="ak-node-mask" x="1408" y="290" width="172" height="54" rx="10"/><rect class="ak-node-card" x="1408" y="290" width="172" height="54" rx="10"/><rect class="ak-node-accent" x="1409" y="300" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1422 309)"><path d="M3 4c0-1.5 10-1.5 10 0v8c0 1.5-10 1.5-10 0zM3 4c0 1.5 10 1.5 10 0M3 8c0 1.5 10 1.5 10 0"/></g><text class="ak-node-label" x="1448" y="315">Outbox</text><text class="ak-node-sub" x="1448" y="330">Data store</text></g><g class="ak-node" data-node-id="export-worker" data-label="CSV export worker" data-role="worker" data-desc="" data-family="worker" data-shape="card" tabindex="0" data-animate="node" style="--step:4"><rect class="ak-node-mask" x="1408" y="206" width="172" height="54" rx="10"/><rect class="ak-node-card" x="1408" y="206" width="172" height="54" rx="10"/><rect class="ak-node-accent" x="1409" y="216" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1422 225)"><path d="M3 13l4-4M6 3l7 7-2 2-7-7zM10 4l2 2"/></g><text class="ak-node-label" x="1448" y="231">CSV export worker</text><text class="ak-node-sub" x="1448" y="246">Worker</text></g><g class="ak-node" data-node-id="survey-events" data-label="survey.events" data-role="queue" data-desc="" data-family="queue" data-shape="card" tabindex="0" data-animate="node" style="--step:5"><rect class="ak-node-mask" x="1672" y="206" width="250" height="54" rx="10"/><rect class="ak-node-card" x="1672" y="206" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="1673" y="216" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1686 225)"><path d="M2 5h3v6H2zM6.5 5h3v6h-3zM11 5h3v6h-3z"/></g><text class="ak-node-label" x="1712" y="231">survey.events</text><text class="ak-node-sub" x="1712" y="246">Queue</text></g><g class="ak-node" data-node-id="webhook-worker" data-label="Webhook dispatcher (Survey-*)" data-role="worker" data-desc="" data-family="worker" data-shape="card" tabindex="0" data-animate="node" style="--step:5"><rect class="ak-node-mask" x="1672" y="290" width="250" height="54" rx="10"/><rect class="ak-node-card" x="1672" y="290" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="1673" y="300" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1686 309)"><path d="M3 13l4-4M6 3l7 7-2 2-7-7zM10 4l2 2"/></g><text class="ak-node-label" x="1712" y="315">Webhook dispatcher (Survey-*)</text><text class="ak-node-sub" x="1712" y="330">Worker</text></g><g class="ak-node" data-node-id="core-webhook" data-label="core/ webhook library" data-role="backend" data-desc="" data-family="service" data-shape="card" tabindex="0" data-animate="node" style="--step:6"><rect class="ak-node-mask" x="2014" y="206" width="250" height="54" rx="10"/><rect class="ak-node-card" x="2014" y="206" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="2015" y="216" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(2028 225)"><path d="M3 3h10v10H3zM6 6h4M6 8h4M6 10h2"/></g><text class="ak-node-label" x="2054" y="231">core/ webhook library</text><text class="ak-node-sub" x="2054" y="246">Service</text></g><g class="ak-node" data-node-id="billing" data-label="Billing (refactored onto core-webhook)" data-role="backend" data-desc="" data-family="service" data-shape="card" tabindex="0" data-animate="node" style="--step:6"><rect class="ak-node-mask" x="2014" y="290" width="250" height="54" rx="10"/><rect class="ak-node-card" x="2014" y="290" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="2015" y="300" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(2028 309)"><path d="M3 3h10v10H3zM6 6h4M6 8h4M6 10h2"/></g><text class="ak-node-label" x="2054" y="315">Billing (refactored onto core-w…</text><text class="ak-node-sub" x="2054" y="330">Service</text></g><g class="ak-legend"><g class="ak-legend-item" data-family="client"><rect class="ak-legend-swatch" x="36" y="488" width="12" height="12" rx="3"/><text x="54" y="498">Client</text></g><g class="ak-legend-item" data-family="service"><rect class="ak-legend-swatch" x="103.7" y="488" width="12" height="12" rx="3"/><text x="121.7" y="498">Service</text></g><g class="ak-legend-item" data-family="data"><rect class="ak-legend-swatch" x="179.6" y="488" width="12" height="12" rx="3"/><text x="197.6" y="498">Data store</text></g><g class="ak-legend-item" data-family="queue"><rect class="ak-legend-swatch" x="267.5" y="488" width="12" height="12" rx="3"/><text x="285.5" y="498">Queue</text></g><g class="ak-legend-item" data-family="gateway"><rect class="ak-legend-swatch" x="337.1" y="488" width="12" height="12" rx="3"/><text x="355.1" y="498">Gateway</text></g><g class="ak-legend-item" data-family="security"><rect class="ak-legend-swatch" x="418.9" y="488" width="12" height="12" rx="3"/><text x="436.9" y="498">Auth / security</text></g><g class="ak-legend-item" data-family="external"><rect class="ak-legend-swatch" x="530.1" y="488" width="12" height="12" rx="3"/><text x="548.1" y="498">External</text></g><g class="ak-legend-item" data-family="worker"><rect class="ak-legend-swatch" x="609.2" y="488" width="12" height="12" rx="3"/><text x="627.2" y="498">Worker</text></g></g></svg>
+    </div>
+    <script type="application/json" class="ak-diagram-data">{"schema_version":1,"diagram_type":"architecture","meta":{"title":"PREVIEW (proposed end state, not implemented): survey app v1, API only, link-based and channel-agnostic","visual_preset":"blueprint","theme":"dark","animation":"trace","views":[{"id":"ch1","title":"Build and publish","narrative":"The Tenant System (the builder UI later) replaces the whole draft with PUT and If-Match. The server validates the structure and every JSON-AST expression (logic, computed variables, quiz scores, piping), offers preview and simulate, and publishing freezes an immutable version that owns its translations.","focus_nodes":["tenant-system","proxy","survey-admin-api","survey-db"]},{"id":"ch2","title":"Create links","narrative":"The survey app only issues links: public links, one per source the Tenant names (email, qr-store-01, website), and personal links in bulk, each with an external_ref, a source, an expiry and single use. It never sends anything and knows no channel. The Tenant puts a link wherever it likes, for example as a variable in a mailroom campaign.","focus_nodes":["tenant-system","survey-admin-api","mailroom"]},{"id":"ch3","title":"A customer opens and responds","narrative":"Opening a link starts a visit that records the link's source, UTM parameters, the referrer domain, the device and the GeoIP country (no raw IP stored). The public API saves drafts, issues presigned uploads, and on submit re-evaluates the logic, validates the path taken, computes variables and the score and enforces the window, the cap, single use, idempotency, rate limits and the honeypot.","focus_nodes":["respondent","proxy","survey-public-api","geoip","object-store","survey-db"]},{"id":"ch4","title":"Analyse, export, notify","narrative":"Analytics answers aggregates, filters by answers, cross-tabs, trends and the funnel (opened, started, abandoned at page N, completed) broken down by source, merged across versions. The respondent list gives who completed (external_ref or the identity question). The Tenant reconciles it by hand with a mailroom group and segment to resend; mailroom does not change. The outbox feeds survey.events and the signed Survey-* webhooks built on the core webhook library Billing also moves onto.","focus_nodes":["analytics-api","export-worker","outbox","survey-events","webhook-worker","core-webhook","billing"]}]},"boundaries":[{"id":"b-survey","label":"survey/ (new deployable, own DB)","role":"cluster","components":["survey-admin-api","survey-public-api","analytics-api","survey-db","replica","outbox","export-worker","webhook-worker","geoip"]},{"id":"b-outside","label":"Outside the suite","role":"external-zone","components":["respondent","tenant-system"]}],"components":[{"id":"respondent","label":"Tenant's customer (fill UI later)","role":"frontend","layer":0},{"id":"tenant-system","label":"Tenant System (builder UI later)","role":"external","layer":0},{"id":"proxy","label":"Reverse proxy /survey","role":"gateway","layer":1},{"id":"platform","label":"Platform (unchanged)","role":"auth","layer":1},{"id":"mailroom","label":"mailroom (unchanged): groups, segments, campaigns carry the link","role":"backend","layer":1},{"id":"survey-admin-api","label":"Admin API: drafts, preview, simulate, publish, links, responses, respondents","role":"backend","layer":2},{"id":"survey-public-api","label":"Public API /survey/p/*: open visit, schema, page events, draft, upload URL, submit","role":"backend","layer":2},{"id":"analytics-api","label":"Analytics: aggregate, filter, cross-tab, trend, funnel by source","role":"backend","layer":2},{"id":"geoip","label":"Offline GeoIP database","role":"storage","layer":3},{"id":"object-store","label":"MinIO / S3 (new infra)","role":"storage","layer":3},{"id":"survey-db","label":"survey DB (RLS): versions JSONB + i18n, links, visits, responses, answers","role":"database","layer":3},{"id":"replica","label":"Platform replica","role":"database","layer":3},{"id":"outbox","label":"Outbox","role":"database","layer":4},{"id":"export-worker","label":"CSV export worker","role":"worker","layer":4},{"id":"survey-events","label":"survey.events","role":"queue","layer":5},{"id":"webhook-worker","label":"Webhook dispatcher (Survey-*)","role":"worker","layer":5},{"id":"core-webhook","label":"core/ webhook library","role":"backend","layer":6},{"id":"billing","label":"Billing (refactored onto core-webhook)","role":"backend","layer":6}],"connections":[{"from":"tenant-system","to":"proxy","label":"suite token","kind":"sync"},{"from":"tenant-system","to":"mailroom","label":"manual resend: group, segment, campaign","kind":"sync"},{"from":"respondent","to":"proxy","label":"public / personal link","kind":"sync"},{"from":"proxy","to":"survey-admin-api","kind":"sync"},{"from":"proxy","to":"survey-public-api","kind":"sync"},{"from":"proxy","to":"analytics-api","kind":"sync"},{"from":"platform","to":"replica","label":"platform.events + snapshot","kind":"async"},{"from":"survey-admin-api","to":"survey-db","kind":"sync"},{"from":"survey-public-api","to":"geoip","label":"country lookup","kind":"sync"},{"from":"survey-public-api","to":"survey-db","label":"visit, validate path","kind":"sync"},{"from":"survey-public-api","to":"object-store","label":"presigned PUT","kind":"sync"},{"from":"analytics-api","to":"survey-db","label":"read","kind":"sync"},{"from":"survey-public-api","to":"outbox","label":"same transaction","kind":"sync"},{"from":"survey-admin-api","to":"export-worker","label":"export job","kind":"async"},{"from":"outbox","to":"survey-events","label":"relay","kind":"async"},{"from":"outbox","to":"webhook-worker","kind":"async"},{"from":"webhook-worker","to":"core-webhook","label":"uses","kind":"sync"},{"from":"billing","to":"core-webhook","label":"uses","kind":"sync"},{"from":"webhook-worker","to":"tenant-system","label":"signed webhook","kind":"async"}]}</script>
+    <script>/**
+ * AgentKit Diagram Reader Runtime (Archify-informed)
+ * Pure vanilla JavaScript, zero runtime dependencies.
+ */
+(function() {
+  function escapeXml(unsafe) {
+    if (typeof unsafe !== 'string') return '';
+    return unsafe
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
+
+  function initDiagram(container) {
+    if (!container || container.__ak_initialized) return;
+    container.__ak_initialized = true;
+
+    const dataEl = container.querySelector('script[type="application/json"].ak-diagram-data');
+    if (!dataEl) return;
+
+    let irData;
+    try {
+      irData = JSON.parse(dataEl.textContent);
+    } catch (e) {
+      console.error('Failed to parse diagram data:', e);
+      return;
+    }
+
+    const state = {
+      focusedNodeId: null,
+      activeReach: null, // 'upstream' | 'downstream'
+      activeRoute: null,
+      activeLensIndex: -1,
+      currentChapterIndex: 0,
+      isPresentation: false
+    };
+
+    // DOM Elements
+    const root = container;
+    const searchInput = container.querySelector('.ak-diagram-search-input');
+    const nodes = Array.from(container.querySelectorAll('.ak-node'));
+    const edges = Array.from(container.querySelectorAll('.ak-edge'));
+    const themeBtn = container.querySelector('.ak-btn-theme');
+    const presentBtn = container.querySelector('.ak-btn-present');
+    const shareBtn = container.querySelector('.ak-btn-share');
+    const reachDownBtn = container.querySelector('.ak-btn-reach-down');
+    const reachUpBtn = container.querySelector('.ak-btn-reach-up');
+    const routeBtn = container.querySelector('.ak-btn-route');
+    const lensBtn = container.querySelector('.ak-btn-lens');
+    const chapterPrevBtn = container.querySelector('.ak-btn-prev-chapter');
+    const chapterNextBtn = container.querySelector('.ak-btn-next-chapter');
+    const chapterLabel = container.querySelector('.ak-chapter-label');
+    const motionBtn = container.querySelector('.ak-btn-motion');
+    const svgEl = container.querySelector('.ak-diagram-svg');
+
+    // Replay the finite entrance/trace motion by re-arming data-motion on the svg.
+    function replayMotion() {
+      if (!svgEl) return;
+      svgEl.removeAttribute('data-motion');
+      void svgEl.getBoundingClientRect();
+      svgEl.setAttribute('data-motion', 'play');
+    }
+    if (motionBtn) motionBtn.addEventListener('click', replayMotion);
+
+    // Build Graph Adjacency & Distinct Roles
+    const outgoing = new Map();
+    const incoming = new Map();
+    const allRoles = new Set();
+
+    nodes.forEach(n => {
+      const role = n.getAttribute('data-role');
+      if (role) allRoles.add(role);
+    });
+    const rolesList = Array.from(allRoles).sort();
+
+    edges.forEach(edgeEl => {
+      const from = edgeEl.getAttribute('data-from');
+      const to = edgeEl.getAttribute('data-to');
+      const edgeId = edgeEl.getAttribute('data-edge-id') || `${from}->${to}`;
+      if (from && to) {
+        if (!outgoing.has(from)) outgoing.set(from, []);
+        outgoing.get(from).push({ to, edgeEl, edgeId });
+
+        if (!incoming.has(to)) incoming.set(to, []);
+        incoming.get(to).push({ from, edgeEl, edgeId });
+      }
+    });
+
+    function clearHighlights() {
+      nodes.forEach(n => {
+        n.classList.remove('is-focused', 'is-dimmed');
+      });
+      edges.forEach(e => {
+        e.classList.remove('is-highlighted', 'is-dimmed', 'is-active-trace');
+      });
+      state.focusedNodeId = null;
+      state.activeReach = null;
+      state.activeRoute = null;
+    }
+
+    function focusNodes(nodeIds) {
+      const ids = (nodeIds || []).filter(Boolean);
+      clearHighlights();
+      if (ids.length === 0) {
+        state.focusedNodeId = null;
+        return;
+      }
+      state.focusedNodeId = ids[0];
+
+      const focusSet = new Set(ids);
+      const connectedNodeIds = new Set(ids);
+      ids.forEach(id => {
+        (outgoing.get(id) || []).forEach(e => connectedNodeIds.add(e.to));
+        (incoming.get(id) || []).forEach(e => connectedNodeIds.add(e.from));
+      });
+
+      nodes.forEach(n => {
+        const id = n.getAttribute('data-node-id');
+        if (focusSet.has(id)) {
+          n.classList.add('is-focused');
+        } else if (!connectedNodeIds.has(id)) {
+          n.classList.add('is-dimmed');
+        }
+      });
+
+      edges.forEach(e => {
+        const from = e.getAttribute('data-from');
+        const to = e.getAttribute('data-to');
+        if (focusSet.has(from) || focusSet.has(to)) {
+          e.classList.add('is-highlighted');
+        } else {
+          e.classList.add('is-dimmed');
+        }
+      });
+    }
+
+    function focusNode(nodeId) {
+      focusNodes(nodeId ? [nodeId] : []);
+    }
+
+    function traceReach(nodeId, direction) {
+      const targetId = nodeId || state.focusedNodeId || (nodes[0] ? nodes[0].getAttribute('data-node-id') : null);
+      if (!targetId) return;
+      clearHighlights();
+      state.focusedNodeId = targetId;
+      state.activeReach = direction;
+
+      const reachedNodes = new Set([targetId]);
+      const reachedEdges = new Set();
+      const queue = [targetId];
+
+      while (queue.length > 0) {
+        const current = queue.shift();
+        const neighbors = (direction === 'downstream') ? (outgoing.get(current) || []) : (incoming.get(current) || []);
+        neighbors.forEach(item => {
+          const nextNode = (direction === 'downstream') ? item.to : item.from;
+          reachedEdges.add(item.edgeEl);
+          if (!reachedNodes.has(nextNode)) {
+            reachedNodes.add(nextNode);
+            queue.push(nextNode);
+          }
+        });
+      }
+
+      nodes.forEach(n => {
+        const id = n.getAttribute('data-node-id');
+        if (id === targetId) {
+          n.classList.add('is-focused');
+        } else if (!reachedNodes.has(id)) {
+          n.classList.add('is-dimmed');
+        }
+      });
+
+      edges.forEach(e => {
+        if (reachedEdges.has(e)) {
+          e.classList.add('is-highlighted', 'is-active-trace');
+        } else {
+          e.classList.add('is-dimmed');
+        }
+      });
+    }
+
+    function traceShortestRoute(sourceId, targetId) {
+      if (!sourceId || !targetId || sourceId === targetId) return;
+      clearHighlights();
+
+      const queue = [[sourceId]];
+      const visited = new Set([sourceId]);
+      let shortestPath = null;
+
+      while (queue.length > 0) {
+        const path = queue.shift();
+        const current = path[path.length - 1];
+        if (current === targetId) {
+          shortestPath = path;
+          break;
+        }
+        const neighbors = outgoing.get(current) || [];
+        const sorted = [...neighbors].sort((a, b) => a.to.localeCompare(b.to));
+        for (const item of sorted) {
+          if (!visited.has(item.to)) {
+            visited.add(item.to);
+            queue.push([...path, item.to]);
+          }
+        }
+      }
+
+      if (!shortestPath) return;
+
+      const pathNodes = new Set(shortestPath);
+      const pathEdges = new Set();
+
+      for (let i = 0; i < shortestPath.length - 1; i++) {
+        const u = shortestPath[i];
+        const v = shortestPath[i + 1];
+        const edgeObj = (outgoing.get(u) || []).find(e => e.to === v);
+        if (edgeObj) pathEdges.add(edgeObj.edgeEl);
+      }
+
+      nodes.forEach(n => {
+        const id = n.getAttribute('data-node-id');
+        if (!pathNodes.has(id)) n.classList.add('is-dimmed');
+        else if (id === sourceId || id === targetId) n.classList.add('is-focused');
+      });
+
+      edges.forEach(e => {
+        if (pathEdges.has(e)) e.classList.add('is-highlighted', 'is-active-trace');
+        else e.classList.add('is-dimmed');
+      });
+    }
+
+    function cycleRoleLens() {
+      if (rolesList.length === 0) return;
+      state.activeLensIndex = (state.activeLensIndex + 1) % (rolesList.length + 1);
+
+      if (state.activeLensIndex === rolesList.length) {
+        clearHighlights();
+        state.activeLens = null;
+        return;
+      }
+
+      const roleName = rolesList[state.activeLensIndex];
+      clearHighlights();
+      state.activeLens = roleName;
+
+      nodes.forEach(n => {
+        const role = n.getAttribute('data-role');
+        if (role !== roleName) {
+          n.classList.add('is-dimmed');
+        } else {
+          n.classList.add('is-focused');
+        }
+      });
+    }
+
+    function cycleRoute() {
+      if (nodes.length < 2) return;
+      const src = nodes[0].getAttribute('data-node-id');
+      const dst = nodes[nodes.length - 1].getAttribute('data-node-id');
+      traceShortestRoute(src, dst);
+    }
+
+    function togglePresentation() {
+      state.isPresentation = !state.isPresentation;
+      root.classList.toggle('is-presentation', state.isPresentation);
+    }
+
+    function setChapter(index) {
+      const views = (irData.meta && irData.meta.views) || [];
+      if (views.length === 0) return;
+      if (index < 0) index = 0;
+      if (index >= views.length) index = views.length - 1;
+      state.currentChapterIndex = index;
+      const chapter = views[index];
+
+      if (chapterLabel) {
+        chapterLabel.textContent = `${index + 1}/${views.length}: ${chapter.title || chapter.id}`;
+      }
+
+      clearHighlights();
+      if (chapter.focus_nodes && chapter.focus_nodes.length > 0) {
+        focusNodes(chapter.focus_nodes);
+      } else if (chapter.highlight_route && chapter.highlight_route.length >= 2) {
+        traceShortestRoute(chapter.highlight_route[0], chapter.highlight_route[chapter.highlight_route.length - 1]);
+      }
+    }
+    const PRESET_THEME_PALETTES = {
+      'classic:light': {
+        '--ak-bg': '#ffffff', '--ak-surface': '#f8fafc', '--ak-surface-border': '#e2e8f0',
+        '--ak-text-primary': '#0f172a', '--ak-text-secondary': '#475569', '--ak-text-muted': '#94a3b8',
+        '--ak-accent': '#2563eb', '--ak-accent-light': '#dbeafe',
+        '--ak-node-bg': '#ffffff', '--ak-node-border': '#cbd5e1',
+        '--ak-edge-stroke': '#64748b', '--ak-edge-active': '#2563eb',
+        '--ak-badge-bg': '#f1f5f9', '--ak-font-sans': 'system-ui, -apple-system, sans-serif',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'classic:dark': {
+        '--ak-bg': '#090d16', '--ak-surface': '#0f172a', '--ak-surface-border': '#1e293b',
+        '--ak-text-primary': '#f8fafc', '--ak-text-secondary': '#94a3b8', '--ak-text-muted': '#64748b',
+        '--ak-accent': '#38bdf8', '--ak-accent-light': '#0369a1',
+        '--ak-node-bg': '#0f172a', '--ak-node-border': '#334155',
+        '--ak-edge-stroke': '#475569', '--ak-edge-active': '#38bdf8',
+        '--ak-badge-bg': '#1e293b', '--ak-font-sans': 'system-ui, -apple-system, sans-serif',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'signal-flow:light': {
+        '--ak-bg': '#f0fdf4', '--ak-surface': '#dcfce7', '--ak-surface-border': '#86efac',
+        '--ak-text-primary': '#14532d', '--ak-text-secondary': '#166534', '--ak-text-muted': '#4ade80',
+        '--ak-accent': '#059669', '--ak-accent-light': '#d1fae5',
+        '--ak-node-bg': '#ffffff', '--ak-node-border': '#10b981',
+        '--ak-edge-stroke': '#059669', '--ak-edge-active': '#047857',
+        '--ak-badge-bg': '#dcfce7', '--ak-font-sans': 'system-ui, -apple-system, sans-serif',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'signal-flow:dark': {
+        '--ak-bg': '#031c18', '--ak-surface': '#064e3b', '--ak-surface-border': '#047857',
+        '--ak-text-primary': '#ecfdf5', '--ak-text-secondary': '#a7f3d0', '--ak-text-muted': '#34d399',
+        '--ak-accent': '#34d399', '--ak-accent-light': '#065f46',
+        '--ak-node-bg': '#064e3b', '--ak-node-border': '#10b981',
+        '--ak-edge-stroke': '#34d399', '--ak-edge-active': '#6ee7b7',
+        '--ak-badge-bg': '#064e3b', '--ak-font-sans': 'system-ui, -apple-system, sans-serif',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'blueprint:light': {
+        '--ak-bg': '#f0f9ff', '--ak-surface': '#e0f2fe', '--ak-surface-border': '#7dd3fc',
+        '--ak-text-primary': '#0369a1', '--ak-text-secondary': '#0284c7', '--ak-text-muted': '#38bdf8',
+        '--ak-accent': '#0284c7', '--ak-accent-light': '#bae6fd',
+        '--ak-node-bg': '#ffffff', '--ak-node-border': '#0ea5e9',
+        '--ak-edge-stroke': '#0284c7', '--ak-edge-active': '#0369a1',
+        '--ak-badge-bg': '#e0f2fe', '--ak-font-sans': 'ui-monospace, monospace',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'blueprint:dark': {
+        '--ak-bg': '#081d33', '--ak-surface': '#0c2a4a', '--ak-surface-border': '#1e4976',
+        '--ak-text-primary': '#e0f2fe', '--ak-text-secondary': '#bae6fd', '--ak-text-muted': '#38bdf8',
+        '--ak-accent': '#38bdf8', '--ak-accent-light': '#0369a1',
+        '--ak-node-bg': '#0c213a', '--ak-node-border': '#38bdf8',
+        '--ak-edge-stroke': '#7dd3fc', '--ak-edge-active': '#38bdf8',
+        '--ak-badge-bg': '#0c213a', '--ak-font-sans': 'ui-monospace, monospace',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'editorial:light': {
+        '--ak-bg': '#faf8f5', '--ak-surface': '#f3efe6', '--ak-surface-border': '#e2dacb',
+        '--ak-text-primary': '#1c1917', '--ak-text-secondary': '#57534e', '--ak-text-muted': '#a8a29e',
+        '--ak-accent': '#991b1b', '--ak-accent-light': '#fecaca',
+        '--ak-node-bg': '#ffffff', '--ak-node-border': '#d6cfc4',
+        '--ak-edge-stroke': '#78716c', '--ak-edge-active': '#991b1b',
+        '--ak-badge-bg': '#f3efe6', '--ak-font-sans': 'system-ui, serif',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'editorial:dark': {
+        '--ak-bg': '#1c1917', '--ak-surface': '#292524', '--ak-surface-border': '#44403c',
+        '--ak-text-primary': '#fafaf9', '--ak-text-secondary': '#d6d3d1', '--ak-text-muted': '#78716c',
+        '--ak-accent': '#ef4444', '--ak-accent-light': '#7f1d1d',
+        '--ak-node-bg': '#292524', '--ak-node-border': '#78716c',
+        '--ak-edge-stroke': '#a8a29e', '--ak-edge-active': '#f87171',
+        '--ak-badge-bg': '#292524', '--ak-font-sans': 'system-ui, serif',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      }
+    };
+
+    function exportShareCard() {
+      const svg = root.querySelector('.ak-diagram-svg');
+      if (!svg) return;
+
+      const title = (irData.meta && irData.meta.title) || 'AgentKit System Map';
+      const preset = root.getAttribute('data-preset') || 'classic';
+      const theme = root.getAttribute('data-theme') || 'light';
+
+      const VAR_WHITELIST = [
+        '--ak-bg', '--ak-surface', '--ak-surface-border',
+        '--ak-text-primary', '--ak-text-secondary', '--ak-text-muted',
+        '--ak-accent', '--ak-accent-light',
+        '--ak-node-bg', '--ak-node-border',
+        '--ak-edge-stroke', '--ak-edge-active',
+        '--ak-badge-bg', '--ak-font-sans', '--ak-font-mono'
+      ];
+
+      const paletteKey = `${preset}:${theme}`;
+      const fallbackPalette = PRESET_THEME_PALETTES[paletteKey] || PRESET_THEME_PALETTES['classic:light'];
+
+      let computed = null;
+      if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+        try { computed = window.getComputedStyle(root); } catch (e) { computed = null; }
+      }
+
+      const resolvedVars = {};
+      VAR_WHITELIST.forEach(varName => {
+        let val = '';
+        if (computed && typeof computed.getPropertyValue === 'function') {
+          val = computed.getPropertyValue(varName);
+        }
+        resolvedVars[varName] = (val && val.trim()) ? val.trim() : (fallbackPalette[varName] || '#000000');
+      });
+
+      const cardBg = resolvedVars['--ak-bg'];
+      const cardSurface = resolvedVars['--ak-surface'];
+      const cardBorder = resolvedVars['--ak-surface-border'];
+      const textPrimary = resolvedVars['--ak-text-primary'];
+      const textMuted = resolvedVars['--ak-text-muted'];
+      const accent = resolvedVars['--ak-accent'];
+
+      const cssDeclarations = Object.entries(resolvedVars)
+        .map(([k, v]) => `${k}: ${v};`)
+        .join(' ');
+
+      const styleBlock = `<style>
+        svg {
+          ${cssDeclarations}
+          font-family: var(--ak-font-sans);
+        }
+      </style>`;
+
+      // Construct canonical 1200x630 Share Card SVG with self-contained resolved variables
+      const shareCardSvg = `<svg viewBox="0 0 1200 630" width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          ${styleBlock}
+        </defs>
+        <rect width="1200" height="630" fill="${cardBg}" rx="12" stroke="${cardBorder}" stroke-width="2"/>
+        <g transform="translate(48, 56)">
+          <text x="0" y="0" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="${textPrimary}">${escapeXml(title)}</text>
+          <text x="0" y="28" font-family="system-ui, sans-serif" font-size="14" fill="${textMuted}">AgentKit System Map • Preset: ${escapeXml(preset)} • Theme: ${escapeXml(theme)}</text>
+        </g>
+        <g transform="translate(48, 120)">
+          <rect width="1104" height="450" fill="${cardSurface}" rx="8" stroke="${cardBorder}" stroke-width="1.5"/>
+          <svg x="20" y="20" width="1064" height="410" viewBox="${svg.getAttribute('viewBox') || '0 0 1000 600'}">
+            ${svg.innerHTML}
+          </svg>
+        </g>
+        <g transform="translate(1050, 595)">
+          <text x="0" y="0" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="${accent}">AgentKit • Archify v2.16</text>
+        </g>
+      </svg>`;
+
+      const blob = new Blob([shareCardSvg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-share-card-1200x630.svg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Attach Node Click Handlers
+    nodes.forEach(nodeEl => {
+      nodeEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = nodeEl.getAttribute('data-node-id');
+        if (state.focusedNodeId === id) {
+          clearHighlights();
+        } else {
+          focusNode(id);
+        }
+      });
+    });
+
+    const viewport = container.querySelector('.ak-diagram-viewport');
+    if (viewport) {
+      viewport.addEventListener('click', () => {
+        clearHighlights();
+      });
+    }
+
+    // Search Input (Searches Label, ID, Description, Role)
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const q = e.target.value.trim().toLowerCase();
+        if (!q) {
+          clearHighlights();
+          return;
+        }
+        clearHighlights();
+        nodes.forEach(n => {
+          const label = (n.getAttribute('data-label') || '').toLowerCase();
+          const id = (n.getAttribute('data-node-id') || '').toLowerCase();
+          const desc = (n.getAttribute('data-desc') || '').toLowerCase();
+          const role = (n.getAttribute('data-role') || '').toLowerCase();
+          if (label.includes(q) || id.includes(q) || desc.includes(q) || role.includes(q)) {
+            n.classList.remove('is-dimmed');
+            n.classList.add('is-focused');
+          } else {
+            n.classList.add('is-dimmed');
+          }
+        });
+      });
+    }
+
+    // Control Buttons
+    if (themeBtn) {
+      themeBtn.addEventListener('click', () => {
+        const currentTheme = root.getAttribute('data-theme') || 'light';
+        const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', nextTheme);
+        themeBtn.textContent = nextTheme === 'dark' ? '☀️' : '🌙';
+      });
+    }
+
+    if (presentBtn) presentBtn.addEventListener('click', togglePresentation);
+    if (shareBtn) shareBtn.addEventListener('click', exportShareCard);
+    if (reachDownBtn) reachDownBtn.addEventListener('click', () => traceReach(null, 'downstream'));
+    if (reachUpBtn) reachUpBtn.addEventListener('click', () => traceReach(null, 'upstream'));
+    if (routeBtn) routeBtn.addEventListener('click', cycleRoute);
+    if (lensBtn) lensBtn.addEventListener('click', cycleRoleLens);
+
+    if (chapterPrevBtn) {
+      chapterPrevBtn.addEventListener('click', () => setChapter(state.currentChapterIndex - 1));
+    }
+    if (chapterNextBtn) {
+      chapterNextBtn.addEventListener('click', () => setChapter(state.currentChapterIndex + 1));
+    }
+
+    // Global Scoped Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+        if (e.key === 'Escape') activeEl.blur();
+        return;
+      }
+
+      if (e.key === '/') {
+        if (searchInput) {
+          e.preventDefault();
+          searchInput.focus();
+        }
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePresentation();
+      } else if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        cycleRoute();
+      } else if (e.key === 'l' || e.key === 'L') {
+        e.preventDefault();
+        cycleRoleLens();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        replayMotion();
+      } else if (e.key === '[') {
+        e.preventDefault();
+        setChapter(state.currentChapterIndex - 1);
+      } else if (e.key === ']') {
+        e.preventDefault();
+        setChapter(state.currentChapterIndex + 1);
+      } else if (e.key === 'Escape') {
+        if (state.isPresentation) {
+          togglePresentation();
+        } else {
+          clearHighlights();
+        }
+      }
+    });
+
+    if (irData.meta && irData.meta.views && irData.meta.views.length > 0) {
+      setChapter(0);
+    }
+  }
+
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.ak-diagram-root').forEach(initDiagram);
+      });
+    } else {
+      document.querySelectorAll('.ak-diagram-root').forEach(initDiagram);
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.AgentKitDiagram = { init: initDiagram };
+  }
+})();
+</script>
+  </div>
+</body>
+</html>

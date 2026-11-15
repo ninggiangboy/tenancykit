@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>attribution: ban xem truoc ket qua cuoi (gia dinh, chua phai code)</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #f1f5f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="ak-diagram-root" data-instance-id="f7f06f5c" data-preset="classic" data-theme="light" data-animation="none">
+    <style>/* AgentKit Diagram Reader Styles & Presets (Archify-informed) */
+
+.ak-diagram-root {
+  --ak-bg: #ffffff;
+  --ak-surface: #f8fafc;
+  --ak-surface-border: #e2e8f0;
+  --ak-text-primary: #0f172a;
+  --ak-text-secondary: #475569;
+  --ak-text-muted: #94a3b8;
+  --ak-accent: #2563eb;
+  --ak-accent-light: #dbeafe;
+  --ak-node-bg: #ffffff;
+  --ak-node-border: #cbd5e1;
+  --ak-edge-stroke: #64748b;
+  --ak-edge-active: #2563eb;
+  --ak-badge-bg: #f1f5f9;
+  --ak-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --ak-font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ak-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  
+  font-family: var(--ak-font-sans);
+  background-color: var(--ak-bg);
+  color: var(--ak-text-primary);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ak-surface-border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* Preset: Classic (Light / Dark) */
+.ak-diagram-root[data-preset="classic"][data-theme="light"],
+.ak-diagram-root[data-preset="classic"]:not([data-theme="dark"]) {
+  --ak-bg: #ffffff;
+  --ak-surface: #f8fafc;
+  --ak-surface-border: #e2e8f0;
+  --ak-text-primary: #0f172a;
+  --ak-text-secondary: #475569;
+  --ak-node-bg: #ffffff;
+  --ak-node-border: #cbd5e1;
+  --ak-edge-stroke: #64748b;
+  --ak-edge-active: #2563eb;
+}
+.ak-diagram-root[data-preset="classic"][data-theme="dark"] {
+  --ak-bg: #090d16;
+  --ak-surface: #0f172a;
+  --ak-surface-border: #1e293b;
+  --ak-text-primary: #f8fafc;
+  --ak-text-secondary: #94a3b8;
+  --ak-node-bg: #0f172a;
+  --ak-node-border: #334155;
+  --ak-edge-stroke: #475569;
+  --ak-edge-active: #38bdf8;
+}
+
+/* Preset: Signal Flow (Light / Dark) */
+.ak-diagram-root[data-preset="signal-flow"][data-theme="light"],
+.ak-diagram-root[data-preset="signal-flow"]:not([data-theme="dark"]) {
+  --ak-bg: #f0fdf4;
+  --ak-surface: #dcfce7;
+  --ak-surface-border: #86efac;
+  --ak-text-primary: #14532d;
+  --ak-text-secondary: #166534;
+  --ak-accent: #059669;
+  --ak-node-bg: #ffffff;
+  --ak-node-border: #10b981;
+  --ak-edge-stroke: #059669;
+  --ak-edge-active: #047857;
+}
+.ak-diagram-root[data-preset="signal-flow"][data-theme="dark"] {
+  --ak-bg: #031c18;
+  --ak-surface: #064e3b;
+  --ak-surface-border: #047857;
+  --ak-text-primary: #ecfdf5;
+  --ak-text-secondary: #a7f3d0;
+  --ak-accent: #34d399;
+  --ak-node-bg: #064e3b;
+  --ak-node-border: #10b981;
+  --ak-edge-stroke: #34d399;
+  --ak-edge-active: #6ee7b7;
+}
+
+/* Preset: Blueprint (Light / Dark) */
+.ak-diagram-root[data-preset="blueprint"][data-theme="light"],
+.ak-diagram-root[data-preset="blueprint"]:not([data-theme="dark"]) {
+  --ak-bg: #f0f9ff;
+  --ak-surface: #e0f2fe;
+  --ak-surface-border: #7dd3fc;
+  --ak-text-primary: #0369a1;
+  --ak-text-secondary: #0284c7;
+  --ak-accent: #0284c7;
+  --ak-node-bg: #ffffff;
+  --ak-node-border: #0ea5e9;
+  --ak-edge-stroke: #0284c7;
+  --ak-edge-active: #0369a1;
+  --ak-font-sans: var(--ak-font-mono);
+}
+.ak-diagram-root[data-preset="blueprint"][data-theme="dark"] {
+  --ak-bg: #081d33;
+  --ak-surface: #0c2a4a;
+  --ak-surface-border: #1e4976;
+  --ak-text-primary: #e0f2fe;
+  --ak-text-secondary: #bae6fd;
+  --ak-accent: #38bdf8;
+  --ak-node-bg: #0c213a;
+  --ak-node-border: #38bdf8;
+  --ak-edge-stroke: #7dd3fc;
+  --ak-edge-active: #38bdf8;
+  --ak-font-sans: var(--ak-font-mono);
+}
+
+/* Preset: Editorial (Light / Dark) */
+.ak-diagram-root[data-preset="editorial"][data-theme="light"],
+.ak-diagram-root[data-preset="editorial"]:not([data-theme="dark"]) {
+  --ak-bg: #faf8f5;
+  --ak-surface: #f3efe6;
+  --ak-surface-border: #e2dacb;
+  --ak-text-primary: #1c1917;
+  --ak-text-secondary: #57534e;
+  --ak-accent: #991b1b;
+  --ak-node-bg: #ffffff;
+  --ak-node-border: #d6cfc4;
+  --ak-edge-stroke: #78716c;
+  --ak-edge-active: #991b1b;
+}
+.ak-diagram-root[data-preset="editorial"][data-theme="dark"] {
+  --ak-bg: #1c1917;
+  --ak-surface: #292524;
+  --ak-surface-border: #44403c;
+  --ak-text-primary: #fafaf9;
+  --ak-text-secondary: #d6d3d1;
+  --ak-accent: #ef4444;
+  --ak-node-bg: #292524;
+  --ak-node-border: #78716c;
+  --ak-edge-stroke: #a8a29e;
+  --ak-edge-active: #f87171;
+}
+
+/* Toolbar & Reader Controls */
+.ak-diagram-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: var(--ak-surface);
+  border-bottom: 1px solid var(--ak-surface-border);
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ak-diagram-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ak-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ak-diagram-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ak-chapter-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--ak-bg);
+  border: 1px solid var(--ak-surface-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.ak-chapter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ak-text-secondary);
+}
+
+.ak-diagram-btn {
+  background: var(--ak-bg);
+  border: 1px solid var(--ak-surface-border);
+  color: var(--ak-text-primary);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+.ak-diagram-btn:hover {
+  background-color: var(--ak-surface);
+  border-color: var(--ak-accent);
+}
+.ak-diagram-btn:focus-visible {
+  outline: 2px solid var(--ak-accent);
+  outline-offset: 1px;
+}
+
+.ak-diagram-search-input {
+  background: var(--ak-bg);
+  border: 1px solid var(--ak-surface-border);
+  color: var(--ak-text-primary);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  width: 140px;
+}
+.ak-diagram-search-input:focus {
+  outline: 2px solid var(--ak-accent);
+  border-color: transparent;
+}
+
+/* Main Viewport */
+.ak-diagram-viewport {
+  position: relative;
+  overflow: auto;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--ak-bg);
+}
+
+.ak-diagram-svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Node, Boundary & Edge Styling */
+.ak-node {
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+.ak-node:hover {
+  transform: translateY(-2px);
+}
+.ak-node.is-dimmed {
+  opacity: 0.25;
+}
+.ak-node.is-focused rect,
+.ak-node.is-focused circle {
+  stroke: var(--ak-accent) !important;
+  stroke-width: 3px !important;
+}
+
+.ak-edge path,
+.ak-edge line,
+.ak-edge polyline {
+  transition: stroke 0.2s ease, opacity 0.2s ease;
+}
+.ak-edge.is-dimmed {
+  opacity: 0.15;
+}
+.ak-edge.is-highlighted path,
+.ak-edge.is-highlighted line,
+.ak-edge.is-highlighted polyline {
+  stroke: var(--ak-edge-active) !important;
+  stroke-width: 2.5px !important;
+}
+.ak-edge text {
+  stroke: none !important;
+  stroke-width: 0 !important;
+  stroke-dasharray: none !important;
+  animation: none !important;
+  fill: var(--ak-text-secondary);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Trace Motion Animation (Finite, <= 8s) */
+@keyframes ak-trace-stroke {
+  from {
+    stroke-dashoffset: 200;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.ak-diagram-root[data-animation="trace"] .ak-edge.is-active-trace path,
+.ak-diagram-root[data-animation="trace"] .ak-edge.is-active-trace line,
+.ak-diagram-root[data-animation="trace"] .ak-edge.is-active-trace polyline {
+  stroke-dasharray: 6 4;
+  animation: ak-trace-stroke 2.5s ease-in-out forwards;
+}
+
+/* Presentation Stage (F) */
+.ak-diagram-root.is-presentation {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  border-radius: 0;
+  border: none;
+  height: 100vh;
+  width: 100vw;
+}
+.ak-diagram-root.is-presentation .ak-diagram-viewport {
+  height: calc(100vh - 48px);
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  .ak-node, .ak-edge, .ak-diagram-btn {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+.ak-diagram-root,svg.ak-diagram-svg{--ak-role-client-stroke:#0e7490;--ak-role-client-fill:rgba(14,116,144,0.1);--ak-role-service-stroke:#4f46e5;--ak-role-service-fill:rgba(79,70,229,0.1);--ak-role-data-stroke:#b45309;--ak-role-data-fill:rgba(180,83,9,0.1);--ak-role-queue-stroke:#7c3aed;--ak-role-queue-fill:rgba(124,58,237,0.1);--ak-role-cache-stroke:#c2410c;--ak-role-cache-fill:rgba(194,65,12,0.1);--ak-role-gateway-stroke:#0369a1;--ak-role-gateway-fill:rgba(3,105,161,0.1);--ak-role-security-stroke:#be123c;--ak-role-security-fill:rgba(190,18,60,0.1);--ak-role-external-stroke:#475569;--ak-role-external-fill:rgba(71,85,105,0.1);--ak-role-worker-stroke:#0f766e;--ak-role-worker-fill:rgba(15,118,110,0.1);--ak-role-start-stroke:#047857;--ak-role-start-fill:rgba(4,120,87,0.1);--ak-role-success-stroke:#059669;--ak-role-success-fill:rgba(5,150,105,0.1);--ak-role-failure-stroke:#b91c1c;--ak-role-failure-fill:rgba(185,28,28,0.1);--ak-role-waiting-stroke:#a16207;--ak-role-waiting-fill:rgba(161,98,7,0.1);--ak-role-decision-stroke:#a21caf;--ak-role-decision-fill:rgba(162,28,175,0.1);--ak-role-process-stroke:#1d4ed8;--ak-role-process-fill:rgba(29,78,216,0.1);--ak-role-governance-stroke:#6d28d9;--ak-role-governance-fill:rgba(109,40,217,0.1);--ak-role-transform-stroke:#4338ca;--ak-role-transform-fill:rgba(67,56,202,0.1);--ak-role-filter-stroke:#4d7c0f;--ak-role-filter-fill:rgba(77,124,15,0.1);}
+.ak-diagram-root[data-theme="dark"],svg.ak-diagram-svg[data-theme="dark"]{--ak-role-client-stroke:#22d3ee;--ak-role-client-fill:rgba(34,211,238,0.16);--ak-role-service-stroke:#818cf8;--ak-role-service-fill:rgba(129,140,248,0.16);--ak-role-data-stroke:#fbbf24;--ak-role-data-fill:rgba(251,191,36,0.16);--ak-role-queue-stroke:#a78bfa;--ak-role-queue-fill:rgba(167,139,250,0.16);--ak-role-cache-stroke:#fb923c;--ak-role-cache-fill:rgba(251,146,60,0.16);--ak-role-gateway-stroke:#38bdf8;--ak-role-gateway-fill:rgba(56,189,248,0.16);--ak-role-security-stroke:#fb7185;--ak-role-security-fill:rgba(251,113,133,0.16);--ak-role-external-stroke:#94a3b8;--ak-role-external-fill:rgba(148,163,184,0.16);--ak-role-worker-stroke:#2dd4bf;--ak-role-worker-fill:rgba(45,212,191,0.16);--ak-role-start-stroke:#34d399;--ak-role-start-fill:rgba(52,211,153,0.16);--ak-role-success-stroke:#34d399;--ak-role-success-fill:rgba(52,211,153,0.16);--ak-role-failure-stroke:#f87171;--ak-role-failure-fill:rgba(248,113,113,0.16);--ak-role-waiting-stroke:#facc15;--ak-role-waiting-fill:rgba(250,204,21,0.16);--ak-role-decision-stroke:#e879f9;--ak-role-decision-fill:rgba(232,121,249,0.16);--ak-role-process-stroke:#60a5fa;--ak-role-process-fill:rgba(96,165,250,0.16);--ak-role-governance-stroke:#c4b5fd;--ak-role-governance-fill:rgba(196,181,253,0.16);--ak-role-transform-stroke:#a5b4fc;--ak-role-transform-fill:rgba(165,180,252,0.16);--ak-role-filter-stroke:#a3e635;--ak-role-filter-fill:rgba(163,230,53,0.16);}
+.ak-node[data-family="client"]{--ak-node-stroke:var(--ak-role-client-stroke);--ak-node-fill:var(--ak-role-client-fill);}.ak-legend-item[data-family="client"] .ak-legend-swatch{fill:var(--ak-role-client-fill);stroke:var(--ak-role-client-stroke);}
+.ak-node[data-family="service"]{--ak-node-stroke:var(--ak-role-service-stroke);--ak-node-fill:var(--ak-role-service-fill);}.ak-legend-item[data-family="service"] .ak-legend-swatch{fill:var(--ak-role-service-fill);stroke:var(--ak-role-service-stroke);}
+.ak-node[data-family="data"]{--ak-node-stroke:var(--ak-role-data-stroke);--ak-node-fill:var(--ak-role-data-fill);}.ak-legend-item[data-family="data"] .ak-legend-swatch{fill:var(--ak-role-data-fill);stroke:var(--ak-role-data-stroke);}
+.ak-node[data-family="queue"]{--ak-node-stroke:var(--ak-role-queue-stroke);--ak-node-fill:var(--ak-role-queue-fill);}.ak-legend-item[data-family="queue"] .ak-legend-swatch{fill:var(--ak-role-queue-fill);stroke:var(--ak-role-queue-stroke);}
+.ak-node[data-family="cache"]{--ak-node-stroke:var(--ak-role-cache-stroke);--ak-node-fill:var(--ak-role-cache-fill);}.ak-legend-item[data-family="cache"] .ak-legend-swatch{fill:var(--ak-role-cache-fill);stroke:var(--ak-role-cache-stroke);}
+.ak-node[data-family="gateway"]{--ak-node-stroke:var(--ak-role-gateway-stroke);--ak-node-fill:var(--ak-role-gateway-fill);}.ak-legend-item[data-family="gateway"] .ak-legend-swatch{fill:var(--ak-role-gateway-fill);stroke:var(--ak-role-gateway-stroke);}
+.ak-node[data-family="security"]{--ak-node-stroke:var(--ak-role-security-stroke);--ak-node-fill:var(--ak-role-security-fill);}.ak-legend-item[data-family="security"] .ak-legend-swatch{fill:var(--ak-role-security-fill);stroke:var(--ak-role-security-stroke);}
+.ak-node[data-family="external"]{--ak-node-stroke:var(--ak-role-external-stroke);--ak-node-fill:var(--ak-role-external-fill);}.ak-legend-item[data-family="external"] .ak-legend-swatch{fill:var(--ak-role-external-fill);stroke:var(--ak-role-external-stroke);}
+.ak-node[data-family="worker"]{--ak-node-stroke:var(--ak-role-worker-stroke);--ak-node-fill:var(--ak-role-worker-fill);}.ak-legend-item[data-family="worker"] .ak-legend-swatch{fill:var(--ak-role-worker-fill);stroke:var(--ak-role-worker-stroke);}
+.ak-node[data-family="start"]{--ak-node-stroke:var(--ak-role-start-stroke);--ak-node-fill:var(--ak-role-start-fill);}.ak-legend-item[data-family="start"] .ak-legend-swatch{fill:var(--ak-role-start-fill);stroke:var(--ak-role-start-stroke);}
+.ak-node[data-family="success"]{--ak-node-stroke:var(--ak-role-success-stroke);--ak-node-fill:var(--ak-role-success-fill);}.ak-legend-item[data-family="success"] .ak-legend-swatch{fill:var(--ak-role-success-fill);stroke:var(--ak-role-success-stroke);}
+.ak-node[data-family="failure"]{--ak-node-stroke:var(--ak-role-failure-stroke);--ak-node-fill:var(--ak-role-failure-fill);}.ak-legend-item[data-family="failure"] .ak-legend-swatch{fill:var(--ak-role-failure-fill);stroke:var(--ak-role-failure-stroke);}
+.ak-node[data-family="waiting"]{--ak-node-stroke:var(--ak-role-waiting-stroke);--ak-node-fill:var(--ak-role-waiting-fill);}.ak-legend-item[data-family="waiting"] .ak-legend-swatch{fill:var(--ak-role-waiting-fill);stroke:var(--ak-role-waiting-stroke);}
+.ak-node[data-family="decision"]{--ak-node-stroke:var(--ak-role-decision-stroke);--ak-node-fill:var(--ak-role-decision-fill);}.ak-legend-item[data-family="decision"] .ak-legend-swatch{fill:var(--ak-role-decision-fill);stroke:var(--ak-role-decision-stroke);}
+.ak-node[data-family="process"]{--ak-node-stroke:var(--ak-role-process-stroke);--ak-node-fill:var(--ak-role-process-fill);}.ak-legend-item[data-family="process"] .ak-legend-swatch{fill:var(--ak-role-process-fill);stroke:var(--ak-role-process-stroke);}
+.ak-node[data-family="governance"]{--ak-node-stroke:var(--ak-role-governance-stroke);--ak-node-fill:var(--ak-role-governance-fill);}.ak-legend-item[data-family="governance"] .ak-legend-swatch{fill:var(--ak-role-governance-fill);stroke:var(--ak-role-governance-stroke);}
+.ak-node[data-family="transform"]{--ak-node-stroke:var(--ak-role-transform-stroke);--ak-node-fill:var(--ak-role-transform-fill);}.ak-legend-item[data-family="transform"] .ak-legend-swatch{fill:var(--ak-role-transform-fill);stroke:var(--ak-role-transform-stroke);}
+.ak-node[data-family="filter"]{--ak-node-stroke:var(--ak-role-filter-stroke);--ak-node-fill:var(--ak-role-filter-fill);}.ak-legend-item[data-family="filter"] .ak-legend-swatch{fill:var(--ak-role-filter-fill);stroke:var(--ak-role-filter-stroke);}
+/* ak-diagram core SVG styles: shared by the reader fragment and standalone SVG.
+   Colour comes from --ak-* palette variables and --ak-role-* family tokens. */
+
+.ak-diagram-svg { font-family: var(--ak-font-sans); display: block; }
+.ak-diagram-svg text { user-select: none; }
+
+.ak-canvas { fill: var(--ak-bg); }
+.ak-grid-dot { fill: var(--ak-text-muted); opacity: 0.28; }
+
+.ak-title { font-size: 16px; font-weight: 700; fill: var(--ak-text-primary); letter-spacing: -0.01em; }
+.ak-subtitle { font-size: 11px; font-weight: 500; fill: var(--ak-text-secondary); }
+
+/* Frames: boundaries, lanes, stages */
+.ak-frame { fill: var(--ak-surface); stroke: var(--ak-surface-border); stroke-width: 1; }
+.ak-frame-boundary { fill: transparent; stroke-dasharray: 6 4; stroke-width: 1.5; }
+.ak-frame-stage { stroke-dasharray: 4 3; }
+.ak-frame-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; fill: var(--ak-text-secondary); }
+.ak-frame-role { font-size: 10px; fill: var(--ak-text-muted); }
+
+/* Nodes */
+.ak-node { cursor: pointer; }
+.ak-node-mask { fill: var(--ak-node-bg); }
+.ak-node-card { fill: var(--ak-node-fill, var(--ak-node-bg)); stroke: var(--ak-node-stroke, var(--ak-node-border)); stroke-width: 1.5; transition: stroke-width 160ms ease; }
+.ak-node[data-shape="notch"] .ak-node-card { stroke-width: 2; }
+.ak-node-accent { fill: var(--ak-node-stroke, var(--ak-accent)); }
+.ak-sigil path { fill: none; stroke: var(--ak-node-stroke, var(--ak-accent)); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ak-node-label { font-size: 13px; font-weight: 600; fill: var(--ak-text-primary); }
+.ak-node-sub { font-size: 9.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; fill: var(--ak-text-muted); }
+.ak-node:hover .ak-node-card, .ak-node:focus-visible .ak-node-card { stroke-width: 2.5; }
+.ak-node:focus-visible { outline: none; }
+
+/* Edges */
+.ak-edge-path { fill: none; stroke: var(--ak-edge-stroke); stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; transition: stroke 160ms ease, stroke-width 160ms ease; }
+.ak-edge-dashed { stroke-dasharray: 5 4; }
+.ak-edge[data-tone="failure"] .ak-edge-path { stroke: var(--ak-role-failure-stroke); }
+.ak-edge[data-tone="decision"] .ak-edge-path { stroke: var(--ak-role-decision-stroke); }
+.ak-edge-flow { fill: none; stroke: var(--ak-edge-active); stroke-width: 2.25; stroke-linecap: round; opacity: 0; pointer-events: none; }
+.ak-edge-label-mask { fill: var(--ak-bg); stroke: var(--ak-surface-border); stroke-width: 1; }
+.ak-edge-label text { font-size: 10.5px; font-weight: 500; fill: var(--ak-text-secondary); }
+.ak-arrowhead { fill: var(--ak-edge-stroke); }
+.ak-arrowhead-open { fill: none; stroke: var(--ak-edge-stroke); stroke-width: 1.25; }
+
+/* Sequence extras */
+.ak-lifeline { stroke: var(--ak-edge-stroke); stroke-width: 1.25; stroke-dasharray: 4 4; opacity: 0.55; }
+.ak-activation { fill: var(--ak-accent-light); stroke: var(--ak-accent); stroke-width: 1; }
+
+/* Legend */
+.ak-legend-swatch { stroke-width: 1.5; }
+.ak-legend-item text { font-size: 10.5px; font-weight: 500; fill: var(--ak-text-secondary); }
+
+/* Motion: staggered entrance, edge draw, optional finite trace pass.
+   Total budget stays under 8 s because --step is capped at 40 by the compiler. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-motion="play"] [data-animate="node"] {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: ak-node-in 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(var(--step, 0) * 110ms);
+  }
+  [data-motion="play"] [data-animate="edge"] .ak-edge-path {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: ak-edge-draw 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: calc(var(--step, 0) * 110ms + 140ms);
+  }
+  [data-motion="play"] [data-animate="edge"] .ak-edge-dashed {
+    animation-name: ak-edge-draw-dashed;
+  }
+  [data-motion="play"] [data-animate="edge"] .ak-edge-label {
+    opacity: 0;
+    animation: ak-fade-in 0.4s ease forwards;
+    animation-delay: calc(var(--step, 0) * 110ms + 520ms);
+  }
+  [data-motion="play"] [data-animate="frame"] {
+    opacity: 0;
+    animation: ak-fade-in 0.5s ease forwards;
+  }
+  [data-motion="play"][data-animation="trace"] [data-animate="edge"] .ak-edge-flow,
+  [data-motion="play"] [data-animation="trace"] [data-animate="edge"] .ak-edge-flow {
+    stroke-dasharray: 5 9;
+    animation: ak-edge-flow 1.3s linear 3;
+    animation-delay: calc(var(--step, 0) * 110ms + 900ms);
+  }
+  [data-motion="play"][data-animation="trace"] [data-animate="node"] .ak-node-card,
+  [data-motion="play"] [data-animation="trace"] [data-animate="node"] .ak-node-card {
+    animation: ak-node-pulse 1.6s ease-in-out 1;
+    animation-delay: calc(var(--step, 0) * 110ms + 900ms);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ak-diagram-svg *, .ak-diagram-svg { animation: none !important; transition: none !important; }
+}
+
+@keyframes ak-node-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ak-edge-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes ak-edge-draw-dashed {
+  to { stroke-dashoffset: 0; stroke-dasharray: 5 4; }
+}
+@keyframes ak-fade-in {
+  to { opacity: 1; }
+}
+@keyframes ak-edge-flow {
+  0% { stroke-dashoffset: 28; opacity: 0; }
+  15% { opacity: 0.9; }
+  85% { opacity: 0.9; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+@keyframes ak-node-pulse {
+  0%, 100% { stroke-width: 1.5; }
+  50% { stroke-width: 3; }
+}
+</style>
+    <div class="ak-diagram-toolbar">
+      <h4 class="ak-diagram-title"><span>&#128202;</span> attribution: ban xem truoc ket qua cuoi (gia dinh, chua phai code)<span class="ak-diagram-subtitle"> - Link tiep thi, do luong, chuyen doi va chi phi quang cao cho Tenant</span></h4>
+      <div class="ak-diagram-controls">
+        <input type="text" class="ak-diagram-search-input" placeholder="Search (/) ..." aria-label="Search diagram nodes and descriptions" />
+        <button type="button" class="ak-diagram-btn ak-btn-reach-down" title="Downstream Reach">&#8595; Reach</button>
+        <button type="button" class="ak-diagram-btn ak-btn-reach-up" title="Upstream Reach">&#8593; Reach</button>
+        <button type="button" class="ak-diagram-btn ak-btn-route" title="Route Inspection (R)">&#128205; Route</button>
+        <button type="button" class="ak-diagram-btn ak-btn-lens" title="Role Lens (L)">&#128269; Lens</button>
+        <div class="ak-chapter-controls">
+    <button type="button" class="ak-diagram-btn ak-btn-prev-chapter" title="Previous Chapter ([)">&#8249;</button>
+    <span class="ak-chapter-label">1/3</span>
+    <button type="button" class="ak-diagram-btn ak-btn-next-chapter" title="Next Chapter (])">&#8250;</button>
+  </div>
+        <button type="button" class="ak-diagram-btn ak-btn-motion" title="Replay motion (M)">&#9654; Replay</button>
+        <button type="button" class="ak-diagram-btn ak-btn-theme" title="Toggle Light/Dark">&#127769;</button>
+        <button type="button" class="ak-diagram-btn ak-btn-present" title="Presentation Stage (F)">&#9974;</button>
+        <button type="button" class="ak-diagram-btn ak-btn-share" title="Export 1200x630 Share Card">&#128228; Card</button>
+      </div>
+    </div>
+    <div class="ak-diagram-viewport">
+      <svg class="ak-diagram-svg" viewBox="-4 0 1597.6 528" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="attribution: ban xem truoc ket qua cuoi (gia dinh, chua phai code)" data-diagram-type="architecture" data-preset="classic" data-theme="light" data-animation="none" data-motion="play"><title>attribution: ban xem truoc ket qua cuoi (gia dinh, chua phai code)</title><desc>Trang thai cuoi du kien sau khi service attribution giao xong. Cac muc ghi (gia dinh) la gia dinh cua advisor, can Tenant owner xac nhan.</desc><defs><marker id="ak-arrowhead-f7f06f5c" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path class="ak-arrowhead" d="M0 0L9 3.5L0 7z"/></marker><marker id="ak-arrowhead-open-f7f06f5c" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="userSpaceOnUse"><path class="ak-arrowhead-open" d="M0 0L8 3.5L0 7"/></marker><pattern id="ak-grid-f7f06f5c" width="24" height="24" patternUnits="userSpaceOnUse"><circle class="ak-grid-dot" cx="1" cy="1" r="1"/></pattern></defs><rect class="ak-canvas" x="-4" y="0" width="1597.6" height="528"/><rect class="ak-canvas-grid" x="-4" y="0" width="1597.6" height="528" fill="url(#ak-grid-f7f06f5c)"/><g class="ak-header"><text class="ak-title" x="36" y="34">attribution: ban xem truoc ket qua cuoi (gia dinh, chua phai code)</text><text class="ak-subtitle" x="36" y="52">Link tiep thi, do luong, chuyen doi va chi phi quang cao cho Tenant</text></g><g class="ak-boundary" data-boundary-id="b-attr" data-animate="frame"><rect class="ak-frame ak-frame-boundary" x="665.3" y="134" width="888.3" height="266" rx="12"/><text class="ak-frame-label" x="679.3" y="155">attribution (deployable moi, DB rieng)</text><text class="ak-frame-role" x="962.5" y="155">trust-boundary</text></g><g class="ak-boundary" data-boundary-id="b-tenant" data-animate="frame"><rect class="ak-frame ak-frame-boundary" x="24" y="260" width="282" height="182" rx="12"/><text class="ak-frame-label" x="38" y="281">Phia Tenant (ngoai suite)</text><text class="ak-frame-role" x="224.6" y="281">external-zone</text></g><g class="ak-edge" data-from="visitor" data-to="proxy" data-edge-id="e0" data-kind="forward" data-animate="edge" data-route="290,149 324,149 324,261 382,261" style="--step:1"><path class="ak-edge-path" d="M290 149 L314 149 Q324 149 324 159 L324 251 Q324 261 334 261 L382 261" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="309.5" y="240" width="87.1" height="18" rx="9"/><text x="353" y="252.5" text-anchor="middle">GET /go/{slug}</text></g></g><g class="ak-edge" data-from="proxy" data-to="redirect" data-edge-id="e1" data-kind="forward" data-animate="edge" data-route="589.3,275 681.3,275" style="--step:2"><path class="ak-edge-path" d="M589.3 275 L681.3 275" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="613.8" y="254" width="43" height="18" rx="9"/><text x="635.3" y="266.5" text-anchor="middle">public</text></g></g><g class="ak-edge" data-from="redirect" data-to="cache" data-edge-id="e2" data-kind="forward" data-animate="edge" data-route="901.8,275 941.8,275 941.8,198 993.8,198" style="--step:3"><path class="ak-edge-path" d="M901.8 275 L931.8 275 Q941.8 275 941.8 265 L941.8 208 Q941.8 198 951.8 198 L993.8 198" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="933.4" y="177" width="68.8" height="18" rx="9"/><text x="967.8" y="189.5" text-anchor="middle">doc quy tac</text></g></g><g class="ak-edge" data-from="redirect" data-to="queue" data-edge-id="e3" data-kind="forward" data-animate="edge" data-route="901.8,289 953.8,289 953.8,268 993.8,268" style="--step:3"><path class="ak-edge-path" d="M901.8 289 L943.8 289 Q953.8 289 953.8 279 L953.8 278 Q953.8 268 963.8 268 L993.8 268" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="900.4" y="268" width="55" height="18" rx="9"/><text x="927.8" y="280.5" text-anchor="middle">ghi click</text></g></g><g class="ak-edge" data-from="redirect" data-to="visitor" data-edge-id="e4" data-kind="back" data-animate="edge" data-route="901.8,261 929.8,261 929.8,96 12,96 12,149 40,149" style="--step:3"><path class="ak-edge-path" d="M901.8 261 L919.8 261 Q929.8 261 929.8 251 L929.8 106 Q929.8 96 919.8 96 L22 96 Q12 96 12 106 L12 139 Q12 149 22 149 L40 149" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="431.5" y="75" width="78.9" height="18" rx="9"/><text x="470.9" y="87.5" text-anchor="middle">302 + click id</text></g></g><g class="ak-edge" data-from="tenant-site" data-to="proxy" data-edge-id="e5" data-kind="forward" data-animate="edge" data-route="290,317 348,317 348,289 382,289" style="--step:1"><path class="ak-edge-path" d="M290 317 L338 317 Q348 317 348 307 L348 299 Q348 289 358 289 L382 289" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="274.1" y="296" width="89.8" height="18" rx="9"/><text x="319" y="308.5" text-anchor="middle">page view, goal</text></g></g><g class="ak-edge" data-from="proxy" data-to="collect" data-edge-id="e6" data-kind="forward" data-animate="edge" data-route="589.3,289 641.3,289 641.3,352 681.3,352" style="--step:2"><path class="ak-edge-path" d="M589.3 289 L631.3 289 Q641.3 289 641.3 299 L641.3 342 Q641.3 352 651.3 352 L681.3 352" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="593.8" y="290" width="43" height="18" rx="9"/><text x="615.3" y="302.5" text-anchor="middle">public</text></g></g><g class="ak-edge" data-from="tenant-system" data-to="collect" data-edge-id="e7" data-kind="forward" data-animate="edge" data-route="290,401 653.3,401 653.3,366 681.3,366" style="--step:1"><path class="ak-edge-path" d="M290 401 L643.3 401 Q653.3 401 653.3 391 L653.3 376 Q653.3 366 663.3 366 L681.3 366" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="419.6" y="380" width="104.1" height="18" rx="9"/><text x="471.7" y="392.5" text-anchor="middle">postback + click id</text></g></g><g class="ak-edge" data-from="collect" data-to="queue" data-edge-id="e8" data-kind="forward" data-animate="edge" data-route="901.8,359 965.8,359 965.8,282 993.8,282" style="--step:3"><path class="ak-edge-path" d="M901.8 359 L955.8 359 Q965.8 359 965.8 349 L965.8 292 Q965.8 282 975.8 282 L993.8 282" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="909.5" y="338" width="48.7" height="18" rx="9"/><text x="933.8" y="350.5" text-anchor="middle">su kien</text></g></g><g class="ak-edge" data-from="queue" data-to="worker" data-edge-id="e9" data-kind="same" data-animate="edge" data-route="1118.8,302 1118.8,332" style="--step:4"><path class="ak-edge-path" d="M1118.8 302 L1118.8 332" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="1126.8" y="308" width="46.1" height="18" rx="9"/><text x="1149.9" y="320.5" text-anchor="middle">theo lo</text></g></g><g class="ak-edge" data-from="worker" data-to="db" data-edge-id="e10" data-kind="forward" data-animate="edge" data-route="1243.8,359 1295.8,359 1295.8,282 1335.8,282" style="--step:4"><path class="ak-edge-path" d="M1243.8 359 L1285.8 359 Q1295.8 359 1295.8 349 L1295.8 292 Q1295.8 282 1305.8 282 L1335.8 282" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="1194.2" y="338" width="151.3" height="18" rx="9"/><text x="1269.8" y="350.5" text-anchor="middle">insert, rollup, gan chuyen doi</text></g></g><g class="ak-edge" data-from="ads" data-to="worker" data-edge-id="e11" data-kind="back" data-animate="edge" data-route="1537.6,359 1571.6,359 1571.6,412 977.8,412 977.8,359 993.8,359" style="--step:5"><path class="ak-edge-path" d="M1537.6 359 L1561.6 359 Q1571.6 359 1571.6 369 L1571.6 402 Q1571.6 412 1561.6 412 L987.8 412 Q977.8 412 977.8 402 L977.8 367 Q977.8 359 985.8 359 L993.8 359" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="1227.1" y="391" width="95.3" height="18" rx="9"/><text x="1274.7" y="403.5" text-anchor="middle">chi phi theo ngay</text></g></g><g class="ak-edge" data-from="tenant-admin" data-to="proxy" data-edge-id="e12" data-kind="forward" data-animate="edge" data-route="290,233 336,233 336,275 382,275" style="--step:1"><path class="ak-edge-path" d="M290 233 L326 233 Q336 233 336 243 L336 265 Q336 275 346 275 L382 275" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="271.6" y="212" width="82.9" height="18" rx="9"/><text x="313" y="224.5" text-anchor="middle">token Platform</text></g></g><g class="ak-edge" data-from="proxy" data-to="api" data-edge-id="e13" data-kind="forward" data-animate="edge" data-route="589.3,261 629.3,261 629.3,198 681.3,198" style="--step:2"><path class="ak-edge-path" d="M589.3 261 L619.3 261 Q629.3 261 629.3 251 L629.3 208 Q629.3 198 639.3 198 L681.3 198" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="616.2" y="177" width="78.3" height="18" rx="9"/><text x="655.3" y="189.5" text-anchor="middle">/attribution/*</text></g></g><g class="ak-edge" data-from="api" data-to="db" data-edge-id="e14" data-kind="forward" data-animate="edge" data-route="901.8,198 917.8,198 917.8,138 1283.8,138 1283.8,268 1335.8,268" style="--step:3"><path class="ak-edge-path" d="M901.8 198 L909.8 198 Q917.8 198 917.8 190 L917.8 148 Q917.8 138 927.8 138 L1273.8 138 Q1283.8 138 1283.8 148 L1283.8 258 Q1283.8 268 1293.8 268 L1335.8 268" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="1054.8" y="117" width="92.1" height="18" rx="9"/><text x="1100.8" y="129.5" text-anchor="middle">doc ghi, bao cao</text></g></g><g class="ak-edge" data-from="api" data-to="cache" data-edge-id="e15" data-kind="forward" data-animate="edge" data-route="901.8,184 993.8,184" style="--step:3"><path class="ak-edge-path" d="M901.8 184 L993.8 184" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="916.6" y="207" width="62.5" height="18" rx="9"/><text x="947.8" y="219.5" text-anchor="middle">huy cache</text></g></g><g class="ak-edge" data-from="platform" data-to="api" data-edge-id="e16" data-kind="back" data-animate="edge" data-route="1537.6,191 1559.6,191 1559.6,138 617.3,138 617.3,184 681.3,184" style="--step:5"><path class="ak-edge-path" d="M1537.6 191 L1549.6 191 Q1559.6 191 1559.6 181 L1559.6 148 Q1559.6 138 1549.6 138 L627.3 138 Q617.3 138 617.3 148 L617.3 174 Q617.3 184 627.3 184 L681.3 184" pathLength="100" marker-end="url(#ak-arrowhead-f7f06f5c)"/><g class="ak-edge-label"><rect class="ak-edge-label-mask" x="1017.5" y="139" width="141.9" height="18" rx="9"/><text x="1088.5" y="151.5" text-anchor="middle">events + snapshot (replica)</text></g></g><g class="ak-node" data-node-id="visitor" data-label="Khach bam link" data-role="frontend" data-desc="Bam link ngan hoac quet QR, thuong den tu quang cao, email, SMS." data-family="client" data-shape="card" tabindex="0" data-animate="node" style="--step:0"><rect class="ak-node-mask" x="40" y="122" width="250" height="54" rx="10"/><rect class="ak-node-card" x="40" y="122" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="41" y="132" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(54 141)"><path d="M2 3h12v8H2zM6 14h4M8 11v3"/></g><text class="ak-node-label" x="80" y="147">Khach bam link</text><text class="ak-node-sub" x="80" y="162">Client</text></g><g class="ak-node" data-node-id="tenant-admin" data-label="Tenant admin / Tenant System" data-role="frontend" data-desc="Tao campaign, link, QR, nhap chi phi, xem bao cao qua REST (API only)." data-family="client" data-shape="card" tabindex="0" data-animate="node" style="--step:0"><rect class="ak-node-mask" x="40" y="206" width="250" height="54" rx="10"/><rect class="ak-node-card" x="40" y="206" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="41" y="216" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(54 225)"><path d="M2 3h12v8H2zM6 14h4M8 11v3"/></g><text class="ak-node-label" x="80" y="231">Tenant admin / Tenant System</text><text class="ak-node-sub" x="80" y="246">Client</text></g><g class="ak-node" data-node-id="tenant-site" data-label="Website Tenant + JS snippet" data-role="external" data-desc="Snippet doc click id, giu cookie first-party sau khi co dong y, ghi page view, phien va goal." data-family="external" data-shape="card" tabindex="0" data-animate="node" style="--step:0"><rect class="ak-node-mask" x="40" y="290" width="250" height="54" rx="10"/><rect class="ak-node-card" x="40" y="290" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="41" y="300" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(54 309)"><path d="M3 8a5 5 0 0 1 10 0 5 5 0 0 1-10 0zM3 8h10M8 3c-2 2-2 8 0 10M8 3c2 2 2 8 0 10"/></g><text class="ak-node-label" x="80" y="315">Website Tenant + JS snippet</text><text class="ak-node-sub" x="80" y="330">External</text></g><g class="ak-node" data-node-id="tenant-system" data-label="Backend Tenant (postback)" data-role="external" data-desc="Goi API postback server-to-server kem click id va gia tri khi co chuyen doi that." data-family="external" data-shape="card" tabindex="0" data-animate="node" style="--step:0"><rect class="ak-node-mask" x="40" y="374" width="250" height="54" rx="10"/><rect class="ak-node-card" x="40" y="374" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="41" y="384" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(54 393)"><path d="M3 8a5 5 0 0 1 10 0 5 5 0 0 1-10 0zM3 8h10M8 3c-2 2-2 8 0 10M8 3c2 2 2 8 0 10"/></g><text class="ak-node-label" x="80" y="399">Backend Tenant (postback)</text><text class="ak-node-sub" x="80" y="414">External</text></g><g class="ak-node" data-node-id="proxy" data-label="Reverse proxy theo Host" data-role="gateway" data-desc="Chi route theo Host; /go/* va /attribution/t/* la public (gia dinh)." data-family="gateway" data-shape="card" tabindex="0" data-animate="node" style="--step:1"><rect class="ak-node-mask" x="382" y="248" width="207.3" height="54" rx="10"/><rect class="ak-node-card" x="382" y="248" width="207.3" height="54" rx="10"/><rect class="ak-node-accent" x="383" y="258" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(396 267)"><path d="M8 2v12M3 6l5-4 5 4M3 10l5 4 5-4"/></g><text class="ak-node-label" x="422" y="273">Reverse proxy theo Host</text><text class="ak-node-sub" x="422" y="288">Gateway</text></g><g class="ak-node" data-node-id="redirect" data-label="Redirect /go/{slug}" data-role="backend" data-desc="Kiem tra het han, quota, mat khau; chon diem den A/B, thiet bi, quoc gia; gan click id; 302." data-family="service" data-shape="card" tabindex="0" data-animate="node" style="--step:2"><rect class="ak-node-mask" x="681.3" y="248" width="220.5" height="54" rx="10"/><rect class="ak-node-card" x="681.3" y="248" width="220.5" height="54" rx="10"/><rect class="ak-node-accent" x="682.3" y="258" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(695.3 267)"><path d="M3 3h10v10H3zM6 6h4M6 8h4M6 10h2"/></g><text class="ak-node-label" x="721.3" y="273">Redirect /go/{slug}</text><text class="ak-node-sub" x="721.3" y="288">Service</text></g><g class="ak-node" data-node-id="collect" data-label="Thu thap /t/* va postback" data-role="backend" data-desc="Page view, phien, goal tu snippet va postback co chong du lieu gia, chong bot, rate limit." data-family="service" data-shape="card" tabindex="0" data-animate="node" style="--step:2"><rect class="ak-node-mask" x="681.3" y="332" width="220.5" height="54" rx="10"/><rect class="ak-node-card" x="681.3" y="332" width="220.5" height="54" rx="10"/><rect class="ak-node-accent" x="682.3" y="342" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(695.3 351)"><path d="M3 3h10v10H3zM6 6h4M6 8h4M6 10h2"/></g><text class="ak-node-label" x="721.3" y="357">Thu thap /t/* va postback</text><text class="ak-node-sub" x="721.3" y="372">Service</text></g><g class="ak-node" data-node-id="api" data-label="API quan tri va bao cao" data-role="backend" data-desc="Campaign, link, QR, link hang loat, chi phi, bao cao, CSV. Quyen attribution:*." data-family="service" data-shape="card" tabindex="0" data-animate="node" style="--step:2"><rect class="ak-node-mask" x="681.3" y="164" width="220.5" height="54" rx="10"/><rect class="ak-node-card" x="681.3" y="164" width="220.5" height="54" rx="10"/><rect class="ak-node-accent" x="682.3" y="174" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(695.3 183)"><path d="M3 3h10v10H3zM6 6h4M6 8h4M6 10h2"/></g><text class="ak-node-label" x="721.3" y="189">API quan tri va bao cao</text><text class="ak-node-sub" x="721.3" y="204">Service</text></g><g class="ak-node" data-node-id="cache" data-label="Cache link" data-role="cache" data-desc="Slug sang quy tac redirect; huy khi link doi." data-family="cache" data-shape="card" tabindex="0" data-animate="node" style="--step:3"><rect class="ak-node-mask" x="993.8" y="164" width="250" height="54" rx="10"/><rect class="ak-node-card" x="993.8" y="164" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="994.8" y="174" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1007.8 183)"><path d="M2 8l6-5 6 5-6 5zM8 3v10"/></g><text class="ak-node-label" x="1033.8" y="189">Cache link</text><text class="ak-node-sub" x="1033.8" y="204">Cache</text></g><g class="ak-node" data-node-id="queue" data-label="Hang doi ingest" data-role="queue" data-desc="RabbitMQ: click, page view, goal cho worker ghi theo lo." data-family="queue" data-shape="card" tabindex="0" data-animate="node" style="--step:3"><rect class="ak-node-mask" x="993.8" y="248" width="250" height="54" rx="10"/><rect class="ak-node-card" x="993.8" y="248" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="994.8" y="258" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1007.8 267)"><path d="M2 5h3v6H2zM6.5 5h3v6h-3zM11 5h3v6h-3z"/></g><text class="ak-node-label" x="1033.8" y="273">Hang doi ingest</text><text class="ak-node-sub" x="1033.8" y="288">Queue</text></g><g class="ak-node" data-node-id="worker" data-label="Worker: ghi lo, rollup, gan chuyen doi, dong bo chi phi" data-role="worker" data-desc="Batch insert, rollup gio/ngay, attribution first/last/linear, keo chi phi Google/Meta theo ngay." data-family="worker" data-shape="card" tabindex="0" data-animate="node" style="--step:3"><rect class="ak-node-mask" x="993.8" y="332" width="250" height="54" rx="10"/><rect class="ak-node-card" x="993.8" y="332" width="250" height="54" rx="10"/><rect class="ak-node-accent" x="994.8" y="342" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1007.8 351)"><path d="M3 13l4-4M6 3l7 7-2 2-7-7zM10 4l2 2"/></g><text class="ak-node-label" x="1033.8" y="357">Worker: ghi lo, rollup, gan chu…</text><text class="ak-node-sub" x="1033.8" y="372">Worker</text></g><g class="ak-node" data-node-id="db" data-label="Postgres attribution" data-role="database" data-desc="Campaign, link, su kien chia partition theo ngay, rollup, chuyen doi, chi phi, token nen tang ma hoa. RLS theo Tenant." data-family="data" data-shape="card" tabindex="0" data-animate="node" style="--step:4"><rect class="ak-node-mask" x="1335.8" y="248" width="201.8" height="54" rx="10"/><rect class="ak-node-card" x="1335.8" y="248" width="201.8" height="54" rx="10"/><rect class="ak-node-accent" x="1336.8" y="258" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1349.8 267)"><path d="M3 4c0-1.5 10-1.5 10 0v8c0 1.5-10 1.5-10 0zM3 4c0 1.5 10 1.5 10 0M3 8c0 1.5 10 1.5 10 0"/></g><text class="ak-node-label" x="1375.8" y="273">Postgres attribution</text><text class="ak-node-sub" x="1375.8" y="288">Data store</text></g><g class="ak-node" data-node-id="platform" data-label="Platform (khong doi)" data-role="auth" data-desc="Token, replica tenant va quyen, entitlement; app chi enforce." data-family="security" data-shape="card" tabindex="0" data-animate="node" style="--step:4"><rect class="ak-node-mask" x="1335.8" y="164" width="201.8" height="54" rx="10"/><rect class="ak-node-card" x="1335.8" y="164" width="201.8" height="54" rx="10"/><rect class="ak-node-accent" x="1336.8" y="174" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1349.8 183)"><path d="M8 2l5 2v4c0 3-2 5-5 6-3-1-5-3-5-6V4zM5.5 8l2 2 3-3"/></g><text class="ak-node-label" x="1375.8" y="189">Platform (khong doi)</text><text class="ak-node-sub" x="1375.8" y="204">Auth / security</text></g><g class="ak-node" data-node-id="ads" data-label="Google Ads / Meta Ads" data-role="external" data-desc="OAuth do Tenant cap; chi lay chi phi va hieu qua. Khong tao hay sua ad that." data-family="external" data-shape="card" tabindex="0" data-animate="node" style="--step:4"><rect class="ak-node-mask" x="1335.8" y="332" width="201.8" height="54" rx="10"/><rect class="ak-node-card" x="1335.8" y="332" width="201.8" height="54" rx="10"/><rect class="ak-node-accent" x="1336.8" y="342" width="3" height="34" rx="1.5"/><g class="ak-sigil" transform="translate(1349.8 351)"><path d="M3 8a5 5 0 0 1 10 0 5 5 0 0 1-10 0zM3 8h10M8 3c-2 2-2 8 0 10M8 3c2 2 2 8 0 10"/></g><text class="ak-node-label" x="1375.8" y="357">Google Ads / Meta Ads</text><text class="ak-node-sub" x="1375.8" y="372">External</text></g><g class="ak-legend"><g class="ak-legend-item" data-family="client"><rect class="ak-legend-swatch" x="36" y="482" width="12" height="12" rx="3"/><text x="54" y="492">Client</text></g><g class="ak-legend-item" data-family="service"><rect class="ak-legend-swatch" x="103.7" y="482" width="12" height="12" rx="3"/><text x="121.7" y="492">Service</text></g><g class="ak-legend-item" data-family="data"><rect class="ak-legend-swatch" x="179.6" y="482" width="12" height="12" rx="3"/><text x="197.6" y="492">Data store</text></g><g class="ak-legend-item" data-family="queue"><rect class="ak-legend-swatch" x="267.5" y="482" width="12" height="12" rx="3"/><text x="285.5" y="492">Queue</text></g><g class="ak-legend-item" data-family="cache"><rect class="ak-legend-swatch" x="337.1" y="482" width="12" height="12" rx="3"/><text x="355.1" y="492">Cache</text></g><g class="ak-legend-item" data-family="gateway"><rect class="ak-legend-swatch" x="406.7" y="482" width="12" height="12" rx="3"/><text x="424.7" y="492">Gateway</text></g><g class="ak-legend-item" data-family="security"><rect class="ak-legend-swatch" x="488.5" y="482" width="12" height="12" rx="3"/><text x="506.5" y="492">Auth / security</text></g><g class="ak-legend-item" data-family="external"><rect class="ak-legend-swatch" x="599.7" y="482" width="12" height="12" rx="3"/><text x="617.7" y="492">External</text></g><g class="ak-legend-item" data-family="worker"><rect class="ak-legend-swatch" x="678.8" y="482" width="12" height="12" rx="3"/><text x="696.8" y="492">Worker</text></g></g></svg>
+    </div>
+    <script type="application/json" class="ak-diagram-data">{"schema_version":1,"diagram_type":"architecture","meta":{"title":"attribution: ban xem truoc ket qua cuoi (gia dinh, chua phai code)","subtitle":"Link tiep thi, do luong, chuyen doi va chi phi quang cao cho Tenant","description":"Trang thai cuoi du kien sau khi service attribution giao xong. Cac muc ghi (gia dinh) la gia dinh cua advisor, can Tenant owner xac nhan.","locale":"vi","visual_preset":"classic","theme":"light","views":[{"id":"ch1","title":"1. Click: tu link toi diem den","narrative":"Khach bam link ngan. Redirect doc tu cache, chon diem den theo quy tac, gan click id va tra 302 trong vai ms. Viec ghi click di bat dong bo.","focus_nodes":["visitor","proxy","redirect","cache","queue"]},{"id":"ch2","title":"2. Chuyen doi: snippet va postback","narrative":"JS snippet tren website Tenant ghi page view va phien sau khi co dong y. Khi co ket qua that, backend Tenant goi postback kem click id. Worker gan chuyen doi cho click theo mo hinh cua campaign.","focus_nodes":["tenant-site","tenant-system","collect","queue","worker","db"]},{"id":"ch3","title":"3. Chi phi va bao cao","narrative":"Chi phi nhap tay hoac keo ve tu Google/Meta Ads theo ngay. API bao cao ghep chi phi voi chuyen doi de ra CPC, CPA, ROAS.","focus_nodes":["ads","worker","db","api","tenant-admin"]}]},"boundaries":[{"id":"b-attr","label":"attribution (deployable moi, DB rieng)","role":"trust-boundary","components":["redirect","collect","api","cache","queue","worker","db"]},{"id":"b-tenant","label":"Phia Tenant (ngoai suite)","role":"external-zone","components":["tenant-site","tenant-system"]}],"components":[{"id":"visitor","label":"Khach bam link","role":"frontend","layer":0,"description":"Bam link ngan hoac quet QR, thuong den tu quang cao, email, SMS."},{"id":"tenant-admin","label":"Tenant admin / Tenant System","role":"frontend","layer":0,"description":"Tao campaign, link, QR, nhap chi phi, xem bao cao qua REST (API only)."},{"id":"tenant-site","label":"Website Tenant + JS snippet","role":"external","layer":0,"description":"Snippet doc click id, giu cookie first-party sau khi co dong y, ghi page view, phien va goal."},{"id":"tenant-system","label":"Backend Tenant (postback)","role":"external","layer":0,"description":"Goi API postback server-to-server kem click id va gia tri khi co chuyen doi that."},{"id":"proxy","label":"Reverse proxy theo Host","role":"gateway","layer":1,"description":"Chi route theo Host; /go/* va /attribution/t/* la public (gia dinh)."},{"id":"redirect","label":"Redirect /go/{slug}","role":"backend","layer":2,"description":"Kiem tra het han, quota, mat khau; chon diem den A/B, thiet bi, quoc gia; gan click id; 302."},{"id":"collect","label":"Thu thap /t/* va postback","role":"backend","layer":2,"description":"Page view, phien, goal tu snippet va postback co chong du lieu gia, chong bot, rate limit."},{"id":"api","label":"API quan tri va bao cao","role":"backend","layer":2,"description":"Campaign, link, QR, link hang loat, chi phi, bao cao, CSV. Quyen attribution:*."},{"id":"cache","label":"Cache link","role":"cache","layer":3,"description":"Slug sang quy tac redirect; huy khi link doi."},{"id":"queue","label":"Hang doi ingest","role":"queue","layer":3,"description":"RabbitMQ: click, page view, goal cho worker ghi theo lo."},{"id":"worker","label":"Worker: ghi lo, rollup, gan chuyen doi, dong bo chi phi","role":"worker","layer":3,"description":"Batch insert, rollup gio/ngay, attribution first/last/linear, keo chi phi Google/Meta theo ngay."},{"id":"db","label":"Postgres attribution","role":"database","layer":4,"description":"Campaign, link, su kien chia partition theo ngay, rollup, chuyen doi, chi phi, token nen tang ma hoa. RLS theo Tenant."},{"id":"platform","label":"Platform (khong doi)","role":"auth","layer":4,"description":"Token, replica tenant va quyen, entitlement; app chi enforce."},{"id":"ads","label":"Google Ads / Meta Ads","role":"external","layer":4,"description":"OAuth do Tenant cap; chi lay chi phi va hieu qua. Khong tao hay sua ad that."}],"connections":[{"from":"visitor","to":"proxy","label":"GET /go/{slug}","kind":"sync"},{"from":"proxy","to":"redirect","label":"public","kind":"sync"},{"from":"redirect","to":"cache","label":"doc quy tac","kind":"sync"},{"from":"redirect","to":"queue","label":"ghi click","kind":"async"},{"from":"redirect","to":"visitor","label":"302 + click id","kind":"sync"},{"from":"tenant-site","to":"proxy","label":"page view, goal","kind":"async"},{"from":"proxy","to":"collect","label":"public","kind":"sync"},{"from":"tenant-system","to":"collect","label":"postback + click id","kind":"sync"},{"from":"collect","to":"queue","label":"su kien","kind":"async"},{"from":"queue","to":"worker","label":"theo lo","kind":"async"},{"from":"worker","to":"db","label":"insert, rollup, gan chuyen doi","kind":"sync"},{"from":"ads","to":"worker","label":"chi phi theo ngay","kind":"sync"},{"from":"tenant-admin","to":"proxy","label":"token Platform","kind":"sync"},{"from":"proxy","to":"api","label":"/attribution/*","kind":"sync"},{"from":"api","to":"db","label":"doc ghi, bao cao","kind":"sync"},{"from":"api","to":"cache","label":"huy cache","kind":"sync"},{"from":"platform","to":"api","label":"events + snapshot (replica)","kind":"async"}]}</script>
+    <script>/**
+ * AgentKit Diagram Reader Runtime (Archify-informed)
+ * Pure vanilla JavaScript, zero runtime dependencies.
+ */
+(function() {
+  function escapeXml(unsafe) {
+    if (typeof unsafe !== 'string') return '';
+    return unsafe
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
+
+  function initDiagram(container) {
+    if (!container || container.__ak_initialized) return;
+    container.__ak_initialized = true;
+
+    const dataEl = container.querySelector('script[type="application/json"].ak-diagram-data');
+    if (!dataEl) return;
+
+    let irData;
+    try {
+      irData = JSON.parse(dataEl.textContent);
+    } catch (e) {
+      console.error('Failed to parse diagram data:', e);
+      return;
+    }
+
+    const state = {
+      focusedNodeId: null,
+      activeReach: null, // 'upstream' | 'downstream'
+      activeRoute: null,
+      activeLensIndex: -1,
+      currentChapterIndex: 0,
+      isPresentation: false
+    };
+
+    // DOM Elements
+    const root = container;
+    const searchInput = container.querySelector('.ak-diagram-search-input');
+    const nodes = Array.from(container.querySelectorAll('.ak-node'));
+    const edges = Array.from(container.querySelectorAll('.ak-edge'));
+    const themeBtn = container.querySelector('.ak-btn-theme');
+    const presentBtn = container.querySelector('.ak-btn-present');
+    const shareBtn = container.querySelector('.ak-btn-share');
+    const reachDownBtn = container.querySelector('.ak-btn-reach-down');
+    const reachUpBtn = container.querySelector('.ak-btn-reach-up');
+    const routeBtn = container.querySelector('.ak-btn-route');
+    const lensBtn = container.querySelector('.ak-btn-lens');
+    const chapterPrevBtn = container.querySelector('.ak-btn-prev-chapter');
+    const chapterNextBtn = container.querySelector('.ak-btn-next-chapter');
+    const chapterLabel = container.querySelector('.ak-chapter-label');
+    const motionBtn = container.querySelector('.ak-btn-motion');
+    const svgEl = container.querySelector('.ak-diagram-svg');
+
+    // Replay the finite entrance/trace motion by re-arming data-motion on the svg.
+    function replayMotion() {
+      if (!svgEl) return;
+      svgEl.removeAttribute('data-motion');
+      void svgEl.getBoundingClientRect();
+      svgEl.setAttribute('data-motion', 'play');
+    }
+    if (motionBtn) motionBtn.addEventListener('click', replayMotion);
+
+    // Build Graph Adjacency & Distinct Roles
+    const outgoing = new Map();
+    const incoming = new Map();
+    const allRoles = new Set();
+
+    nodes.forEach(n => {
+      const role = n.getAttribute('data-role');
+      if (role) allRoles.add(role);
+    });
+    const rolesList = Array.from(allRoles).sort();
+
+    edges.forEach(edgeEl => {
+      const from = edgeEl.getAttribute('data-from');
+      const to = edgeEl.getAttribute('data-to');
+      const edgeId = edgeEl.getAttribute('data-edge-id') || `${from}->${to}`;
+      if (from && to) {
+        if (!outgoing.has(from)) outgoing.set(from, []);
+        outgoing.get(from).push({ to, edgeEl, edgeId });
+
+        if (!incoming.has(to)) incoming.set(to, []);
+        incoming.get(to).push({ from, edgeEl, edgeId });
+      }
+    });
+
+    function clearHighlights() {
+      nodes.forEach(n => {
+        n.classList.remove('is-focused', 'is-dimmed');
+      });
+      edges.forEach(e => {
+        e.classList.remove('is-highlighted', 'is-dimmed', 'is-active-trace');
+      });
+      state.focusedNodeId = null;
+      state.activeReach = null;
+      state.activeRoute = null;
+    }
+
+    function focusNodes(nodeIds) {
+      const ids = (nodeIds || []).filter(Boolean);
+      clearHighlights();
+      if (ids.length === 0) {
+        state.focusedNodeId = null;
+        return;
+      }
+      state.focusedNodeId = ids[0];
+
+      const focusSet = new Set(ids);
+      const connectedNodeIds = new Set(ids);
+      ids.forEach(id => {
+        (outgoing.get(id) || []).forEach(e => connectedNodeIds.add(e.to));
+        (incoming.get(id) || []).forEach(e => connectedNodeIds.add(e.from));
+      });
+
+      nodes.forEach(n => {
+        const id = n.getAttribute('data-node-id');
+        if (focusSet.has(id)) {
+          n.classList.add('is-focused');
+        } else if (!connectedNodeIds.has(id)) {
+          n.classList.add('is-dimmed');
+        }
+      });
+
+      edges.forEach(e => {
+        const from = e.getAttribute('data-from');
+        const to = e.getAttribute('data-to');
+        if (focusSet.has(from) || focusSet.has(to)) {
+          e.classList.add('is-highlighted');
+        } else {
+          e.classList.add('is-dimmed');
+        }
+      });
+    }
+
+    function focusNode(nodeId) {
+      focusNodes(nodeId ? [nodeId] : []);
+    }
+
+    function traceReach(nodeId, direction) {
+      const targetId = nodeId || state.focusedNodeId || (nodes[0] ? nodes[0].getAttribute('data-node-id') : null);
+      if (!targetId) return;
+      clearHighlights();
+      state.focusedNodeId = targetId;
+      state.activeReach = direction;
+
+      const reachedNodes = new Set([targetId]);
+      const reachedEdges = new Set();
+      const queue = [targetId];
+
+      while (queue.length > 0) {
+        const current = queue.shift();
+        const neighbors = (direction === 'downstream') ? (outgoing.get(current) || []) : (incoming.get(current) || []);
+        neighbors.forEach(item => {
+          const nextNode = (direction === 'downstream') ? item.to : item.from;
+          reachedEdges.add(item.edgeEl);
+          if (!reachedNodes.has(nextNode)) {
+            reachedNodes.add(nextNode);
+            queue.push(nextNode);
+          }
+        });
+      }
+
+      nodes.forEach(n => {
+        const id = n.getAttribute('data-node-id');
+        if (id === targetId) {
+          n.classList.add('is-focused');
+        } else if (!reachedNodes.has(id)) {
+          n.classList.add('is-dimmed');
+        }
+      });
+
+      edges.forEach(e => {
+        if (reachedEdges.has(e)) {
+          e.classList.add('is-highlighted', 'is-active-trace');
+        } else {
+          e.classList.add('is-dimmed');
+        }
+      });
+    }
+
+    function traceShortestRoute(sourceId, targetId) {
+      if (!sourceId || !targetId || sourceId === targetId) return;
+      clearHighlights();
+
+      const queue = [[sourceId]];
+      const visited = new Set([sourceId]);
+      let shortestPath = null;
+
+      while (queue.length > 0) {
+        const path = queue.shift();
+        const current = path[path.length - 1];
+        if (current === targetId) {
+          shortestPath = path;
+          break;
+        }
+        const neighbors = outgoing.get(current) || [];
+        const sorted = [...neighbors].sort((a, b) => a.to.localeCompare(b.to));
+        for (const item of sorted) {
+          if (!visited.has(item.to)) {
+            visited.add(item.to);
+            queue.push([...path, item.to]);
+          }
+        }
+      }
+
+      if (!shortestPath) return;
+
+      const pathNodes = new Set(shortestPath);
+      const pathEdges = new Set();
+
+      for (let i = 0; i < shortestPath.length - 1; i++) {
+        const u = shortestPath[i];
+        const v = shortestPath[i + 1];
+        const edgeObj = (outgoing.get(u) || []).find(e => e.to === v);
+        if (edgeObj) pathEdges.add(edgeObj.edgeEl);
+      }
+
+      nodes.forEach(n => {
+        const id = n.getAttribute('data-node-id');
+        if (!pathNodes.has(id)) n.classList.add('is-dimmed');
+        else if (id === sourceId || id === targetId) n.classList.add('is-focused');
+      });
+
+      edges.forEach(e => {
+        if (pathEdges.has(e)) e.classList.add('is-highlighted', 'is-active-trace');
+        else e.classList.add('is-dimmed');
+      });
+    }
+
+    function cycleRoleLens() {
+      if (rolesList.length === 0) return;
+      state.activeLensIndex = (state.activeLensIndex + 1) % (rolesList.length + 1);
+
+      if (state.activeLensIndex === rolesList.length) {
+        clearHighlights();
+        state.activeLens = null;
+        return;
+      }
+
+      const roleName = rolesList[state.activeLensIndex];
+      clearHighlights();
+      state.activeLens = roleName;
+
+      nodes.forEach(n => {
+        const role = n.getAttribute('data-role');
+        if (role !== roleName) {
+          n.classList.add('is-dimmed');
+        } else {
+          n.classList.add('is-focused');
+        }
+      });
+    }
+
+    function cycleRoute() {
+      if (nodes.length < 2) return;
+      const src = nodes[0].getAttribute('data-node-id');
+      const dst = nodes[nodes.length - 1].getAttribute('data-node-id');
+      traceShortestRoute(src, dst);
+    }
+
+    function togglePresentation() {
+      state.isPresentation = !state.isPresentation;
+      root.classList.toggle('is-presentation', state.isPresentation);
+    }
+
+    function setChapter(index) {
+      const views = (irData.meta && irData.meta.views) || [];
+      if (views.length === 0) return;
+      if (index < 0) index = 0;
+      if (index >= views.length) index = views.length - 1;
+      state.currentChapterIndex = index;
+      const chapter = views[index];
+
+      if (chapterLabel) {
+        chapterLabel.textContent = `${index + 1}/${views.length}: ${chapter.title || chapter.id}`;
+      }
+
+      clearHighlights();
+      if (chapter.focus_nodes && chapter.focus_nodes.length > 0) {
+        focusNodes(chapter.focus_nodes);
+      } else if (chapter.highlight_route && chapter.highlight_route.length >= 2) {
+        traceShortestRoute(chapter.highlight_route[0], chapter.highlight_route[chapter.highlight_route.length - 1]);
+      }
+    }
+    const PRESET_THEME_PALETTES = {
+      'classic:light': {
+        '--ak-bg': '#ffffff', '--ak-surface': '#f8fafc', '--ak-surface-border': '#e2e8f0',
+        '--ak-text-primary': '#0f172a', '--ak-text-secondary': '#475569', '--ak-text-muted': '#94a3b8',
+        '--ak-accent': '#2563eb', '--ak-accent-light': '#dbeafe',
+        '--ak-node-bg': '#ffffff', '--ak-node-border': '#cbd5e1',
+        '--ak-edge-stroke': '#64748b', '--ak-edge-active': '#2563eb',
+        '--ak-badge-bg': '#f1f5f9', '--ak-font-sans': 'system-ui, -apple-system, sans-serif',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'classic:dark': {
+        '--ak-bg': '#090d16', '--ak-surface': '#0f172a', '--ak-surface-border': '#1e293b',
+        '--ak-text-primary': '#f8fafc', '--ak-text-secondary': '#94a3b8', '--ak-text-muted': '#64748b',
+        '--ak-accent': '#38bdf8', '--ak-accent-light': '#0369a1',
+        '--ak-node-bg': '#0f172a', '--ak-node-border': '#334155',
+        '--ak-edge-stroke': '#475569', '--ak-edge-active': '#38bdf8',
+        '--ak-badge-bg': '#1e293b', '--ak-font-sans': 'system-ui, -apple-system, sans-serif',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'signal-flow:light': {
+        '--ak-bg': '#f0fdf4', '--ak-surface': '#dcfce7', '--ak-surface-border': '#86efac',
+        '--ak-text-primary': '#14532d', '--ak-text-secondary': '#166534', '--ak-text-muted': '#4ade80',
+        '--ak-accent': '#059669', '--ak-accent-light': '#d1fae5',
+        '--ak-node-bg': '#ffffff', '--ak-node-border': '#10b981',
+        '--ak-edge-stroke': '#059669', '--ak-edge-active': '#047857',
+        '--ak-badge-bg': '#dcfce7', '--ak-font-sans': 'system-ui, -apple-system, sans-serif',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'signal-flow:dark': {
+        '--ak-bg': '#031c18', '--ak-surface': '#064e3b', '--ak-surface-border': '#047857',
+        '--ak-text-primary': '#ecfdf5', '--ak-text-secondary': '#a7f3d0', '--ak-text-muted': '#34d399',
+        '--ak-accent': '#34d399', '--ak-accent-light': '#065f46',
+        '--ak-node-bg': '#064e3b', '--ak-node-border': '#10b981',
+        '--ak-edge-stroke': '#34d399', '--ak-edge-active': '#6ee7b7',
+        '--ak-badge-bg': '#064e3b', '--ak-font-sans': 'system-ui, -apple-system, sans-serif',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'blueprint:light': {
+        '--ak-bg': '#f0f9ff', '--ak-surface': '#e0f2fe', '--ak-surface-border': '#7dd3fc',
+        '--ak-text-primary': '#0369a1', '--ak-text-secondary': '#0284c7', '--ak-text-muted': '#38bdf8',
+        '--ak-accent': '#0284c7', '--ak-accent-light': '#bae6fd',
+        '--ak-node-bg': '#ffffff', '--ak-node-border': '#0ea5e9',
+        '--ak-edge-stroke': '#0284c7', '--ak-edge-active': '#0369a1',
+        '--ak-badge-bg': '#e0f2fe', '--ak-font-sans': 'ui-monospace, monospace',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'blueprint:dark': {
+        '--ak-bg': '#081d33', '--ak-surface': '#0c2a4a', '--ak-surface-border': '#1e4976',
+        '--ak-text-primary': '#e0f2fe', '--ak-text-secondary': '#bae6fd', '--ak-text-muted': '#38bdf8',
+        '--ak-accent': '#38bdf8', '--ak-accent-light': '#0369a1',
+        '--ak-node-bg': '#0c213a', '--ak-node-border': '#38bdf8',
+        '--ak-edge-stroke': '#7dd3fc', '--ak-edge-active': '#38bdf8',
+        '--ak-badge-bg': '#0c213a', '--ak-font-sans': 'ui-monospace, monospace',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'editorial:light': {
+        '--ak-bg': '#faf8f5', '--ak-surface': '#f3efe6', '--ak-surface-border': '#e2dacb',
+        '--ak-text-primary': '#1c1917', '--ak-text-secondary': '#57534e', '--ak-text-muted': '#a8a29e',
+        '--ak-accent': '#991b1b', '--ak-accent-light': '#fecaca',
+        '--ak-node-bg': '#ffffff', '--ak-node-border': '#d6cfc4',
+        '--ak-edge-stroke': '#78716c', '--ak-edge-active': '#991b1b',
+        '--ak-badge-bg': '#f3efe6', '--ak-font-sans': 'system-ui, serif',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      },
+      'editorial:dark': {
+        '--ak-bg': '#1c1917', '--ak-surface': '#292524', '--ak-surface-border': '#44403c',
+        '--ak-text-primary': '#fafaf9', '--ak-text-secondary': '#d6d3d1', '--ak-text-muted': '#78716c',
+        '--ak-accent': '#ef4444', '--ak-accent-light': '#7f1d1d',
+        '--ak-node-bg': '#292524', '--ak-node-border': '#78716c',
+        '--ak-edge-stroke': '#a8a29e', '--ak-edge-active': '#f87171',
+        '--ak-badge-bg': '#292524', '--ak-font-sans': 'system-ui, serif',
+        '--ak-font-mono': 'ui-monospace, monospace'
+      }
+    };
+
+    function exportShareCard() {
+      const svg = root.querySelector('.ak-diagram-svg');
+      if (!svg) return;
+
+      const title = (irData.meta && irData.meta.title) || 'AgentKit System Map';
+      const preset = root.getAttribute('data-preset') || 'classic';
+      const theme = root.getAttribute('data-theme') || 'light';
+
+      const VAR_WHITELIST = [
+        '--ak-bg', '--ak-surface', '--ak-surface-border',
+        '--ak-text-primary', '--ak-text-secondary', '--ak-text-muted',
+        '--ak-accent', '--ak-accent-light',
+        '--ak-node-bg', '--ak-node-border',
+        '--ak-edge-stroke', '--ak-edge-active',
+        '--ak-badge-bg', '--ak-font-sans', '--ak-font-mono'
+      ];
+
+      const paletteKey = `${preset}:${theme}`;
+      const fallbackPalette = PRESET_THEME_PALETTES[paletteKey] || PRESET_THEME_PALETTES['classic:light'];
+
+      let computed = null;
+      if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+        try { computed = window.getComputedStyle(root); } catch (e) { computed = null; }
+      }
+
+      const resolvedVars = {};
+      VAR_WHITELIST.forEach(varName => {
+        let val = '';
+        if (computed && typeof computed.getPropertyValue === 'function') {
+          val = computed.getPropertyValue(varName);
+        }
+        resolvedVars[varName] = (val && val.trim()) ? val.trim() : (fallbackPalette[varName] || '#000000');
+      });
+
+      const cardBg = resolvedVars['--ak-bg'];
+      const cardSurface = resolvedVars['--ak-surface'];
+      const cardBorder = resolvedVars['--ak-surface-border'];
+      const textPrimary = resolvedVars['--ak-text-primary'];
+      const textMuted = resolvedVars['--ak-text-muted'];
+      const accent = resolvedVars['--ak-accent'];
+
+      const cssDeclarations = Object.entries(resolvedVars)
+        .map(([k, v]) => `${k}: ${v};`)
+        .join(' ');
+
+      const styleBlock = `<style>
+        svg {
+          ${cssDeclarations}
+          font-family: var(--ak-font-sans);
+        }
+      </style>`;
+
+      // Construct canonical 1200x630 Share Card SVG with self-contained resolved variables
+      const shareCardSvg = `<svg viewBox="0 0 1200 630" width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          ${styleBlock}
+        </defs>
+        <rect width="1200" height="630" fill="${cardBg}" rx="12" stroke="${cardBorder}" stroke-width="2"/>
+        <g transform="translate(48, 56)">
+          <text x="0" y="0" font-family="system-ui, sans-serif" font-size="28" font-weight="700" fill="${textPrimary}">${escapeXml(title)}</text>
+          <text x="0" y="28" font-family="system-ui, sans-serif" font-size="14" fill="${textMuted}">AgentKit System Map • Preset: ${escapeXml(preset)} • Theme: ${escapeXml(theme)}</text>
+        </g>
+        <g transform="translate(48, 120)">
+          <rect width="1104" height="450" fill="${cardSurface}" rx="8" stroke="${cardBorder}" stroke-width="1.5"/>
+          <svg x="20" y="20" width="1064" height="410" viewBox="${svg.getAttribute('viewBox') || '0 0 1000 600'}">
+            ${svg.innerHTML}
+          </svg>
+        </g>
+        <g transform="translate(1050, 595)">
+          <text x="0" y="0" font-family="system-ui, sans-serif" font-size="12" font-weight="600" fill="${accent}">AgentKit • Archify v2.16</text>
+        </g>
+      </svg>`;
+
+      const blob = new Blob([shareCardSvg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-share-card-1200x630.svg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Attach Node Click Handlers
+    nodes.forEach(nodeEl => {
+      nodeEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = nodeEl.getAttribute('data-node-id');
+        if (state.focusedNodeId === id) {
+          clearHighlights();
+        } else {
+          focusNode(id);
+        }
+      });
+    });
+
+    const viewport = container.querySelector('.ak-diagram-viewport');
+    if (viewport) {
+      viewport.addEventListener('click', () => {
+        clearHighlights();
+      });
+    }
+
+    // Search Input (Searches Label, ID, Description, Role)
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const q = e.target.value.trim().toLowerCase();
+        if (!q) {
+          clearHighlights();
+          return;
+        }
+        clearHighlights();
+        nodes.forEach(n => {
+          const label = (n.getAttribute('data-label') || '').toLowerCase();
+          const id = (n.getAttribute('data-node-id') || '').toLowerCase();
+          const desc = (n.getAttribute('data-desc') || '').toLowerCase();
+          const role = (n.getAttribute('data-role') || '').toLowerCase();
+          if (label.includes(q) || id.includes(q) || desc.includes(q) || role.includes(q)) {
+            n.classList.remove('is-dimmed');
+            n.classList.add('is-focused');
+          } else {
+            n.classList.add('is-dimmed');
+          }
+        });
+      });
+    }
+
+    // Control Buttons
+    if (themeBtn) {
+      themeBtn.addEventListener('click', () => {
+        const currentTheme = root.getAttribute('data-theme') || 'light';
+        const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', nextTheme);
+        themeBtn.textContent = nextTheme === 'dark' ? '☀️' : '🌙';
+      });
+    }
+
+    if (presentBtn) presentBtn.addEventListener('click', togglePresentation);
+    if (shareBtn) shareBtn.addEventListener('click', exportShareCard);
+    if (reachDownBtn) reachDownBtn.addEventListener('click', () => traceReach(null, 'downstream'));
+    if (reachUpBtn) reachUpBtn.addEventListener('click', () => traceReach(null, 'upstream'));
+    if (routeBtn) routeBtn.addEventListener('click', cycleRoute);
+    if (lensBtn) lensBtn.addEventListener('click', cycleRoleLens);
+
+    if (chapterPrevBtn) {
+      chapterPrevBtn.addEventListener('click', () => setChapter(state.currentChapterIndex - 1));
+    }
+    if (chapterNextBtn) {
+      chapterNextBtn.addEventListener('click', () => setChapter(state.currentChapterIndex + 1));
+    }
+
+    // Global Scoped Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+      const activeEl = document.activeElement;
+      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+        if (e.key === 'Escape') activeEl.blur();
+        return;
+      }
+
+      if (e.key === '/') {
+        if (searchInput) {
+          e.preventDefault();
+          searchInput.focus();
+        }
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        togglePresentation();
+      } else if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        cycleRoute();
+      } else if (e.key === 'l' || e.key === 'L') {
+        e.preventDefault();
+        cycleRoleLens();
+      } else if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        replayMotion();
+      } else if (e.key === '[') {
+        e.preventDefault();
+        setChapter(state.currentChapterIndex - 1);
+      } else if (e.key === ']') {
+        e.preventDefault();
+        setChapter(state.currentChapterIndex + 1);
+      } else if (e.key === 'Escape') {
+        if (state.isPresentation) {
+          togglePresentation();
+        } else {
+          clearHighlights();
+        }
+      }
+    });
+
+    if (irData.meta && irData.meta.views && irData.meta.views.length > 0) {
+      setChapter(0);
+    }
+  }
+
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.ak-diagram-root').forEach(initDiagram);
+      });
+    } else {
+      document.querySelectorAll('.ak-diagram-root').forEach(initDiagram);
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.AgentKitDiagram = { init: initDiagram };
+  }
+})();
+</script>
+  </div>
+</body>
+</html>
