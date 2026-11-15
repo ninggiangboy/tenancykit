@@ -1,0 +1,98 @@
+[
+  {
+    "name": "single click: without a visitor id the chain is one click and all three models agree",
+    "model": "LAST",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "99.99"
+    },
+    "chain": [
+      {
+        "click_id": "click-single",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-10T11:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-single",
+        "credit": "99.99"
+      }
+    ]
+  },
+  {
+    "name": "single click: first credits the only click",
+    "model": "FIRST",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "99.99"
+    },
+    "chain": [
+      {
+        "click_id": "click-single",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-10T11:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-single",
+        "credit": "99.99"
+      }
+    ]
+  },
+  {
+    "name": "single click: linear credits the only click its whole share, with no residual",
+    "model": "LINEAR",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "99.99"
+    },
+    "chain": [
+      {
+        "click_id": "click-single",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-10T11:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-single",
+        "credit": "99.99"
+      }
+    ]
+  },
+  {
+    "name": "single click: a lone bot click is never credited",
+    "model": "LAST",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "12.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-bot-only",
+        "link_id": "link-preview",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-10T11:00:00Z",
+        "traffic_class": "BOT"
+      }
+    ],
+    "expect": [],
+    "reason": "bot_only"
+  }
+]

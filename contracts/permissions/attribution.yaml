@@ -1,0 +1,81 @@
+# Attribution's permission catalog.
+#
+# codes are namespaced by the app that enforces them: <app>:<resource>:<action>. A role may hold only a code whose
+# `scopes` include the role's scope.
+#
+# scopes: platform and/or tenant. grantable_to_tenant_system: whether an API credential may carry the code.
+#
+# Every code is tenant scope: a campaign, a link, a goal, a conversion and a cost entry belong to one tenant's own
+# marketing, and no platform-scope caller has a legitimate use for them. Attribution is the app a Tenant's **own**
+# backend is expected to drive — it posts conversions and sets cost — so most codes are grantable to a Tenant System
+# credential. `conversion:write` is the postback and is the one machines are meant to hold.
+#
+# Three codes are deliberately not grantable to a Tenant System:
+# - `connection:manage` connects an advertising account, which is an authorization a person gives at the ad platform.
+# - `settings:manage` changes the click parameter, the allowed origins and the attribution window for every link.
+# - `data:erase` deletes a data subject's events, which is an erasure decision, not a routine machine call.
+
+- code: attribution:campaign:read
+  description: Read campaigns and their settings.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: attribution:campaign:manage
+  description: Create, update and archive a campaign, including its attribution model and window.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: attribution:link:read
+  description: Read tracked links, their destinations, their QR code and their statistics.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: attribution:link:manage
+  description: Create, update, pause, resume and archive a tracked link, and issue personal links in bulk.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: attribution:goal:read
+  description: Read goals and the conversion keys a site or a backend reports.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: attribution:goal:manage
+  description: Create, update and archive a goal.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: attribution:conversion:write
+  description: Report a conversion through the postback.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: attribution:report:read
+  description: Read conversions, credits, time series, breakdowns, the funnel, cohorts, cost reports and CSV exports.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: attribution:spend:read
+  description: Read advertising cost entries for a campaign.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: attribution:spend:manage
+  description: Set and delete manual advertising cost for a campaign and day.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: attribution:connection:manage
+  description: Connect, map and disconnect a Google Ads or Meta Ads account, and trigger its import.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: attribution:settings:manage
+  description: Change the click parameter, the allowed collect origins and the default attribution window.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: attribution:data:erase
+  description: Erase one visitor's page events, sessions, bindings and identifiers.
+  scopes: [tenant]
+  grantable_to_tenant_system: false

@@ -1,0 +1,190 @@
+[
+  {
+    "name": "window: a click older than the window is excluded and the first click inside it is credited",
+    "model": "FIRST",
+    "window_days": 7,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "80.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-old-1",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-02-20T12:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-new-1",
+        "link_id": "link-newsletter",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-05T12:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-new-2",
+        "link_id": "link-newsletter",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-09T12:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-new-1",
+        "credit": "80.00"
+      }
+    ]
+  },
+  {
+    "name": "window: a click exactly on the window boundary is inside it",
+    "model": "LAST",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-31T12:00:00Z",
+      "value": "20.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-boundary",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-01T12:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-boundary",
+        "credit": "20.00"
+      }
+    ]
+  },
+  {
+    "name": "window: a click one second past the window boundary is outside and leaves nothing to credit",
+    "model": "LAST",
+    "window_days": 1,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "20.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-just-outside",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-09T11:59:59Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [],
+    "reason": "all_clicks_outside_window"
+  },
+  {
+    "name": "window: a click after the conversion is never credited",
+    "model": "LAST",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "45.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-before",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-08T12:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-after",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-11T12:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-before",
+        "credit": "45.00"
+      }
+    ]
+  },
+  {
+    "name": "window: every click outside the linear window leaves an unattributed conversion",
+    "model": "LINEAR",
+    "window_days": 3,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-31T12:00:00Z",
+      "value": "30.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-stale-1",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-01T12:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-stale-2",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-10T12:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [],
+    "reason": "all_clicks_outside_window"
+  },
+  {
+    "name": "window: a shorter window keeps only the recent human touches and splits the value between them",
+    "model": "LINEAR",
+    "window_days": 5,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "40.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-v1",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-02-25T12:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-v2",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-07T12:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-v3",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-09T12:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-v2",
+        "credit": "20.00"
+      },
+      {
+        "click_id": "click-v3",
+        "credit": "20.00"
+      }
+    ]
+  }
+]

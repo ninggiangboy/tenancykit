@@ -1,0 +1,211 @@
+[
+  {
+    "name": "linear: three touches split evenly in a two-digit currency, the residual to the last",
+    "model": "LINEAR",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "100.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-a1",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-01T09:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-a2",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-05T18:30:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-a3",
+        "link_id": "link-newsletter",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-09T21:15:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-a1",
+        "credit": "33.33"
+      },
+      {
+        "click_id": "click-a2",
+        "credit": "33.33"
+      },
+      {
+        "click_id": "click-a3",
+        "credit": "33.34"
+      }
+    ]
+  },
+  {
+    "name": "linear: three touches split evenly in a zero-digit currency, the residual to the last",
+    "model": "LINEAR",
+    "window_days": 30,
+    "currency": "VND",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "100"
+    },
+    "chain": [
+      {
+        "click_id": "click-h1",
+        "link_id": "link-vn",
+        "campaign_id": "camp-vn",
+        "at": "2026-03-02T01:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-h2",
+        "link_id": "link-vn",
+        "campaign_id": "camp-vn",
+        "at": "2026-03-06T04:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-h3",
+        "link_id": "link-vn",
+        "campaign_id": "camp-vn",
+        "at": "2026-03-09T09:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-h1",
+        "credit": "33"
+      },
+      {
+        "click_id": "click-h2",
+        "credit": "33"
+      },
+      {
+        "click_id": "click-h3",
+        "credit": "34"
+      }
+    ]
+  },
+  {
+    "name": "linear: two human touches split exactly with no residual",
+    "model": "LINEAR",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "50.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-i1",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-04T08:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-i2",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-08T20:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-i1",
+        "credit": "25.00"
+      },
+      {
+        "click_id": "click-i2",
+        "credit": "25.00"
+      }
+    ]
+  },
+  {
+    "name": "linear: a bot in the middle is skipped and the human touches split the value",
+    "model": "LINEAR",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "90.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-j1",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-02T08:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-j2",
+        "link_id": "link-preview",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-06T08:00:00Z",
+        "traffic_class": "BOT"
+      },
+      {
+        "click_id": "click-j3",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-09T08:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-j1",
+        "credit": "45.00"
+      },
+      {
+        "click_id": "click-j3",
+        "credit": "45.00"
+      }
+    ]
+  },
+  {
+    "name": "linear: a chain across campaigns splits by touch, whatever the campaigns",
+    "model": "LINEAR",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "60.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-k1",
+        "link_id": "link-social",
+        "campaign_id": "camp-social",
+        "at": "2026-02-20T08:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-k2",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-01T08:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-k1",
+        "credit": "30.00"
+      },
+      {
+        "click_id": "click-k2",
+        "credit": "30.00"
+      }
+    ]
+  }
+]

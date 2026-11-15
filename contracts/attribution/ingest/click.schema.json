@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/attribution/ingest/click.schema.json",
+  "title": "Click event",
+  "description": "One click produced by the redirect. The redirect writes nothing to the database: it puts this payload in a bounded in-memory buffer, and the publisher sends batches to the attribution.ingest exchange. The worker inserts it per tenant under row-level security, idempotent on `event_id`, so a redelivered batch writes nothing twice. The payload carries no raw IP and no user agent string: device, browser, country and traffic class are already classified, and `visitor_hash` is the daily HMAC that a click and a page view can share only within one UTC day.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "tenant_id",
+    "click_id",
+    "link_id",
+    "occurred_at",
+    "device_class",
+    "browser_family",
+    "traffic_class",
+    "visitor_hash"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The event's identity, generated on the redirect path. The store is idempotent on it."
+    },
+    "tenant_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The tenant the host resolved to. The worker groups a batch by this and inserts each group in its own tenant-scoped transaction."
+    },
+    "click_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "The click's identity. The signed token the redirect appends to the destination carries it, so a page view or a postback can name it."
+    },
+    "link_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "destination_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The destination the redirect chose, so a report can break clicks down by destination."
+    },
+    "campaign_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The campaign of the link, absent for a link outside a campaign."
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the redirect answered, in UTC. The day partition is chosen from it."
+    },
+    "device_class": {
+      "type": "string",
+      "enum": [
+        "DESKTOP",
+        "MOBILE",
+        "TABLET",
+        "UNKNOWN"
+      ]
+    },
+    "browser_family": {
+      "type": "string",
+      "maxLength": 32,
+      "description": "A small closed list of families, never a version and never the raw user agent."
+    },
+    "country": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$",
+      "description": "The ISO 3166-1 alpha-2 country from the GeoIP database, absent when the reader is unavailable."
+    },
+    "referrer_domain": {
+      "type": "string",
+      "maxLength": 253,
+      "description": "The referrer's registrable domain only: no path, no query, no scheme."
+    },
+    "entry": {
+      "type": "string",
+      "maxLength": 32,
+      "description": "The `e` entry label the redirect received, such as `qr`, so a Tenant can compare a QR code with a link."
+    },
+    "traffic_class": {
+      "type": "string",
+      "enum": [
+        "HUMAN",
+        "BOT",
+        "SUSPECT"
+      ],
+      "description": "`BOT` is a crawler or a link-preview fetcher; `SUSPECT` is a visitor over the per-link click rate. A report excludes both by default, and neither is ever credited."
+    },
+    "visitor_hash": {
+      "type": "string",
+      "maxLength": 64,
+      "description": "The daily anonymous visitor hash: base64url of an HMAC over the tenant, address and user agent under a key that changes each UTC day, so a hash cannot be linked across days."
+    }
+  }
+}

@@ -10,7 +10,7 @@ while keeping independent data, accounts, integration configuration and billing 
 The goal is that a new business app (CRM, HR, …) joins the suite by adding a build, a permission catalog, an
 `AppCode` and a proxy route, with Platform and Billing unchanged.
 
-## Six deployables
+## Seven deployables
 
 | System | Owns | Reached at |
 |---|---|---|
@@ -19,6 +19,7 @@ The goal is that a new business app (CRM, HR, …) joins the suite by adding a b
 | **Notification** (`notification/`) | Notification types, suite-wide templates, locale and user preferences, the stored in-app notification list, the email dispatch ledger and the outbox that produces `email.send`. It keeps the Platform replica, notifies the suite's own users (tenant users and Platform administrators), and reads no other app's business data; delivery stays with `mailer/` | `<tenant-code>.<base-domain>` and `platform.<base-domain>`, through the `/notification` prefix |
 | **Mailroom** (`mailroom/`) | A Tenant's templates, receivers, groups, segments, suppressions, the sent-email ledger, campaigns and tracking events for the Tenant's **own customers**. It keeps the Platform replica, renders with a sandboxed Mustache and publishes `email.send`; delivery stays with `mailer/`, which reports the outcome back on `mailer.events` | `<tenant-code>.<base-domain>` through the `/mailroom` prefix; `/mailroom/t/*` is public for recipients |
 | **Survey** (`survey/`) | A Tenant's surveys, their immutable versions, links, visits, page events, responses, answers, uploads and the analysis of all of it, including the one expression language that decides branching, computed variables, scoring and piping. It keeps the Platform replica, consumes no business data from another app and sends nothing: it issues links and the Tenant places them | `<tenant-code>.<base-domain>` through the `/survey` prefix; `/survey/p/*` is public for respondents |
+| **Attribution** (`attribution/`) | A Tenant's campaigns and tracked links, the clicks, page views, sessions and conversions they produce, the credit each click receives under a per-campaign model, and the advertising cost behind it, entered by hand or imported from Google Ads and Meta Ads. It keeps the Platform replica, writes `attribution.ingest` for its own worker, and reads no other app's business data | `<tenant-code>.<base-domain>` through the `/attribution` prefix; `/go/*` is the public redirect and `/t/*` the public collection surface |
 | **Sample Tenant System** (`tenant/`) | Its own users, catalog, orders, usage and the policy it applies to Billing's state changes. It proves the integration and deploys without Billing | its own host |
 
 `notification/` is the suite's app for **notifying the suite's own users** about platform-side state changes. It
@@ -53,6 +54,15 @@ likes — a mailroom campaign, a QR code, a page on its own site. Delivery there
 has its own database, its own retention and deletion rules, and no raw IP is stored. It is API only: the builder UI
 and the fill UI are a later plan.
 
+`attribution/` is the suite's app for **telling a Tenant which marketing link, channel or ad brought a customer, and
+what that cost**. It owns the campaigns, the tracked links that redirect through `<tenant-code>.<base-domain>/go/<slug>`,
+the clicks, page views, sessions and conversions those links produce, the credit each click receives under a
+per-campaign model, and the advertising spend behind it. It reads no business data from another app and calls no other
+app; its ad-platform connections are read-only. It measures only traffic that arrived through a tracked link, which is
+why it is an attribution product rather than a web-analytics one, and it stores no raw IP and sets no cookie before
+consent. It counts as a deployable in the same sense as Survey: a build, a permission catalog, an entitlement and a
+proxy route, with Platform, Billing, mailroom and the shared resolver untouched.
+
 They are separate Gradle builds, separate databases and separate processes. They meet three ways, never by sharing
 code:
 
@@ -82,6 +92,12 @@ the delivery state and the event catalog stay in the app.
 | Replica | An app's local copy of Platform data (tenants, domains, systems, user grants, entitlements), rebuilt from the snapshot and kept current by `platform.events` |
 | Keycloak | The Identity Provider; authentication only |
 | Stripe / Stripe Connect | The Payment Provider, and the mechanism that links a Tenant's Stripe account to the Platform |
+| Campaign | A Tenant's marketing effort with one attribution model, one window and one currency; tracked links belong to it |
+| Tracked link | A link with a unique slug that redirects through the suite's domain, appends a signed click id and records the click |
+| Click id | The signed token a redirect appends to the destination; only an id the app issued is accepted by collection and the postback |
+| Conversion | A goal reached, with a value and a currency, reported by a postback or the site snippet |
+| Attribution model | `FIRST`, `LAST` or `LINEAR`: how a conversion's value is divided among the clicks in its chain |
+| Credit | The share of a conversion's value one click receives under the owning campaign's model |
 
 ## Functions
 
@@ -116,6 +132,16 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
   filters, and publishes its schema and test vectors in `contracts/survey/` so a future fill UI agrees with it.
 - Enforces `survey:*` permissions from its replica of Platform data; it never mints, edits or decides them.
 - Issues links and sends nothing; a Tenant reaches a respondent through mailroom.
+
+**Attribution**
+- Owns a Tenant's campaigns, tracked links, destinations and rules, and the clicks, page views, sessions and
+  conversions they produce.
+- Owns the touchpoint chain of each conversion and the credit each click receives under the owning campaign's model,
+  reproducibly from a stored chain.
+- Owns advertising cost, entered by hand or imported read-only from Google Ads and Meta Ads, and the cost metrics
+  derived from it.
+- Enforces `attribution:*` permissions from its replica of Platform data; it never mints, edits or decides them.
+- Stores no raw IP, sets no cookie before consent, and provides an erasure endpoint keyed by visitor id.
 
 **Sample Tenant System**
 - Manages its own users, business roles and permissions.
@@ -161,6 +187,10 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 - A builder UI or a fill UI for `survey/`; sending invitations or reminders from Survey; reconciling a respondent with
   a mailroom receiver; CAPTCHA, virus scanning, realtime co-editing, and a retention schedule for responses (only an
   explicit deletion). A Tenant that must not keep an answer deletes the response.
+- `attribution/` measuring traffic that did not arrive through a tracked link, and any claim to be a general web
+  analytics product. It also does not create or edit ads on any ad platform, serve a custom domain, store a raw IP,
+  resolve one person across devices, fingerprint, stream in real time, convert currency, bucket reports in a time zone
+  other than UTC, or export to object storage (CSV is streamed).
 - Charging tenants for suite use.
 - An API gateway with logic. The reverse proxy routes on the Host header only.
 - CDC or event sourcing. A consumer rebuilds by paging the snapshot API.

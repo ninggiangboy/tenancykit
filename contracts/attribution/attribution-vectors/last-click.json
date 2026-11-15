@@ -1,0 +1,137 @@
+[
+  {
+    "name": "last: the latest click inside the window takes the whole value",
+    "model": "LAST",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "120.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-a1",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-01T09:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-a2",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-05T18:30:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-a3",
+        "link_id": "link-newsletter",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-09T21:15:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-a3",
+        "credit": "120.00"
+      }
+    ]
+  },
+  {
+    "name": "last: the last human click is credited, the bot click after it is not",
+    "model": "LAST",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "55.25"
+    },
+    "chain": [
+      {
+        "click_id": "click-e1",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-03T10:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-e2",
+        "link_id": "link-unfurl",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-10T11:55:00Z",
+        "traffic_class": "BOT"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-e1",
+        "credit": "55.25"
+      }
+    ]
+  },
+  {
+    "name": "last: a suspect click is skipped like a bot",
+    "model": "LAST",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "10.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-f1",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-09T10:00:00Z",
+        "traffic_class": "SUSPECT"
+      },
+      {
+        "click_id": "click-f2",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-09T09:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-f2",
+        "credit": "10.00"
+      }
+    ]
+  },
+  {
+    "name": "last: a click exactly at the conversion instant is the last click",
+    "model": "LAST",
+    "window_days": 1,
+    "currency": "JPY",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "500"
+    },
+    "chain": [
+      {
+        "click_id": "click-g1",
+        "link_id": "link-jp",
+        "campaign_id": "camp-jp",
+        "at": "2026-03-10T02:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-g2",
+        "link_id": "link-jp",
+        "campaign_id": "camp-jp",
+        "at": "2026-03-10T12:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-g2",
+        "credit": "500"
+      }
+    ]
+  }
+]

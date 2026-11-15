@@ -1,0 +1,137 @@
+[
+  {
+    "name": "first: the earliest click inside the window takes the whole value",
+    "model": "FIRST",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "120.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-a1",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-01T09:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-a2",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-05T18:30:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-a3",
+        "link_id": "link-newsletter",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-09T21:15:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-a1",
+        "credit": "120.00"
+      }
+    ]
+  },
+  {
+    "name": "first: a chain across campaigns still credits the earliest click once",
+    "model": "FIRST",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "75.50"
+    },
+    "chain": [
+      {
+        "click_id": "click-b1",
+        "link_id": "link-social",
+        "campaign_id": "camp-social",
+        "at": "2026-02-20T08:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-b2",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-10T11:59:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-b1",
+        "credit": "75.50"
+      }
+    ]
+  },
+  {
+    "name": "first: a bot click before the first human click is skipped, not credited",
+    "model": "FIRST",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "40.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-c1",
+        "link_id": "link-preview",
+        "campaign_id": "camp-spring",
+        "at": "2026-02-28T07:00:00Z",
+        "traffic_class": "BOT"
+      },
+      {
+        "click_id": "click-c2",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-02T10:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-c2",
+        "credit": "40.00"
+      }
+    ]
+  },
+  {
+    "name": "first: a zero-digit currency keeps the value whole",
+    "model": "FIRST",
+    "window_days": 30,
+    "currency": "VND",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "100"
+    },
+    "chain": [
+      {
+        "click_id": "click-d1",
+        "link_id": "link-vn",
+        "campaign_id": "camp-vn",
+        "at": "2026-03-04T03:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-d2",
+        "link_id": "link-vn",
+        "campaign_id": "camp-vn",
+        "at": "2026-03-08T05:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-d1",
+        "credit": "100"
+      }
+    ]
+  }
+]

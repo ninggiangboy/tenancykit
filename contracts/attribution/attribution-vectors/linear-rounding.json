@@ -1,0 +1,223 @@
+[
+  {
+    "name": "linear rounding: an even split in a two-digit currency floors each share and gives the residual to the last touch",
+    "model": "LINEAR",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "10.00"
+    },
+    "chain": [
+      {
+        "click_id": "click-r1",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-01T09:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-r2",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-05T09:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-r3",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-09T09:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-r1",
+        "credit": "3.33"
+      },
+      {
+        "click_id": "click-r2",
+        "credit": "3.33"
+      },
+      {
+        "click_id": "click-r3",
+        "credit": "3.34"
+      }
+    ]
+  },
+  {
+    "name": "linear rounding: a two-way split of a cent-floored value gives the one-cent residual to the last",
+    "model": "LINEAR",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "0.05"
+    },
+    "chain": [
+      {
+        "click_id": "click-s1",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-08T09:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-s2",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-09T09:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-s1",
+        "credit": "0.02"
+      },
+      {
+        "click_id": "click-s2",
+        "credit": "0.03"
+      }
+    ]
+  },
+  {
+    "name": "linear rounding: seven touches of eight cents give the one-cent residual to the last and keep the sum exact",
+    "model": "LINEAR",
+    "window_days": 30,
+    "currency": "USD",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "0.08"
+    },
+    "chain": [
+      {
+        "click_id": "click-t1",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-01T01:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-t2",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-02T02:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-t3",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-03T03:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-t4",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-04T04:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-t5",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-05T05:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-t6",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-06T06:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-t7",
+        "link_id": "link-spring",
+        "campaign_id": "camp-spring",
+        "at": "2026-03-07T07:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-t1",
+        "credit": "0.01"
+      },
+      {
+        "click_id": "click-t2",
+        "credit": "0.01"
+      },
+      {
+        "click_id": "click-t3",
+        "credit": "0.01"
+      },
+      {
+        "click_id": "click-t4",
+        "credit": "0.01"
+      },
+      {
+        "click_id": "click-t5",
+        "credit": "0.01"
+      },
+      {
+        "click_id": "click-t6",
+        "credit": "0.01"
+      },
+      {
+        "click_id": "click-t7",
+        "credit": "0.02"
+      }
+    ]
+  },
+  {
+    "name": "linear rounding: a three-way split of a large value in a zero-digit currency keeps the sum exact",
+    "model": "LINEAR",
+    "window_days": 30,
+    "currency": "VND",
+    "conversion": {
+      "at": "2026-03-10T12:00:00Z",
+      "value": "1000000"
+    },
+    "chain": [
+      {
+        "click_id": "click-u1",
+        "link_id": "link-vn",
+        "campaign_id": "camp-vn",
+        "at": "2026-03-01T01:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-u2",
+        "link_id": "link-vn",
+        "campaign_id": "camp-vn",
+        "at": "2026-03-05T05:00:00Z",
+        "traffic_class": "HUMAN"
+      },
+      {
+        "click_id": "click-u3",
+        "link_id": "link-vn",
+        "campaign_id": "camp-vn",
+        "at": "2026-03-09T09:00:00Z",
+        "traffic_class": "HUMAN"
+      }
+    ],
+    "expect": [
+      {
+        "click_id": "click-u1",
+        "credit": "333333"
+      },
+      {
+        "click_id": "click-u2",
+        "credit": "333333"
+      },
+      {
+        "click_id": "click-u3",
+        "credit": "333334"
+      }
+    ]
+  }
+]

@@ -1,0 +1,1547 @@
+openapi: 3.1.0
+info:
+  title: Attribution API
+  version: v1
+  description: |
+    The API a Tenant System uses to run tracked marketing links, report conversions, read measurement and keep
+    advertising cost, plus the public redirect and collection endpoints a visitor's browser calls without credentials.
+
+    This is a resource skeleton: every path carries its operation, the permission it requires and the shape it will
+    settle on. Each phase fills the schema it owns. `x-required-permission` names a code from
+    contracts/permissions/attribution.yaml; a public operation carries `x-public: true` instead and requires no suite
+    token.
+
+    The tenant always comes from the verified host, never from a request body or a query parameter. The one stated
+    exception is `GET /attribution/t/oauth/callback`, which reads the tenant from a server-signed `state`, because a
+    provider needs one exact redirect URI for every tenant. Every tenant endpoint answers `404` for a resource in
+    another tenant, exactly as it does for one that does not exist.
+
+    The redirect never fails or slows because measurement fails: an analytics error is logged and counted, and the
+    visitor still receives the `302`.
+servers:
+- url: /
+  description: "Any tenant hostname: <tenant-code>.<base-domain>"
+tags:
+- name: campaign-controller
+  description: Campaigns, their attribution model and their window
+- name: link-controller
+  description: Tracked links, their destinations, their QR code and their statistics
+- name: redirect-controller
+  description: The public redirect a visitor follows
+- name: collect-controller
+  description: The public snippet and event collection a visitor's browser calls
+- name: goal-controller
+  description: Goals and the conversion keys a site or a backend reports
+- name: conversion-controller
+  description: Reporting a conversion and reading its chain and credits
+- name: report-controller
+  description: Time series, breakdowns, the funnel, cohorts and cost metrics
+- name: spend-controller
+  description: Manual advertising cost per campaign and day
+- name: connection-controller
+  description: Ad platform connections, their campaign mappings and their import
+- name: settings-controller
+  description: The tenant's click parameter, allowed origins and default window
+- name: data-subject-controller
+  description: Erasing one visitor's events and identifiers
+paths:
+  /go/{slug}:
+    parameters:
+    - $ref: "#/components/parameters/Slug"
+    get:
+      tags: [redirect-controller]
+      operationId: redirect
+      x-public: true
+      description: |
+        Resolves the link from an in-process cache, applies expiry, cap and destination rules, appends the signed
+        click id to the destination and answers `302`. Unknown, archived, paused or entitlement-less is `404`; expired
+        or cap reached is `410`; a password-protected link is `401` until the password is posted.
+      parameters:
+      - name: e
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: "^[a-z0-9_-]{1,32}$"
+        description: The entry label recorded on the click.
+      responses:
+        "302":
+          description: Found. The `Location` header carries the destination with UTM merged and the click parameter appended.
+          headers:
+            Location:
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                type: string
+        "401":
+          description: A password is required.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "404":
+          description: Unknown, archived, paused or not entitled.
+        "410":
+          description: Expired or click cap reached.
+        "429":
+          description: A public rate limit refused the request.
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+    head:
+      tags: [redirect-controller]
+      operationId: redirectHead
+      x-public: true
+      description: Answered like `GET` without recording a click.
+      responses:
+        "302":
+          description: Found.
+        "404":
+          description: Unknown, archived, paused or not entitled.
+        "410":
+          description: Expired or click cap reached.
+    post:
+      tags: [redirect-controller]
+      operationId: unlock
+      x-public: true
+      description: Unlocks a password-protected link; answers `302` on success and `403` otherwise. Failures are rate-limited before the hash is checked.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UnlockRequest"
+      responses:
+        "302":
+          description: Found.
+        "403":
+          description: Wrong password.
+        "429":
+          description: A public rate limit refused the attempt.
+  /t/v1/snippet.js:
+    get:
+      tags: [collect-controller]
+      operationId: snippet
+      x-public: true
+      description: The tenant's collection snippet. Static, cacheable for a day, and under 4 KB gzipped.
+      responses:
+        "200":
+          description: The script.
+          content:
+            text/javascript:
+              schema:
+                type: string
+  /t/v1/events:
+    options:
+      tags: [collect-controller]
+      operationId: eventsPreflight
+      x-public: true
+      description: The CORS preflight for the collection endpoint.
+      responses:
+        "204":
+          description: No content.
+    post:
+      tags: [collect-controller]
+      operationId: collect
+      x-public: true
+      description: |
+        Accepts a batch of at most 20 events under 8 KiB. An event is stored only when its click id passes
+        verification, its `Origin` is allowed, the limits hold and consent permits the identifiers it carries.
+        Everything else answers `204` without storing, so a probe learns nothing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventBatch"
+      responses:
+        "204":
+          description: Accepted, stored or silently refused.
+  /attribution/t/oauth/callback:
+    get:
+      tags: [connection-controller]
+      operationId: oauthCallback
+      x-public: true
+      description: |
+        The one endpoint whose tenant comes from the signed `state`, not the host. A bad signature, an expired state or
+        a replayed nonce answers one constant `400` that reveals nothing.
+      parameters:
+      - name: code
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: state
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Connected; answered as JSON when no allowed return URL was signed.
+        "302":
+          description: Connected; redirected to the signed return URL.
+        "400":
+          description: The callback could not be trusted.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+  /campaigns:
+    get:
+      tags: [campaign-controller]
+      operationId: listCampaigns
+      x-required-permission: attribution:campaign:read
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CampaignView"
+    post:
+      tags: [campaign-controller]
+      operationId: createCampaign
+      x-required-permission: attribution:campaign:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignView"
+  /campaigns/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags: [campaign-controller]
+      operationId: getCampaign
+      x-required-permission: attribution:campaign:read
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignView"
+    patch:
+      tags: [campaign-controller]
+      operationId: updateCampaign
+      x-required-permission: attribution:campaign:manage
+      parameters:
+      - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignRequest"
+      responses:
+        "200":
+          description: Updated. Changing the model or the window starts a recompute run.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignView"
+        "412":
+          description: The `If-Match` tag is stale.
+  /campaigns/{id}/archive:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags: [campaign-controller]
+      operationId: archiveCampaign
+      x-required-permission: attribution:campaign:manage
+      responses:
+        "204":
+          description: Archived.
+  /links:
+    get:
+      tags: [link-controller]
+      operationId: listLinks
+      x-required-permission: attribution:link:read
+      parameters:
+      - name: campaign_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: external_ref
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [ACTIVE, PAUSED, ARCHIVED]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LinkView"
+    post:
+      tags: [link-controller]
+      operationId: createLink
+      x-required-permission: attribution:link:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LinkView"
+  /links/bulk:
+    post:
+      tags: [link-controller]
+      operationId: createLinksBulk
+      x-required-permission: attribution:link:manage
+      description: |
+        At most 1,000 rows as JSON or `text/csv`. `Idempotency-Key` is required: a replay with the same body returns
+        the same result, and the same key with a different body is `422`.
+      parameters:
+      - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkLinkRequest"
+          text/csv:
+            schema:
+              type: string
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PersonalLinkView"
+  /links/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags: [link-controller]
+      operationId: getLink
+      x-required-permission: attribution:link:read
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LinkView"
+    patch:
+      tags: [link-controller]
+      operationId: updateLink
+      x-required-permission: attribution:link:manage
+      parameters:
+      - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LinkView"
+        "412":
+          description: The `If-Match` tag is stale.
+  /links/{id}/pause:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags: [link-controller]
+      operationId: pauseLink
+      x-required-permission: attribution:link:manage
+      responses:
+        "204":
+          description: Paused.
+  /links/{id}/resume:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags: [link-controller]
+      operationId: resumeLink
+      x-required-permission: attribution:link:manage
+      responses:
+        "204":
+          description: Resumed.
+  /links/{id}/archive:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags: [link-controller]
+      operationId: archiveLink
+      x-required-permission: attribution:link:manage
+      responses:
+        "204":
+          description: Archived.
+  /links/{id}/qr:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags: [link-controller]
+      operationId: linkQr
+      x-required-permission: attribution:link:read
+      parameters:
+      - name: format
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [png, svg]
+          default: png
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 128
+          maximum: 1024
+          default: 256
+      responses:
+        "200":
+          description: The QR code, generated on request and never stored.
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+  /links/{id}/stats:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags: [link-controller]
+      operationId: linkStats
+      x-required-permission: attribution:link:read
+      responses:
+        "200":
+          description: Totals and the last 30 days.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LinkStatsView"
+  /goals:
+    get:
+      tags: [goal-controller]
+      operationId: listGoals
+      x-required-permission: attribution:goal:read
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GoalView"
+    post:
+      tags: [goal-controller]
+      operationId: createGoal
+      x-required-permission: attribution:goal:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoalView"
+  /goals/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags: [goal-controller]
+      operationId: getGoal
+      x-required-permission: attribution:goal:read
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoalView"
+    patch:
+      tags: [goal-controller]
+      operationId: updateGoal
+      x-required-permission: attribution:goal:manage
+      parameters:
+      - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoalView"
+        "412":
+          description: The `If-Match` tag is stale.
+  /conversions:
+    get:
+      tags: [conversion-controller]
+      operationId: listConversions
+      x-required-permission: attribution:report:read
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConversionView"
+    post:
+      tags: [conversion-controller]
+      operationId: createConversion
+      x-required-permission: attribution:conversion:write
+      description: |
+        The postback. `Idempotency-Key` is required: a replay with the same body answers `200` and writes nothing,
+        and the same key with a different body is `422`. A forged or foreign-tenant click token is stored as
+        `UNATTRIBUTED`, never rejected, so a Tenant's order flow does not fail here.
+      parameters:
+      - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversionRequest"
+      responses:
+        "201":
+          description: Recorded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversionView"
+        "200":
+          description: A replay of the same key and body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversionView"
+        "422":
+          description: The key was already used with a different body.
+  /conversions/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags: [conversion-controller]
+      operationId: getConversion
+      x-required-permission: attribution:report:read
+      responses:
+        "200":
+          description: The conversion, its touch chain and its credits.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversionView"
+  /reports/timeseries:
+    get:
+      tags: [report-controller]
+      operationId: reportTimeseries
+      x-required-permission: attribution:report:read
+      parameters:
+      - $ref: "#/components/parameters/From"
+      - $ref: "#/components/parameters/To"
+      - name: granularity
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [hour, day]
+          default: day
+      - name: metrics
+        in: query
+        required: true
+        schema:
+          type: string
+          description: A comma-separated list of metric names.
+      - name: include
+        in: query
+        required: false
+        schema:
+          type: string
+          description: "`bot,suspect` adds non-human traffic; the default is human only."
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportView"
+  /reports/breakdown:
+    get:
+      tags: [report-controller]
+      operationId: reportBreakdown
+      x-required-permission: attribution:report:read
+      parameters:
+      - $ref: "#/components/parameters/From"
+      - $ref: "#/components/parameters/To"
+      - name: dimension
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [link, campaign, entry, device, country, referrer, destination, goal]
+      - name: metrics
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportView"
+  /reports/funnel:
+    get:
+      tags: [report-controller]
+      operationId: reportFunnel
+      x-required-permission: attribution:report:read
+      parameters:
+      - $ref: "#/components/parameters/From"
+      - $ref: "#/components/parameters/To"
+      - name: campaign_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: link_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: goal
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Clicks, landed and converted counts with step ratios.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportView"
+  /reports/cohorts:
+    get:
+      tags: [report-controller]
+      operationId: reportCohorts
+      x-required-permission: attribution:report:read
+      parameters:
+      - name: campaign_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: cohort
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [week]
+          default: week
+      - name: periods
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 12
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportView"
+  /reports/costs:
+    get:
+      tags: [report-controller]
+      operationId: reportCosts
+      x-required-permission: attribution:report:read
+      parameters:
+      - $ref: "#/components/parameters/From"
+      - $ref: "#/components/parameters/To"
+      - name: campaign_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: group_by
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [campaign, day]
+          default: campaign
+      responses:
+        "200":
+          description: Cost, clicks, conversions, credited value, CPC, CPA, ROAS and ROI.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportView"
+  /campaigns/{id}/spend:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags: [spend-controller]
+      operationId: listSpend
+      x-required-permission: attribution:spend:read
+      responses:
+        "200":
+          description: Cost rows with their source.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SpendView"
+    post:
+      tags: [spend-controller]
+      operationId: setSpend
+      x-required-permission: attribution:spend:manage
+      description: Sets up to 366 manual day rows in one call. A currency other than the campaign's is `409`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpendBatchRequest"
+      responses:
+        "200":
+          description: Written.
+  /campaigns/{id}/spend/{day}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    - name: day
+      in: path
+      required: true
+      schema:
+        type: string
+        format: date
+    put:
+      tags: [spend-controller]
+      operationId: putSpend
+      x-required-permission: attribution:spend:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpendRequest"
+      responses:
+        "200":
+          description: The manual row for that day was set.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpendView"
+        "409":
+          description: The currency is not the campaign's.
+    delete:
+      tags: [spend-controller]
+      operationId: deleteSpend
+      x-required-permission: attribution:spend:manage
+      description: Deletes the `MANUAL` row only; an imported row for the same day is untouched.
+      responses:
+        "204":
+          description: Deleted.
+  /connections/{platform}/authorize:
+    parameters:
+    - name: platform
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [GOOGLE_ADS, META_ADS]
+    post:
+      tags: [connection-controller]
+      operationId: authorizeConnection
+      x-required-permission: attribution:connection:manage
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReturnUrlRequest"
+      responses:
+        "200":
+          description: The provider's authorization URL to open.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [authorization_url]
+                properties:
+                  authorization_url:
+                    type: string
+                    format: uri
+  /connections:
+    get:
+      tags: [connection-controller]
+      operationId: listConnections
+      x-required-permission: attribution:connection:manage
+      responses:
+        "200":
+          description: Connected accounts. A token is never returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConnectionView"
+  /connections/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags: [connection-controller]
+      operationId: getConnection
+      x-required-permission: attribution:connection:manage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionView"
+    delete:
+      tags: [connection-controller]
+      operationId: deleteConnection
+      x-required-permission: attribution:connection:manage
+      description: Revokes locally and best-effort at the provider.
+      responses:
+        "204":
+          description: Revoked.
+  /connections/{id}/external-campaigns:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags: [connection-controller]
+      operationId: listExternalCampaigns
+      x-required-permission: attribution:connection:manage
+      responses:
+        "200":
+          description: The platform's campaigns, for mapping.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExternalCampaignView"
+  /connections/{id}/mappings:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    put:
+      tags: [connection-controller]
+      operationId: putMappings
+      x-required-permission: attribution:connection:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MappingRequest"
+      responses:
+        "204":
+          description: Mapped.
+        "409":
+          description: The platform account's currency is not the campaign's.
+  /connections/{id}/sync:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags: [connection-controller]
+      operationId: syncConnection
+      x-required-permission: attribution:connection:manage
+      responses:
+        "202":
+          description: A sync run was queued.
+  /settings:
+    get:
+      tags: [settings-controller]
+      operationId: getSettings
+      x-required-permission: attribution:settings:manage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsView"
+    put:
+      tags: [settings-controller]
+      operationId: putSettings
+      x-required-permission: attribution:settings:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsRequest"
+      responses:
+        "200":
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsView"
+  /data-subjects/erasure:
+    post:
+      tags: [data-subject-controller]
+      operationId: eraseVisitor
+      x-required-permission: attribution:data:erase
+      description: Removes the visitor's page events, sessions, bindings and identifiers; conversions keep their amount and lose the person.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ErasureRequest"
+      responses:
+        "200":
+          description: Counts of what was removed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErasureView"
+components:
+  securitySchemes:
+    suiteToken:
+      type: http
+      description: Platform suite token for a Tenant System; obtain it from POST /oauth/token on Platform
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: "^[a-z0-9][a-z0-9_-]{2,63}$"
+    IfMatch:
+      name: If-Match
+      in: header
+      required: false
+      schema:
+        type: string
+      description: The `ETag` last read. A stale tag answers `412` with the current one.
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        maxLength: 255
+    From:
+      name: from
+      in: query
+      required: true
+      schema:
+        type: string
+        format: date
+    To:
+      name: to
+      in: query
+      required: true
+      schema:
+        type: string
+        format: date
+  schemas:
+    Problem:
+      type: object
+      description: The suite's problem-details error body.
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+          description: A stable machine code such as `slug_taken`, `click_param_conflict` or `currency_mismatch`.
+    UnlockRequest:
+      type: object
+      additionalProperties: false
+      required: [password]
+      properties:
+        password:
+          type: string
+          minLength: 1
+          maxLength: 200
+    CampaignRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        slug:
+          type: string
+          pattern: "^[a-z0-9][a-z0-9_-]{2,63}$"
+        channel:
+          type: string
+          maxLength: 64
+        attribution_model:
+          type: string
+          enum: [FIRST, LAST, LINEAR]
+        window_days:
+          type: integer
+          minimum: 1
+          maximum: 90
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+        starts_on:
+          type: string
+          format: date
+        ends_on:
+          type: string
+          format: date
+    CampaignView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        channel:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, ARCHIVED]
+        attribution_model:
+          type: string
+          enum: [FIRST, LAST, LINEAR]
+        window_days:
+          type: integer
+        currency:
+          type: string
+        version:
+          type: integer
+    DestinationRequest:
+      type: object
+      additionalProperties: false
+      required: [url]
+      properties:
+        url:
+          type: string
+          maxLength: 2048
+          description: Absolute `http` or `https`, no userinfo, no private or suite host.
+        weight:
+          type: integer
+          minimum: 1
+        match:
+          type: object
+          additionalProperties: false
+          properties:
+            device:
+              type: array
+              items:
+                type: string
+                enum: [DESKTOP, MOBILE, TABLET, UNKNOWN]
+            country:
+              type: array
+              items:
+                type: string
+                pattern: "^[A-Z]{2}$"
+        is_fallback:
+          type: boolean
+    LinkRequest:
+      type: object
+      additionalProperties: false
+      required: [destinations]
+      properties:
+        campaign_id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+          pattern: "^[a-z0-9][a-z0-9_-]{2,63}$"
+        kind:
+          type: string
+          enum: [STANDARD, PERSONAL]
+        external_ref:
+          type: string
+          maxLength: 128
+        expires_at:
+          type: string
+          format: date-time
+        max_clicks:
+          type: integer
+          minimum: 1
+        password:
+          type: string
+          maxLength: 200
+          writeOnly: true
+        utm:
+          type: object
+          additionalProperties: false
+          properties:
+            source:
+              type: string
+              maxLength: 100
+            medium:
+              type: string
+              maxLength: 100
+            campaign:
+              type: string
+              maxLength: 100
+            content:
+              type: string
+              maxLength: 100
+            term:
+              type: string
+              maxLength: 100
+        destinations:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            $ref: "#/components/schemas/DestinationRequest"
+    LinkView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        campaign_id:
+          type: string
+          format: uuid
+          nullable: true
+        slug:
+          type: string
+        kind:
+          type: string
+          enum: [STANDARD, PERSONAL]
+        external_ref:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [ACTIVE, PAUSED, ARCHIVED]
+        url:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        max_clicks:
+          type: integer
+          nullable: true
+        has_password:
+          type: boolean
+        utm:
+          type: object
+          additionalProperties: true
+        destinations:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        version:
+          type: integer
+    BulkLinkRequest:
+      type: object
+      additionalProperties: false
+      required: [campaign_id, rows]
+      properties:
+        campaign_id:
+          type: string
+          format: uuid
+        destination:
+          type: string
+        utm:
+          type: object
+          additionalProperties: true
+        expires_at:
+          type: string
+          format: date-time
+        rows:
+          type: array
+          maxItems: 1000
+          items:
+            type: object
+            additionalProperties: false
+            required: [external_ref]
+            properties:
+              external_ref:
+                type: string
+                maxLength: 128
+    PersonalLinkView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        url:
+          type: string
+        external_ref:
+          type: string
+    LinkStatsView:
+      type: object
+      additionalProperties: true
+      description: Totals and the last 30 days for one link.
+    GoalRequest:
+      type: object
+      additionalProperties: false
+      required: [key, name]
+      properties:
+        key:
+          type: string
+          pattern: "^[a-z0-9_-]{1,64}$"
+        name:
+          type: string
+          maxLength: 200
+        default_value:
+          type: string
+          description: A decimal, as a string.
+    GoalView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        name:
+          type: string
+        default_value:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [ACTIVE, ARCHIVED]
+    ConversionRequest:
+      type: object
+      additionalProperties: false
+      required: [goal_key]
+      properties:
+        goal_key:
+          type: string
+        click_id:
+          type: string
+          description: The signed click token the redirect appended.
+        visitor_id:
+          type: string
+        value:
+          type: string
+          description: A decimal, as a string; defaults to the goal's default.
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+        occurred_at:
+          type: string
+          format: date-time
+    ConversionView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        goal_id:
+          type: string
+          format: uuid
+        value:
+          type: string
+        currency:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+        source:
+          type: string
+          enum: [POSTBACK, SNIPPET]
+        credit_status:
+          type: string
+          enum: [PENDING, COMPUTED, UNATTRIBUTED]
+        owning_campaign_id:
+          type: string
+          format: uuid
+          nullable: true
+        touch_chain:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        credits:
+          type: array
+          items:
+            type: object
+            properties:
+              click_id:
+                type: string
+              credit:
+                type: string
+    EventBatch:
+      type: object
+      additionalProperties: false
+      required: [events]
+      properties:
+        events:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items:
+            type: object
+            additionalProperties: true
+    SpendRequest:
+      type: object
+      additionalProperties: false
+      required: [amount]
+      properties:
+        amount:
+          type: string
+          description: A non-negative decimal, as a string.
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+        impressions:
+          type: integer
+          minimum: 0
+        clicks:
+          type: integer
+          minimum: 0
+    SpendBatchRequest:
+      type: object
+      additionalProperties: false
+      required: [entries]
+      properties:
+        entries:
+          type: array
+          maxItems: 366
+          items:
+            type: object
+            additionalProperties: false
+            required: [day, amount]
+            properties:
+              day:
+                type: string
+                format: date
+              amount:
+                type: string
+              currency:
+                type: string
+                pattern: "^[A-Z]{3}$"
+              impressions:
+                type: integer
+                minimum: 0
+              clicks:
+                type: integer
+                minimum: 0
+    SpendView:
+      type: object
+      properties:
+        campaign_id:
+          type: string
+          format: uuid
+        day:
+          type: string
+          format: date
+        source:
+          type: string
+          enum: [MANUAL, GOOGLE_ADS, META_ADS]
+        amount:
+          type: string
+        currency:
+          type: string
+        impressions:
+          type: integer
+          nullable: true
+        clicks:
+          type: integer
+          nullable: true
+    ReportView:
+      type: object
+      additionalProperties: true
+      description: A report payload; the members depend on the endpoint.
+    ReturnUrlRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        return_url:
+          type: string
+          format: uri
+    ConnectionView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        platform:
+          type: string
+          enum: [GOOGLE_ADS, META_ADS]
+        external_account_id:
+          type: string
+        account_time_zone:
+          type: string
+        account_currency:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, REAUTH_REQUIRED, REVOKED]
+        last_synced_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_error:
+          type: string
+          nullable: true
+    ExternalCampaignView:
+      type: object
+      properties:
+        external_campaign_id:
+          type: string
+        name:
+          type: string
+        currency:
+          type: string
+    MappingRequest:
+      type: object
+      additionalProperties: false
+      required: [mappings]
+      properties:
+        mappings:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [external_campaign_id, campaign_id]
+            properties:
+              external_campaign_id:
+                type: string
+              campaign_id:
+                type: string
+                format: uuid
+    SettingsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        click_param:
+          type: string
+          pattern: "^[a-zA-Z][a-zA-Z0-9_]{0,31}$"
+        allowed_origins:
+          type: array
+          items:
+            type: string
+            format: uri
+        default_window_days:
+          type: integer
+          minimum: 1
+          maximum: 90
+    SettingsView:
+      type: object
+      properties:
+        click_param:
+          type: string
+        allowed_origins:
+          type: array
+          items:
+            type: string
+        default_window_days:
+          type: integer
+    ErasureRequest:
+      type: object
+      additionalProperties: false
+      required: [visitor_id]
+      properties:
+        visitor_id:
+          type: string
+    ErasureView:
+      type: object
+      properties:
+        page_events:
+          type: integer
+        sessions:
+          type: integer
+        bindings:
+          type: integer
+        clicks:
+          type: integer
+        conversions:
+          type: integer

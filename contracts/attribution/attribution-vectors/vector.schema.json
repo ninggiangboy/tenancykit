@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/attribution/vector.schema.json",
+  "title": "Attribution vector file",
+  "description": "One file in contracts/attribution/attribution-vectors/ is a JSON array of cases, split by subject. Every case is a pure function input and its expected credit, so the engine in the app is built against this file rather than the other way round: a case states the outcome a reviewer would defend, and adding a model case means adding a case here, never a test in the code. The credits of one case always sum exactly to the conversion value, because the largest-remainder residual goes to the last touch.",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "$ref": "#/$defs/case"
+  },
+  "$defs": {
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "model",
+        "window_days",
+        "currency",
+        "conversion",
+        "chain",
+        "expect"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "What the case proves, phrased as an assertion."
+        },
+        "model": {
+          "type": "string",
+          "enum": [
+            "FIRST",
+            "LAST",
+            "LINEAR"
+          ],
+          "description": "The attribution model, chosen per campaign. It is the model of the owning campaign: the campaign of the last click in the chain."
+        },
+        "window_days": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 90,
+          "description": "The owning campaign's attribution window. A click is inside the window when it is not after the conversion and no more than this many days before it, counted as 24-hour periods from `conversion.at`."
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "The ISO 4217 code that decides the fraction digits of every credit: 2 for USD, 0 for VND."
+        },
+        "conversion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "at",
+            "value"
+          ],
+          "properties": {
+            "at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "When the conversion happened, in UTC."
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^[0-9]+(\\.[0-9]+)?$",
+              "description": "The conversion value as a decimal string, never a binary float, so 100.00 keeps its two fraction digits."
+            }
+          }
+        },
+        "chain": {
+          "type": "array",
+          "maxItems": 200,
+          "description": "The touchpoints, oldest first. The engine filters it to the clicks inside the window whose traffic class is HUMAN, and a BOT or SUSPECT click is never credited. An empty chain means the conversion is unattributed.",
+          "items": {
+            "$ref": "#/$defs/touch"
+          }
+        },
+        "expect": {
+          "type": "array",
+          "description": "The credits, one per credited click, as decimal strings at the currency's fraction digits. The sum is exactly the conversion value. An empty array means the conversion is UNATTRIBUTED.",
+          "items": {
+            "$ref": "#/$defs/credit"
+          }
+        },
+        "expected_credit_status": {
+          "type": "string",
+          "enum": [
+            "COMPUTED",
+            "UNATTRIBUTED"
+          ],
+          "description": "Optional. When absent the runner derives it: `COMPUTED` when `expect` is not empty, `UNATTRIBUTED` otherwise."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Optional. Why the conversion is unattributed, such as `no_chain`, `all_clicks_outside_window` or `bot_only`. Present only where the empty `expect` needs an explanation a reviewer would ask for."
+        }
+      }
+    },
+    "touch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "click_id",
+        "link_id",
+        "campaign_id",
+        "at",
+        "traffic_class"
+      ],
+      "properties": {
+        "click_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "The click's identity. A case never repeats one."
+        },
+        "link_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "The link the click came through."
+        },
+        "campaign_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "The campaign the link belongs to. A chain may span campaigns; the last click's campaign owns the conversion."
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the click happened, in UTC."
+        },
+        "traffic_class": {
+          "type": "string",
+          "enum": [
+            "HUMAN",
+            "BOT",
+            "SUSPECT"
+          ],
+          "description": "Only HUMAN clicks are credited. BOT is a crawler or a link-preview fetcher; SUSPECT is a visitor over the per-link click rate."
+        }
+      }
+    },
+    "credit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "click_id",
+        "credit"
+      ],
+      "properties": {
+        "click_id": {
+          "type": "string",
+          "description": "The credited click, naming an entry of `chain`."
+        },
+        "credit": {
+          "type": "string",
+          "pattern": "^[0-9]+(\\.[0-9]+)?$",
+          "description": "The credited amount as a decimal string at the currency's fraction digits."
+        }
+      }
+    }
+  }
+}
