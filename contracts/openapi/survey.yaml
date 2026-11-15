@@ -1,0 +1,1297 @@
+openapi: 3.1.0
+info:
+  title: Survey API
+  version: v1
+  description: |
+    The API a Tenant System uses to build versioned surveys, issue links and read what came back, plus the public
+    endpoints a respondent's browser calls without credentials.
+
+    This is a resource skeleton: every path carries its operation, the permission it requires and the shape it will
+    settle on. Each phase fills the schema it owns. `x-required-permission` names a code from
+    contracts/permissions/survey.yaml; a public operation carries `x-public: true` instead and requires no suite token.
+
+    The tenant always comes from the verified host, never from a request body or a query parameter. Every tenant
+    endpoint answers `404` for a resource in another tenant, exactly as it does for one that does not exist.
+servers:
+- url: /
+  description: "Any tenant hostname: <tenant-code>.<base-domain>/survey"
+tags:
+- name: survey-controller
+  description: Surveys, their status and their lifecycle
+- name: draft-controller
+  description: The editable draft of one survey, with optimistic concurrency
+- name: version-controller
+  description: Publish and read immutable versions; preview and simulate a flow
+- name: link-controller
+  description: Public and personal links, and their revocation
+- name: response-controller
+  description: Responses, their files, and their deletion
+- name: analytics-controller
+  description: Aggregates, cross-tabs, trends and the funnel
+- name: respondent-controller
+  description: The respondents list a Tenant imports into a mailroom group
+- name: export-controller
+  description: A CSV export and its download
+- name: webhook-controller
+  description: Webhook endpoints and the delivery history
+- name: public-controller
+  description: The unauthenticated fill surface a respondent's browser calls
+paths:
+  /survey/api/v1/surveys:
+    get:
+      tags:
+      - survey-controller
+      operationId: listSurveys
+      x-required-permission: survey:survey:read
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+      - survey-controller
+      operationId: createSurvey
+      x-required-permission: survey:survey:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SurveyRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SurveyView"
+  /survey/api/v1/surveys/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - survey-controller
+      operationId: getSurvey
+      x-required-permission: survey:survey:read
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SurveyView"
+  /survey/api/v1/surveys/{id}/close:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - survey-controller
+      operationId: closeSurvey
+      x-required-permission: survey:survey:manage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SurveyView"
+  /survey/api/v1/surveys/{id}/reopen:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - survey-controller
+      operationId: reopenSurvey
+      x-required-permission: survey:survey:manage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SurveyView"
+  /survey/api/v1/surveys/{id}/draft:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - draft-controller
+      operationId: getDraft
+      x-required-permission: survey:survey:read
+      responses:
+        "200":
+          description: OK
+          headers:
+            ETag:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftView"
+    put:
+      tags:
+      - draft-controller
+      operationId: saveDraft
+      x-required-permission: survey:survey:manage
+      parameters:
+      - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DraftRequest"
+      responses:
+        "200":
+          description: The stored document, including the ids the server assigned
+          headers:
+            ETag:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DraftView"
+        "412":
+          description: The If-Match tag is stale; the current tag is in the response
+        "428":
+          description: If-Match is required
+  /survey/api/v1/surveys/{id}/draft/validate:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - draft-controller
+      operationId: validateDraft
+      x-required-permission: survey:survey:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DraftRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationResult"
+  /survey/api/v1/surveys/{id}/draft/preview:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - draft-controller
+      operationId: previewDraft
+      x-required-permission: survey:survey:read
+      parameters:
+      - name: locale
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SurveyPreview"
+  /survey/api/v1/surveys/{id}/draft/simulate:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - draft-controller
+      operationId: simulateDraft
+      x-required-permission: survey:survey:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimulateRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FlowResult"
+  /survey/api/v1/surveys/{id}/publish:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - version-controller
+      operationId: publishVersion
+      x-required-permission: survey:survey:manage
+      parameters:
+      - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionView"
+        "412":
+          description: The If-Match tag is stale
+        "422":
+          description: The draft has structural errors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationResult"
+  /survey/api/v1/surveys/{id}/versions:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - version-controller
+      operationId: listVersions
+      x-required-permission: survey:survey:read
+      responses:
+        "200":
+          description: OK
+  /survey/api/v1/surveys/{id}/versions/{no}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    - name: no
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    get:
+      tags:
+      - version-controller
+      operationId: getVersion
+      x-required-permission: survey:survey:read
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionView"
+  /survey/api/v1/surveys/{id}/versions/{no}/simulate:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    - name: no
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    post:
+      tags:
+      - version-controller
+      operationId: simulateVersion
+      x-required-permission: survey:survey:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimulateRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FlowResult"
+  /survey/api/v1/surveys/{id}/links:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - link-controller
+      operationId: listLinks
+      x-required-permission: survey:link:manage
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+      - link-controller
+      operationId: createPublicLink
+      x-required-permission: survey:link:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicLinkRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LinkView"
+        "409":
+          description: A public link for that source already exists
+  /survey/api/v1/surveys/{id}/links/personal:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - link-controller
+      operationId: createPersonalLinks
+      x-required-permission: survey:link:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PersonalLinksRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonalLinksResponse"
+  /survey/api/v1/links/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - link-controller
+      operationId: getLink
+      x-required-permission: survey:link:manage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LinkView"
+  /survey/api/v1/links/{id}/revoke:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - link-controller
+      operationId: revokeLink
+      x-required-permission: survey:link:manage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LinkView"
+  /survey/api/v1/surveys/{id}/responses:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - response-controller
+      operationId: listResponses
+      x-required-permission: survey:response:read
+      parameters:
+      - name: version
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: source
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: external_ref
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [IN_PROGRESS, COMPLETED]
+      responses:
+        "200":
+          description: OK
+  /survey/api/v1/responses/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - response-controller
+      operationId: getResponse
+      x-required-permission: survey:response:read
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseView"
+    delete:
+      tags:
+      - response-controller
+      operationId: deleteResponse
+      x-required-permission: survey:response:delete
+      responses:
+        "204":
+          description: Deleted, with its answers and objects
+  /survey/api/v1/responses/{id}/files/{uploadId}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    - name: uploadId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    get:
+      tags:
+      - response-controller
+      operationId: downloadFile
+      x-required-permission: survey:response:read
+      responses:
+        "200":
+          description: A presigned GET URL answering as an attachment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresignedUrl"
+  /survey/api/v1/surveys/{id}/analytics/aggregate:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - analytics-controller
+      operationId: aggregate
+      x-required-permission: survey:analytics:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyticsRequest"
+      responses:
+        "200":
+          description: OK
+  /survey/api/v1/surveys/{id}/analytics/crosstab:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - analytics-controller
+      operationId: crosstab
+      x-required-permission: survey:analytics:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrosstabRequest"
+      responses:
+        "200":
+          description: OK
+  /survey/api/v1/surveys/{id}/analytics/trend:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - analytics-controller
+      operationId: trend
+      x-required-permission: survey:analytics:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrendRequest"
+      responses:
+        "200":
+          description: OK
+  /survey/api/v1/surveys/{id}/analytics/funnel:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - analytics-controller
+      operationId: funnel
+      x-required-permission: survey:analytics:read
+      parameters:
+      - name: group_by
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [source, country, device_class]
+          default: source
+      responses:
+        "200":
+          description: OK
+  /survey/api/v1/surveys/{id}/respondents:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - respondent-controller
+      operationId: listRespondents
+      x-required-permission: survey:response:read
+      parameters:
+      - name: state
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [COMPLETED, STARTED, ABANDONED]
+      - name: source
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+  /survey/api/v1/surveys/{id}/exports:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - export-controller
+      operationId: createExport
+      x-required-permission: survey:export:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExportRequest"
+      responses:
+        "202":
+          description: Accepted; the export runs in the worker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportView"
+  /survey/api/v1/exports/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - export-controller
+      operationId: getExport
+      x-required-permission: survey:export:manage
+      responses:
+        "200":
+          description: OK, with a presigned GET when the export is done
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportView"
+  /survey/api/v1/webhook-endpoints:
+    get:
+      tags:
+      - webhook-controller
+      operationId: listEndpoints
+      x-required-permission: survey:webhook:manage
+      responses:
+        "200":
+          description: OK
+    post:
+      tags:
+      - webhook-controller
+      operationId: createEndpoint
+      x-required-permission: survey:webhook:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EndpointRequest"
+      responses:
+        "201":
+          description: Created; the signing secret is returned once
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EndpointCreated"
+  /survey/api/v1/webhook-endpoints/{id}:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    get:
+      tags:
+      - webhook-controller
+      operationId: getEndpoint
+      x-required-permission: survey:webhook:manage
+      responses:
+        "200":
+          description: OK
+    put:
+      tags:
+      - webhook-controller
+      operationId: updateEndpoint
+      x-required-permission: survey:webhook:manage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EndpointRequest"
+      responses:
+        "200":
+          description: OK
+    delete:
+      tags:
+      - webhook-controller
+      operationId: deleteEndpoint
+      x-required-permission: survey:webhook:manage
+      responses:
+        "204":
+          description: Deleted with its delivery history
+  /survey/api/v1/webhook-endpoints/{id}/rotate-secret:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - webhook-controller
+      operationId: rotateSecret
+      x-required-permission: survey:webhook:manage
+      responses:
+        "200":
+          description: The new secret, shown once
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EndpointCreated"
+  /survey/api/v1/webhook-deliveries:
+    get:
+      tags:
+      - webhook-controller
+      operationId: listDeliveries
+      x-required-permission: survey:webhook:manage
+      parameters:
+      - name: endpoint
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [PENDING, DELIVERED, DEAD]
+      responses:
+        "200":
+          description: OK
+  /survey/api/v1/webhook-deliveries/{id}/retry:
+    parameters:
+    - $ref: "#/components/parameters/Id"
+    post:
+      tags:
+      - webhook-controller
+      operationId: retryDelivery
+      x-required-permission: survey:webhook:manage
+      responses:
+        "202":
+          description: Accepted; the delivery is due again
+  /survey/p/l/{token}/open:
+    parameters:
+    - name: token
+      in: path
+      required: true
+      schema:
+        type: string
+    post:
+      tags:
+      - public-controller
+      operationId: openLink
+      x-public: true
+      responses:
+        "200":
+          description: A visit token, the version and the locale
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenResponse"
+        "404":
+          description: The same body for every invalid, revoked, expired or unknown token
+        "409":
+          description: already_completed on a personal link that already completed
+        "429":
+          description: Rate limited
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+  /survey/p/v/{visitToken}/schema:
+    parameters:
+    - $ref: "#/components/parameters/VisitToken"
+    get:
+      tags:
+      - public-controller
+      operationId: visitSchema
+      x-public: true
+      parameters:
+      - name: locale
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The version for one locale, without scores
+  /survey/p/v/{visitToken}/draft:
+    parameters:
+    - $ref: "#/components/parameters/VisitToken"
+    get:
+      tags:
+      - public-controller
+      operationId: readDraft
+      x-public: true
+      responses:
+        "200":
+          description: OK
+    put:
+      tags:
+      - public-controller
+      operationId: saveDraftAnswers
+      x-public: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswersRequest"
+      responses:
+        "200":
+          description: OK; the first save moves the visit to STARTED
+  /survey/p/v/{visitToken}/pages/{pageId}/view:
+    parameters:
+    - $ref: "#/components/parameters/VisitToken"
+    - name: pageId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    post:
+      tags:
+      - public-controller
+      operationId: recordPageView
+      x-public: true
+      responses:
+        "202":
+          description: Accepted
+        "409":
+          description: The visit already recorded 200 page events
+  /survey/p/v/{visitToken}/uploads:
+    parameters:
+    - $ref: "#/components/parameters/VisitToken"
+    post:
+      tags:
+      - public-controller
+      operationId: createUpload
+      x-public: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadRequest"
+      responses:
+        "201":
+          description: A presigned PUT URL and the headers it needs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadCreated"
+  /survey/p/v/{visitToken}/submit:
+    parameters:
+    - $ref: "#/components/parameters/VisitToken"
+    post:
+      tags:
+      - public-controller
+      operationId: submitResponse
+      x-public: true
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          maxLength: 200
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswersRequest"
+      responses:
+        "201":
+          description: The completed response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitResult"
+        "202":
+          description: Accepted and discarded; the honeypot was filled
+        "409":
+          description: cap_reached, already_completed or answer_not_on_path
+        "422":
+          description: A required answer is missing or a constraint failed
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IfMatch:
+      name: If-Match
+      in: header
+      required: false
+      schema:
+        type: string
+    VisitToken:
+      name: visitToken
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    SurveyRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 200
+    SurveyView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, OPEN, CLOSED]
+        currentVersionId:
+          type: string
+          format: uuid
+        currentVersionNo:
+          type: integer
+        version:
+          type: integer
+    DraftRequest:
+      type: object
+      additionalProperties: false
+      required: [document]
+      properties:
+        document:
+          type: object
+          additionalProperties: true
+          description: A document validated against contracts/survey/version.schema.json
+    DraftView:
+      type: object
+      properties:
+        document:
+          type: object
+          additionalProperties: true
+        etag:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+    ValidationResult:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationError"
+    ValidationError:
+      type: object
+      required: [pointer, code, message]
+      properties:
+        pointer:
+          type: string
+        code:
+          type: string
+          enum:
+          - required
+          - unknown_type
+          - duplicate_id
+          - dangling_reference
+          - translation_missing
+          - limit_exceeded
+          - cycle
+          - expression_invalid
+        message:
+          type: string
+    VersionView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        versionNo:
+          type: integer
+        publishedAt:
+          type: string
+          format: date-time
+        document:
+          type: object
+          additionalProperties: true
+    SimulateRequest:
+      type: object
+      additionalProperties: false
+      required: [answers]
+      properties:
+        answers:
+          type: object
+          additionalProperties: true
+        locale:
+          type: string
+    FlowResult:
+      type: object
+      properties:
+        path:
+          type: array
+          items:
+            type: string
+            format: uuid
+        visible:
+          type: object
+          additionalProperties:
+            type: boolean
+        vars:
+          type: object
+          additionalProperties: true
+        score:
+          type: number
+          nullable: true
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationError"
+    SurveyPreview:
+      type: object
+      properties:
+        locale:
+          type: string
+        pages:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    PublicLinkRequest:
+      type: object
+      additionalProperties: false
+      required: [source]
+      properties:
+        source:
+          type: string
+          maxLength: 100
+          pattern: "^[a-z0-9][a-z0-9._-]*$"
+    PersonalLinksRequest:
+      type: object
+      additionalProperties: false
+      required: [links]
+      properties:
+        links:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          items:
+            $ref: "#/components/schemas/PersonalLinkRequest"
+    PersonalLinkRequest:
+      type: object
+      additionalProperties: false
+      required: [external_ref]
+      properties:
+        external_ref:
+          type: string
+          maxLength: 200
+        source:
+          type: string
+          maxLength: 100
+        expires_at:
+          type: string
+          format: date-time
+    PersonalLinksResponse:
+      type: object
+      properties:
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/LinkView"
+    LinkView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum: [PUBLIC, PERSONAL]
+        source:
+          type: string
+        externalRef:
+          type: string
+        url:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, REVOKED]
+        expiresAt:
+          type: string
+          format: date-time
+    ResponseView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        surveyId:
+          type: string
+          format: uuid
+        versionId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [IN_PROGRESS, COMPLETED]
+        locale:
+          type: string
+        answers:
+          type: object
+          additionalProperties: true
+        vars:
+          type: object
+          additionalProperties: true
+        score:
+          type: number
+          nullable: true
+        respondentIdentity:
+          type: string
+          nullable: true
+        externalRef:
+          type: string
+          nullable: true
+        source:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        submittedAt:
+          type: string
+          format: date-time
+    PresignedUrl:
+      type: object
+      properties:
+        url:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+    AnalyticsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        where:
+          type: object
+          description: An expression from contracts/survey/expression.schema.json
+          additionalProperties: true
+        version:
+          type: integer
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        source:
+          type: string
+    CrosstabRequest:
+      type: object
+      additionalProperties: false
+      required: [row, column]
+      properties:
+        row:
+          type: string
+        column:
+          type: string
+        where:
+          type: object
+          additionalProperties: true
+    TrendRequest:
+      type: object
+      additionalProperties: false
+      required: [metric, bucket]
+      properties:
+        metric:
+          type: string
+          enum: [count, mean, nps]
+        question:
+          type: string
+        bucket:
+          type: string
+          enum: [day, week]
+        where:
+          type: object
+          additionalProperties: true
+    ExportRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        where:
+          type: object
+          additionalProperties: true
+        version:
+          type: integer
+    ExportView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [QUEUED, RUNNING, DONE, FAILED]
+        rows:
+          type: integer
+        url:
+          type: string
+          nullable: true
+        finishedAt:
+          type: string
+          format: date-time
+    EndpointRequest:
+      type: object
+      additionalProperties: false
+      required: [url, event_types]
+      properties:
+        url:
+          type: string
+          format: uri
+        event_types:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            enum:
+            - survey-version.published
+            - survey.closed
+            - survey-response.submitted
+        enabled:
+          type: boolean
+    EndpointCreated:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+        eventTypes:
+          type: array
+          items:
+            type: string
+        secret:
+          type: string
+          description: Shown once, on create and on rotate; never again
+    OpenResponse:
+      type: object
+      properties:
+        visitToken:
+          type: string
+        version:
+          type: integer
+        locale:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+    AnswersRequest:
+      type: object
+      additionalProperties: false
+      required: [answers]
+      properties:
+        answers:
+          type: object
+          additionalProperties: true
+        locale:
+          type: string
+    UploadRequest:
+      type: object
+      additionalProperties: false
+      required: [question_id, filename, size, mime]
+      properties:
+        question_id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+          maxLength: 255
+        size:
+          type: integer
+          minimum: 1
+        mime:
+          type: string
+          maxLength: 100
+    UploadCreated:
+      type: object
+      properties:
+        uploadId:
+          type: string
+          format: uuid
+        url:
+          type: string
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+    SubmitResult:
+      type: object
+      properties:
+        responseId:
+          type: string
+          format: uuid
+        score:
+          type: number
+          nullable: true
+  securitySchemes:
+    oidc:
+      type: http
+      description: A tenant user signed in through Keycloak
+      scheme: bearer
+      bearerFormat: JWT
+    suiteToken:
+      type: http
+      description: Platform suite token for a Tenant System; obtain it from POST /oauth/token on Platform
+      scheme: bearer
+      bearerFormat: JWT

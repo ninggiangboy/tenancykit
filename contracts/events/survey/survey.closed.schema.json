@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/survey/survey.closed.schema.json",
+  "title": "Survey closed",
+  "description": "A Tenant closed a survey, so its links answer 404 from that moment and every visit that was still in progress is marked abandoned. Reopening a survey publishes a new version, which is a separate `survey-version.published` event; this one reports only the close. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "survey_id",
+    "current_version_id",
+    "closed_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "survey_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "current_version_id": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The version that was current at the close, so a receiver knows which document the last responses belong to. Null only for a survey closed before it was ever published."
+    },
+    "closed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the survey closed, in UTC."
+    }
+  }
+}

@@ -10,7 +10,7 @@ while keeping independent data, accounts, integration configuration and billing 
 The goal is that a new business app (CRM, HR, …) joins the suite by adding a build, a permission catalog, an
 `AppCode` and a proxy route, with Platform and Billing unchanged.
 
-## Five deployables
+## Six deployables
 
 | System | Owns | Reached at |
 |---|---|---|
@@ -18,6 +18,7 @@ The goal is that a new business app (CRM, HR, …) joins the suite by adding a b
 | **Billing** (`billing/`) | Pricing, Wallet, Ledger, Reservation, Charge, Invoice, Payment, Refund, Subscription, Webhook, the Billing Session and the Customer Portal. It keeps a **replica** of the Platform data it enforces and owns no tenant, user or role logic | `<tenant-code>.<base-domain>` |
 | **Notification** (`notification/`) | Notification types, suite-wide templates, locale and user preferences, the stored in-app notification list, the email dispatch ledger and the outbox that produces `email.send`. It keeps the Platform replica, notifies the suite's own users (tenant users and Platform administrators), and reads no other app's business data; delivery stays with `mailer/` | `<tenant-code>.<base-domain>` and `platform.<base-domain>`, through the `/notification` prefix |
 | **Mailroom** (`mailroom/`) | A Tenant's templates, receivers, groups, segments, suppressions, the sent-email ledger, campaigns and tracking events for the Tenant's **own customers**. It keeps the Platform replica, renders with a sandboxed Mustache and publishes `email.send`; delivery stays with `mailer/`, which reports the outcome back on `mailer.events` | `<tenant-code>.<base-domain>` through the `/mailroom` prefix; `/mailroom/t/*` is public for recipients |
+| **Survey** (`survey/`) | A Tenant's surveys, their immutable versions, links, visits, page events, responses, answers, uploads and the analysis of all of it, including the one expression language that decides branching, computed variables, scoring and piping. It keeps the Platform replica, consumes no business data from another app and sends nothing: it issues links and the Tenant places them | `<tenant-code>.<base-domain>` through the `/survey` prefix; `/survey/p/*` is public for respondents |
 | **Sample Tenant System** (`tenant/`) | Its own users, catalog, orders, usage and the policy it applies to Billing's state changes. It proves the integration and deploys without Billing | its own host |
 
 `notification/` is the suite's app for **notifying the suite's own users** about platform-side state changes. It
@@ -44,6 +45,14 @@ own, and the suite stores it on the Tenant's behalf under explicit retention and
 those two non-goal bullets still stands — no SMS, push, Slack, Telegram or real-time stream; no tenant-configurable
 rules engine or template editor; no attachments, bounce/complaint processing, digest scheduling or second retry loop.
 
+`survey/` is the suite's app for **asking a Tenant's own customers something**. It owns a Tenant's surveys, their
+immutable versions, the links that reach a respondent, the visits those links produce, the responses and the analysis
+of all of it. It never sends a message and knows no channel: it issues links, and the Tenant places one wherever it
+likes — a mailroom campaign, a QR code, a page on its own site. Delivery therefore stays with `mailroom/` and
+`mailer/`, and Survey publishes no `email.send`. Its data is the Tenant's customer data on the Tenant's behalf, so it
+has its own database, its own retention and deletion rules, and no raw IP is stored. It is API only: the builder UI
+and the fill UI are a later plan.
+
 They are separate Gradle builds, separate databases and separate processes. They meet three ways, never by sharing
 code:
 
@@ -54,8 +63,10 @@ code:
 - **The snapshot API.** A consumer rebuilds its replica from zero by paging Platform's snapshot streams, so a fresh
   app starts correct without replaying history.
 
-Webhooks stay in Billing: a Tenant System still registers an endpoint with Billing and verifies Billing's signed
-deliveries.
+Webhooks stay in the app that owns the fact: a Tenant System registers an endpoint with Billing and verifies
+Billing's signed deliveries, and Survey does the same with its own `Survey-*` deliveries. The signing, destination
+policy, guarded DNS resolution, HTTP send and retry schedule are the shared `core-webhook` mechanics; the endpoints,
+the delivery state and the event catalog stay in the app.
 
 ## Vocabulary
 
@@ -98,6 +109,14 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 - Guarantees financial consistency, Idempotency and auditability.
 - Serves the Customer Billing Portal.
 
+**Survey**
+- Owns a Tenant's surveys, their immutable versions, links, visits, page events, responses, answers, uploads and the
+  analysis of all of it.
+- Owns the one expression language used for branching, computed variables, quiz scoring, piping and analytics
+  filters, and publishes its schema and test vectors in `contracts/survey/` so a future fill UI agrees with it.
+- Enforces `survey:*` permissions from its replica of Platform data; it never mints, edits or decides them.
+- Issues links and sends nothing; a Tenant reaches a respondent through mailroom.
+
 **Sample Tenant System**
 - Manages its own users, business roles and permissions.
 - Manages Customers and their mapping to Billing Customers.
@@ -135,10 +154,16 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 - A second **business app** beyond Billing in the sense of an app that owns commercial data. The suite's first app
   beyond Billing is `notification/`, a platform-facing app rather than a business app; the extension trace — a build, a
   permission catalog, an entitlement and a proxy route, with no Platform code change — is now proven rather than
-  hypothesised.
+  hypothesised. **Reversed (2026-11-16):** `survey/` is the second tenant-facing business app beyond Billing and the
+  first one that is not about money or mail. It joins the suite the same way, proving the trace a second time from a
+  different direction: it publishes its own events and signed webhooks, and Platform, mailroom and the shared resolver
+  are untouched.
+- A builder UI or a fill UI for `survey/`; sending invitations or reminders from Survey; reconciling a respondent with
+  a mailroom receiver; CAPTCHA, virus scanning, realtime co-editing, and a retention schedule for responses (only an
+  explicit deletion). A Tenant that must not keep an answer deletes the response.
 - Charging tenants for suite use.
 - An API gateway with logic. The reverse proxy routes on the Host header only.
 - CDC or event sourcing. A consumer rebuilds by paging the snapshot API.
 - Migrating existing data from an earlier layout.
 - The Suite Console UI, which is a separate follow-up plan.
-- A first business app beyond Billing; the extension trace is proven with a future app.
+- A first business app beyond Billing; the extension trace is proven a second time with `survey/`.

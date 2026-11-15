@@ -1,0 +1,816 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/survey/version.schema.json",
+  "title": "Survey version document",
+  "description": "One immutable published version of a survey, and the shape an editable draft is validated against. Pages, questions, options, matrix rows and columns are structural only; every human-visible string lives in `translations`, keyed by the identifiers below, so a locale is complete or the publish fails. Ids are server-assigned UUIDs that persist across versions: a question whose `type` changes gets a new id at publish and records `replaces` in the lineage table. Limits the schema cannot express: a version holds at most 2,000 expression nodes in total and every expression is at most 500 nodes and depth 16, checked by the parser. Numbers are decimals rounded to 6 fraction digits with HALF_EVEN (see expression.schema.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "settings",
+    "pages",
+    "computed",
+    "scoring",
+    "translations"
+  ],
+  "properties": {
+    "settings": {
+      "$ref": "#/$defs/settings"
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 200,
+      "description": "In presentation order. A respondent walks them in this order unless a jump redirects, so the order is part of the version and never inferred from ids.",
+      "items": {
+        "$ref": "#/$defs/page"
+      }
+    },
+    "computed": {
+      "type": "array",
+      "maxItems": 50,
+      "description": "Computed variables, evaluated in declared order after all answers, so a variable may reference an earlier one and the graph cannot cycle.",
+      "items": {
+        "$ref": "#/$defs/computedVariable"
+      }
+    },
+    "scoring": {
+      "$ref": "#/$defs/scoring"
+    },
+    "translations": {
+      "type": "object",
+      "description": "Every enabled locale maps every key to its text. A key the version does not define is an error, and a key with no value in an enabled locale blocks the publish with `translation_missing`.",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "minProperties": 1,
+        "additionalProperties": {
+          "$ref": "#/$defs/pipedText"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "default_locale",
+        "locales"
+      ],
+      "properties": {
+        "default_locale": {
+          "type": "string",
+          "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+          "description": "The locale a respondent sees when the link names none and the key must exist in `translations`."
+        },
+        "locales": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true,
+          "description": "Every locale the version is published in. `default_locale` is one of them.",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]{2}(-[A-Z]{2})?$"
+          }
+        },
+        "opens_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The window opens at this instant. Null means it is open as soon as it is published. A link opened outside the window answers 404, the same as an unknown one."
+        },
+        "closes_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The window closes at this instant; null means it stays open until the Tenant closes the survey."
+        },
+        "response_cap": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The most completed responses this survey accepts. Enforced by a conditional counter update, so a burst of concurrent submits completes at most this many. Null means no cap."
+        },
+        "quiz": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "enabled",
+            "return_score"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Whether scoring rules and option scores contribute to the score. When false the score is null and no scoring rule is evaluated."
+            },
+            "return_score": {
+              "type": "boolean",
+              "description": "Whether the submit response carries the score to the respondent. The Tenant always sees it; this only governs what the public submit returns."
+            }
+          }
+        },
+        "abandon_after_hours": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 720,
+          "default": 24,
+          "description": "A visit still STARTED with no activity for this long becomes ABANDONED. The tenant setting supplies the default a new version inherits."
+        },
+        "timezone": {
+          "type": "string",
+          "default": "UTC",
+          "description": "The zone a trend bucket uses, an IANA name such as Asia/Ho_Chi_Minh. Defaults to UTC."
+        }
+      }
+    },
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "skip_if": {
+          "$ref": "#/$defs/expression",
+          "description": "When true, the page is skipped. Absent means never skip."
+        },
+        "jumps": {
+          "type": "array",
+          "maxItems": 20,
+          "description": "Evaluated in order after the page is visited; the first match redirects. Absent means fall through to the next page.",
+          "items": {
+            "$ref": "#/$defs/jump"
+          }
+        },
+        "questions": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/question"
+          },
+          "description": "In presentation order. May be empty for an intro page."
+        }
+      }
+    },
+    "jump": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "when",
+        "to_page"
+      ],
+      "properties": {
+        "when": {
+          "$ref": "#/$defs/expression"
+        },
+        "to_page": {
+          "type": "string",
+          "description": "A page id, or the literal `end` to finish the survey here.",
+          "pattern": "^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|end)$"
+        }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "short_text",
+            "long_text",
+            "number",
+            "email",
+            "single_choice",
+            "multi_choice",
+            "rating",
+            "nps",
+            "date",
+            "matrix",
+            "file"
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "default": false,
+          "description": "A required question on the path must be answered at submit; one behind a false `visible_if` or a skipped page is not on the path and is not required."
+        },
+        "identity": {
+          "type": "boolean",
+          "default": false,
+          "description": "Marks this answer as the respondent's identity when the link is public. Allowed on `short_text` and `email` only. At most one question in a version carries it."
+        },
+        "visible_if": {
+          "$ref": "#/$defs/expression",
+          "description": "When false the question is not on the path: it is not asked and an answer to it is rejected at submit. Absent means true."
+        },
+        "constraints": {
+          "$ref": "#/$defs/constraints"
+        },
+        "options": {
+          "type": "array",
+          "maxItems": 100,
+          "description": "The choices of a single_choice or multi_choice question.",
+          "items": {
+            "$ref": "#/$defs/option"
+          }
+        },
+        "rows": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "The matrix rows. A matrix answer is a cell per row.",
+          "items": {
+            "$ref": "#/$defs/matrixRow"
+          }
+        },
+        "columns": {
+          "type": "array",
+          "maxItems": 20,
+          "description": "The matrix columns; each cell stores the chosen column id plus its score.",
+          "items": {
+            "$ref": "#/$defs/matrixColumn"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "short_text"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "constraints": {
+                "$ref": "#/$defs/textConstraints"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "long_text"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "constraints": {
+                "$ref": "#/$defs/textConstraints"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "email"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "constraints": {
+                "$ref": "#/$defs/emailConstraints"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "number"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "constraints": {
+                "$ref": "#/$defs/numberConstraints"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "date"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "constraints": {
+                "$ref": "#/$defs/dateConstraints"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "rating"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "constraints": {
+                "$ref": "#/$defs/ratingConstraints"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "single_choice"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "options"
+            ],
+            "properties": {
+              "options": {
+                "minItems": 2
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "multi_choice"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "options"
+            ],
+            "properties": {
+              "options": {
+                "minItems": 2
+              },
+              "constraints": {
+                "$ref": "#/$defs/choiceConstraints"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "matrix"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "rows",
+              "columns"
+            ],
+            "properties": {
+              "rows": {
+                "minItems": 1
+              },
+              "columns": {
+                "minItems": 2
+              },
+              "constraints": {
+                "$ref": "#/$defs/matrixConstraints"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "file"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "constraints"
+            ],
+            "properties": {
+              "constraints": {
+                "$ref": "#/$defs/fileConstraints"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "nps"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "constraints"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "identity"
+            ],
+            "properties": {
+              "identity": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "short_text",
+                  "email"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "value"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "The stored value: stable across versions and never the label, which is translated."
+        },
+        "score": {
+          "type": "number",
+          "description": "Points this option adds when the question is on the path and quiz is enabled. Absent is zero."
+        }
+      }
+    },
+    "matrixRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    },
+    "matrixColumn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "value"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "score": {
+          "type": "number"
+        }
+      }
+    },
+    "computedVariable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "expr"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,63}$"
+        },
+        "expr": {
+          "$ref": "#/$defs/expression"
+        }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rules": {
+          "type": "array",
+          "maxItems": 100,
+          "description": "Extra points, evaluated in order over the answers of questions on the path. An option or matrix column score is added separately.",
+          "items": {
+            "$ref": "#/$defs/scoringRule"
+          }
+        }
+      }
+    },
+    "scoringRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "when",
+        "points"
+      ],
+      "properties": {
+        "question": {
+          "$ref": "#/$defs/id",
+          "description": "Limits the rule to questions on the path. Absent means the rule applies whenever `when` is true."
+        },
+        "when": {
+          "$ref": "#/$defs/expression"
+        },
+        "points": {
+          "type": "number"
+        }
+      }
+    },
+    "constraints": {
+      "description": "Type-specific limits. The question's `type` decides which members are allowed; a member from another type is an error.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/textConstraints"
+        },
+        {
+          "$ref": "#/$defs/emailConstraints"
+        },
+        {
+          "$ref": "#/$defs/numberConstraints"
+        },
+        {
+          "$ref": "#/$defs/dateConstraints"
+        },
+        {
+          "$ref": "#/$defs/ratingConstraints"
+        },
+        {
+          "$ref": "#/$defs/choiceConstraints"
+        },
+        {
+          "$ref": "#/$defs/matrixConstraints"
+        },
+        {
+          "$ref": "#/$defs/fileConstraints"
+        }
+      ]
+    },
+    "textConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min_length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "max_length": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      }
+    },
+    "emailConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_length": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 320
+        }
+      }
+    },
+    "numberConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "decimals": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "description": "The most fraction digits accepted. A number is stored as the decimal it is, rounded to 6 by arithmetic."
+        },
+        "integer_only": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "dateConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "max_date": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "ratingConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "scale": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 10,
+          "default": 5,
+          "description": "The highest value; the scale always starts at 1."
+        }
+      }
+    },
+    "choiceConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min_selected": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "max_selected": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
+    "matrixConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "require_all_rows": {
+          "type": "boolean",
+          "default": true,
+          "description": "Every row needs a chosen column at submit. False accepts a partly answered matrix."
+        }
+      }
+    },
+    "fileConstraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allowed_mime",
+        "max_bytes"
+      ],
+      "properties": {
+        "allowed_mime": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "uniqueItems": true,
+          "description": "Checked against the file's magic bytes at submit, not its declared type.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "image/png",
+              "image/jpeg",
+              "image/gif",
+              "image/webp",
+              "application/pdf",
+              "text/plain",
+              "text/csv",
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            ]
+          }
+        },
+        "max_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10485760
+        },
+        "max_files": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "default": 1
+        }
+      }
+    },
+    "pipedText": {
+      "description": "A translated string, or an ordered list of literal strings and `{\"ref\": <expression>}` tokens for piping an answer into the sentence. The server HTML-escapes each substituted value and caps the rendered result at 2,000 characters.",
+      "oneOf": [
+        {
+          "type": "string",
+          "maxLength": 2000
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "$ref": "#/$defs/ref"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref"
+      ],
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/expression"
+        }
+      }
+    },
+    "expression": {
+      "$ref": "expression.schema.json"
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    }
+  }
+}

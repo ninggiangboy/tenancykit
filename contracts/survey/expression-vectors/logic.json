@@ -1,0 +1,3200 @@
+[
+  {
+    "name": "eq: equal strings are equal",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "eq",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              "yes"
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "yes"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "eq: different strings are not equal",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "eq",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              "yes"
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "no"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "eq: text comparison is case sensitive",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "eq",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              "yes"
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "YES"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "eq: an answer compared with null is false, not true",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "eq",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              null
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {},
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "eq: numbers compare by value, not by representation",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "eq",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              1.0
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 1
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "eq: a number never equals its string spelling",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "eq",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              1
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "1"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "eq: a number answer equals a decimal literal of the same value",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "eq",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              0.5
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 0.5
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "neq: a different string is not equal",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "neq",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              "no"
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "yes"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "neq: a null compared with a value is false",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "neq",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              "no"
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {},
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "neq: two nulls are not unequal, because a null comparison is false",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            },
+            {
+              "id": "476319a0-3d69-84a4-5e81-ace3332fbee9",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "neq",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              {
+                "answer": "476319a0-3d69-84a4-5e81-ace3332fbee9"
+              }
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {},
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true,
+        "476319a0-3d69-84a4-5e81-ace3332fbee9": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "gt: a larger number is greater",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "gt",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              18
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 21
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "gt: an equal value is not greater",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "gt",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              18
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 18
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "gt: a null operand makes the comparison false",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "gt",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              0
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {},
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "gte: an equal value passes",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "gte",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              18
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 18
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "gte: a null on the right makes the comparison false",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "gte",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              null
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 1
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "lt: a smaller number is less",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "lt",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              0
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": -3
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "lte: an equal value passes",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "lte",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              0
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 0
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "lt: a text operand against a number is a type mismatch and is false",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "lt",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              0
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "abc"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "gt: a decimal comparison is exact on the stored decimal",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "gt",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              0.1
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 0.100001
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "gt: a value that rounds to the same 6 digits is not greater",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "gt",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              0.1
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 0.1000001
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "and: two true operands are true",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "and",
+            "args": [
+              {
+                "op": "gt",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  10
+                ]
+              },
+              {
+                "op": "lt",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  20
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 15
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "and: one false operand is false",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "and",
+            "args": [
+              {
+                "op": "gt",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  10
+                ]
+              },
+              {
+                "op": "lt",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  20
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 25
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "and: a null operand is false",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "and",
+            "args": [
+              true,
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              }
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {},
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "and: eight operands are allowed",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "and",
+            "args": [
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {},
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "or: one true operand is true",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "or",
+            "args": [
+              {
+                "op": "eq",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  "a"
+                ]
+              },
+              {
+                "op": "eq",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  "b"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "b"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "or: two false operands are false",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "or",
+            "args": [
+              {
+                "op": "eq",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  "a"
+                ]
+              },
+              {
+                "op": "eq",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  "b"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "c"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "or: a null cannot make a false operand true",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "or",
+            "args": [
+              false,
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              }
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {},
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "or: a true operand is true beside a null",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "or",
+            "args": [
+              true,
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              }
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {},
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "not: a false operand becomes true",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "not",
+            "args": [
+              {
+                "op": "eq",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  "yes"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "no"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "not: a true operand becomes false",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "not",
+            "args": [
+              {
+                "op": "eq",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  "yes"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "yes"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": false
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "not: a null is not true, so its negation is true",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "not",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              }
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {},
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": true
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "if: the true branch is chosen",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "if",
+            "args": [
+              {
+                "op": "gt",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  0
+                ]
+              },
+              "positive",
+              "other"
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 5
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": "positive"
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "if: the false branch is chosen",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "if",
+            "args": [
+              {
+                "op": "gt",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  0
+                ]
+              },
+              "positive",
+              "other"
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": -1
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": "other"
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "if: a null condition takes the false branch",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "computed": [
+        {
+          "name": "r",
+          "expr": {
+            "op": "if",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              "yes",
+              "no"
+            ]
+          }
+        }
+      ],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {},
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {
+        "r": "no"
+      },
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "visible_if: a met dependency makes the question visible",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            },
+            {
+              "id": "476319a0-3d69-84a4-5e81-ace3332fbee9",
+              "type": "short_text",
+              "visible_if": {
+                "op": "eq",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  "yes"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "computed": [],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "yes"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true,
+        "476319a0-3d69-84a4-5e81-ace3332fbee9": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {},
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "visible_if: an unanswered dependency hides the question",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            },
+            {
+              "id": "476319a0-3d69-84a4-5e81-ace3332fbee9",
+              "type": "short_text",
+              "visible_if": {
+                "op": "eq",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  "yes"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "computed": [],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {},
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true,
+        "476319a0-3d69-84a4-5e81-ace3332fbee9": false
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {},
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "visible_if: an absent visible_if is true",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "anything"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {},
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "visible_if: an and over a rating and a choice hides a follow-up",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "rating",
+              "constraints": {
+                "scale": 5
+              }
+            },
+            {
+              "id": "476319a0-3d69-84a4-5e81-ace3332fbee9",
+              "type": "single_choice",
+              "options": [
+                {
+                  "id": "52695b04-b038-8676-9fc2-485c0a332221",
+                  "value": "a"
+                },
+                {
+                  "id": "eaf32553-50e0-82cd-07c2-dcc02781e035",
+                  "value": "b"
+                }
+              ]
+            },
+            {
+              "id": "78903acd-2881-8c4a-7137-977a5026fb03",
+              "type": "long_text",
+              "visible_if": {
+                "op": "and",
+                "args": [
+                  {
+                    "op": "lte",
+                    "args": [
+                      {
+                        "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                      },
+                      2
+                    ]
+                  },
+                  {
+                    "op": "eq",
+                    "args": [
+                      {
+                        "answer": "476319a0-3d69-84a4-5e81-ace3332fbee9"
+                      },
+                      "a"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "computed": [],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 4,
+      "476319a0-3d69-84a4-5e81-ace3332fbee9": "a"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true,
+        "476319a0-3d69-84a4-5e81-ace3332fbee9": true,
+        "78903acd-2881-8c4a-7137-977a5026fb03": false
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {},
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "visible_if: nested and/or follows the tree, not precedence",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "number"
+            },
+            {
+              "id": "476319a0-3d69-84a4-5e81-ace3332fbee9",
+              "type": "short_text",
+              "visible_if": {
+                "op": "or",
+                "args": [
+                  {
+                    "op": "and",
+                    "args": [
+                      {
+                        "op": "gt",
+                        "args": [
+                          {
+                            "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                          },
+                          5
+                        ]
+                      },
+                      false
+                    ]
+                  },
+                  true
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "computed": [],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": 10
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true,
+        "476319a0-3d69-84a4-5e81-ace3332fbee9": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {},
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "path: a matching jump skips the middle page",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ],
+          "jumps": [
+            {
+              "when": {
+                "op": "eq",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  "skip"
+                ]
+              },
+              "to_page": "33333333-3333-7333-8333-333333333333"
+            }
+          ]
+        },
+        {
+          "id": "22222222-2222-7222-8222-222222222222",
+          "questions": [
+            {
+              "id": "476319a0-3d69-84a4-5e81-ace3332fbee9",
+              "type": "short_text"
+            }
+          ]
+        },
+        {
+          "id": "33333333-3333-7333-8333-333333333333",
+          "questions": [
+            {
+              "id": "78903acd-2881-8c4a-7137-977a5026fb03",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "skip"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true,
+        "476319a0-3d69-84a4-5e81-ace3332fbee9": false,
+        "78903acd-2881-8c4a-7137-977a5026fb03": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111",
+        "33333333-3333-7333-8333-333333333333"
+      ],
+      "vars": {},
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "path: no jump match visits every page",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ],
+          "jumps": [
+            {
+              "when": {
+                "op": "eq",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  "skip"
+                ]
+              },
+              "to_page": "33333333-3333-7333-8333-333333333333"
+            }
+          ]
+        },
+        {
+          "id": "22222222-2222-7222-8222-222222222222",
+          "questions": [
+            {
+              "id": "476319a0-3d69-84a4-5e81-ace3332fbee9",
+              "type": "short_text"
+            }
+          ]
+        },
+        {
+          "id": "33333333-3333-7333-8333-333333333333",
+          "questions": [
+            {
+              "id": "78903acd-2881-8c4a-7137-977a5026fb03",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "stay"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true,
+        "476319a0-3d69-84a4-5e81-ace3332fbee9": true,
+        "78903acd-2881-8c4a-7137-977a5026fb03": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111",
+        "22222222-2222-7222-8222-222222222222",
+        "33333333-3333-7333-8333-333333333333"
+      ],
+      "vars": {},
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "path: a true skip_if removes the page",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        },
+        {
+          "id": "22222222-2222-7222-8222-222222222222",
+          "skip_if": {
+            "op": "eq",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              "skip"
+            ]
+          },
+          "questions": [
+            {
+              "id": "476319a0-3d69-84a4-5e81-ace3332fbee9",
+              "type": "short_text"
+            }
+          ]
+        },
+        {
+          "id": "33333333-3333-7333-8333-333333333333",
+          "questions": [
+            {
+              "id": "78903acd-2881-8c4a-7137-977a5026fb03",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "skip"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true,
+        "476319a0-3d69-84a4-5e81-ace3332fbee9": false,
+        "78903acd-2881-8c4a-7137-977a5026fb03": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111",
+        "33333333-3333-7333-8333-333333333333"
+      ],
+      "vars": {},
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "path: a false skip_if keeps the page",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ]
+        },
+        {
+          "id": "22222222-2222-7222-8222-222222222222",
+          "skip_if": {
+            "op": "eq",
+            "args": [
+              {
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+              },
+              "skip"
+            ]
+          },
+          "questions": [
+            {
+              "id": "476319a0-3d69-84a4-5e81-ace3332fbee9",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "stay"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true,
+        "476319a0-3d69-84a4-5e81-ace3332fbee9": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111",
+        "22222222-2222-7222-8222-222222222222"
+      ],
+      "vars": {},
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "path: a jump to end stops before the next page",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ],
+          "jumps": [
+            {
+              "when": {
+                "op": "eq",
+                "args": [
+                  {
+                    "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
+                  },
+                  "stop"
+                ]
+              },
+              "to_page": "end"
+            }
+          ]
+        },
+        {
+          "id": "22222222-2222-7222-8222-222222222222",
+          "questions": [
+            {
+              "id": "476319a0-3d69-84a4-5e81-ace3332fbee9",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "stop"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true,
+        "476319a0-3d69-84a4-5e81-ace3332fbee9": false
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {},
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "path: the first matching jump wins",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ],
+          "jumps": [
+            {
+              "when": true,
+              "to_page": "33333333-3333-7333-8333-333333333333"
+            },
+            {
+              "when": true,
+              "to_page": "22222222-2222-7222-8222-222222222222"
+            }
+          ]
+        },
+        {
+          "id": "22222222-2222-7222-8222-222222222222",
+          "questions": [
+            {
+              "id": "476319a0-3d69-84a4-5e81-ace3332fbee9",
+              "type": "short_text"
+            }
+          ]
+        },
+        {
+          "id": "33333333-3333-7333-8333-333333333333",
+          "questions": [
+            {
+              "id": "78903acd-2881-8c4a-7137-977a5026fb03",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {},
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true,
+        "476319a0-3d69-84a4-5e81-ace3332fbee9": false,
+        "78903acd-2881-8c4a-7137-977a5026fb03": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111",
+        "33333333-3333-7333-8333-333333333333"
+      ],
+      "vars": {},
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "path: a question on a page the path never reaches is not visible",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ],
+          "jumps": [
+            {
+              "when": true,
+              "to_page": "end"
+            }
+          ]
+        },
+        {
+          "id": "22222222-2222-7222-8222-222222222222",
+          "questions": [
+            {
+              "id": "476319a0-3d69-84a4-5e81-ace3332fbee9",
+              "type": "long_text"
+            }
+          ]
+        }
+      ],
+      "computed": [],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {
+      "00210257-69ad-8cf6-dce4-12aac7c47365": "yes"
+    },
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true,
+        "476319a0-3d69-84a4-5e81-ace3332fbee9": false
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111"
+      ],
+      "vars": {},
+      "score": null,
+      "errors": []
+    }
+  },
+  {
+    "name": "path: a jump forward then a later jump still lands on the last page",
+    "version_fragment": {
+      "settings": {
+        "default_locale": "en",
+        "locales": [
+          "en"
+        ],
+        "quiz": {
+          "enabled": false,
+          "return_score": false
+        }
+      },
+      "pages": [
+        {
+          "id": "11111111-1111-7111-8111-111111111111",
+          "questions": [
+            {
+              "id": "00210257-69ad-8cf6-dce4-12aac7c47365",
+              "type": "short_text"
+            }
+          ],
+          "jumps": [
+            {
+              "when": true,
+              "to_page": "33333333-3333-7333-8333-333333333333"
+            }
+          ]
+        },
+        {
+          "id": "22222222-2222-7222-8222-222222222222",
+          "questions": [
+            {
+              "id": "476319a0-3d69-84a4-5e81-ace3332fbee9",
+              "type": "short_text"
+            }
+          ]
+        },
+        {
+          "id": "33333333-3333-7333-8333-333333333333",
+          "questions": [
+            {
+              "id": "78903acd-2881-8c4a-7137-977a5026fb03",
+              "type": "short_text"
+            }
+          ]
+        }
+      ],
+      "computed": [],
+      "scoring": {
+        "rules": []
+      },
+      "translations": {
+        "en": {
+          "survey.title": "T"
+        }
+      }
+    },
+    "answers": {},
+    "expected": {
+      "visible": {
+        "00210257-69ad-8cf6-dce4-12aac7c47365": true,
+        "476319a0-3d69-84a4-5e81-ace3332fbee9": false,
+        "78903acd-2881-8c4a-7137-977a5026fb03": true
+      },
+      "path": [
+        "11111111-1111-7111-8111-111111111111",
+        "33333333-3333-7333-8333-333333333333"
+      ],
+      "vars": {},
+      "score": null,
+      "errors": []
+    }
+  }
+]

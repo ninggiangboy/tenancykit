@@ -9,9 +9,10 @@ Documentation lives in [docs/](docs/README.md). Code lives in:
 | `mailer/` | Mailer service (Gradle multi-module, Spring Boot): consumes `email.send` commands and delivers already-rendered email through SESv2 or SMTP, with a per-recipient delivery ledger |
 | `notification/` | Notification service: the suite's in-app inbox and transactional email for Platform users, a replica consumer that publishes `email.send` |
 | `mailroom/` | Mailroom app: a Tenant's own templates, receivers, groups, segments, campaigns and tracking, a replica consumer that publishes `email.send` and consumes `email-delivery.changed` |
+| `survey/` | Survey app: a Tenant's surveys, immutable versions, links, visits, responses, uploads, analytics and signed webhooks; a replica consumer that publishes `survey.events` and sends no message |
 | `tenant/` | Sample Tenant System, built and deployed independently; it calls Billing over REST with a Platform-issued suite token |
 | `web/` | Placeholder for the frontends (Platform Admin, Tenant Admin, Customer Portal, Sample Tenant UI); no code yet |
-| `core/` | The technical core every service builds against: kernel, Spring implementations, messaging (`core-messaging`), the Platform replica (`core-replica`), snapshot sync (`core-platform-sync`), suite policy (`core-suite`), the shared Feign client (`core-feign`) and the shared architecture rule set (`core-arch`); the only code they share |
+| `core/` | The technical core every service builds against: kernel, Spring implementations, messaging (`core-messaging`), the Platform replica (`core-replica`), snapshot sync (`core-platform-sync`), suite policy (`core-suite`), signed webhook mechanics (`core-webhook`), the shared Feign client (`core-feign`) and the shared architecture rule set (`core-arch`); the only code they share |
 | `contracts/` | OpenAPI, event schemas, the messaging contract, permission catalogs and the token claim list, shared between services as documents, never as code |
 | `ops/` | Local runtime: PostgreSQL init, RabbitMQ users, the Keycloak realm import, the Caddy route table, the load-test entry and the smoke scripts |
 
@@ -39,6 +40,7 @@ cd billing && ./gradlew build
 cd mailer && ./gradlew build
 cd notification && ./gradlew build
 cd mailroom && ./gradlew build
+cd survey && ./gradlew build
 cd tenant && ./gradlew build
 ```
 

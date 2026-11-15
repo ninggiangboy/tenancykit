@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/survey/expression.schema.json",
+  "title": "Survey expression",
+  "description": "The one expression language a version uses for visibility, page jumps, computed variables, scoring and analytics filters. It is a JSON AST with a closed operator set: there is no way to call a function the schema does not name, no access to the host, and no regular expression. The server evaluates it and a future fill UI evaluates the same documents against the same vectors (contracts/survey/expression-vectors), so a branch or a score cannot disagree between them. Limits the schema cannot express: depth <= 16 and nodes <= 500 per expression, checked by the parser; array literals are capped at 100 items here. Numbers are decimals: every arithmetic result is rounded to 6 fraction digits with HALF_EVEN, and a comparison is exact on the rounded values. Comparisons with null are false; `div` by zero is null; arithmetic on null is null.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/literal"
+    },
+    {
+      "$ref": "#/$defs/array"
+    },
+    {
+      "$ref": "#/$defs/answer"
+    },
+    {
+      "$ref": "#/$defs/var"
+    },
+    {
+      "$ref": "#/$defs/operation"
+    }
+  ],
+  "$defs": {
+    "literal": {
+      "description": "A constant. A string is text, a number is a decimal, a boolean is a flag and null is the empty value.",
+      "oneOf": [
+        {
+          "type": "string",
+          "maxLength": 2000
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "array": {
+      "description": "A list literal. Every element is an expression. At most 100 items.",
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/expression"
+      }
+    },
+    "answer": {
+      "description": "The submitted value of one question, optionally one matrix row. An unanswered question is null.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "answer"
+      ],
+      "properties": {
+        "answer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "The stable question id assigned at publish."
+        },
+        "row": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "The matrix row id, required only when the question is a matrix."
+        }
+      }
+    },
+    "var": {
+      "description": "The value of a computed variable. The reference must resolve to a variable declared earlier in the version's computed list, so the graph cannot cycle.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "var"
+      ],
+      "properties": {
+        "var": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,63}$",
+          "description": "The declared variable name."
+        }
+      }
+    },
+    "expression": {
+      "$ref": "#"
+    },
+    "operation": {
+      "description": "An operator and its arguments. The arity is fixed per operator: nullary none, unary one, binary two, and `and`, `or` and `min`/`max` take two to eight.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "args"
+      ],
+      "properties": {
+        "op": {
+          "type": "string",
+          "enum": [
+            "eq",
+            "neq",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "in",
+            "contains",
+            "and",
+            "or",
+            "not",
+            "exists",
+            "empty",
+            "count",
+            "sum",
+            "add",
+            "sub",
+            "mul",
+            "div",
+            "min",
+            "max",
+            "if",
+            "len",
+            "lower"
+          ]
+        },
+        "args": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/expression"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "enum": [
+                  "eq",
+                  "neq",
+                  "gt",
+                  "gte",
+                  "lt",
+                  "lte",
+                  "in",
+                  "contains",
+                  "add",
+                  "sub",
+                  "mul",
+                  "div"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "args": {
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "enum": [
+                  "not",
+                  "exists",
+                  "empty",
+                  "count",
+                  "sum",
+                  "len",
+                  "lower"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "args": {
+                "minItems": 1,
+                "maxItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "enum": [
+                  "and",
+                  "or",
+                  "min",
+                  "max"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "args": {
+                "minItems": 2,
+                "maxItems": 8
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "if"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "args": {
+                "minItems": 3,
+                "maxItems": 3
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

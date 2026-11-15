@@ -7,6 +7,7 @@ Event schemas are namespaced by the service that produces them:
 | `billing/` | Billing | AMQP (`billing.events`) between services, and signed HTTP to Tenant Systems. |
 | `platform/` | Platform | AMQP (`platform.events`) only: state-transfer `*.changed` events other services replicate. |
 | `mailer/` | Mailer | AMQP (`mailer.events`) only: the terminal delivery outcome (`email-delivery.changed`) a producer maps onto its own ledger. |
+| `survey/` | Survey | AMQP (`survey.events`) between services, and signed HTTP to Tenant Systems: the three facts a Tenant's own system reacts to. |
 
 Within a producer folder, the `*.schema.json` files are the source of truth for which event types that service
 publishes and for the shape of each event's `data`. The application packages them and rejects a subscription to a
@@ -17,8 +18,11 @@ Between services the AMQP message body is the one canonical envelope the webhook
 [messaging/README.md](../messaging/README.md): both are produced by `EventDocument`, so a receiver of either gets the
 same bytes. The rest of this file describes the signed HTTP delivery to a Tenant System.
 
-Billing reports business state changes to a Tenant System as signed HTTP webhooks. A webhook only reports a
-fact; it never asks the receiver to do anything, and the receiver decides its own policy.
+Billing reports business state changes to a Tenant System as signed HTTP webhooks, and Survey reports its own three
+facts the same way with `Survey-*` headers. A webhook only reports a fact; it never asks the receiver to do anything,
+and the receiver decides its own policy. The signing, destination policy, guarded DNS resolution, HTTP send and retry
+schedule are the shared `core-webhook` mechanics; each app owns its endpoints, its deliveries, its tables and its
+event catalog, so a delivery is never cross-app.
 
 ## The delivered document
 

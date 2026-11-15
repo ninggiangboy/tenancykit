@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/survey/survey-response.submitted.schema.json",
+  "title": "Survey response submitted",
+  "description": "One respondent completed a survey, so a Tenant's own system can react — score a quiz, open a ticket, credit an account. The event deliberately carries no answers: they are personal data of the Tenant's customers and are read from the API with `survey:response:read` instead. Survey appends the event to its transactional outbox in the same transaction as the response it reports. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "survey_id",
+    "version_id",
+    "response_id",
+    "source",
+    "score",
+    "submitted_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "survey_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The immutable version the respondent answered. A later version never changes the meaning of this event."
+    },
+    "response_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The completed response. Fetch it with `GET /responses/{id}` for the answers."
+    },
+    "link_id": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The link the respondent came through. Null only for a response recorded before this event existed to carry it."
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "The Tenant-named source of the link, for example `qr-store-01` or `email-november`. The same string the survey's funnel groups by."
+    },
+    "external_ref": {
+      "oneOf": [
+        {
+          "type": "string",
+          "maxLength": 200
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The personal link's own reference, which is how a Tenant matches a response to a customer in its own system. Null for a public link."
+    },
+    "respondent_identity": {
+      "oneOf": [
+        {
+          "type": "string",
+          "maxLength": 320
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The personal link's `external_ref`, else the answer to the question the version marks as identity, lower-cased and trimmed. Null when the survey asks for neither."
+    },
+    "score": {
+      "oneOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The recomputed quiz score, or null when the version does not enable scoring. The server ignores any score a client sends."
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the server recorded the completion, in UTC."
+    }
+  }
+}

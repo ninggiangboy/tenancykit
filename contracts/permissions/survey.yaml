@@ -1,0 +1,61 @@
+# Survey's permission catalog.
+#
+# codes are namespaced by the app that enforces them: <app>:<resource>:<action>. A role may hold only a code whose
+# `scopes` include the role's scope.
+#
+# scopes: platform and/or tenant. grantable_to_tenant_system: whether an API credential may carry the code.
+#
+# Every code is tenant scope: a survey, its versions, its links, its responses and its analysis belong to one
+# tenant's own customers, and a platform-scope caller has no legitimate use for them. Survey never sends a message
+# and owns no channel, so no code here is about delivery; a Tenant reaches a respondent through mailroom, which has
+# its own codes.
+#
+# `survey:settings:manage` changes the tenant's public rate limit, upload limit and abandonment threshold. It is
+# deliberately not grantable to a Tenant System credential: it is an administrative decision a person makes, the same
+# way mailroom keeps its own settings out of a machine's reach. Every other code is grantable, because Survey is an
+# app a Tenant's own system is expected to drive: it builds surveys, issues links and reads results.
+
+- code: survey:survey:read
+  description: Read a survey, its draft, its versions and the structural validation of a draft.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: survey:survey:manage
+  description: Create a survey, edit and publish its draft, and close or reopen it.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: survey:link:manage
+  description: Create, read and revoke public and personal links, and read the visit funnel they produce.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: survey:response:read
+  description: Read responses, respondents and uploaded files.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: survey:response:delete
+  description: Delete one response together with its answers and its uploaded files.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: survey:analytics:read
+  description: Read aggregates, cross-tabs, trends and the funnel.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: survey:export:manage
+  description: Request a CSV export and download a finished one.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: survey:webhook:manage
+  description: Create, update, disable and rotate the secret of a webhook endpoint; read and retry a delivery.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: survey:settings:manage
+  description: Change the tenant's public rate limit, upload size limit and abandonment threshold.
+  scopes: [tenant]
+  grantable_to_tenant_system: false

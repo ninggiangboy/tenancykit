@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/survey/survey-version.published.schema.json",
+  "title": "Survey version published",
+  "description": "A Tenant published an immutable new version of a survey. A link issued before the publish keeps answering with the version it opened, so a receiver must use `version_id` and never assume the survey's current version. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "survey_id",
+    "version_id",
+    "version_no",
+    "question_ids",
+    "published_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "survey_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "version_no": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The version's number within the survey, starting at 1. Unique per survey and never reused."
+    },
+    "question_ids": {
+      "type": "array",
+      "maxItems": 2000,
+      "uniqueItems": true,
+      "description": "Every question id the version carries, so a consumer of `survey-response.submitted` can tell which questions a response could contain without fetching the version. Ids are stable across versions; a question whose type changed gets a new id.",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      }
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the version became immutable, in UTC."
+    }
+  }
+}

@@ -192,8 +192,29 @@ notification module. `sending` reaches `content` and `audience` only through the
 `email-delivery.changed` from `mailer.events`; mailer is the only transport. The public `/mailroom/t/*` endpoints are the
 suite's first unauthenticated surface, isolated in one controller and one ArchUnit rule.
 
+**Survey** (`survey/`) — the suite's app for asking a Tenant's own customers questions, in four contexts:
+
+| Directory | Module | Holds |
+|---|---|---|
+| `contexts/` | `platform` | The Platform replica it keeps (`tenants`, `tenant_domains`, `tenant_systems`, `user_grants`, `app_entitlements`) and the read ports `TenantDirectory` and `UserDirectory`. Nothing else reaches these tables |
+| | `authoring` | Surveys, drafts with optimistic concurrency, immutable versions with stable ids, translations, the expression engine, the flow evaluator, preview and simulate |
+| | `collection` | Links and tokens, visits and page events, drafts and submissions, the typed `answers` rows, uploads, the cap, single use, idempotency and deletion |
+| | `insight` | Aggregates, cross-tabs, trends, the funnel, respondents and CSV exports; it writes only its own `exports` table |
+| | `webhook` | Webhook endpoints, deliveries, the event-type catalog, and the claim and deliver use cases |
+| `libs/` | `shared-core` | Value objects and the permission constants |
+| | `jooq-schema` | jOOQ classes generated from the migrations and committed |
+| `apps/` | `app-boot` | Spring wiring, security, the three runtimes, jobs (replica rebuild, outbox relay, webhook delivery, abandonment, upload housekeeping) and the Flyway migrations, including the replica tables and the outbox |
+| `testing/` | `arch-fixtures` | Deliberately violating classes that prove each ArchUnit rule can fail |
+
+It is API only, so the builder UI and the fill UI are a later plan; it never sends a message, so it publishes no
+`email.send`. `collection` and `insight` reach `authoring` only through its `api` package, `insight` reaches
+`collection` only through its `api` package, and `insight` writes no table but `exports` — which is what keeps
+`context-uses-only-own-tables` true while five contexts share one database. Deletion lives in `collection` because it
+owns the rows, so `insight` calls it rather than writing a response itself. Its public `/p/*` endpoints are the
+suite's second unauthenticated surface, isolated in one controller and one ArchUnit rule.
+
 **The shared core** sits beside the services, in `core/`. It is its own Gradle build that `platform/`, `billing/`,
-`notification/`, `mailer/`, `mailroom/` and `tenant/` include with `includeBuild("../core")`:
+`notification/`, `mailer/`, `mailroom/`, `survey/` and `tenant/` include with `includeBuild("../core")`:
 
 | Module | Holds |
 |---|---|
@@ -204,6 +225,7 @@ suite's first unauthenticated surface, isolated in one controller and one ArchUn
 | `core-platform-sync` | `SnapshotClient`, `ReplicaBootstrap` and `ReplicaProperties`: pages Platform's snapshot and rebuilds the replica from it |
 | `core-suite` | `SuiteJwtDecoders`, `SuiteHostResolver`, `SuiteActorResolver`, `SuiteTenantFilter`, `SuiteEntitlementFilter` and `SuiteEntitlements`: what a request must satisfy to be a member of the suite |
 | `core-feign` | The shared HTTP client plumbing: `FeignClients`, the `JacksonCodec`, the `LinearRetryer`, the `TokenProvider` and its client-credentials implementation, the contract and the `StatusFeignErrorMapper` base |
+| `core-webhook` | The signed-webhook mechanics every app that delivers one shares: `WebhookSigner`, `WebhookHeaderSet` (`BILLING`, `SURVEY`), `DestinationPolicy`, `GuardedDnsResolver`, `WebhookHttpSender`, `RetrySchedule` and `WebhookUrl`. Endpoints, deliveries, their tables and their event catalog stay in the app |
 | `core-arch` | The shared architecture rule set, `ArchitectureRules`, parameterised by a per-service profile; it exports `archunit-junit5` so a service writes its own tests against the same rules |
 
 Its root package is `dev.ngb.core`, outside every service's root, so Modulith does not see it. ArchUnit holds the

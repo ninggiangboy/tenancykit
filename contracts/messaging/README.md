@@ -74,16 +74,18 @@ version guard drops any the snapshot already covered. Platform never hard-delete
 
 | Exchange (topic, durable) | Producer | Routing key | Queues (one per consuming app) |
 |---|---|---|---|
-| `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events`, `notification.platform-events`, `mailroom.platform-events` |
+| `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events`, `notification.platform-events`, `mailroom.platform-events`, `survey.platform-events` |
 | `billing.events` | Billing | event type | none yet; an app that wants Billing's public events declares its own queue |
+| `survey.events` | Survey | event type | none yet; an app that wants a survey fact declares its own queue |
 | `mailer.commands` | any producer | command type, today `email.send` | `mailer.commands` (and its `mailer.commands.dlq`) |
 | `mailer.events` | Mailer | event type, today `email-delivery.changed` | `mailroom.mailer-events` (and its `mailroom.mailer-events.dlq`) |
 
-`notification.platform-events` and `mailroom.platform-events` bind to `platform.events` with the five state-transfer
-routing keys, declare `x-dead-letter-exchange: suite.dlx`, and have a matching `.dlq`. Notification declares no
-exchange: it produces `email.send` into `mailer.commands` and exports no event of its own. Mailroom declares no exchange
-either: it produces `email.send` and consumes `email-delivery.changed` from mailer's `mailer.events`, which is the
-suite's first exchange owned by a service that is otherwise a pure consumer.
+`notification.platform-events`, `mailroom.platform-events` and `survey.platform-events` bind to `platform.events` with
+the five state-transfer routing keys, declare `x-dead-letter-exchange: suite.dlx`, and have a matching `.dlq`.
+Notification declares no exchange: it produces `email.send` into `mailer.commands` and exports no event of its own.
+Mailroom declares no exchange either: it produces `email.send` and consumes `email-delivery.changed` from mailer's
+`mailer.events`, which is the suite's first exchange owned by a service that is otherwise a pure consumer. Survey
+declares `survey.events` for its own three facts, which have no consumer today.
 
 Each queue is durable, bound to its exchange by the event types the consumer accepts, and declares
 `x-dead-letter-exchange: suite.dlx`. The matching `<queue>.dlq` is bound to `suite.dlx` by the queue name. Consumers

@@ -67,6 +67,34 @@ the consumer transaction, and the end-to-end number is the load test's.
 
 Reliability mechanics (outbox, backoff, dead-letter queue, idempotent consumers) are in [security-and-reliability.md](security-and-reliability.md). Inbound Stripe webhooks are in [payments-and-stripe.md](payments-and-stripe.md).
 
+## Survey to Tenant System
+
+Survey reports its own facts the same way Billing does, with its own header set and its own endpoints and deliveries:
+
+| Event | Meaning | `data` (see the schema) |
+|---|---|---|
+| `survey-version.published` | A Tenant published an immutable new version | `survey_id`, `version_id`, `version_no`, `question_ids`, `published_at` |
+| `survey.closed` | A survey closed, so its links now answer 404 | `survey_id`, `current_version_id`, `closed_at` |
+| `survey-response.submitted` | A respondent completed a survey | `survey_id`, `version_id`, `response_id`, `link_id`, `source`, `external_ref`, `respondent_identity`, `score`, `submitted_at` |
+
+| Header | Meaning |
+|---|---|
+| `Survey-Event-Id` | The event id (same as `id`). **The deduplication key.** |
+| `Survey-Event-Type` | The event type. |
+| `Survey-Timestamp` | Unix time in seconds when this attempt was signed. |
+| `Survey-Key-Id` | Identifies which signing secret signed this delivery. |
+| `Survey-Signature` | `v1=` followed by the lowercase hex HMAC-SHA256 of `timestamp + "." + rawBody`. |
+| `Survey-Attempt` | 1 for the first attempt, then 2, 3, and so on. |
+
+The signing secret is shown once, on create and on `rotate-secret`; there is no overlap window, as in Billing. The
+signature rule, the 5-minute timestamp window and the verification recipes in Java and TypeScript are the same as
+Billing's above, with `Survey-*` header names. **A response event carries no answers**: they are the Tenant's
+customer data and are read from the API with `survey:response:read`.
+
+The mechanics — signing, the destination policy, the guarded DNS resolver, the HTTP sender and the retry schedule —
+are shared from `core/core-webhook`; the endpoints, the delivery state and the event catalog stay in Survey, so a
+delivery is never cross-app and one app's outbound state cannot be read by another.
+
 ## Between services: `billing.events`
 
 Webhooks stay in Billing: a Tenant System still registers an endpoint and verifies Billing's signed deliveries, so
