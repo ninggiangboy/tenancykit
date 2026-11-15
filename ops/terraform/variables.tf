@@ -106,6 +106,18 @@ variable "mailer_desired_count" {
   default     = 2
 }
 
+variable "notification_api_desired_count" {
+  description = "Notification api tasks."
+  type        = number
+  default     = 2
+}
+
+variable "notification_worker_desired_count" {
+  description = "Notification worker tasks."
+  type        = number
+  default     = 2
+}
+
 variable "ses_domain" {
   description = "Domain of the suite's verified SES identity. Mailer sends from noreply@<domain> in SHARED mode."
   type        = string

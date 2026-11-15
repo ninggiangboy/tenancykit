@@ -22,6 +22,7 @@ locals {
     { name = "PLATFORM_OIDC_ISSUER_URI", value = var.keycloak_public_issuer },
     { name = "PLATFORM_OIDC_JWK_SET_URI", value = var.keycloak_internal_jwks },
     { name = "PLATFORM_SERVICE_CLIENT_ID", value = "billing" },
+    { name = "PLATFORM_NOTIFICATION_SERVICE_CLIENT_ID", value = "notification" },
     { name = "PLATFORM_BOOTSTRAP_ADMIN_EMAIL", value = var.admin_email },
   ]
 
@@ -32,6 +33,7 @@ locals {
     { name = "PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET", valueFrom = var.secret_arns["PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET"] },
     { name = "PLATFORM_TOKEN_SIGNING_KEY", valueFrom = var.secret_arns["PLATFORM_TOKEN_SIGNING_KEY"] },
     { name = "PLATFORM_SERVICE_CLIENT_SECRET_HASH", valueFrom = var.secret_arns["PLATFORM_SERVICE_CLIENT_SECRET_HASH"] },
+    { name = "PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH", valueFrom = var.secret_arns["PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH"] },
     { name = "PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD", valueFrom = var.secret_arns["PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD"] },
   ]
 }

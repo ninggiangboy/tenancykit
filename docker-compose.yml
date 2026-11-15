@@ -57,6 +57,29 @@ x-mailer-environment: &mailer-environment
   MAILER_DEFAULT_FROM_ADDRESS: ${MAILER_DEFAULT_FROM_ADDRESS:-noreply@example.com}
   MAILER_DEFAULT_FROM_NAME: ${MAILER_DEFAULT_FROM_NAME:-TenancyKit}
 
+# Notification's settings, shared by its migrate step, api and worker. It consumes platform.events on its own queue and
+# publishes one command to mailer.commands; it declares no exchange of its own.
+x-notification-environment: &notification-environment
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50"
+  NOTIFICATION_DB_URL: jdbc:postgresql://postgres:5432/notification
+  NOTIFICATION_DB_USER: notification_app
+  NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:?set it in .env}
+  NOTIFICATION_MIGRATION_DB_USER: notification_owner
+  NOTIFICATION_MIGRATION_DB_PASSWORD: ${NOTIFICATION_MIGRATION_DB_PASSWORD:?set it in .env}
+  NOTIFICATION_RABBITMQ_HOST: rabbitmq
+  NOTIFICATION_RABBITMQ_USER: notification
+  NOTIFICATION_RABBITMQ_PASSWORD: ${NOTIFICATION_RABBITMQ_PASSWORD:?set it in .env}
+  # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
+  NOTIFICATION_OIDC_ISSUER_URI: ${NOTIFICATION_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
+  NOTIFICATION_OIDC_JWK_SET_URI: ${NOTIFICATION_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  NOTIFICATION_PLATFORM_BASE_URL: http://platform.localhost:8080
+  NOTIFICATION_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
+  NOTIFICATION_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
+  # The replica's own service client, never shared with Billing; only its SHA-256 hash is configured in Platform.
+  PLATFORM_NOTIFICATION_SERVICE_CLIENT_ID: notification
+  PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET: ${NOTIFICATION_REPLICA_CLIENT_SECRET:?set it in .env}
+  NOTIFICATION_PORT: "8080"
+
 x-app: &app
   restart: unless-stopped
   mem_limit: 512m
@@ -76,6 +99,8 @@ services:
       TENANT_DB_PASSWORD: ${TENANT_DB_PASSWORD:?set it in .env}
       MAILER_MIGRATION_DB_PASSWORD: ${MAILER_MIGRATION_DB_PASSWORD:?set it in .env}
       MAILER_DB_PASSWORD: ${MAILER_DB_PASSWORD:?set it in .env}
+      NOTIFICATION_MIGRATION_DB_PASSWORD: ${NOTIFICATION_MIGRATION_DB_PASSWORD:?set it in .env}
+      NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:?set it in .env}
     ports:
       - "5432:5432"
     volumes:
@@ -117,6 +142,7 @@ services:
       PLATFORM_BROKER_PASSWORD: ${PLATFORM_RABBITMQ_PASSWORD:?set it in .env}
       BILLING_BROKER_PASSWORD: ${BILLING_RABBITMQ_PASSWORD:?set it in .env}
       MAILER_BROKER_PASSWORD: ${MAILER_RABBITMQ_PASSWORD:?set it in .env}
+      NOTIFICATION_BROKER_PASSWORD: ${NOTIFICATION_RABBITMQ_PASSWORD:?set it in .env}
     entrypoint: ["/bin/sh", "-c"]
     command: ["sh /ops/rabbitmq/declare-users.sh"]
     volumes:
@@ -194,6 +220,8 @@ services:
       PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD: ${PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD:-}
       PLATFORM_SERVICE_CLIENT_ID: ${PLATFORM_SERVICE_CLIENT_ID:-billing}
       PLATFORM_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
+      PLATFORM_NOTIFICATION_SERVICE_CLIENT_ID: notification
+      PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH: ${NOTIFICATION_REPLICA_CLIENT_SECRET_HASH:?set it in .env}
     ports:
       - "8082:8080"
     networks:
@@ -339,6 +367,83 @@ services:
       timeout: 5s
       retries: 60
 
+  # Writes Notification's schema once, as the table owner, then exits.
+  notification-migrate:
+    <<: *app
+    restart: "no"
+    build:
+      context: .
+      dockerfile: notification/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+    environment:
+      <<: *notification-environment
+      SPRING_PROFILES_ACTIVE: migrate
+
+  # Notification's HTTP edge: the user's inbox, preferences and the tenant's template, settings and ledger APIs.
+  notification-api:
+    <<: *app
+    build:
+      context: .
+      dockerfile: notification/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+      notification-migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *notification-environment
+      SPRING_PROFILES_ACTIVE: api
+    ports:
+      - "8085:8080"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # Notification's background edge: the platform-events listener, the outbox relay and housekeeping.
+  #
+  # Mailpit is deliberately not a dependency: mailer owns SMTP, and a dead mail server must not stop notification from
+  # storing in-app rows or queueing commands.
+  notification-worker:
+    <<: *app
+    build:
+      context: .
+      dockerfile: notification/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+      notification-migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *notification-environment
+      SPRING_PROFILES_ACTIVE: worker
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
   # The sample tenant app: its own database, calling Billing with a Platform-issued suite token.
   tenant:
     <<: *app
@@ -382,6 +487,8 @@ services:
       platform:
         condition: service_healthy
       billing:
+        condition: service_healthy
+      notification-api:
         condition: service_healthy
       tenant:
         condition: service_healthy

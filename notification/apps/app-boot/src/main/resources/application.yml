@@ -1,0 +1,112 @@
+spring:
+  application:
+    name: notification
+  profiles:
+    # With no active profile (dev, bootRun and every default-mode test) both runtime profiles are active, which
+    # keeps the all-in-one behaviour. The two profile files stay out of that run: each guards itself with an
+    # on-profile expression so only a runtime that runs alone applies its settings.
+    default: api,worker
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${NOTIFICATION_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}
+          jwk-set-uri: ${NOTIFICATION_OIDC_JWK_SET_URI:${NOTIFICATION_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}/protocol/openid-connect/certs}
+          audiences: notification
+  datasource:
+    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://localhost:5432/notification}
+    username: ${NOTIFICATION_DB_USER:notification_app}
+    password: ${NOTIFICATION_DB_PASSWORD:notification_app}
+  rabbitmq:
+    host: ${NOTIFICATION_RABBITMQ_HOST:localhost}
+    port: ${NOTIFICATION_RABBITMQ_PORT:5672}
+    username: ${NOTIFICATION_RABBITMQ_USER:notification}
+    password: ${NOTIFICATION_RABBITMQ_PASSWORD:notification}
+    # The relay marks an outbox row only after waitForConfirmsOrDie, which needs simple publisher confirms.
+    publisher-confirm-type: simple
+  flyway:
+    locations: classpath:db/migration
+    # Migrations run as the table owner; the application connects as notification_app, which owns nothing.
+    url: ${NOTIFICATION_MIGRATION_DB_URL:${NOTIFICATION_DB_URL:jdbc:postgresql://localhost:5432/notification}}
+    user: ${NOTIFICATION_MIGRATION_DB_USER:notification_owner}
+    password: ${NOTIFICATION_MIGRATION_DB_PASSWORD:notification_owner}
+    placeholders:
+      # The baseline creates notification_app with this password. Without the placeholder Flyway aborts the whole set.
+      appDbPassword: ${NOTIFICATION_DB_PASSWORD:notification_app}
+  task:
+    scheduling:
+      pool:
+        size: ${NOTIFICATION_SCHEDULER_POOL_SIZE:4}
+      shutdown:
+        await-termination: true
+        await-termination-period: 30s
+
+server:
+  port: ${NOTIFICATION_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db,replicaState
+
+suite:
+  app-code: notification
+  replica:
+    platform-base-url: ${NOTIFICATION_PLATFORM_BASE_URL:http://localhost:8082}
+    client-id: ${PLATFORM_NOTIFICATION_SERVICE_CLIENT_ID:notification}
+    client-secret: ${PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET:notification}
+    rebuild-on-start: ${NOTIFICATION_REPLICA_REBUILD_ON_START:true}
+    page-limit: 200
+    request-timeout: PT10S
+    platform-issuer: ${NOTIFICATION_PLATFORM_ISSUER:http://localhost:8082}
+    platform-jwk-set-uri: ${NOTIFICATION_PLATFORM_JWK_SET_URI:http://localhost:8082/.well-known/jwks.json}
+    # The worker's queue; the api runtime serves HTTP and consumes nothing.
+    queue: notification.platform-events
+    exchange: platform.events
+    max-attempts: 3
+    retry-backoff: PT0.5S
+    refresh-skew: PT30S
+
+notification:
+  messaging:
+    exchange: ${NOTIFICATION_MESSAGING_EXCHANGE:platform.events}
+    queue: ${NOTIFICATION_MESSAGING_QUEUE:notification.platform-events}
+  commands:
+    exchange: ${NOTIFICATION_COMMANDS_EXCHANGE:mailer.commands}
+    routing-key: ${NOTIFICATION_COMMANDS_ROUTING_KEY:email.send}
+  jobs:
+    enabled: ${NOTIFICATION_JOBS_ENABLED:true}
+    # At most this many tenants run at once across all jobs; keep it below the connection pool.
+    tenant-parallelism: ${NOTIFICATION_WORKER_TENANT_PARALLELISM:4}
+  email:
+    # Set to false to stop publishing without losing queued work: outbox rows stay PENDING.
+    enabled: ${NOTIFICATION_EMAIL_ENABLED:true}
+    from-key: ${NOTIFICATION_EMAIL_FROM_KEY:noreply}
+    poll-delay: PT2S
+    batch-size: 50
+    max-attempts: 10
+    backoff-base: PT10S
+    backoff-cap: PT1H
+    jitter: 0.2
+    claim-deadline: PT30S
+  housekeeping:
+    enabled: ${NOTIFICATION_HOUSEKEEPING_ENABLED:true}
+    notification-retention: P90D
+    dispatch-retention: P90D
+    inbox-retention: P30D
+    dead-outbox-retention: P7D
+    batch-size: 500
+    interval: PT1H
+  templates:
+    # A template part larger than this is refused rather than truncated.
+    max-part-bytes: 65536

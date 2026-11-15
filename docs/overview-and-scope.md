@@ -10,13 +10,23 @@ while keeping independent data, accounts, integration configuration and billing 
 The goal is that a new business app (CRM, HR, …) joins the suite by adding a build, a permission catalog, an
 `AppCode` and a proxy route, with Platform and Billing unchanged.
 
-## Three deployables
+## Four deployables
 
 | System | Owns | Reached at |
 |---|---|---|
 | **Platform** (`platform/`) | Tenants, tenant domains, users, centralized RBAC, app entitlement, Tenant Systems, API credentials and the suite's signed tokens | `platform.<base-domain>` |
 | **Billing** (`billing/`) | Pricing, Wallet, Ledger, Reservation, Charge, Invoice, Payment, Refund, Subscription, Webhook, the Billing Session and the Customer Portal. It keeps a **replica** of the Platform data it enforces and owns no tenant, user or role logic | `<tenant-code>.<base-domain>` |
+| **Notification** (`notification/`) | Notification types, suite-wide templates, locale and user preferences, the stored in-app notification list, the email dispatch ledger and the outbox that produces `email.send`. It keeps the Platform replica, notifies the suite's own users (tenant users and Platform administrators), and reads no other app's business data; delivery stays with `mailer/` | `<tenant-code>.<base-domain>` and `platform.<base-domain>`, through the `/notification` prefix |
 | **Sample Tenant System** (`tenant/`) | Its own users, catalog, orders, usage and the policy it applies to Billing's state changes. It proves the integration and deploys without Billing | its own host |
+
+`notification/` is the suite's app for **notifying the suite's own users** about platform-side state changes. It
+owns the notification types, the suite-wide templates, locale and user preferences and the stored in-app
+notification list; it does not notify a Tenant's customers and reads no business data from another app; email
+delivery stays with `mailer/`. Templates are the suite's content rather than a tenant's: one row serves every tenant and
+only a Platform user at platform scope may edit it, so a tenant administrator has no surface for rewriting an email.
+This supersedes the cancelled phase 10 of `261112-0726-enterprise-suite-foundation`
+(the dated reversal, 2026-11-15, moves notification from a non-goal to a deployable because recipients are the suite's
+own users, so no business data crosses a boundary).
 
 They are separate Gradle builds, separate databases and separate processes. They meet three ways, never by sharing
 code:
@@ -97,10 +107,17 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 - Custom domains. Only the domain-mapping seam is designed.
 - Platform or an app managing a Tenant System's own users, passwords, roles or permissions.
 - Billing operating on resources or deciding on a Tenant System's behalf.
-- A notification service: who gets notified, which events notify them, the templates and the translations stay out of
-  the suite, and so do in-app, SMS and push channels. The one exception is **delivery**, `mailer/`: it sends an email a
-  producer has already rendered — recipients, subject and both bodies arrive in the command — and owns no template, no
-  rule about who is notified and no localisation. Webhooks stay in Billing.
+- Notifying a Tenant's **customers**. The suite's notification app serves Platform tenant users only: a Customer,
+  payment or invoice notification belongs to the Tenant System that owns that relationship. The notification app reads
+  no Billing data and keeps no customer contact.
+- SMS, push, Slack, Telegram or a real-time SSE stream; a tenant-configurable rules engine, a template editor, or
+  bulk/marketing campaigns; attachments, bounce and complaint processing, digest scheduling, or a second email retry
+  loop. Email **delivery** stays with `mailer/`, which sends an email a producer has already rendered and owns no
+  template, no rule about who is notified and no localisation. Webhooks stay in Billing.
+- A second **business app** beyond Billing in the sense of an app that owns commercial data. The suite's first app
+  beyond Billing is `notification/`, a platform-facing app rather than a business app; the extension trace — a build, a
+  permission catalog, an entitlement and a proxy route, with no Platform code change — is now proven rather than
+  hypothesised.
 - Charging tenants for suite use.
 - An API gateway with logic. The reverse proxy routes on the Host header only.
 - CDC or event sourcing. A consumer rebuilds by paging the snapshot API.

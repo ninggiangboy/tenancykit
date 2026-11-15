@@ -75,3 +75,16 @@ declare_user mailer \
   '^(mailer\\.commands|mailer\\.commands\\.dlq|suite\\.dlx)$' \
   '^(mailer\\.commands|mailer\\.commands\\.dlq|suite\\.dlx)$' \
   '^(mailer\\.commands|mailer\\.commands\\.dlq|suite\\.dlx)$'
+
+# Notification consumes platform.events on its own queue and publishes exactly one command to mailer.commands. It is the
+# only service user with a cross-service publish grant, and `ops/smoke/isolation.sh` asserts it twice: as a refusal for
+# every exchange it must not write, and as a positive control for the one it must. It declares no exchange of its own.
+#
+# `write` must include its queue, its DLQ and suite.dlx because queue.declare with a dead-letter exchange and binding the
+# DLQ both check write on the queue. `read` must include platform.events because a queue.bind checks read on the source
+# exchange, and its own queue because consuming checks read on it.
+declare_user notification \
+  "${NOTIFICATION_BROKER_PASSWORD:?set the notification broker password}" \
+  '^(notification\\.platform-events|notification\\.platform-events\\.dlq|suite\\.dlx|mailer\\.commands)$' \
+  '^(notification\\.platform-events|notification\\.platform-events\\.dlq|suite\\.dlx|mailer\\.commands)$' \
+  '^(platform\\.events|notification\\.platform-events|notification\\.platform-events\\.dlq|suite\\.dlx)$'

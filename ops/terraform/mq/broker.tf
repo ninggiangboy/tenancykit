@@ -33,4 +33,11 @@ resource "aws_mq_broker" "this" {
     username = "mailer"
     password = var.mailer_password
   }
+
+  # Notification consumes platform.events and publishes exactly one command to mailer.commands. The one-shot task
+  # scopes this user to those resources and nothing else.
+  user {
+    username = "notification"
+    password = var.notification_password
+  }
 }

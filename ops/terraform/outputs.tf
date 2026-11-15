@@ -41,8 +41,11 @@ output "task_definition_arns" {
     billing_api     = module.billing.api_task_definition_arn
     billing_worker  = module.billing.worker_task_definition_arn
     billing_migrate = module.billing.migrate_task_definition_arn
-    mailer          = module.mailer.worker_task_definition_arn
-    mailer_migrate  = module.mailer.migrate_task_definition_arn
+    mailer                = module.mailer.worker_task_definition_arn
+    mailer_migrate        = module.mailer.migrate_task_definition_arn
+    notification_api      = module.notification.api_task_definition_arn
+    notification_worker   = module.notification.worker_task_definition_arn
+    notification_migrate  = module.notification.migrate_task_definition_arn
     rds_init        = module.rds.init_task_definition_arn
     mq_users        = module.mq.users_task_definition_arn
   }
@@ -56,6 +59,8 @@ output "service_names" {
     billing_api    = module.billing.api_service_name
     billing_worker = module.billing.worker_service_name
     mailer         = module.mailer.service_name
+    notification_api    = module.notification.api_service_name
+    notification_worker = module.notification.worker_service_name
   }
 }
 

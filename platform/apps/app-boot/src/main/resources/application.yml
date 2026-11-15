@@ -68,6 +68,11 @@ platform:
     - id: ${PLATFORM_SERVICE_CLIENT_ID:billing}
       secret-hash: ${PLATFORM_SERVICE_CLIENT_SECRET_HASH:}
       scopes: [platform:replica:read]
+    # The second replica consumer. A list entry is the whole Platform-side change: its own id, its own SHA-256 hash and
+    # the same narrow scope, so Billing's credential is never shared and no Java code moves.
+    - id: ${PLATFORM_NOTIFICATION_SERVICE_CLIENT_ID:notification}
+      secret-hash: ${PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH:}
+      scopes: [platform:replica:read]
   outbox:
     poll-delay: PT1S
 

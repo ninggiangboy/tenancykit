@@ -1,0 +1,33 @@
+# Notification's permission catalog.
+#
+# codes are namespaced by the app that enforces them: <app>:<resource>:<action>. A role may hold only a code whose
+# `scopes` include the role's scope.
+#
+# scopes: platform and/or tenant. grantable_to_tenant_system: whether an API credential may carry the code.
+#
+# The template codes are **platform** scope: a template is the suite's content, every tenant renders from the same
+# row, and only a Platform user may edit the wording every tenant receives. The settings and dispatch codes stay
+# tenant-scoped: they configure one tenant and audit one tenant's own mail. None is grantable to a Tenant System
+# credential, so a machine cannot edit the suite's templates, change a tenant's settings or read its dispatch ledger.
+# The self-service endpoints (list, read, read-all and the caller's own preference) carry no permission code, matching
+# how a user reads their own data elsewhere in the suite.
+
+- code: notification:template:read
+  description: Read the resolved template for a type and locale, including the suite-wide override.
+  scopes: [platform]
+  grantable_to_tenant_system: false
+
+- code: notification:template:manage
+  description: Create, update and delete the suite-wide template override every tenant renders from.
+  scopes: [platform]
+  grantable_to_tenant_system: false
+
+- code: notification:config:manage
+  description: Enable or disable a notification type and set the tenant default locale.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: notification:dispatch:read
+  description: Read the email dispatch ledger to audit what was and was not sent.
+  scopes: [tenant]
+  grantable_to_tenant_system: false

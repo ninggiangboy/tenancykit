@@ -1,7 +1,8 @@
 # Runtime profiles and deployment
 
-Each service jar runs in one shape. Billing's one jar runs in three: `api`, `worker` and `migrate`. Mailer's runs in
-two: `worker` and `migrate` — it serves no business HTTP endpoint, so it has no `api` runtime at all. `dev` and `test`
+Each service jar runs in one shape. Billing's and Notification's jars each run in three: `api`, `worker` and
+`migrate`. Mailer's runs in two: `worker` and `migrate` — it serves no business HTTP endpoint, so it has no `api`
+runtime at all. `dev` and `test`
 start Billing with no profile, which activates `api` and `worker` together — the all-in-one behaviour from before the
 split; production starts one of the profiles below.
 
@@ -46,6 +47,9 @@ no logic, retries nothing and rewrites no body. See [suite-messaging.md](suite-m
 | `billing-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
 | `mailer-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
 | `mailer-worker` (`worker`) | The `mailer.commands` listener and every mailer job: delivery, housekeeping, credential health | Its database, the broker, the SMTP server (Mailpit locally, SES in a deployment) |
+| `notification-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
+| `notification-api` (`api`) | The user's inbox and preferences, the suite's templates, the tenant's settings and dispatch ledger | Its database, the broker, Platform (replica snapshots) |
+| `notification-worker` (`worker`) | The `platform.events` listener, the outbox relay and housekeeping; the replica rebuild on start | Its database, the broker, Platform (replica snapshots) |
 | `mailpit` | SMTP on 1025 and an HTTP API/UI on 8025, for local development only | Nothing |
 | `tenant` | Its own HTTP surface, webhook verification, the Platform token provider, the execution worker | Its database, Platform, Billing |
 

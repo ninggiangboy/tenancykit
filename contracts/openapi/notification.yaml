@@ -1,0 +1,396 @@
+openapi: 3.1.0
+info:
+  title: Notification API
+  version: v1
+servers:
+- url: /
+  description: "Any notification hostname: <tenant-code>.<base-domain>/notification"
+paths:
+  /api/v1/templates/{key}/{locale}:
+    put:
+      tags:
+      - template-controller
+      operationId: save
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: locale
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TemplateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+      x-allowed-callers:
+      - platform-user
+    delete:
+      tags:
+      - template-controller
+      operationId: delete
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: locale
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+      x-allowed-callers:
+      - platform-user
+  /api/v1/settings:
+    get:
+      tags:
+      - tenant-settings-controller
+      operationId: current
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+      x-allowed-callers:
+      - tenant-user
+    put:
+      tags:
+      - tenant-settings-controller
+      operationId: save_1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+      x-allowed-callers:
+      - tenant-user
+  /api/v1/notifications/preferences:
+    get:
+      tags:
+      - notification-preference-controller
+      operationId: current_1
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PreferenceResponse"
+      x-allowed-callers:
+      - tenant-user
+      - platform-user
+    put:
+      tags:
+      - notification-preference-controller
+      operationId: save_2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferenceRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PreferenceResponse"
+      x-allowed-callers:
+      - tenant-user
+      - platform-user
+  /api/v1/notifications/{id}/read:
+    post:
+      tags:
+      - notification-controller
+      operationId: read
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+      x-allowed-callers:
+      - tenant-user
+      - platform-user
+  /api/v1/notifications/read-all:
+    post:
+      tags:
+      - notification-controller
+      operationId: readAll
+      responses:
+        "200":
+          description: OK
+      x-allowed-callers:
+      - tenant-user
+      - platform-user
+  /api/v1/templates:
+    get:
+      tags:
+      - template-controller
+      operationId: list
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TemplateSummary"
+      x-allowed-callers:
+      - platform-user
+  /api/v1/templates/{key}:
+    get:
+      tags:
+      - template-controller
+      operationId: resolved
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: locale
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Resolved"
+      x-allowed-callers:
+      - platform-user
+  /api/v1/notifications:
+    get:
+      tags:
+      - notification-controller
+      operationId: list_1
+      parameters:
+      - name: unread
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+      - name: before
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 25
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Page"
+      x-allowed-callers:
+      - tenant-user
+      - platform-user
+  /api/v1/email-dispatches:
+    get:
+      tags:
+      - dispatch-controller
+      operationId: list_2
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: before
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 25
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Page"
+      x-allowed-callers:
+      - tenant-user
+components:
+  schemas:
+    TemplateRequest:
+      type: object
+      properties:
+        subject:
+          type: string
+        html:
+          type: string
+        text:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+    SettingsRequest:
+      type: object
+      properties:
+        defaultLocale:
+          type: string
+        enabledTypes:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+    SettingsResponse:
+      type: object
+      properties:
+        defaultLocale:
+          type: string
+        enabledTypes:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+    PreferenceRequest:
+      type: object
+      properties:
+        locale:
+          type: string
+        mutedTypes:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+    PreferenceResponse:
+      type: object
+      properties:
+        locale:
+          type: string
+        mutedTypes:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+    TemplateSummary:
+      type: object
+      properties:
+        type:
+          type: string
+        key:
+          type: string
+    Resolved:
+      type: object
+      properties:
+        key:
+          type: string
+        locale:
+          type: string
+        variant:
+          $ref: "#/components/schemas/TemplateVariant"
+        overridden:
+          type: boolean
+    TemplateVariant:
+      type: object
+      properties:
+        subject:
+          type: string
+        html:
+          type: string
+        text:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        version:
+          type: integer
+          format: int32
+    NotificationView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        templateKey:
+          type: string
+        templateVersion:
+          type: integer
+          format: int32
+        locale:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        link:
+          type: string
+        readAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+    Page:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationView"
+        unreadCount:
+          type: integer
+          format: int64
+        nextBefore:
+          type: string
+          format: uuid
+  securitySchemes:
+    oidc:
+      type: http
+      description: A tenant user signed in through Keycloak
+      scheme: bearer
+      bearerFormat: JWT

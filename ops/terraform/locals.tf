@@ -39,6 +39,9 @@ locals {
     billing_migrate = "/ecs/${var.environment}/billing-migrate"
     mailer          = "/ecs/${var.environment}/mailer"
     mailer_migrate  = "/ecs/${var.environment}/mailer-migrate"
+    notification          = "/ecs/${var.environment}/notification"
+    notification_api      = "/ecs/${var.environment}/notification-api"
+    notification_migrate  = "/ecs/${var.environment}/notification-migrate"
     rds_init        = "/ecs/${var.environment}/rds-init"
     mq_users        = "/ecs/${var.environment}/mq-users"
   }

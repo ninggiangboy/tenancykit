@@ -55,3 +55,6 @@ jobs:
       - name: Mailer rule ids
         working-directory: mailer
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
+      - name: Notification rule ids
+        working-directory: notification
+        run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'

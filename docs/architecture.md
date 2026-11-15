@@ -157,8 +157,25 @@ each service's Gradle isolation task, which fails the build when a project decla
 and each service's ArchUnit `otherServiceRoots` rule set, which fails it when a class names another service's
 package. `mailer` is the only service permitted to call an AWS API.
 
-**The shared core** sits beside the services, in `core/`. It is its own Gradle build that `platform/`, `billing/`
-and `tenant/` include with `includeBuild("../core")`:
+**Notification** (`notification/`) — the suite's app for notifying Platform tenant users, in two contexts:
+
+| Directory | Module | Holds |
+|---|---|---|
+| `contexts/` | `platform` | The Platform replica it keeps (`tenants`, `tenant_domains`, `tenant_systems`, `user_grants`, `app_entitlements`) and the read ports `TenantDirectory` and `UserDirectory`. Nothing else in the app reaches these tables |
+| | `dispatch` | The notification catalog, templates and renderer, in-app notifications, tenant settings and user preferences, the email dispatch ledger and the `email.send` publisher |
+| `libs/` | `shared-core` | `TemplateKey` and the permission constants |
+| | `jooq-schema` | jOOQ classes generated from the migrations and committed |
+| `apps/` | `app-boot` | Spring wiring, security, jobs, the three runtimes and the Flyway migrations, including the replica tables and the outbox |
+| `testing/` | `arch-fixtures` | Deliberately violating classes that prove each ArchUnit rule can fail |
+
+It owns templates, locale, preferences and a stored read model, none of which belongs in `mailer` or Billing, and it
+reads no Billing data: recipients are Platform tenant users. The `platform`/`dispatch` split is the same seam Billing
+keeps, and it is what lets `context-uses-only-own-tables` hold while replica tables and notification tables
+coexist in one service. Notification is the only service besides `mailer` that produces `email.send`, and it
+produces no event another app consumes.
+
+**The shared core** sits beside the services, in `core/`. It is its own Gradle build that `platform/`, `billing/`,
+`notification/`, `mailer/` and `tenant/` include with `includeBuild("../core")`:
 
 | Module | Holds |
 |---|---|

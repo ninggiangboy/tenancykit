@@ -33,6 +33,16 @@ http://:80 {
 		reverse_proxy platform:8080
 	}
 
+	# Notification is a fourth app, reached through its own prefix on every host — including platform.localhost, where a
+	# Platform user reads their own inbox. Caddy picks the first matching `handle`, so this rule must sit before the
+	# platform-host rule below; otherwise platform.localhost/notification/... would be answered by Platform and a
+	# Platform user would have no inbox.
+	@notificationPath path /notification/*
+	handle @notificationPath {
+		uri strip_prefix /notification
+		reverse_proxy notification-api:8080
+	}
+
 	@platformHost host platform.localhost
 	handle @platformHost {
 		reverse_proxy platform:8080
