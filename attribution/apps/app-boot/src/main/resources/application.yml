@@ -1,0 +1,123 @@
+spring:
+  application:
+    name: attribution
+  profiles:
+    # With no active profile (dev, bootRun and every default-mode test) both runtime profiles are active, which
+    # keeps the all-in-one behaviour. The two profile files stay out of that run: each guards itself with an
+    # on-profile expression so only a runtime that runs alone applies its settings.
+    default: api,worker
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${ATTRIBUTION_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}
+          jwk-set-uri: ${ATTRIBUTION_OIDC_JWK_SET_URI:${ATTRIBUTION_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}/protocol/openid-connect/certs}
+          audiences: attribution
+  datasource:
+    url: ${ATTRIBUTION_DB_URL:jdbc:postgresql://localhost:5432/attribution}
+    username: ${ATTRIBUTION_DB_USER:attribution_app}
+    password: ${ATTRIBUTION_DB_PASSWORD:attribution_app}
+  rabbitmq:
+    host: ${ATTRIBUTION_RABBITMQ_HOST:localhost}
+    port: ${ATTRIBUTION_RABBITMQ_PORT:5672}
+    username: ${ATTRIBUTION_RABBITMQ_USER:attribution}
+    password: ${ATTRIBUTION_RABBITMQ_PASSWORD:attribution}
+    # The relay marks an outbox row only after waitForConfirmsOrDie, which needs simple publisher confirms.
+    publisher-confirm-type: simple
+  flyway:
+    locations: classpath:db/migration
+    # Migrations run as the table owner; the application connects as attribution_app, which owns nothing.
+    url: ${ATTRIBUTION_MIGRATION_DB_URL:${ATTRIBUTION_DB_URL:jdbc:postgresql://localhost:5432/attribution}}
+    user: ${ATTRIBUTION_MIGRATION_DB_USER:attribution_owner}
+    password: ${ATTRIBUTION_MIGRATION_DB_PASSWORD:attribution_owner}
+    placeholders:
+      # The baseline creates attribution_app with this password. Without the placeholder Flyway aborts the whole set.
+      appDbPassword: ${ATTRIBUTION_DB_PASSWORD:attribution_app}
+  task:
+    scheduling:
+      pool:
+        size: ${ATTRIBUTION_SCHEDULER_POOL_SIZE:4}
+      shutdown:
+        await-termination: true
+        await-termination-period: 30s
+
+server:
+  port: ${ATTRIBUTION_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db,replicaState
+
+suite:
+  app-code: attribution
+  replica:
+    platform-base-url: ${ATTRIBUTION_PLATFORM_BASE_URL:http://localhost:8082}
+    client-id: ${PLATFORM_ATTRIBUTION_SERVICE_CLIENT_ID:attribution}
+    client-secret: ${PLATFORM_ATTRIBUTION_SERVICE_CLIENT_SECRET:attribution}
+    rebuild-on-start: ${ATTRIBUTION_REPLICA_REBUILD_ON_START:true}
+    page-limit: 200
+    request-timeout: PT10S
+    platform-issuer: ${ATTRIBUTION_PLATFORM_ISSUER:http://localhost:8082}
+    platform-jwk-set-uri: ${ATTRIBUTION_PLATFORM_JWK_SET_URI:http://localhost:8082/.well-known/jwks.json}
+    # The worker's queue; the api runtime serves HTTP and consumes nothing.
+    queue: attribution.platform-events
+    exchange: platform.events
+    max-attempts: 3
+    retry-backoff: PT0.5S
+    refresh-skew: PT30S
+
+attribution:
+  messaging:
+    exchange: ${ATTRIBUTION_MESSAGING_EXCHANGE:platform.events}
+    queue: ${ATTRIBUTION_MESSAGING_QUEUE:attribution.platform-events}
+  # This app's own ingest exchange: the redirect publishes clicks here and the worker consumes them. It is not the
+  # outbox, because an ingest batch is not a domain event.
+  ingest:
+    exchange: ${ATTRIBUTION_INGEST_EXCHANGE:attribution.ingest}
+    queue: ${ATTRIBUTION_INGEST_QUEUE:attribution.ingest}
+  relay:
+    poll-delay: PT2S
+    batch-size: 50
+    max-attempts: 10
+    backoff-base: PT10S
+    backoff-cap: PT1H
+    jitter: 0.2
+    claim-deadline: PT30S
+  jobs:
+    enabled: ${ATTRIBUTION_JOBS_ENABLED:true}
+    # At most this many tenants run at once across all jobs; keep it below the connection pool.
+    tenant-parallelism: ${ATTRIBUTION_WORKER_TENANT_PARALLELISM:4}
+  # What a tenant inherits when it has no attribution_settings row of its own.
+  defaults:
+    click-param: ${ATTRIBUTION_DEFAULT_CLICK_PARAM:aid}
+    default-window-days: ${ATTRIBUTION_DEFAULT_WINDOW_DAYS:30}
+    # A deployment setting, not a tenant one: raw partitions are shared across tenants.
+    raw-retention-days: ${ATTRIBUTION_RAW_RETENTION_DAYS:90}
+  housekeeping:
+    enabled: ${ATTRIBUTION_HOUSEKEEPING_ENABLED:true}
+    inbox-retention: P30D
+    dead-outbox-retention: P7D
+    batch-size: 500
+    interval: PT1H
+  keys:
+    # New tokens carry this key id; verification accepts every key still listed, so a rotation keeps old links valid.
+    active-key-id: ${ATTRIBUTION_CLICK_KEY_ID:k1}
+    public-base-url: ${ATTRIBUTION_PUBLIC_BASE_URL:http://localhost}
+    # Deliberately empty rather than a well-known string: the keys configuration refuses to start without one, so a
+    # deployment that forgets ATTRIBUTION_VISITOR_HASH_KEY fails at boot instead of hashing with a public secret.
+    visitor-hash-key: ${ATTRIBUTION_VISITOR_HASH_KEY:}
+    geoip-path: ${ATTRIBUTION_GEOIP_PATH:}
+    # The click-token HMAC keys. New tokens use active-key-id; every listed key still verifies.
+    click-keys:
+      k1: ${ATTRIBUTION_CLICK_SECRET:}
