@@ -26,6 +26,10 @@ import org.springframework.stereotype.Component;
  * directly would pass its unit test and deliver nothing in production. The sweep reads the tenant list in the Platform
  * scope, then binds each tenant's scope for the work.
  *
+ * <p>The list includes the reserved Platform tenant, because Notification notifies Platform administrators about their
+ * own access changes and those commands carry that tenant id. Without the row a Platform user's email would be accepted
+ * into the ledger and never claimed.
+ *
  * <p>A failure in one tenant is logged and does not stop the others. Above one, tenants run on virtual threads bounded
  * by one semaphore shared by every job, so a slow tenant cannot delay the ones behind it and the worker never asks the
  * database for more connections than its pool.

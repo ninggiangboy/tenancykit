@@ -13,8 +13,10 @@ SES in a deployment, SMTP (Mailpit) locally. It is a separate deployable (`maile
 | A sender through the suite's own SES identity, or through a Tenant's own AWS role | A mailbox, or a bounce and complaint processor: SES's asynchronous events are not consumed |
 | A consumer that publishes nothing | A producer: it declares no exchange of its own and has no outbox table |
 
-Who is notified, which event notifies them, the templates and their translations stay outside the suite, so mailer is the
-one exception to that non-goal; see [overview-and-scope.md](overview-and-scope.md).
+Who is notified, which event notifies them, the templates and their translations stay outside mailer. That work now
+belongs to [notification.md](notification.md), the suite's app for notifying Platform tenant users: it produces the
+`email.send` command with an already-rendered subject and both bodies, and mailer remains delivery-only. See
+[overview-and-scope.md](overview-and-scope.md) for the dated reversal.
 
 ## Runtimes
 
@@ -51,7 +53,14 @@ by the envelope's event id (consumer name `mailer.email-send`), and the ledger, 
 `(tenant, requestId, recipient)`.
 
 A command that fails schema validation writes nothing at all and lands in `mailer.commands.dlq` after the dispatcher's
-retries. A command naming the Platform tenant is refused the same way.
+retries.
+
+A command naming the reserved Platform tenant is accepted. Mailer used to refuse it, on the grounds that it had no
+legitimate platform-scope send; that changed when Notification started notifying Platform administrators about their own
+access changes. Their commands carry the Platform tenant id, and mailer treats it as one more tenant: the ledger row is
+written under that id, and delivery happens because `mailer_tenants` has a row for it (written by
+`V6__platform_tenant.sql`). No credential row is needed — an absent `mailer_credentials` row already means "send through
+the suite's own identity", which is the `SHARED` behaviour Platform mail should have.
 
 ## The delivery status machine
 
@@ -99,8 +108,7 @@ or it did and the transaction rolled back.
 2. Look at the delivered count for that tenant and request id:
    `select status, attempts, last_error from email_deliveries where tenant_id = '<tenant>' and request_id = '<requestId>'`.
    No rows means the command was rejected before it wrote anything.
-3. Fix the cause — usually a producer sending a payload that does not match `contracts/`, or a message for the Platform
-   tenant, which mailer refuses by design.
+3. Fix the cause — usually a producer sending a payload that does not match `contracts/`.
 4. Move the message back with a one-shot shovel from `mailer.commands.dlq` to `mailer.commands` with routing key
    `email.send`, then delete the shovel so a later failure is not silently replayed. Republishing by hand is the same
    thing and is enough for a single message — the management API takes the envelope unchanged:

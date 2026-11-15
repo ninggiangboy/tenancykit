@@ -131,18 +131,23 @@ class EmailCommandConsumerIntegrationTest {
     }
 
     @Test
-    void aCommandAddressingThePlatformTenantIsRefused() {
+    void aCommandAddressingThePlatformTenantIsAccepted() {
         TenantId platform = RequestScope.PLATFORM_TENANT_ID;
         TenantId saved = tenant;
         tenant = platform;
         try {
+            // Notification notifies Platform administrators about their own access changes, so a platform-tenant
+            // command is a legitimate send, not a mistake.
             publish(envelope(UUID.randomUUID(), "request-6", List.of("a@example.com")));
-            assertThat(rabbit.receive(EXCHANGE + ".dlq", 20_000)).isNotNull();
+            awaitCount("request-6", 1);
+            // The ledger row is written under the Platform tenant, which is where the delivery sweep finds it.
+            assertThat(count("request-6")).isEqualTo(1);
+            assertThat(rabbit.receive(EXCHANGE + ".dlq", 500))
+                    .as("nothing was dead-lettered")
+                    .isNull();
         } finally {
             tenant = saved;
         }
-        // Nothing was written under any tenant.
-        assertThat(scoped(() -> dsl.fetchCount(EMAIL_DELIVERIES))).isZero();
     }
 
     // --------------------------------------------------------------- helpers
