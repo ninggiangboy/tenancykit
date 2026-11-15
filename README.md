@@ -18,7 +18,7 @@ path follows its directory:
 
 | Directory | Contents |
 |---|---|
-| `contexts/` | The bounded contexts of that service (Billing: eight; Platform: `tenancy`, `access`, `integration`); the sample tenant names the same group `modules/` |
+| `contexts/` | The bounded contexts of that service, under the same group name in all three (Billing: eight; Platform: `tenancy`, `access`, `integration`; the sample tenant: eight) |
 | `libs/` | `shared-kernel` (the service's value objects; `shared-core` in the sample tenant) and `jooq-schema` |
 | `apps/` | `app-boot`, which wires the contexts and holds the migrations |
 | `testing/` | `arch-fixtures`, the deliberately violating classes the architecture rules are tested against |

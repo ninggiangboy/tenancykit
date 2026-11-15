@@ -3,12 +3,8 @@ plugins {
 }
 
 dependencies {
-    "applicationImplementation"(project(":modules:billing-client"))
-    "adapterImplementation"(project(":modules:billing-client"))
-    "adapterImplementation"(project(":modules:customer"))
-    "adapterImplementation"(project(":modules:identity"))
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-webmvc")
-    "adapterImplementation"("org.springframework.security:spring-security-core")
+    "adapterImplementation"(project(":contexts:identity"))
     testImplementation("org.assertj:assertj-core")
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-jooq")
     "adapterImplementation"(project(":libs:jooq-schema"))
