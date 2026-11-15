@@ -50,10 +50,10 @@ commands already published.
 
 ## Files to create
 
-- `email/contexts/sending/.../campaign/*` (aggregate, transitions, create/update/schedule/send-now/pause/resume/cancel/test-send,
+- `mailroom/contexts/sending/.../campaign/*` (aggregate, transitions, create/update/schedule/send-now/pause/resume/cancel/test-send,
   snapshot builder, publisher tick)
-- `email/apps/app-boot/.../jobs/CampaignSchedulerJob.java`, `CampaignPublisherJob.java`
-- `email/apps/app-boot/src/main/resources/db/migration/V5__campaigns.sql`; OpenAPI additions
+- `mailroom/apps/app-boot/.../jobs/CampaignSchedulerJob.java`, `CampaignPublisherJob.java`
+- `mailroom/apps/app-boot/src/main/resources/db/migration/V5__campaigns.sql`; OpenAPI additions
 - Tests under `.../sending/campaign/`
 
 ## Endpoints
@@ -62,7 +62,7 @@ commands already published.
 `POST /campaigns/{id}/schedule`, `POST /campaigns/{id}/send`, `POST /campaigns/{id}/pause|resume|cancel`,
 `POST /campaigns/{id}/test` (render with sample data and send to up to 5 explicit addresses as `TRANSACTIONAL`, tagged
 so they never count in stats), `GET /campaigns/{id}/stats` (sent counts here; opens and clicks arrive in phase 8).
-Permissions `email:campaign:read|manage`.
+Permissions `mailroom:campaign:read|manage`.
 
 ## Verification
 

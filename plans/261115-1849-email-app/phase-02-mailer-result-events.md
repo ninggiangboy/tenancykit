@@ -28,7 +28,7 @@ registers a tenant the first time it accepts a command for it.
 ## Key insights
 
 - The tenant gap is real: `mailer_tenants` is written only by migrations, and `TenantSweep` reads it. Notification mail
-  for an ordinary tenant is accepted and never delivered today. This phase fixes it for everyone, not just `email/`.
+  for an ordinary tenant is accepted and never delivered today. This phase fixes it for everyone, not just `mailroom/`.
 - `MessagingProperties.exchange` is the **producing** exchange. Mailer currently passes `mailer.commands` there only
   because it produces nothing. Set it to `mailer.events`; `SuiteTopology` still declares `mailer.commands` through the
   queue binding.

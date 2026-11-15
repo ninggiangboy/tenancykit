@@ -35,9 +35,9 @@ address and any kind of email — whether sending is allowed.
 
 ## Files to create
 
-- `email/contexts/audience/src/{domain,application,adapter,api}/...` for receiver, group, membership, suppression
-- `email/apps/app-boot/src/main/resources/db/migration/V3__audience.sql`; `contracts/openapi/email.yaml` (receivers, groups, suppressions)
-- Tests under `email/apps/app-boot/src/test/java/dev/ngb/email/audience/`
+- `mailroom/contexts/audience/src/{domain,application,adapter,api}/...` for receiver, group, membership, suppression
+- `mailroom/apps/app-boot/src/main/resources/db/migration/V3__audience.sql`; `contracts/openapi/mailroom.yaml` (receivers, groups, suppressions)
+- Tests under `mailroom/apps/app-boot/src/test/java/dev/ngb/mailroom/audience/`
 
 ## Endpoints
 
@@ -46,7 +46,7 @@ address and any kind of email — whether sending is allowed.
 `POST /groups`, `GET /groups`, `PUT /groups/{id}`, `DELETE /groups/{id}`, `POST|DELETE /groups/{id}/members`
 (≤ 1,000 ids per call), `GET /groups/{id}/members`, `GET|POST|DELETE /suppressions`.
 `DELETE /receivers/{id}` is a hard delete that also removes group memberships (a customer's erasure request) and keeps
-only the suppression row so a deleted-then-re-imported address is still not mailed. Permissions `email:receiver:read|manage`.
+only the suppression row so a deleted-then-re-imported address is still not mailed. Permissions `mailroom:receiver:read|manage`.
 
 ## Verification
 
@@ -59,4 +59,4 @@ only the suppression row so a deleted-then-re-imported address is still not mail
 ## Risks
 
 - Import volume: bulk endpoints are capped and paged; a 1M-row import is a client loop, not a single request.
-- Hard delete versus audit: the suppression row deliberately outlives the receiver; document it in `docs/email.md`.
+- Hard delete versus audit: the suppression row deliberately outlives the receiver; document it in `docs/mailroom.md`.

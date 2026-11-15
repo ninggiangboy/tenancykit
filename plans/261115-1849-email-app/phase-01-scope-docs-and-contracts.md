@@ -24,22 +24,22 @@ Make the repository honest before any code exists: the docs currently forbid wha
 ## Files to create / modify
 
 - Modify: `docs/overview-and-scope.md` (reverse the two non-goals, extend the deployables table, state date and reason)
-- Modify: `docs/notification.md` (one sentence: the Tenant's customers are served by `email/`, not here)
+- Modify: `docs/notification.md` (one sentence: the Tenant's customers are served by `mailroom/`, not here)
 - Modify: `docs/architecture.md`, `docs/README.md`, `docs/suite-messaging.md`, `contracts/messaging/README.md` (topology rows)
-- Create: `docs/email.md` (scope, what it is and is not, runtimes, status machines; filled further in phase 10)
-- Create: `contracts/permissions/email.yaml`
+- Create: `docs/mailroom.md` (scope, what it is and is not, runtimes, status machines; filled further in phase 10)
+- Create: `contracts/permissions/mailroom.yaml`
 - Create: `contracts/events/mailer/email-delivery.changed.schema.json`
 - Modify: `contracts/commands/email.send.schema.json` (additive optional `headers`)
-- Create: `contracts/openapi/email.yaml` (resource skeleton: paths, schemas; completed per phase)
+- Create: `contracts/openapi/mailroom.yaml` (resource skeleton: paths, schemas; completed per phase)
 
 ## Tasks
 
 1. Reverse the non-goals with the reason: the recipient is now the Tenant's customer, the data is the Tenant's own, and
    the suite stores it on the Tenant's behalf with retention and deletion rules. Keep the rationale of the old non-goal.
-2. Write `email.yaml`. Codes (tenant scope; `grantable_to_tenant_system` true unless stated, because Tenant Systems are
+2. Write `mailroom.yaml`. Codes (tenant scope; `grantable_to_tenant_system` true unless stated, because Tenant Systems are
    the primary callers and there is no UI):
-   `email:template:read|manage`, `email:receiver:read|manage`, `email:email:send`, `email:email:read`,
-   `email:campaign:read|manage`, `email:settings:manage` (**not** grantable to a Tenant System).
+   `mailroom:template:read|manage`, `mailroom:receiver:read|manage`, `mailroom:email:send`, `mailroom:email:read`,
+   `mailroom:campaign:read|manage`, `mailroom:settings:manage` (**not** grantable to a Tenant System).
 3. Write `email-delivery.changed.schema.json` (data only): `requestId`, `recipient`, `status` (`SUCCEEDED` | `DEAD`),
    `attempts`, `completedAt`, `providerMessageId` (optional), `lastError` (optional, short, no body). Document that
    `status` is an open set and a consumer ignores values it does not know.
@@ -48,13 +48,13 @@ Make the repository honest before any code exists: the docs currently forbid wha
 5. Verify that no build globs `contracts/events/**` in a way that picks up the new `mailer/` directory. Billing's
    `SchemaEventTypeCatalog` reads `classpath*:events/*.schema.json` and fails on an unknown file, so the schema must not
    be packaged into Billing.
-6. Update the topology tables: `email.platform-events`, `email.mailer-events`, the new exchange `mailer.events`, and the
+6. Update the topology tables: `mailroom.platform-events`, `mailroom.mailer-events`, the new exchange `mailer.events`, and the
    `email` producer of `email.send`.
 
 ## Verification
 
 - `git grep -n "bulk/marketing" docs` returns only the dated reversal.
-- Every code in `email.yaml` is used by an endpoint in a later phase (checked in phase 10).
+- Every code in `mailroom.yaml` is used by an endpoint in a later phase (checked in phase 10).
 - `./gradlew build` still passes in `billing/`, `platform/`, `notification/` and `mailer/` (contracts only changed additively).
 - JSON schemas parse and validate a sample payload (a throwaway test in phase 2 consumes them).
 

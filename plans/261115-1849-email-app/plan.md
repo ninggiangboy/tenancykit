@@ -1,6 +1,6 @@
 ---
-title: "Email app — transactional and marketing email for a Tenant's own customers"
-description: "A fifth deployable, email/, that gives Tenants a Resend/SendGrid-style API (templates, receivers, groups and segments, single and batch email, campaigns, open/click tracking, view email), sending through mailer, which gains result events."
+title: "Mailroom app — transactional and marketing email for a Tenant's own customers"
+description: "A fifth deployable, mailroom/, that gives Tenants a Resend/SendGrid-style API (templates, receivers, groups and segments, single and batch email, campaigns, open/click tracking, view email), sending through mailer, which gains result events."
 status: done
 priority: P1
 effort: "10 phases, 2 × S, 5 × M, 3 × L"
@@ -16,9 +16,9 @@ created: 2026-11-15
 ## Overview
 
 The suite can email its own users (`notification/` → `mailer/`), but a Tenant has nowhere to email **its own customers**.
-This plan adds `email/`, a deployable that owns a Tenant's templates, receivers, groups, segments, campaigns and the
+This plan adds `mailroom/`, a deployable that owns a Tenant's templates, receivers, groups, segments, campaigns and the
 record of every email it sent, and exposes them as a REST API. Sending stays with `mailer/`, which gets one new
-capability: it publishes the result of each delivery so `email/` can report `SENT` or `FAILED`.
+capability: it publishes the result of each delivery so `mailroom/` can report `SENT` or `FAILED`.
 
 Scope was fixed in the `/ak-advise` interview of 2026-11-15 (memory: `email-app-decisions`). Preview:
 `plans/reports/advise-261115-1838-email-app-preview.html`.
@@ -36,7 +36,7 @@ This reverses two documented non-goals in `docs/overview-and-scope.md` ("notifyi
 
 **Done means**
 
-- `email/` builds, migrates and tests green; ArchUnit passes; `ops/smoke/isolation.sh` proves `email` cannot publish to
+- `mailroom/` builds, migrates and tests green; ArchUnit passes; `ops/smoke/isolation.sh` proves `mailroom` cannot publish to
   any exchange except `mailer.commands`, and `mailer` can publish only `mailer.events`.
 - An end-to-end test runs template → group → receivers → campaign → mailer reports `SUCCEEDED` → an open and a click are
   recorded → `GET /campaigns/{id}/stats` returns `sent`, `failed`, `skipped`, `opened`, `clicked`, `unsubscribed` that
@@ -45,7 +45,7 @@ This reverses two documented non-goals in `docs/overview-and-scope.md` ("notifyi
 - Tenant A cannot read or write tenant B's data on any table or endpoint (RLS test per table, API test per resource).
 - `contracts/events/mailer/email-delivery.changed.schema.json` exists and mailer publishes it from an outbox.
 - Rendered bodies are removed after the configured retention (30 days default); metadata and events remain.
-- `docs/` is correct: non-goals reversed, `docs/email.md` added, `mailer.md` and `suite-messaging.md` updated.
+- `docs/` is correct: non-goals reversed, `docs/mailroom.md` added, `mailer.md` and `suite-messaging.md` updated.
 
 **Non-goals**
 
@@ -66,16 +66,16 @@ patterns (jOOQ, RLS, outbox/inbox, suite tokens, `core/` shared modules); conven
 | `core-messaging` already has the outbox appender and relay; a service opts in through `MessagingProperties.exports` | `core/core-messaging/.../MessagingProperties.java`, `notification/.../OutboxConfiguration.java` | Mailer needs a table and a bean, not new infrastructure |
 | `SuiteTopology` declares `properties.exchange()` plus every queue's exchange | `SuiteTopology.declarables` | Mailer can set `exchange = mailer.events` and still declare `mailer.commands` through its queue binding |
 | **`mailer_tenants` is written only by migrations** (`V6` registers the Platform tenant); `TenantSweep` delivers only for rows in it | `mailer/.../V2__delivery.sql`, `V6__platform_tenant.sql`, `TenantSweep.java` | **A command for any ordinary tenant is accepted and then sits `PENDING` forever.** Phase 2 registers the tenant when a command is accepted |
-| Notification renders with JMustache, `strictSections(true)`, and refuses sections at write time | `JmustacheTemplateRenderer.java`, `docs/notification.md` | Same library, different policy; the renderer stays local to `email/` because builds share only `core/` |
+| Notification renders with JMustache, `strictSections(true)`, and refuses sections at write time | `JmustacheTemplateRenderer.java`, `docs/notification.md` | Same library, different policy; the renderer stays local to `mailroom/` because builds share only `core/` |
 | `email.send` has no header field, no bcc, no attachment; `to` ≤ 50 | `contracts/commands/email.send.schema.json` | One command per recipient; an additive optional `headers` allowlist carries `List-Unsubscribe` |
-| Envelope `schemaVersion` is **2** for every producer; a wrong value rejects every message | `MessagingConfiguration` in mailer and notification | `email/` and the mailer events use `Document(2)` |
+| Envelope `schemaVersion` is **2** for every producer; a wrong value rejects every message | `MessagingConfiguration` in mailer and notification | `mailroom/` and the mailer events use `Document(2)` |
 | A new app's permission catalog is `contracts/permissions/<app>.yaml`; the file name is the app code | `ClasspathAppCatalog`, notification plan phase 1 | Platform needs no code change; Keycloak needs an audience mapper |
 
 ## Key decisions
 
 | Decision | Choice | Why |
 |---|---|---|
-| Deployable | `email/`, root package `dev.ngb.email`, runtimes `migrate` / `api` / `worker`, own DB `email`, own broker user | Same shape as `notification/`; the data is personal data of a Tenant's customers and must not share a database |
+| Deployable | `mailroom/`, root package `dev.ngb.mailroom`, runtimes `migrate` / `api` / `worker`, own DB `mailroom`, own broker user | Same shape as `notification/`; the data is personal data of a Tenant's customers and must not share a database |
 | Contexts | `platform` (replica), `content`, `audience`, `sending` | ArchUnit allows a context only its own tables; `sending` reads templates and receivers through the other contexts' `api` ports |
 | Result path | Mailer publishes `email-delivery.changed` (`SUCCEEDED` / `DEAD`) to `mailer.events` | The suite's topic-exchange-per-producer pattern; the name follows `<aggregate>.changed` |
 | Email kinds | `TRANSACTIONAL` (API) and `MARKETING` (campaign) | Unsubscribe must not block a password-reset mail; marketing must honour it |
@@ -86,14 +86,14 @@ patterns (jOOQ, RLS, outbox/inbox, suite tokens, `core/` shared modules); conven
 | Tracking | Self-measured: open pixel, redirected links recorded at render time, one-click unsubscribe; HMAC-signed tokens | No provider event is needed; open count means "pixel loaded" |
 | Segments | A typed JSON filter AST compiled to parameterised SQL over a GIN-indexed `jsonb` attributes column | No free-form expression is ever evaluated |
 | Stats | Aggregated live from `emails` and `email_events` with indexes | A counter table is a premature optimisation until a measured campaign proves it slow |
-| Public endpoints | `/email/t/...` bypass the suite-token filter; tenant scope comes from the verified token | They must work from a mail client with no credentials |
+| Public endpoints | `/mailroom/t/...` bypass the suite-token filter; tenant scope comes from the verified token | They must work from a mail client with no credentials |
 
 ## Architecture
 
 ```mermaid
 flowchart LR
   TS[Tenant System] -- "REST + suite token" --> API[email api]
-  R[Recipient mail client] -- "open / click / unsubscribe" --> PUB["/email/t/* (public)"]
+  R[Recipient mail client] -- "open / click / unsubscribe" --> PUB["/mailroom/t/* (public)"]
   API --> CORE[content, audience, sending]
   PUB --> CORE
   CORE --> DB[(email DB, RLS)]
@@ -108,9 +108,9 @@ flowchart LR
 ## Extension trace
 
 The one credible next variant is **bounce and complaint events** from SES. It must change only: mailer (a consumer for
-SES notifications that publishes more `status` values on the same event) and `email/` (map the new statuses onto
+SES notifications that publishes more `status` values on the same event) and `mailroom/` (map the new statuses onto
 `FAILED` plus an automatic `ALL` suppression). Templates, receivers, campaigns and tracking stay unchanged. The event
-therefore carries an open `status` string with a documented value set and a `completedAt` guard, and `email/` ignores
+therefore carries an open `status` string with a documented value set and a `completedAt` guard, and `mailroom/` ignores
 unknown values. No registry, plugin or provider abstraction is built: there is one transport, `mailer`.
 
 ## Phases
@@ -128,7 +128,7 @@ unknown values. No registry, plugin or provider abstraction is built: there is o
 | 9 | [Dynamic segments and housekeeping](phase-09-segments-and-housekeeping.md) | M | 7 |
 | 10 | [Ops seams, end-to-end and docs](phase-10-ops-e2e-and-docs.md) | M | 8, 9 |
 
-Phases 2 and 3 can run in parallel after phase 1 (disjoint trees: `mailer/` + `contracts/` versus `email/`). Phases 4 and
+Phases 2 and 3 can run in parallel after phase 1 (disjoint trees: `mailer/` + `contracts/` versus `mailroom/`). Phases 4 and
 5 can run in parallel after phase 3.
 
 ## Risk register
@@ -157,7 +157,7 @@ Phases 2 and 3 can run in parallel after phase 1 (disjoint trees: `mailer/` + `c
 
 ## Verification status (2026-11-15)
 
-- `cd email && ./gradlew build` is green: 137 tests, including the ArchUnit/Modulith gates, the jOOQ drift test, the
+- `cd mailroom && ./gradlew build` is green: 137 tests, including the ArchUnit/Modulith gates, the jOOQ drift test, the
   per-table row-level-security test, the renderer's adversarial suite, the contract/controller path coverage test, the
   permission coverage test, and `EmailFlowIntegrationTest` (template → receiver → group → campaign → published email
   with rewritten links → mailer SUCCEEDED → open/click/unsubscribe → stats) against real PostgreSQL and RabbitMQ.

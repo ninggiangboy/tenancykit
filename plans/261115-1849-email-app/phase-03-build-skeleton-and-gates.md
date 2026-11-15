@@ -11,7 +11,7 @@ dependencies: [1]
 
 ## Goal
 
-An `email/` build that starts in all three runtimes, authenticates suite tokens, enforces the `email` entitlement,
+A `mailroom/` build that starts in all three runtimes, authenticates suite tokens, enforces the `mailroom` entitlement,
 replicates Platform data, and fails the build on any layering or isolation violation — with no business feature yet.
 
 ## Context
@@ -23,27 +23,27 @@ the `boot/replica`, `boot/security`, `boot/web`, `boot/jobs` packages, `docs/not
 
 ## Files to create
 
-- `email/settings.gradle.kts` (`includeBuild("../core")`, `rootProject.name = "email"`), `build.gradle.kts`, `build-logic/`
-- `email/libs/shared-core` (ids, `TemplateKey`-like value objects, `EmailPermissions`), `email/libs/jooq-schema` (generated, committed)
-- `email/contexts/platform` (replica ports, adapters, application), `content`, `audience`, `sending` (empty layered modules)
-- `email/apps/app-boot`: `Application`, `config/*` (Messaging, Outbox, Replica, Scheduling, Suite, Security, Web),
+- `mailroom/settings.gradle.kts` (`includeBuild("../core")`, `rootProject.name = "mailroom"`), `build.gradle.kts`, `build-logic/`
+- `mailroom/libs/shared-core` (ids, `TemplateKey`-like value objects, `EmailPermissions`), `mailroom/libs/jooq-schema` (generated, committed)
+- `mailroom/contexts/platform` (replica ports, adapters, application), `content`, `audience`, `sending` (empty layered modules)
+- `mailroom/apps/app-boot`: `Application`, `config/*` (Messaging, Outbox, Replica, Scheduling, Suite, Security, Web),
   `replica/*`, `health/ReplicaStateHealthContributor`, `web/*` (entitlement and scope filters), `jobs/TenantSweep`,
   `Dockerfile`, `application{,-api,-worker,-migrate}.yml`
-- `email/apps/app-boot/src/main/resources/db/migration/V1__baseline.sql` (roles `email_owner`/`email_app`, RLS template,
+- `mailroom/apps/app-boot/src/main/resources/db/migration/V1__baseline.sql` (roles `mailroom_owner`/`mailroom_app`, RLS template,
   replica tables, `replica_state`, `event_inbox`, `outbox`, reserved Platform tenant, `email_settings`)
-- `email/testing/arch-fixtures` and the architecture tests (`ArchitectureRules`, `ArchitectureTest`, `ArchitectureMetaTest`, `ModulithVerificationTest`)
+- `mailroom/testing/arch-fixtures` and the architecture tests (`ArchitectureRules`, `ArchitectureTest`, `ArchitectureMetaTest`, `ModulithVerificationTest`)
 - Tests: `RowLevelSecurityTest`, `JooqSchemaTest`, `ReplicaApplyTest`, `PermissionCatalogTest`, `OpenApiContractTest`
 
 ## Tasks
 
 1. Scaffold the build by copying `notification/` and renaming; delete everything dispatch-specific. Package root
-   `dev.ngb.email`; no class name or comment may mention notification.
-2. Messaging: `Document(2)`; queues `email.platform-events` (the five state-transfer keys) and `email.mailer-events`
+   `dev.ngb.mailroom`; no class name or comment may mention notification.
+2. Messaging: `Document(2)`; queues `mailroom.platform-events` (the five state-transfer keys) and `mailroom.mailer-events`
    (bound to `mailer.events`, key `email-delivery.changed`), each with the suite DLX pair; exports
    `{"email.send": "mailer.commands"}`. The relay job is worker-only.
-3. Replica: reuse `core-replica` and `core-platform-sync` unchanged; configure a Platform service client named `email`
+3. Replica: reuse `core-replica` and `core-platform-sync` unchanged; configure a Platform service client named `mailroom`
    with its own secret hash (see `docs/notification.md`, "Replica rebuild").
-4. Security: suite token decoding from `core-suite`; the `email` entitlement filter on HTTP only; the guard rule from
+4. Security: suite token decoding from `core-suite`; the `mailroom` entitlement filter on HTTP only; the guard rule from
    notification — platform-scope callers get `403` on every email endpoint, because all email data is tenant data.
 5. `email_settings` (one row per tenant): default `from_key`, `from_name`, `reply_to`, `body_retention_days` (30),
    `campaign_publish_per_minute`. Defaults are created lazily; a missing row means the configured defaults.
@@ -53,11 +53,11 @@ the `boot/replica`, `boot/security`, `boot/web`, `boot/jobs` packages, `docs/not
 
 ## Verification
 
-- `cd email && ./gradlew build` is green: unit, ArchUnit, Modulith verification, RLS, jOOQ schema drift, replica apply.
+- `cd mailroom && ./gradlew build` is green: unit, ArchUnit, Modulith verification, RLS, jOOQ schema drift, replica apply.
 - `bootRun` with each profile starts; `api` readiness stays `DOWN` until the worker finishes one replica rebuild.
 - A request with a tenant-A token and a platform-scope token to a placeholder endpoint returns `200` and `403`.
-- No file under `email/` contains the string `notification` outside licence-free comments that cite the precedent
-  (`git grep -n -i notification email/` reviewed by hand).
+- No file under `mailroom/` contains the string `notification` outside licence-free comments that cite the precedent
+  (`git grep -n -i notification mailroom/` reviewed by hand).
 
 ## Risks
 

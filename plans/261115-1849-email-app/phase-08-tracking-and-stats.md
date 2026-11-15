@@ -25,10 +25,10 @@ so nothing is learned from the status code.
 
 - Insert the 1×1 pixel before `</body>` (append when absent) — **marketing only**; transactional mail is not tracked
   unless the request opts in.
-- Replace each `http(s)` link `href` with `/email/t/c/{token}`, recording `(email_id, position, url)` in `email_links`.
+- Replace each `http(s)` link `href` with `/mailroom/t/c/{token}`, recording `(email_id, position, url)` in `email_links`.
   `mailto:`, `tel:` and the unsubscribe link itself are left alone. The text part keeps original URLs and gets only the
   unsubscribe URL.
-- Add `headers` to the command: `List-Unsubscribe: <https://…/email/t/u/{token}>` and
+- Add `headers` to the command: `List-Unsubscribe: <https://…/mailroom/t/u/{token}>` and
   `List-Unsubscribe-Post: List-Unsubscribe=One-Click`.
 - Expose `{{unsubscribe_url}}` to the template as a system variable.
 
@@ -36,10 +36,10 @@ so nothing is learned from the status code.
 
 | Endpoint | Behaviour |
 |---|---|
-| `GET /email/t/o/{token}.gif` | Record `OPENED` (insert-only), return a 1×1 GIF with `Cache-Control: no-store`, always |
-| `GET /email/t/c/{token}` | Look up the recorded URL by signed link id, record `CLICKED`, `302` to it; unknown or purged link → a static "link expired" page. **Never** accepts a URL parameter |
-| `GET /email/t/u/{token}` | Static confirmation page that posts to the same path |
-| `POST /email/t/u/{token}` | Idempotent unsubscribe: write the `MARKETING` suppression, flip the receiver, record `UNSUBSCRIBED`; this is the RFC 8058 one-click target |
+| `GET /mailroom/t/o/{token}.gif` | Record `OPENED` (insert-only), return a 1×1 GIF with `Cache-Control: no-store`, always |
+| `GET /mailroom/t/c/{token}` | Look up the recorded URL by signed link id, record `CLICKED`, `302` to it; unknown or purged link → a static "link expired" page. **Never** accepts a URL parameter |
+| `GET /mailroom/t/u/{token}` | Static confirmation page that posts to the same path |
+| `POST /mailroom/t/u/{token}` | Idempotent unsubscribe: write the `MARKETING` suppression, flip the receiver, record `UNSUBSCRIBED`; this is the RFC 8058 one-click target |
 
 Per-IP rate limit at the proxy; the application also caps events per email per minute so a scanner cannot inflate counts.
 
@@ -58,10 +58,10 @@ mail clients which prefetch (Apple Mail Privacy Protection) inflate it.
 
 ## Files to create / modify
 
-- `email/contexts/sending/.../tracking/*` (token codec, rewriter, event recorder, unsubscribe use case, stats query)
-- `email/apps/app-boot/.../web/PublicTrackingController.java`, `security/SecurityConfiguration.java` (permit the public paths
+- `mailroom/contexts/sending/.../tracking/*` (token codec, rewriter, event recorder, unsubscribe use case, stats query)
+- `mailroom/apps/app-boot/.../web/PublicTrackingController.java`, `security/SecurityConfiguration.java` (permit the public paths
   only), `web/WebConfiguration.java`
-- `email/apps/app-boot/src/main/resources/db/migration/V6__tracking.sql`; OpenAPI additions; `ops/caddy/Caddyfile` route in phase 10
+- `mailroom/apps/app-boot/src/main/resources/db/migration/V6__tracking.sql`; OpenAPI additions; `ops/caddy/Caddyfile` route in phase 10
 
 ## Verification
 

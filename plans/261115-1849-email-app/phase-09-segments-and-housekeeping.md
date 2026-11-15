@@ -46,10 +46,10 @@ taken. Rendered bodies and tracking links are removed after the retention period
 
 ## Files to create
 
-- `email/contexts/audience/.../segment/*` (aggregate, filter AST, validator, SQL compiler, preview)
-- `email/contexts/sending/.../campaign/` (snapshot builder reads the audience `api` port `SegmentResolver`)
-- `email/apps/app-boot/.../jobs/HousekeepingJob.java`, `MessagingHousekeeping.java`
-- `email/apps/app-boot/src/main/resources/db/migration/V7__segments.sql`; OpenAPI additions
+- `mailroom/contexts/audience/.../segment/*` (aggregate, filter AST, validator, SQL compiler, preview)
+- `mailroom/contexts/sending/.../campaign/` (snapshot builder reads the audience `api` port `SegmentResolver`)
+- `mailroom/apps/app-boot/.../jobs/HousekeepingJob.java`, `MessagingHousekeeping.java`
+- `mailroom/apps/app-boot/src/main/resources/db/migration/V7__segments.sql`; OpenAPI additions
 - Tests under `.../audience/segment/` and `.../jobs/`
 
 ## Verification

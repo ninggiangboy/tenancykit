@@ -22,14 +22,14 @@ containers, and the docs describe what exists.
 
 ## Tasks
 
-1. **Compose**: services `email-migrate`, `email-api`, `email-worker`; database `email`; broker user `email` that may
-   write `mailer.commands` only and read `email.*` queues; healthchecks like notification's.
-2. **Proxy**: route `/email/*` on the tenant host; the public tracking paths `/email/t/*` forward without auth and with
+1. **Compose**: services `mailroom-migrate`, `mailroom-api`, `mailroom-worker`; database `mailroom`; broker user `mailroom` that may
+   write `mailer.commands` only and read `mailroom.*` queues; healthchecks like notification's.
+2. **Proxy**: route `/mailroom/*` on the tenant host; the public tracking paths `/mailroom/t/*` forward without auth and with
    a per-IP rate limit. Keep Caddy routing on the Host header and path prefix only.
-3. **Keycloak**: an `email-audience` mapper (see the existing `notification-audience` mapper in `ops/keycloak/realm-export.json`).
-4. **Platform data**: an entitlement `email` per tenant is created through the Platform API, not by code. The catalog file
+3. **Keycloak**: a `mailroom-audience` mapper (see the existing `notification-audience` mapper in `ops/keycloak/realm-export.json`).
+4. **Platform data**: an entitlement `mailroom` per tenant is created through the Platform API, not by code. The catalog file
    from phase 1 registers the app code.
-5. **CI**: `.github/workflows/email.yml`, entries in `suite.yml`, `core.yml`, `deploy.yml`.
+5. **CI**: `.github/workflows/mailroom.yml`, entries in `suite.yml`, `core.yml`, `deploy.yml`.
 6. **Terraform / Kubernetes**: follow the notification service's resources (ECR, task definitions, secrets for the HMAC key
    and DB password, broker user). Add the tracking-token key to the secret list; document rotation.
 7. **Smoke**: `ops/smoke/isolation.sh` asserts `email` cannot publish to `platform.events`, `billing.events`,
@@ -38,11 +38,11 @@ containers, and the docs describe what exists.
    run a campaign through a real mailer (SMTP to Mailpit), assert Mailpit received N messages with the rewritten links and
    `List-Unsubscribe` header, fetch a link and the pixel, post an unsubscribe, assert `stats` and that a second campaign
    skips the unsubscribed receiver. Add a second tenant and assert it sees none of it.
-9. **Docs**: finish `docs/email.md` (runtimes, broker items, status machines, tracking semantics and their limits,
+9. **Docs**: finish `docs/mailroom.md` (runtimes, broker items, status machines, tracking semantics and their limits,
    retention, the suppression rules, the dead-letter runbook), update `docs/runtime-profiles.md`, `docs/architecture.md`,
    `docs/suite-messaging.md`, `docs/mailer.md`, root `README.md`; add a `docs/email-tenant-guide.md` only if `email.md`
    exceeds the 800-line doc limit.
-10. **Permission coverage**: a test asserts every code in `email.yaml` is enforced by at least one endpoint and every
+10. **Permission coverage**: a test asserts every code in `mailroom.yaml` is enforced by at least one endpoint and every
     endpoint requires one (or is explicitly public).
 
 ## Verification

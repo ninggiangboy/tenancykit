@@ -31,7 +31,7 @@ through the outbox, and update the email's status when mailer reports the outcom
    render through `content`'s `RenderTemplate` port (or accept inline `subject`/`html`/`text` with the same limits).
 3. In **one transaction**: insert the `emails` row (`QUEUED`, `request_id = id`) and append the `email.send` command to the
    outbox with `to = [address]`, the stored `from_key`, and (marketing only, phase 8) `headers`.
-4. The relay publishes; mailer delivers; the `email.mailer-events` consumer applies `email-delivery.changed`.
+4. The relay publishes; mailer delivers; the `mailroom.mailer-events` consumer applies `email-delivery.changed`.
 
 ## Result consumer
 
@@ -45,15 +45,15 @@ through the outbox, and update the email's status when mailer reports the outcom
 `POST /emails` (`Idempotency-Key` header becomes `request_id`'s namespace so a retried call returns the same email),
 `POST /emails/batch` (≤ 100 items, each with its own recipient, template and variables; the response lists a per-item
 result and never fails the whole call for one bad item), `GET /emails/{id}` (status, reason, events, rendered subject/html/text
-until purged), `GET /emails` (filter by status, kind, campaign, recipient; cursor paging). Permissions `email:email:send`
-and `email:email:read`.
+until purged), `GET /emails` (filter by status, kind, campaign, recipient; cursor paging). Permissions `mailroom:email:send`
+and `mailroom:email:read`.
 
 ## Files to create
 
-- `email/contexts/sending/src/{domain,application,adapter}/...` (email aggregate, send and batch use cases, result handler,
+- `mailroom/contexts/sending/src/{domain,application,adapter}/...` (email aggregate, send and batch use cases, result handler,
   outbox publisher adapter, jOOQ repositories, controllers)
-- `email/apps/app-boot/src/main/resources/db/migration/V4__emails.sql`; `contracts/openapi/email.yaml` (emails)
-- Tests under `email/apps/app-boot/src/test/java/dev/ngb/email/sending/`
+- `mailroom/apps/app-boot/src/main/resources/db/migration/V4__emails.sql`; `contracts/openapi/mailroom.yaml` (emails)
+- Tests under `mailroom/apps/app-boot/src/test/java/dev/ngb/mailroom/sending/`
 
 ## Verification
 

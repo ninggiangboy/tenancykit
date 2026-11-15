@@ -46,19 +46,19 @@ sends a partial body. Link rewriting for tracking (phase 8) runs **after** rende
 
 ## Files to create
 
-- `email/contexts/content/src/domain/.../template/{Template,TemplateRevision,TemplateKey}.java`
-- `email/contexts/content/src/application/.../template/{command,query,port,service}/*` (create, update, delete, get, list, preview)
-- `email/contexts/content/src/application/.../render/{TemplateRenderer,RenderLimits,TemplatePolicy}.java` (ports and policy)
-- `email/contexts/content/src/adapter/.../render/{JmustacheTemplateRenderer,LimitedModel,CountingWriter}.java`
-- `email/contexts/content/src/adapter/.../persistence/Jooq*Repository.java`; web controllers and `api` port `RenderTemplate`
-- `email/apps/app-boot/src/main/resources/db/migration/V2__templates.sql`; `contracts/openapi/email.yaml` (templates)
-- Tests under `email/apps/app-boot/src/test/java/dev/ngb/email/content/`
+- `mailroom/contexts/content/src/domain/.../template/{Template,TemplateRevision,TemplateKey}.java`
+- `mailroom/contexts/content/src/application/.../template/{command,query,port,service}/*` (create, update, delete, get, list, preview)
+- `mailroom/contexts/content/src/application/.../render/{TemplateRenderer,RenderLimits,TemplatePolicy}.java` (ports and policy)
+- `mailroom/contexts/content/src/adapter/.../render/{JmustacheTemplateRenderer,LimitedModel,CountingWriter}.java`
+- `mailroom/contexts/content/src/adapter/.../persistence/Jooq*Repository.java`; web controllers and `api` port `RenderTemplate`
+- `mailroom/apps/app-boot/src/main/resources/db/migration/V2__templates.sql`; `contracts/openapi/mailroom.yaml` (templates)
+- Tests under `mailroom/apps/app-boot/src/test/java/dev/ngb/mailroom/content/`
 
-## Endpoints (prefix `/email/api/v1`)
+## Endpoints (prefix `/mailroom/api/v1`)
 
 `POST /templates`, `GET /templates`, `GET /templates/{id}`, `PUT /templates/{id}` (new revision, `If-Match`),
 `DELETE /templates/{id}`, `GET /templates/{id}/revisions`, `POST /templates/{id}/preview` (variables in, rendered parts
-out, same limits as sending). Permissions `email:template:read|manage`.
+out, same limits as sending). Permissions `mailroom:template:read|manage`.
 
 ## Verification
 
@@ -69,8 +69,8 @@ out, same limits as sending). Permissions `email:template:read|manage`.
 - Property test: random depth/size inputs never exceed the output cap and never hang.
 - Behavioural tests: sections and `{{#items}}` loops over supplied data, inverted sections over supplied empty values, a
   misspelled variable fails, a missing `receiver.*` attribute fails, and the failure names the variable.
-- RLS test for both tables; contract test that every endpoint exists in `contracts/openapi/email.yaml` and every permission
-  in `contracts/permissions/email.yaml`.
+- RLS test for both tables; contract test that every endpoint exists in `contracts/openapi/mailroom.yaml` and every permission
+  in `contracts/permissions/mailroom.yaml`.
 
 ## Risks
 
