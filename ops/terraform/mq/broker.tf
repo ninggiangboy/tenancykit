@@ -16,7 +16,7 @@ resource "aws_mq_broker" "this" {
   }
 
   # Amazon MQ takes users on the broker itself (there is no separate user resource). The broker ends up with the same
-  # two service users as compose; their resource permissions are applied by the one-shot task in users.tf.
+  # three service users as compose; their resource permissions are applied by the one-shot task in users.tf.
   user {
     username = "platform"
     password = var.platform_password
@@ -25,5 +25,12 @@ resource "aws_mq_broker" "this" {
   user {
     username = "billing"
     password = var.billing_password
+  }
+
+  # Mailer consumes commands and publishes nothing; the one-shot task scopes this user to mailer.commands, its
+  # dead-letter queue and the suite's dead-letter exchange.
+  user {
+    username = "mailer"
+    password = var.mailer_password
   }
 }

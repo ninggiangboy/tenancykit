@@ -1,7 +1,7 @@
-# Three repositories back four workloads: Platform, Billing (shared by migrate, api and worker) and the Keycloak image
-# that bakes the realm export.
+# Four repositories back seven workloads: Platform, Billing (shared by migrate, api and worker), Mailer (shared by the
+# worker and the one-shot migrate) and the Keycloak image that bakes the realm export.
 resource "aws_ecr_repository" "this" {
-  for_each = toset(["platform", "billing", "keycloak"])
+  for_each = toset(["platform", "billing", "keycloak", "mailer"])
 
   name                 = "${var.suite_name}/${var.environment}/${each.key}"
   image_tag_mutability = "MUTABLE"

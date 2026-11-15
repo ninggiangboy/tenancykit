@@ -1,9 +1,9 @@
 name: deploy
 
-# Builds the three images, applies the Terraform stack, runs Billing's Flyway migrate to completion, and only then
-# rolls the services onto the new revision. Gated on repository variables so an unconfigured fork skips it:
+# Builds the four images, applies the Terraform stack, runs Billing's and Mailer's Flyway migrate to completion, and only
+# then rolls the services onto the new revision. Gated on repository variables so an unconfigured fork skips it:
 #
-#   AWS_ROLE_ARN   OIDC role with ECS, ECR, RDS, MQ, IAM, EC2 and Secrets Manager permissions
+#   AWS_ROLE_ARN   OIDC role with ECS, ECR, RDS, MQ, IAM, EC2, SES and Secrets Manager permissions
 #   AWS_REGION     e.g. us-west-2
 #   PUBLIC_DOMAIN  e.g. billing.example.com
 #
@@ -72,6 +72,7 @@ jobs:
           platform_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .platform)"
           billing_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .billing)"
           keycloak_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .keycloak)"
+          mailer_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .mailer)"
 
           docker build -f platform/apps/app-boot/Dockerfile -t "${platform_repo}:${TAG}" .
           docker push "${platform_repo}:${TAG}"
@@ -81,6 +82,9 @@ jobs:
 
           docker build -f ops/terraform/keycloak/Dockerfile -t "${keycloak_repo}:${TAG}" .
           docker push "${keycloak_repo}:${TAG}"
+
+          docker build -f mailer/apps/app-boot/Dockerfile -t "${mailer_repo}:${TAG}" .
+          docker push "${mailer_repo}:${TAG}"
 
       - name: Bootstrap the database and broker (first deploy only)
         if: ${{ inputs.bootstrap_data }}
@@ -136,6 +140,29 @@ jobs:
             exit 1
           fi
 
+      - name: Migrate Mailer
+        run: |
+          set -euo pipefail
+          cluster="$(terraform output -raw cluster_name)"
+          subnets="$(terraform output -json private_subnet_ids | jq -r 'join(",")')"
+          security_group="$(terraform output -raw task_security_group_id)"
+          definition="$(terraform output -json task_definition_arns | jq -r .mailer_migrate)"
+
+          task="$(aws ecs run-task \
+            --cluster "$cluster" \
+            --task-definition "$definition" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$subnets],securityGroups=[$security_group],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' --output text)"
+          aws ecs wait tasks-stopped --cluster "$cluster" --tasks "$task"
+          exit_code="$(aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+            --query 'tasks[0].containers[0].exitCode' --output text)"
+          if [ "$exit_code" != "0" ]; then
+            aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+              --query 'tasks[0].containers[0].reason' --output text
+            exit 1
+          fi
+
       # The services are pinned to the previous revision by `ignore_changes = [task_definition]`, so the update is
       # explicit and ordered after migrate.
       - name: Roll the services
@@ -156,3 +183,4 @@ jobs:
           roll platform platform
           roll billing_api billing_api
           roll billing_worker billing_worker
+          roll mailer mailer

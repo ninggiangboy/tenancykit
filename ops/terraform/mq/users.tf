@@ -12,7 +12,7 @@ locals {
 
 # Amazon MQ for RabbitMQ accepts users on the broker, but it has no per-user resource permissions: the exchange and
 # queue limits that ops/rabbitmq/declare-users.sh sets have no equivalent in the broker resource. The script runs as a
-# one-shot task against the management API after the broker exists, so the broker ends up with the same two scoped
+# one-shot task against the management API after the broker exists, so the broker ends up with the same three scoped
 # users as the compose stack. The broker's `user` blocks only guarantee the users exist with the right passwords.
 resource "aws_ecs_task_definition" "users" {
   family                   = "${var.environment}-mq-users"
@@ -39,6 +39,7 @@ resource "aws_ecs_task_definition" "users" {
         { name = "ADMIN_PASSWORD", valueFrom = var.secret_arns["MQ_ADMIN_PASSWORD"] },
         { name = "PLATFORM_BROKER_PASSWORD", valueFrom = var.secret_arns["PLATFORM_RABBITMQ_PASSWORD"] },
         { name = "BILLING_BROKER_PASSWORD", valueFrom = var.secret_arns["BILLING_RABBITMQ_PASSWORD"] },
+        { name = "MAILER_BROKER_PASSWORD", valueFrom = var.secret_arns["MAILER_RABBITMQ_PASSWORD"] },
       ]
 
       logConfiguration = {

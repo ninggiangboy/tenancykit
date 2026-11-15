@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Email Command Contract"
-status: pending
+status: completed
 priority: P1
 effort: "S"
 dependencies: []
@@ -92,12 +92,12 @@ at decode time, because the schema protects the wire and the value object protec
 
 ## Todo
 
-- [ ] `contracts/commands/README.md` with the command-ownership and trust-boundary rules
-- [ ] `contracts/commands/email.send.schema.json` with limits, `additionalProperties: false`, header-injection patterns, `anyOf` html/text
-- [ ] `contracts/messaging/README.md` command section
-- [ ] `docs/suite-messaging.md:8-16` topology row for `mailer.commands` + DLQ
-- [ ] `contracts/README.md` gains `commands/`
-- [ ] `jq` verification passes
+- [x] `contracts/commands/README.md` with the command-ownership and trust-boundary rules
+- [x] `contracts/commands/email.send.schema.json` with limits, `additionalProperties: false`, header-injection patterns, `anyOf` html/text
+- [x] `contracts/messaging/README.md` command section
+- [x] `docs/suite-messaging.md:8-16` topology row for `mailer.commands` + DLQ
+- [x] `contracts/README.md` gains `commands/`
+- [x] `jq` verification passes
 
 ## Verification
 

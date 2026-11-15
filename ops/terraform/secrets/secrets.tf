@@ -19,6 +19,10 @@ locals {
     "SMOKE_CLIENT_SECRET",
     "BILLING_REPLICA_CLIENT_SECRET",
     "BILLING_SECRETS_MASTER_KEY",
+    "MAILER_MIGRATION_DB_PASSWORD",
+    "MAILER_DB_PASSWORD",
+    "MAILER_RABBITMQ_PASSWORD",
+    "MAILER_SECRETS_MASTER_KEY",
   ])
 
   derived_secrets = toset([
@@ -38,6 +42,8 @@ locals {
       PLATFORM_SERVICE_CLIENT_SECRET_HASH = sha256(random_password.this["BILLING_REPLICA_CLIENT_SECRET"].result)
       # base64 of 32 bytes, which is what Billing's AES-256 master key expects.
       BILLING_SECRETS_MASTER_KEY = base64encode(random_password.this["BILLING_SECRETS_MASTER_KEY"].result)
+      # Same encoding, same reason: Mailer's AesGcmSecretCipher refuses a key that does not decode to exactly 32 bytes.
+      MAILER_SECRETS_MASTER_KEY = base64encode(random_password.this["MAILER_SECRETS_MASTER_KEY"].result)
     }
   )
 }

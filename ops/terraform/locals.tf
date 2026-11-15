@@ -25,12 +25,20 @@ locals {
 
   billing_public_url = "${local.public_scheme}://${var.public_domain}"
 
+  # An SES identity exists per account and per region, so the suite's own identity follows the deployment region unless
+  # a tfvars file pins another one. Its ownership check is a DKIM record set this repository cannot publish: there is no
+  # Route53 zone, so an operator adds the three CNAMEs by hand (see README.md).
+  ses_region       = var.ses_region == "" ? var.region : var.ses_region
+  ses_from_address = "noreply@${var.ses_domain}"
+
   log_group_names = {
     keycloak        = "/ecs/${var.environment}/keycloak"
     platform        = "/ecs/${var.environment}/platform"
     billing_api     = "/ecs/${var.environment}/billing-api"
     billing_worker  = "/ecs/${var.environment}/billing-worker"
     billing_migrate = "/ecs/${var.environment}/billing-migrate"
+    mailer          = "/ecs/${var.environment}/mailer"
+    mailer_migrate  = "/ecs/${var.environment}/mailer-migrate"
     rds_init        = "/ecs/${var.environment}/rds-init"
     mq_users        = "/ecs/${var.environment}/mq-users"
   }

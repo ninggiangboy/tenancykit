@@ -1,7 +1,7 @@
 # ECS Fargate deployment
 
 The AWS path for the suite. `docker compose` remains the local path and is unchanged; this directory describes the
-same four workloads on ECS Fargate, with managed data services instead of containers.
+same workloads on ECS Fargate, with managed data services instead of containers.
 
 | Workload | Runs | ECS shape |
 |---|---|---|
@@ -10,11 +10,52 @@ same four workloads on ECS Fargate, with managed data services instead of contai
 | `billing` (`api`) | HTTP, portal and Stripe webhooks | Service, 2 replicas, the ALB's default target |
 | `billing-worker` | Every Billing job | Service, 2 replicas, no ALB target |
 | `billing-migrate` | Flyway as the table owner, then exits | One-shot task definition, run by the pipeline |
+| `mailer` | The `email.send` command listener and every mailer job | Service, 2 replicas, no ALB target and no Service Connect |
+| `mailer-migrate` | Flyway as the table owner, then exits | One-shot task definition, run by the pipeline |
 | `rds-init` | Creates databases and roles, then exits | One-shot task definition, run once |
 | `mq-users` | Applies broker permissions, then exits | One-shot task definition, run once |
 
-RDS hosts `platform`, `billing`, `tenant` and `keycloak` databases with the same owner/app role split as compose.
-Amazon MQ hosts the RabbitMQ broker. Both are private; tasks reach them through their security group.
+RDS hosts `platform`, `billing`, `tenant`, `mailer` and `keycloak` databases with the same owner/app role split as
+compose. Amazon MQ hosts the RabbitMQ broker with a user per service, and mailer's is limited to `mailer.commands`, its
+dead-letter queue and `suite.dlx`. Both are private; tasks reach them through their security group.
+
+## IAM
+
+Every task except mailer's uses the shared execution role `${name_prefix}-task-execution`: it pulls images, writes logs
+and injects container secrets. Its `read-suite-secrets` policy allows `secretsmanager:GetSecretValue` on every secret in
+the map **except** `MAILER_SECRETS_MASTER_KEY`, the one value that decrypts every tenant credential — so Keycloak,
+Platform, Billing, rds-init and mq-users can no longer read it. The other three mailer secrets stay in that set on
+purpose: `rds-init` and `mq-users` inject them to create the mailer database roles, the database and the broker user, and
+excluding them would fail both tasks at start.
+
+Mailer's container secrets are injected by its own execution role (`<environment>-mailer-task-execution`), which reads
+exactly the four mailer secrets. ECS resolves a container's `secrets` with the execution role, so splitting the read
+policy per module is what makes the narrowing above work instead of failing every mailer task with a
+`ResourceInitializationError`.
+
+Mailer is the only workload that calls an AWS API, so it is the only one with a task role (`${name_prefix}-task`),
+threaded into the mailer module alone and never attached to the shared execution role:
+
+| Policy | Allows | Bounded by |
+|---|---|---|
+| `task_ses` | `ses:SendEmail` on the suite identity ARN, `ses:GetAccount` on `*` (GetAccount takes no resource) | `ses:FromAddress` must equal the configured from address |
+| `task_assume` | `sts:AssumeRole` on one `mailer-*` role per registered tenant account | `sts:ExternalId` must be present and `aws:PrincipalArn` must be the task role; the *value* check lives in the tenant's trust policy |
+
+`StringLike` on `sts:ExternalId = "mailer-*"` is a presence check, not a value check. `var.tenant_aws_account_ids` is
+the load-bearing part: one resource ARN pattern per account ops has registered in `mailer_credentials`, never
+`arn:aws:iam::*:role/*`. The IAM action prefix is `ses:` for both SES API generations; `sesv2:` is the SDK and ARN name
+and is never an action prefix.
+
+## SES
+
+`ses_domain` and `ses_region` (empty follows `region`) describe the suite's sending identity, created as
+`aws_sesv2_email_identity` in the `aws.ses` provider, and mailer reads both back as `MAILER_DEFAULT_FROM_ADDRESS` and
+`MAILER_SES_REGION`. The identity is created **without a Route53 zone**: Terraform returns three DKIM tokens and an
+operator publishes the three CNAMEs by hand where the domain's DNS lives, exactly as the ALB's DNS records are published
+by hand. Until they resolve, the identity stays `Pending` and a SHARED-mode send is rejected. Production access is a
+separate account-level request, so a new account stays in the SES sandbox and can only send to verified addresses. A
+tenant that sends through its own identity is unaffected: it brings its own identity, region and sandbox state, which is
+what `docs/mailer-tenant-onboarding.md` describes.
 
 ## Addresses
 
@@ -73,6 +114,9 @@ service_connect_namespace = "tenancykit.local"
 certificate_arn           = "" # an ACM ARN enables the HTTPS listener
 image_tag                 = "2026-11-14"
 platform_admin_email      = "admin@billing.example.com"
+ses_domain                = "mail.example.com"
+ses_region                = "us-west-2" # empty follows `region`
+tenant_aws_account_ids    = ["111122223333"]
 ```
 
 `platform_admin_email` creates the first Platform administrator through Keycloak on start; leave it empty to skip the
@@ -112,6 +156,11 @@ docker push "$billing_repo:$tag"
 keycloak_repo="$(terraform output -json ecr_repository_urls | jq -r .keycloak)"
 docker build -f keycloak/Dockerfile -t "$keycloak_repo:$tag" ../..
 docker push "$keycloak_repo:$tag"
+
+# mailer (shared by migrate and worker)
+mailer_repo="$(terraform output -json ecr_repository_urls | jq -r .mailer)"
+docker build -f ../../mailer/apps/app-boot/Dockerfile -t "$mailer_repo:$tag" ../..
+docker push "$mailer_repo:$tag"
 ```
 
 Run the two one-shot initializers exactly once, before any service starts:
@@ -140,8 +189,9 @@ Then run the migrate task and roll the services. The deploy workflow does this i
 
 ```bash
 run_once billing_migrate
+run_once mailer_migrate
 
-for key in keycloak platform billing_api billing_worker; do
+for key in keycloak platform billing_api billing_worker mailer; do
   definition="$(terraform output -json task_definition_arns | jq -r --arg key "$key" '.[$key]')"
   service="$(terraform output -json service_names | jq -r --arg key "$key" '.[$key]')"
   aws ecs update-service --cluster "$cluster" --service "$service" \
@@ -149,9 +199,9 @@ for key in keycloak platform billing_api billing_worker; do
 done
 ```
 
-`billing-migrate` is a task definition, not a service: ECS has no `depends_on: service_completed_successfully`. The
-api and worker services deliberately ignore task-definition changes in Terraform, so they only move after migrate
-has exited 0.
+`billing-migrate` and `mailer-migrate` are task definitions, not services: ECS has no
+`depends_on: service_completed_successfully`. The api, worker and mailer services deliberately ignore task-definition
+changes in Terraform, so they only move after their migrate has exited 0.
 
 Point DNS at `terraform output -raw alb_dns_name`: the apex or tenant wildcard at Billing, `platform.<domain>` at
 Platform, `auth.<domain>` at Keycloak.
@@ -161,8 +211,8 @@ Platform, `auth.<domain>` at Keycloak.
 `terraform.yml` runs `fmt -check`, `init -backend=false` and `validate` on every change under `ops/terraform/`, and
 `plan` when the repository variable `AWS_ROLE_ARN` is set.
 
-`deploy.yml` builds the three images, applies the stack, optionally bootstraps the data services, runs migrate, and
-rolls the services. It needs `AWS_ROLE_ARN`, `AWS_REGION`, `PUBLIC_DOMAIN`, the optional
+`deploy.yml` builds the four images, applies the stack, optionally bootstraps the data services, runs Billing's and
+Mailer's migrate, and rolls the services. It needs `AWS_ROLE_ARN`, `AWS_REGION`, `PUBLIC_DOMAIN`, the optional
 `SERVICE_CONNECT_NAMESPACE` / `CERTIFICATE_ARN` variables, and shared state.
 
 ## Verification and known gaps
@@ -206,4 +256,7 @@ Known gaps, recorded rather than hidden:
   unaffected.
 - **Amazon MQ permissions.** The broker has users but no per-user exchange/queue permissions; `mq-users` applies them
   through the management API. Its exit code is the proof; it needs the sandbox.
+- **SES.** The identity is created without a Route53 zone, so its three DKIM CNAMEs are published by hand and it stays
+  `Pending` until a send is attempted; the account also stays in the SES sandbox until production access is granted.
+  Proving a send works means the mailbox simulator, not a real recipient.
 - **One NAT gateway.** Development only; production adds one per zone.

@@ -71,6 +71,12 @@ variable "billing_password" {
   sensitive   = true
 }
 
+variable "mailer_password" {
+  description = "Password of the mailer broker user."
+  type        = string
+  sensitive   = true
+}
+
 variable "secret_arns" {
   description = "Secret ARNs the broker-users task injects."
   type        = map(string)

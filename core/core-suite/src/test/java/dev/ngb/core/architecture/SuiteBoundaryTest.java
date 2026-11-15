@@ -17,14 +17,15 @@ class SuiteBoundaryTest {
     static final ArchRule suiteDoesNotDependOnAService = noClasses()
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("dev.ngb.billing..", "dev.ngb.tenant..", "dev.ngb.platform..")
+            .resideInAnyPackage("dev.ngb.billing..", "dev.ngb.tenant..", "dev.ngb.platform..", "dev.ngb.mailer..")
             .because("core-suite is shared by every service, so no service may leak into it");
 
     @ArchTest
     static final ArchRule suiteDoesNotUseGeneratedSchema = noClasses()
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("dev.ngb.billing_jooq..", "dev.ngb.platform_jooq..", "dev.ngb.tenant_jooq..")
+            .resideInAnyPackage("dev.ngb.billing_jooq..", "dev.ngb.platform_jooq..", "dev.ngb.tenant_jooq..",
+                    "dev.ngb.mailer_jooq..")
             .because("the replica tables belong to the app's schema, so the policy reads them with plain SQL");
 
     @ArchTest

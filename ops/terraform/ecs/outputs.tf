@@ -10,6 +10,10 @@ output "execution_role_arn" {
   value = aws_iam_role.execution.arn
 }
 
+output "task_role_arn" {
+  value = aws_iam_role.task.arn
+}
+
 output "ecr_repository_urls" {
   value = { for name, repository in aws_ecr_repository.this : name => repository.repository_url }
 }

@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "SES Adapter and Shared Mode"
-status: pending
+status: completed
 priority: P1
 effort: "M"
 dependencies: [7]
@@ -117,19 +117,19 @@ Error translation, driven by the HTTP status and the error code rather than the 
 
 ## Todo
 
-- [ ] AWS SDK BOM + `sesv2` as `adapterImplementation` only
-- [ ] `SesClientFactory` caching per `(region, provider)`, closed on shutdown
-- [ ] `SesErrorTranslator` keyed on status code and error code, including 403 on the base exception type
-- [ ] `SesV2EmailSender` with `RetryStrategy.none()` and explicit charset
-- [ ] `SenderResolver` port + `ConfiguredSenderResolver` with the tenant predicate
-- [ ] `replyTo` allowlist enforced in the resolver
-- [ ] Sender selected by `mailer.sender`
-- [ ] `SesErrorTranslationTest` covering every row of the mapping table
-- [ ] `SesWireContractTest` (WireMock/MockWebServer) driving 429 / 403 / MessageRejected / 500 against the real adapter
-- [ ] `SesEmulatorSmokeTest` (tagged, skipped by default) against AWS Emulator via `endpointOverride`; a 501 is reported as "not covered", not a failure
-- [ ] `EMULATOR_TELEMETRY=off` set in CI and local scripts; self-signed HTTPS certificate trusted by the test client
-- [ ] `mailer.ses.endpoint-override` property threaded into `SesClientFactory`
-- [ ] Dependency grep proves no `com.fasterxml.jackson.core` on the classpath
+- [x] AWS SDK BOM + `sesv2` as `adapterImplementation` only
+- [x] `SesClientFactory` caching per `(region, provider)`, closed on shutdown
+- [x] `SesErrorTranslator` keyed on status code and error code, including 403 on the base exception type
+- [x] `SesV2EmailSender` with `RetryStrategy.none()` and explicit charset
+- [x] `SenderResolver` port + `ConfiguredSenderResolver` with the tenant predicate
+- [x] `replyTo` allowlist enforced in the resolver
+- [x] Sender selected by `mailer.sender`
+- [x] `SesErrorTranslationTest` covering every row of the mapping table
+- [x] `SesWireContractTest` (WireMock/MockWebServer) driving 429 / 403 / MessageRejected / 500 against the real adapter
+- [x] `SesEmulatorSmokeTest` (tagged, skipped by default) against AWS Emulator via `endpointOverride`; a 501 is reported as "not covered", not a failure
+- [x] `EMULATOR_TELEMETRY=off` set in CI and local scripts; self-signed HTTPS certificate trusted by the test client
+- [x] `mailer.ses.endpoint-override` property threaded into `SesClientFactory`
+- [x] Dependency grep proves no `com.fasterxml.jackson.core` on the classpath
 
 ## Verification
 

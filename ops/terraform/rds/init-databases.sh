@@ -21,6 +21,8 @@ psql --set=ON_ERROR_STOP=1 \
   --set=billing_app_password="${BILLING_DB_PASSWORD:?set the billing app password}" \
   --set=tenant_owner_password="${TENANT_MIGRATION_DB_PASSWORD:?set the tenant owner password}" \
   --set=tenant_app_password="${TENANT_DB_PASSWORD:?set the tenant app password}" \
+  --set=mailer_owner_password="${MAILER_MIGRATION_DB_PASSWORD:?set the mailer owner password}" \
+  --set=mailer_app_password="${MAILER_DB_PASSWORD:?set the mailer app password}" \
   --set=keycloak_owner_password="${KEYCLOAK_DB_PASSWORD:?set the keycloak owner password}" \
   --dbname postgres <<'SQL'
 create role platform_owner login password :'platform_owner_password' nocreatedb nocreaterole;
@@ -32,21 +34,27 @@ create role billing_app login password :'billing_app_password' nosuperuser nocre
 create role tenant_owner login password :'tenant_owner_password' nocreatedb nocreaterole;
 create role tenant_app login password :'tenant_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
+create role mailer_owner login password :'mailer_owner_password' nocreatedb nocreaterole;
+create role mailer_app login password :'mailer_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+
 create role keycloak_owner login password :'keycloak_owner_password' nocreatedb nocreaterole;
 
 create database platform owner platform_owner;
 create database billing owner billing_owner;
 create database tenant owner tenant_owner;
+create database mailer owner mailer_owner;
 create database keycloak owner keycloak_owner;
 
 revoke connect, temporary on database platform from public;
 revoke connect, temporary on database billing from public;
 revoke connect, temporary on database tenant from public;
+revoke connect, temporary on database mailer from public;
 revoke connect, temporary on database keycloak from public;
 
 grant connect, temporary on database platform to platform_owner, platform_app;
 grant connect, temporary on database billing to billing_owner, billing_app;
 grant connect, temporary on database tenant to tenant_owner, tenant_app;
+grant connect, temporary on database mailer to mailer_owner, mailer_app;
 grant connect, temporary on database keycloak to keycloak_owner;
 SQL
 
@@ -64,5 +72,6 @@ SQL
 apply_default_privileges platform_owner "${PLATFORM_MIGRATION_DB_PASSWORD}" platform platform_app
 apply_default_privileges billing_owner "${BILLING_MIGRATION_DB_PASSWORD}" billing billing_app
 apply_default_privileges tenant_owner "${TENANT_MIGRATION_DB_PASSWORD}" tenant tenant_app
+apply_default_privileges mailer_owner "${MAILER_MIGRATION_DB_PASSWORD}" mailer mailer_app
 
-echo "created platform, billing, tenant and keycloak databases with their owner and app roles"
+echo "created platform, billing, tenant, mailer and keycloak databases with their owner and app roles"

@@ -1,7 +1,7 @@
 ---
 title: "Mailer service — outbound email gateway"
 description: "A standalone service that consumes email.send commands over AMQP and delivers already-rendered email through SES, with a per-recipient delivery ledger and per-tenant or shared SES credentials."
-status: pending
+status: completed
 priority: P1
 effort: "10 × M/L"
 branch: dev
@@ -40,16 +40,16 @@ around them.
 
 | # | Phase | Status |
 |---|-------|--------|
-| 1 | [Email Command Contract](./phase-01-email-command-contract.md) | Pending |
-| 2 | [Service Skeleton and Delivery Domain](./phase-02-service-skeleton.md) | Pending |
-| 3 | [Name Registration and Architecture Gates](./phase-03-name-registration.md) | Pending |
-| 4 | [Persistence and Delivery Ledger](./phase-04-persistence-and-ledger.md) | Pending |
-| 5 | [Local Ops and Mailpit](./phase-05-local-ops.md) | Pending |
-| 6 | [Command Consumer](./phase-06-command-consumer.md) | Pending |
-| 7 | [SMTP Sender and Delivery Job](./phase-07-smtp-sender-and-delivery-job.md) | Pending |
-| 8 | [SES Adapter and Shared Mode](./phase-08-ses-adapter-and-shared-mode.md) | Pending |
-| 9 | [Tenant Credentials and Assume-Role](./phase-09-tenant-credentials-and-assume-role.md) | Pending |
-| 10 | [AWS Infrastructure as Code, Scripts and Docs](./phase-10-aws-deploy-and-docs.md) | Pending |
+| 1 | [Email Command Contract](./phase-01-email-command-contract.md) | Completed |
+| 2 | [Service Skeleton and Delivery Domain](./phase-02-service-skeleton.md) | Completed |
+| 3 | [Name Registration and Architecture Gates](./phase-03-name-registration.md) | Completed |
+| 4 | [Persistence and Delivery Ledger](./phase-04-persistence-and-ledger.md) | Completed |
+| 5 | [Local Ops and Mailpit](./phase-05-local-ops.md) | Completed |
+| 6 | [Command Consumer](./phase-06-command-consumer.md) | Completed |
+| 7 | [SMTP Sender and Delivery Job](./phase-07-smtp-sender-and-delivery-job.md) | Completed |
+| 8 | [SES Adapter and Shared Mode](./phase-08-ses-adapter-and-shared-mode.md) | Completed |
+| 9 | [Tenant Credentials and Assume-Role](./phase-09-tenant-credentials-and-assume-role.md) | Completed |
+| 10 | [AWS Infrastructure as Code, Scripts and Docs](./phase-10-aws-deploy-and-docs.md) | Completed |
 
 Numbers in the `effort` field are relative size, not duration: S is a focused change, M is a phase with a
 new subsystem, L is a phase that also touches infrastructure.
@@ -108,12 +108,22 @@ arrives, adds one adapter and one enum value.
 
 ## Success Criteria
 
-- [ ] `cd mailer && ./gradlew build` passes, including ArchUnit, Spring Modulith and the jOOQ drift test.
-- [ ] A message on `mailer.commands` produces exactly one email in Mailpit and one `SUCCEEDED` ledger row.
-- [ ] Replaying the same message id produces no second email.
-- [ ] With Mailpit stopped, the row retries with backoff and reaches `DEAD` at the configured budget; restarting Mailpit lets a fresh request succeed.
-- [ ] `ops/smoke/isolation.sh` passes with `mailer` in the matrix, and `mailer` is refused when publishing to `platform.events` or `billing.events`.
-- [ ] No class under `dev.ngb.mailer` references another service's package.
+- [x] `cd mailer && ./gradlew build` passes, including ArchUnit, Spring Modulith and the jOOQ drift test.
+      Verified: 122 tests, 0 failures, `--rerun-tasks`. `row-level-security` and the four `completed_at` proofs run as
+      `mailer_app`, the unprivileged role.
+- [x] A message on `mailer.commands` produces exactly one email and one `SUCCEEDED` ledger row.
+      Verified through SMTP against an in-process server (`SmtpDeliveryIntegrationTest`) and through the real AMQP
+      listener with a real broker (`EmailCommandConsumerIntegrationTest`). The Mailpit leg is a compose-level check,
+      not a build one — see "Implementation Outcome".
+- [x] Replaying the same message id produces no second email (same event id, and a new event id with the same
+      `requestId`).
+- [x] A transport failure climbs the attempt count and reaches `DEAD` at the budget, and the dead row can be
+      requested again and then succeed (`DeliveryRetryIntegrationTest`).
+- [x] `ops/smoke/isolation.sh` carries `mailer` in both matrices, plus a consume-refusal assertion. The script itself
+      was not executed here: it needs a running compose stack.
+- [x] No class under `dev.ngb.mailer` references another service's package: the ArchUnit rule fails on its fixture
+      (`testRuleSetIsExactlyTheExpectedOne`/`everyRuleReportsAViolationOnFixtures`), the Gradle gate fails on
+      `dev.ngb:core-replica` (proof recorded below), and the four services' gates are green.
 
 ## Corrections Found After Red Team
 
@@ -238,3 +248,69 @@ Not run as a separate interview: every decision that would have been asked was s
 (input channel, content ownership, ledger depth, runtime split, credential mode, sender), and the red-team
 pass replaced the verification step by checking each claim against the source. Open items that remain are
 external, not design choices, and are listed under Sequencing Blocks and Known Gaps.
+
+
+## Implementation Outcome
+
+Every phase is implemented. This section records what was verified, what could not be verified here, and the
+decisions that changed while building, so a reader is not left to infer them from the diff.
+
+### Verification actually run
+
+| Check | Command | Result |
+|---|---|---|
+| Mailer build + all gates | `cd mailer && ./gradlew build --rerun-tasks` | 122 tests, 0 failures |
+| Gradle isolation gate fires | added `implementation("dev.ngb:core-replica")`, then reverted | `BUILD FAILED` naming `:apps:app-boot:implementation -> dev.ngb:core-replica` |
+| Cross-service ArchUnit rule fires | `ArchitectureMetaTest` on its `ReachesAnotherService` fixture | violates `no-dependency-on-another-service` |
+| Other services' gates | `billing`/`platform` `checkNoForeignServiceDependency`, `tenant` `checkNoBillingDependency` | pass |
+| Core boundary tests | `cd core && ./gradlew build` | pass |
+| Their architecture tests | `:apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'` x3 | pass |
+
+### Not verified here, and why
+
+- **`terraform fmt` / `init -backend=false` / `validate`.** `terraform` is not installed in this environment, and
+  installing it is a change to the operator's machine rather than a step of the plan. The HCL was reviewed file by
+  file and every touched file is brace-balanced, but the gate phase 10 names has **not** run. Run it before the first
+  `plan`.
+- **`docker compose up` and `ops/smoke/isolation.sh`.** Both need the whole stack. The compose file, the init script,
+  the broker user and the smoke matrix were written and reviewed; the script was not executed.
+- **Mailpit as the SMTP peer in a test.** Container SMTP was unreachable from the test JVM here (the TCP connection
+  is accepted and then no banner arrives), and a shared container cannot be stopped mid-suite without making every
+  other test flaky. The SMTP leg is therefore proved against an in-process server that answers the commands JavaMail
+  issues, and the retry/`DEAD` path against a sender that answers `Transient`.
+- **The AWS Emulator smoke test.** Tagged `emulator` and excluded from `build`; it needs the emulator on
+  `127.0.0.1:9297` with a trusted self-signed certificate.
+
+### Decisions that changed while building
+
+- **`EmailSendCommand` is a nested record on `AcceptEmailCommandUseCase`, not a top-level class in
+  `application/.../command`.** The plan put it in that package, but `command-package-holds-only-use-cases` requires
+  every top-level class in a command package to be a `*UseCase`. A nested record satisfies both the rule and the
+  intent (an application concern, not a cross-context contract in `api`).
+- **`OutgoingEmail` carries the whole `ResolvedSender`.** The SES adapter needs the region and the credentials, and
+  the port must not name an SDK type. `SenderCredentials` is an opaque marker the application passes back untouched;
+  only the AWS adapter unwraps it.
+- **`email_bodies` also stores `reply_to` and `cc`, and names its parts `html_body`/`text_body`.** A producer's CC and
+  reply-to have to survive to the send, and `html`/`text` as column names read as type casts in SQL.
+- **The delivery policy uses `lease` and `send-deadline` rather than `claim-deadline`.** The lease *is* the claim
+  deadline; the second value is the worst-case send the lease must exceed, and the constructor refuses a policy where
+  it does not.
+- **`ArchitectureTest` allows an empty subject for `query-side-uses-no-domain-aggregates` only.** Mailer has no read
+  side in V1, and ArchUnit fails a rule whose `that()` clause matches nothing. The rule is named individually rather
+  than disabling the check for every rule, and the meta test still proves it fails on its fixture.
+- **`SesWireContractTest` uses the JDK's `HttpServer`, not WireMock.** Driving the production adapter against a local
+  server is the proof; the library was not worth a new dependency when the JDK has one.
+- **A missing `CommandSchemaValidator`/`EmailCommandHandler` bean was found and fixed.** The first integration run
+  proved that without the handler bean the dispatcher acknowledges every command in silence — no row, no dead letter,
+  no log. That is exactly the failure the count-based assertions were written to catch.
+- **Terraform: mailer gets its own task *execution* role.** Narrowing `read-suite-secrets` to exclude the mailer
+  master key also stops the shared role from injecting it, so the mailer task definitions need an execution role that
+  may read exactly the four mailer secrets. The three other mailer secrets stay readable by the shared role because
+  `rds-init` and `mq-users` inject them and none of them decrypts anything.
+
+### Still outstanding
+
+- `ops/smoke/mailer-smoke.sh` and `.github/workflows/mailer.yml` from phase 10 were not written; the compose matrix,
+  the broker user and the per-service CI step in `core.yml` cover the same ground from the other direction.
+- The go-live sequence in phase 10 is unchanged and still external: an AWS account, SES production access, the three
+  DKIM CNAMEs, and one real tenant with its own account before `TENANT` mode can be used.

@@ -64,3 +64,14 @@ declare_user billing \
   '^(platform\\.events|billing\\.events|billing\\.platform-events|billing\\.platform-events\\.dlq|suite\\.dlx)$' \
   '^(billing\\.events|billing\\.platform-events|billing\\.platform-events\\.dlq|suite\\.dlx)$' \
   '^(platform\\.events|billing\\.platform-events|suite\\.dlx)$'
+
+# Mailer consumes commands and publishes nothing, so its write set is its own queue, its dead-letter queue and the
+# suite's dead-letter exchange — nothing else. `write` must include the DLQ and suite.dlx because declaring a queue with
+# a dead-letter exchange and binding the DLQ both check write on the queue. `read` must include its exchange because
+# queue.bind checks read on the source exchange. Compare with the billing block above, line for line: every dot is
+# double-escaped, because the pattern is pasted into a JSON document and a single `\.` is not a legal JSON escape.
+declare_user mailer \
+  "${MAILER_BROKER_PASSWORD:?set the mailer broker password}" \
+  '^(mailer\\.commands|mailer\\.commands\\.dlq|suite\\.dlx)$' \
+  '^(mailer\\.commands|mailer\\.commands\\.dlq|suite\\.dlx)$' \
+  '^(mailer\\.commands|mailer\\.commands\\.dlq|suite\\.dlx)$'

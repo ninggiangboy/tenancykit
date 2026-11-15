@@ -42,6 +42,21 @@ provider "aws" {
   }
 }
 
+# The suite's SES identity and the mailer clients that send from it are pinned to one region: an identity exists per
+# account *and* per region, so both take it from `ses_region`, which falls back to `region`.
+provider "aws" {
+  alias  = "ses"
+  region = local.ses_region
+
+  default_tags {
+    tags = {
+      Project     = "tenancykit"
+      Environment = var.environment
+      ManagedBy   = "terraform"
+    }
+  }
+}
+
 module "network" {
   source = "./network"
 
@@ -59,12 +74,16 @@ module "secrets" {
 module "ecs" {
   source = "./ecs"
 
-  name_prefix        = local.name_prefix
-  suite_name         = local.suite_name
-  environment        = var.environment
-  secret_arns        = module.secrets.arns
-  log_group_names    = local.log_group_names
-  log_retention_days = var.log_retention_days
+  name_prefix            = local.name_prefix
+  suite_name             = local.suite_name
+  environment            = var.environment
+  secret_arns            = module.secrets.arns
+  log_group_names        = local.log_group_names
+  log_retention_days     = var.log_retention_days
+  ses_region             = local.ses_region
+  ses_domain             = var.ses_domain
+  ses_from_address       = local.ses_from_address
+  tenant_aws_account_ids = var.tenant_aws_account_ids
 }
 
 module "service_discovery" {
@@ -120,6 +139,7 @@ module "mq" {
   admin_password         = module.secrets.values["MQ_ADMIN_PASSWORD"]
   platform_password      = module.secrets.values["PLATFORM_RABBITMQ_PASSWORD"]
   billing_password       = module.secrets.values["BILLING_RABBITMQ_PASSWORD"]
+  mailer_password        = module.secrets.values["MAILER_RABBITMQ_PASSWORD"]
   secret_arns            = module.secrets.arns
 }
 
@@ -209,4 +229,37 @@ module "billing" {
   broker_host              = module.mq.amqp_host
   broker_port              = module.mq.amqp_port
   secret_arns              = module.secrets.arns
+}
+
+module "mailer" {
+  source = "./mailer"
+
+  environment            = var.environment
+  region                 = var.region
+  cluster_arn            = module.ecs.cluster_arn
+  task_role_arn          = module.ecs.task_role_arn
+  private_subnet_ids     = module.network.private_subnet_ids
+  task_security_group_id = module.network.task_security_group_id
+  image                  = "${module.ecs.ecr_repository_urls["mailer"]}:${var.image_tag}"
+  desired_count          = var.mailer_desired_count
+  db_host                = module.rds.address
+  db_port                = module.rds.port
+  broker_host            = module.mq.amqp_host
+  broker_port            = module.mq.amqp_port
+  ses_region             = local.ses_region
+  default_from_address   = local.ses_from_address
+  secret_arns            = module.secrets.arns
+  log_group_names = {
+    worker  = module.ecs.log_group_names["mailer"]
+    migrate = module.ecs.log_group_names["mailer_migrate"]
+  }
+}
+
+# The suite's own verified sending identity, which SHARED-mode sends come from. Easy DKIM returns three tokens; this
+# repository has no Route53 zone, so an operator publishes the three CNAMEs by hand where the domain's DNS lives and the
+# identity stays Pending until they resolve (see README.md).
+resource "aws_sesv2_email_identity" "suite" {
+  provider = aws.ses
+
+  email_identity = var.ses_domain
 }

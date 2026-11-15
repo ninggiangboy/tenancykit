@@ -60,7 +60,7 @@ final class ArchitectureRules {
                 "dev.ngb.platform_jooq",
                 TABLE_OWNER,
                 Set.of(),
-                Set.of("dev.ngb.billing..", "dev.ngb.tenant.."),
+                Set.of("dev.ngb.billing..", "dev.ngb.tenant..", "dev.ngb.mailer.."),
                 Set.of("*.adapter..", "boot.."),
                 Set.of("org.jooq..", "dev.ngb.platform_jooq.."),
                 Set.of(),

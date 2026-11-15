@@ -152,9 +152,10 @@ directory: `:contexts:money`, `:libs:jooq-schema`, `:apps:app-boot`):
 
 Billing no longer has a `platform` context: tenants, users, roles, Tenant Systems and credentials live in Platform.
 Billing's security is `SuiteJwtDecoders` (two issuers) and `SuiteActorResolver` (the actor from its replica), and
-its host filter resolves a tenant through `SuiteHostResolver`. An ArchUnit rule fails the build when a Billing class
-names `dev.ngb.platform`, `dev.ngb.tenant` or `dev.ngb.notification`, and a Gradle task fails when a Billing project
-declares such a dependency.
+its host filter resolves a tenant through `SuiteHostResolver`. Two gates keep one service's types out of the others:
+each service's Gradle isolation task, which fails the build when a project declares another service's coordinates,
+and each service's ArchUnit `otherServiceRoots` rule set, which fails it when a class names another service's
+package. `mailer` is the only service permitted to call an AWS API.
 
 **The shared core** sits beside the services, in `core/`. It is its own Gradle build that `platform/`, `billing/`
 and `tenant/` include with `includeBuild("../core")`:

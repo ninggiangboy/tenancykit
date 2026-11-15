@@ -33,6 +33,15 @@ contract moves to the new version together, with no dual-format window.
 AMQP properties: `message_id` = `id`, `type` = `type`, `content_type` = `application/json`, header `tenant-id` =
 `tenantId`, delivery mode **persistent**. A message with no schema is never published.
 
+### Commands
+
+A message is an event (a fact a producer reports) or a **command** (a request one app sends to the app that owns
+the work). The envelope above is identical for both; only the owner of the type differs. An event type belongs to
+the service that emits it and its schema lives under `contracts/events/<app>/`; a command type belongs to the
+service that performs it, so its schema lives under `contracts/commands/`, describes `data` only, and a producer
+implements the contract rather than editing it. See [commands/README.md](../commands/README.md), including the
+trust boundary: a command's `tenantId` is asserted by the publisher, not authenticated by the consumer.
+
 ## Replicated data
 
 Platform data that other services need is replicated with **state-transfer events**: one `<aggregate>.changed`
@@ -67,6 +76,7 @@ version guard drops any the snapshot already covered. Platform never hard-delete
 |---|---|---|---|
 | `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events` |
 | `billing.events` | Billing | event type | none yet; an app that wants Billing's public events declares its own queue |
+| `mailer.commands` | any producer | command type, today `email.send` | `mailer.commands` (and its `mailer.commands.dlq`) |
 
 Each queue is durable, bound to its exchange by the event types the consumer accepts, and declares
 `x-dead-letter-exchange: suite.dlx`. The matching `<queue>.dlq` is bound to `suite.dlx` by the queue name. Consumers

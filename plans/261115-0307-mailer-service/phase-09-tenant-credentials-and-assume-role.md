@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "Tenant Credentials and Assume-Role"
-status: pending
+status: completed
 priority: P2
 effort: "L"
 dependencies: [8]
@@ -116,14 +116,14 @@ delivery dies immediately instead of burning the retry budget — and `Credentia
 
 ## Todo
 
-- [ ] `CredentialProbe` port + SES implementation (`assumeRole`, then `GetAccount`)
-- [ ] `TENANT` branch in the existing `ConfiguredSenderResolver`, region from the row
-- [ ] `CredentialProviderCache` keyed by `(rowId, version)` with `evict(rowId)`
-- [ ] `CredentialAdminUseCase` with version CAS, rotation at `version + 1`, account-allowlist check
-- [ ] `CredentialHealthJob` with the same version guard and cache eviction
-- [ ] `AesGcmSecretCipher` wired with the environment master key
-- [ ] `CredentialResolutionTest` incl. cross-tenant invisibility and `DISABLED` → error not fallback
-- [ ] `CredentialProbeTest` against a stubbed STS/SES
+- [x] `CredentialProbe` port + SES implementation (`assumeRole`, then `GetAccount`)
+- [x] `TENANT` branch in the existing `ConfiguredSenderResolver`, region from the row
+- [x] `CredentialProviderCache` keyed by `(rowId, version)` with `evict(rowId)`
+- [x] `CredentialAdminUseCase` with version CAS, rotation at `version + 1`, account-allowlist check
+- [x] `CredentialHealthJob` with the same version guard and cache eviction
+- [x] `AesGcmSecretCipher` wired with the environment master key
+- [x] `CredentialResolutionTest` incl. cross-tenant invisibility and `DISABLED` → error not fallback
+- [x] `CredentialProbeTest` against a stubbed STS/SES
 
 ## Verification
 

@@ -97,7 +97,10 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 - Custom domains. Only the domain-mapping seam is designed.
 - Platform or an app managing a Tenant System's own users, passwords, roles or permissions.
 - Billing operating on resources or deciding on a Tenant System's behalf.
-- A notification service, or any email, in-app, SMS or push channel. Webhooks stay in Billing.
+- A notification service: who gets notified, which events notify them, the templates and the translations stay out of
+  the suite, and so do in-app, SMS and push channels. The one exception is **delivery**, `mailer/`: it sends an email a
+  producer has already rendered — recipients, subject and both bodies arrive in the command — and owns no template, no
+  rule about who is notified and no localisation. Webhooks stay in Billing.
 - Charging tenants for suite use.
 - An API gateway with logic. The reverse proxy routes on the Host header only.
 - CDC or event sourcing. A consumer rebuilds by paging the snapshot API.

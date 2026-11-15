@@ -52,3 +52,6 @@ jobs:
       - name: Tenant rule ids
         working-directory: tenant
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
+      - name: Mailer rule ids
+        working-directory: mailer
+        run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'

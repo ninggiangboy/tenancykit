@@ -7,7 +7,7 @@ import org.gradle.api.artifacts.ProjectDependency
  * shares `core-messaging` and `core-replica` with Billing by design; what a service may not do is reach another
  * service.
  */
-val foreignServices = listOf("billing", "tenant")
+val foreignServices = listOf("billing", "tenant", "mailer")
 
 val checkNoForeignServiceDependency = tasks.register("checkNoForeignServiceDependency") {
     group = "verification"
@@ -21,7 +21,8 @@ val checkNoForeignServiceDependency = tasks.register("checkNoForeignServiceDepen
                             dependency.takeIf { it.path.split(":").any(foreignServices::contains) }
                                 ?.let { "${project.path}:${configuration.name} -> ${it.path}" }
                         is ExternalModuleDependency ->
-                            dependency.takeIf { it.group in setOf("dev.ngb.billing", "dev.ngb.tenant") }
+                            dependency
+                                .takeIf { it.group in setOf("dev.ngb.billing", "dev.ngb.tenant", "dev.ngb.mailer") }
                                 ?.let { "${project.path}:${configuration.name} -> ${it.group}:${it.name}" }
                         else -> null
                     }

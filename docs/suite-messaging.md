@@ -13,7 +13,13 @@ One topic exchange per producer, one durable queue per consuming app, one dead-l
 |---|---|---|---|
 | `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events` |
 | `billing.events` | Billing | event type | none yet |
+| `mailer.commands` | any producer | command type, today `email.send` | `mailer.commands`, `mailer.commands.dlq` |
 | `suite.dlx` | — | queue name | `<queue>.dlq` per consumer |
+
+An exchange carries either events or commands. `mailer.commands` carries commands: a request one app sends to the
+service that owns the work, described by `contracts/commands/` rather than by the sender. The envelope is the same;
+the difference is who owns the type and that a command's `tenantId` is asserted by the publisher rather than
+authenticated, which [contracts/commands/README.md](../contracts/commands/README.md) states in full.
 
 A consumer declares its own queue, its bindings and the queue's dead-letter pair; a producer declares its exchange.
 Every declaration is idempotent, so startup order does not matter. Billing's `billing.events` has no consumer today;

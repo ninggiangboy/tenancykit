@@ -7,7 +7,8 @@ import org.gradle.api.artifacts.ProjectDependency
  * only a service runs (the replica and the messaging infrastructure). The technical core is included as a
  * separate build and found by its coordinates, so `dev.ngb:core-kernel` and `dev.ngb:core-spring` pass.
  */
-val foreignServices = setOf("billing", "platform")
+val foreignServices = setOf("billing", "platform", "mailer")
+val foreignGroups = setOf("dev.ngb.billing", "dev.ngb.platform", "dev.ngb.mailer")
 val serviceOnlyCoreModules = setOf("core-messaging", "core-replica", "core-platform-sync", "core-suite")
 
 tasks.register("checkNoBillingDependency") {
@@ -22,7 +23,11 @@ tasks.register("checkNoBillingDependency") {
                             dependency.takeIf { it.path.split(":").any(foreignServices::contains) }
                                 ?.let { "${project.path}:${configuration.name} -> ${it.path}" }
                         is ExternalModuleDependency ->
-                            dependency.takeIf { it.group == "dev.ngb" && serviceOnlyCoreModules.contains(it.name) }
+                            dependency
+                                .takeIf {
+                                    it.group in foreignGroups ||
+                                        (it.group == "dev.ngb" && serviceOnlyCoreModules.contains(it.name))
+                                }
                                 ?.let { "${project.path}:${configuration.name} -> ${it.group}:${it.name}" }
                         else -> null
                     }

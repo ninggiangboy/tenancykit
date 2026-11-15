@@ -6,6 +6,7 @@ Documentation lives in [docs/](docs/README.md). Code lives in:
 |---|---|
 | `platform/` | Platform service (Gradle multi-module, Spring Boot): tenants, users, centralized RBAC, app entitlement, tenant systems and the suite's tokens |
 | `billing/` | Billing app (Gradle multi-module, Spring Boot): the eight billing contexts, replicating the Platform data it enforces |
+| `mailer/` | Mailer service (Gradle multi-module, Spring Boot): consumes `email.send` commands and delivers already-rendered email through SESv2 or SMTP, with a per-recipient delivery ledger |
 | `tenant/` | Sample Tenant System, built and deployed independently; it calls Billing over REST with a Platform-issued suite token |
 | `web/` | Placeholder for the frontends (Platform Admin, Tenant Admin, Customer Portal, Sample Tenant UI); no code yet |
 | `core/` | The technical core every service builds against: kernel, Spring implementations, messaging (`core-messaging`), the Platform replica (`core-replica`), snapshot sync (`core-platform-sync`), suite policy (`core-suite`), the shared Feign client (`core-feign`) and the shared architecture rule set (`core-arch`); the only code they share |
@@ -33,6 +34,7 @@ Each service builds on its own and needs JDK 25 and a Docker daemon for Testcont
 cd core && ./gradlew build
 cd platform && ./gradlew build
 cd billing && ./gradlew build
+cd mailer && ./gradlew build
 cd tenant && ./gradlew build
 ```
 

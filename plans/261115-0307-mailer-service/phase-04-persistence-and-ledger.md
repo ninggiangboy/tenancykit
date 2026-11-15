@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Persistence and Delivery Ledger"
-status: pending
+status: completed
 priority: P1
 effort: "M"
 dependencies: [2]
@@ -137,15 +137,15 @@ resendable for a short window while still bounding retained personal data.
 
 ## Todo
 
-- [ ] `V1__baseline.sql`: app role, `app_tenant_id()`, `enable_tenant_rls()`, grants
-- [ ] `V2__delivery.sql`: `mailer_tenants`, deliveries, attempts; RLS on the two tenant tables
-- [ ] `V3__bodies.sql` with RLS and a purge index
-- [ ] `V4__credentials.sql` with both `check` constraints, `aws_account_id`, `reply_to_allowlist`, `(tenant_id, from_key, version)` unique
-- [ ] `V5__inbox.sql` with `processed_at`, no foreign key, RLS
-- [ ] `application.yml` datasource + flyway owner/app **and the `appDbPassword` placeholder**
-- [ ] jOOQ regenerated and committed; `tableOwner` filled
-- [ ] `JooqSchemaTest` (drift) and `RowLevelSecurityTest` (as `mailer_app`) green
-- [ ] Three psql proofs for the `completed_at` predicate recorded
+- [x] `V1__baseline.sql`: app role, `app_tenant_id()`, `enable_tenant_rls()`, grants
+- [x] `V2__delivery.sql`: `mailer_tenants`, deliveries, attempts; RLS on the two tenant tables
+- [x] `V3__bodies.sql` with RLS and a purge index
+- [x] `V4__credentials.sql` with both `check` constraints, `aws_account_id`, `reply_to_allowlist`, `(tenant_id, from_key, version)` unique
+- [x] `V5__inbox.sql` with `processed_at`, no foreign key, RLS
+- [x] `application.yml` datasource + flyway owner/app **and the `appDbPassword` placeholder**
+- [x] jOOQ regenerated and committed; `tableOwner` filled
+- [x] `JooqSchemaTest` (drift) and `RowLevelSecurityTest` (as `mailer_app`) green
+- [x] Three psql proofs for the `completed_at` predicate recorded
 
 ## Verification
 

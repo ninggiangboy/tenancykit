@@ -1,12 +1,15 @@
 # Runtime profiles and deployment
 
-Each service jar runs in one shape. Billing's one jar runs in three: `api`, `worker` and `migrate`. `dev` and `test`
+Each service jar runs in one shape. Billing's one jar runs in three: `api`, `worker` and `migrate`. Mailer's runs in
+two: `worker` and `migrate` — it serves no business HTTP endpoint, so it has no `api` runtime at all. `dev` and `test`
 start Billing with no profile, which activates `api` and `worker` together — the all-in-one behaviour from before the
 split; production starts one of the profiles below.
 
-Platform and the sample tenant have no such split; each runs as one process and migrates on start. Under `docker
-compose`, Platform and the tenant boot normally, while Billing writes its schema once through `billing-migrate` and
-its `api` and `worker` runtimes connect as `billing_app` with Flyway off.
+Platform and the sample tenant have no such split; each runs as one process and migrates on start. Mailer runs with **no
+profile** on a laptop, which leaves Flyway on and creates neither the listener nor the jobs, so a web test can migrate a
+schema without connecting to a broker. Under `docker compose`, Platform and the tenant boot normally, Billing writes its
+schema once through `billing-migrate`, and Billing's `api` and `worker` runtimes and mailer's `worker` connect as their
+unprivileged application roles with Flyway off.
 
 | Profile | Serves | Builds | Migrates |
 |---|---|---|---|
@@ -41,6 +44,9 @@ no logic, retries nothing and rewrites no body. See [suite-messaging.md](suite-m
 | `billing` (`api`) | HTTP, the portal and Stripe webhooks; the replica rebuild and the `platform.events` listener | Its database, the broker, Platform |
 | `billing-worker` (`worker`) | Every Billing job: outbox relay, webhook delivery, billing cycle, renewals and so on | Its database, the broker |
 | `billing-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
+| `mailer-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
+| `mailer-worker` (`worker`) | The `mailer.commands` listener and every mailer job: delivery, housekeeping, credential health | Its database, the broker, the SMTP server (Mailpit locally, SES in a deployment) |
+| `mailpit` | SMTP on 1025 and an HTTP API/UI on 8025, for local development only | Nothing |
 | `tenant` | Its own HTTP surface, webhook verification, the Platform token provider, the execution worker | Its database, Platform, Billing |
 
 ## What each profile owns

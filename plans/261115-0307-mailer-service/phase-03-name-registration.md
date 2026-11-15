@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Name Registration and Architecture Gates"
-status: pending
+status: completed
 priority: P1
 effort: "S"
 dependencies: [2]
@@ -65,13 +65,13 @@ Two corrections to the naive plan:
 
 ## Todo
 
-- [ ] `"mailer"` in the three `foreignServices` sets
-- [ ] `"dev.ngb.mailer"` in Billing's and Platform's group sets; group branch added to the tenant's gate
-- [ ] `"dev.ngb.mailer.."` in the three `otherServiceRoots()`
-- [ ] `"dev.ngb.mailer.."` in the seven core boundary tests, plus `mailer_jooq` where applicable
-- [ ] CI step for mailer's architecture tests
-- [ ] `docs/architecture.md:155-156` false claim replaced
-- [ ] ArchUnit deliberate-failure proof recorded
+- [x] `"mailer"` in the three `foreignServices` sets
+- [x] `"dev.ngb.mailer"` in Billing's and Platform's group sets; group branch added to the tenant's gate
+- [x] `"dev.ngb.mailer.."` in the three `otherServiceRoots()`
+- [x] `"dev.ngb.mailer.."` in the seven core boundary tests, plus `mailer_jooq` where applicable
+- [x] CI step for mailer's architecture tests
+- [x] `docs/architecture.md:155-156` false claim replaced
+- [x] ArchUnit deliberate-failure proof recorded
 
 ## Verification
 

@@ -9,6 +9,7 @@ Documents the suite's services share, never code. The only code they share is th
 | `openapi/platform.yaml` | Platform's REST API. Generated from the code and checked by a test; regenerate with `./gradlew :apps:app-boot:test --tests '*PlatformOpenApiContractTest' -Dopenapi.update=true`. |
 | `events/billing/` | Billing's outbound events: one JSON Schema per type, plus how a webhook delivery is signed and verified. See [events/README.md](events/README.md). |
 | `events/platform/` | Platform's replicated state-transfer events (`*.changed`). |
+| `commands/` | The commands one app sends to the app that owns the work, one JSON Schema per type (`data` only). The consumer owns the type; a producer implements it. See [commands/README.md](commands/README.md). |
 | `messaging/` | The AMQP envelope, topology, delivery guarantees and the dead-letter runbook. See [messaging/README.md](messaging/README.md). |
 | `permissions/` | One permission catalog per app (`billing.yaml`, `platform.yaml`): `code`, `description`, `scopes`, `grantable_to_tenant_system`. Platform validates credential scopes against it and seeds roles from it. |
 | `tokens/` | The claims of Platform-issued suite tokens for service clients and Tenant Systems. See [tokens/README.md](tokens/README.md). |

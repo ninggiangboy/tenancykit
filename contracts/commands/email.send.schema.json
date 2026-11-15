@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tenancykit.dev/commands/email.send.schema.json",
+  "title": "Send email",
+  "description": "Deliver one already-rendered email. The producer owns the recipients, the subject and the body; the consumer owns the sender address, the transport and the delivery record. This schema describes the `data` member of the delivered document; the envelope (id, type, aggregate, tenantId, occurredAt, schemaVersion, data) is described in README.md.",
+  "type": "object",
+  "required": [
+    "requestId",
+    "to",
+    "fromKey",
+    "subject"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The producer's idempotency key. A repeated requestId never sends twice; a requestId whose delivery already died is retried."
+    },
+    "to": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 50,
+      "description": "The recipients. Each becomes its own delivery record, so one bad address cannot hide the others.",
+      "items": {
+        "type": "string",
+        "format": "email",
+        "maxLength": 320,
+        "pattern": "^[^\\r\\n]+$"
+      }
+    },
+    "cc": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "string",
+        "format": "email",
+        "maxLength": 320,
+        "pattern": "^[^\\r\\n]+$"
+      }
+    },
+    "fromKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$",
+      "description": "A configuration key, never an address. The address must be verified in the account that sends, so it belongs to the consumer while the display name belongs to the producer."
+    },
+    "fromName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[^\"<>\\r\\n,]+$",
+      "description": "The display name the recipient sees. Quotes, angle brackets, commas and line breaks are refused so it cannot break out of the display-name position."
+    },
+    "replyTo": {
+      "type": "string",
+      "format": "email",
+      "maxLength": 320,
+      "pattern": "^[^\\r\\n]+$",
+      "description": "Where a reply goes. The consumer checks it against the resolved sender's allowlist, because an arbitrary reply-to turns a DKIM-valid suite email into business-email compromise."
+    },
+    "subject": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 998,
+      "pattern": "^[^\\r\\n]*$",
+      "description": "Line breaks are refused: they are the header-injection vector."
+    },
+    "html": {
+      "type": "string",
+      "maxLength": 262144
+    },
+    "text": {
+      "type": "string",
+      "maxLength": 262144
+    }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "html"
+      ]
+    },
+    {
+      "required": [
+        "text"
+      ]
+    }
+  ]
+}

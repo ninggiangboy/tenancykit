@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Command Consumer"
-status: pending
+status: completed
 priority: P1
 effort: "M"
 dependencies: [4, 5]
@@ -116,14 +116,14 @@ inbox drop one of them.
 
 ## Todo
 
-- [ ] `processResources` packages `contracts/commands`
-- [ ] `CommandSchemaValidator` + `InvalidEmailCommandException`, failing at startup if the resource is missing
-- [ ] `JooqEmailDeliveryRepository` with `onConflict().doNothing()` and an existing-rows read
-- [ ] Duplicate policy: no-op for live rows, resurrect `DEAD`, WARN with the request id
-- [ ] `InfrastructureConfiguration` (sole owner of `clock`/`idGenerator`, scope hook, `JooqEventInbox`)
-- [ ] `MessagingConfiguration`: `EnvelopeCodec`, full `MessagingProperties` incl. `Document(2)`, `Declarables`, dispatcher
-- [ ] Listener container on `mailer.commands`, `@Profile("worker")`, retry choice (a) or (b) documented
-- [ ] Integration test: valid, replay, duplicate-live, duplicate-dead, schema-invalid
+- [x] `processResources` packages `contracts/commands`
+- [x] `CommandSchemaValidator` + `InvalidEmailCommandException`, failing at startup if the resource is missing
+- [x] `JooqEmailDeliveryRepository` with `onConflict().doNothing()` and an existing-rows read
+- [x] Duplicate policy: no-op for live rows, resurrect `DEAD`, WARN with the request id
+- [x] `InfrastructureConfiguration` (sole owner of `clock`/`idGenerator`, scope hook, `JooqEventInbox`)
+- [x] `MessagingConfiguration`: `EnvelopeCodec`, full `MessagingProperties` incl. `Document(2)`, `Declarables`, dispatcher
+- [x] Listener container on `mailer.commands`, `@Profile("worker")`, retry choice (a) or (b) documented
+- [x] Integration test: valid, replay, duplicate-live, duplicate-dead, schema-invalid
 
 ## Verification
 

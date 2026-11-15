@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "SMTP Sender and Delivery Job"
-status: pending
+status: completed
 priority: P1
 effort: "L"
 dependencies: [6]
@@ -124,14 +124,14 @@ the attempt rows — of the other deliveries in the same claim.
 
 ## Todo
 
-- [ ] `SmtpEmailSender` with `multipart/alternative` and the `Transient`/`Rejected` mapping
-- [ ] Claim query: `status in ('PENDING','IN_PROGRESS')`, `skip locked`, **`attempts = attempts + 1` in the claim**
-- [ ] Outcome writes with CAS on `(id, attempts, status='IN_PROGRESS')`, one transaction per delivery
-- [ ] `TenantSweep` over `mailer_tenants`
-- [ ] `DeliverEmailsJob` + `HousekeepingJob` behind their switches
-- [ ] SMTP connect/read/write timeouts and the `lease > worst-case deadline` check
-- [ ] `SenderAddressLookup` stub (phase 8 replaces its source, not the abstraction)
-- [ ] Tests: happy path, replay, Mailpit down → `DEAD`, restart → success, job-with-no-scope, housekeeping purge
+- [x] `SmtpEmailSender` with `multipart/alternative` and the `Transient`/`Rejected` mapping
+- [x] Claim query: `status in ('PENDING','IN_PROGRESS')`, `skip locked`, **`attempts = attempts + 1` in the claim**
+- [x] Outcome writes with CAS on `(id, attempts, status='IN_PROGRESS')`, one transaction per delivery
+- [x] `TenantSweep` over `mailer_tenants`
+- [x] `DeliverEmailsJob` + `HousekeepingJob` behind their switches
+- [x] SMTP connect/read/write timeouts and the `lease > worst-case deadline` check
+- [x] `SenderAddressLookup` stub (phase 8 replaces its source, not the abstraction)
+- [x] Tests: happy path, replay, Mailpit down → `DEAD`, restart → success, job-with-no-scope, housekeeping purge
 
 ## Verification
 

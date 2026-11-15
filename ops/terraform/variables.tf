@@ -100,6 +100,30 @@ variable "billing_worker_desired_count" {
   default     = 2
 }
 
+variable "mailer_desired_count" {
+  description = "Mailer worker tasks."
+  type        = number
+  default     = 2
+}
+
+variable "ses_domain" {
+  description = "Domain of the suite's verified SES identity. Mailer sends from noreply@<domain> in SHARED mode."
+  type        = string
+  default     = "example.com"
+}
+
+variable "ses_region" {
+  description = "Region of the suite's SES identity. Empty follows `region`; both are reported as MAILER_SES_REGION."
+  type        = string
+  default     = ""
+}
+
+variable "tenant_aws_account_ids" {
+  description = "AWS accounts whose mailer-* role the mailer task role may assume, one entry per tenant account."
+  type        = list(string)
+  default     = []
+}
+
 variable "log_retention_days" {
   description = "CloudWatch Logs retention for every task."
   type        = number

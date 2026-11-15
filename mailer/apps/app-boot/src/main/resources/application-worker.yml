@@ -1,0 +1,36 @@
+# The background edge: the commands listener and every scheduled job. It runs alone, so Flyway is off (the migrate step
+# owns the schema) and the mail health contributor stays off, because an SMTP outage is what the ledger's backoff is for.
+spring:
+  config:
+    activate:
+      on-profile: worker
+  flyway:
+    enabled: false
+  datasource:
+    hikari:
+      maximum-pool-size: ${MAILER_WORKER_DB_POOL_SIZE:10}
+      minimum-idle: ${MAILER_WORKER_DB_MIN_IDLE:2}
+      # A contended coordination row becomes a skipped tick instead of a worker stuck behind someone else's transaction.
+      connection-init-sql: "SET lock_timeout = '5s'; SET idle_in_transaction_session_timeout = '60s'"
+  task:
+    scheduling:
+      # One thread per scheduled method (four today), so a slow housekeeping round cannot hold up the delivery job.
+      pool:
+        size: ${MAILER_WORKER_SCHEDULER_POOL_SIZE:4}
+      shutdown:
+        await-termination: true
+        await-termination-period: 30s
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+server:
+  shutdown: graceful
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db

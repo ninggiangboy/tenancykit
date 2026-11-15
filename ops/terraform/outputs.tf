@@ -41,6 +41,8 @@ output "task_definition_arns" {
     billing_api     = module.billing.api_task_definition_arn
     billing_worker  = module.billing.worker_task_definition_arn
     billing_migrate = module.billing.migrate_task_definition_arn
+    mailer          = module.mailer.worker_task_definition_arn
+    mailer_migrate  = module.mailer.migrate_task_definition_arn
     rds_init        = module.rds.init_task_definition_arn
     mq_users        = module.mq.users_task_definition_arn
   }
@@ -53,6 +55,7 @@ output "service_names" {
     platform       = module.platform.service_name
     billing_api    = module.billing.api_service_name
     billing_worker = module.billing.worker_service_name
+    mailer         = module.mailer.service_name
   }
 }
 

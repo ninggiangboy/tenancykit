@@ -37,6 +37,26 @@ x-billing-environment: &billing-environment
 x-app-environment: &app-environment
   JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50"
 
+# Mailer's settings, shared by its migrate step and its worker. There is no api runtime: mailer serves no business HTTP
+# endpoint, so its only HTTP surface is the actuator probe.
+x-mailer-environment: &mailer-environment
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50"
+  MAILER_DB_URL: jdbc:postgresql://postgres:5432/mailer
+  MAILER_DB_USER: mailer_app
+  MAILER_DB_PASSWORD: ${MAILER_DB_PASSWORD:?set it in .env}
+  MAILER_MIGRATION_DB_USER: mailer_owner
+  MAILER_MIGRATION_DB_PASSWORD: ${MAILER_MIGRATION_DB_PASSWORD:?set it in .env}
+  MAILER_RABBITMQ_HOST: rabbitmq
+  MAILER_RABBITMQ_USER: mailer
+  MAILER_RABBITMQ_PASSWORD: ${MAILER_RABBITMQ_PASSWORD:?set it in .env}
+  MAILER_SECRETS_MASTER_KEY: ${MAILER_SECRETS_MASTER_KEY:?set it in .env}
+  # The local transport is plain SMTP to Mailpit, which needs neither a username nor a password.
+  MAILER_SENDER: smtp
+  MAILER_SMTP_HOST: mailpit
+  MAILER_SMTP_PORT: "1025"
+  MAILER_DEFAULT_FROM_ADDRESS: ${MAILER_DEFAULT_FROM_ADDRESS:-noreply@example.com}
+  MAILER_DEFAULT_FROM_NAME: ${MAILER_DEFAULT_FROM_NAME:-TenancyKit}
+
 x-app: &app
   restart: unless-stopped
   mem_limit: 512m
@@ -54,6 +74,8 @@ services:
       BILLING_DB_PASSWORD: ${BILLING_DB_PASSWORD:?set it in .env}
       TENANT_MIGRATION_DB_PASSWORD: ${TENANT_MIGRATION_DB_PASSWORD:?set it in .env}
       TENANT_DB_PASSWORD: ${TENANT_DB_PASSWORD:?set it in .env}
+      MAILER_MIGRATION_DB_PASSWORD: ${MAILER_MIGRATION_DB_PASSWORD:?set it in .env}
+      MAILER_DB_PASSWORD: ${MAILER_DB_PASSWORD:?set it in .env}
     ports:
       - "5432:5432"
     volumes:
@@ -94,11 +116,25 @@ services:
       ADMIN_PASSWORD: ${RABBITMQ_ADMIN_PASSWORD:?set it in .env}
       PLATFORM_BROKER_PASSWORD: ${PLATFORM_RABBITMQ_PASSWORD:?set it in .env}
       BILLING_BROKER_PASSWORD: ${BILLING_RABBITMQ_PASSWORD:?set it in .env}
+      MAILER_BROKER_PASSWORD: ${MAILER_RABBITMQ_PASSWORD:?set it in .env}
     entrypoint: ["/bin/sh", "-c"]
     command: ["sh /ops/rabbitmq/declare-users.sh"]
     volumes:
       - ./ops/rabbitmq:/ops/rabbitmq:ro
     restart: "no"
+
+  # The local inbox. `axllent/mailpit` speaks SMTP on 1025 and serves its UI and HTTP API on 8025. It has no
+  # authentication and no STARTTLS, which is why the application never sets `mail.smtp.auth` or `starttls.required`
+  # against it, and why it must never be part of an AWS deployment.
+  #
+  # No compose healthcheck on purpose: the published image is a static binary with no shell and no curl, so a
+  # container-side probe can never pass. Poll `/api/v1/info` from the host instead.
+  mailpit:
+    <<: *app
+    image: axllent/mailpit:v1.33.1
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.8.2
@@ -247,6 +283,56 @@ services:
     environment:
       <<: *billing-environment
       SPRING_PROFILES_ACTIVE: worker
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # Writes Mailer's schema once, as the table owner, then exits.
+  mailer-migrate:
+    <<: *app
+    restart: "no"
+    build:
+      context: .
+      dockerfile: mailer/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+    environment:
+      <<: *mailer-environment
+      SPRING_PROFILES_ACTIVE: migrate
+
+  # Mailer's only long-running runtime: the commands listener and every job.
+  #
+  # Mailpit is `service_started`, never `service_healthy`, and that is a design decision rather than a shortcut: the
+  # ledger's backoff is what should handle a dead SMTP server, and a hard dependency would turn a transient outage into
+  # "the worker never starts".
+  mailer-worker:
+    <<: *app
+    build:
+      context: .
+      dockerfile: mailer/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      mailer-migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+    environment:
+      <<: *mailer-environment
+      SPRING_PROFILES_ACTIVE: worker
+    ports:
+      - "8084:8080"
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
       interval: 5s

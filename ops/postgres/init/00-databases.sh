@@ -18,6 +18,8 @@ psql -v ON_ERROR_STOP=1 \
   -v billing_app_password="${BILLING_DB_PASSWORD:?set it}" \
   -v tenant_owner_password="${TENANT_MIGRATION_DB_PASSWORD:?set it}" \
   -v tenant_app_password="${TENANT_DB_PASSWORD:?set it}" \
+  -v mailer_owner_password="${MAILER_MIGRATION_DB_PASSWORD:?set it}" \
+  -v mailer_app_password="${MAILER_DB_PASSWORD:?set it}" \
   --dbname postgres <<'SQL'
 create role platform_owner login password :'platform_owner_password' nocreatedb nocreaterole;
 create role platform_app login password :'platform_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
@@ -28,17 +30,23 @@ create role billing_app login password :'billing_app_password' nosuperuser nocre
 create role tenant_owner login password :'tenant_owner_password' nocreatedb nocreaterole;
 create role tenant_app login password :'tenant_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
+create role mailer_owner login password :'mailer_owner_password' nocreatedb nocreaterole;
+create role mailer_app login password :'mailer_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+
 create database platform owner platform_owner;
 create database billing owner billing_owner;
 create database tenant owner tenant_owner;
+create database mailer owner mailer_owner;
 
 revoke connect, temporary on database platform from public;
 revoke connect, temporary on database billing from public;
 revoke connect, temporary on database tenant from public;
+revoke connect, temporary on database mailer from public;
 
 grant connect, temporary on database platform to platform_owner, platform_app;
 grant connect, temporary on database billing to billing_owner, billing_app;
 grant connect, temporary on database tenant to tenant_owner, tenant_app;
+grant connect, temporary on database mailer to mailer_owner, mailer_app;
 
 -- The app role creates nothing; Flyway, as the owner, grants the tables it creates. These defaults cover every
 -- table a later migration adds without a per-table grant.
@@ -59,4 +67,10 @@ alter default privileges for role tenant_owner in schema public
     grant select, insert, update, delete on tables to tenant_app;
 alter default privileges for role tenant_owner in schema public
     grant usage, select on sequences to tenant_app;
+
+\connect mailer
+alter default privileges for role mailer_owner in schema public
+    grant select, insert, update, delete on tables to mailer_app;
+alter default privileges for role mailer_owner in schema public
+    grant usage, select on sequences to mailer_app;
 SQL

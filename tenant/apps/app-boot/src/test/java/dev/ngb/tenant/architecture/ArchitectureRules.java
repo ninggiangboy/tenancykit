@@ -87,7 +87,7 @@ final class ArchitectureRules {
                 "dev.ngb.tenant_jooq",
                 TABLE_OWNER,
                 Set.of(),
-                Set.of("dev.ngb.billing..", "dev.ngb.platform.."),
+                Set.of("dev.ngb.billing..", "dev.ngb.platform..", "dev.ngb.mailer.."),
                 Set.of("*.adapter..persistence..", "boot.."),
                 Set.of("dev.ngb.tenant_jooq.."),
                 NOT_YET_ON_THE_UNIT_OF_WORK,

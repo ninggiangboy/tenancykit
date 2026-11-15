@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Service Skeleton and Delivery Domain"
-status: pending
+status: completed
 priority: P1
 effort: "M"
 dependencies: [1]
@@ -133,15 +133,15 @@ two do not drift conceptually, without coupling the job to the broker's configur
 
 ## Todo
 
-- [ ] `mailer/` copied from `tenant/`, `modules/` and the web/security/test shell deleted
-- [ ] `settings.gradle.kts` + `build.gradle.kts` gate with both the project and the group axis
-- [ ] `build-logic` three plugins, `mainClass = dev.ngb.mailer.Application`
-- [ ] `libs/shared-core` holds `Recipient` and `FromKey` with header-injection validation
-- [ ] Domain: `DeliveryStatus`, `EmailDelivery`, `DeliveryAttempt`, `DeliveryPolicy`
-- [ ] Ports: `EmailSender`, `SendOutcome`, `OutgoingEmail`; two use case shells depending on `UnitOfWork`
-- [ ] Architecture tests rebuilt from Billing's set, including the two runtime rules
-- [ ] `architecture` non-vacuity assertions set to mailer's real values
-- [ ] Deliberate-failure proof of the gate recorded
+- [x] `mailer/` copied from `tenant/`, `modules/` and the web/security/test shell deleted
+- [x] `settings.gradle.kts` + `build.gradle.kts` gate with both the project and the group axis
+- [x] `build-logic` three plugins, `mainClass = dev.ngb.mailer.Application`
+- [x] `libs/shared-core` holds `Recipient` and `FromKey` with header-injection validation
+- [x] Domain: `DeliveryStatus`, `EmailDelivery`, `DeliveryAttempt`, `DeliveryPolicy`
+- [x] Ports: `EmailSender`, `SendOutcome`, `OutgoingEmail`; two use case shells depending on `UnitOfWork`
+- [x] Architecture tests rebuilt from Billing's set, including the two runtime rules
+- [x] `architecture` non-vacuity assertions set to mailer's real values
+- [x] Deliberate-failure proof of the gate recorded
 
 ## Verification
 

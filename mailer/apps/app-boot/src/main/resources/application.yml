@@ -1,0 +1,95 @@
+spring:
+  application:
+    name: mailer
+  datasource:
+    url: ${MAILER_DB_URL:jdbc:postgresql://localhost:5432/mailer}
+    username: ${MAILER_DB_USER:mailer_app}
+    password: ${MAILER_DB_PASSWORD:mailer_app}
+  rabbitmq:
+    host: ${MAILER_RABBITMQ_HOST:localhost}
+    port: ${MAILER_RABBITMQ_PORT:5672}
+    username: ${MAILER_RABBITMQ_USER:mailer}
+    password: ${MAILER_RABBITMQ_PASSWORD:mailer}
+  mail:
+    host: ${MAILER_SMTP_HOST:localhost}
+    port: ${MAILER_SMTP_PORT:1025}
+    # The local server (Mailpit) needs neither, and `auth` with no username is a hard failure rather than a default.
+    # There is deliberately no `starttls.required`: Mailpit offers STARTTLS only when a certificate is configured.
+    properties:
+      mail:
+        smtp:
+          # JavaMail's defaults are infinite; one blackholed socket would block the whole batch. Worst case is this
+          # sum plus the write timeout, which must stay below mailer.delivery.lease.
+          connectiontimeout: 3000
+          timeout: 10000
+          writetimeout: 10000
+  flyway:
+    locations: classpath:db/migration
+    # Migrations run as the table owner; the application connects as mailer_app, which owns nothing.
+    url: ${MAILER_MIGRATION_DB_URL:${MAILER_DB_URL:jdbc:postgresql://localhost:5432/mailer}}
+    user: ${MAILER_MIGRATION_DB_USER:mailer_owner}
+    password: ${MAILER_MIGRATION_DB_PASSWORD:mailer_owner}
+    placeholders:
+      # The baseline creates mailer_app with this password. Without the placeholder Flyway aborts the whole set.
+      appDbPassword: ${MAILER_DB_PASSWORD:mailer_app}
+
+server:
+  port: ${MAILER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  health:
+    mail:
+      # An SMTP outage is what the ledger's backoff is for. Letting the health contributor probe the server would report
+      # the worker DOWN and let a supervisor restart the process that is supposed to wait it out.
+      enabled: false
+
+mailer:
+  messaging:
+    exchange: ${MAILER_COMMANDS_EXCHANGE:mailer.commands}
+    queue: ${MAILER_COMMANDS_QUEUE:mailer.commands}
+  sender:
+    # `smtp` locally, `ses` in a deployment. A tenant's own credential overrides both, per from-key.
+    kind: ${MAILER_SENDER:smtp}
+    region: ${MAILER_SES_REGION:eu-west-1}
+    default-from-address: ${MAILER_DEFAULT_FROM_ADDRESS:noreply@example.com}
+    default-from-name: ${MAILER_DEFAULT_FROM_NAME:TenancyKit}
+  ses:
+    # Blank in production. A test or an emulator points the production adapter at itself through this.
+    endpoint-override: ${MAILER_SES_ENDPOINT:}
+  delivery:
+    # Set to false to stop sending without losing queued work: rows stay PENDING and go out when it is switched back on.
+    enabled: ${MAILER_DELIVERY_ENABLED:true}
+    poll-delay: PT2S
+    batch-size: 25
+    max-attempts: 10
+    backoff-base: PT30S
+    backoff-cap: PT6H
+    jitter: 0.2
+    # The lease must exceed the worst-case send (connect 3s + read 10s + write 10s), or a second worker claims a
+    # delivery whose first send is still running. DeliveryPolicy refuses to build otherwise.
+    lease: PT2M
+    send-deadline: PT30S
+  jobs:
+    enabled: ${MAILER_JOBS_ENABLED:true}
+    # At most this many tenants run at once across all jobs; keep it below the connection pool.
+    tenant-parallelism: ${MAILER_WORKER_TENANT_PARALLELISM:4}
+  housekeeping:
+    enabled: ${MAILER_HOUSEKEEPING_ENABLED:true}
+    # A body is personal data, so it is kept briefly and purged; the ledger row outlives it.
+    body-retention: P7D
+    inbox-retention: P30D
+    batch-size: 500
+    interval: PT1H
+  credentials:
+    health-enabled: ${MAILER_CREDENTIAL_HEALTH_ENABLED:true}
+    health-interval: PT15M
+    stale-after: PT1H
+    cache-size: 100
+  secrets:
+    # Base64 of exactly 32 random bytes: `openssl rand -base64 32`. Losing it makes every TENANT row undecryptable.
+    master-key: ${MAILER_SECRETS_MASTER_KEY:}
+    master-key-id: ${MAILER_SECRETS_MASTER_KEY_ID:k1}

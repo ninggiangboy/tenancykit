@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Local Ops and Mailpit"
-status: pending
+status: completed
 priority: P1
 effort: "M"
 dependencies: [4]
@@ -120,15 +120,15 @@ refused when attempting to bind a queue to `suite.dlx` with a routing key outsid
 
 ## Todo
 
-- [ ] `mailpit` service (ports 1025/8025, no container healthcheck)
-- [ ] `mailer-migrate` and `mailer-worker` compose services
-- [ ] `application.yml`, `application-migrate.yml`, `application-worker.yml` (with `management.health.mail.enabled: false`)
-- [ ] Dockerfile based on Billing's, copying `contracts/`
-- [ ] `00-databases.sh`: `mailer_owner`, `mailer_app`, grants, default privileges
-- [ ] `declare-users.sh`: double-escaped mailer regex including `suite.dlx`
-- [ ] Four `.env.example` entries + matching `suite.yml` sed lines
-- [ ] `isolation.sh`: refusal matrix plus one consume-refusal assertion
-- [ ] `docs/runtime-profiles.md` and `README.md` updated
+- [x] `mailpit` service (ports 1025/8025, no container healthcheck)
+- [x] `mailer-migrate` and `mailer-worker` compose services
+- [x] `application.yml`, `application-migrate.yml`, `application-worker.yml` (with `management.health.mail.enabled: false`)
+- [x] Dockerfile based on Billing's, copying `contracts/`
+- [x] `00-databases.sh`: `mailer_owner`, `mailer_app`, grants, default privileges
+- [x] `declare-users.sh`: double-escaped mailer regex including `suite.dlx`
+- [x] Four `.env.example` entries + matching `suite.yml` sed lines
+- [x] `isolation.sh`: refusal matrix plus one consume-refusal assertion
+- [x] `docs/runtime-profiles.md` and `README.md` updated
 
 ## Verification
 
@@ -171,3 +171,11 @@ docker compose exec -T rabbitmq rabbitmqadmin -u mailer -p "$MAILER_RABBITMQ_PAS
 ## Next Steps
 
 Phase 6 implements the consumer that this phase's wiring turns on.
+
+## Verification Note
+
+The compose file, the database roles, the broker regex, the `.env.example` entries, the `suite.yml` sed lines and the
+`isolation.sh` matrix are all written and reviewed. The script itself was **not executed**: it needs the whole stack
+running, which is not available in the environment this phase was completed in. The two things to re-check by hand on
+the first `docker compose up` are the broker regex (one wrong backslash aborts `rabbitmq-users`, and the stack then
+never becomes healthy) and `mailer_app`'s connect grant.

@@ -1,0 +1,27 @@
+# Versions resolved from Maven Central and mutually compatible: Spring Boot 4.1 manages Flyway, the
+# PostgreSQL driver, JavaMail and Testcontainers.
+[versions]
+spring-boot = "4.1.2"
+spring-modulith = "2.1.2"
+archunit = "1.5.1"
+json-schema-validator = "3.0.7"
+# AWS SDK v2 >= 2.17.0 shades Jackson 2 into its own namespace (software.amazon.awssdk.thirdparty.jackson.core),
+# so it never collides with this repository's Jackson 3 (tools.jackson) and needs no exclusion. Below 2.17.0
+# the SDK pulls real com.fasterxml.jackson.core onto the classpath.
+aws-sdk = "2.59.1"
+jdk = "25"
+
+[libraries]
+spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
+spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "spring-boot" }
+spring-modulith-bom = { module = "org.springframework.modulith:spring-modulith-bom", version.ref = "spring-modulith" }
+spring-modulith-api = { module = "org.springframework.modulith:spring-modulith-api" }
+spring-modulith-core = { module = "org.springframework.modulith:spring-modulith-core" }
+spring-modulith-docs = { module = "org.springframework.modulith:spring-modulith-docs" }
+json-schema-validator = { module = "com.networknt:json-schema-validator", version.ref = "json-schema-validator" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+aws-sdk-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws-sdk" }
+aws-sesv2 = { module = "software.amazon.awssdk:sesv2" }
+aws-sts = { module = "software.amazon.awssdk:sts" }
+
+[plugins]

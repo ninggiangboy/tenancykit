@@ -1,0 +1,34 @@
+# The migration step: Flyway as the table owner, then exit. It serves nothing and runs no job, so a deployment cannot
+# start delivering before the schema it needs exists.
+spring:
+  config:
+    activate:
+      on-profile: migrate
+  main:
+    web-application-type: none
+  flyway:
+    enabled: true
+    # A queued ALTER TABLE gives up instead of blocking every query behind it.
+    init-sql: "SET lock_timeout = '3s'"
+  datasource:
+    hikari:
+      maximum-pool-size: 2
+      minimum-idle: 0
+  task:
+    scheduling:
+      pool:
+        size: 1
+mailer:
+  delivery:
+    enabled: false
+  jobs:
+    enabled: false
+  housekeeping:
+    enabled: false
+  credentials:
+    health-enabled: false
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
