@@ -3,6 +3,7 @@ package dev.ngb.mailer.email.application.email.port;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.mailer.shared.Recipient;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -18,7 +19,8 @@ public record OutgoingEmail(
         ResolvedSender sender,
         String subject,
         String html,
-        String text) {
+        String text,
+        Map<String, String> headers) {
 
     public OutgoingEmail {
         Objects.requireNonNull(tenantId, "tenantId");
@@ -26,6 +28,7 @@ public record OutgoingEmail(
         Objects.requireNonNull(sender, "sender");
         Objects.requireNonNull(subject, "subject");
         cc = cc == null ? List.of() : List.copyOf(cc);
+        headers = headers == null ? Map.of() : Map.copyOf(headers);
         if (html == null && text == null) {
             throw new IllegalArgumentException("an email carries an html part, a text part, or both");
         }

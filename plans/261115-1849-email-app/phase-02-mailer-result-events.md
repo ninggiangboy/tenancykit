@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Mailer: result events, headers, tenant registration"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [1]

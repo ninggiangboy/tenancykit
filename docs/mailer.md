@@ -11,12 +11,13 @@ SES in a deployment, SMTP (Mailpit) locally. It is a separate deployable (`maile
 | A delivery service: one `email.send` command in, one ledger row and one email per recipient out | A notification service: it decides nothing about who is notified, or when |
 | The owner of a delivery ledger, per tenant and per recipient | A template engine: recipients, subject and both bodies arrive in the command |
 | A sender through the suite's own SES identity, or through a Tenant's own AWS role | A mailbox, or a bounce and complaint processor: SES's asynchronous events are not consumed |
-| A consumer that publishes nothing | A producer: it declares no exchange of its own and has no outbox table |
+| A producer of one event, `email-delivery.changed`, the terminal outcome it already computes | A business service: the event reports a delivery, it never asks the consumer to do anything |
+| The only transport: every app's mail leaves through it | A notification service, a template engine, or a campaign sender: [notification.md](notification.md) and [email.md](email.md) own those decisions |
 
-Who is notified, which event notifies them, the templates and their translations stay outside mailer. That work now
-belongs to [notification.md](notification.md), the suite's app for notifying Platform tenant users: it produces the
-`email.send` command with an already-rendered subject and both bodies, and mailer remains delivery-only. See
-[overview-and-scope.md](overview-and-scope.md) for the dated reversal.
+Who is notified, which event notifies them, the templates and their translations stay outside mailer. Notification
+notifies Platform tenant users and Email notifies a Tenant's own customers: each produces the `email.send` command with
+an already-rendered subject and both bodies, and mailer remains delivery-only. See
+[overview-and-scope.md](overview-and-scope.md) for the dated reversals.
 
 ## Runtimes
 
@@ -25,7 +26,7 @@ Two profiles, one image, deployed as one service and one one-shot task (`ops/ter
 | Runtime | Profile | What runs |
 |---|---|---|
 | `mailer-migrate` | `migrate` | Flyway as `mailer_owner`, then exits. Run to completion before the worker moves |
-| `mailer` | `worker` | The `mailer.commands` listener and every job: delivery, housekeeping, credential health |
+| `mailer` | `worker` | The `mailer.commands` listener, the outbox relay that publishes delivery results, and every job: delivery, housekeeping, credential health |
 
 The worker serves no business HTTP and declares no port mapping. It keeps an actuator probe on its server port so a stuck
 task is distinguishable from a healthy one, and its readiness group includes `db`, so a task whose database went away
@@ -37,15 +38,18 @@ stops advertising itself as ready.
 |---|---|
 | Command exchange | `mailer.commands` (topic) |
 | Command queue | `mailer.commands`, bound to the exchange with routing key `email.send` |
+| Result exchange | `mailer.events` (topic); mailer is its only producer, routing key `email-delivery.changed` |
+| Result consumers | Each interested app declares its own queue and binding; Mailer declares none |
 | Dead-letter exchange | `suite.dlx` (topic, shared by the suite) |
 | Dead-letter queue | `mailer.commands.dlq`, bound to `suite.dlx` with the queue's own name as its routing key |
 
 The dead-letter routing key is set explicitly to the queue's name, because the broker otherwise keeps the original key
 and the DLQ binding would never match.
 
-The broker user `mailer` is scoped to `mailer.commands`, `mailer.commands.dlq` and `suite.dlx`, and can publish
-nothing. `ops/rabbitmq/declare-users.sh` is where those permissions are written down; the `mq-users` task applies them to
-a managed Amazon MQ broker.
+The broker user `mailer` may write `mailer.events` and its own command queue and dead-letter pair, and read
+`mailer.commands`, its queue and `suite.dlx`. It may not write any other exchange, including the command exchange it
+consumes from. `ops/rabbitmq/declare-users.sh` is where those permissions are written down; the `mq-users` task applies
+them to a managed Amazon MQ broker, and `ops/smoke/isolation.sh` proves the refusals and the one grant.
 
 A command is accepted in one database transaction and never sent from the listener: the handler writes the ledger rows
 and returns, so a message the broker redelivers can never send an email twice. Two keys make that safe — the inbox, keyed
@@ -57,10 +61,14 @@ retries.
 
 A command naming the reserved Platform tenant is accepted. Mailer used to refuse it, on the grounds that it had no
 legitimate platform-scope send; that changed when Notification started notifying Platform administrators about their own
-access changes. Their commands carry the Platform tenant id, and mailer treats it as one more tenant: the ledger row is
-written under that id, and delivery happens because `mailer_tenants` has a row for it (written by
-`V6__platform_tenant.sql`). No credential row is needed — an absent `mailer_credentials` row already means "send through
-the suite's own identity", which is the `SHARED` behaviour Platform mail should have.
+access changes. Their commands carry the Platform tenant id, and mailer treats it as one more tenant. No credential row
+is needed — an absent `mailer_credentials` row already means "send through the suite's own identity", which is the
+`SHARED` behaviour Platform mail should have.
+
+Accepting a command also **registers its tenant** in `mailer_tenants`, in the same transaction. The sweep delivers only
+for rows in that table, and before this the table was written by migrations alone, so a command for an ordinary tenant
+was accepted and then sat `PENDING` for ever. Registering on acceptance makes "accepted" mean "the sweep will visit it";
+the insert is `on conflict do nothing`, so a repeat is a no-op.
 
 ## The delivery status machine
 
@@ -91,6 +99,33 @@ jitter. `completed_at` is set for both terminal states and for no other.
 
 Every attempt is appended to `email_delivery_attempts`, which the application role may only insert into: the history is
 evidence, and the ledger's status is only its last line.
+
+## The delivery result event
+
+A **terminal** outcome is published to the producer as `email-delivery.changed` on `mailer.events`. A transient attempt
+is an internal step of the retry loop and publishes nothing.
+
+The event is appended to the transactional outbox in the **same transaction** that records the ledger outcome, so a crash
+cannot record an outcome and lose the event that reports it. Only the worker's relay calls the broker, and the publish is
+guarded by the outcome's compare-and-swap: a worker whose row another worker has taken over writes no outcome and
+publishes no event. Schema:
+[contracts/events/mailer/email-delivery.changed.schema.json](../contracts/events/mailer/email-delivery.changed.schema.json).
+
+A delivery whose worker died during its **final** attempt is the third way a row reaches `DEAD`: no worker writes its
+outcome, so the delivery round's sweep marks it and publishes its `DEAD` result in the same transaction that performs the
+sweep. Without that, the producer would wait for an answer nothing was going to send, and its own ledger would stay
+`QUEUED` for ever. The sweep is bounded by the lease, so a slow worker is not mistaken for a lost one.
+
+| Field | Meaning |
+|---|---|
+| `requestId`, `recipient` | The producer's email and the one address this outcome is about; a consumer matches on `(tenantId, requestId)` |
+| `status` | `SUCCEEDED` or `DEAD`. The set is **open**: a later producer may add values, and a consumer ignores one it does not know |
+| `attempts`, `completedAt` | How many attempts were made and when the terminal status was reached. A resurrected delivery that later succeeds carries a newer `completedAt`, so a consumer keeps the newest and drops a replay |
+| `providerMessageId`, `lastError` | Optional and diagnostic. `lastError` is a short reason, never a body, an address or a credential |
+
+`email.send` carries one optional `headers` object, restricted to `List-Unsubscribe` and `List-Unsubscribe-Post`. The
+allowlist is the command contract's, not mailer's: an open map would let a producer set arbitrary message headers.
+Notification never sends it; Email uses it for one-click unsubscribe on marketing mail.
 
 Two switches stop work without losing it: `mailer.delivery.enabled = false` keeps rows `PENDING` until it is switched
 back on, and `mailer.jobs.enabled = false` stops the scheduled jobs. Neither drops a queued email.

@@ -43,8 +43,14 @@ public interface DeliveryClaimRepository {
             Instant nextAttemptAt,
             Instant completedAt);
 
-    /** Marks rows a lost worker left {@code IN_PROGRESS} past their budget as {@code DEAD}, so they stop being claimed. */
-    int killExhausted(Instant now, int maxAttempts);
+    /**
+     * Marks rows a lost worker left {@code IN_PROGRESS} past their budget as {@code DEAD}, so they stop being claimed.
+     *
+     * <p>It returns the rows it killed rather than a count: the caller publishes their terminal result in the same
+     * transaction, and a delivery whose worker died on its final attempt would otherwise leave the producer waiting
+     * forever. {@code completedAt} is the {@code now} the sweep wrote.
+     */
+    List<ExhaustedDelivery> killExhausted(Instant now, int maxAttempts);
 
     /** Deletes at most {@code limit} bodies created before {@code olderThan}. The ledger row survives, which is what keeps a dead delivery resendable. */
     int purgeBodies(Instant olderThan, int limit);

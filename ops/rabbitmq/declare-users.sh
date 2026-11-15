@@ -65,15 +65,17 @@ declare_user billing \
   '^(billing\\.events|billing\\.platform-events|billing\\.platform-events\\.dlq|suite\\.dlx)$' \
   '^(platform\\.events|billing\\.platform-events|suite\\.dlx)$'
 
-# Mailer consumes commands and publishes nothing, so its write set is its own queue, its dead-letter queue and the
-# suite's dead-letter exchange — nothing else. `write` must include the DLQ and suite.dlx because declaring a queue with
-# a dead-letter exchange and binding the DLQ both check write on the queue. `read` must include its exchange because
-# queue.bind checks read on the source exchange. Compare with the billing block above, line for line: every dot is
-# double-escaped, because the pattern is pasted into a JSON document and a single `\.` is not a legal JSON escape.
+# Mailer consumes commands and publishes exactly one event, the terminal delivery result, to its own `mailer.events`.
+# Its write set is therefore `mailer.events` plus its own queue and dead-letter pair — never another service's exchange.
+# `write` must include the DLQ and suite.dlx because declaring a queue with a dead-letter exchange and binding the DLQ
+# both check write on the queue, and `mailer.events` because publishing checks write on the exchange. `read` must
+# include `mailer.commands` because queue.bind checks read on the source exchange, and its own queue because consuming
+# checks read on it. Compare with the billing block above, line for line: every dot is double-escaped, because the
+# pattern is pasted into a JSON document and a single `\.` is not a legal JSON escape.
 declare_user mailer \
   "${MAILER_BROKER_PASSWORD:?set the mailer broker password}" \
-  '^(mailer\\.commands|mailer\\.commands\\.dlq|suite\\.dlx)$' \
-  '^(mailer\\.commands|mailer\\.commands\\.dlq|suite\\.dlx)$' \
+  '^(mailer\\.commands|mailer\\.commands\\.dlq|mailer\\.events|suite\\.dlx)$' \
+  '^(mailer\\.commands|mailer\\.commands\\.dlq|mailer\\.events|suite\\.dlx)$' \
   '^(mailer\\.commands|mailer\\.commands\\.dlq|suite\\.dlx)$'
 
 # Notification consumes platform.events on its own queue and publishes exactly one command to mailer.commands. It is the
@@ -88,3 +90,14 @@ declare_user notification \
   '^(notification\\.platform-events|notification\\.platform-events\\.dlq|suite\\.dlx|mailer\\.commands)$' \
   '^(notification\\.platform-events|notification\\.platform-events\\.dlq|suite\\.dlx|mailer\\.commands)$' \
   '^(platform\\.events|notification\\.platform-events|notification\\.platform-events\\.dlq|suite\\.dlx)$'
+
+# Email consumes platform.events and mailer.events on its own queues and publishes exactly one command to
+# mailer.commands. It declares no exchange of its own. `write` covers its two queues, their DLQs, suite.dlx and
+# mailer.commands (publishing checks write on the exchange). `read` covers both source exchanges (a queue.bind checks
+# read on the source) and its own queues (consuming checks read on the queue). It has no write grant on mailer.events,
+# which is what the isolation smoke proves.
+declare_user email \
+  "${EMAIL_BROKER_PASSWORD:?set the email broker password}" \
+  '^(email\\.platform-events|email\\.platform-events\\.dlq|email\\.mailer-events|email\\.mailer-events\\.dlq|suite\\.dlx|mailer\\.commands)$' \
+  '^(email\\.platform-events|email\\.platform-events\\.dlq|email\\.mailer-events|email\\.mailer-events\\.dlq|suite\\.dlx|mailer\\.commands)$' \
+  '^(platform\\.events|mailer\\.events|email\\.platform-events|email\\.platform-events\\.dlq|email\\.mailer-events|email\\.mailer-events\\.dlq|suite\\.dlx)$'

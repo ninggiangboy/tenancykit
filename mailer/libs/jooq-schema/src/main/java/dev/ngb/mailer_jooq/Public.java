@@ -10,6 +10,7 @@ import dev.ngb.mailer_jooq.tables.EmailDeliveryAttempts;
 import dev.ngb.mailer_jooq.tables.EventInbox;
 import dev.ngb.mailer_jooq.tables.MailerCredentials;
 import dev.ngb.mailer_jooq.tables.MailerTenants;
+import dev.ngb.mailer_jooq.tables.Outbox;
 
 import java.util.Arrays;
 import java.util.List;
@@ -64,6 +65,11 @@ public class Public extends SchemaImpl {
     public final MailerTenants MAILER_TENANTS = MailerTenants.MAILER_TENANTS;
 
     /**
+     * The table <code>public.outbox</code>.
+     */
+    public final Outbox OUTBOX = Outbox.OUTBOX;
+
+    /**
      * No further instances allowed
      */
     private Public() {
@@ -84,7 +90,8 @@ public class Public extends SchemaImpl {
             EmailDeliveryAttempts.EMAIL_DELIVERY_ATTEMPTS,
             EventInbox.EVENT_INBOX,
             MailerCredentials.MAILER_CREDENTIALS,
-            MailerTenants.MAILER_TENANTS
+            MailerTenants.MAILER_TENANTS,
+            Outbox.OUTBOX
         );
     }
 }

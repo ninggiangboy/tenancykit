@@ -77,6 +77,7 @@ class SesEmulatorSmokeTest {
                 resolved,
                 "Emulator smoke",
                 null,
-                "Hello from the AWS Emulator");
+                "Hello from the AWS Emulator",
+                java.util.Map.of());
     }
 }

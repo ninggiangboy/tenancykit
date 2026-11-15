@@ -78,7 +78,13 @@ variable "mailer_password" {
 }
 
 variable "notification_password" {
-  description = "Password of the notification broker user."
+  description = "Notification broker user password."
+  type        = string
+  sensitive   = true
+}
+
+variable "email_password" {
+  description = "Email broker user password."
   type        = string
   sensitive   = true
 }

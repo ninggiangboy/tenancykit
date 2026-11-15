@@ -5,6 +5,7 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.mailer.email.application.email.port.EmailDeliveryRepository;
+import dev.ngb.mailer.email.application.email.port.MailerTenants;
 import dev.ngb.mailer.email.domain.delivery.EmailDelivery;
 import dev.ngb.mailer.shared.FromKey;
 import dev.ngb.mailer.shared.Recipient;
@@ -40,11 +41,13 @@ public class AcceptEmailCommandUseCase {
             String replyTo,
             String subject,
             String html,
-            String text) {
+            String text,
+            Map<String, String> headers) {
 
         public Command {
             to = List.copyOf(to);
             cc = cc == null ? List.of() : List.copyOf(cc);
+            headers = headers == null ? Map.of() : Map.copyOf(headers);
         }
     }
 
@@ -60,19 +63,29 @@ public class AcceptEmailCommandUseCase {
 
     private final UnitOfWork unitOfWork;
     private final EmailDeliveryRepository deliveries;
+    private final MailerTenants tenants;
     private final Clock clock;
     private final IdGenerator ids;
 
     public AcceptEmailCommandUseCase(
-            UnitOfWork unitOfWork, EmailDeliveryRepository deliveries, Clock clock, IdGenerator ids) {
+            UnitOfWork unitOfWork,
+            EmailDeliveryRepository deliveries,
+            MailerTenants tenants,
+            Clock clock,
+            IdGenerator ids) {
         this.unitOfWork = unitOfWork;
         this.deliveries = deliveries;
+        this.tenants = tenants;
         this.clock = clock;
         this.ids = ids;
     }
 
     public Outcome accept(TenantId tenantId, Command command) {
         return unitOfWork.transactional(() -> {
+            // The delivery sweep visits only tenants registered here, and before this call the table was written by a
+            // migration alone: a command for an ordinary tenant was accepted and then sat PENDING for ever. Registering
+            // in the accept transaction makes "accepted" mean "the sweep will see it", and the insert is idempotent.
+            tenants.register(tenantId);
             Instant now = clock.now();
             List<Recipient> recipients = command.to().stream().map(Recipient::of).toList();
             Map<String, EmailDelivery> existing = new LinkedHashMap<>();
@@ -88,7 +101,8 @@ public class AcceptEmailCommandUseCase {
                 if (row == null) {
                     EmailDelivery pending = EmailDelivery.pending(
                             ids.newId(), tenantId, command.requestId(), recipient, fromKey, command.subject(), now);
-                    created |= deliveries.addIfAbsent(pending, command.replyTo(), cc, command.html(), command.text());
+                    created |= deliveries.addIfAbsent(
+                            pending, command.replyTo(), cc, command.html(), command.text(), command.headers());
                 } else if (row.isDead()) {
                     deliveries.resurrect(row.id());
                     resurrected = true;

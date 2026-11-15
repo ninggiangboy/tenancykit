@@ -14,6 +14,7 @@ import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.mailer.boot.config.MailerSettings.Delivery;
 import dev.ngb.mailer.email.adapter.delivery.messaging.CommandSchemaValidator;
 import dev.ngb.mailer.email.adapter.delivery.messaging.EmailCommandHandler;
+import dev.ngb.mailer.email.adapter.delivery.messaging.OutboxDeliveryResultPublisher;
 import dev.ngb.mailer.email.application.email.command.AcceptEmailCommandUseCase;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,12 @@ import org.springframework.context.annotation.Profile;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Mailer's part in the suite broker: it consumes commands and publishes nothing at all.
+ * Mailer's part in the suite broker: it consumes commands and publishes one event, the terminal delivery result.
+ *
+ * <p>The producing exchange is {@code mailer.events}, not {@code mailer.commands}: {@code MessagingProperties.exchange}
+ * is where this service's <em>events</em> go, and the command exchange is declared through the queue binding instead,
+ * because mailer is a consumer there. {@code exports} maps the one event type to that exchange; an empty map would make
+ * the broker relay a silent no-op.
  *
  * <p>Two values in here are not defaults a reader should trust to be free: the envelope {@code schemaVersion} is
  * <b>2</b>, and a wrong value rejects every command; and {@code EnvelopeCodec} is not a bean in {@code core}, so it has
@@ -36,15 +42,15 @@ import tools.jackson.databind.json.JsonMapper;
 class MessagingConfiguration {
 
     /**
-     * One exchange, one queue, one dead-letter pair. {@code exports} is empty because mailer publishes no events, which is
-     * also why there is no outbox table in its schema.
+     * One producing exchange, one consumed queue, one dead-letter pair. The export entry is what {@code BrokerRelay}
+     * resolves the exchange from; {@code OutboxConfiguration} asserts the route set is non-empty at startup.
      */
     @Bean
     MessagingProperties messagingProperties(MailerSettings settings) {
         Delivery delivery = settings.delivery();
         return new MessagingProperties(
-                settings.messaging().exchange(),
-                Map.of(),
+                settings.messaging().eventsExchange(),
+                Map.of(OutboxDeliveryResultPublisher.TYPE, settings.messaging().eventsExchange()),
                 List.of(new QueueBinding(
                         settings.messaging().queue(), settings.messaging().exchange(), List.of("email.send"))),
                 new Relay(

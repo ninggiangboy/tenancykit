@@ -11,16 +11,21 @@ One topic exchange per producer, one durable queue per consuming app, one dead-l
 
 | Exchange (topic, durable) | Producer | Routing key | Queues |
 |---|---|---|---|
-| `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events`, `notification.platform-events` |
+| `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events`, `notification.platform-events`, `email.platform-events` |
 | `billing.events` | Billing | event type | none yet |
 | `mailer.commands` | any producer | command type, today `email.send` | `mailer.commands`, `mailer.commands.dlq` |
+| `mailer.events` | Mailer | event type, today `email-delivery.changed` | `email.mailer-events`, `email.mailer-events.dlq` |
 | `suite.dlx` | — | queue name | `<queue>.dlq` per consumer |
 
-`notification.platform-events` is durable, bound to `platform.events` with the five state-transfer routing keys
-(`tenant.changed`, `tenant-domain.changed`, `tenant-system.changed`, `user-access.changed`, `entitlement.changed`),
-declares `x-dead-letter-exchange: suite.dlx`, and its dead-letter queue is `notification.platform-events.dlq`.
-Notification declares **no exchange of its own**: it publishes the `email.send` command to `mailer.commands` and
-owns no event that another app consumes.
+`notification.platform-events` and `email.platform-events` are durable, bound to `platform.events` with the five
+state-transfer routing keys (`tenant.changed`, `tenant-domain.changed`, `tenant-system.changed`, `user-access.changed`,
+`entitlement.changed`), declare `x-dead-letter-exchange: suite.dlx`, and their dead-letter queues are
+`notification.platform-events.dlq` and `email.platform-events.dlq`.
+
+Notification declares **no exchange of its own**: it publishes the `email.send` command to `mailer.commands` and owns
+no event that another app consumes. Email declares no exchange either: it publishes `email.send` to
+`mailer.commands` and consumes `email-delivery.changed` on `email.mailer-events`, which binds to mailer's own
+`mailer.events`. Mailer produces one event and no command; before this change it produced nothing.
 
 An exchange carries either events or commands. `mailer.commands` carries commands: a request one app sends to the
 service that owns the work, described by `contracts/commands/` rather than by the sender. The envelope is the same;

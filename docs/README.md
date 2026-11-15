@@ -1,6 +1,6 @@
 # TenancyKit Documentation
 
-Documentation for the suite: the **Platform** service, the **Billing** app and the **Sample Tenant System** (a Cloud Resource Management reference tenant), each independently deployable. It is written for people and AI collaborators who need to know what the systems must do, why they are shaped this way, and where each rule is owned.
+Documentation for the suite: the **Platform** service, the **Billing** and **Notification** and **Email** apps, and the **Sample Tenant System** (a Cloud Resource Management reference tenant), each independently deployable. It is written for people and AI collaborators who need to know what the systems must do, why they are shaped this way, and where each rule is owned.
 
 ## Authority
 
@@ -17,6 +17,7 @@ Documentation for the suite: the **Platform** service, the **Billing** app and t
 | [platform-service.md](platform-service.md) | Platform's contexts, surface, token issuance, snapshot and streams |
 | [suite-messaging.md](suite-messaging.md) | RabbitMQ topology, envelope, versioned replicas, rebuild, dead-letter handling |
 | [notification.md](notification.md) | The notification app: its five types, templates, locale, in-app store, dispatch ledger and replica rebuild |
+| [email.md](email.md) | The email app: a Tenant's templates, receivers, groups, segments, campaigns, tracking and retention for its own customers |
 | [mailer.md](mailer.md) | The delivery service: its command queue, the delivery status machine, the DLQ runbook |
 | [mailer-tenant-onboarding.md](mailer-tenant-onboarding.md) | The trust policy a Tenant creates so mailer sends under the Tenant's own SES identity |
 | [multi-tenancy-and-data-isolation.md](multi-tenancy-and-data-isolation.md) | Tenant model, isolation strategy, tenant resolution |

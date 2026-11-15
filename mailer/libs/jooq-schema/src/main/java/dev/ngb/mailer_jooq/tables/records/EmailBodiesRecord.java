@@ -9,6 +9,7 @@ import dev.ngb.mailer_jooq.tables.EmailBodies;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.jooq.JSONB;
 import org.jooq.Record2;
 import org.jooq.impl.UpdatableRecordImpl;
 
@@ -141,6 +142,21 @@ public class EmailBodiesRecord extends UpdatableRecordImpl<EmailBodiesRecord> {
         return (Instant) get(7);
     }
 
+    /**
+     * Setter for <code>public.email_bodies.headers</code>.
+     */
+    public EmailBodiesRecord setHeaders(JSONB value) {
+        set(8, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.email_bodies.headers</code>.
+     */
+    public JSONB getHeaders() {
+        return (JSONB) get(8);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -164,7 +180,7 @@ public class EmailBodiesRecord extends UpdatableRecordImpl<EmailBodiesRecord> {
     /**
      * Create a detached, initialised EmailBodiesRecord
      */
-    public EmailBodiesRecord(UUID tenantId, UUID deliveryId, String subject, String replyTo, String[] cc, String htmlBody, String textBody, Instant createdAt) {
+    public EmailBodiesRecord(UUID tenantId, UUID deliveryId, String subject, String replyTo, String[] cc, String htmlBody, String textBody, Instant createdAt, JSONB headers) {
         super(EmailBodies.EMAIL_BODIES);
 
         setTenantId(tenantId);
@@ -175,6 +191,7 @@ public class EmailBodiesRecord extends UpdatableRecordImpl<EmailBodiesRecord> {
         setHtmlBody(htmlBody);
         setTextBody(textBody);
         setCreatedAt(createdAt);
+        setHeaders(headers);
         resetTouchedOnNotNull();
     }
 }

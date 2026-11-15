@@ -20,6 +20,7 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.InverseForeignKey;
+import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Path;
 import org.jooq.PlainSQL;
@@ -99,6 +100,11 @@ public class EmailBodies extends TableImpl<EmailBodiesRecord> {
      * The column <code>public.email_bodies.created_at</code>.
      */
     public final TableField<EmailBodiesRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.INSTANT.nullable(false), this, "");
+
+    /**
+     * The column <code>public.email_bodies.headers</code>.
+     */
+    public final TableField<EmailBodiesRecord, JSONB> HEADERS = createField(DSL.name("headers"), SQLDataType.JSONB, this, "");
 
     private EmailBodies(Name alias, Table<EmailBodiesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);

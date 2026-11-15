@@ -24,6 +24,7 @@ locals {
   platform_internal_jwks = "${local.platform_internal_url}/.well-known/jwks.json"
 
   billing_public_url = "${local.public_scheme}://${var.public_domain}"
+  email_public_url   = "${local.public_scheme}://${var.public_domain}/email"
 
   # An SES identity exists per account and per region, so the suite's own identity follows the deployment region unless
   # a tfvars file pins another one. Its ownership check is a DKIM record set this repository cannot publish: there is no
@@ -42,6 +43,9 @@ locals {
     notification          = "/ecs/${var.environment}/notification"
     notification_api      = "/ecs/${var.environment}/notification-api"
     notification_migrate  = "/ecs/${var.environment}/notification-migrate"
+    email                 = "/ecs/${var.environment}/email"
+    email_api             = "/ecs/${var.environment}/email-api"
+    email_migrate         = "/ecs/${var.environment}/email-migrate"
     rds_init        = "/ecs/${var.environment}/rds-init"
     mq_users        = "/ecs/${var.environment}/mq-users"
   }

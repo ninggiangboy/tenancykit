@@ -1,10 +1,9 @@
 # Runtime profiles and deployment
 
-Each service jar runs in one shape. Billing's and Notification's jars each run in three: `api`, `worker` and
+Each service jar runs in one shape. Billing's, Notification's and Email's jars each run in three: `api`, `worker` and
 `migrate`. Mailer's runs in two: `worker` and `migrate` — it serves no business HTTP endpoint, so it has no `api`
-runtime at all. `dev` and `test`
-start Billing with no profile, which activates `api` and `worker` together — the all-in-one behaviour from before the
-split; production starts one of the profiles below.
+runtime at all. `dev` and `test` start Billing with no profile, which activates `api` and `worker` together — the
+all-in-one behaviour from before the split; production starts one of the profiles below.
 
 Platform and the sample tenant have no such split; each runs as one process and migrates on start. Mailer runs with **no
 profile** on a laptop, which leaves Flyway on and creates neither the listener nor the jobs, so a web test can migrate a
@@ -50,6 +49,9 @@ no logic, retries nothing and rewrites no body. See [suite-messaging.md](suite-m
 | `notification-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
 | `notification-api` (`api`) | The user's inbox and preferences, the suite's templates, the tenant's settings and dispatch ledger | Its database, the broker, Platform (replica snapshots) |
 | `notification-worker` (`worker`) | The `platform.events` listener, the outbox relay and housekeeping; the replica rebuild on start | Its database, the broker, Platform (replica snapshots) |
+| `email-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
+| `email-api` (`api`) | Templates, receivers, groups, segments, suppressions, emails, campaigns, settings and the public `/t/*` tracking endpoints | Its database, Platform (replica snapshots) |
+| `email-worker` (`worker`) | The `platform.events` and `email.mailer-events` listeners, the outbox relay, the campaign scheduler and publisher, housekeeping; the replica rebuild on start | Its database, the broker, Platform (replica snapshots) |
 | `mailpit` | SMTP on 1025 and an HTTP API/UI on 8025, for local development only | Nothing |
 | `tenant` | Its own HTTP surface, webhook verification, the Platform token provider, the execution worker | Its database, Platform, Billing |
 
@@ -121,6 +123,12 @@ other. The deployment has four long-running workloads and three one-shot tasks:
 | `billing-api` | `api` | 2 replicas; the ALB's default target; Service Connect name `billing`. |
 | `billing-worker` | `worker` | 2 replicas; no ALB target; no virtual threads. |
 | `billing-migrate` | `migrate` | One-shot task run to exit 0 before api and worker roll. |
+| `notification-migrate` | `migrate` | One-shot task run to exit 0 before notification's services roll. |
+| `notification-api` | `api` | 2 replicas; ALB rule priority 40. |
+| `notification-worker` | `worker` | 2 replicas; no ALB target. |
+| `email-migrate` | `migrate` | One-shot task run to exit 0 before email's services roll. |
+| `email-api` | `api` | 2 replicas; ALB rule priority 50. |
+| `email-worker` | `worker` | 2 replicas; no ALB target. |
 | `rds-init` | n/a | One-shot task that creates the databases and owner/app roles RDS does not provision. |
 | `mq-users` | n/a | One-shot task that applies the broker's per-user exchange/queue permissions. |
 

@@ -58,3 +58,6 @@ jobs:
       - name: Notification rule ids
         working-directory: notification
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
+      - name: Email rule ids
+        working-directory: email
+        run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'

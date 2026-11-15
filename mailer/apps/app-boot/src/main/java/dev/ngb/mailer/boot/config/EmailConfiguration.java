@@ -1,5 +1,6 @@
 package dev.ngb.mailer.boot.config;
 
+import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -10,6 +11,7 @@ import dev.ngb.mailer.email.adapter.credential.aws.ConfiguredSenderResolver;
 import dev.ngb.mailer.email.adapter.credential.aws.CredentialProviderCache;
 import dev.ngb.mailer.email.adapter.credential.aws.SesCredentialProbe;
 import dev.ngb.mailer.email.adapter.credential.persistence.JooqCredentialStore;
+import dev.ngb.mailer.email.adapter.delivery.messaging.OutboxDeliveryResultPublisher;
 import dev.ngb.mailer.email.adapter.delivery.persistence.JooqDeliveryClaimRepository;
 import dev.ngb.mailer.email.adapter.delivery.persistence.JooqEmailDeliveryRepository;
 import dev.ngb.mailer.email.adapter.delivery.ses.SesClientFactory;
@@ -23,6 +25,7 @@ import dev.ngb.mailer.email.application.email.command.HousekeepingUseCase;
 import dev.ngb.mailer.email.application.email.port.CredentialProbe;
 import dev.ngb.mailer.email.application.email.port.CredentialStore;
 import dev.ngb.mailer.email.application.email.port.DeliveryClaimRepository;
+import dev.ngb.mailer.email.application.email.port.DeliveryResultPublisher;
 import dev.ngb.mailer.email.application.email.port.EmailDeliveryRepository;
 import dev.ngb.mailer.email.application.email.port.EmailSender;
 import dev.ngb.mailer.email.application.email.port.MailerTenants;
@@ -34,6 +37,7 @@ import dev.ngb.core.util.Backoff;
 import java.security.SecureRandom;
 import java.util.function.DoubleSupplier;
 import org.jooq.DSLContext;
+import tools.jackson.databind.json.JsonMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,13 +53,18 @@ import org.springframework.mail.javamail.JavaMailSender;
 class EmailConfiguration {
 
     @Bean
-    EmailDeliveryRepository emailDeliveryRepository(DSLContext dsl) {
-        return new JooqEmailDeliveryRepository(dsl);
+    EmailDeliveryRepository emailDeliveryRepository(DSLContext dsl, JsonMapper json) {
+        return new JooqEmailDeliveryRepository(dsl, json);
     }
 
     @Bean
-    DeliveryClaimRepository deliveryClaimRepository(DSLContext dsl) {
-        return new JooqDeliveryClaimRepository(dsl);
+    DeliveryClaimRepository deliveryClaimRepository(DSLContext dsl, JsonMapper json) {
+        return new JooqDeliveryClaimRepository(dsl, json);
+    }
+
+    @Bean
+    DeliveryResultPublisher deliveryResultPublisher(EventPublisher outbox, IdGenerator ids) {
+        return new OutboxDeliveryResultPublisher(outbox, ids);
     }
 
     @Bean
@@ -142,8 +151,12 @@ class EmailConfiguration {
 
     @Bean
     AcceptEmailCommandUseCase acceptEmailCommandUseCase(
-            UnitOfWork unitOfWork, EmailDeliveryRepository deliveries, Clock clock, IdGenerator ids) {
-        return new AcceptEmailCommandUseCase(unitOfWork, deliveries, clock, ids);
+            UnitOfWork unitOfWork,
+            EmailDeliveryRepository deliveries,
+            MailerTenants tenants,
+            Clock clock,
+            IdGenerator ids) {
+        return new AcceptEmailCommandUseCase(unitOfWork, deliveries, tenants, clock, ids);
     }
 
     @Bean
@@ -158,12 +171,13 @@ class EmailConfiguration {
             DeliveryClaimRepository claims,
             SenderResolver resolver,
             EmailSender sender,
+            DeliveryResultPublisher results,
             TenantContext tenantContext,
             DeliverySettings settings,
             Clock clock,
             DoubleSupplier random) {
         return new DeliverEmailsUseCase(
-                unitOfWork, claims, resolver, sender, tenantContext, settings, clock, random);
+                unitOfWork, claims, resolver, sender, results, tenantContext, settings, clock, random);
     }
 
     @Bean

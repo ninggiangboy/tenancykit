@@ -10,6 +10,7 @@ import dev.ngb.mailer_jooq.tables.EmailDeliveryAttempts;
 import dev.ngb.mailer_jooq.tables.EventInbox;
 import dev.ngb.mailer_jooq.tables.MailerCredentials;
 import dev.ngb.mailer_jooq.tables.MailerTenants;
+import dev.ngb.mailer_jooq.tables.Outbox;
 
 
 /**
@@ -47,4 +48,9 @@ public class Tables {
      * The table <code>public.mailer_tenants</code>.
      */
     public static final MailerTenants MAILER_TENANTS = MailerTenants.MAILER_TENANTS;
+
+    /**
+     * The table <code>public.outbox</code>.
+     */
+    public static final Outbox OUTBOX = Outbox.OUTBOX;
 }

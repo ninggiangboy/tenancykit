@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "Dynamic segments and housekeeping"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [7]

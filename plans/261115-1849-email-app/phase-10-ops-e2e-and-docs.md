@@ -1,7 +1,7 @@
 ---
 phase: 10
 title: "Ops seams, end-to-end and docs"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [8, 9]

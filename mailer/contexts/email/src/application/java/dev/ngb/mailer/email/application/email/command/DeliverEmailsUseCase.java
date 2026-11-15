@@ -7,7 +7,10 @@ import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.mailer.email.application.email.exception.UnresolvableSenderException;
 import dev.ngb.mailer.email.application.email.port.ClaimedDelivery;
 import dev.ngb.mailer.email.application.email.port.DeliveryClaimRepository;
+import dev.ngb.mailer.email.application.email.port.DeliveryResult;
+import dev.ngb.mailer.email.application.email.port.DeliveryResultPublisher;
 import dev.ngb.mailer.email.application.email.port.EmailSender;
+import dev.ngb.mailer.email.application.email.port.ExhaustedDelivery;
 import dev.ngb.mailer.email.application.email.port.OutgoingEmail;
 import dev.ngb.mailer.email.application.email.port.ResolvedSender;
 import dev.ngb.mailer.email.application.email.port.SendOutcome;
@@ -30,6 +33,10 @@ import java.util.function.DoubleSupplier;
  *
  * <p>Each outcome is its own transaction: one rejected recipient must not roll back the outcomes — and the attempt
  * rows — of the other deliveries in the same claim.
+ *
+ * <p>A terminal outcome also publishes its result in that same transaction, so a crash cannot record an outcome and
+ * lose the event that reports it. The publish is guarded by the compare-and-swap result: a worker whose row another
+ * worker has taken over writes nothing and publishes nothing.
  */
 public class DeliverEmailsUseCase {
 
@@ -41,6 +48,7 @@ public class DeliverEmailsUseCase {
     private final DeliveryClaimRepository claims;
     private final SenderResolver resolver;
     private final EmailSender sender;
+    private final DeliveryResultPublisher results;
     private final TenantContext tenantContext;
     private final DeliverySettings settings;
     private final Clock clock;
@@ -51,6 +59,7 @@ public class DeliverEmailsUseCase {
             DeliveryClaimRepository claims,
             SenderResolver resolver,
             EmailSender sender,
+            DeliveryResultPublisher results,
             TenantContext tenantContext,
             DeliverySettings settings,
             Clock clock,
@@ -59,6 +68,7 @@ public class DeliverEmailsUseCase {
         this.claims = claims;
         this.resolver = resolver;
         this.sender = sender;
+        this.results = results;
         this.tenantContext = tenantContext;
         this.settings = settings;
         this.clock = clock;
@@ -70,7 +80,7 @@ public class DeliverEmailsUseCase {
         DeliveryPolicy policy = settings.policy();
         List<ClaimedDelivery> claimed = unitOfWork.transactional(() -> {
             Instant now = clock.now();
-            claims.killExhausted(now, policy.maxAttempts());
+            publishExhausted(tenantId, claims.killExhausted(now, policy.maxAttempts()));
             return claims.claimDue(now, settings.batchSize(), policy.lease());
         });
         if (claimed.isEmpty()) {
@@ -119,8 +129,25 @@ public class DeliverEmailsUseCase {
         Instant next = nextAttemptAt;
         Instant completed = completedAt;
         String messageId = providerMessageId;
-        unitOfWork.transactional(() -> claims.recordOutcome(
-                item.delivery().id(), attemptsMade, attempt, decided, messageId, next, completed));
+        unitOfWork.transactional(() -> {
+            int applied = claims.recordOutcome(
+                    item.delivery().id(), attemptsMade, attempt, decided, messageId, next, completed);
+            // The CAS says whether this worker still owned the row. Only its owner reports the outcome, so a result
+            // event can never describe an outcome another worker overwrote.
+            if (applied == 1 && (decided == DeliveryStatus.SUCCEEDED || decided == DeliveryStatus.DEAD)) {
+                results.publish(new DeliveryResult(
+                        tenantId,
+                        item.delivery().id(),
+                        item.delivery().requestId(),
+                        item.delivery().recipient().address(),
+                        decided,
+                        attemptsMade,
+                        completed,
+                        messageId,
+                        attempt.error()));
+            }
+            return applied;
+        });
         return status;
     }
 
@@ -130,7 +157,8 @@ public class DeliverEmailsUseCase {
         try {
             ResolvedSender resolved = resolver.resolve(tenantId, delivery.fromKey(), item.replyTo());
             OutgoingEmail email = new OutgoingEmail(
-                    tenantId, delivery.recipient(), item.cc(), resolved, delivery.subject(), item.html(), item.text());
+                    tenantId, delivery.recipient(), item.cc(), resolved, delivery.subject(), item.html(), item.text(),
+                    item.headers());
             SendOutcome outcome = sender.send(email);
             return switch (outcome) {
                 case SendOutcome.Accepted accepted -> new Sent(
@@ -158,4 +186,26 @@ public class DeliverEmailsUseCase {
     }
 
     private record Sent(DeliveryAttempt attempt, String providerMessageId) {}
+
+    /**
+     * Publishes the terminal result of every delivery the sweep just killed, inside the sweep's own transaction.
+     *
+     * <p>A lost worker's final attempt is a real {@code DEAD} outcome; the producer is owed the event exactly as it is
+     * for an outcome this worker wrote itself. Publishing here, before the claim, keeps the sweep and its events
+     * atomic: a crash rolls both back, and the next round finds the same rows.
+     */
+    private void publishExhausted(TenantId tenantId, List<ExhaustedDelivery> exhausted) {
+        for (ExhaustedDelivery delivery : exhausted) {
+            results.publish(new DeliveryResult(
+                    tenantId,
+                    delivery.deliveryId(),
+                    delivery.requestId(),
+                    delivery.recipient(),
+                    DeliveryStatus.DEAD,
+                    delivery.attempts(),
+                    delivery.completedAt(),
+                    null,
+                    delivery.lastError()));
+        }
+    }
 }

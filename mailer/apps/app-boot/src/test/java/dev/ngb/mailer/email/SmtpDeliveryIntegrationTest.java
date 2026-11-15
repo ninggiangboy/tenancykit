@@ -93,6 +93,37 @@ class SmtpDeliveryIntegrationTest {
     }
 
     @Test
+    void aSucceededDeliveryWritesOneResultToTheOutbox() {
+        String requestId = "outbox-" + UUID.randomUUID();
+        accept(requestId);
+
+        deliverOnce(requestId);
+
+        var rows = scoped(() -> dsl.fetch(
+                "select type, payload->>'requestId' as request_id, payload->>'status' as status "
+                        + "from outbox where tenant_id = ?",
+                tenant.value()));
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).get("type", String.class)).isEqualTo("email-delivery.changed");
+        assertThat(rows.get(0).get("request_id", String.class)).isEqualTo(requestId);
+        assertThat(rows.get(0).get("status", String.class)).isEqualTo("SUCCEEDED");
+    }
+
+    @Test
+    void allowlistedHeadersReachTheMessage() {
+        String requestId = "headers-" + UUID.randomUUID();
+        accept(requestId, java.util.Map.of(
+                "List-Unsubscribe", "<https://example.test/email/t/u/abc>",
+                "List-Unsubscribe-Post", "List-Unsubscribe=One-Click"));
+
+        deliverOnce(requestId);
+
+        String message = SMTP.lastMessage();
+        assertThat(message).contains("List-Unsubscribe: <https://example.test/email/t/u/abc>");
+        assertThat(message).contains("List-Unsubscribe-Post: List-Unsubscribe=One-Click");
+    }
+
+    @Test
     void runningTheRoundAgainSendsNoSecondEmail() {
         String requestId = "replay-" + UUID.randomUUID();
         accept(requestId);
@@ -109,9 +140,13 @@ class SmtpDeliveryIntegrationTest {
     // --------------------------------------------------------------- helpers
 
     private void accept(String requestId) {
+        accept(requestId, java.util.Map.of());
+    }
+
+    private void accept(String requestId, java.util.Map<String, String> headers) {
         AcceptEmailCommandUseCase.Command command = new AcceptEmailCommandUseCase.Command(
                 requestId, List.of("someone@example.com"), List.of(), "default", "TenancyKit", null,
-                "Your invoice 42", null, "Hello from TenancyKit");
+                "Your invoice 42", null, "Hello from TenancyKit", headers);
         AcceptEmailCommandUseCase.Outcome outcome = scoped(() -> accept.accept(tenant, command));
         assertThat(outcome).isEqualTo(AcceptEmailCommandUseCase.Outcome.CREATED);
     }

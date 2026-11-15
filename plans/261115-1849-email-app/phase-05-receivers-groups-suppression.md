@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Receivers, groups, suppression, unsubscribe"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [3]

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/mailer/email-delivery.changed.schema.json",
+  "title": "Email delivery changed",
+  "description": "The terminal outcome mailer computed for one recipient of one email.send command. Mailer appends it to its transactional outbox in the same transaction as the outcome it records, so the event and the ledger cannot disagree. A consumer matches the email by (tenantId, requestId). `status` is an open set: a consumer ignores a value it does not know. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "requestId",
+    "recipient",
+    "status",
+    "attempts",
+    "completedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The idempotency key the producer put on the email.send command. The producer's email id, so the consumer matches the outcome without a second lookup key."
+    },
+    "recipient": {
+      "type": "string",
+      "format": "email",
+      "maxLength": 320,
+      "pattern": "^[^\\r\\n]+$",
+      "description": "The single recipient whose delivery this outcome describes. One command may carry several; mailer publishes one result per recipient."
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "description": "The terminal delivery status. Known values are SUCCEEDED and DEAD. The set is open: a later producer may add values such as BOUNCED or COMPLAINED, and a consumer must ignore any value it does not understand rather than guess. DEAD means the delivery budget is exhausted and mailer will not retry."
+    },
+    "attempts": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "How many delivery attempts mailer made. A DEAD outcome reports the exhausted budget."
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When mailer reached this terminal status, in UTC. A delivery that is resurrected and later succeeds carries a newer completedAt, so a consumer keeps the newest outcome and drops an out-of-order replay."
+    },
+    "providerMessageId": {
+      "type": "string",
+      "maxLength": 256,
+      "description": "The transport's own message id when it supplies one (the SES message id). Diagnostic only: a consumer must not parse it."
+    },
+    "lastError": {
+      "type": "string",
+      "maxLength": 500,
+      "pattern": "^[^\\r\\n]+$",
+      "description": "A short reason for a failed delivery. Never a message body, an address or a credential: it is written from the transport's error class, not its raw response."
+    }
+  }
+}

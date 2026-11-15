@@ -1,7 +1,8 @@
-# Five repositories back ten workloads: Platform, Billing (migrate, api and worker), Mailer (worker and migrate),
-# Notification (migrate, api and worker) and the Keycloak image that bakes the realm export.
+# Six repositories back thirteen workloads: Platform, Billing (migrate, api and worker), Mailer (worker and migrate),
+# Notification (migrate, api and worker), Email (migrate, api and worker) and the Keycloak image that bakes the realm
+# export.
 resource "aws_ecr_repository" "this" {
-  for_each = toset(["platform", "billing", "keycloak", "mailer", "notification"])
+  for_each = toset(["platform", "billing", "keycloak", "mailer", "notification", "email"])
 
   name                 = "${var.suite_name}/${var.environment}/${each.key}"
   image_tag_mutability = "MUTABLE"

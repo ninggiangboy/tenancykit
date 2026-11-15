@@ -12,12 +12,19 @@ same workloads on ECS Fargate, with managed data services instead of containers.
 | `billing-migrate` | Flyway as the table owner, then exits | One-shot task definition, run by the pipeline |
 | `mailer` | The `email.send` command listener and every mailer job | Service, 2 replicas, no ALB target and no Service Connect |
 | `mailer-migrate` | Flyway as the table owner, then exits | One-shot task definition, run by the pipeline |
+| `notification-api` | The user's inbox and preferences, templates, tenant settings and the dispatch ledger | Service, 2 replicas, ALB rule priority 40 |
+| `notification-worker` | The `platform.events` listener, the outbox relay and housekeeping | Service, 2 replicas, no ALB target |
+| `notification-migrate` | Flyway as the table owner, then exits | One-shot task definition, run by the pipeline |
+| `email-api` | Templates, receivers, groups, segments, emails, campaigns, settings and the public tracking paths | Service, 2 replicas, ALB rule priority 50 |
+| `email-worker` | The `platform.events` and `email.mailer-events` listeners, the campaign jobs and housekeeping | Service, 2 replicas, no ALB target |
+| `email-migrate` | Flyway as the table owner, then exits | One-shot task definition, run by the pipeline |
 | `rds-init` | Creates databases and roles, then exits | One-shot task definition, run once |
 | `mq-users` | Applies broker permissions, then exits | One-shot task definition, run once |
 
-RDS hosts `platform`, `billing`, `tenant`, `mailer` and `keycloak` databases with the same owner/app role split as
-compose. Amazon MQ hosts the RabbitMQ broker with a user per service, and mailer's is limited to `mailer.commands`, its
-dead-letter queue and `suite.dlx`. Both are private; tasks reach them through their security group.
+RDS hosts `platform`, `billing`, `tenant`, `mailer`, `notification`, `email` and `keycloak` databases with the same
+owner/app role split as compose. Amazon MQ hosts the RabbitMQ broker with a user per service; mailer's is limited to
+`mailer.commands`, its dead-letter queue and `suite.dlx`, and email's to `mailer.commands` plus its own queues. Both are
+private; tasks reach them through their security group.
 
 ## IAM
 
@@ -67,6 +74,8 @@ There is one rule about addresses: an issuer is public, a server-to-server URL i
 | `BILLING_PLATFORM_ISSUER`, `BILLING_OIDC_ISSUER_URI` | the same public addresses | Billing validates what Platform and Keycloak minted. |
 | `PLATFORM_OIDC_JWK_SET_URI`, `BILLING_PLATFORM_JWK_SET_URI` | `http://keycloak.<namespace>:8080/...`, `http://platform.<namespace>:8080/.well-known/jwks.json` | Fetched server-to-server, so no ALB round trip. |
 | `BILLING_PLATFORM_BASE_URL` | `http://platform.<namespace>:8080` | Service Connect name. |
+| `EMAIL_PLATFORM_BASE_URL`, `EMAIL_OIDC_ISSUER_URI` | `http://platform.<namespace>:8080`, the public Keycloak issuer | The replica source and the user-token issuer. |
+| `EMAIL_PUBLIC_BASE_URL` | `https://<domain>/email` | The prefix a recipient's mail client reaches; the proxy forwards it to `email-api`. |
 | `PLATFORM_INTERNAL_HOSTNAMES` | `platform.<namespace>` | Platform resolves the tenant from Host; an unlisted internal FQDN gets a 404. This needs plan `261114-0930` in the code. |
 
 The internal FQDN is `local.internal_fqdn` in `locals.tf`; no module hardcodes the namespace.
@@ -78,6 +87,8 @@ The internal FQDN is `local.internal_fqdn` in `locals.tf`; no module hardcodes t
 | 10 | path `/platform/*` | Platform |
 | 20 | host `platform.<domain>` | Platform |
 | 30 | host `auth.<domain>` | Keycloak |
+| 40 | path `/notification/*` | Notification api |
+| 50 | path `/email/*` | Email api |
 | default | anything else, including every tenant host | Billing api |
 
 The Host header is forwarded unchanged; rewriting it would break tenant resolution. ALB cannot strip a path prefix,

@@ -97,6 +97,11 @@ public class SmtpEmailSender implements EmailSender {
         } else {
             helper.setText(email.text(), false);
         }
+        // Set last so the helper cannot overwrite them. The allowlist is the command contract's; a header value that
+        // contained CR/LF was refused there, which is what keeps this from being a header-injection site.
+        for (java.util.Map.Entry<String, String> header : email.headers().entrySet()) {
+            message.setHeader(header.getKey(), header.getValue());
+        }
         return message;
     }
 }

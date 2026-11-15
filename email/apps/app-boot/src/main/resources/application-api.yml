@@ -1,0 +1,34 @@
+# The HTTP edge. It consumes nothing and schedules nothing: a request reads or writes through a use case whose
+# transaction is short, and the platform-events listener belongs to the worker alone.
+spring:
+  config:
+    activate:
+      on-profile: "api & !worker"
+  threads:
+    virtual:
+      enabled: true
+  flyway:
+    enabled: false
+  datasource:
+    hikari:
+      maximum-pool-size: ${EMAIL_API_DB_POOL_SIZE:20}
+      minimum-idle: ${EMAIL_API_DB_MIN_IDLE:5}
+      connection-timeout: 3000
+      connection-init-sql: "SET lock_timeout = '30s'; SET idle_in_transaction_session_timeout = '60s'"
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+server:
+  shutdown: graceful
+management:
+  endpoint:
+    health:
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db,replicaState
+email:
+  jobs:
+    enabled: false
+  housekeeping:
+    enabled: false

@@ -27,12 +27,18 @@ locals {
     "NOTIFICATION_DB_PASSWORD",
     "NOTIFICATION_RABBITMQ_PASSWORD",
     "NOTIFICATION_REPLICA_CLIENT_SECRET",
+    "EMAIL_MIGRATION_DB_PASSWORD",
+    "EMAIL_DB_PASSWORD",
+    "EMAIL_RABBITMQ_PASSWORD",
+    "EMAIL_REPLICA_CLIENT_SECRET",
+    "EMAIL_TRACKING_SECRET",
   ])
 
   derived_secrets = toset([
     "PLATFORM_TOKEN_SIGNING_KEY",
     "PLATFORM_SERVICE_CLIENT_SECRET_HASH",
     "PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH",
+    "PLATFORM_EMAIL_SERVICE_CLIENT_SECRET_HASH",
   ])
 
   secret_names = setunion(local.generated_secrets, local.derived_secrets)
@@ -47,6 +53,8 @@ locals {
       PLATFORM_SERVICE_CLIENT_SECRET_HASH = sha256(random_password.this["BILLING_REPLICA_CLIENT_SECRET"].result)
       # Notification's own replica client, hashed the same way; the secret is never shared with Billing.
       PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH = sha256(random_password.this["NOTIFICATION_REPLICA_CLIENT_SECRET"].result)
+      # Email's own replica client, hashed the same way; never shared with another service's client.
+      PLATFORM_EMAIL_SERVICE_CLIENT_SECRET_HASH = sha256(random_password.this["EMAIL_REPLICA_CLIENT_SECRET"].result)
       # base64 of 32 bytes, which is what Billing's AES-256 master key expects.
       BILLING_SECRETS_MASTER_KEY = base64encode(random_password.this["BILLING_SECRETS_MASTER_KEY"].result)
       # Same encoding, same reason: Mailer's AesGcmSecretCipher refuses a key that does not decode to exactly 32 bytes.

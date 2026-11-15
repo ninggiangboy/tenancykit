@@ -15,8 +15,8 @@ resource "aws_ecs_service" "this" {
     assign_public_ip = false
   }
 
-  # No load balancer and no Service Connect: mailer consumes commands and publishes nothing, so no address is
-  # registered anywhere and no client resolves it.
+  # No load balancer and no Service Connect: mailer consumes commands and publishes its delivery result to a broker
+  # exchange, so no address is registered anywhere and no client resolves it over HTTP.
   #
   # A task may not run before this revision's schema exists. ECS cannot order services, so the pipeline runs the
   # migrate task to completion first and only then forces this service onto the new revision.

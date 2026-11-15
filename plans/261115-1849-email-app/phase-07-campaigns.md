@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "Campaigns"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [6]

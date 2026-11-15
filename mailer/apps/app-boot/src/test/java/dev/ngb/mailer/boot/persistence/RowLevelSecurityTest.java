@@ -52,6 +52,9 @@ class RowLevelSecurityTest {
             assertThat(count(app, "mailer_credentials", null)).isZero();
             assertThat(count(app, "event_inbox", null)).isZero();
             assertThat(count(app, "email_bodies", null)).isZero();
+            // The result outbox is tenant-scoped too: an unbound connection must see no result, even though the row
+            // names a tenant the ledger already knows.
+            assertThat(count(app, "outbox", null)).isZero();
         }
     }
 

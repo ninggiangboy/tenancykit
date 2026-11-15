@@ -5,6 +5,7 @@ import dev.ngb.mailer.email.domain.delivery.EmailDelivery;
 import dev.ngb.mailer.shared.Recipient;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -18,7 +19,13 @@ public interface EmailDeliveryRepository {
      *
      * @return true when a row was written
      */
-    boolean addIfAbsent(EmailDelivery delivery, String replyTo, List<Recipient> cc, String html, String text);
+    boolean addIfAbsent(
+            EmailDelivery delivery,
+            String replyTo,
+            List<Recipient> cc,
+            String html,
+            String text,
+            Map<String, String> headers);
 
     /**
      * The rows that already exist for this request, across the recipients named. It is what makes a repeated

@@ -74,6 +74,7 @@ jobs:
           keycloak_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .keycloak)"
           mailer_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .mailer)"
           notification_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .notification)"
+          email_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .email)"
 
           docker build -f platform/apps/app-boot/Dockerfile -t "${platform_repo}:${TAG}" .
           docker push "${platform_repo}:${TAG}"
@@ -89,6 +90,9 @@ jobs:
 
           docker build -f notification/apps/app-boot/Dockerfile -t "${notification_repo}:${TAG}" .
           docker push "${notification_repo}:${TAG}"
+
+          docker build -f email/apps/app-boot/Dockerfile -t "${email_repo}:${TAG}" .
+          docker push "${email_repo}:${TAG}"
 
       - name: Bootstrap the database and broker (first deploy only)
         if: ${{ inputs.bootstrap_data }}
@@ -192,6 +196,29 @@ jobs:
             exit 1
           fi
 
+      - name: Migrate Email
+        run: |
+          set -euo pipefail
+          cluster="$(terraform output -raw cluster_name)"
+          subnets="$(terraform output -json private_subnet_ids | jq -r 'join(",")')"
+          security_group="$(terraform output -raw task_security_group_id)"
+          definition="$(terraform output -json task_definition_arns | jq -r .email_migrate)"
+
+          task="$(aws ecs run-task \
+            --cluster "$cluster" \
+            --task-definition "$definition" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$subnets],securityGroups=[$security_group],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' --output text)"
+          aws ecs wait tasks-stopped --cluster "$cluster" --tasks "$task"
+          exit_code="$(aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+            --query 'tasks[0].containers[0].exitCode' --output text)"
+          if [ "$exit_code" != "0" ]; then
+            aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+              --query 'tasks[0].containers[0].reason' --output text
+            exit 1
+          fi
+
       - name: Roll the services
         run: |
           set -euo pipefail
@@ -213,3 +240,5 @@ jobs:
           roll mailer mailer
           roll notification_api notification_api
           roll notification_worker notification_worker
+          roll email_api email_api
+          roll email_worker email_worker

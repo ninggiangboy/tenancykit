@@ -6,6 +6,7 @@ Event schemas are namespaced by the service that produces them:
 |---|---|---|
 | `billing/` | Billing | AMQP (`billing.events`) between services, and signed HTTP to Tenant Systems. |
 | `platform/` | Platform | AMQP (`platform.events`) only: state-transfer `*.changed` events other services replicate. |
+| `mailer/` | Mailer | AMQP (`mailer.events`) only: the terminal delivery outcome (`email-delivery.changed`) a producer maps onto its own ledger. |
 
 Within a producer folder, the `*.schema.json` files are the source of truth for which event types that service
 publishes and for the shape of each event's `data`. The application packages them and rejects a subscription to a

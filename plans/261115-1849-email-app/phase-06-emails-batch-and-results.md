@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Single and batch email, results, view email"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [2, 4, 5]

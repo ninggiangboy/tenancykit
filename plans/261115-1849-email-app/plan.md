@@ -1,7 +1,7 @@
 ---
 title: "Email app — transactional and marketing email for a Tenant's own customers"
 description: "A fifth deployable, email/, that gives Tenants a Resend/SendGrid-style API (templates, receivers, groups and segments, single and batch email, campaigns, open/click tracking, view email), sending through mailer, which gains result events."
-status: pending
+status: done
 priority: P1
 effort: "10 phases, 2 × S, 5 × M, 3 × L"
 branch: dev
@@ -154,6 +154,18 @@ Phases 2 and 3 can run in parallel after phase 1 (disjoint trees: `mailer/` + `c
 | Unknown template variable | Strict at every depth (see Key decisions) |
 | Does an unsubscribe block transactional mail? | No. It writes a `MARKETING` suppression only; the Tenant adds an `ALL` suppression to block everything |
 | Result event name | `email-delivery.changed`, following the `<aggregate>.changed` convention (the advice wrote `email.delivery.changed`) |
+
+## Verification status (2026-11-15)
+
+- `cd email && ./gradlew build` is green: 137 tests, including the ArchUnit/Modulith gates, the jOOQ drift test, the
+  per-table row-level-security test, the renderer's adversarial suite, the contract/controller path coverage test, the
+  permission coverage test, and `EmailFlowIntegrationTest` (template → receiver → group → campaign → published email
+  with rewritten links → mailer SUCCEEDED → open/click/unsubscribe → stats) against real PostgreSQL and RabbitMQ.
+- `notification`'s `EmailCommandContractTest` and `mailer`'s affected tests remain green (phase 1-2 evidence; the
+  command change is additive).
+- Not executed in this environment: `docker compose up` with the new `email-*` services and `ops/smoke/isolation.sh`,
+  `terraform validate` (no Terraform binary here), and the GitHub workflows. The compose file validates with
+  `docker compose --env-file .env.example config`; the realm export parses as JSON.
 
 ## Open questions
 

@@ -83,6 +83,13 @@ require_refused "notification_app connecting to billing" psql_as notification_ap
 require_refused "notification_app connecting to platform" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" platform
 require_refused "notification_app connecting to tenant" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" tenant
 require_refused "notification_app connecting to mailer" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" mailer
+require_refused "email_app connecting to billing" psql_as email_app "${EMAIL_DB_PASSWORD:?}" billing
+require_refused "email_app connecting to platform" psql_as email_app "${EMAIL_DB_PASSWORD:?}" platform
+require_refused "email_app connecting to tenant" psql_as email_app "${EMAIL_DB_PASSWORD:?}" tenant
+require_refused "email_app connecting to mailer" psql_as email_app "${EMAIL_DB_PASSWORD:?}" mailer
+require_refused "email_app connecting to notification" psql_as email_app "${EMAIL_DB_PASSWORD:?}" notification
+require_refused "notification_app connecting to email" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" email
+require_refused "mailer_app connecting to email" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" email
 
 # ------------------------------ broker ------------------------------
 step "cross-exchange publishing must be refused"
@@ -99,12 +106,31 @@ platform_publish_to_billing() {
     publish exchange=billing.events routing_key=customer.created payload='{}' > /dev/null 2>&1
 }
 
-# Mailer consumes commands and publishes nothing, so both of these must fail: it may not write to another service's
-# exchange, and it may not read another service's queue — a message there carries that service's work.
+# Mailer consumes commands and publishes one event to `mailer.events`. Every other exchange must be refused, including
+# `mailer.commands`: a service may not publish to the exchange it consumes from, or its results would look like
+# commands. It also may not read another service's queue — a message there carries that service's work.
 mailer_publish_to_billing() {
   docker compose exec -T rabbitmq \
     rabbitmqadmin --host rabbitmq --username mailer --password "${MAILER_RABBITMQ_PASSWORD:?}" \
     publish exchange=billing.events routing_key=customer.created payload='{}' > /dev/null 2>&1
+}
+
+mailer_publish_to_platform() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username mailer --password "${MAILER_RABBITMQ_PASSWORD:?}" \
+    publish exchange=platform.events routing_key=tenant.changed payload='{}' > /dev/null 2>&1
+}
+
+mailer_publish_to_its_command_exchange() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username mailer --password "${MAILER_RABBITMQ_PASSWORD:?}" \
+    publish exchange=mailer.commands routing_key=email.send payload='{}' > /dev/null 2>&1
+}
+
+mailer_publish_result() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username mailer --password "${MAILER_RABBITMQ_PASSWORD:?}" \
+    publish exchange=mailer.events routing_key=email-delivery.changed payload='{}' > /dev/null 2>&1
 }
 
 mailer_read_billing_queue() {
@@ -139,10 +165,48 @@ notification_publish_email_command() {
     publish exchange=mailer.commands routing_key=email.send payload='{}' > /dev/null 2>&1
 }
 
+# Email may publish only to mailer.commands and read only its own queues. In particular it may not publish to
+# mailer.events: a consumer of mailer's results that could also write them would make its own ledger.
+email_publish_to_platform() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username email --password "${EMAIL_RABBITMQ_PASSWORD:?}" \
+    publish exchange=platform.events routing_key=tenant.changed payload='{}' > /dev/null 2>&1
+}
+
+email_publish_to_billing() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username email --password "${EMAIL_RABBITMQ_PASSWORD:?}" \
+    publish exchange=billing.events routing_key=customer.created payload='{}' > /dev/null 2>&1
+}
+
+email_publish_to_mailer_events() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username email --password "${EMAIL_RABBITMQ_PASSWORD:?}" \
+    publish exchange=mailer.events routing_key=email-delivery.changed payload='{}' > /dev/null 2>&1
+}
+
+email_read_billing_queue() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username email --password "${EMAIL_RABBITMQ_PASSWORD:?}" \
+    get queue=billing.platform-events count=1 ackmode=reject_requeue_true > /dev/null 2>&1
+}
+
+email_publish_email_command() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username email --password "${EMAIL_RABBITMQ_PASSWORD:?}" \
+    publish exchange=mailer.commands routing_key=email.send payload='{}' > /dev/null 2>&1
+}
+
 require_refused "the billing user publishing to platform.events" billing_publish_to_platform
 require_refused "the platform user publishing to billing.events" platform_publish_to_billing
 require_refused "the mailer user publishing to billing.events" mailer_publish_to_billing
+require_refused "the mailer user publishing to platform.events" mailer_publish_to_platform
+require_refused "the mailer user publishing to its own command exchange" mailer_publish_to_its_command_exchange
 require_refused "the mailer user reading billing.platform-events" mailer_read_billing_queue
+if ! mailer_publish_result; then
+  fail "the mailer user cannot publish email-delivery.changed to mailer.events; its result grant is missing"
+fi
+echo "allowed: the mailer user publishing email-delivery.changed to mailer.events"
 require_refused "the notification user publishing to platform.events" notification_publish_to_platform
 require_refused "the notification user publishing to billing.events" notification_publish_to_billing
 require_refused "the billing user reading notification.platform-events" billing_read_notification_queue
@@ -150,6 +214,14 @@ if ! notification_publish_email_command; then
   fail "the notification user cannot publish email.send to mailer.commands; the one cross-service grant is missing"
 fi
 echo "allowed: the notification user publishing email.send to mailer.commands"
+require_refused "the email user publishing to platform.events" email_publish_to_platform
+require_refused "the email user publishing to billing.events" email_publish_to_billing
+require_refused "the email user publishing to mailer.events" email_publish_to_mailer_events
+require_refused "the email user reading billing.platform-events" email_read_billing_queue
+if ! email_publish_email_command; then
+  fail "the email user cannot publish email.send to mailer.commands; its only publish grant is missing"
+fi
+echo "allowed: the email user publishing email.send to mailer.commands"
 
 # ------------------------------ row-level security ------------------------------
 step "a Platform user's notification row stays inside the Platform tenant"
@@ -190,6 +262,29 @@ visible_from_another=$(
 sql_as_owner notification "delete from notifications where id = '22222222-2222-7222-8222-222222222222'" > /dev/null
 echo "refused: another tenant reading the Platform user's notification row"
 
+# The email ledger is a tenant's own data: a row under one tenant is invisible to another even though both connect as
+# the same app role. This is the same policy every email table uses.
+sql_as_owner email "insert into emails (
+    id, tenant_id, kind, to_address, from_key, subject, status, request_id, created_at, updated_at)
+  values ('55555555-5555-7555-8555-555555555555', '${PLATFORM_TENANT_ID}', 'TRANSACTIONAL', 'a@example.com',
+    'noreply', 'T', 'QUEUED', 'r', now(), now())
+  on conflict do nothing" > /dev/null
+
+email_visible_from_platform=$(
+  sql_as_tenant email_app "${EMAIL_DB_PASSWORD:?}" email "${PLATFORM_TENANT_ID}" \
+    "select count(*) from emails"
+)
+email_visible_from_another=$(
+  sql_as_tenant email_app "${EMAIL_DB_PASSWORD:?}" email "${OTHER_TENANT_ID}" \
+    "select count(*) from emails"
+)
+[ "${email_visible_from_platform}" = "1" ] ||
+  fail "the Platform tenant cannot read its own email row (saw ${email_visible_from_platform})"
+[ "${email_visible_from_another}" = "0" ] ||
+  fail "another tenant can read the Platform tenant's email row (saw ${email_visible_from_another})"
+sql_as_owner email "delete from emails where id = '55555555-5555-7555-8555-555555555555'" > /dev/null
+echo "refused: another tenant reading the Platform tenant's email row"
+
 # ------------------------------ a control ------------------------------
 step "a service may still reach its own database"
 # A control that proves the refusals above are about scope, not about a broken client.
@@ -207,5 +302,10 @@ if ! psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" notification; then
   fail "notification_app cannot reach its own database; the isolation checks are not meaningful"
 fi
 echo "allowed: notification_app connecting to notification"
+
+if ! psql_as email_app "${EMAIL_DB_PASSWORD:?}" email; then
+  fail "email_app cannot reach its own database; the isolation checks are not meaningful"
+fi
+echo "allowed: email_app connecting to email"
 
 echo "PASS: no service can reach another service's database or exchange"

@@ -18,4 +18,12 @@ public interface MailerTenants {
 
     /** Every tenant a job should visit, read in the Platform scope because no tenant scope exists yet. */
     List<TenantId> activeIds();
+
+    /**
+     * Records that this service has work for {@code tenantId}, creating the row on first use.
+     *
+     * <p>Called inside the transaction that accepts a command, so accepting implies the sweep will visit the tenant.
+     * The insert is {@code on conflict do nothing}: a repeat is the common case, not an error.
+     */
+    void register(TenantId tenantId);
 }

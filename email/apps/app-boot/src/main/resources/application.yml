@@ -1,0 +1,130 @@
+spring:
+  application:
+    name: email
+  profiles:
+    # With no active profile (dev, bootRun and every default-mode test) both runtime profiles are active, which
+    # keeps the all-in-one behaviour. The two profile files stay out of that run: each guards itself with an
+    # on-profile expression so only a runtime that runs alone applies its settings.
+    default: api,worker
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${EMAIL_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}
+          jwk-set-uri: ${EMAIL_OIDC_JWK_SET_URI:${EMAIL_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}/protocol/openid-connect/certs}
+          audiences: email
+  datasource:
+    url: ${EMAIL_DB_URL:jdbc:postgresql://localhost:5432/email}
+    username: ${EMAIL_DB_USER:email_app}
+    password: ${EMAIL_DB_PASSWORD:email_app}
+  rabbitmq:
+    host: ${EMAIL_RABBITMQ_HOST:localhost}
+    port: ${EMAIL_RABBITMQ_PORT:5672}
+    username: ${EMAIL_RABBITMQ_USER:email}
+    password: ${EMAIL_RABBITMQ_PASSWORD:email}
+    # The relay marks an outbox row only after waitForConfirmsOrDie, which needs simple publisher confirms.
+    publisher-confirm-type: simple
+  flyway:
+    locations: classpath:db/migration
+    # Migrations run as the table owner; the application connects as email_app, which owns nothing.
+    url: ${EMAIL_MIGRATION_DB_URL:${EMAIL_DB_URL:jdbc:postgresql://localhost:5432/email}}
+    user: ${EMAIL_MIGRATION_DB_USER:email_owner}
+    password: ${EMAIL_MIGRATION_DB_PASSWORD:email_owner}
+    placeholders:
+      # The baseline creates email_app with this password. Without the placeholder Flyway aborts the whole set.
+      appDbPassword: ${EMAIL_DB_PASSWORD:email_app}
+  task:
+    scheduling:
+      pool:
+        size: ${EMAIL_SCHEDULER_POOL_SIZE:4}
+      shutdown:
+        await-termination: true
+        await-termination-period: 30s
+
+server:
+  port: ${EMAIL_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db,replicaState
+
+suite:
+  app-code: email
+  replica:
+    platform-base-url: ${EMAIL_PLATFORM_BASE_URL:http://localhost:8082}
+    client-id: ${PLATFORM_EMAIL_SERVICE_CLIENT_ID:email}
+    client-secret: ${PLATFORM_EMAIL_SERVICE_CLIENT_SECRET:email}
+    rebuild-on-start: ${EMAIL_REPLICA_REBUILD_ON_START:true}
+    page-limit: 200
+    request-timeout: PT10S
+    platform-issuer: ${EMAIL_PLATFORM_ISSUER:http://localhost:8082}
+    platform-jwk-set-uri: ${EMAIL_PLATFORM_JWK_SET_URI:http://localhost:8082/.well-known/jwks.json}
+    # The worker's queue; the api runtime serves HTTP and consumes nothing.
+    queue: email.platform-events
+    exchange: platform.events
+    max-attempts: 3
+    retry-backoff: PT0.5S
+    refresh-skew: PT30S
+
+email:
+  messaging:
+    exchange: ${EMAIL_MESSAGING_EXCHANGE:platform.events}
+    queue: ${EMAIL_MESSAGING_QUEUE:email.platform-events}
+  # Mailer's result event. It is mailer's exchange: email only binds a queue to it.
+  mailer:
+    exchange: ${EMAIL_MAILER_EVENTS_EXCHANGE:mailer.events}
+    queue: ${EMAIL_MAILER_EVENTS_QUEUE:email.mailer-events}
+  commands:
+    exchange: ${EMAIL_COMMANDS_EXCHANGE:mailer.commands}
+    routing-key: ${EMAIL_COMMANDS_ROUTING_KEY:email.send}
+  relay:
+    poll-delay: PT2S
+    batch-size: 50
+    max-attempts: 10
+    backoff-base: PT10S
+    backoff-cap: PT1H
+    jitter: 0.2
+    claim-deadline: PT30S
+  jobs:
+    enabled: ${EMAIL_JOBS_ENABLED:true}
+    # At most this many tenants run at once across all jobs; keep it below the connection pool.
+    tenant-parallelism: ${EMAIL_WORKER_TENANT_PARALLELISM:4}
+  campaign:
+    # The publishing tick. The per-tick budget is the tenant's per-minute cap divided by the ticks in a minute, so
+    # changing this interval changes how the cap is spent but never the cap itself.
+    publisher-interval: ${EMAIL_CAMPAIGN_PUBLISHER_INTERVAL:PT5S}
+    scheduler-interval: ${EMAIL_CAMPAIGN_SCHEDULER_INTERVAL:PT5S}
+  # What a tenant inherits when it has no email_settings row of its own.
+  defaults:
+    from-key: ${EMAIL_DEFAULT_FROM_KEY:noreply}
+    from-name: ${EMAIL_DEFAULT_FROM_NAME:}
+    reply-to: ${EMAIL_DEFAULT_REPLY_TO:}
+    body-retention-days: ${EMAIL_DEFAULT_BODY_RETENTION_DAYS:30}
+    campaign-publish-per-minute: ${EMAIL_DEFAULT_CAMPAIGN_PUBLISH_PER_MINUTE:600}
+  housekeeping:
+    enabled: ${EMAIL_HOUSEKEEPING_ENABLED:true}
+    inbox-retention: P30D
+    dead-outbox-retention: P7D
+    campaign-recipient-retention: P365D
+    batch-size: 500
+    interval: PT1H
+  tracking:
+    # New tokens carry this key id; verification accepts every key still listed, so a rotation keeps old mail valid.
+    active-key-id: ${EMAIL_TRACKING_KEY_ID:k1}
+    public-base-url: ${EMAIL_PUBLIC_BASE_URL:http://localhost/email}
+    # The default is deliberately empty rather than a well-known string: TrackingConfiguration refuses to start
+    # without a key, so a deployment that forgets EMAIL_TRACKING_SECRET fails at boot instead of signing every
+    # recipient's links with a secret the whole internet can read.
+    keys:
+      k1: ${EMAIL_TRACKING_SECRET:}

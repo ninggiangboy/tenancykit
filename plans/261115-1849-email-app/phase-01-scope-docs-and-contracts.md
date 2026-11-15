@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Scope, docs and contracts"
-status: pending
+status: done
 priority: P1
 effort: "S"
 dependencies: []

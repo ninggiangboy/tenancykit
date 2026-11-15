@@ -67,11 +67,15 @@ class DeliveryRetryIntegrationTest {
     @Autowired
     Clock clock;
 
+    private final java.util.List<dev.ngb.mailer.email.application.email.port.DeliveryResult> published =
+            new java.util.concurrent.CopyOnWriteArrayList<>();
+
     private TenantId tenant;
 
     @BeforeEach
     void freshTenant() {
         tenant = new TenantId(UUID.randomUUID());
+        published.clear();
     }
 
     @Test
@@ -83,6 +87,8 @@ class DeliveryRetryIntegrationTest {
         scoped(() -> retrying.runOnce());
         assertThat(statuses(requestId)).containsOnly(DeliveryStatus.PENDING.name());
         assertThat(attempts(requestId)).isEqualTo(1);
+        // A transient attempt is an internal step: the producer must not see a result until the budget is spent.
+        assertThat(published).as("no result is published for a retryable attempt").isEmpty();
 
         makeDueAgain(requestId);
         scoped(() -> retrying.runOnce());
@@ -90,6 +96,12 @@ class DeliveryRetryIntegrationTest {
         assertThat(statuses(requestId)).containsOnly(DeliveryStatus.DEAD.name());
         assertThat(attempts(requestId)).isEqualTo(MAX_ATTEMPTS);
         assertThat(attemptRows(requestId)).isEqualTo(MAX_ATTEMPTS);
+        assertThat(published).singleElement().satisfies(result -> {
+            assertThat(result.status()).isEqualTo(DeliveryStatus.DEAD);
+            assertThat(result.requestId()).isEqualTo(requestId);
+            assertThat(result.attempts()).isEqualTo(MAX_ATTEMPTS);
+            assertThat(result.completedAt()).isNotNull();
+        });
     }
 
     @Test
@@ -124,6 +136,26 @@ class DeliveryRetryIntegrationTest {
         // Retrying a request the provider called wrong only burns quota, so the budget is irrelevant here.
         assertThat(statuses(requestId)).containsOnly(DeliveryStatus.DEAD.name());
         assertThat(attempts(requestId)).isEqualTo(1);
+        assertThat(published).singleElement()
+                .satisfies(result -> assertThat(result.status()).isEqualTo(DeliveryStatus.DEAD));
+    }
+
+    @Test
+    void aWorkerLostOnItsFinalAttemptStillReportsTheOutcome() {
+        // The row a dead worker leaves behind is killed by the sweep, not by an outcome this worker wrote. The producer
+        // is still owed the terminal result: without it the email it requested stays QUEUED for ever.
+        String requestId = "lost-" + UUID.randomUUID();
+        accept(requestId, "lost@example.com");
+        loseTheWorkerDuringItsFinalAttempt(requestId);
+
+        scoped(() -> roundFor(new SendOutcome.Accepted("unused")).runOnce());
+
+        assertThat(statuses(requestId)).containsOnly(DeliveryStatus.DEAD.name());
+        assertThat(published).singleElement().satisfies(result -> {
+            assertThat(result.requestId()).isEqualTo(requestId);
+            assertThat(result.status()).isEqualTo(DeliveryStatus.DEAD);
+            assertThat(result.completedAt()).isNotNull();
+        });
     }
 
     // --------------------------------------------------------------- helpers
@@ -137,7 +169,7 @@ class DeliveryRetryIntegrationTest {
                 Duration.ofSeconds(1));
         DeliverySettings settings = new DeliverySettings(true, 10, Duration.ofSeconds(1), policy);
         return new DeliverEmailsUseCase(
-                unitOfWork, claims, resolver, sender, tenantContext, settings, clock, () -> 0.0);
+                unitOfWork, claims, resolver, sender, published::add, tenantContext, settings, clock, () -> 0.0);
     }
 
     private void accept(String requestId, String recipient) {
@@ -148,13 +180,27 @@ class DeliveryRetryIntegrationTest {
     private static AcceptEmailCommandUseCase.Command command(String requestId, String recipient) {
         return new AcceptEmailCommandUseCase.Command(
                 requestId, List.of(recipient), List.of(), "default", "TenancyKit", null,
-                "Your invoice", null, "Hello");
+                "Your invoice", null, "Hello", java.util.Map.of());
     }
 
     private void makeDueAgain(String requestId) {
         scoped(() -> dsl.update(EMAIL_DELIVERIES)
                 .set(EMAIL_DELIVERIES.NEXT_ATTEMPT_AT, Instant.now().minusSeconds(60))
                 .set(EMAIL_DELIVERIES.CLAIMED_UNTIL, (Instant) null)
+                .where(EMAIL_DELIVERIES.REQUEST_ID.eq(requestId))
+                .execute());
+    }
+
+    /**
+     * The exact state a worker leaves when it dies mid-send on its last allowed attempt: claimed, budget spent, lease
+     * expired. Nothing wrote an outcome, so only the sweep can answer for it.
+     */
+    private void loseTheWorkerDuringItsFinalAttempt(String requestId) {
+        scoped(() -> dsl.update(EMAIL_DELIVERIES)
+                .set(EMAIL_DELIVERIES.STATUS, DeliveryStatus.IN_PROGRESS.name())
+                .set(EMAIL_DELIVERIES.ATTEMPTS, MAX_ATTEMPTS)
+                .set(EMAIL_DELIVERIES.CLAIMED_UNTIL, Instant.now().minusSeconds(1))
+                .set(EMAIL_DELIVERIES.LAST_ERROR, (String) null)
                 .where(EMAIL_DELIVERIES.REQUEST_ID.eq(requestId))
                 .execute());
     }

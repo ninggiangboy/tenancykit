@@ -10,12 +10,14 @@ import dev.ngb.mailer_jooq.tables.EmailDeliveryAttempts;
 import dev.ngb.mailer_jooq.tables.EventInbox;
 import dev.ngb.mailer_jooq.tables.MailerCredentials;
 import dev.ngb.mailer_jooq.tables.MailerTenants;
+import dev.ngb.mailer_jooq.tables.Outbox;
 import dev.ngb.mailer_jooq.tables.records.EmailBodiesRecord;
 import dev.ngb.mailer_jooq.tables.records.EmailDeliveriesRecord;
 import dev.ngb.mailer_jooq.tables.records.EmailDeliveryAttemptsRecord;
 import dev.ngb.mailer_jooq.tables.records.EventInboxRecord;
 import dev.ngb.mailer_jooq.tables.records.MailerCredentialsRecord;
 import dev.ngb.mailer_jooq.tables.records.MailerTenantsRecord;
+import dev.ngb.mailer_jooq.tables.records.OutboxRecord;
 
 import org.jooq.ForeignKey;
 import org.jooq.TableField;
@@ -47,6 +49,7 @@ public class Keys {
     public static final UniqueKey<MailerCredentialsRecord> MAILER_CREDENTIALS_TENANT_ID_FROM_KEY_VERSION_KEY = Internal.createUniqueKey(MailerCredentials.MAILER_CREDENTIALS, DSL.name("mailer_credentials_tenant_id_from_key_version_key"), new TableField[] { MailerCredentials.MAILER_CREDENTIALS.TENANT_ID, MailerCredentials.MAILER_CREDENTIALS.FROM_KEY, MailerCredentials.MAILER_CREDENTIALS.VERSION }, true);
     public static final UniqueKey<MailerCredentialsRecord> MAILER_CREDENTIALS_TENANT_ID_ID_KEY = Internal.createUniqueKey(MailerCredentials.MAILER_CREDENTIALS, DSL.name("mailer_credentials_tenant_id_id_key"), new TableField[] { MailerCredentials.MAILER_CREDENTIALS.TENANT_ID, MailerCredentials.MAILER_CREDENTIALS.ID }, true);
     public static final UniqueKey<MailerTenantsRecord> MAILER_TENANTS_PKEY = Internal.createUniqueKey(MailerTenants.MAILER_TENANTS, DSL.name("mailer_tenants_pkey"), new TableField[] { MailerTenants.MAILER_TENANTS.TENANT_ID }, true);
+    public static final UniqueKey<OutboxRecord> OUTBOX_PKEY = Internal.createUniqueKey(Outbox.OUTBOX, DSL.name("outbox_pkey"), new TableField[] { Outbox.OUTBOX.ID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions

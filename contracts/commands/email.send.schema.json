@@ -75,6 +75,28 @@
     "text": {
       "type": "string",
       "maxLength": 262144
+    },
+    "headers": {
+      "type": "object",
+      "additionalProperties": false,
+      "maxProperties": 2,
+      "properties": {
+        "List-Unsubscribe": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048,
+          "pattern": "^[^\\r\\n]+$",
+          "description": "An RFC 2369 List-Unsubscribe value, normally an angle-bracketed URL. Line breaks are refused: they are the header-injection vector."
+        },
+        "List-Unsubscribe-Post": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[^\\r\\n]+$",
+          "description": "The RFC 8058 one-click marker, normally `List-Unsubscribe=One-Click`."
+        }
+      },
+      "description": "Extra transport headers, restricted to an allowlist of two names. Marketing mail needs List-Unsubscribe; nothing else does, and an open map would let a producer set arbitrary headers and rewrite the message's meaning. Omitted entirely by notification."
     }
   },
   "anyOf": [

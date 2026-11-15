@@ -1,0 +1,72 @@
+package dev.ngb.email.audience.adapter.suppression.web;
+
+import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.email.audience.application.audience.query.AudienceQueries;
+import dev.ngb.email.audience.application.audience.query.SuppressionView;
+import dev.ngb.email.audience.application.suppression.command.AddSuppressionUseCase;
+import dev.ngb.email.audience.application.suppression.command.DeleteSuppressionUseCase;
+import dev.ngb.email.audience.domain.suppression.SuppressionScope;
+import dev.ngb.email.shared.EmailPermissions;
+import java.time.Instant;
+import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Suppressions. Removing one is the Tenant's explicit statement that the customer consented again; it is the only
+ * action that re-subscribes an address.
+ */
+@RestController
+@RequestMapping("/api/v1/suppressions")
+class SuppressionController {
+
+    private final AddSuppressionUseCase add;
+    private final DeleteSuppressionUseCase remove;
+    private final AudienceQueries queries;
+
+    SuppressionController(
+            AddSuppressionUseCase add, DeleteSuppressionUseCase remove, AudienceQueries queries) {
+        this.add = add;
+        this.remove = remove;
+        this.queries = queries;
+    }
+
+    @GetMapping
+    @RequiresPermission(EmailPermissions.RECEIVER_READ)
+    List<SuppressionResponse> list(
+            @RequestParam(required = false) String after, @RequestParam(required = false) Integer limit) {
+        return queries.suppressions(after, limit).stream().map(SuppressionResponse::of).toList();
+    }
+
+    @PostMapping
+    @RequiresPermission(EmailPermissions.RECEIVER_MANAGE)
+    SuppressionResponse add(@RequestBody SuppressionRequest request) {
+        SuppressionScope scope = SuppressionScope.valueOf(request.scope());
+        add.execute(request.email(), scope);
+        return new SuppressionResponse(request.email().trim().toLowerCase(java.util.Locale.ROOT), scope.name(), "MANUAL", null);
+    }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @RequiresPermission(EmailPermissions.RECEIVER_MANAGE)
+    void remove(@RequestParam String email) {
+        remove.execute(email);
+    }
+
+    record SuppressionRequest(String email, String scope) {}
+
+    record SuppressionResponse(String email, String scope, String reason, Instant createdAt) {
+
+        static SuppressionResponse of(SuppressionView view) {
+            return new SuppressionResponse(
+                    view.email(), view.scope().name(), view.reason().name(), view.createdAt());
+        }
+    }
+}

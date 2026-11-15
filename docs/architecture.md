@@ -171,11 +171,29 @@ package. `mailer` is the only service permitted to call an AWS API.
 It owns templates, locale, preferences and a stored read model, none of which belongs in `mailer` or Billing, and it
 reads no Billing data: recipients are Platform tenant users. The `platform`/`dispatch` split is the same seam Billing
 keeps, and it is what lets `context-uses-only-own-tables` hold while replica tables and notification tables
-coexist in one service. Notification is the only service besides `mailer` that produces `email.send`, and it
-produces no event another app consumes.
+coexist in one service. Notification produces `email.send` and no event another app consumes.
+
+**Email** (`email/`) — the suite's app for letting a Tenant email its own customers, in four contexts:
+
+| Directory | Module | Holds |
+|---|---|---|
+| `contexts/` | `platform` | The Platform replica it keeps (`tenants`, `tenant_domains`, `tenant_systems`, `user_grants`, `app_entitlements`) and the read ports `TenantDirectory` and `UserDirectory`. Nothing else reaches these tables |
+| | `content` | Templates, immutable revisions, the policy that refuses hostile constructs, the sandboxed renderer and the `RenderTemplate` port |
+| | `audience` | Receivers, groups and memberships, suppressions, `SendEligibility`, and segments (a closed filter AST compiled to parameterised SQL) |
+| | `sending` | The sent-email ledger, single and batch sending, campaigns, the delivery-result consumer, tracking tokens and events, and statistics |
+| `libs/` | `shared-core` | Value objects and the permission constants |
+| | `jooq-schema` | jOOQ classes generated from the migrations and committed |
+| `apps/` | `app-boot` | Spring wiring, security, the three runtimes, jobs (replica rebuild, outbox relay, campaign scheduler and publisher, housekeeping) and the Flyway migrations, including the replica tables and the outbox |
+| `testing/` | `arch-fixtures` | Deliberately violating classes that prove each ArchUnit rule can fail |
+
+It owns a tenant's customer data, which notification deliberately does not, so it is a separate database rather than a
+notification module. `sending` reaches `content` and `audience` only through their `api` ports, which is what keeps
+`context-uses-only-own-tables` true while the four contexts share one database. It produces `email.send` and consumes
+`email-delivery.changed` from `mailer.events`; mailer is the only transport. The public `/email/t/*` endpoints are the
+suite's first unauthenticated surface, isolated in one controller and one ArchUnit rule.
 
 **The shared core** sits beside the services, in `core/`. It is its own Gradle build that `platform/`, `billing/`,
-`notification/`, `mailer/` and `tenant/` include with `includeBuild("../core")`:
+`notification/`, `mailer/`, `email/` and `tenant/` include with `includeBuild("../core")`:
 
 | Module | Holds |
 |---|---|

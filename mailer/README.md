@@ -1,8 +1,9 @@
 # mailer
 
 An outbound email gateway. It owns exactly one thing: taking an already-rendered email request off a queue and
-delivering it reliably, with a record of what happened. It does not choose recipients, render templates or interpret
-business events — those decisions belong to the app whose business they are. See
+delivering it reliably, with a record of what happened. It reports the terminal outcome back as one event,
+`email-delivery.changed` on `mailer.events`, through a transactional outbox. It does not choose recipients, render
+templates or interpret business events — those decisions belong to the app whose business they are. See
 [docs/mailer.md](../docs/mailer.md) and the command contract in
 [contracts/commands/email.send.schema.json](../contracts/commands/email.send.schema.json).
 
@@ -34,6 +35,13 @@ exhausting its budget. The claim selects `PENDING` *and* `IN_PROGRESS`, so a row
 when its lease runs out.
 
 A repeated `requestId` is a defined answer, not a silent no-op: live rows are left alone, a `DEAD` row is resurrected.
+
+Accepting a command registers its tenant in `mailer_tenants`, because the delivery sweep visits only the tenants listed
+there; before that, a command for an ordinary tenant was accepted and then sat `PENDING` for ever.
+
+A terminal outcome appends `email-delivery.changed` to the outbox in the same transaction as the ledger outcome, and the
+worker's relay publishes it. The publish is guarded by the outcome's compare-and-swap, so a worker whose row another
+worker took over publishes nothing.
 
 ## Local pipeline
 

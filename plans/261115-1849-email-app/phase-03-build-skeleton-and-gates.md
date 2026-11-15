@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Build skeleton, replica and gates"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [1]

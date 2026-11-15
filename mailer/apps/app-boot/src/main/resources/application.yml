@@ -50,6 +50,9 @@ management:
 mailer:
   messaging:
     exchange: ${MAILER_COMMANDS_EXCHANGE:mailer.commands}
+    # The exchange mailer produces to. It is its own, not mailer.commands: a result is an event consumers bind a
+    # queue to, and the command exchange carries requests in the other direction.
+    events-exchange: ${MAILER_EVENTS_EXCHANGE:mailer.events}
     queue: ${MAILER_COMMANDS_QUEUE:mailer.commands}
   sender:
     # `smtp` locally, `ses` in a deployment. A tenant's own credential overrides both, per from-key.

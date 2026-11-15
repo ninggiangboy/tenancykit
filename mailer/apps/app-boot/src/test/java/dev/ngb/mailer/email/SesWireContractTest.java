@@ -82,6 +82,21 @@ class SesWireContractTest {
     }
 
     @Test
+    void allowlistedHeadersReachTheSesRequest() {
+        nextResponse.set(new Response(200, "{\"MessageId\":\"0100-abc\"}"));
+
+        sender.send(email("someone@example.com", null, java.util.Map.of(
+                "List-Unsubscribe", "<https://example.test/email/t/u/abc>",
+                "List-Unsubscribe-Post", "List-Unsubscribe=One-Click")));
+
+        String body = lastRequest.get();
+        assertThat(body).contains("\"Headers\"");
+        assertThat(body).contains("\"Name\":\"List-Unsubscribe\"");
+        assertThat(body).contains("\"Value\":\"<https://example.test/email/t/u/abc>\"");
+        assertThat(body).contains("\"Name\":\"List-Unsubscribe-Post\"");
+    }
+
+    @Test
     void aForbiddenResponseIsRejected() {
         nextResponse.set(new Response(403, "{\"__type\":\"AccessDeniedException\",\"message\":\"not authorized\"}"));
 
@@ -124,6 +139,10 @@ class SesWireContractTest {
     }
 
     private static OutgoingEmail email(String recipient, String replyTo) {
+        return email(recipient, replyTo, java.util.Map.of());
+    }
+
+    private static OutgoingEmail email(String recipient, String replyTo, java.util.Map<String, String> headers) {
         ResolvedSender resolved = new ResolvedSender(
                 "eu-west-1",
                 "noreply@example.com",
@@ -139,7 +158,8 @@ class SesWireContractTest {
                 resolved,
                 "Your invoice",
                 "<p>Hello</p>",
-                "Hello");
+                "Hello",
+                headers);
     }
 
     private record Response(int status, String body) {}

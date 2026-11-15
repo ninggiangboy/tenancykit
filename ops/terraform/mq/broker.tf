@@ -27,8 +27,8 @@ resource "aws_mq_broker" "this" {
     password = var.billing_password
   }
 
-  # Mailer consumes commands and publishes nothing; the one-shot task scopes this user to mailer.commands, its
-  # dead-letter queue and the suite's dead-letter exchange.
+  # Mailer consumes commands and publishes one event to mailer.events; the one-shot task scopes this user to
+  # mailer.commands, mailer.events, its dead-letter pair and the suite's dead-letter exchange.
   user {
     username = "mailer"
     password = var.mailer_password

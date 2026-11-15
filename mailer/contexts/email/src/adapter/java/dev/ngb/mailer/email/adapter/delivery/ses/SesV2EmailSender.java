@@ -6,6 +6,7 @@ import dev.ngb.mailer.email.application.email.port.SendOutcome;
 import dev.ngb.mailer.shared.Recipient;
 import java.util.List;
 import software.amazon.awssdk.services.sesv2.SesV2Client;
+import software.amazon.awssdk.services.sesv2.model.MessageHeader;
 import software.amazon.awssdk.services.sesv2.model.SendEmailRequest;
 import software.amazon.awssdk.services.sesv2.model.SendEmailResponse;
 import software.amazon.awssdk.services.sesv2.model.SesV2Exception;
@@ -57,11 +58,23 @@ public class SesV2EmailSender implements EmailSender {
                             if (email.text() != null) {
                                 body.text(part -> part.data(email.text()).charset("UTF-8"));
                             }
-                        })));
+                        })
+                        // The allowlist is the command contract's; SES v2 carries them as message headers beside the
+                        // body, not as a destination or a policy.
+                        .headers(messageHeaders(email))));
         if (email.sender().replyTo() != null) {
             builder.replyToAddresses(email.sender().replyTo());
         }
         return builder.build();
+    }
+
+    private static List<MessageHeader> messageHeaders(OutgoingEmail email) {
+        return email.headers().entrySet().stream()
+                .map(header -> MessageHeader.builder()
+                        .name(header.getKey())
+                        .value(header.getValue())
+                        .build())
+                .toList();
     }
 
     /**

@@ -12,7 +12,9 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -26,6 +28,7 @@ import tools.jackson.databind.json.JsonMapper;
 public class CommandSchemaValidator {
 
     private static final String SCHEMA_RESOURCE = "/commands/email.send.schema.json";
+    private static final TypeReference<Map<String, String>> HEADER_MAP = new TypeReference<>() {};
 
     private final JsonMapper json;
     private final Schema schema;
@@ -56,7 +59,8 @@ public class CommandSchemaValidator {
                     optional(data, "replyTo"),
                     required(data, "subject"),
                     optional(data, "html"),
-                    optional(data, "text"));
+                    optional(data, "text"),
+                    headers(data));
         } catch (IllegalArgumentException invalid) {
             // The schema protects the wire; the value objects protect every later caller. A string that passes the
             // pattern but still cannot be a header value is caught here, not inside a transport.
@@ -87,6 +91,19 @@ public class CommandSchemaValidator {
     private static String optional(JsonNode data, String field) {
         JsonNode value = data.get(field);
         return value == null || value.isNull() ? null : value.asString();
+    }
+
+    /**
+     * The optional allowlisted headers. The schema has already refused any other key and any CR/LF, so nothing here
+     * needs to re-validate a name or a value; it only has to turn the object into the map the body table stores.
+     */
+    private Map<String, String> headers(JsonNode data) {
+        JsonNode value = data.get("headers");
+        if (value == null || value.isNull()) {
+            return Map.of();
+        }
+        Map<String, String> headers = json.convertValue(value, HEADER_MAP);
+        return headers == null ? Map.of() : Map.copyOf(headers);
     }
 
     private static List<String> addresses(JsonNode data, String field) {

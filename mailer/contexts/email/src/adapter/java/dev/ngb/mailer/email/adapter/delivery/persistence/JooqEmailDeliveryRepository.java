@@ -13,21 +13,32 @@ import dev.ngb.mailer_jooq.tables.records.EmailDeliveriesRecord;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.jooq.DSLContext;
+import org.jooq.JSONB;
 import org.jooq.impl.DSL;
+import tools.jackson.databind.json.JsonMapper;
 
 /** The accept side: one ledger row plus one body per recipient, and nothing when the row already exists. */
 public class JooqEmailDeliveryRepository implements EmailDeliveryRepository {
 
     private final DSLContext dsl;
+    private final JsonMapper json;
 
-    public JooqEmailDeliveryRepository(DSLContext dsl) {
+    public JooqEmailDeliveryRepository(DSLContext dsl, JsonMapper json) {
         this.dsl = dsl;
+        this.json = json;
     }
 
     @Override
-    public boolean addIfAbsent(EmailDelivery delivery, String replyTo, List<Recipient> cc, String html, String text) {
+    public boolean addIfAbsent(
+            EmailDelivery delivery,
+            String replyTo,
+            List<Recipient> cc,
+            String html,
+            String text,
+            Map<String, String> headers) {
         // The unique key (tenant, request, recipient) is what makes a repeated command a no-op. The body is written
         // only when the ledger row was actually created, so a conflict cannot leave an orphan body.
         UUID inserted = dsl.insertInto(EMAIL_DELIVERIES)
@@ -56,6 +67,9 @@ public class JooqEmailDeliveryRepository implements EmailDeliveryRepository {
                 .set(EMAIL_BODIES.CC, cc.stream().map(Recipient::address).toArray(String[]::new))
                 .set(EMAIL_BODIES.HTML_BODY, html)
                 .set(EMAIL_BODIES.TEXT_BODY, text)
+                // An absent map is stored as NULL, not as `{}`: the column's presence means "the producer asked for
+                // transport headers", and a consumer of the row never has to distinguish two spellings of nothing.
+                .set(EMAIL_BODIES.HEADERS, headers.isEmpty() ? null : JSONB.valueOf(json.writeValueAsString(headers)))
                 .set(EMAIL_BODIES.CREATED_AT, delivery.createdAt())
                 .execute();
         return true;

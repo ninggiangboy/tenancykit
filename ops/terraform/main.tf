@@ -141,6 +141,7 @@ module "mq" {
   billing_password       = module.secrets.values["BILLING_RABBITMQ_PASSWORD"]
   mailer_password        = module.secrets.values["MAILER_RABBITMQ_PASSWORD"]
   notification_password  = module.secrets.values["NOTIFICATION_RABBITMQ_PASSWORD"]
+  email_password         = module.secrets.values["EMAIL_RABBITMQ_PASSWORD"]
   secret_arns            = module.secrets.arns
 }
 
@@ -276,6 +277,39 @@ module "notification" {
   api_desired_count      = var.notification_api_desired_count
   worker_desired_count   = var.notification_worker_desired_count
   listener_arn           = module.alb.listener_arn
+  platform_internal_url  = local.platform_internal_url
+  platform_internal_jwks = local.platform_internal_jwks
+  platform_public_issuer = local.platform_public_issuer
+  keycloak_public_issuer = local.keycloak_public_issuer
+  keycloak_internal_jwks = local.keycloak_internal_jwks
+  db_host                = module.rds.address
+  db_port                = module.rds.port
+  broker_host            = module.mq.amqp_host
+  broker_port            = module.mq.amqp_port
+  secret_arns            = module.secrets.arns
+}
+
+module "email" {
+  source = "./email"
+
+  environment                   = var.environment
+  region                        = var.region
+  cluster_arn                   = module.ecs.cluster_arn
+  execution_role_arn            = module.ecs.execution_role_arn
+  private_subnet_ids            = module.network.private_subnet_ids
+  task_security_group_id        = module.network.task_security_group_id
+  vpc_id                        = module.network.vpc_id
+  service_connect_namespace_arn = module.service_discovery.namespace_arn
+  log_group_names = {
+    api     = module.ecs.log_group_names["email_api"]
+    worker  = module.ecs.log_group_names["email"]
+    migrate = module.ecs.log_group_names["email_migrate"]
+  }
+  image                  = "${module.ecs.ecr_repository_urls["email"]}:${var.image_tag}"
+  api_desired_count      = var.email_api_desired_count
+  worker_desired_count   = var.email_worker_desired_count
+  listener_arn           = module.alb.listener_arn
+  email_public_base_url  = local.email_public_url
   platform_internal_url  = local.platform_internal_url
   platform_internal_jwks = local.platform_internal_jwks
   platform_public_issuer = local.platform_public_issuer

@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Templates and the sandboxed renderer"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [3]

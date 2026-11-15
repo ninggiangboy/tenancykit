@@ -61,6 +61,9 @@ class EmailCommandConsumerIntegrationTest {
     @Autowired
     TenantContext tenantContext;
 
+    @Autowired
+    dev.ngb.mailer.email.application.email.port.MailerTenants mailerTenants;
+
     private TenantId tenant;
 
     @BeforeEach
@@ -116,6 +119,17 @@ class EmailCommandConsumerIntegrationTest {
         awaitStatus("request-4", DeliveryStatus.PENDING.name());
         assertThat(attempts("request-4")).isZero();
         assertThat(count("request-4")).isEqualTo(1);
+    }
+
+    @Test
+    void aCommandRegistersItsTenantSoTheSweepWillDeliverForIt() {
+        // Before this change `mailer_tenants` was written only by migrations, so an ordinary tenant's command was
+        // accepted and then never claimed: the row would sit PENDING for ever. Accepting now registers the tenant.
+        publish(envelope(UUID.randomUUID(), "request-7", List.of("a@example.com")));
+        awaitCount("request-7", 1);
+
+        List<TenantId> active = tenantContext.callAs(RequestScope.platform(), mailerTenants::activeIds);
+        assertThat(active).contains(tenant);
     }
 
     @Test

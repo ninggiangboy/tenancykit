@@ -7,6 +7,7 @@ import static dev.ngb.mailer_jooq.Tables.EMAIL_DELIVERY_ATTEMPTS;
 import dev.ngb.core.util.Text;
 import dev.ngb.mailer.email.application.email.port.ClaimedDelivery;
 import dev.ngb.mailer.email.application.email.port.DeliveryClaimRepository;
+import dev.ngb.mailer.email.application.email.port.ExhaustedDelivery;
 import dev.ngb.mailer.email.domain.delivery.DeliveryAttempt;
 import dev.ngb.mailer.email.domain.delivery.DeliveryStatus;
 import dev.ngb.mailer.shared.Recipient;
@@ -15,9 +16,13 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.jooq.DSLContext;
+import org.jooq.JSONB;
 import org.jooq.impl.DSL;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The delivery side: the claim, the compare-and-swap outcome, and the two bounded deletes housekeeping runs.
@@ -29,11 +34,14 @@ import org.jooq.impl.DSL;
 public class JooqDeliveryClaimRepository implements DeliveryClaimRepository {
 
     private static final int MAX_ERROR = 500;
+    private static final TypeReference<Map<String, String>> HEADERS = new TypeReference<>() {};
 
     private final DSLContext dsl;
+    private final JsonMapper json;
 
-    public JooqDeliveryClaimRepository(DSLContext dsl) {
+    public JooqDeliveryClaimRepository(DSLContext dsl, JsonMapper json) {
         this.dsl = dsl;
+        this.json = json;
     }
 
     @Override
@@ -64,7 +72,7 @@ public class JooqDeliveryClaimRepository implements DeliveryClaimRepository {
         // join yields a null body, and the sender reports that as a transient failure rather than skipping the row.
         return dsl.select(
                         EMAIL_DELIVERIES.asterisk(), EMAIL_BODIES.REPLY_TO, EMAIL_BODIES.CC,
-                        EMAIL_BODIES.HTML_BODY, EMAIL_BODIES.TEXT_BODY)
+                        EMAIL_BODIES.HTML_BODY, EMAIL_BODIES.TEXT_BODY, EMAIL_BODIES.HEADERS)
                 .from(EMAIL_DELIVERIES)
                 .leftJoin(EMAIL_BODIES)
                 .on(EMAIL_BODIES.TENANT_ID.eq(EMAIL_DELIVERIES.TENANT_ID)
@@ -81,8 +89,13 @@ public class JooqDeliveryClaimRepository implements DeliveryClaimRepository {
                             row.get(EMAIL_BODIES.REPLY_TO),
                             recipients,
                             row.get(EMAIL_BODIES.HTML_BODY),
-                            row.get(EMAIL_BODIES.TEXT_BODY));
+                            row.get(EMAIL_BODIES.TEXT_BODY),
+                            headers(row.get(EMAIL_BODIES.HEADERS)));
                 });
+    }
+
+    private Map<String, String> headers(JSONB stored) {
+        return stored == null ? Map.of() : json.readValue(stored.data(), HEADERS);
     }
 
     @Override
@@ -132,9 +145,11 @@ public class JooqDeliveryClaimRepository implements DeliveryClaimRepository {
     }
 
     @Override
-    public int killExhausted(Instant now, int maxAttempts) {
+    public List<ExhaustedDelivery> killExhausted(Instant now, int maxAttempts) {
         // A worker that died during its final attempt leaves the row IN_PROGRESS past its lease. Without this it is
-        // claimed again for ever; with it the retry loop is finite.
+        // claimed again for ever; with it the retry loop is finite. The killed rows are returned so the caller can
+        // publish their terminal result in the same transaction: a delivery that simply went DEAD here would leave
+        // the producer that requested it waiting for an answer that never comes.
         return dsl.update(EMAIL_DELIVERIES)
                 .set(EMAIL_DELIVERIES.STATUS, DeliveryStatus.DEAD.name())
                 .set(EMAIL_DELIVERIES.COMPLETED_AT, now)
@@ -145,7 +160,20 @@ public class JooqDeliveryClaimRepository implements DeliveryClaimRepository {
                 .where(EMAIL_DELIVERIES.STATUS.eq(DeliveryStatus.IN_PROGRESS.name()))
                 .and(EMAIL_DELIVERIES.CLAIMED_UNTIL.le(now))
                 .and(EMAIL_DELIVERIES.ATTEMPTS.ge(maxAttempts))
-                .execute();
+                .returning(
+                        EMAIL_DELIVERIES.ID,
+                        EMAIL_DELIVERIES.REQUEST_ID,
+                        EMAIL_DELIVERIES.RECIPIENT,
+                        EMAIL_DELIVERIES.ATTEMPTS,
+                        EMAIL_DELIVERIES.COMPLETED_AT,
+                        EMAIL_DELIVERIES.LAST_ERROR)
+                .fetch(row -> new ExhaustedDelivery(
+                        row.get(EMAIL_DELIVERIES.ID),
+                        row.get(EMAIL_DELIVERIES.REQUEST_ID),
+                        row.get(EMAIL_DELIVERIES.RECIPIENT),
+                        row.get(EMAIL_DELIVERIES.ATTEMPTS),
+                        row.get(EMAIL_DELIVERIES.COMPLETED_AT),
+                        row.get(EMAIL_DELIVERIES.LAST_ERROR)));
     }
 
     @Override

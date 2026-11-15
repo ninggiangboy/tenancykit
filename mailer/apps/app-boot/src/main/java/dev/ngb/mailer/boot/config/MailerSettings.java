@@ -22,8 +22,13 @@ public record MailerSettings(
         Credentials credentials,
         Secrets secrets) {
 
-    /** The command exchange and queue this service consumes. Both are named in contracts/commands. */
-    public record Messaging(String exchange, String queue) {}
+    /**
+     * @param exchange the command exchange this service consumes, named in contracts/commands
+     * @param eventsExchange the exchange this service produces its delivery results to; it is a <em>producing</em>
+     *     exchange, distinct from the command exchange it consumes
+     * @param queue the durable command queue
+     */
+    public record Messaging(String exchange, String eventsExchange, String queue) {}
 
     /**
      * Which transport sends, and the identity used when a tenant has registered none.

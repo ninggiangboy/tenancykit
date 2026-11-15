@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "Tracking, public endpoints and stats"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [7]

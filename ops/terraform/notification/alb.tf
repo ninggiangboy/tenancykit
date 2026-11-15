@@ -23,7 +23,7 @@ resource "aws_lb_target_group" "this" {
 # Platform's path rule documents.
 resource "aws_lb_listener_rule" "path" {
   listener_arn = var.listener_arn
-  priority     = 30
+  priority     = 40
 
   action {
     type             = "forward"
