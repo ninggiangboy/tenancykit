@@ -120,6 +120,24 @@ resolved in that zone, never in the caller's.
 - Capacity sessions are the exception: a recurring session is materialized into rows inside a rolling horizon
   (default 120 days) on create and daily by the worker, idempotently by `(series_id, starts_at)`.
 
+## Recurrence
+
+The expander behind `RecurrenceExpander` is `Rfc5545RecurrenceExpander` in
+`booking/contexts/catalog/.../adapter/recurrence/rfc5545/`, and it is the only class that names the library. The spike's
+two candidates were `org.dmfs:lib-recur` and `org.mnode.ical4j:ical4j`; measured against every vector, `lib-recur`
+(0.17.1) passes all of them, so it is the one dependency. The port is what a later swap changes, and nothing above it
+moves.
+
+`lib-recur` owns the `RRULE` grammar — frequency, interval, `COUNT`/`UNTIL`, `BYDAY` (with ordinals), `BYMONTHDAY`,
+`BYMONTH`, `BYSETPOS` and `WKST` — and rejects the parts this service does not expand (`BYYEARDAY`, `BYWEEKNO`,
+`BYHOUR`, `BYMINUTE`, `BYSECOND`) rather than reading them as if they said nothing. `EXDATE` and `RDATE` lines are
+applied around the rule's own instants, with `RDATE` kept even when it sits outside the rule's bound. Every occurrence
+is resolved by turning the intended local wall-clock start into an instant in the caller's zone, which is what keeps a
+spring-forward start at its local hour and takes an ambiguous one at its first occurrence.
+
+All twelve vectors under [contracts/booking/recurrence-vectors](../contracts/booking/recurrence-vectors/) pass through
+it, both in the expansion test and through `POST /api/v1/recurrence/preview`.
+
 ## Availability
 
 `GET /offerings/{id}/availability?from&to&resource=` returns start instants on the offering's `slot_step` grid:

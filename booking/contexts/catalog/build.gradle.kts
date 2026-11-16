@@ -8,6 +8,7 @@ dependencies {
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-webmvc")
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
     "adapterImplementation"("dev.ngb:core-spring")
+    "adapterImplementation"(libs.lib.recur)
     "adapterImplementation"(project(":libs:jooq-schema"))
     testImplementation("org.assertj:assertj-core")
 }

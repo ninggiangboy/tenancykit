@@ -9,6 +9,7 @@ json-schema-validator = "3.0.7"
 jmustache = "1.16"
 springdoc = "3.2.0"
 aws-sdk = "2.57.11"
+lib-recur = "0.17.1"
 jdk = "25"
 
 [libraries]
@@ -24,5 +25,6 @@ jmustache = { module = "com.samskivert:jmustache", version.ref = "jmustache" }
 springdoc-webmvc = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdoc" }
 aws-sdk-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws-sdk" }
 aws-s3 = { module = "software.amazon.awssdk:s3" }
+lib-recur = { module = "org.dmfs:lib-recur", version.ref = "lib-recur" }
 
 [plugins]

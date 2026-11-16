@@ -3,6 +3,8 @@ package dev.ngb.booking.boot.web;
 import dev.ngb.booking.catalog.application.catalog.exception.CatalogProblem;
 import dev.ngb.booking.catalog.application.catalog.exception.DuplicateCodeException;
 import dev.ngb.booking.catalog.application.catalog.exception.ResourceInUseException;
+import dev.ngb.booking.catalog.application.recurrence.exception.InvalidRecurrenceException;
+import dev.ngb.booking.catalog.application.session.exception.SessionInUseException;
 import dev.ngb.booking.shared.PreconditionRequiredException;
 import dev.ngb.core.spring.web.CoreExceptionHandlers;
 import org.springframework.http.HttpStatus;
@@ -43,10 +45,23 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
     /** A catalog body that is well formed but breaks a rule: {@code 422} with the rule's stable code. */
     @ExceptionHandler(CatalogProblem.class)
     ProblemDetail catalogProblem(CatalogProblem e) {
-        HttpStatus status = e instanceof ResourceInUseException || e instanceof DuplicateCodeException
+        HttpStatus status = e instanceof ResourceInUseException
+                        || e instanceof DuplicateCodeException
+                        || e instanceof SessionInUseException
                 ? HttpStatus.CONFLICT
                 : HttpStatus.UNPROCESSABLE_CONTENT;
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(status, e.getMessage());
+        detail.setProperty("code", e.code());
+        return detail;
+    }
+
+    /**
+     * A rule this service will not expand: {@code 422} with the {@code invalid-recurrence} the contract names, so a
+     * caller can tell a rule it sent badly from a body it sent badly.
+     */
+    @ExceptionHandler(InvalidRecurrenceException.class)
+    ProblemDetail invalidRecurrence(InvalidRecurrenceException e) {
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
         detail.setProperty("code", e.code());
         return detail;
     }
