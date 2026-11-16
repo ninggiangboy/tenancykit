@@ -7,6 +7,7 @@ package dev.ngb.loyalty_jooq.tables;
 import dev.ngb.loyalty_jooq.Keys;
 import dev.ngb.loyalty_jooq.Public;
 import dev.ngb.loyalty_jooq.tables.Members.MembersPath;
+import dev.ngb.loyalty_jooq.tables.Vouchers.VouchersPath;
 import dev.ngb.loyalty_jooq.tables.records.RedemptionsRecord;
 
 import java.time.Instant;
@@ -202,6 +203,19 @@ public class Redemptions extends TableImpl<RedemptionsRecord> {
             _members = new MembersPath(this, Keys.REDEMPTIONS__REDEMPTIONS_TENANT_ID_MEMBER_ID_FKEY, null);
 
         return _members;
+    }
+
+    private transient VouchersPath _vouchers;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.vouchers</code>
+     * table
+     */
+    public VouchersPath vouchers() {
+        if (_vouchers == null)
+            _vouchers = new VouchersPath(this, null, Keys.VOUCHERS__VOUCHERS_TENANT_ID_REDEMPTION_ID_FKEY.getInverseKey());
+
+        return _vouchers;
     }
 
     @Override

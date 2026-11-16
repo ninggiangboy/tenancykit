@@ -5,6 +5,8 @@ import dev.ngb.core.spring.web.ProblemDetails;
 import dev.ngb.loyalty.points.api.redemption.PointSpendRefusal;
 import dev.ngb.loyalty.points.application.earn.exception.PointsRefusal;
 import dev.ngb.loyalty.program.application.program.exception.ProgramRefusal;
+import dev.ngb.loyalty.rewards.application.reward.exception.RewardRefusal;
+import dev.ngb.loyalty.rewards.application.voucher.exception.VoucherRefusal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -58,6 +60,36 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
     /** A spend the points context refused, shaped exactly like its own refusals so a caller branches on the code alone. */
     @ExceptionHandler(PointSpendRefusal.class)
     ResponseEntity<ProblemDetail> pointSpendRefusal(PointSpendRefusal e) {
+        HttpStatus status = switch (e.kind()) {
+            case INVALID -> HttpStatus.UNPROCESSABLE_CONTENT;
+            case CONFLICT -> HttpStatus.CONFLICT;
+            case NOT_FOUND -> HttpStatus.NOT_FOUND;
+        };
+        ProblemDetail detail = ProblemDetails.of(status, e.getMessage());
+        detail.setProperty("code", e.code());
+        return ResponseEntity.status(status).body(detail);
+    }
+
+    /** A catalog refusal: the code travels in the body, so a caller branches on {@code REWARD_NOT_AVAILABLE} alone. */
+    @ExceptionHandler(RewardRefusal.class)
+    ResponseEntity<ProblemDetail> rewardRefusal(RewardRefusal e) {
+        HttpStatus status = switch (e.kind()) {
+            case INVALID -> HttpStatus.UNPROCESSABLE_CONTENT;
+            case CONFLICT -> HttpStatus.CONFLICT;
+            case NOT_FOUND -> HttpStatus.NOT_FOUND;
+            case PRECONDITION_REQUIRED -> HttpStatus.PRECONDITION_REQUIRED;
+        };
+        ProblemDetail detail = ProblemDetails.of(status, e.getMessage());
+        detail.setProperty("code", e.code());
+        return ResponseEntity.status(status).body(detail);
+    }
+
+    /**
+     * A voucher refusal. Its message never carries the code it was asked about: a voucher code is a bearer token, and an
+     * error body may end up in a log or a bug report.
+     */
+    @ExceptionHandler(VoucherRefusal.class)
+    ResponseEntity<ProblemDetail> voucherRefusal(VoucherRefusal e) {
         HttpStatus status = switch (e.kind()) {
             case INVALID -> HttpStatus.UNPROCESSABLE_CONTENT;
             case CONFLICT -> HttpStatus.CONFLICT;

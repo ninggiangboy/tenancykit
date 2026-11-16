@@ -98,7 +98,7 @@ public class PointSpenderService implements PointSpender {
         long available = ledger.liveBalance(member.id(), now) - debt;
         events.pointsRedeemed(tenantId, now, member.id(), member.externalRef(), redemptionId, command.points(),
                 redemption.reference(), available, debt);
-        return receipt(redemption, member.externalRef(), available, debt, false);
+        return receipt(redemption, member, available, debt, false);
     }
 
     /** Refuses a spend the member cannot make, before a row is written. */
@@ -146,14 +146,15 @@ public class PointSpenderService implements PointSpender {
                     "The same Idempotency-Key was sent before with a different body.");
         }
         long available = ledger.liveBalance(member.id(), clock.now()) - member.debt();
-        return receipt(stored, member.externalRef(), available, member.debt(), true);
+        return receipt(stored, member, available, member.debt(), true);
     }
 
     private static Receipt receipt(
-            RedemptionRow redemption, String externalRef, long available, long debt, boolean replayed) {
+            RedemptionRow redemption, MemberRow member, long available, long debt, boolean replayed) {
         return new Receipt(
                 redemption.id(),
-                externalRef,
+                member.id(),
+                member.externalRef(),
                 redemption.points(),
                 redemption.reference(),
                 redemption.status().name(),

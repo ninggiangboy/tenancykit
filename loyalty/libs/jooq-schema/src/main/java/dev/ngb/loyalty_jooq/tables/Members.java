@@ -11,6 +11,7 @@ import dev.ngb.loyalty_jooq.tables.OrderEarns.OrderEarnsPath;
 import dev.ngb.loyalty_jooq.tables.Orders.OrdersPath;
 import dev.ngb.loyalty_jooq.tables.PointLots.PointLotsPath;
 import dev.ngb.loyalty_jooq.tables.Redemptions.RedemptionsPath;
+import dev.ngb.loyalty_jooq.tables.Vouchers.VouchersPath;
 import dev.ngb.loyalty_jooq.tables.records.MembersRecord;
 
 import java.time.Instant;
@@ -254,6 +255,19 @@ public class Members extends TableImpl<MembersRecord> {
             _redemptions = new RedemptionsPath(this, null, Keys.REDEMPTIONS__REDEMPTIONS_TENANT_ID_MEMBER_ID_FKEY.getInverseKey());
 
         return _redemptions;
+    }
+
+    private transient VouchersPath _vouchers;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.vouchers</code>
+     * table
+     */
+    public VouchersPath vouchers() {
+        if (_vouchers == null)
+            _vouchers = new VouchersPath(this, null, Keys.VOUCHERS__VOUCHERS_TENANT_ID_MEMBER_ID_FKEY.getInverseKey());
+
+        return _vouchers;
     }
 
     @Override

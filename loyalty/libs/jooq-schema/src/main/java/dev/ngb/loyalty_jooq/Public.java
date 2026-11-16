@@ -22,11 +22,13 @@ import dev.ngb.loyalty_jooq.tables.PointLots;
 import dev.ngb.loyalty_jooq.tables.Promotions;
 import dev.ngb.loyalty_jooq.tables.Redemptions;
 import dev.ngb.loyalty_jooq.tables.ReplicaState;
+import dev.ngb.loyalty_jooq.tables.Rewards;
 import dev.ngb.loyalty_jooq.tables.TenantDomains;
 import dev.ngb.loyalty_jooq.tables.TenantSystems;
 import dev.ngb.loyalty_jooq.tables.Tenants;
 import dev.ngb.loyalty_jooq.tables.Tiers;
 import dev.ngb.loyalty_jooq.tables.UserGrants;
+import dev.ngb.loyalty_jooq.tables.Vouchers;
 import dev.ngb.loyalty_jooq.tables.WebhookDeliveries;
 import dev.ngb.loyalty_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.loyalty_jooq.tables.WebhookEndpoints;
@@ -144,6 +146,11 @@ public class Public extends SchemaImpl {
     public final ReplicaState REPLICA_STATE = ReplicaState.REPLICA_STATE;
 
     /**
+     * The table <code>public.rewards</code>.
+     */
+    public final Rewards REWARDS = Rewards.REWARDS;
+
+    /**
      * The table <code>public.tenant_domains</code>.
      */
     public final TenantDomains TENANT_DOMAINS = TenantDomains.TENANT_DOMAINS;
@@ -167,6 +174,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.user_grants</code>.
      */
     public final UserGrants USER_GRANTS = UserGrants.USER_GRANTS;
+
+    /**
+     * The table <code>public.vouchers</code>.
+     */
+    public final Vouchers VOUCHERS = Vouchers.VOUCHERS;
 
     /**
      * The table <code>public.webhook_deliveries</code>.
@@ -217,11 +229,13 @@ public class Public extends SchemaImpl {
             Promotions.PROMOTIONS,
             Redemptions.REDEMPTIONS,
             ReplicaState.REPLICA_STATE,
+            Rewards.REWARDS,
             TenantDomains.TENANT_DOMAINS,
             TenantSystems.TENANT_SYSTEMS,
             Tenants.TENANTS,
             Tiers.TIERS,
             UserGrants.USER_GRANTS,
+            Vouchers.VOUCHERS,
             WebhookDeliveries.WEBHOOK_DELIVERIES,
             WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS,
             WebhookEndpoints.WEBHOOK_ENDPOINTS

@@ -22,9 +22,11 @@ import dev.ngb.loyalty.points.application.ledger.port.LedgerRepository;
 import dev.ngb.loyalty.points.application.ledger.query.LedgerQueries;
 import dev.ngb.loyalty.points.application.ledger.query.LedgerReadRepository;
 import dev.ngb.loyalty.points.application.member.command.EnrolMemberUseCase;
+import dev.ngb.loyalty.points.api.member.MemberDirectory;
 import dev.ngb.loyalty.points.application.member.port.MemberRepository;
 import dev.ngb.loyalty.points.application.member.query.MemberQueries;
 import dev.ngb.loyalty.points.application.member.query.MemberReadRepository;
+import dev.ngb.loyalty.points.application.member.service.MemberDirectoryService;
 import dev.ngb.loyalty.points.application.member.query.TierProgressReadRepository;
 import dev.ngb.loyalty.points.application.order.command.RecordOrderUseCase;
 import dev.ngb.loyalty.points.application.order.command.RecordReturnUseCase;
@@ -33,8 +35,8 @@ import dev.ngb.loyalty.points.application.order.query.OrderQueries;
 import dev.ngb.loyalty.points.application.order.query.OrderReadRepository;
 import dev.ngb.loyalty.points.application.redemption.command.RedeemPointsUseCase;
 import dev.ngb.loyalty.points.application.redemption.command.ReverseRedemptionUseCase;
-import dev.ngb.loyalty.points.application.redemption.port.RedemptionReversalHook;
 import dev.ngb.loyalty.points.application.redemption.port.RedemptionRepository;
+import dev.ngb.loyalty.points.application.redemption.port.RedemptionReversalHook;
 import dev.ngb.loyalty.points.application.redemption.query.RedemptionQueries;
 import dev.ngb.loyalty.points.application.redemption.query.RedemptionReadRepository;
 import dev.ngb.loyalty.points.application.redemption.service.PointSpenderService;
@@ -100,12 +102,12 @@ class PointsConfiguration {
     }
 
     /**
-     * The reversal's hook is a no-op until a feature issues something the spend must undo with it; the reversal's own
-     * rules do not wait for that feature.
+     * The question another context asks of a member. The rewards context resolves a Tenant's reference through it, so a
+     * voucher names the member loyalty owns without reading the member row itself.
      */
     @Bean
-    RedemptionReversalHook redemptionReversalHook() {
-        return (memberId, redemptionId) -> {};
+    MemberDirectory memberDirectory(MemberReadRepository members, Clock clock) {
+        return new MemberDirectoryService(members, clock);
     }
 
     @Bean

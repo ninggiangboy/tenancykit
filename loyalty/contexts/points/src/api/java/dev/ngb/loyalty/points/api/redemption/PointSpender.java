@@ -27,9 +27,15 @@ public interface PointSpender {
     /** One spend as the caller asks for it. */
     record Command(String externalRef, String idempotencyKey, long points, String reference) {}
 
-    /** The redemption and the balance it left; {@code replayed} is true when the key had already spent these points. */
+    /**
+     * The redemption and the balance it left; {@code replayed} is true when the key had already spent these points.
+     *
+     * <p>{@code memberId} is the opaque id of the member the spend was made for, so a caller that owns per-member rows of
+     * its own can name it without a second question.
+     */
     record Receipt(
             UUID redemptionId,
+            UUID memberId,
             String externalRef,
             long points,
             String reference,
