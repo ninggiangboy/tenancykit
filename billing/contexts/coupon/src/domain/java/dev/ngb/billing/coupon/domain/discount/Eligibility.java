@@ -33,7 +33,7 @@ final class Eligibility {
         if (coupon.scope().isPlanScoped() && (facts.planId() == null || !coupon.scope().planIds().contains(facts.planId()))) {
             return false;
         }
-        if (coupon.scope().isMetricScoped() && !facts.hasMetrics()) {
+        if (coupon.scope().isMetricScoped() && !coupon.scope().metrics().stream().anyMatch(facts.metricAmounts()::containsKey)) {
             return false;
         }
         return candidate.remainingBudget() == null || candidate.remainingBudget().isPositive();

@@ -72,6 +72,17 @@ reservation capture and a standalone charge carry no plan and no metric, so a pl
 there; a source filter still does. No new request fields are added to make those charges carry a plan they do not
 have.
 
+### A metric-scoped coupon's base
+
+A metric-scoped coupon discounts only what its own metrics cost. The base it is computed on is the smaller of the
+running net and what is still undiscounted of the coupon's metrics, and applying it reduces those subtotals pro rata,
+floor division with the remainder given to the first metric alphabetically. Two coupons scoped to the same metric
+therefore cannot discount it by more than it cost.
+
+When pricing's minimum or maximum charge replaced the calculated amount, the per-metric subtotals are scaled down to
+fit the gross and never up: the gross is the ceiling a discount can reach. A line with no metric, such as a base or a
+start fee, belongs to no metric and is discounted only by an unscoped coupon.
+
 ## Eligibility
 
 A coupon applies to a charge only when every condition holds:

@@ -82,17 +82,28 @@ public final class DiscountPlanner {
         return combinations;
     }
 
+    /**
+     * The best set of redemptions to run is chosen on the net each combination produces, so the planner evaluates every
+     * combination in full. A metric-scoped coupon's base is limited to what is left of its own metrics, which is why
+     * the subtotals are carried through a combination rather than recomputed from the gross.
+     */
     private static Combination apply(List<DiscountCandidate> members, ChargeFacts facts) {
         List<DiscountCandidate> ordered = members.stream().sorted(APPLICATION_ORDER).toList();
         Money runningNet = facts.gross();
+        MetricSubtotals subtotals = MetricSubtotals.of(facts);
         List<AppliedDiscount> lines = new ArrayList<>();
         for (DiscountCandidate candidate : ordered) {
-            Money taken = discountOf(candidate, runningNet);
+            boolean metricScoped = candidate.coupon().scope().isMetricScoped();
+            Money base = metricScoped ? subtotals.baseFor(candidate.coupon().scope().metrics(), runningNet) : runningNet;
+            Money taken = discountOf(candidate, base, runningNet);
             if (!taken.isPositive()) {
                 continue;
             }
             lines.add(new AppliedDiscount(candidate.redemption().id(), candidate.coupon().id(), candidate.coupon().name(), taken));
             runningNet = runningNet.minus(taken);
+            if (metricScoped) {
+                subtotals.reduce(candidate.coupon().scope().metrics(), taken);
+            }
         }
         DiscountQuote quote = new DiscountQuote(facts.gross(), runningNet, lines);
         DiscountCandidate earliest = ordered.stream()
@@ -103,10 +114,10 @@ public final class DiscountPlanner {
     }
 
     /** One coupon's contribution, capped by every limit that applies to it and by what is still owed. */
-    private static Money discountOf(DiscountCandidate candidate, Money runningNet) {
+    private static Money discountOf(DiscountCandidate candidate, Money base, Money runningNet) {
         Money raw = switch (candidate.coupon().benefit()) {
-            case Benefit.PercentOff percent -> DiscountMath.percentOf(runningNet, percent.basisPoints());
-            case Benefit.AmountOff amountOff -> DiscountMath.min(amountOff.amount(), runningNet);
+            case Benefit.PercentOff percent -> DiscountMath.percentOf(base, percent.basisPoints());
+            case Benefit.AmountOff amountOff -> DiscountMath.min(amountOff.amount(), base);
             case Benefit.WalletCredit ignored -> Money.zero(runningNet.currency());
         };
 

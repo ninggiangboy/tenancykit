@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -104,7 +105,8 @@ class DiscountInvariantsTest {
             Collections.shuffle(shuffled, random);
 
             DiscountQuote original = fixture.quote();
-            DiscountQuote permuted = DiscountPlanner.plan(shuffled, ChargeFacts.of(ChargeKind.STANDALONE, fixture.gross), NOW);
+            DiscountQuote permuted = DiscountPlanner.plan(shuffled,
+                    new ChargeFacts(ChargeKind.USAGE, null, fixture.gross, fixture.metricAmounts), NOW);
 
             assertThat(permuted.net()).as("case %d: order must not matter", i).isEqualTo(original.net());
         }
@@ -127,7 +129,15 @@ class DiscountInvariantsTest {
 
     /** One random arrangement of benefits, caps, budgets and stacking flags over one gross. */
     private static Fixture fixture(Random random) {
-        Money gross = Money.of(1 + random.nextInt(200_000), USD);
+        Money metricsGross = Money.of(1 + random.nextInt(200_000), USD);
+        boolean metricScoped = random.nextBoolean();
+        java.util.Map<String, Money> metricAmounts = new java.util.LinkedHashMap<>();
+        if (metricScoped) {
+            Money first = Money.of(1 + random.nextInt((int) metricsGross.minorUnits()), USD);
+            metricAmounts.put("api_calls", first);
+            metricAmounts.put("storage", metricsGross.minus(first));
+        }
+        Money gross = metricsGross;
         int count = random.nextInt(4);
         List<DiscountCandidate> candidates = new ArrayList<>();
         List<Fixture.Capped> capped = new ArrayList<>();
@@ -141,20 +151,25 @@ class DiscountInvariantsTest {
             Money budget = random.nextBoolean() ? null : Money.of(1 + random.nextInt(300_000), USD);
             Money remainingTotal = random.nextBoolean() ? null : Money.of(1 + random.nextInt(200_000), USD);
             Limits limits = new Limits(NOW.plusSeconds(86_400), null, null, null, perApplication, budget);
-            Coupon coupon = Coupon.create(new CouponId(UUID.randomUUID()), TENANT, "Random", benefit, Duration.forever(), Scope.everything(),
+            // Half the coupons are limited to one metric, which exercises the subtotal base and the pro-rata reduction.
+            Scope scope = metricScoped && random.nextBoolean()
+                    ? new Scope(Set.of(), Set.of(), Set.of("api_calls"))
+                    : Scope.everything();
+            Coupon coupon = Coupon.create(new CouponId(UUID.randomUUID()), TENANT, "Random", benefit, Duration.forever(), scope,
                     limits, USD, random.nextBoolean(), "admin", NOW.minusSeconds(3_600));
             Redemption redemption = Redemption.activate(new RedemptionId(UUID.randomUUID()), TENANT, coupon.id(), null, WALLET, CUSTOMER,
                     null, remainingTotal, null, "customer", new ReplayIdentity(UUID.randomUUID().toString(), "h"), USD, NOW.minusSeconds(600));
             candidates.add(new DiscountCandidate(coupon, redemption, budget));
             capped.add(new Fixture.Capped(coupon, perApplication, remainingTotal, budget));
         }
-        return new Fixture(gross, candidates, capped);
+        return new Fixture(gross, candidates, capped, metricAmounts);
     }
 
-    private record Fixture(Money gross, List<DiscountCandidate> candidates, List<Fixture.Capped> capped) {
+    private record Fixture(Money gross, List<DiscountCandidate> candidates, List<Fixture.Capped> capped, java.util.Map<String, Money> metricAmounts) {
 
         DiscountQuote quote() {
-            return DiscountPlanner.plan(candidates, ChargeFacts.of(ChargeKind.STANDALONE, gross), NOW);
+            return DiscountPlanner.plan(candidates,
+                    new ChargeFacts(ChargeKind.USAGE, null, gross, metricAmounts), NOW);
         }
 
         Fixture.Capped candidateFor(AppliedDiscount line) {
