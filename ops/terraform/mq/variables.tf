@@ -89,6 +89,18 @@ variable "mailroom_password" {
   sensitive   = true
 }
 
+variable "crm_password" {
+  description = "crm broker user password."
+  type        = string
+  sensitive   = true
+}
+
+variable "loyalty_password" {
+  description = "Loyalty broker user password."
+  type        = string
+  sensitive   = true
+}
+
 variable "secret_arns" {
   description = "Secret ARNs the broker-users task injects."
   type        = map(string)

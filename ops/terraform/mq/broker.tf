@@ -40,4 +40,24 @@ resource "aws_mq_broker" "this" {
     username = "notification"
     password = var.notification_password
   }
+
+  # Mailroom consumes platform.events and mailer.events on two queues of its own and publishes one command to
+  # mailer.commands. The one-shot task scopes this user to those and to nothing else.
+  user {
+    username = "mailroom"
+    password = var.mailroom_password
+  }
+
+  # crm and loyalty are replica consumers only: each binds one queue to platform.events, owns no exchange and publishes
+  # nothing, because every fact they hold leaves as a signed webhook. The one-shot task therefore scopes each to its own
+  # queue, its dead-letter pair, suite.dlx and a read grant on platform.events — no write grant on any exchange.
+  user {
+    username = "crm"
+    password = var.crm_password
+  }
+
+  user {
+    username = "loyalty"
+    password = var.loyalty_password
+  }
 }

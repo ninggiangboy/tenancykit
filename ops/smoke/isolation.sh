@@ -99,6 +99,23 @@ require_refused "booking_app connecting to platform" psql_as booking_app "${BOOK
 require_refused "booking_app connecting to survey" psql_as booking_app "${BOOKING_DB_PASSWORD:?}" survey
 require_refused "billing_app connecting to booking" psql_as billing_app "${BILLING_DB_PASSWORD:?}" booking
 require_refused "survey_app connecting to booking" psql_as survey_app "${SURVEY_DB_PASSWORD:?}" booking
+# crm and loyalty each own one database. Their roles reach nothing else, and no other role reaches theirs.
+require_refused "crm_app connecting to loyalty" psql_as crm_app "${CRM_DB_PASSWORD:?}" loyalty
+require_refused "crm_app connecting to platform" psql_as crm_app "${CRM_DB_PASSWORD:?}" platform
+require_refused "crm_app connecting to billing" psql_as crm_app "${CRM_DB_PASSWORD:?}" billing
+require_refused "crm_app connecting to survey" psql_as crm_app "${CRM_DB_PASSWORD:?}" survey
+require_refused "loyalty_app connecting to crm" psql_as loyalty_app "${LOYALTY_DB_PASSWORD:?}" crm
+require_refused "loyalty_app connecting to platform" psql_as loyalty_app "${LOYALTY_DB_PASSWORD:?}" platform
+require_refused "loyalty_app connecting to billing" psql_as loyalty_app "${LOYALTY_DB_PASSWORD:?}" billing
+require_refused "loyalty_app connecting to survey" psql_as loyalty_app "${LOYALTY_DB_PASSWORD:?}" survey
+require_refused "billing_app connecting to crm" psql_as billing_app "${BILLING_DB_PASSWORD:?}" crm
+require_refused "billing_app connecting to loyalty" psql_as billing_app "${BILLING_DB_PASSWORD:?}" loyalty
+require_refused "platform_app connecting to crm" psql_as platform_app "${PLATFORM_DB_PASSWORD:?}" crm
+require_refused "platform_app connecting to loyalty" psql_as platform_app "${PLATFORM_DB_PASSWORD:?}" loyalty
+require_refused "mailroom_app connecting to crm" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" crm
+require_refused "mailroom_app connecting to loyalty" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" loyalty
+require_refused "mailer_app connecting to crm" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" crm
+require_refused "mailer_app connecting to loyalty" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" loyalty
 
 # ------------------------------ broker ------------------------------
 step "cross-exchange publishing must be refused"

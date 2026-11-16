@@ -1,6 +1,6 @@
 name: deploy
 
-# Builds the four images, applies the Terraform stack, runs Billing's and Mailer's Flyway migrate to completion, and only
+# Builds one image per deployable, applies the Terraform stack, runs each app's Flyway migrate to completion, and only
 # then rolls the services onto the new revision. Gated on repository variables so an unconfigured fork skips it:
 #
 #   AWS_ROLE_ARN   OIDC role with ECS, ECR, RDS, MQ, IAM, EC2, SES and Secrets Manager permissions
@@ -75,6 +75,8 @@ jobs:
           mailer_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .mailer)"
           notification_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .notification)"
           mailroom_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .mailroom)"
+          crm_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .crm)"
+          loyalty_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .loyalty)"
 
           docker build -f platform/apps/app-boot/Dockerfile -t "${platform_repo}:${TAG}" .
           docker push "${platform_repo}:${TAG}"
@@ -93,6 +95,12 @@ jobs:
 
           docker build -f mailroom/apps/app-boot/Dockerfile -t "${mailroom_repo}:${TAG}" .
           docker push "${mailroom_repo}:${TAG}"
+
+          docker build -f crm/apps/app-boot/Dockerfile -t "${crm_repo}:${TAG}" .
+          docker push "${crm_repo}:${TAG}"
+
+          docker build -f loyalty/apps/app-boot/Dockerfile -t "${loyalty_repo}:${TAG}" .
+          docker push "${loyalty_repo}:${TAG}"
 
       - name: Bootstrap the database and broker (first deploy only)
         if: ${{ inputs.bootstrap_data }}
@@ -219,6 +227,52 @@ jobs:
             exit 1
           fi
 
+      - name: Migrate CRM
+        run: |
+          set -euo pipefail
+          cluster="$(terraform output -raw cluster_name)"
+          subnets="$(terraform output -json private_subnet_ids | jq -r 'join(",")')"
+          security_group="$(terraform output -raw task_security_group_id)"
+          definition="$(terraform output -json task_definition_arns | jq -r .crm_migrate)"
+
+          task="$(aws ecs run-task \
+            --cluster "$cluster" \
+            --task-definition "$definition" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$subnets],securityGroups=[$security_group],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' --output text)"
+          aws ecs wait tasks-stopped --cluster "$cluster" --tasks "$task"
+          exit_code="$(aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+            --query 'tasks[0].containers[0].exitCode' --output text)"
+          if [ "$exit_code" != "0" ]; then
+            aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+              --query 'tasks[0].containers[0].reason' --output text
+            exit 1
+          fi
+
+      - name: Migrate Loyalty
+        run: |
+          set -euo pipefail
+          cluster="$(terraform output -raw cluster_name)"
+          subnets="$(terraform output -json private_subnet_ids | jq -r 'join(",")')"
+          security_group="$(terraform output -raw task_security_group_id)"
+          definition="$(terraform output -json task_definition_arns | jq -r .loyalty_migrate)"
+
+          task="$(aws ecs run-task \
+            --cluster "$cluster" \
+            --task-definition "$definition" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$subnets],securityGroups=[$security_group],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' --output text)"
+          aws ecs wait tasks-stopped --cluster "$cluster" --tasks "$task"
+          exit_code="$(aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+            --query 'tasks[0].containers[0].exitCode' --output text)"
+          if [ "$exit_code" != "0" ]; then
+            aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+              --query 'tasks[0].containers[0].reason' --output text
+            exit 1
+          fi
+
       - name: Roll the services
         run: |
           set -euo pipefail
@@ -242,3 +296,7 @@ jobs:
           roll notification_worker notification_worker
           roll mailroom_api mailroom_api
           roll mailroom_worker mailroom_worker
+          roll crm_api crm_api
+          roll crm_worker crm_worker
+          roll loyalty_api loyalty_api
+          roll loyalty_worker loyalty_worker

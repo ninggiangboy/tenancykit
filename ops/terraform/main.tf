@@ -142,6 +142,8 @@ module "mq" {
   mailer_password        = module.secrets.values["MAILER_RABBITMQ_PASSWORD"]
   notification_password  = module.secrets.values["NOTIFICATION_RABBITMQ_PASSWORD"]
   mailroom_password         = module.secrets.values["MAILROOM_RABBITMQ_PASSWORD"]
+  crm_password              = module.secrets.values["CRM_RABBITMQ_PASSWORD"]
+  loyalty_password          = module.secrets.values["LOYALTY_RABBITMQ_PASSWORD"]
   secret_arns            = module.secrets.arns
 }
 
@@ -323,7 +325,6 @@ module "mailroom" {
 }
 
 # The suite's own verified sending identity, which SHARED-mode sends come from. Easy DKIM returns three tokens; this
-# repository has no Route53 zone, so an operator publishes the three CNAMEs by hand where the domain's DNS lives and the
 # identity stays Pending until they resolve (see README.md).
 resource "aws_sesv2_email_identity" "suite" {
   provider = aws.ses

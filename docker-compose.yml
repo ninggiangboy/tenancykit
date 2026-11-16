@@ -170,6 +170,62 @@ x-booking-environment: &booking-environment
   BOOKING_PUBLIC_BASE_URL: ${BOOKING_PUBLIC_BASE_URL:-http://localhost:8090/booking}
   BOOKING_PORT: "8080"
 
+# crm's settings, shared by its migrate step, api and worker. It consumes platform.events on its own queue and declares
+# no exchange of its own: its facts leave as signed webhooks to the Tenant's endpoints. Every runtime activates the
+# `compose` profile beside its API or worker profile, which is the only place the webhook destination policy is relaxed
+# so the stack's own smoke forwarder is reachable on the container network.
+x-crm-environment: &crm-environment
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50"
+  CRM_DB_URL: jdbc:postgresql://postgres:5432/crm
+  CRM_DB_USER: crm_app
+  CRM_DB_PASSWORD: ${CRM_DB_PASSWORD:?set it in .env}
+  CRM_MIGRATION_DB_USER: crm_owner
+  CRM_MIGRATION_DB_PASSWORD: ${CRM_MIGRATION_DB_PASSWORD:?set it in .env}
+  CRM_RABBITMQ_HOST: rabbitmq
+  CRM_RABBITMQ_USER: crm
+  CRM_RABBITMQ_PASSWORD: ${CRM_RABBITMQ_PASSWORD:?set it in .env}
+  # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
+  CRM_OIDC_ISSUER_URI: ${CRM_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
+  CRM_OIDC_JWK_SET_URI: ${CRM_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  CRM_PLATFORM_BASE_URL: http://platform.localhost:8080
+  CRM_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
+  CRM_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
+  # The replica's own service client, never shared with another app.
+  PLATFORM_CRM_SERVICE_CLIENT_ID: crm
+  PLATFORM_CRM_SERVICE_CLIENT_SECRET: ${CRM_REPLICA_CLIENT_SECRET:?set it in .env}
+  # Endpoint signing secrets are envelope-encrypted with this key; 32 base64 bytes.
+  CRM_SECRETS_MASTER_KEY: ${CRM_SECRETS_MASTER_KEY:?set it in .env}
+  # The public host a Tenant's system reaches /crm/... from; it must be a hostname Caddy serves.
+  CRM_PUBLIC_BASE_URL: ${CRM_PUBLIC_BASE_URL:-http://localhost:8090/crm}
+  CRM_PORT: "8080"
+
+# loyalty's settings, shared by its migrate step, api and worker. The same shape as crm's: one Platform queue, no
+# exchange of its own, every fact leaving as a signed webhook, and the `compose` profile for the stack's own receiver.
+x-loyalty-environment: &loyalty-environment
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50"
+  LOYALTY_DB_URL: jdbc:postgresql://postgres:5432/loyalty
+  LOYALTY_DB_USER: loyalty_app
+  LOYALTY_DB_PASSWORD: ${LOYALTY_DB_PASSWORD:?set it in .env}
+  LOYALTY_MIGRATION_DB_USER: loyalty_owner
+  LOYALTY_MIGRATION_DB_PASSWORD: ${LOYALTY_MIGRATION_DB_PASSWORD:?set it in .env}
+  LOYALTY_RABBITMQ_HOST: rabbitmq
+  LOYALTY_RABBITMQ_USER: loyalty
+  LOYALTY_RABBITMQ_PASSWORD: ${LOYALTY_RABBITMQ_PASSWORD:?set it in .env}
+  # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
+  LOYALTY_OIDC_ISSUER_URI: ${LOYALTY_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
+  LOYALTY_OIDC_JWK_SET_URI: ${LOYALTY_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  LOYALTY_PLATFORM_BASE_URL: http://platform.localhost:8080
+  LOYALTY_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
+  LOYALTY_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
+  # The replica's own service client, never shared with another app.
+  PLATFORM_LOYALTY_SERVICE_CLIENT_ID: loyalty
+  PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET: ${LOYALTY_REPLICA_CLIENT_SECRET:?set it in .env}
+  # Endpoint signing secrets are envelope-encrypted with this key; 32 base64 bytes.
+  LOYALTY_SECRETS_MASTER_KEY: ${LOYALTY_SECRETS_MASTER_KEY:?set it in .env}
+  # The public host a Tenant's system reaches /loyalty/... from; it must be a hostname Caddy serves.
+  LOYALTY_PUBLIC_BASE_URL: ${LOYALTY_PUBLIC_BASE_URL:-http://localhost:8090/loyalty}
+  LOYALTY_PORT: "8080"
+
 x-app: &app
   restart: unless-stopped
   mem_limit: 512m
@@ -687,6 +743,10 @@ services:
         condition: service_healthy
       mailroom-api:
         condition: service_healthy
+      crm-api:
+        condition: service_healthy
+      loyalty-api:
+        condition: service_healthy
       tenant:
         condition: service_healthy
     ports:
@@ -871,6 +931,160 @@ services:
       SPRING_PROFILES_ACTIVE: worker
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\r\n\r\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # Writes crm's schema once, as the table owner, then exits. The `compose` profile rides along so the mount is the same
+  # file for all three runtimes even though only api and worker act on the webhook destination setting.
+  crm-migrate:
+    <<: *app
+    restart: "no"
+    build:
+      context: .
+      dockerfile: crm/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+    environment:
+      <<: *crm-environment
+      SPRING_PROFILES_ACTIVE: migrate
+
+  # crm's HTTP edge: customers, orders, returns, activities, the 360 profile, export, tags, consent and the webhook
+  # endpoints a Tenant registers.
+  crm-api:
+    <<: *app
+    build:
+      context: .
+      dockerfile: crm/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+      crm-migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *crm-environment
+      # `compose` is what relaxes the webhook destination policy, so the smoke run's forwarder on this network can be
+      # registered; a deployment never loads that profile and never sets the setting.
+      SPRING_PROFILES_ACTIVE: api,compose
+    ports:
+      - "8087:8080"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # crm's background edge: the platform-events listener, the outbox relay, the webhook delivery round and housekeeping.
+  crm-worker:
+    <<: *app
+    build:
+      context: .
+      dockerfile: crm/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+      crm-migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *crm-environment
+      SPRING_PROFILES_ACTIVE: worker,compose
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # Writes loyalty's schema once, as the table owner, then exits.
+  loyalty-migrate:
+    <<: *app
+    restart: "no"
+    build:
+      context: .
+      dockerfile: loyalty/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+    environment:
+      <<: *loyalty-environment
+      SPRING_PROFILES_ACTIVE: migrate
+
+  # loyalty's HTTP edge: the program, members, orders, returns, the balance, redemptions, rewards, vouchers and the
+  # webhook endpoints a Tenant registers.
+  loyalty-api:
+    <<: *app
+    build:
+      context: .
+      dockerfile: loyalty/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+      loyalty-migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *loyalty-environment
+      SPRING_PROFILES_ACTIVE: api,compose
+    ports:
+      - "8088:8080"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # loyalty's background edge: the platform-events listener, the outbox relay, the webhook delivery round, the expiry
+  # and notice runs, the daily tier evaluation and housekeeping.
+  loyalty-worker:
+    <<: *app
+    build:
+      context: .
+      dockerfile: loyalty/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+      loyalty-migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *loyalty-environment
+      SPRING_PROFILES_ACTIVE: worker,compose
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
       interval: 5s
       timeout: 5s
       retries: 60
