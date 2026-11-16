@@ -6,13 +6,21 @@ package dev.ngb.booking_jooq;
 
 import dev.ngb.booking_jooq.tables.AppEntitlements;
 import dev.ngb.booking_jooq.tables.BookingSettings;
+import dev.ngb.booking_jooq.tables.CalendarExceptions;
+import dev.ngb.booking_jooq.tables.CancellationWindows;
 import dev.ngb.booking_jooq.tables.EventInbox;
+import dev.ngb.booking_jooq.tables.GroupMembers;
+import dev.ngb.booking_jooq.tables.OfferingRequirements;
+import dev.ngb.booking_jooq.tables.Offerings;
 import dev.ngb.booking_jooq.tables.Outbox;
 import dev.ngb.booking_jooq.tables.ReplicaState;
+import dev.ngb.booking_jooq.tables.ResourceGroups;
+import dev.ngb.booking_jooq.tables.Resources;
 import dev.ngb.booking_jooq.tables.TenantDomains;
 import dev.ngb.booking_jooq.tables.TenantSystems;
 import dev.ngb.booking_jooq.tables.Tenants;
 import dev.ngb.booking_jooq.tables.UserGrants;
+import dev.ngb.booking_jooq.tables.WorkingHours;
 
 import java.util.Arrays;
 import java.util.List;
@@ -47,9 +55,34 @@ public class Public extends SchemaImpl {
     public final BookingSettings BOOKING_SETTINGS = BookingSettings.BOOKING_SETTINGS;
 
     /**
+     * The table <code>public.calendar_exceptions</code>.
+     */
+    public final CalendarExceptions CALENDAR_EXCEPTIONS = CalendarExceptions.CALENDAR_EXCEPTIONS;
+
+    /**
+     * The table <code>public.cancellation_windows</code>.
+     */
+    public final CancellationWindows CANCELLATION_WINDOWS = CancellationWindows.CANCELLATION_WINDOWS;
+
+    /**
      * The table <code>public.event_inbox</code>.
      */
     public final EventInbox EVENT_INBOX = EventInbox.EVENT_INBOX;
+
+    /**
+     * The table <code>public.group_members</code>.
+     */
+    public final GroupMembers GROUP_MEMBERS = GroupMembers.GROUP_MEMBERS;
+
+    /**
+     * The table <code>public.offering_requirements</code>.
+     */
+    public final OfferingRequirements OFFERING_REQUIREMENTS = OfferingRequirements.OFFERING_REQUIREMENTS;
+
+    /**
+     * The table <code>public.offerings</code>.
+     */
+    public final Offerings OFFERINGS = Offerings.OFFERINGS;
 
     /**
      * The table <code>public.outbox</code>.
@@ -60,6 +93,16 @@ public class Public extends SchemaImpl {
      * The table <code>public.replica_state</code>.
      */
     public final ReplicaState REPLICA_STATE = ReplicaState.REPLICA_STATE;
+
+    /**
+     * The table <code>public.resource_groups</code>.
+     */
+    public final ResourceGroups RESOURCE_GROUPS = ResourceGroups.RESOURCE_GROUPS;
+
+    /**
+     * The table <code>public.resources</code>.
+     */
+    public final Resources RESOURCES = Resources.RESOURCES;
 
     /**
      * The table <code>public.tenant_domains</code>.
@@ -82,6 +125,11 @@ public class Public extends SchemaImpl {
     public final UserGrants USER_GRANTS = UserGrants.USER_GRANTS;
 
     /**
+     * The table <code>public.working_hours</code>.
+     */
+    public final WorkingHours WORKING_HOURS = WorkingHours.WORKING_HOURS;
+
+    /**
      * No further instances allowed
      */
     private Public() {
@@ -99,13 +147,21 @@ public class Public extends SchemaImpl {
         return Arrays.asList(
             AppEntitlements.APP_ENTITLEMENTS,
             BookingSettings.BOOKING_SETTINGS,
+            CalendarExceptions.CALENDAR_EXCEPTIONS,
+            CancellationWindows.CANCELLATION_WINDOWS,
             EventInbox.EVENT_INBOX,
+            GroupMembers.GROUP_MEMBERS,
+            OfferingRequirements.OFFERING_REQUIREMENTS,
+            Offerings.OFFERINGS,
             Outbox.OUTBOX,
             ReplicaState.REPLICA_STATE,
+            ResourceGroups.RESOURCE_GROUPS,
+            Resources.RESOURCES,
             TenantDomains.TENANT_DOMAINS,
             TenantSystems.TENANT_SYSTEMS,
             Tenants.TENANTS,
-            UserGrants.USER_GRANTS
+            UserGrants.USER_GRANTS,
+            WorkingHours.WORKING_HOURS
         );
     }
 }

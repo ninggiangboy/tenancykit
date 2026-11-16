@@ -6,22 +6,38 @@ package dev.ngb.booking_jooq;
 
 import dev.ngb.booking_jooq.tables.AppEntitlements;
 import dev.ngb.booking_jooq.tables.BookingSettings;
+import dev.ngb.booking_jooq.tables.CalendarExceptions;
+import dev.ngb.booking_jooq.tables.CancellationWindows;
 import dev.ngb.booking_jooq.tables.EventInbox;
+import dev.ngb.booking_jooq.tables.GroupMembers;
+import dev.ngb.booking_jooq.tables.OfferingRequirements;
+import dev.ngb.booking_jooq.tables.Offerings;
 import dev.ngb.booking_jooq.tables.Outbox;
 import dev.ngb.booking_jooq.tables.ReplicaState;
+import dev.ngb.booking_jooq.tables.ResourceGroups;
+import dev.ngb.booking_jooq.tables.Resources;
 import dev.ngb.booking_jooq.tables.TenantDomains;
 import dev.ngb.booking_jooq.tables.TenantSystems;
 import dev.ngb.booking_jooq.tables.Tenants;
 import dev.ngb.booking_jooq.tables.UserGrants;
+import dev.ngb.booking_jooq.tables.WorkingHours;
 import dev.ngb.booking_jooq.tables.records.AppEntitlementsRecord;
 import dev.ngb.booking_jooq.tables.records.BookingSettingsRecord;
+import dev.ngb.booking_jooq.tables.records.CalendarExceptionsRecord;
+import dev.ngb.booking_jooq.tables.records.CancellationWindowsRecord;
 import dev.ngb.booking_jooq.tables.records.EventInboxRecord;
+import dev.ngb.booking_jooq.tables.records.GroupMembersRecord;
+import dev.ngb.booking_jooq.tables.records.OfferingRequirementsRecord;
+import dev.ngb.booking_jooq.tables.records.OfferingsRecord;
 import dev.ngb.booking_jooq.tables.records.OutboxRecord;
 import dev.ngb.booking_jooq.tables.records.ReplicaStateRecord;
+import dev.ngb.booking_jooq.tables.records.ResourceGroupsRecord;
+import dev.ngb.booking_jooq.tables.records.ResourcesRecord;
 import dev.ngb.booking_jooq.tables.records.TenantDomainsRecord;
 import dev.ngb.booking_jooq.tables.records.TenantSystemsRecord;
 import dev.ngb.booking_jooq.tables.records.TenantsRecord;
 import dev.ngb.booking_jooq.tables.records.UserGrantsRecord;
+import dev.ngb.booking_jooq.tables.records.WorkingHoursRecord;
 
 import org.jooq.ForeignKey;
 import org.jooq.TableField;
@@ -44,9 +60,19 @@ public class Keys {
 
     public static final UniqueKey<AppEntitlementsRecord> APP_ENTITLEMENTS_PKEY = Internal.createUniqueKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_pkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID, AppEntitlements.APP_ENTITLEMENTS.APP_CODE }, true);
     public static final UniqueKey<BookingSettingsRecord> BOOKING_SETTINGS_PKEY = Internal.createUniqueKey(BookingSettings.BOOKING_SETTINGS, DSL.name("booking_settings_pkey"), new TableField[] { BookingSettings.BOOKING_SETTINGS.TENANT_ID }, true);
+    public static final UniqueKey<CalendarExceptionsRecord> CALENDAR_EXCEPTIONS_PKEY = Internal.createUniqueKey(CalendarExceptions.CALENDAR_EXCEPTIONS, DSL.name("calendar_exceptions_pkey"), new TableField[] { CalendarExceptions.CALENDAR_EXCEPTIONS.ID }, true);
+    public static final UniqueKey<CancellationWindowsRecord> CANCELLATION_WINDOWS_PKEY = Internal.createUniqueKey(CancellationWindows.CANCELLATION_WINDOWS, DSL.name("cancellation_windows_pkey"), new TableField[] { CancellationWindows.CANCELLATION_WINDOWS.TENANT_ID, CancellationWindows.CANCELLATION_WINDOWS.OFFERING_ID, CancellationWindows.CANCELLATION_WINDOWS.MINUTES_BEFORE_START }, true);
     public static final UniqueKey<EventInboxRecord> EVENT_INBOX_PKEY = Internal.createUniqueKey(EventInbox.EVENT_INBOX, DSL.name("event_inbox_pkey"), new TableField[] { EventInbox.EVENT_INBOX.TENANT_ID, EventInbox.EVENT_INBOX.CONSUMER, EventInbox.EVENT_INBOX.EVENT_ID }, true);
+    public static final UniqueKey<GroupMembersRecord> GROUP_MEMBERS_PKEY = Internal.createUniqueKey(GroupMembers.GROUP_MEMBERS, DSL.name("group_members_pkey"), new TableField[] { GroupMembers.GROUP_MEMBERS.TENANT_ID, GroupMembers.GROUP_MEMBERS.GROUP_ID, GroupMembers.GROUP_MEMBERS.RESOURCE_ID }, true);
+    public static final UniqueKey<OfferingRequirementsRecord> OFFERING_REQUIREMENTS_PKEY = Internal.createUniqueKey(OfferingRequirements.OFFERING_REQUIREMENTS, DSL.name("offering_requirements_pkey"), new TableField[] { OfferingRequirements.OFFERING_REQUIREMENTS.TENANT_ID, OfferingRequirements.OFFERING_REQUIREMENTS.OFFERING_ID, OfferingRequirements.OFFERING_REQUIREMENTS.SLOT_CODE }, true);
+    public static final UniqueKey<OfferingsRecord> OFFERINGS_PKEY = Internal.createUniqueKey(Offerings.OFFERINGS, DSL.name("offerings_pkey"), new TableField[] { Offerings.OFFERINGS.ID }, true);
+    public static final UniqueKey<OfferingsRecord> OFFERINGS_TENANT_ID_CODE_KEY = Internal.createUniqueKey(Offerings.OFFERINGS, DSL.name("offerings_tenant_id_code_key"), new TableField[] { Offerings.OFFERINGS.TENANT_ID, Offerings.OFFERINGS.CODE }, true);
     public static final UniqueKey<OutboxRecord> OUTBOX_PKEY = Internal.createUniqueKey(Outbox.OUTBOX, DSL.name("outbox_pkey"), new TableField[] { Outbox.OUTBOX.ID }, true);
     public static final UniqueKey<ReplicaStateRecord> REPLICA_STATE_PKEY = Internal.createUniqueKey(ReplicaState.REPLICA_STATE, DSL.name("replica_state_pkey"), new TableField[] { ReplicaState.REPLICA_STATE.ID }, true);
+    public static final UniqueKey<ResourceGroupsRecord> RESOURCE_GROUPS_PKEY = Internal.createUniqueKey(ResourceGroups.RESOURCE_GROUPS, DSL.name("resource_groups_pkey"), new TableField[] { ResourceGroups.RESOURCE_GROUPS.ID }, true);
+    public static final UniqueKey<ResourceGroupsRecord> RESOURCE_GROUPS_TENANT_ID_CODE_KEY = Internal.createUniqueKey(ResourceGroups.RESOURCE_GROUPS, DSL.name("resource_groups_tenant_id_code_key"), new TableField[] { ResourceGroups.RESOURCE_GROUPS.TENANT_ID, ResourceGroups.RESOURCE_GROUPS.CODE }, true);
+    public static final UniqueKey<ResourcesRecord> RESOURCES_PKEY = Internal.createUniqueKey(Resources.RESOURCES, DSL.name("resources_pkey"), new TableField[] { Resources.RESOURCES.ID }, true);
+    public static final UniqueKey<ResourcesRecord> RESOURCES_TENANT_ID_CODE_KEY = Internal.createUniqueKey(Resources.RESOURCES, DSL.name("resources_tenant_id_code_key"), new TableField[] { Resources.RESOURCES.TENANT_ID, Resources.RESOURCES.CODE }, true);
     public static final UniqueKey<TenantDomainsRecord> TENANT_DOMAINS_HOSTNAME_KEY = Internal.createUniqueKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_hostname_key"), new TableField[] { TenantDomains.TENANT_DOMAINS.HOSTNAME }, true);
     public static final UniqueKey<TenantDomainsRecord> TENANT_DOMAINS_PKEY = Internal.createUniqueKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_pkey"), new TableField[] { TenantDomains.TENANT_DOMAINS.ID }, true);
     public static final UniqueKey<TenantSystemsRecord> TENANT_SYSTEMS_PKEY = Internal.createUniqueKey(TenantSystems.TENANT_SYSTEMS, DSL.name("tenant_systems_pkey"), new TableField[] { TenantSystems.TENANT_SYSTEMS.ID }, true);
@@ -54,13 +80,22 @@ public class Keys {
     public static final UniqueKey<TenantsRecord> TENANTS_PKEY = Internal.createUniqueKey(Tenants.TENANTS, DSL.name("tenants_pkey"), new TableField[] { Tenants.TENANTS.ID }, true);
     public static final UniqueKey<UserGrantsRecord> USER_GRANTS_KEYCLOAK_SUBJECT_KEY = Internal.createUniqueKey(UserGrants.USER_GRANTS, DSL.name("user_grants_keycloak_subject_key"), new TableField[] { UserGrants.USER_GRANTS.KEYCLOAK_SUBJECT }, true);
     public static final UniqueKey<UserGrantsRecord> USER_GRANTS_PKEY = Internal.createUniqueKey(UserGrants.USER_GRANTS, DSL.name("user_grants_pkey"), new TableField[] { UserGrants.USER_GRANTS.USER_ID }, true);
+    public static final UniqueKey<WorkingHoursRecord> WORKING_HOURS_PKEY = Internal.createUniqueKey(WorkingHours.WORKING_HOURS, DSL.name("working_hours_pkey"), new TableField[] { WorkingHours.WORKING_HOURS.ID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
     public static final ForeignKey<AppEntitlementsRecord, TenantsRecord> APP_ENTITLEMENTS__APP_ENTITLEMENTS_TENANT_ID_FKEY = Internal.createForeignKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_tenant_id_fkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<CalendarExceptionsRecord, ResourcesRecord> CALENDAR_EXCEPTIONS__CALENDAR_EXCEPTIONS_RESOURCE_ID_FKEY = Internal.createForeignKey(CalendarExceptions.CALENDAR_EXCEPTIONS, DSL.name("calendar_exceptions_resource_id_fkey"), new TableField[] { CalendarExceptions.CALENDAR_EXCEPTIONS.RESOURCE_ID }, Keys.RESOURCES_PKEY, new TableField[] { Resources.RESOURCES.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<CancellationWindowsRecord, OfferingsRecord> CANCELLATION_WINDOWS__CANCELLATION_WINDOWS_OFFERING_ID_FKEY = Internal.createForeignKey(CancellationWindows.CANCELLATION_WINDOWS, DSL.name("cancellation_windows_offering_id_fkey"), new TableField[] { CancellationWindows.CANCELLATION_WINDOWS.OFFERING_ID }, Keys.OFFERINGS_PKEY, new TableField[] { Offerings.OFFERINGS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<GroupMembersRecord, ResourceGroupsRecord> GROUP_MEMBERS__GROUP_MEMBERS_GROUP_ID_FKEY = Internal.createForeignKey(GroupMembers.GROUP_MEMBERS, DSL.name("group_members_group_id_fkey"), new TableField[] { GroupMembers.GROUP_MEMBERS.GROUP_ID }, Keys.RESOURCE_GROUPS_PKEY, new TableField[] { ResourceGroups.RESOURCE_GROUPS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<GroupMembersRecord, ResourcesRecord> GROUP_MEMBERS__GROUP_MEMBERS_RESOURCE_ID_FKEY = Internal.createForeignKey(GroupMembers.GROUP_MEMBERS, DSL.name("group_members_resource_id_fkey"), new TableField[] { GroupMembers.GROUP_MEMBERS.RESOURCE_ID }, Keys.RESOURCES_PKEY, new TableField[] { Resources.RESOURCES.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<OfferingRequirementsRecord, ResourceGroupsRecord> OFFERING_REQUIREMENTS__OFFERING_REQUIREMENTS_GROUP_ID_FKEY = Internal.createForeignKey(OfferingRequirements.OFFERING_REQUIREMENTS, DSL.name("offering_requirements_group_id_fkey"), new TableField[] { OfferingRequirements.OFFERING_REQUIREMENTS.GROUP_ID }, Keys.RESOURCE_GROUPS_PKEY, new TableField[] { ResourceGroups.RESOURCE_GROUPS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<OfferingRequirementsRecord, OfferingsRecord> OFFERING_REQUIREMENTS__OFFERING_REQUIREMENTS_OFFERING_ID_FKEY = Internal.createForeignKey(OfferingRequirements.OFFERING_REQUIREMENTS, DSL.name("offering_requirements_offering_id_fkey"), new TableField[] { OfferingRequirements.OFFERING_REQUIREMENTS.OFFERING_ID }, Keys.OFFERINGS_PKEY, new TableField[] { Offerings.OFFERINGS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<OfferingRequirementsRecord, ResourcesRecord> OFFERING_REQUIREMENTS__OFFERING_REQUIREMENTS_RESOURCE_ID_FKEY = Internal.createForeignKey(OfferingRequirements.OFFERING_REQUIREMENTS, DSL.name("offering_requirements_resource_id_fkey"), new TableField[] { OfferingRequirements.OFFERING_REQUIREMENTS.RESOURCE_ID }, Keys.RESOURCES_PKEY, new TableField[] { Resources.RESOURCES.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<TenantDomainsRecord, TenantsRecord> TENANT_DOMAINS__TENANT_DOMAINS_TENANT_ID_FKEY = Internal.createForeignKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_tenant_id_fkey"), new TableField[] { TenantDomains.TENANT_DOMAINS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<TenantSystemsRecord, TenantsRecord> TENANT_SYSTEMS__TENANT_SYSTEMS_TENANT_ID_FKEY = Internal.createForeignKey(TenantSystems.TENANT_SYSTEMS, DSL.name("tenant_systems_tenant_id_fkey"), new TableField[] { TenantSystems.TENANT_SYSTEMS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<UserGrantsRecord, TenantsRecord> USER_GRANTS__USER_GRANTS_TENANT_ID_FKEY = Internal.createForeignKey(UserGrants.USER_GRANTS, DSL.name("user_grants_tenant_id_fkey"), new TableField[] { UserGrants.USER_GRANTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<WorkingHoursRecord, ResourcesRecord> WORKING_HOURS__WORKING_HOURS_RESOURCE_ID_FKEY = Internal.createForeignKey(WorkingHours.WORKING_HOURS, DSL.name("working_hours_resource_id_fkey"), new TableField[] { WorkingHours.WORKING_HOURS.RESOURCE_ID }, Keys.RESOURCES_PKEY, new TableField[] { Resources.RESOURCES.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
 }

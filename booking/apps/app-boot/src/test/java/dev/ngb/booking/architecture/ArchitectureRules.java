@@ -43,6 +43,18 @@ final class ArchitectureRules {
         for (String table : List.of("WebhookEndpoints", "WebhookDeliveries")) {
             TABLE_OWNER.put(table, "webhook");
         }
+        // The catalog owns what may be booked and when it is open.
+        for (String table : List.of(
+                "Resources",
+                "WorkingHours",
+                "CalendarExceptions",
+                "ResourceGroups",
+                "GroupMembers",
+                "Offerings",
+                "OfferingRequirements",
+                "CancellationWindows")) {
+            TABLE_OWNER.put(table, "catalog");
+        }
     }
 
     /** Every use case opens a unit of work; booking has no exception and should never grow one. */

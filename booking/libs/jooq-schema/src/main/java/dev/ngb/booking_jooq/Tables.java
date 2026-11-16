@@ -6,13 +6,21 @@ package dev.ngb.booking_jooq;
 
 import dev.ngb.booking_jooq.tables.AppEntitlements;
 import dev.ngb.booking_jooq.tables.BookingSettings;
+import dev.ngb.booking_jooq.tables.CalendarExceptions;
+import dev.ngb.booking_jooq.tables.CancellationWindows;
 import dev.ngb.booking_jooq.tables.EventInbox;
+import dev.ngb.booking_jooq.tables.GroupMembers;
+import dev.ngb.booking_jooq.tables.OfferingRequirements;
+import dev.ngb.booking_jooq.tables.Offerings;
 import dev.ngb.booking_jooq.tables.Outbox;
 import dev.ngb.booking_jooq.tables.ReplicaState;
+import dev.ngb.booking_jooq.tables.ResourceGroups;
+import dev.ngb.booking_jooq.tables.Resources;
 import dev.ngb.booking_jooq.tables.TenantDomains;
 import dev.ngb.booking_jooq.tables.TenantSystems;
 import dev.ngb.booking_jooq.tables.Tenants;
 import dev.ngb.booking_jooq.tables.UserGrants;
+import dev.ngb.booking_jooq.tables.WorkingHours;
 
 
 /**
@@ -32,9 +40,34 @@ public class Tables {
     public static final BookingSettings BOOKING_SETTINGS = BookingSettings.BOOKING_SETTINGS;
 
     /**
+     * The table <code>public.calendar_exceptions</code>.
+     */
+    public static final CalendarExceptions CALENDAR_EXCEPTIONS = CalendarExceptions.CALENDAR_EXCEPTIONS;
+
+    /**
+     * The table <code>public.cancellation_windows</code>.
+     */
+    public static final CancellationWindows CANCELLATION_WINDOWS = CancellationWindows.CANCELLATION_WINDOWS;
+
+    /**
      * The table <code>public.event_inbox</code>.
      */
     public static final EventInbox EVENT_INBOX = EventInbox.EVENT_INBOX;
+
+    /**
+     * The table <code>public.group_members</code>.
+     */
+    public static final GroupMembers GROUP_MEMBERS = GroupMembers.GROUP_MEMBERS;
+
+    /**
+     * The table <code>public.offering_requirements</code>.
+     */
+    public static final OfferingRequirements OFFERING_REQUIREMENTS = OfferingRequirements.OFFERING_REQUIREMENTS;
+
+    /**
+     * The table <code>public.offerings</code>.
+     */
+    public static final Offerings OFFERINGS = Offerings.OFFERINGS;
 
     /**
      * The table <code>public.outbox</code>.
@@ -45,6 +78,16 @@ public class Tables {
      * The table <code>public.replica_state</code>.
      */
     public static final ReplicaState REPLICA_STATE = ReplicaState.REPLICA_STATE;
+
+    /**
+     * The table <code>public.resource_groups</code>.
+     */
+    public static final ResourceGroups RESOURCE_GROUPS = ResourceGroups.RESOURCE_GROUPS;
+
+    /**
+     * The table <code>public.resources</code>.
+     */
+    public static final Resources RESOURCES = Resources.RESOURCES;
 
     /**
      * The table <code>public.tenant_domains</code>.
@@ -65,4 +108,9 @@ public class Tables {
      * The table <code>public.user_grants</code>.
      */
     public static final UserGrants USER_GRANTS = UserGrants.USER_GRANTS;
+
+    /**
+     * The table <code>public.working_hours</code>.
+     */
+    public static final WorkingHours WORKING_HOURS = WorkingHours.WORKING_HOURS;
 }

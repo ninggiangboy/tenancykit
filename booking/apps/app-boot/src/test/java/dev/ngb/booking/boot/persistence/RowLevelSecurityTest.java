@@ -99,6 +99,77 @@ class RowLevelSecurityTest {
                 Arguments.of("outbox", outboxInsert("%1$s")),
                 Arguments.of("event_inbox", """
                         insert into event_inbox (tenant_id, consumer, event_id) values ('%1$s', 'booking', gen_random_uuid())
+                        """),
+                Arguments.of("resources", """
+                        insert into resources (tenant_id, id, code, name, zone, status, created_at, updated_at)
+                        values ('%1$s', gen_random_uuid(), 'r-%1$s', 'Resource', 'UTC', 'ACTIVE', now(), now())
+                        """),
+                Arguments.of("working_hours", """
+                        with r as (
+                            insert into resources (tenant_id, id, code, name, zone, status, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'r-wh-%1$s', 'Resource', 'UTC', 'ACTIVE', now(), now())
+                            returning id
+                        )
+                        insert into working_hours (tenant_id, id, resource_id, weekday, opens_minute, closes_minute)
+                        select '%1$s', gen_random_uuid(), r.id, 1, 540, 1020 from r
+                        """),
+                Arguments.of("calendar_exceptions", """
+                        with r as (
+                            insert into resources (tenant_id, id, code, name, zone, status, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'r-ce-%1$s', 'Resource', 'UTC', 'ACTIVE', now(), now())
+                            returning id
+                        )
+                        insert into calendar_exceptions (tenant_id, id, resource_id, from_date, to_date, kind)
+                        select '%1$s', gen_random_uuid(), r.id, current_date, current_date, 'CLOSED' from r
+                        """),
+                Arguments.of("resource_groups", """
+                        insert into resource_groups (tenant_id, id, code, name, strategy, created_at, updated_at)
+                        values ('%1$s', gen_random_uuid(), 'g-%1$s', 'Group', 'PRIORITY', now(), now())
+                        """),
+                Arguments.of("group_members", """
+                        with r as (
+                            insert into resources (tenant_id, id, code, name, zone, status, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'r-gm-%1$s', 'Resource', 'UTC', 'ACTIVE', now(), now())
+                            returning id
+                        ), g as (
+                            insert into resource_groups (tenant_id, id, code, name, strategy, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'g-gm-%1$s', 'Group', 'PRIORITY', now(), now())
+                            returning id
+                        )
+                        insert into group_members (tenant_id, group_id, resource_id, priority)
+                        select '%1$s', g.id, r.id, 0 from g, r
+                        """),
+                Arguments.of("offerings", """
+                        insert into offerings (tenant_id, id, code, name, kind, status, duration_min, slot_step,
+                                               horizon_days, created_at, updated_at)
+                        values ('%1$s', gen_random_uuid(), 'o-%1$s', 'Offering', 'INTERVAL', 'ACTIVE', 30, 15, 30,
+                                now(), now())
+                        """),
+                Arguments.of("offering_requirements", """
+                        with r as (
+                            insert into resources (tenant_id, id, code, name, zone, status, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'r-or-%1$s', 'Resource', 'UTC', 'ACTIVE', now(), now())
+                            returning id
+                        ), o as (
+                            insert into offerings (tenant_id, id, code, name, kind, status, duration_min, slot_step,
+                                                   horizon_days, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'o-or-%1$s', 'Offering', 'INTERVAL', 'ACTIVE', 30, 15,
+                                    30, now(), now())
+                            returning id
+                        )
+                        insert into offering_requirements (tenant_id, offering_id, slot_code, resource_id)
+                        select '%1$s', o.id, 'staff', r.id from o, r
+                        """),
+                Arguments.of("cancellation_windows", """
+                        with o as (
+                            insert into offerings (tenant_id, id, code, name, kind, status, duration_min, slot_step,
+                                                   horizon_days, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'o-cw-%1$s', 'Offering', 'INTERVAL', 'ACTIVE', 30, 15,
+                                    30, now(), now())
+                            returning id
+                        )
+                        insert into cancellation_windows (tenant_id, offering_id, minutes_before_start, code)
+                        select '%1$s', o.id, 1440, 'full-refund' from o
                         """));
     }
 
