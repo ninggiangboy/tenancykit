@@ -8,11 +8,14 @@ import dev.ngb.loyalty_jooq.tables.AppEntitlements;
 import dev.ngb.loyalty_jooq.tables.EventInbox;
 import dev.ngb.loyalty_jooq.tables.JobLeases;
 import dev.ngb.loyalty_jooq.tables.JobRuns;
+import dev.ngb.loyalty_jooq.tables.LoyaltyPrograms;
 import dev.ngb.loyalty_jooq.tables.Outbox;
+import dev.ngb.loyalty_jooq.tables.Promotions;
 import dev.ngb.loyalty_jooq.tables.ReplicaState;
 import dev.ngb.loyalty_jooq.tables.TenantDomains;
 import dev.ngb.loyalty_jooq.tables.TenantSystems;
 import dev.ngb.loyalty_jooq.tables.Tenants;
+import dev.ngb.loyalty_jooq.tables.Tiers;
 import dev.ngb.loyalty_jooq.tables.UserGrants;
 import dev.ngb.loyalty_jooq.tables.WebhookDeliveries;
 import dev.ngb.loyalty_jooq.tables.WebhookDeliveryAttempts;
@@ -46,9 +49,19 @@ public class Tables {
     public static final JobRuns JOB_RUNS = JobRuns.JOB_RUNS;
 
     /**
+     * The table <code>public.loyalty_programs</code>.
+     */
+    public static final LoyaltyPrograms LOYALTY_PROGRAMS = LoyaltyPrograms.LOYALTY_PROGRAMS;
+
+    /**
      * The table <code>public.outbox</code>.
      */
     public static final Outbox OUTBOX = Outbox.OUTBOX;
+
+    /**
+     * The table <code>public.promotions</code>.
+     */
+    public static final Promotions PROMOTIONS = Promotions.PROMOTIONS;
 
     /**
      * The table <code>public.replica_state</code>.
@@ -69,6 +82,11 @@ public class Tables {
      * The table <code>public.tenants</code>.
      */
     public static final Tenants TENANTS = Tenants.TENANTS;
+
+    /**
+     * The table <code>public.tiers</code>.
+     */
+    public static final Tiers TIERS = Tiers.TIERS;
 
     /**
      * The table <code>public.user_grants</code>.

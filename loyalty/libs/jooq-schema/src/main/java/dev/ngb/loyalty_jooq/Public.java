@@ -8,11 +8,14 @@ import dev.ngb.loyalty_jooq.tables.AppEntitlements;
 import dev.ngb.loyalty_jooq.tables.EventInbox;
 import dev.ngb.loyalty_jooq.tables.JobLeases;
 import dev.ngb.loyalty_jooq.tables.JobRuns;
+import dev.ngb.loyalty_jooq.tables.LoyaltyPrograms;
 import dev.ngb.loyalty_jooq.tables.Outbox;
+import dev.ngb.loyalty_jooq.tables.Promotions;
 import dev.ngb.loyalty_jooq.tables.ReplicaState;
 import dev.ngb.loyalty_jooq.tables.TenantDomains;
 import dev.ngb.loyalty_jooq.tables.TenantSystems;
 import dev.ngb.loyalty_jooq.tables.Tenants;
+import dev.ngb.loyalty_jooq.tables.Tiers;
 import dev.ngb.loyalty_jooq.tables.UserGrants;
 import dev.ngb.loyalty_jooq.tables.WebhookDeliveries;
 import dev.ngb.loyalty_jooq.tables.WebhookDeliveryAttempts;
@@ -61,9 +64,19 @@ public class Public extends SchemaImpl {
     public final JobRuns JOB_RUNS = JobRuns.JOB_RUNS;
 
     /**
+     * The table <code>public.loyalty_programs</code>.
+     */
+    public final LoyaltyPrograms LOYALTY_PROGRAMS = LoyaltyPrograms.LOYALTY_PROGRAMS;
+
+    /**
      * The table <code>public.outbox</code>.
      */
     public final Outbox OUTBOX = Outbox.OUTBOX;
+
+    /**
+     * The table <code>public.promotions</code>.
+     */
+    public final Promotions PROMOTIONS = Promotions.PROMOTIONS;
 
     /**
      * The table <code>public.replica_state</code>.
@@ -84,6 +97,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.tenants</code>.
      */
     public final Tenants TENANTS = Tenants.TENANTS;
+
+    /**
+     * The table <code>public.tiers</code>.
+     */
+    public final Tiers TIERS = Tiers.TIERS;
 
     /**
      * The table <code>public.user_grants</code>.
@@ -125,11 +143,14 @@ public class Public extends SchemaImpl {
             EventInbox.EVENT_INBOX,
             JobLeases.JOB_LEASES,
             JobRuns.JOB_RUNS,
+            LoyaltyPrograms.LOYALTY_PROGRAMS,
             Outbox.OUTBOX,
+            Promotions.PROMOTIONS,
             ReplicaState.REPLICA_STATE,
             TenantDomains.TENANT_DOMAINS,
             TenantSystems.TENANT_SYSTEMS,
             Tenants.TENANTS,
+            Tiers.TIERS,
             UserGrants.USER_GRANTS,
             WebhookDeliveries.WEBHOOK_DELIVERIES,
             WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS,

@@ -25,8 +25,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  * {@code loyalty_app}, the unprivileged role a deployment uses. A superuser would bypass every policy and leave the
  * promise unverified.
  *
- * <p>The tenant-scoped tables of the skeleton are the consumer's inbox, the outbox and the three webhook tables; later
- * phases add one case per table they create.
+ * <p>Every tenant-scoped table of the app is a case here: the consumer's inbox, the outbox, the three webhook tables and
+ * the program, its tiers and its promotions.
  */
 class RowLevelSecurityTest {
 
@@ -47,9 +47,15 @@ class RowLevelSecurityTest {
         UUID tenant = UUID.randomUUID();
         executeAsOwner(OUTBOX.formatted(tenant));
         executeAsOwner(ENDPOINT.formatted(tenant));
+        executeAsOwner(PROGRAM.formatted(tenant));
+        executeAsOwner(TIER.formatted(tenant));
+        executeAsOwner(PROMOTION.formatted(tenant));
 
         try (Connection app = appRole()) {
             assertThat(count(app, "event_inbox", null)).isZero();
+            assertThat(count(app, "loyalty_programs", null)).isZero();
+            assertThat(count(app, "tiers", null)).isZero();
+            assertThat(count(app, "promotions", null)).isZero();
             assertThat(count(app, "outbox", null)).isZero();
             assertThat(count(app, "webhook_endpoints", null)).isZero();
             assertThat(count(app, "webhook_deliveries", null)).isZero();
@@ -103,7 +109,10 @@ class RowLevelSecurityTest {
                 Arguments.of("outbox", OUTBOX),
                 Arguments.of("webhook_endpoints", ENDPOINT),
                 Arguments.of("webhook_deliveries", DELIVERY),
-                Arguments.of("webhook_delivery_attempts", ATTEMPT));
+                Arguments.of("webhook_delivery_attempts", ATTEMPT),
+                Arguments.of("loyalty_programs", PROGRAM),
+                Arguments.of("tiers", TIER),
+                Arguments.of("promotions", PROMOTION));
     }
 
     // ------------------------------------------------------------------ helpers
@@ -173,6 +182,21 @@ class RowLevelSecurityTest {
             )
             insert into webhook_delivery_attempts (id, tenant_id, delivery_id, attempt_no, latency_ms, attempted_at)
             select gen_random_uuid(), '%1$s', d.id, 1, 5, now() from d
+            """;
+
+    private static final String PROGRAM = """
+            insert into loyalty_programs (tenant_id, currency, unit_amount, created_at, updated_at)
+            values ('%1$s', 'USD', 1000, now(), now())
+            """;
+
+    private static final String TIER = """
+            insert into tiers (tenant_id, id, code, name, min_spend, earn_multiplier, position)
+            values ('%1$s', gen_random_uuid(), 'BRONZE', 'Bronze', 0, 1.00, 0)
+            """;
+
+    private static final String PROMOTION = """
+            insert into promotions (tenant_id, id, name, status, multiplier, created_at, updated_at)
+            values ('%1$s', gen_random_uuid(), 'Double points', 'ACTIVE', 2.00, now(), now())
             """;
 
     private static final String OUTBOX = """

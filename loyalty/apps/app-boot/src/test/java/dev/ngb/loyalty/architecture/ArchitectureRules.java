@@ -58,6 +58,9 @@ final class ArchitectureRules {
         for (String table : List.of("WebhookEndpoints", "WebhookDeliveries", "WebhookDeliveryAttempts")) {
             TABLE_OWNER.put(table, "webhook");
         }
+        for (String table : List.of("LoyaltyPrograms", "Tiers", "Promotions")) {
+            TABLE_OWNER.put(table, "program");
+        }
     }
 
     /** Every use case opens a unit of work; loyalty has no exception and should never grow one. */
