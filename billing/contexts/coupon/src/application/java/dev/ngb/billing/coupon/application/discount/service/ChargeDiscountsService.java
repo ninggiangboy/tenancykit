@@ -19,7 +19,6 @@ import dev.ngb.billing.money.api.charge.DiscountLine;
 import dev.ngb.billing.money.api.charge.DiscountRequest;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.billing.sharedkernel.money.Money;
-import dev.ngb.core.runtime.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -40,14 +39,11 @@ public class ChargeDiscountsService implements ChargeDiscounts {
     private final CouponRepository coupons;
     private final RedemptionRepository redemptions;
     private final EndingRedemptions endingRedemptions;
-    private final Clock clock;
 
-    public ChargeDiscountsService(
-            CouponRepository coupons, RedemptionRepository redemptions, EndingRedemptions endingRedemptions, Clock clock) {
+    public ChargeDiscountsService(CouponRepository coupons, RedemptionRepository redemptions, EndingRedemptions endingRedemptions) {
         this.coupons = coupons;
         this.redemptions = redemptions;
         this.endingRedemptions = endingRedemptions;
-        this.clock = clock;
     }
 
     @Override
@@ -67,22 +63,19 @@ public class ChargeDiscountsService implements ChargeDiscounts {
     }
 
     @Override
-    public void consume(ChargeId chargeId, dev.ngb.billing.money.api.charge.DiscountQuote quote) {
-        Instant now = clock.now();
+    public void consume(ChargeId chargeId, dev.ngb.billing.money.api.charge.DiscountQuote quote, Instant now) {
         for (DiscountLine line : quote.lines()) {
-            Redemption redemption = redemptions.findById(new RedemptionId(line.redemptionId())).orElse(null);
-            if (redemption == null) {
-                continue;
-            }
+            // The quote was claimed under locks in this transaction, so every row it names exists; one that does not
+            // means the discount lines would describe something that was never consumed, and the charge must not commit.
+            Redemption redemption = redemptions.findById(new RedemptionId(line.redemptionId()))
+                    .orElseThrow(() -> new IllegalStateException("the redemption " + line.redemptionId() + " of a claimed discount is gone"));
             if (!redemptions.recordApplication(redemption.id(), line.amount().minorUnits(), now)) {
                 throw new IllegalStateException("the redemption " + redemption.id() + " was no longer consumable");
             }
-            Coupon coupon = coupons.findById(redemption.couponId()).orElse(null);
-            if (coupon == null) {
-                continue;
-            }
-            if (coupon.limits().budget() != null) {
-                coupons.spendBudget(coupon.id(), line.amount().minorUnits());
+            Coupon coupon = coupons.findById(redemption.couponId())
+                    .orElseThrow(() -> new IllegalStateException("the coupon " + redemption.couponId() + " of a claimed discount is gone"));
+            if (coupon.limits().budget() != null && coupons.spendBudget(coupon.id(), line.amount().minorUnits()) != line.amount().minorUnits()) {
+                throw new IllegalStateException("the budget of coupon " + coupon.id() + " could not cover a claimed discount");
             }
             endIfExhausted(redemption.id(), now);
         }

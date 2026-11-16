@@ -1,5 +1,7 @@
 package dev.ngb.billing.money.api.charge;
 
+import java.time.Instant;
+
 /**
  * The one seam through which a discount reaches a charge. Money owns this port; the coupon context implements it, so
  * money depends on nothing in coupon and the arrow never turns back.
@@ -21,8 +23,13 @@ public interface ChargeDiscounts {
     /** The discount a charge will receive. Called once, inside the charge transaction, after the wallet lock. */
     DiscountQuote claim(DiscountRequest request);
 
-    /** Records that {@code quote}'s lines were applied to {@code chargeId}. */
-    void consume(ChargeId chargeId, DiscountQuote quote);
+    /**
+     * Records that {@code quote}'s lines were applied to {@code chargeId}. {@code now} is the instant the quote was
+     * claimed at, so a redemption that was usable then is still usable when it is recorded.
+     *
+     * @throws IllegalStateException when a line names a redemption that can no longer take it, which rolls the charge back
+     */
+    void consume(ChargeId chargeId, DiscountQuote quote, Instant now);
 
     /** The seam with no coupons behind it: every charge keeps its whole gross. */
     ChargeDiscounts NONE = new ChargeDiscounts() {
@@ -37,7 +44,7 @@ public interface ChargeDiscounts {
         }
 
         @Override
-        public void consume(ChargeId chargeId, DiscountQuote quote) {
+        public void consume(ChargeId chargeId, DiscountQuote quote, Instant now) {
             // nothing is discounted, so nothing is consumed
         }
     };

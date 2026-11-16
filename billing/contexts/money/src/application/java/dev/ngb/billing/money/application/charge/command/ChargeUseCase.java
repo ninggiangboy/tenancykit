@@ -117,7 +117,7 @@ public class ChargeUseCase implements ChargeWallet {
                 if (reservation != null) {
                     reservations.update(reservation);
                 }
-                discounts.consume(outcome.charge().id(), quote);
+                discounts.consume(outcome.charge().id(), quote, now);
                 events.publish(new MoneyEvents.ChargeSucceeded(ids.newId(), outcome.charge(), outcome.entry(), now));
             } else {
                 events.publish(new MoneyEvents.ChargeFailed(ids.newId(), outcome.charge(), now));

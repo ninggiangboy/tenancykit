@@ -82,8 +82,8 @@ class CouponConfiguration {
     /** The discount seam the charge path calls. Money names the port; this is the only implementation. */
     @Bean
     dev.ngb.billing.money.api.charge.ChargeDiscounts chargeDiscounts(
-            CouponRepository coupons, RedemptionRepository redemptions, EndingRedemptions endingRedemptions, Clock clock) {
-        return new ChargeDiscountsService(coupons, redemptions, endingRedemptions, clock);
+            CouponRepository coupons, RedemptionRepository redemptions, EndingRedemptions endingRedemptions) {
+        return new ChargeDiscountsService(coupons, redemptions, endingRedemptions);
     }
 
     @Bean
