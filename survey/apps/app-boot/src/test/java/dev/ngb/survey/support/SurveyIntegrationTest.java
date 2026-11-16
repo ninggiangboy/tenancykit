@@ -46,6 +46,10 @@ public abstract class SurveyIntegrationTest {
         registry.add("survey.housekeeping.enabled", () -> "false");
         // A link key has no shipped default: a blank key fails startup, so the harness supplies its own.
         registry.add("survey.links.keys.k1", () -> "test-link-secret");
+        // A local test receiver is not https, so the harness allows insecure targets the way a dev deployment does.
+        registry.add("survey.webhooks.allow-insecure-targets", () -> "true");
+        // The webhook secret cipher refuses to start without a 32-byte key, so the harness supplies one.
+        registry.add("survey.webhooks.master-key", () -> "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHg=");
     }
 
     /** Runs work with the tenant bound, which is what row-level security reads. */

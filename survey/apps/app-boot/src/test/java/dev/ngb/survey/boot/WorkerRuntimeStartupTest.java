@@ -44,6 +44,8 @@ class WorkerRuntimeStartupTest {
         registry.add("survey.jobs.enabled", () -> "false");
         // A link key has no shipped default: a blank key fails startup, so the test supplies its own.
         registry.add("survey.links.keys.k1", () -> "test-link-secret");
+        // The webhook secret cipher refuses to start without a 32-byte key.
+        registry.add("survey.webhooks.master-key", () -> "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHg=");
     }
 
     @Test
