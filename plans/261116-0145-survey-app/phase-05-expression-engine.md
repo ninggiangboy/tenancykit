@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Expression engine, preview and simulate"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [4]
