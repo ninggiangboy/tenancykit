@@ -28,10 +28,11 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
 /**
- * The committed contract documents every operation crm will serve, and this phase serves only the webhook surface; the
- * test therefore runs the comparison in the one direction that is true today — every operation the app actually serves
- * must be documented, with the same permission, and that permission must exist in the catalog. Later phases keep the
- * same direction and add the reverse only once every documented operation exists.
+ * The committed contract documents every operation crm serves, and the test runs the comparison in the direction that
+ * is true today: every operation the app actually serves must be documented, with the same permission, and that
+ * permission must exist in the catalog. The documented operations crm does not serve yet are the other direction; the
+ * surface test below names what exists, so a served endpoint cannot appear undocumented and a documented one cannot be
+ * forgotten once it is built.
  */
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -109,13 +110,16 @@ class OpenApiContractTest {
         assertThat(permissionByOperation.values()).isSubsetOf(CrmPermissions.CODES);
     }
 
-    /** The phase ships the webhook surface and no business endpoint; a phase that adds one updates this set with it. */
+    /** What crm serves today: the customer surface and the webhook surface. A new endpoint extends this set. */
     @Test
-    void theServedSurfaceIsTheWebhookSurface() throws Exception {
+    void theServedSurfaceIsTheCustomerAndWebhookSurface() throws Exception {
         JsonNode served = YAML.readTree(mvc.perform(get("/v3/api-docs.yaml"))
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8));
         Set<String> servedPaths = new TreeSet<>(List.of(served.get("paths").propertyNames().toArray(String[]::new)));
         assertThat(servedPaths).containsExactlyInAnyOrder(
+                "/api/v1/customers",
+                "/api/v1/customers/batch",
+                "/api/v1/customers/{externalRef}",
                 "/api/v1/webhook-deliveries",
                 "/api/v1/webhook-deliveries/{id}/retry",
                 "/api/v1/webhook-endpoints",

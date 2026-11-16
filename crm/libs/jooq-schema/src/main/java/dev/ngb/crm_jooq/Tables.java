@@ -5,6 +5,7 @@ package dev.ngb.crm_jooq;
 
 
 import dev.ngb.crm_jooq.tables.AppEntitlements;
+import dev.ngb.crm_jooq.tables.Customers;
 import dev.ngb.crm_jooq.tables.EventInbox;
 import dev.ngb.crm_jooq.tables.JobLeases;
 import dev.ngb.crm_jooq.tables.JobRuns;
@@ -29,6 +30,11 @@ public class Tables {
      * The table <code>public.app_entitlements</code>.
      */
     public static final AppEntitlements APP_ENTITLEMENTS = AppEntitlements.APP_ENTITLEMENTS;
+
+    /**
+     * The table <code>public.customers</code>.
+     */
+    public static final Customers CUSTOMERS = Customers.CUSTOMERS;
 
     /**
      * The table <code>public.event_inbox</code>.

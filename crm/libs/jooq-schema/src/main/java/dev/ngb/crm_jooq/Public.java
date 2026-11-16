@@ -5,6 +5,7 @@ package dev.ngb.crm_jooq;
 
 
 import dev.ngb.crm_jooq.tables.AppEntitlements;
+import dev.ngb.crm_jooq.tables.Customers;
 import dev.ngb.crm_jooq.tables.EventInbox;
 import dev.ngb.crm_jooq.tables.JobLeases;
 import dev.ngb.crm_jooq.tables.JobRuns;
@@ -44,6 +45,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.app_entitlements</code>.
      */
     public final AppEntitlements APP_ENTITLEMENTS = AppEntitlements.APP_ENTITLEMENTS;
+
+    /**
+     * The table <code>public.customers</code>.
+     */
+    public final Customers CUSTOMERS = Customers.CUSTOMERS;
 
     /**
      * The table <code>public.event_inbox</code>.
@@ -122,6 +128,7 @@ public class Public extends SchemaImpl {
     public final List<Table<?>> getTables() {
         return Arrays.asList(
             AppEntitlements.APP_ENTITLEMENTS,
+            Customers.CUSTOMERS,
             EventInbox.EVENT_INBOX,
             JobLeases.JOB_LEASES,
             JobRuns.JOB_RUNS,

@@ -23,8 +23,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  * {@code crm_app}, the unprivileged role a deployment uses. A superuser would bypass every policy and leave the promise
  * unverified.
  *
- * <p>Five tenant-scoped tables exist in the skeleton — the inbox, the outbox, the two webhook tables and the attempt
- * log — and the parameterized case covers one row of each. Later phases add a row per table they create.
+ * <p>Six tenant-scoped tables exist — the inbox, the outbox, the two webhook tables, the attempt log and the customers —
+ * and the parameterized case covers one row of each. A new table adds its row here.
  */
 class RowLevelSecurityTest {
 
@@ -110,6 +110,7 @@ class RowLevelSecurityTest {
                         insert into event_inbox (tenant_id, consumer, event_id) values ('%1$s', 'crm-platform-events', gen_random_uuid())
                         """),
                 Arguments.of("outbox", outboxRow()),
+                Arguments.of("customers", customerRow()),
                 Arguments.of("webhook_endpoints", endpointRow()),
                 Arguments.of("webhook_deliveries", deliveryRow()),
                 Arguments.of("webhook_delivery_attempts", attemptRow()));
@@ -119,6 +120,15 @@ class RowLevelSecurityTest {
         return """
                 insert into outbox (id, tenant_id, aggregate, type, payload, created_at, next_attempt_at)
                 values (gen_random_uuid(), '%1$s', 'customer/1', 'customer.created', '{}'::jsonb, now(), now())
+                """;
+    }
+
+    private static String customerRow() {
+        return """
+                insert into customers (tenant_id, id, external_ref, display_name, phone, phone_digits, email, status,
+                                       version, created_at, updated_at)
+                values ('%1$s', gen_random_uuid(), 'cust-' || gen_random_uuid(), 'Ada Lovelace', '+44 20 7946 0958',
+                        '442079460958', 'ada@example.com', 'ACTIVE', 1, now(), now())
                 """;
     }
 

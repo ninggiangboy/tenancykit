@@ -5,6 +5,7 @@ package dev.ngb.crm_jooq;
 
 
 import dev.ngb.crm_jooq.tables.AppEntitlements;
+import dev.ngb.crm_jooq.tables.Customers;
 import dev.ngb.crm_jooq.tables.EventInbox;
 import dev.ngb.crm_jooq.tables.JobLeases;
 import dev.ngb.crm_jooq.tables.JobRuns;
@@ -18,6 +19,7 @@ import dev.ngb.crm_jooq.tables.WebhookDeliveries;
 import dev.ngb.crm_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.crm_jooq.tables.WebhookEndpoints;
 import dev.ngb.crm_jooq.tables.records.AppEntitlementsRecord;
+import dev.ngb.crm_jooq.tables.records.CustomersRecord;
 import dev.ngb.crm_jooq.tables.records.EventInboxRecord;
 import dev.ngb.crm_jooq.tables.records.JobLeasesRecord;
 import dev.ngb.crm_jooq.tables.records.JobRunsRecord;
@@ -51,6 +53,8 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<AppEntitlementsRecord> APP_ENTITLEMENTS_PKEY = Internal.createUniqueKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_pkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID, AppEntitlements.APP_ENTITLEMENTS.APP_CODE }, true);
+    public static final UniqueKey<CustomersRecord> CUSTOMERS_PKEY = Internal.createUniqueKey(Customers.CUSTOMERS, DSL.name("customers_pkey"), new TableField[] { Customers.CUSTOMERS.ID }, true);
+    public static final UniqueKey<CustomersRecord> CUSTOMERS_TENANT_ID_EXTERNAL_REF_KEY = Internal.createUniqueKey(Customers.CUSTOMERS, DSL.name("customers_tenant_id_external_ref_key"), new TableField[] { Customers.CUSTOMERS.TENANT_ID, Customers.CUSTOMERS.EXTERNAL_REF }, true);
     public static final UniqueKey<EventInboxRecord> EVENT_INBOX_PKEY = Internal.createUniqueKey(EventInbox.EVENT_INBOX, DSL.name("event_inbox_pkey"), new TableField[] { EventInbox.EVENT_INBOX.TENANT_ID, EventInbox.EVENT_INBOX.CONSUMER, EventInbox.EVENT_INBOX.EVENT_ID }, true);
     public static final UniqueKey<JobLeasesRecord> JOB_LEASES_PKEY = Internal.createUniqueKey(JobLeases.JOB_LEASES, DSL.name("job_leases_pkey"), new TableField[] { JobLeases.JOB_LEASES.NAME }, true);
     public static final UniqueKey<JobRunsRecord> JOB_RUNS_PKEY = Internal.createUniqueKey(JobRuns.JOB_RUNS, DSL.name("job_runs_pkey"), new TableField[] { JobRuns.JOB_RUNS.JOB, JobRuns.JOB_RUNS.RUN_KEY, JobRuns.JOB_RUNS.TENANT_ID }, true);
