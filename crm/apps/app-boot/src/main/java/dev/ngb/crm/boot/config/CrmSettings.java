@@ -20,6 +20,9 @@ public record CrmSettings(
         Jobs jobs,
         Housekeeping housekeeping,
         Batches batches,
+        Fields fields,
+        Tags tags,
+        Consents consents,
         Orders orders,
         Activity activity,
         Exports exports,
@@ -97,6 +100,39 @@ public record CrmSettings(
 
         public Orders {
             positive(maxLinesPerOrder, "crm.orders.max-lines-per-order");
+        }
+    }
+
+    /**
+     * The Tenant's own customer attributes, bounded so one Tenant's definitions and one customer's values cannot grow
+     * without limit.
+     *
+     * @param maxActiveDefinitions how many definitions a Tenant may have that accept values, 50 by default
+     * @param maxBytes the largest serialized field values of one customer, 16 KiB by default
+     */
+    public record Fields(int maxActiveDefinitions, int maxBytes) {
+
+        public Fields {
+            positive(maxActiveDefinitions, "crm.fields.max-active-definitions");
+            positive(maxBytes, "crm.fields.max-bytes");
+        }
+    }
+
+    /** @param maxPerCustomer how many tags one customer may carry, 50 by default */
+    public record Tags(int maxPerCustomer) {
+
+        public Tags {
+            positive(maxPerCustomer, "crm.tags.max-per-customer");
+        }
+    }
+
+    /** @param maxFutureSkew how far ahead of the service's own clock a consent's {@code occurredAt} may be */
+    public record Consents(Duration maxFutureSkew) {
+
+        public Consents {
+            if (maxFutureSkew == null || maxFutureSkew.isNegative()) {
+                throw new IllegalArgumentException("crm.consents.max-future-skew must not be negative");
+            }
         }
     }
 

@@ -1,65 +1,38 @@
 package dev.ngb.crm.customers.adapter.customer.web;
 
+import static dev.ngb.crm_jooq.Tables.CUSTOMERS;
+import static dev.ngb.crm_jooq.Tables.OUTBOX;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static dev.ngb.crm_jooq.Tables.CUSTOMERS;
-import static dev.ngb.crm_jooq.Tables.OUTBOX;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 
-import dev.ngb.core.id.TenantId;
-import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.crm.shared.CrmPermissions;
-import dev.ngb.crm.support.CrmIntegrationTest;
+import dev.ngb.crm.support.CrmApiTest;
 import dev.ngb.crm.support.ReplicaFixtures;
 import dev.ngb.crm.support.TestTokenFactory;
-import dev.ngb.crm.support.TokensConfig;
 import java.util.UUID;
-import org.jooq.DSLContext;
 import org.jooq.JSONB;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
- * The customer API tests' common ground: the real application behind MockMvc, a Tenant with a Tenant System
- * credential that holds the two customer codes, and the request builders the tests send.
- *
- * <p>Every test uses a fresh random tenant, so no test has to clean up after another and a customer stored by one is
- * invisible to the next — which is the isolation the tests are about.
+ * The customer API tests' common ground: a Tenant with a Tenant System credential that holds the two customer codes,
+ * and the request builders the tests send.
  */
-@AutoConfigureMockMvc
-@Import(TokensConfig.class)
-abstract class CustomerApiTestCase extends CrmIntegrationTest {
+abstract class CustomerApiTestCase extends CrmApiTest {
 
-    @Autowired
-    MockMvc mvc;
-
-    @Autowired
-    ReplicaFixtures replica;
-
-    @Autowired
-    DSLContext dsl;
-
-    @Autowired
-    UnitOfWork unitOfWork;
-
-    /** A tenant, its hostname and a Tenant System token holding both customer permissions. */
-    record Session(TenantId tenant, String host, String token) {}
-
+    /** A tenant whose credential holds both customer codes. */
     Session tenant() {
-        ReplicaFixtures.TenantSeed seed = replica.tenant();
-        UUID system = replica.tenantSystem(seed.id().value(), "Tenant POS").value();
-        String token = TestTokenFactory.tenantSystemToken(
-                system,
-                seed.id().value(),
-                CrmPermissions.CUSTOMER_MANAGE,
-                CrmPermissions.CUSTOMER_READ);
-        return new Session(seed.id(), seed.host(), token);
+        return tenant(CrmPermissions.CUSTOMER_MANAGE, CrmPermissions.CUSTOMER_READ);
+    }
+
+    /** A second credential of the same tenant, holding only the codes it names. */
+    String readOnlyCredential(Session session) {
+        UUID system = replica.tenantSystem(session.tenant().value(), "Rival POS").value();
+        return TestTokenFactory.tenantSystemToken(
+                system, session.tenant().value(), CrmPermissions.CUSTOMER_READ);
     }
 
     ResultActions putCustomer(Session session, String externalRef, String body) throws Exception {
@@ -134,7 +107,6 @@ abstract class CustomerApiTestCase extends CrmIntegrationTest {
     }
 
     long customerRows(Session session) {
-        return inTenant(session.tenant(), () -> unitOfWork.transactional(
-                () -> (long) dsl.fetchCount(CUSTOMERS)));
+        return rowsOf(session, CUSTOMERS);
     }
 }

@@ -5,8 +5,12 @@ package dev.ngb.crm_jooq;
 
 
 import dev.ngb.crm_jooq.tables.AppEntitlements;
+import dev.ngb.crm_jooq.tables.ConsentEvents;
+import dev.ngb.crm_jooq.tables.ConsentTopics;
+import dev.ngb.crm_jooq.tables.CustomerTags;
 import dev.ngb.crm_jooq.tables.Customers;
 import dev.ngb.crm_jooq.tables.EventInbox;
+import dev.ngb.crm_jooq.tables.FieldDefinitions;
 import dev.ngb.crm_jooq.tables.JobLeases;
 import dev.ngb.crm_jooq.tables.JobRuns;
 import dev.ngb.crm_jooq.tables.Outbox;
@@ -47,6 +51,21 @@ public class Public extends SchemaImpl {
     public final AppEntitlements APP_ENTITLEMENTS = AppEntitlements.APP_ENTITLEMENTS;
 
     /**
+     * The table <code>public.consent_events</code>.
+     */
+    public final ConsentEvents CONSENT_EVENTS = ConsentEvents.CONSENT_EVENTS;
+
+    /**
+     * The table <code>public.consent_topics</code>.
+     */
+    public final ConsentTopics CONSENT_TOPICS = ConsentTopics.CONSENT_TOPICS;
+
+    /**
+     * The table <code>public.customer_tags</code>.
+     */
+    public final CustomerTags CUSTOMER_TAGS = CustomerTags.CUSTOMER_TAGS;
+
+    /**
      * The table <code>public.customers</code>.
      */
     public final Customers CUSTOMERS = Customers.CUSTOMERS;
@@ -55,6 +74,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.event_inbox</code>.
      */
     public final EventInbox EVENT_INBOX = EventInbox.EVENT_INBOX;
+
+    /**
+     * The table <code>public.field_definitions</code>.
+     */
+    public final FieldDefinitions FIELD_DEFINITIONS = FieldDefinitions.FIELD_DEFINITIONS;
 
     /**
      * The table <code>public.job_leases</code>.
@@ -128,8 +152,12 @@ public class Public extends SchemaImpl {
     public final List<Table<?>> getTables() {
         return Arrays.asList(
             AppEntitlements.APP_ENTITLEMENTS,
+            ConsentEvents.CONSENT_EVENTS,
+            ConsentTopics.CONSENT_TOPICS,
+            CustomerTags.CUSTOMER_TAGS,
             Customers.CUSTOMERS,
             EventInbox.EVENT_INBOX,
+            FieldDefinitions.FIELD_DEFINITIONS,
             JobLeases.JOB_LEASES,
             JobRuns.JOB_RUNS,
             Outbox.OUTBOX,

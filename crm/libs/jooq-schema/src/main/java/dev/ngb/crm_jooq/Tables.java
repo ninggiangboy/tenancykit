@@ -5,8 +5,12 @@ package dev.ngb.crm_jooq;
 
 
 import dev.ngb.crm_jooq.tables.AppEntitlements;
+import dev.ngb.crm_jooq.tables.ConsentEvents;
+import dev.ngb.crm_jooq.tables.ConsentTopics;
+import dev.ngb.crm_jooq.tables.CustomerTags;
 import dev.ngb.crm_jooq.tables.Customers;
 import dev.ngb.crm_jooq.tables.EventInbox;
+import dev.ngb.crm_jooq.tables.FieldDefinitions;
 import dev.ngb.crm_jooq.tables.JobLeases;
 import dev.ngb.crm_jooq.tables.JobRuns;
 import dev.ngb.crm_jooq.tables.Outbox;
@@ -32,6 +36,21 @@ public class Tables {
     public static final AppEntitlements APP_ENTITLEMENTS = AppEntitlements.APP_ENTITLEMENTS;
 
     /**
+     * The table <code>public.consent_events</code>.
+     */
+    public static final ConsentEvents CONSENT_EVENTS = ConsentEvents.CONSENT_EVENTS;
+
+    /**
+     * The table <code>public.consent_topics</code>.
+     */
+    public static final ConsentTopics CONSENT_TOPICS = ConsentTopics.CONSENT_TOPICS;
+
+    /**
+     * The table <code>public.customer_tags</code>.
+     */
+    public static final CustomerTags CUSTOMER_TAGS = CustomerTags.CUSTOMER_TAGS;
+
+    /**
      * The table <code>public.customers</code>.
      */
     public static final Customers CUSTOMERS = Customers.CUSTOMERS;
@@ -40,6 +59,11 @@ public class Tables {
      * The table <code>public.event_inbox</code>.
      */
     public static final EventInbox EVENT_INBOX = EventInbox.EVENT_INBOX;
+
+    /**
+     * The table <code>public.field_definitions</code>.
+     */
+    public static final FieldDefinitions FIELD_DEFINITIONS = FieldDefinitions.FIELD_DEFINITIONS;
 
     /**
      * The table <code>public.job_leases</code>.

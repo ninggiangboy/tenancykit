@@ -23,8 +23,9 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  * {@code crm_app}, the unprivileged role a deployment uses. A superuser would bypass every policy and leave the promise
  * unverified.
  *
- * <p>Six tenant-scoped tables exist — the inbox, the outbox, the two webhook tables, the attempt log and the customers —
- * and the parameterized case covers one row of each. A new table adds its row here.
+ * <p>Ten tenant-scoped tables exist — the inbox, the outbox, the two webhook tables, the attempt log, the customers,
+ * their tags and consent records, the field definitions and the consent topics — and the parameterized case covers one
+ * row of each. A new table adds its row here.
  */
 class RowLevelSecurityTest {
 
@@ -52,6 +53,11 @@ class RowLevelSecurityTest {
             assertThat(count(app, "webhook_endpoints", null)).isZero();
             assertThat(count(app, "webhook_deliveries", null)).isZero();
             assertThat(count(app, "webhook_delivery_attempts", null)).isZero();
+            assertThat(count(app, "customers", null)).isZero();
+            assertThat(count(app, "field_definitions", null)).isZero();
+            assertThat(count(app, "customer_tags", null)).isZero();
+            assertThat(count(app, "consent_topics", null)).isZero();
+            assertThat(count(app, "consent_events", null)).isZero();
         }
     }
 
@@ -88,6 +94,22 @@ class RowLevelSecurityTest {
         }
     }
 
+    /** A consent record is evidence: the app role may append one and may not rewrite the history behind it. */
+    @Test
+    void theAppRoleCannotRewriteAConsentRecord() throws SQLException {
+        UUID tenant = UUID.randomUUID();
+        executeAsOwner(consentRow().formatted(tenant));
+
+        try (Connection app = appRole()) {
+            bind(app, tenant);
+            try (Statement statement = app.createStatement()) {
+                assertThatThrownBy(() -> statement.execute("update consent_events set status = 'REVOKED'"))
+                        .isInstanceOf(SQLException.class)
+                        .hasMessageContaining("permission denied");
+            }
+        }
+    }
+
     /** One row per tenant table. A table that forgot its {@code enable_tenant_rls} call fails here. */
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.MethodSource("tenantTableRows")
@@ -111,6 +133,10 @@ class RowLevelSecurityTest {
                         """),
                 Arguments.of("outbox", outboxRow()),
                 Arguments.of("customers", customerRow()),
+                Arguments.of("field_definitions", fieldDefinitionRow()),
+                Arguments.of("customer_tags", customerTagRow()),
+                Arguments.of("consent_topics", consentTopicRow()),
+                Arguments.of("consent_events", consentRow()),
                 Arguments.of("webhook_endpoints", endpointRow()),
                 Arguments.of("webhook_deliveries", deliveryRow()),
                 Arguments.of("webhook_delivery_attempts", attemptRow()));
@@ -129,6 +155,47 @@ class RowLevelSecurityTest {
                                        version, created_at, updated_at)
                 values ('%1$s', gen_random_uuid(), 'cust-' || gen_random_uuid(), 'Ada Lovelace', '+44 20 7946 0958',
                         '442079460958', 'ada@example.com', 'ACTIVE', 1, now(), now())
+                """;
+    }
+
+    private static String fieldDefinitionRow() {
+        return """
+                insert into field_definitions (tenant_id, key, label, type, choices, archived, created_at)
+                values ('%1$s', 'size', 'Size', 'CHOICE', array['S', 'M'], false, now())
+                """;
+    }
+
+    private static String customerTagRow() {
+        return """
+                with customer as (
+                    insert into customers (tenant_id, id, external_ref, status, version, created_at, updated_at)
+                    values ('%1$s', gen_random_uuid(), 'cust-' || gen_random_uuid(), 'ACTIVE', 1, now(), now())
+                    returning id
+                )
+                insert into customer_tags (tenant_id, customer_id, tag)
+                select '%1$s', customer.id, 'vip' from customer
+                """;
+    }
+
+    private static String consentTopicRow() {
+        return """
+                insert into consent_topics (tenant_id, key, label, archived)
+                values ('%1$s', 'profiling', 'Profiling', false)
+                """;
+    }
+
+    private static String consentRow() {
+        return """
+                with customer as (
+                    insert into customers (tenant_id, id, external_ref, status, version, created_at, updated_at)
+                    values ('%1$s', gen_random_uuid(), 'cust-' || gen_random_uuid(), 'ACTIVE', 1, now(), now())
+                    returning id
+                )
+                insert into consent_events (id, tenant_id, customer_id, topic_key, status, occurred_at, recorded_at,
+                                            source, consent_ref)
+                select gen_random_uuid(), '%1$s', customer.id, 'profiling', 'GRANTED', now(), now(), 'pos',
+                       'ref-' || gen_random_uuid()
+                from customer
                 """;
     }
 

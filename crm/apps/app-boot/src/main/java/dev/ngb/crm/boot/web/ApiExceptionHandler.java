@@ -1,11 +1,13 @@
 package dev.ngb.crm.boot.web;
 
 import dev.ngb.core.spring.web.CoreExceptionHandlers;
+import dev.ngb.crm.customers.application.consent.exception.ConsentProblem;
 import dev.ngb.crm.customers.application.customer.exception.CustomerErasedException;
 import dev.ngb.crm.customers.application.customer.exception.CustomerProblem;
 import dev.ngb.crm.customers.application.customer.exception.IfMatchRequiredException;
 import dev.ngb.crm.customers.application.customer.exception.InvalidBatchException;
 import dev.ngb.crm.customers.application.customer.exception.InvalidCustomerException;
+import dev.ngb.crm.customers.application.field.exception.FieldProblem;
 import dev.ngb.crm.webhook.application.endpoint.exception.PreconditionRequiredException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -56,9 +58,26 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
         return problem(HttpStatus.BAD_REQUEST, e);
     }
 
+    /** A field or consent refusal: a missing definition is 404, a taken key or an immutable type 409, the rest 422. */
+    @ExceptionHandler({FieldProblem.class, ConsentProblem.class})
+    ProblemDetail definitionProblem(CustomerProblem e) {
+        return problem(statusOf(e.code()), e);
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ProblemDetail unreadableBody(HttpMessageNotReadableException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "The request body is not valid.");
+    }
+
+    /** The status a refusal code answers with, so a caller branches on the code rather than on the wording. */
+    private static HttpStatus statusOf(String code) {
+        if (code.endsWith("_NOT_FOUND")) {
+            return HttpStatus.NOT_FOUND;
+        }
+        if (code.endsWith("_EXISTS") || code.endsWith("_IMMUTABLE")) {
+            return HttpStatus.CONFLICT;
+        }
+        return HttpStatus.UNPROCESSABLE_CONTENT;
     }
 
     private static ProblemDetail problem(HttpStatus status, CustomerProblem e) {

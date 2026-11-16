@@ -2,7 +2,12 @@ package dev.ngb.crm.customers.domain.customer;
 
 import dev.ngb.core.id.TenantId;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 
 /**
@@ -11,7 +16,8 @@ import java.util.UUID;
  * or email, so nothing here merges, resolves or looks up by an attribute.
  *
  * <p>The reference is immutable and the version is the ETag: a change replaces the attributes, moves the instant and
- * bumps the version, and a body that matches what is stored changes nothing at all.
+ * bumps the version, and a body that matches what is stored changes nothing at all. The version covers the customer's
+ * field values and tags as well, because a caller that pinned it asks about the customer as a whole.
  */
 public final class Customer {
 
@@ -22,14 +28,27 @@ public final class Customer {
     private String phone;
     private String phoneDigits;
     private String email;
+    private Map<String, Object> fields;
+    private Set<String> tags;
     private CustomerStatus status;
     private final Instant createdAt;
     private Instant updatedAt;
     private long version;
 
     private Customer(
-            CustomerId id, TenantId tenantId, String externalRef, String displayName, String phone, String phoneDigits,
-            String email, CustomerStatus status, Instant createdAt, Instant updatedAt, long version) {
+            CustomerId id,
+            TenantId tenantId,
+            String externalRef,
+            String displayName,
+            String phone,
+            String phoneDigits,
+            String email,
+            Map<String, Object> fields,
+            Set<String> tags,
+            CustomerStatus status,
+            Instant createdAt,
+            Instant updatedAt,
+            long version) {
         this.id = Objects.requireNonNull(id, "id");
         this.tenantId = Objects.requireNonNull(tenantId, "tenantId");
         this.externalRef = Objects.requireNonNull(externalRef, "externalRef");
@@ -37,6 +56,8 @@ public final class Customer {
         this.phone = phone;
         this.phoneDigits = phoneDigits;
         this.email = email;
+        this.fields = copyOfFields(fields);
+        this.tags = copyOfTags(tags);
         this.status = Objects.requireNonNull(status, "status");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
         this.updatedAt = Objects.requireNonNull(updatedAt, "updatedAt");
@@ -45,38 +66,71 @@ public final class Customer {
 
     /** A customer that did not exist until now; active from the moment it is created. */
     public static Customer create(
-            CustomerId id, TenantId tenantId, String externalRef, String displayName, String phone, String phoneDigits,
-            String email, Instant now) {
+            CustomerId id,
+            TenantId tenantId,
+            String externalRef,
+            String displayName,
+            String phone,
+            String phoneDigits,
+            String email,
+            Map<String, Object> fields,
+            Set<String> tags,
+            Instant now) {
         return new Customer(
-                id, tenantId, externalRef, displayName, phone, phoneDigits, email, CustomerStatus.ACTIVE, now, now, 1);
+                id, tenantId, externalRef, displayName, phone, phoneDigits, email, fields, tags, CustomerStatus.ACTIVE,
+                now, now, 1);
     }
 
     /** The customer a repository reads back from storage. */
     public static Customer restore(
-            CustomerId id, TenantId tenantId, String externalRef, String displayName, String phone, String phoneDigits,
-            String email, CustomerStatus status, Instant createdAt, Instant updatedAt, long version) {
+            CustomerId id,
+            TenantId tenantId,
+            String externalRef,
+            String displayName,
+            String phone,
+            String phoneDigits,
+            String email,
+            Map<String, Object> fields,
+            Set<String> tags,
+            CustomerStatus status,
+            Instant createdAt,
+            Instant updatedAt,
+            long version) {
         return new Customer(
-                id, tenantId, externalRef, displayName, phone, phoneDigits, email, status, createdAt, updatedAt, version);
+                id, tenantId, externalRef, displayName, phone, phoneDigits, email, fields, tags, status, createdAt,
+                updatedAt, version);
     }
 
     /**
-     * Replaces the attributes with what the caller sent.
+     * Replaces the attributes, the field values and the tags with what the caller sent.
      *
      * @return whether anything changed, because a body identical to what is stored must bump no version and announce
      *     nothing
      */
     public boolean replace(
-            String newDisplayName, String newPhone, String newPhoneDigits, String newEmail, Instant now) {
+            String newDisplayName,
+            String newPhone,
+            String newPhoneDigits,
+            String newEmail,
+            Map<String, Object> newFields,
+            Set<String> newTags,
+            Instant now) {
+        Map<String, Object> storedFields = copyOfFields(newFields);
+        Set<String> storedTags = copyOfTags(newTags);
         if (Objects.equals(displayName, newDisplayName)
                 && Objects.equals(phone, newPhone)
                 && Objects.equals(phoneDigits, newPhoneDigits)
-                && Objects.equals(email, newEmail)) {
+                && Objects.equals(email, newEmail)
+                && fields.equals(storedFields)
+                && tags.equals(storedTags)) {
             return false;
         }
         this.displayName = newDisplayName;
         this.phone = newPhone;
         this.phoneDigits = newPhoneDigits;
         this.email = newEmail;
+        this.fields = storedFields;
+        this.tags = storedTags;
         this.updatedAt = now;
         this.version++;
         return true;
@@ -119,6 +173,21 @@ public final class Customer {
         return email;
     }
 
+    /** The customer's field values, keyed by field-definition key; a key it has no value for is absent. */
+    public Map<String, Object> fields() {
+        return fields;
+    }
+
+    /** The customer's tags, in tag order. */
+    public Set<String> tags() {
+        return tags;
+    }
+
+    /** The tags as a list, for a representation that carries them in a stable order. */
+    public List<String> tagList() {
+        return List.copyOf(tags);
+    }
+
     public CustomerStatus status() {
         return status;
     }
@@ -134,5 +203,15 @@ public final class Customer {
     /** The version an ETag carries; a PATCH that pins it must match for the change to proceed. */
     public long version() {
         return version;
+    }
+
+    private static Map<String, Object> copyOfFields(Map<String, Object> fields) {
+        return fields == null ? Map.of() : Collections.unmodifiableMap(new java.util.LinkedHashMap<>(fields));
+    }
+
+    private static Set<String> copyOfTags(Set<String> tags) {
+        return tags == null
+                ? Set.of()
+                : Collections.unmodifiableSortedSet(new TreeSet<>(tags));
     }
 }

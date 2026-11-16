@@ -50,7 +50,9 @@ final class ArchitectureRules {
         for (String table : List.of("WebhookEndpoints", "WebhookDeliveries", "WebhookDeliveryAttempts")) {
             TABLE_OWNER.put(table, "webhook");
         }
-        TABLE_OWNER.put("Customers", "customers");
+        for (String table : List.of("Customers", "FieldDefinitions", "CustomerTags", "ConsentTopics", "ConsentEvents")) {
+            TABLE_OWNER.put(table, "customers");
+        }
     }
 
     /** Every use case opens a unit of work; crm has no exception and should never grow one. */

@@ -5,8 +5,12 @@ package dev.ngb.crm_jooq;
 
 
 import dev.ngb.crm_jooq.tables.AppEntitlements;
+import dev.ngb.crm_jooq.tables.ConsentEvents;
+import dev.ngb.crm_jooq.tables.ConsentTopics;
+import dev.ngb.crm_jooq.tables.CustomerTags;
 import dev.ngb.crm_jooq.tables.Customers;
 import dev.ngb.crm_jooq.tables.EventInbox;
+import dev.ngb.crm_jooq.tables.FieldDefinitions;
 import dev.ngb.crm_jooq.tables.JobLeases;
 import dev.ngb.crm_jooq.tables.JobRuns;
 import dev.ngb.crm_jooq.tables.Outbox;
@@ -19,8 +23,12 @@ import dev.ngb.crm_jooq.tables.WebhookDeliveries;
 import dev.ngb.crm_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.crm_jooq.tables.WebhookEndpoints;
 import dev.ngb.crm_jooq.tables.records.AppEntitlementsRecord;
+import dev.ngb.crm_jooq.tables.records.ConsentEventsRecord;
+import dev.ngb.crm_jooq.tables.records.ConsentTopicsRecord;
+import dev.ngb.crm_jooq.tables.records.CustomerTagsRecord;
 import dev.ngb.crm_jooq.tables.records.CustomersRecord;
 import dev.ngb.crm_jooq.tables.records.EventInboxRecord;
+import dev.ngb.crm_jooq.tables.records.FieldDefinitionsRecord;
 import dev.ngb.crm_jooq.tables.records.JobLeasesRecord;
 import dev.ngb.crm_jooq.tables.records.JobRunsRecord;
 import dev.ngb.crm_jooq.tables.records.OutboxRecord;
@@ -53,9 +61,13 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<AppEntitlementsRecord> APP_ENTITLEMENTS_PKEY = Internal.createUniqueKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_pkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID, AppEntitlements.APP_ENTITLEMENTS.APP_CODE }, true);
+    public static final UniqueKey<ConsentEventsRecord> CONSENT_EVENTS_PKEY = Internal.createUniqueKey(ConsentEvents.CONSENT_EVENTS, DSL.name("consent_events_pkey"), new TableField[] { ConsentEvents.CONSENT_EVENTS.ID }, true);
+    public static final UniqueKey<ConsentTopicsRecord> CONSENT_TOPICS_PKEY = Internal.createUniqueKey(ConsentTopics.CONSENT_TOPICS, DSL.name("consent_topics_pkey"), new TableField[] { ConsentTopics.CONSENT_TOPICS.TENANT_ID, ConsentTopics.CONSENT_TOPICS.KEY }, true);
+    public static final UniqueKey<CustomerTagsRecord> CUSTOMER_TAGS_PKEY = Internal.createUniqueKey(CustomerTags.CUSTOMER_TAGS, DSL.name("customer_tags_pkey"), new TableField[] { CustomerTags.CUSTOMER_TAGS.TENANT_ID, CustomerTags.CUSTOMER_TAGS.CUSTOMER_ID, CustomerTags.CUSTOMER_TAGS.TAG }, true);
     public static final UniqueKey<CustomersRecord> CUSTOMERS_PKEY = Internal.createUniqueKey(Customers.CUSTOMERS, DSL.name("customers_pkey"), new TableField[] { Customers.CUSTOMERS.ID }, true);
     public static final UniqueKey<CustomersRecord> CUSTOMERS_TENANT_ID_EXTERNAL_REF_KEY = Internal.createUniqueKey(Customers.CUSTOMERS, DSL.name("customers_tenant_id_external_ref_key"), new TableField[] { Customers.CUSTOMERS.TENANT_ID, Customers.CUSTOMERS.EXTERNAL_REF }, true);
     public static final UniqueKey<EventInboxRecord> EVENT_INBOX_PKEY = Internal.createUniqueKey(EventInbox.EVENT_INBOX, DSL.name("event_inbox_pkey"), new TableField[] { EventInbox.EVENT_INBOX.TENANT_ID, EventInbox.EVENT_INBOX.CONSUMER, EventInbox.EVENT_INBOX.EVENT_ID }, true);
+    public static final UniqueKey<FieldDefinitionsRecord> FIELD_DEFINITIONS_PKEY = Internal.createUniqueKey(FieldDefinitions.FIELD_DEFINITIONS, DSL.name("field_definitions_pkey"), new TableField[] { FieldDefinitions.FIELD_DEFINITIONS.TENANT_ID, FieldDefinitions.FIELD_DEFINITIONS.KEY }, true);
     public static final UniqueKey<JobLeasesRecord> JOB_LEASES_PKEY = Internal.createUniqueKey(JobLeases.JOB_LEASES, DSL.name("job_leases_pkey"), new TableField[] { JobLeases.JOB_LEASES.NAME }, true);
     public static final UniqueKey<JobRunsRecord> JOB_RUNS_PKEY = Internal.createUniqueKey(JobRuns.JOB_RUNS, DSL.name("job_runs_pkey"), new TableField[] { JobRuns.JOB_RUNS.JOB, JobRuns.JOB_RUNS.RUN_KEY, JobRuns.JOB_RUNS.TENANT_ID }, true);
     public static final UniqueKey<OutboxRecord> OUTBOX_PKEY = Internal.createUniqueKey(Outbox.OUTBOX, DSL.name("outbox_pkey"), new TableField[] { Outbox.OUTBOX.ID }, true);
@@ -77,6 +89,8 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final ForeignKey<AppEntitlementsRecord, TenantsRecord> APP_ENTITLEMENTS__APP_ENTITLEMENTS_TENANT_ID_FKEY = Internal.createForeignKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_tenant_id_fkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<ConsentEventsRecord, CustomersRecord> CONSENT_EVENTS__CONSENT_EVENTS_CUSTOMER_ID_FKEY = Internal.createForeignKey(ConsentEvents.CONSENT_EVENTS, DSL.name("consent_events_customer_id_fkey"), new TableField[] { ConsentEvents.CONSENT_EVENTS.CUSTOMER_ID }, Keys.CUSTOMERS_PKEY, new TableField[] { Customers.CUSTOMERS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<CustomerTagsRecord, CustomersRecord> CUSTOMER_TAGS__CUSTOMER_TAGS_CUSTOMER_ID_FKEY = Internal.createForeignKey(CustomerTags.CUSTOMER_TAGS, DSL.name("customer_tags_customer_id_fkey"), new TableField[] { CustomerTags.CUSTOMER_TAGS.CUSTOMER_ID }, Keys.CUSTOMERS_PKEY, new TableField[] { Customers.CUSTOMERS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<TenantDomainsRecord, TenantsRecord> TENANT_DOMAINS__TENANT_DOMAINS_TENANT_ID_FKEY = Internal.createForeignKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_tenant_id_fkey"), new TableField[] { TenantDomains.TENANT_DOMAINS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<TenantSystemsRecord, TenantsRecord> TENANT_SYSTEMS__TENANT_SYSTEMS_TENANT_ID_FKEY = Internal.createForeignKey(TenantSystems.TENANT_SYSTEMS, DSL.name("tenant_systems_tenant_id_fkey"), new TableField[] { TenantSystems.TENANT_SYSTEMS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<UserGrantsRecord, TenantsRecord> USER_GRANTS__USER_GRANTS_TENANT_ID_FKEY = Internal.createForeignKey(UserGrants.USER_GRANTS, DSL.name("user_grants_tenant_id_fkey"), new TableField[] { UserGrants.USER_GRANTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);

@@ -103,6 +103,17 @@ crm:
     max-order-lines: ${CRM_MAX_ORDER_LINES_PER_BATCH:5000}
   orders:
     max-lines-per-order: ${CRM_MAX_LINES_PER_ORDER:500}
+  fields:
+    # The Tenant's own customer attributes: how many definitions may accept values, and how large one customer's
+    # values may be serialized. These bound one Tenant's vocabulary and one row, so a deployment sets them.
+    max-active-definitions: ${CRM_MAX_FIELD_DEFINITIONS:50}
+    max-bytes: ${CRM_MAX_FIELD_BYTES:16384}
+  tags:
+    max-per-customer: ${CRM_MAX_TAGS_PER_CUSTOMER:50}
+  consents:
+    # A consent's occurredAt may not be further in the future than this, so a bad clock cannot sort above every
+    # honest record of the history.
+    max-future-skew: ${CRM_CONSENT_MAX_FUTURE_SKEW:PT5M}
   activity:
     max-payload-bytes: ${CRM_MAX_ACTIVITY_PAYLOAD_BYTES:8192}
   exports:

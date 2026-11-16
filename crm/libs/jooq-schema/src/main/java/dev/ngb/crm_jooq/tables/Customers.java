@@ -6,6 +6,8 @@ package dev.ngb.crm_jooq.tables;
 
 import dev.ngb.crm_jooq.Keys;
 import dev.ngb.crm_jooq.Public;
+import dev.ngb.crm_jooq.tables.ConsentEvents.ConsentEventsPath;
+import dev.ngb.crm_jooq.tables.CustomerTags.CustomerTagsPath;
 import dev.ngb.crm_jooq.tables.records.CustomersRecord;
 
 import java.time.Instant;
@@ -17,9 +19,14 @@ import java.util.UUID;
 import org.jooq.Check;
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.ForeignKey;
+import org.jooq.InverseForeignKey;
+import org.jooq.JSONB;
 import org.jooq.Name;
+import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
+import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Stringly;
@@ -110,6 +117,11 @@ public class Customers extends TableImpl<CustomersRecord> {
      */
     public final TableField<CustomersRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.INSTANT.nullable(false), this, "");
 
+    /**
+     * The column <code>public.customers.fields</code>.
+     */
+    public final TableField<CustomersRecord, JSONB> FIELDS = createField(DSL.name("fields"), SQLDataType.JSONB.nullable(false).defaultValue(DSL.field(DSL.raw("'{}'::jsonb"), SQLDataType.JSONB)), this, "");
+
     private Customers(Name alias, Table<CustomersRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -139,6 +151,39 @@ public class Customers extends TableImpl<CustomersRecord> {
         this(DSL.name("customers"), null);
     }
 
+    public <O extends Record> Customers(Table<O> path, ForeignKey<O, CustomersRecord> childPath, InverseForeignKey<O, CustomersRecord> parentPath) {
+        super(path, childPath, parentPath, CUSTOMERS);
+    }
+
+    /**
+     * A subtype implementing {@link Path} for simplified path-based joins.
+     */
+    public static class CustomersPath extends Customers implements Path<CustomersRecord> {
+
+        private static final long serialVersionUID = 1L;
+        public <O extends Record> CustomersPath(Table<O> path, ForeignKey<O, CustomersRecord> childPath, InverseForeignKey<O, CustomersRecord> parentPath) {
+            super(path, childPath, parentPath);
+        }
+        private CustomersPath(Name alias, Table<CustomersRecord> aliased) {
+            super(alias, aliased);
+        }
+
+        @Override
+        public CustomersPath as(String alias) {
+            return new CustomersPath(DSL.name(alias), this);
+        }
+
+        @Override
+        public CustomersPath as(Name alias) {
+            return new CustomersPath(alias, this);
+        }
+
+        @Override
+        public CustomersPath as(Table<?> alias) {
+            return new CustomersPath(alias.getQualifiedName(), this);
+        }
+    }
+
     @Override
     public Schema getSchema() {
         return aliased() ? null : Public.PUBLIC;
@@ -154,12 +199,39 @@ public class Customers extends TableImpl<CustomersRecord> {
         return Arrays.asList(Keys.CUSTOMERS_TENANT_ID_EXTERNAL_REF_KEY);
     }
 
+    private transient ConsentEventsPath _consentEvents;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.consent_events</code> table
+     */
+    public ConsentEventsPath consentEvents() {
+        if (_consentEvents == null)
+            _consentEvents = new ConsentEventsPath(this, null, Keys.CONSENT_EVENTS__CONSENT_EVENTS_CUSTOMER_ID_FKEY.getInverseKey());
+
+        return _consentEvents;
+    }
+
+    private transient CustomerTagsPath _customerTags;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.customer_tags</code> table
+     */
+    public CustomerTagsPath customerTags() {
+        if (_customerTags == null)
+            _customerTags = new CustomerTagsPath(this, null, Keys.CUSTOMER_TAGS__CUSTOMER_TAGS_CUSTOMER_ID_FKEY.getInverseKey());
+
+        return _customerTags;
+    }
+
     @Override
     public List<Check<CustomersRecord>> getChecks() {
         return Arrays.asList(
             Internal.createCheck(this, DSL.name("customers_display_name_check"), "(((display_name IS NULL) OR ((length(display_name) >= 1) AND (length(display_name) <= 200))))", true),
             Internal.createCheck(this, DSL.name("customers_email_check"), "(((email IS NULL) OR (length(email) <= 254)))", true),
             Internal.createCheck(this, DSL.name("customers_external_ref_check"), "(((length(external_ref) >= 1) AND (length(external_ref) <= 128)))", true),
+            Internal.createCheck(this, DSL.name("customers_fields_check"), "((jsonb_typeof(fields) = 'object'::text))", true),
             Internal.createCheck(this, DSL.name("customers_phone_check"), "(((phone IS NULL) OR ((length(phone) >= 1) AND (length(phone) <= 32))))", true),
             Internal.createCheck(this, DSL.name("customers_phone_digits_check"), "(((phone_digits IS NULL) OR (phone_digits ~ '^[0-9]{1,32}$'::text)))", true),
             Internal.createCheck(this, DSL.name("customers_status_check"), "((status = ANY (ARRAY['ACTIVE'::text, 'ERASED'::text])))", true),

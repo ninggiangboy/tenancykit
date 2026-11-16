@@ -2,6 +2,8 @@ package dev.ngb.crm.customers.application.customer.query;
 
 import dev.ngb.crm.customers.domain.customer.CustomerStatus;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -14,6 +16,8 @@ public record CustomerView(
         String displayName,
         String phone,
         String email,
+        Map<String, Object> customFields,
+        List<String> tags,
         CustomerStatus status,
         Instant createdAt,
         Instant updatedAt,

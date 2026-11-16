@@ -9,6 +9,7 @@ import dev.ngb.crm_jooq.tables.Customers;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.jooq.JSONB;
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
 
@@ -186,6 +187,21 @@ public class CustomersRecord extends UpdatableRecordImpl<CustomersRecord> {
         return (Instant) get(10);
     }
 
+    /**
+     * Setter for <code>public.customers.fields</code>.
+     */
+    public CustomersRecord setFields(JSONB value) {
+        set(11, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.customers.fields</code>.
+     */
+    public JSONB getFields() {
+        return (JSONB) get(11);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -209,7 +225,7 @@ public class CustomersRecord extends UpdatableRecordImpl<CustomersRecord> {
     /**
      * Create a detached, initialised CustomersRecord
      */
-    public CustomersRecord(UUID tenantId, UUID id, String externalRef, String displayName, String phone, String phoneDigits, String email, String status, Long version, Instant createdAt, Instant updatedAt) {
+    public CustomersRecord(UUID tenantId, UUID id, String externalRef, String displayName, String phone, String phoneDigits, String email, String status, Long version, Instant createdAt, Instant updatedAt, JSONB fields) {
         super(Customers.CUSTOMERS);
 
         setTenantId(tenantId);
@@ -223,6 +239,7 @@ public class CustomersRecord extends UpdatableRecordImpl<CustomersRecord> {
         setVersion(version);
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
+        setFields(fields);
         resetTouchedOnNotNull();
     }
 }

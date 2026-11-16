@@ -57,9 +57,14 @@ public class CustomerBatchController {
     /** A null item is a malformed one, not a reason to fail the batch: it carries no reference and fails alone. */
     private static UpsertCustomerUseCase.Command command(CustomerController.CustomerUpsertRequest item) {
         if (item == null) {
-            return new UpsertCustomerUseCase.Command(null, null, null, null);
+            return new UpsertCustomerUseCase.Command(null, null, null, null, null, null);
         }
         return new UpsertCustomerUseCase.Command(
-                item.externalRef(), item.displayName(), item.phone(), item.email());
+                item.externalRef(),
+                item.displayName(),
+                item.phone(),
+                item.email(),
+                item.customFields(),
+                item.tags());
     }
 }

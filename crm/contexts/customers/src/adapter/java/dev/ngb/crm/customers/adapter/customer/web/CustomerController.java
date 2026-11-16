@@ -19,6 +19,8 @@ import dev.ngb.crm.customers.application.customer.service.CustomerRules;
 import dev.ngb.crm.customers.domain.customer.Customer;
 import dev.ngb.crm.shared.CrmPermissions;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,17 +39,38 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>{@code PUT} replaces a customer and answers {@code 201} the first time and {@code 200} afterwards, including when
  * the body changed nothing. {@code PATCH} is conditional on {@code If-Match}, so two systems that edit one customer
  * cannot overwrite each other silently. Every response carries the version as an {@code ETag}.
+ *
+ * <p>Both bodies carry the customer's field values and tags, because a caller states and reads the customer as one
+ * representation; the field definitions and the consent records that give them meaning have endpoints of their own.
  */
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
 public class CustomerController {
 
-    /** The representation a PUT stores. A null attribute is one the Tenant does not have. */
-    public record CustomerUpsertRequest(String externalRef, String displayName, String phone, String email) {}
+    /**
+     * The representation a PUT stores. A null attribute is one the Tenant does not have, and the field values and tags
+     * replace the stored ones.
+     */
+    public record CustomerUpsertRequest(
+            String externalRef,
+            String displayName,
+            String phone,
+            String email,
+            Map<String, Object> customFields,
+            List<String> tags) {}
 
-    /** The properties to change: a null one is left as it is. */
-    public record CustomerPatchRequest(String displayName, String phone, String email) {}
+    /**
+     * The properties to change: a null one is left as it is. Field values merge into the stored set, and the tags to add
+     * and remove change the tag set without replacing it.
+     */
+    public record CustomerPatchRequest(
+            String displayName,
+            String phone,
+            String email,
+            Map<String, Object> customFields,
+            List<String> addTags,
+            List<String> removeTags) {}
 
     public record CustomerResponse(
             String id,
@@ -55,6 +78,8 @@ public class CustomerController {
             String displayName,
             String phone,
             String email,
+            Map<String, Object> customFields,
+            List<String> tags,
             String status,
             Instant createdAt,
             Instant updatedAt) {
@@ -66,6 +91,8 @@ public class CustomerController {
                     customer.displayName(),
                     customer.phone(),
                     customer.email(),
+                    customer.fields(),
+                    customer.tagList(),
                     customer.status().name(),
                     customer.createdAt(),
                     customer.updatedAt());
@@ -78,6 +105,8 @@ public class CustomerController {
                     view.displayName(),
                     view.phone(),
                     view.email(),
+                    view.customFields(),
+                    view.tags(),
                     view.status().name(),
                     view.createdAt(),
                     view.updatedAt());
@@ -108,7 +137,12 @@ public class CustomerController {
             @RequestBody CustomerUpsertRequest request) {
         requireSameReference(externalRef, request.externalRef());
         UpsertCustomerUseCase.Result result = upsert.execute(new UpsertCustomerUseCase.Command(
-                externalRef, request.displayName(), request.phone(), request.email()));
+                externalRef,
+                request.displayName(),
+                request.phone(),
+                request.email(),
+                request.customFields(),
+                request.tags()));
         return ResponseEntity.status(result.created() ? HttpStatus.CREATED : HttpStatus.OK)
                 .eTag(ExpectedVersion.etag(result.customer().version()))
                 .body(CustomerResponse.of(result.customer()));
@@ -125,7 +159,13 @@ public class CustomerController {
             @RequestBody CustomerPatchRequest request) {
         Customer customer = patches.execute(
                 externalRef,
-                new PatchCustomerUseCase.Change(request.displayName(), request.phone(), request.email()),
+                new PatchCustomerUseCase.Change(
+                        request.displayName(),
+                        request.phone(),
+                        request.email(),
+                        request.customFields(),
+                        request.addTags(),
+                        request.removeTags()),
                 required(ifMatch));
         return ResponseEntity.ok()
                 .eTag(ExpectedVersion.etag(customer.version()))

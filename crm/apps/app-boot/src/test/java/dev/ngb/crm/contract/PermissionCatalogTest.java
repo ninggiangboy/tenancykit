@@ -38,14 +38,13 @@ class PermissionCatalogTest {
     private static final String ROOT = "dev.ngb.crm";
 
     /**
-     * The codes the contract already defines for endpoints that do not exist yet: fields, orders, activities, the
-     * export and the erasure. Each change that adds one of these endpoints removes its code here, so the set shrinking
-     * is what records the progress, and a code that no endpoint enforces cannot silently stay behind.
+     * The codes the contract already defines for endpoints that do not exist yet: the export, the orders, the
+     * activities and the erasure. Each change that adds one of these endpoints removes its code here, so the set
+     * shrinking is what records the progress, and a code that no endpoint enforces cannot silently stay behind.
      */
     private static final Set<String> NOT_YET_SERVED = Set.of(
             CrmPermissions.CUSTOMER_EXPORT,
             CrmPermissions.CUSTOMER_ERASE,
-            CrmPermissions.FIELD_MANAGE,
             CrmPermissions.ORDER_READ,
             CrmPermissions.ORDER_RECORD,
             CrmPermissions.ACTIVITY_READ,
