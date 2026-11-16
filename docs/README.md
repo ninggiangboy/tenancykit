@@ -32,6 +32,7 @@ Documentation for the suite: the **Platform** service, the **Billing** and **Not
 | [payments-and-stripe.md](payments-and-stripe.md) | Payment Provider model, Stripe Direct and Connect, Payment, Refund, Stripe webhooks |
 | [billing-session-and-portal.md](billing-session-and-portal.md) | Billing Session and the Customer Portal |
 | [webhooks-and-events.md](webhooks-and-events.md) | Tenant System to Billing and Billing to Tenant System integration |
+| [list-query-contract.md](list-query-contract.md) | The one filter, sort and paging contract every list endpoint follows, and how a resource declares it |
 | [tenant-system.md](tenant-system.md) | The reference tenant, its scenarios and the Platform token flow |
 | [security-and-reliability.md](security-and-reliability.md) | Security and operational requirements: token checks, broker users, DLQ runbook, key rotation |
 | [concurrency-and-locking.md](concurrency-and-locking.md) | Lock order, coordination transactions, and the lock safety net |
