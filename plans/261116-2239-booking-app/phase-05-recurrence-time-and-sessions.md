@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Recurrence, time and session materialization"
-status: pending
+status: completed
 priority: P1
 effort: "L"
 dependencies: [4]
