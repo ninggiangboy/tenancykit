@@ -589,7 +589,7 @@ public final class ArchitectureRules {
         return classes().that().resideInAnyPackage(core + "..")
                 .and().resideOutsideOfPackages(
                         core + ".spring..", core + ".messaging..", core + ".replica..", core + ".sync..",
-                        core + ".suite..", core + ".feign..", core + ".visitor..", core + ".webhook..", core + ".arch..")
+                        core + ".suite..", core + ".feign..", core + ".visitor..", core + ".webhook..", core + ".openapi..", core + ".arch..")
                 .should().onlyDependOnClassesThat().resideInAnyPackage(concat(JDK, core + ".."))
                 .because("the core is shared by every application build and depends on nothing of theirs")
                 .allowEmptyShould(true);
