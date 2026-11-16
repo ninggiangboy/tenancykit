@@ -47,6 +47,7 @@ class CouponCallerIntegrationTest {
     private static final Currency USD = Currency.of("USD");
     private static final Audit AUDIT = new Audit("user/test", "req-1");
     private static final long PRICE = 2_900;
+    private static final java.time.Instant DAY = java.time.Instant.parse("2026-10-01T00:00:00Z");
 
     @Autowired MoneyTestWorld worlds;
     @Autowired PricingTestWorld pricing;
@@ -55,6 +56,7 @@ class CouponCallerIntegrationTest {
     @Autowired CreateSubscriptionUseCase createSubscription;
     @Autowired RenewSubscriptionUseCase renew;
     @Autowired EstimateCostUseCase estimates;
+    @Autowired dev.ngb.billing.pricing.application.rating.command.ChargeFromUsageUseCase chargeUsage;
     @Autowired ScopeTestSupport scopes;
     @Autowired UnitOfWork unitOfWork;
     @Autowired OwnerDatabase owner;
@@ -146,6 +148,26 @@ class CouponCallerIntegrationTest {
 
         long discounted = PRICE - (PRICE * 5_000 / 10_000);
         assertThat(balance(world)).isEqualTo(100_000 - 2 * discounted);
+    }
+
+    @Test
+    void aUsageChargeIsDiscountedAndItsRatingKeepsTheGross() {
+        World world = worlds.prepaid(1_000_000);
+        attach(world, coupon(world, new Benefit.PercentOff(2_000), Scope.everything(), true));
+        String metric = pricing.metric();
+        var plan = pricing.plan(world.tenant().id(), "metered", new dev.ngb.billing.pricing.domain.rule.EventBased(
+                metric, "call", new java.math.BigDecimal("1000")), BillingCycle.MONTHLY, null, null);
+        pricing.record(world.tenant().id(), world.customerId(), metric, "call", "10", DAY);
+
+        var result = scopes.inTenant(world.tenant().id(), () -> chargeUsage.execute(
+                new dev.ngb.billing.pricing.application.rating.command.ChargeFromUsageUseCase.Command(
+                        world.customerId(), world.wallet().id(), plan.id(), null, DAY, DAY.plus(1, java.time.temporal.ChronoUnit.DAYS))));
+
+        // 10 calls at 1,000 minor units is 10,000; 20% off leaves 8,000.
+        assertThat(result.rating().amount().minorUnits()).as("the rating keeps the gross").isEqualTo(10_000);
+        assertThat(balance(world)).isEqualTo(1_000_000 - 8_000);
+        assertThat(owner.count("select discount_total from charges where tenant_id = ? and source = 'USAGE'", world.tenant().id().value()))
+                .isEqualTo(2_000);
     }
 
     @Test
