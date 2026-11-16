@@ -66,6 +66,16 @@ http://:80 {
 		reverse_proxy survey-api:8080
 	}
 
+	# Booking is reached through its own prefix on every tenant host. The public gate lives under the same prefix
+	# (`/booking/p/...`, also reachable as `/p/...` at its root); it needs no credentials because the proxy adds none, and
+	# the short-lived customer token the Tenant minted is its proof. The application enforces its own rate, body and
+	# admission limits, because the stock Caddy image has no rate-limit directive.
+	@bookingPath path /booking/*
+	handle @bookingPath {
+		uri strip_prefix /booking
+		reverse_proxy booking-api:8080
+	}
+
 	@platformHost host platform.localhost
 	handle @platformHost {
 		reverse_proxy platform:8080

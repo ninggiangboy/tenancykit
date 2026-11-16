@@ -11,6 +11,7 @@ Documentation lives in [docs/](docs/README.md). Code lives in:
 | `mailroom/` | Mailroom app: a Tenant's own templates, receivers, groups, segments, campaigns and tracking, a replica consumer that publishes `email.send` and consumes `email-delivery.changed` |
 | `survey/` | Survey app: a Tenant's surveys, immutable versions, links, visits, responses, uploads, analytics and signed webhooks; a replica consumer that publishes `survey.events` and sends no message |
 | `attribution/` | Attribution app: a Tenant's campaigns, tracked links, the redirect and its signed click id, clicks, page views, sessions and conversions, the credit each click receives under a per-campaign model, and advertising cost entered by hand or imported from Google Ads and Meta Ads |
+| `booking/` | Booking app: a Tenant's bookable resources, weekly hours and exceptions, groups, interval and capacity offerings, the two inventory engines behind one `Booking` lifecycle, availability, reschedules, series, a waitlist and a waiting room, the public customer gate and signed webhooks; a replica consumer that sends no message and touches no money |
 | `tenant/` | Sample Tenant System, built and deployed independently; it calls Billing over REST with a Platform-issued suite token |
 | `web/` | Placeholder for the frontends (Platform Admin, Tenant Admin, Customer Portal, Sample Tenant UI); no code yet |
 | `core/` | The technical core every service builds against: kernel, Spring implementations, messaging (`core-messaging`), the Platform replica (`core-replica`), snapshot sync (`core-platform-sync`), suite policy (`core-suite`), signed webhook mechanics (`core-webhook`), the shared Feign client (`core-feign`) and the shared architecture rule set (`core-arch`); the only code they share |
@@ -43,6 +44,7 @@ cd notification && ./gradlew build
 cd mailroom && ./gradlew build
 cd survey && ./gradlew build
 cd attribution && ./gradlew build
+cd booking && ./gradlew build
 cd tenant && ./gradlew build
 ```
 

@@ -130,3 +130,14 @@ declare_user loyalty \
   '^(loyalty\\.platform-events|loyalty\\.platform-events\\.dlq|suite\\.dlx)$' \
   '^(loyalty\\.platform-events|loyalty\\.platform-events\\.dlq|suite\\.dlx)$' \
   '^(platform\\.events|loyalty\\.platform-events|loyalty\\.platform-events\\.dlq|suite\\.dlx)$'
+
+# Booking is a replica consumer only, like crm and loyalty: it declares one queue and its dead-letter pair and owns no
+# exchange, so its ten facts leave as signed webhooks and there is no booking exchange to grant. `write` stops at its
+# own queue (declaring a queue with a dead-letter exchange and binding the DLQ both check write on the queue, and a
+# publish would check write on the exchange), which is what refuses a publish to platform.events. `read` covers
+# platform.events (a queue.bind checks read on the source) and its own queue only.
+declare_user booking \
+  "${BOOKING_BROKER_PASSWORD:?set the booking broker password}" \
+  '^(booking\\.platform-events|booking\\.platform-events\\.dlq|suite\\.dlx)$' \
+  '^(booking\\.platform-events|booking\\.platform-events\\.dlq|suite\\.dlx)$' \
+  '^(platform\\.events|booking\\.platform-events|booking\\.platform-events\\.dlq|suite\\.dlx)$'

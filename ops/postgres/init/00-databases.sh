@@ -30,6 +30,8 @@ psql -v ON_ERROR_STOP=1 \
   -v crm_app_password="${CRM_DB_PASSWORD:?set it}" \
   -v loyalty_owner_password="${LOYALTY_MIGRATION_DB_PASSWORD:?set it}" \
   -v loyalty_app_password="${LOYALTY_DB_PASSWORD:?set it}" \
+  -v booking_owner_password="${BOOKING_MIGRATION_DB_PASSWORD:?set it}" \
+  -v booking_app_password="${BOOKING_DB_PASSWORD:?set it}" \
   --dbname postgres <<'SQL'
 create role platform_owner login password :'platform_owner_password' nocreatedb nocreaterole;
 create role platform_app login password :'platform_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
@@ -58,6 +60,9 @@ create role crm_app login password :'crm_app_password' nosuperuser nocreatedb no
 create role loyalty_owner login password :'loyalty_owner_password' nocreatedb nocreaterole;
 create role loyalty_app login password :'loyalty_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
+create role booking_owner login password :'booking_owner_password' nocreatedb nocreaterole;
+create role booking_app login password :'booking_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+
 create database platform owner platform_owner;
 create database billing owner billing_owner;
 create database tenant owner tenant_owner;
@@ -67,6 +72,7 @@ create database mailroom owner mailroom_owner;
 create database survey owner survey_owner;
 create database crm owner crm_owner;
 create database loyalty owner loyalty_owner;
+create database booking owner booking_owner;
 
 revoke connect, temporary on database platform from public;
 revoke connect, temporary on database billing from public;
@@ -77,6 +83,7 @@ revoke connect, temporary on database mailroom from public;
 revoke connect, temporary on database survey from public;
 revoke connect, temporary on database crm from public;
 revoke connect, temporary on database loyalty from public;
+revoke connect, temporary on database booking from public;
 
 grant connect, temporary on database platform to platform_owner, platform_app;
 grant connect, temporary on database billing to billing_owner, billing_app;
@@ -87,6 +94,7 @@ grant connect, temporary on database mailroom to mailroom_owner, mailroom_app;
 grant connect, temporary on database survey to survey_owner, survey_app;
 grant connect, temporary on database crm to crm_owner, crm_app;
 grant connect, temporary on database loyalty to loyalty_owner, loyalty_app;
+grant connect, temporary on database booking to booking_owner, booking_app;
 
 -- The app role creates nothing; Flyway, as the owner, grants the tables it creates. These defaults cover every
 -- table a later migration adds without a per-table grant.
@@ -143,5 +151,11 @@ alter default privileges for role loyalty_owner in schema public
     grant select, insert, update, delete on tables to loyalty_app;
 alter default privileges for role loyalty_owner in schema public
     grant usage, select on sequences to loyalty_app;
+
+\connect booking
+alter default privileges for role booking_owner in schema public
+    grant select, insert, update, delete on tables to booking_app;
+alter default privileges for role booking_owner in schema public
+    grant usage, select on sequences to booking_app;
 
 SQL

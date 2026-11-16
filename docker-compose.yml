@@ -142,6 +142,34 @@ x-survey-environment: &survey-environment
   SURVEY_GEOIP_PATH: /ops/geoip/dbip-country-lite.mmdb
   SURVEY_PORT: "8080"
 
+x-booking-environment: &booking-environment
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50"
+  BOOKING_DB_URL: jdbc:postgresql://postgres:5432/booking
+  BOOKING_DB_USER: booking_app
+  BOOKING_DB_PASSWORD: ${BOOKING_DB_PASSWORD:?set it in .env}
+  BOOKING_MIGRATION_DB_USER: booking_owner
+  BOOKING_MIGRATION_DB_PASSWORD: ${BOOKING_MIGRATION_DB_PASSWORD:?set it in .env}
+  BOOKING_RABBITMQ_HOST: rabbitmq
+  BOOKING_RABBITMQ_USER: booking
+  BOOKING_RABBITMQ_PASSWORD: ${BOOKING_RABBITMQ_PASSWORD:?set it in .env}
+  # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
+  BOOKING_OIDC_ISSUER_URI: ${BOOKING_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
+  BOOKING_OIDC_JWK_SET_URI: ${BOOKING_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  BOOKING_PLATFORM_BASE_URL: http://platform.localhost:8080
+  BOOKING_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
+  BOOKING_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
+  # The replica's own service client, never shared with another app.
+  PLATFORM_BOOKING_SERVICE_CLIENT_ID: booking
+  PLATFORM_BOOKING_SERVICE_CLIENT_SECRET: ${BOOKING_REPLICA_CLIENT_SECRET:?set it in .env}
+  # Customer-token signing keys; the key id is what a rotation pins, and the previous keys verify until retired.
+  BOOKING_TOKEN_KEY_ID: ${BOOKING_TOKEN_KEY_ID:-k1}
+  BOOKING_TOKEN_SECRET: ${BOOKING_TOKEN_SECRET:?set it in .env}
+  # Webhook signing secrets are envelope-encrypted with this key; 32 base64 bytes.
+  BOOKING_SECRETS_MASTER_KEY: ${BOOKING_SECRETS_MASTER_KEY:?set it in .env}
+  # The public host a Tenant's customer reaches /booking/p/... from; a hostname Caddy serves.
+  BOOKING_PUBLIC_BASE_URL: ${BOOKING_PUBLIC_BASE_URL:-http://localhost:8090/booking}
+  BOOKING_PORT: "8080"
+
 x-app: &app
   restart: unless-stopped
   mem_limit: 512m
@@ -171,6 +199,8 @@ services:
       CRM_DB_PASSWORD: ${CRM_DB_PASSWORD:?set it in .env}
       LOYALTY_MIGRATION_DB_PASSWORD: ${LOYALTY_MIGRATION_DB_PASSWORD:?set it in .env}
       LOYALTY_DB_PASSWORD: ${LOYALTY_DB_PASSWORD:?set it in .env}
+      BOOKING_MIGRATION_DB_PASSWORD: ${BOOKING_MIGRATION_DB_PASSWORD:?set it in .env}
+      BOOKING_DB_PASSWORD: ${BOOKING_DB_PASSWORD:?set it in .env}
     ports:
       - "5432:5432"
     volumes:
@@ -217,6 +247,7 @@ services:
       SURVEY_BROKER_PASSWORD: ${SURVEY_RABBITMQ_PASSWORD:?set it in .env}
       CRM_BROKER_PASSWORD: ${CRM_RABBITMQ_PASSWORD:?set it in .env}
       LOYALTY_BROKER_PASSWORD: ${LOYALTY_RABBITMQ_PASSWORD:?set it in .env}
+      BOOKING_BROKER_PASSWORD: ${BOOKING_RABBITMQ_PASSWORD:?set it in .env}
     entrypoint: ["/bin/sh", "-c"]
     command: ["sh /ops/rabbitmq/declare-users.sh"]
     volumes:
@@ -764,6 +795,75 @@ services:
     volumes:
       # The offline GeoIP file is fetched by ops/geoip/fetch.sh and git-ignored; a missing directory is not an error.
       - ./ops/geoip:/ops/geoip:ro
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\r\n\r\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  booking-migrate:
+    <<: *app
+    restart: "no"
+    build:
+      context: .
+      dockerfile: booking/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+    environment:
+      <<: *booking-environment
+      SPRING_PROFILES_ACTIVE: migrate
+
+  booking-api:
+    <<: *app
+    build:
+      context: .
+      dockerfile: booking/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+      booking-migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *booking-environment
+      SPRING_PROFILES_ACTIVE: api
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\r\n\r\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  booking-worker:
+    <<: *app
+    build:
+      context: .
+      dockerfile: booking/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+      booking-migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *booking-environment
+      SPRING_PROFILES_ACTIVE: worker
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\r\n\r\n' >&3 && head -20 <&3 | grep -q UP"]
       interval: 5s

@@ -94,6 +94,11 @@ require_refused "survey_app connecting to billing" psql_as survey_app "${SURVEY_
 require_refused "survey_app connecting to platform" psql_as survey_app "${SURVEY_DB_PASSWORD:?}" platform
 require_refused "survey_app connecting to mailroom" psql_as survey_app "${SURVEY_DB_PASSWORD:?}" mailroom
 require_refused "billing_app connecting to survey" psql_as billing_app "${BILLING_DB_PASSWORD:?}" survey
+require_refused "booking_app connecting to billing" psql_as booking_app "${BOOKING_DB_PASSWORD:?}" billing
+require_refused "booking_app connecting to platform" psql_as booking_app "${BOOKING_DB_PASSWORD:?}" platform
+require_refused "booking_app connecting to survey" psql_as booking_app "${BOOKING_DB_PASSWORD:?}" survey
+require_refused "billing_app connecting to booking" psql_as billing_app "${BILLING_DB_PASSWORD:?}" booking
+require_refused "survey_app connecting to booking" psql_as survey_app "${SURVEY_DB_PASSWORD:?}" booking
 
 # ------------------------------ broker ------------------------------
 step "cross-exchange publishing must be refused"
@@ -268,6 +273,30 @@ fi
 echo "allowed: the survey user publishing survey-response.submitted to survey.events"
 echo "allowed: the mailroom user publishing email.send to mailer.commands"
 
+# Booking owns no exchange: its ten facts leave as signed webhooks. Its write grant covers its own queue, its DLQ and
+# suite.dlx, so publishing to platform.events or billing.events must be refused, and it may read only its own queue.
+booking_publish_to_platform() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username booking --password "${BOOKING_RABBITMQ_PASSWORD:?}" \
+    publish exchange=platform.events routing_key=tenant.changed payload='{}' > /dev/null 2>&1
+}
+
+booking_publish_to_billing() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username booking --password "${BOOKING_RABBITMQ_PASSWORD:?}" \
+    publish exchange=billing.events routing_key=customer.created payload='{}' > /dev/null 2>&1
+}
+
+booking_read_billing_queue() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username booking --password "${BOOKING_RABBITMQ_PASSWORD:?}" \
+    get queue=billing.platform-events count=1 ackmode=reject_requeue_true > /dev/null 2>&1
+}
+
+require_refused "the booking user publishing to platform.events" booking_publish_to_platform
+require_refused "the booking user publishing to billing.events" booking_publish_to_billing
+require_refused "the booking user reading billing.platform-events" booking_read_billing_queue
+
 # ------------------------------ row-level security ------------------------------
 step "a Platform user's notification row stays inside the Platform tenant"
 # Now that a Platform user is a notification recipient, their rows live under the reserved Platform tenant id. The
@@ -352,5 +381,10 @@ if ! psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" mailroom; then
   fail "mailroom_app cannot reach its own database; the isolation checks are not meaningful"
 fi
 echo "allowed: mailroom_app connecting to mailroom"
+
+if ! psql_as booking_app "${BOOKING_DB_PASSWORD:?}" booking; then
+  fail "booking_app cannot reach its own database; the isolation checks are not meaningful"
+fi
+echo "allowed: booking_app connecting to booking"
 
 echo "PASS: no service can reach another service's database or exchange"

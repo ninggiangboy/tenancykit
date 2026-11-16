@@ -32,6 +32,8 @@ jobs:
               -e 's/^MAILROOM_DB_PASSWORD=.*/MAILROOM_DB_PASSWORD=ci-mailroom-app/' \
               -e 's/^SURVEY_MIGRATION_DB_PASSWORD=.*/SURVEY_MIGRATION_DB_PASSWORD=ci-survey-owner/' \
               -e 's/^SURVEY_DB_PASSWORD=.*/SURVEY_DB_PASSWORD=ci-survey-app/' \
+              -e 's/^BOOKING_MIGRATION_DB_PASSWORD=.*/BOOKING_MIGRATION_DB_PASSWORD=ci-booking-owner/' \
+              -e 's/^BOOKING_DB_PASSWORD=.*/BOOKING_DB_PASSWORD=ci-booking-app/' \
               -e 's/^KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD=.*/KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD=ci-keycloak-admin/' \
               -e 's/^PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET=.*/PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET=ci-keycloak-client/' \
               -e 's/^SMOKE_CLIENT_SECRET=.*/SMOKE_CLIENT_SECRET=ci-smoke-client/' \
@@ -42,6 +44,7 @@ jobs:
               -e 's/^NOTIFICATION_RABBITMQ_PASSWORD=.*/NOTIFICATION_RABBITMQ_PASSWORD=ci-notification-broker/' \
               -e 's/^MAILROOM_RABBITMQ_PASSWORD=.*/MAILROOM_RABBITMQ_PASSWORD=ci-mailroom-broker/' \
               -e 's/^SURVEY_RABBITMQ_PASSWORD=.*/SURVEY_RABBITMQ_PASSWORD=ci-survey-broker/' \
+              -e 's/^BOOKING_RABBITMQ_PASSWORD=.*/BOOKING_RABBITMQ_PASSWORD=ci-booking-broker/' \
               -e 's/^BILLING_REPLICA_CLIENT_SECRET=.*/BILLING_REPLICA_CLIENT_SECRET=ci-replica-secret/' \
               -e 's/^PLATFORM_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_SERVICE_CLIENT_SECRET_HASH=ci-replica-hash/' \
               .env.example > .env
@@ -61,6 +64,10 @@ jobs:
           sed -i "s/^PLATFORM_SURVEY_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_SURVEY_SERVICE_CLIENT_SECRET_HASH=${SURVEY_HASH}/" .env
           sed -i 's/^SURVEY_LINK_SECRET=.*/SURVEY_LINK_SECRET=ci-survey-link-secret/' .env
           sed -i 's/^SURVEY_S3_SECRET_KEY=.*/SURVEY_S3_SECRET_KEY=ci-survey-s3-secret/' .env
+          BOOKING_HASH=$(printf %s 'ci-booking-replica-secret' | sha256sum | cut -d' ' -f1)
+          sed -i "s/^BOOKING_REPLICA_CLIENT_SECRET=.*/BOOKING_REPLICA_CLIENT_SECRET=ci-booking-replica-secret/" .env
+          sed -i "s/^PLATFORM_BOOKING_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_BOOKING_SERVICE_CLIENT_SECRET_HASH=${BOOKING_HASH}/" .env
+          sed -i 's/^BOOKING_TOKEN_SECRET=.*/BOOKING_TOKEN_SECRET=ci-booking-token-secret/' .env
           MASTER_KEY=$(openssl rand -base64 32)
           sed -i "s|^BILLING_SECRETS_MASTER_KEY=.*|BILLING_SECRETS_MASTER_KEY=${MASTER_KEY}|" .env
           # Mailer's master key protects tenant credentials and must decode to exactly 32 bytes too; the cipher refuses
@@ -68,6 +75,9 @@ jobs:
           sed -i "s|^MAILER_SECRETS_MASTER_KEY=.*|MAILER_SECRETS_MASTER_KEY=${MASTER_KEY}|" .env
           # Survey's master key protects webhook signing secrets and must decode to 32 bytes for the same reason.
           sed -i "s|^SURVEY_SECRETS_MASTER_KEY=.*|SURVEY_SECRETS_MASTER_KEY=${MASTER_KEY}|" .env
+          # Booking's master key protects webhook signing secrets, and its customer-token key signs the public gate's
+          # tokens; both need the same treatment.
+          sed -i "s|^BOOKING_SECRETS_MASTER_KEY=.*|BOOKING_SECRETS_MASTER_KEY=${MASTER_KEY}|" .env
           sed -i 's/^PLATFORM_BOOTSTRAP_ADMIN_EMAIL=.*/PLATFORM_BOOTSTRAP_ADMIN_EMAIL=admin@platform.test/' .env
           sed -i 's/^PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD=.*/PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD=ci-admin-password/' .env
           sed -i 's/^PLATFORM_OIDC_ISSUER_URI=.*/PLATFORM_OIDC_ISSUER_URI=http:\/\/localhost:8081\/realms\/billing/' .env

@@ -95,6 +95,11 @@ platform:
     - id: ${PLATFORM_LOYALTY_SERVICE_CLIENT_ID:loyalty}
       secret-hash: ${PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH:}
       scopes: [platform:replica:read]
+    # Booking is the same seam a third time: one list entry and a secret hash, no Java code moves. Its permission
+    # catalog under contracts/permissions is packaged at build time and names the app.
+    - id: ${PLATFORM_BOOKING_SERVICE_CLIENT_ID:booking}
+      secret-hash: ${PLATFORM_BOOKING_SERVICE_CLIENT_SECRET_HASH:}
+      scopes: [platform:replica:read]
   outbox:
     poll-delay: PT1S
 
