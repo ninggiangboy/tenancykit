@@ -14,12 +14,15 @@ import dev.ngb.attribution_jooq.tables.LinkCounters;
 import dev.ngb.attribution_jooq.tables.LinkDestinations;
 import dev.ngb.attribution_jooq.tables.Links;
 import dev.ngb.attribution_jooq.tables.Outbox;
+import dev.ngb.attribution_jooq.tables.PageEvents;
 import dev.ngb.attribution_jooq.tables.PartitionManagedTables;
 import dev.ngb.attribution_jooq.tables.ReplicaState;
+import dev.ngb.attribution_jooq.tables.Sessions;
 import dev.ngb.attribution_jooq.tables.TenantDomains;
 import dev.ngb.attribution_jooq.tables.TenantSystems;
 import dev.ngb.attribution_jooq.tables.Tenants;
 import dev.ngb.attribution_jooq.tables.UserGrants;
+import dev.ngb.attribution_jooq.tables.VisitorClicks;
 
 import java.util.Arrays;
 import java.util.List;
@@ -94,6 +97,11 @@ public class Public extends SchemaImpl {
     public final Outbox OUTBOX = Outbox.OUTBOX;
 
     /**
+     * The table <code>public.page_events</code>.
+     */
+    public final PageEvents PAGE_EVENTS = PageEvents.PAGE_EVENTS;
+
+    /**
      * The table <code>public.partition_managed_tables</code>.
      */
     public final PartitionManagedTables PARTITION_MANAGED_TABLES = PartitionManagedTables.PARTITION_MANAGED_TABLES;
@@ -102,6 +110,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.replica_state</code>.
      */
     public final ReplicaState REPLICA_STATE = ReplicaState.REPLICA_STATE;
+
+    /**
+     * The table <code>public.sessions</code>.
+     */
+    public final Sessions SESSIONS = Sessions.SESSIONS;
 
     /**
      * The table <code>public.tenant_domains</code>.
@@ -122,6 +135,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.user_grants</code>.
      */
     public final UserGrants USER_GRANTS = UserGrants.USER_GRANTS;
+
+    /**
+     * The table <code>public.visitor_clicks</code>.
+     */
+    public final VisitorClicks VISITOR_CLICKS = VisitorClicks.VISITOR_CLICKS;
 
     /**
      * No further instances allowed
@@ -149,12 +167,15 @@ public class Public extends SchemaImpl {
             LinkDestinations.LINK_DESTINATIONS,
             Links.LINKS,
             Outbox.OUTBOX,
+            PageEvents.PAGE_EVENTS,
             PartitionManagedTables.PARTITION_MANAGED_TABLES,
             ReplicaState.REPLICA_STATE,
+            Sessions.SESSIONS,
             TenantDomains.TENANT_DOMAINS,
             TenantSystems.TENANT_SYSTEMS,
             Tenants.TENANTS,
-            UserGrants.USER_GRANTS
+            UserGrants.USER_GRANTS,
+            VisitorClicks.VISITOR_CLICKS
         );
     }
 }

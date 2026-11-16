@@ -1,4 +1,4 @@
-package dev.ngb.attribution.links.api.redirect;
+package dev.ngb.attribution.shared.redirect;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;

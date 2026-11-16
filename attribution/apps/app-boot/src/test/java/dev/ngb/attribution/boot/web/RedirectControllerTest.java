@@ -7,7 +7,7 @@ import dev.ngb.attribution.links.adapter.redirect.ratelimit.PublicRateLimiter;
 import dev.ngb.attribution.links.adapter.redirect.suspect.SuspectTracker;
 import dev.ngb.attribution.links.adapter.redirect.unlock.UnlockAttempts;
 import dev.ngb.attribution.links.adapter.redirect.web.ClickFactory;
-import dev.ngb.attribution.links.api.redirect.ClickToken;
+import dev.ngb.attribution.shared.redirect.ClickToken;
 import dev.ngb.attribution.links.application.link.port.LinkRepository;
 import dev.ngb.attribution.links.application.link.port.PasswordHasher;
 import dev.ngb.attribution.links.application.redirect.service.RedirectDecider;

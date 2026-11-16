@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "Site collection: snippet, page views, sessions, visitor binding"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [6]

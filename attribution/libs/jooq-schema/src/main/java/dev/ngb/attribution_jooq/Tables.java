@@ -14,12 +14,15 @@ import dev.ngb.attribution_jooq.tables.LinkCounters;
 import dev.ngb.attribution_jooq.tables.LinkDestinations;
 import dev.ngb.attribution_jooq.tables.Links;
 import dev.ngb.attribution_jooq.tables.Outbox;
+import dev.ngb.attribution_jooq.tables.PageEvents;
 import dev.ngb.attribution_jooq.tables.PartitionManagedTables;
 import dev.ngb.attribution_jooq.tables.ReplicaState;
+import dev.ngb.attribution_jooq.tables.Sessions;
 import dev.ngb.attribution_jooq.tables.TenantDomains;
 import dev.ngb.attribution_jooq.tables.TenantSystems;
 import dev.ngb.attribution_jooq.tables.Tenants;
 import dev.ngb.attribution_jooq.tables.UserGrants;
+import dev.ngb.attribution_jooq.tables.VisitorClicks;
 
 
 /**
@@ -79,6 +82,11 @@ public class Tables {
     public static final Outbox OUTBOX = Outbox.OUTBOX;
 
     /**
+     * The table <code>public.page_events</code>.
+     */
+    public static final PageEvents PAGE_EVENTS = PageEvents.PAGE_EVENTS;
+
+    /**
      * The table <code>public.partition_managed_tables</code>.
      */
     public static final PartitionManagedTables PARTITION_MANAGED_TABLES = PartitionManagedTables.PARTITION_MANAGED_TABLES;
@@ -87,6 +95,11 @@ public class Tables {
      * The table <code>public.replica_state</code>.
      */
     public static final ReplicaState REPLICA_STATE = ReplicaState.REPLICA_STATE;
+
+    /**
+     * The table <code>public.sessions</code>.
+     */
+    public static final Sessions SESSIONS = Sessions.SESSIONS;
 
     /**
      * The table <code>public.tenant_domains</code>.
@@ -107,4 +120,9 @@ public class Tables {
      * The table <code>public.user_grants</code>.
      */
     public static final UserGrants USER_GRANTS = UserGrants.USER_GRANTS;
+
+    /**
+     * The table <code>public.visitor_clicks</code>.
+     */
+    public static final VisitorClicks VISITOR_CLICKS = VisitorClicks.VISITOR_CLICKS;
 }

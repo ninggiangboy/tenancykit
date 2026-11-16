@@ -3,7 +3,7 @@ package dev.ngb.attribution.links.domain.redirect;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import dev.ngb.attribution.links.api.redirect.ClickToken;
+import dev.ngb.attribution.shared.redirect.ClickToken;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;

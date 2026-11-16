@@ -14,12 +14,15 @@ import dev.ngb.attribution_jooq.tables.LinkCounters;
 import dev.ngb.attribution_jooq.tables.LinkDestinations;
 import dev.ngb.attribution_jooq.tables.Links;
 import dev.ngb.attribution_jooq.tables.Outbox;
+import dev.ngb.attribution_jooq.tables.PageEvents;
 import dev.ngb.attribution_jooq.tables.PartitionManagedTables;
 import dev.ngb.attribution_jooq.tables.ReplicaState;
+import dev.ngb.attribution_jooq.tables.Sessions;
 import dev.ngb.attribution_jooq.tables.TenantDomains;
 import dev.ngb.attribution_jooq.tables.TenantSystems;
 import dev.ngb.attribution_jooq.tables.Tenants;
 import dev.ngb.attribution_jooq.tables.UserGrants;
+import dev.ngb.attribution_jooq.tables.VisitorClicks;
 import dev.ngb.attribution_jooq.tables.records.AppEntitlementsRecord;
 import dev.ngb.attribution_jooq.tables.records.AttributionSettingsRecord;
 import dev.ngb.attribution_jooq.tables.records.BulkLinkRequestsRecord;
@@ -30,12 +33,15 @@ import dev.ngb.attribution_jooq.tables.records.LinkCountersRecord;
 import dev.ngb.attribution_jooq.tables.records.LinkDestinationsRecord;
 import dev.ngb.attribution_jooq.tables.records.LinksRecord;
 import dev.ngb.attribution_jooq.tables.records.OutboxRecord;
+import dev.ngb.attribution_jooq.tables.records.PageEventsRecord;
 import dev.ngb.attribution_jooq.tables.records.PartitionManagedTablesRecord;
 import dev.ngb.attribution_jooq.tables.records.ReplicaStateRecord;
+import dev.ngb.attribution_jooq.tables.records.SessionsRecord;
 import dev.ngb.attribution_jooq.tables.records.TenantDomainsRecord;
 import dev.ngb.attribution_jooq.tables.records.TenantSystemsRecord;
 import dev.ngb.attribution_jooq.tables.records.TenantsRecord;
 import dev.ngb.attribution_jooq.tables.records.UserGrantsRecord;
+import dev.ngb.attribution_jooq.tables.records.VisitorClicksRecord;
 
 import org.jooq.ForeignKey;
 import org.jooq.TableField;
@@ -68,8 +74,10 @@ public class Keys {
     public static final UniqueKey<LinksRecord> LINKS_PKEY = Internal.createUniqueKey(Links.LINKS, DSL.name("links_pkey"), new TableField[] { Links.LINKS.ID }, true);
     public static final UniqueKey<LinksRecord> LINKS_TENANT_ID_ID_KEY = Internal.createUniqueKey(Links.LINKS, DSL.name("links_tenant_id_id_key"), new TableField[] { Links.LINKS.TENANT_ID, Links.LINKS.ID }, true);
     public static final UniqueKey<OutboxRecord> OUTBOX_PKEY = Internal.createUniqueKey(Outbox.OUTBOX, DSL.name("outbox_pkey"), new TableField[] { Outbox.OUTBOX.ID }, true);
+    public static final UniqueKey<PageEventsRecord> PAGE_EVENTS_PKEY = Internal.createUniqueKey(PageEvents.PAGE_EVENTS, DSL.name("page_events_pkey"), new TableField[] { PageEvents.PAGE_EVENTS.EVENT_ID, PageEvents.PAGE_EVENTS.OCCURRED_AT }, true);
     public static final UniqueKey<PartitionManagedTablesRecord> PARTITION_MANAGED_TABLES_PKEY = Internal.createUniqueKey(PartitionManagedTables.PARTITION_MANAGED_TABLES, DSL.name("partition_managed_tables_pkey"), new TableField[] { PartitionManagedTables.PARTITION_MANAGED_TABLES.TABLE_NAME }, true);
     public static final UniqueKey<ReplicaStateRecord> REPLICA_STATE_PKEY = Internal.createUniqueKey(ReplicaState.REPLICA_STATE, DSL.name("replica_state_pkey"), new TableField[] { ReplicaState.REPLICA_STATE.ID }, true);
+    public static final UniqueKey<SessionsRecord> SESSIONS_PKEY = Internal.createUniqueKey(Sessions.SESSIONS, DSL.name("sessions_pkey"), new TableField[] { Sessions.SESSIONS.TENANT_ID, Sessions.SESSIONS.SESSION_ID }, true);
     public static final UniqueKey<TenantDomainsRecord> TENANT_DOMAINS_HOSTNAME_KEY = Internal.createUniqueKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_hostname_key"), new TableField[] { TenantDomains.TENANT_DOMAINS.HOSTNAME }, true);
     public static final UniqueKey<TenantDomainsRecord> TENANT_DOMAINS_PKEY = Internal.createUniqueKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_pkey"), new TableField[] { TenantDomains.TENANT_DOMAINS.ID }, true);
     public static final UniqueKey<TenantSystemsRecord> TENANT_SYSTEMS_PKEY = Internal.createUniqueKey(TenantSystems.TENANT_SYSTEMS, DSL.name("tenant_systems_pkey"), new TableField[] { TenantSystems.TENANT_SYSTEMS.ID }, true);
@@ -77,6 +85,7 @@ public class Keys {
     public static final UniqueKey<TenantsRecord> TENANTS_PKEY = Internal.createUniqueKey(Tenants.TENANTS, DSL.name("tenants_pkey"), new TableField[] { Tenants.TENANTS.ID }, true);
     public static final UniqueKey<UserGrantsRecord> USER_GRANTS_KEYCLOAK_SUBJECT_KEY = Internal.createUniqueKey(UserGrants.USER_GRANTS, DSL.name("user_grants_keycloak_subject_key"), new TableField[] { UserGrants.USER_GRANTS.KEYCLOAK_SUBJECT }, true);
     public static final UniqueKey<UserGrantsRecord> USER_GRANTS_PKEY = Internal.createUniqueKey(UserGrants.USER_GRANTS, DSL.name("user_grants_pkey"), new TableField[] { UserGrants.USER_GRANTS.USER_ID }, true);
+    public static final UniqueKey<VisitorClicksRecord> VISITOR_CLICKS_PKEY = Internal.createUniqueKey(VisitorClicks.VISITOR_CLICKS, DSL.name("visitor_clicks_pkey"), new TableField[] { VisitorClicks.VISITOR_CLICKS.TENANT_ID, VisitorClicks.VISITOR_CLICKS.VISITOR_ID, VisitorClicks.VISITOR_CLICKS.CLICK_ID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions

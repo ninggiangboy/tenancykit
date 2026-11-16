@@ -143,6 +143,32 @@ The stored facts are the classified ones. A schema test reads `information_schem
 the build if any column is named or typed like an address (`ip`, `inet`, `cidr`, `remote_addr`, …) or holds a user-agent
 string.
 
+## Site collection
+
+A Tenant adds one script, `/t/v1/snippet.js` (static, cacheable for a day, under 4 KB gzipped). The snippet reads the
+click parameter from the landing URL, and exposes `attribution.consent(true|false)`, `attribution.page()` and
+`attribution.goal(key, {value, currency})`. It sets **no cookie** before consent: the first page view carries only the
+click id. After consent it keeps the click id, a random visitor id (30 days) and a session id (30 minutes of
+inactivity), and sends with `sendBeacon` falling back to `fetch`.
+
+`POST /t/v1/events` accepts at most 20 events in at most 8 KiB. An event is stored only when its click id is a token
+this app signed, its `Origin` is one the Tenant listed in `allowed_origins`, the per-click daily budget (500) and the
+per-visitor-hash rate hold. Everything else answers `204` and stores nothing — a bad signature, a foreign origin, an
+oversize body and a rate refusal all look the same, so a probe learns nothing.
+
+Consent is enforced on the server: with `consent=false` the use case drops the visitor and session ids before the row
+is written, so no identifier reaches storage even if a client sent one. The path is stored without its query string or
+fragment, so a landing page's own parameters and a search term never persist.
+
+An event with a visitor id and a click id upserts a `visitor_clicks` row — the only link between a visitor and the
+clicks that brought them, and what the multi-touch chain reads. A session upserts by `(tenant, session_id)`, extending
+its last activity and counting the page.
+
+`POST /api/v1/data-subjects/erasure` removes one visitor's page views, sessions and bindings, and the clicks no other
+binding still names. Rollups hold aggregates only and are untouched, so a report's totals stay and the person does not.
+`GET/PUT /api/v1/settings` manage the click parameter, the allowed origins and the default window; an origin must be an
+absolute `https` origin (or `http://localhost`), and a wildcard, a path or a bare host is refused.
+
 ## Cross-plan coordination
 
 This plan creates `core/core-visitor` (device class, browser family, traffic class, referrer domain, GeoIP country and
