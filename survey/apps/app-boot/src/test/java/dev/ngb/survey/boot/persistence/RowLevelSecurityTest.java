@@ -25,8 +25,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  * {@code survey_app}, the unprivileged role a deployment uses. A superuser would bypass every policy and leave the
  * promise unverified.
  *
- * <p>{@code survey_settings} and {@code outbox} are the two tenant-scoped tables that exist in the skeleton; later
- * phases add one case per table they create.
+ * <p>Every tenant-scoped table the migrations create has a case here. A table added without a case is a table whose
+ * policy nobody checked.
  */
 class RowLevelSecurityTest {
 
@@ -99,7 +99,34 @@ class RowLevelSecurityTest {
                 Arguments.of("survey_settings", """
                         insert into survey_settings (tenant_id, default_locale) values ('%1$s', 'en')
                         """),
-                Arguments.of("outbox", outboxInsert("%1$s")));
+                Arguments.of("outbox", outboxInsert("%1$s")),
+                Arguments.of("surveys", """
+                        insert into surveys (id, tenant_id, name, status, created_at, updated_at)
+                        values (gen_random_uuid(), '%1$s', 'Survey', 'DRAFT', now(), now())
+                        """),
+                Arguments.of("survey_drafts", surveyInsert() + """
+                        insert into survey_drafts (survey_id, tenant_id, document, etag, updated_at)
+                        select id, tenant_id, '{}'::jsonb, 1, now() from seeded_survey
+                        """),
+                Arguments.of("survey_versions", surveyInsert() + """
+                        insert into survey_versions (id, survey_id, tenant_id, version_no, document, published_at)
+                        select gen_random_uuid(), id, tenant_id, 1, '{}'::jsonb, now() from seeded_survey
+                        """),
+                Arguments.of("question_lineage", surveyInsert() + """
+                        insert into question_lineage (survey_id, question_id, tenant_id, replaces, first_version_no)
+                        select id, gen_random_uuid(), tenant_id, gen_random_uuid(), 1 from seeded_survey
+                        """));
+    }
+
+    /** The child tables reference a survey, so each case seeds one for the tenant it is about to write. */
+    private static String surveyInsert() {
+        return """
+                with seeded_survey as (
+                    insert into surveys (id, tenant_id, name, status, created_at, updated_at)
+                    values (gen_random_uuid(), '%1$s', 'Survey', 'DRAFT', now(), now())
+                    returning id, tenant_id
+                )
+                """;
     }
 
     private static String outboxInsert(String tenant) {

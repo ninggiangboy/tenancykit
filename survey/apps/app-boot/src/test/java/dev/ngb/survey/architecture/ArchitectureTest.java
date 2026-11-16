@@ -24,14 +24,11 @@ class ArchitectureTest {
     static final String ROOT = "dev.ngb.survey";
 
     /**
-     * The skeleton has no domain, query or job class yet: the feature phases add them. Each of these rules is asserted
-     * again from the phase that creates its first subject, so an empty subject here is a record of what does not exist
-     * yet, not a rule that was weakened.
+     * A rule whose subject the feature phases have not created yet. Each of these is asserted again from the phase that
+     * creates its first subject, so an empty subject here is a record of what does not exist yet, not a rule that was
+     * weakened.
      */
-    private static final Set<String> RULES_WITHOUT_SUBJECTS = Set.of(
-            "layer-direction",
-            "query-side-uses-no-domain-aggregates",
-            "domain-events-live-in-an-events-holder");
+    private static final Set<String> RULES_WITHOUT_SUBJECTS = Set.of("domain-events-live-in-an-events-holder");
 
     private static JavaClasses production;
     private static JavaClasses core;

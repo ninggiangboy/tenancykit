@@ -75,6 +75,10 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            ETag:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -156,6 +160,12 @@ paths:
           description: The If-Match tag is stale; the current tag is in the response
         "428":
           description: If-Match is required
+        "422":
+          description: The document does not have the version schema's shape
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationResult"
   /survey/api/v1/surveys/{id}/draft/validate:
     parameters:
     - $ref: "#/components/parameters/Id"
@@ -238,6 +248,8 @@ paths:
                 $ref: "#/components/schemas/VersionView"
         "412":
           description: The If-Match tag is stale
+        "428":
+          description: If-Match is required; a publish always compares the draft it freezes
         "422":
           description: The draft has structural errors
           content:
@@ -913,15 +925,21 @@ components:
         document:
           type: object
           additionalProperties: true
-          description: A document validated against contracts/survey/version.schema.json
+          description: |
+            A document validated against contracts/survey/version.schema.json. The server assigns a UUID to every
+            page, question, option, matrix row and column that arrives without one and returns the stored document,
+            so a client must keep the ids it is given: dropping them makes every publish create new questions.
     DraftView:
       type: object
+      description: The stored document and the tag the next write must carry.
       properties:
         document:
           type: object
           additionalProperties: true
+          description: The document exactly as stored, with the ids the server assigned. A new survey starts from a minimal document with no page.
         etag:
           type: string
+          description: The draft's tag as a decimal. The ETag header carries the same number quoted; a publish moves it too, because a publish may rewrite a retyped question's id.
         updatedAt:
           type: string
           format: date-time
