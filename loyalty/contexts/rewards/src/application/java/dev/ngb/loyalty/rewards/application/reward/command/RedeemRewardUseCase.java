@@ -112,11 +112,22 @@ public class RedeemRewardUseCase {
                 receipt.createdAt(), false);
     }
 
-    /** The voucher this key issued before, which is the same voucher however often the caller sends the key. */
+    /**
+     * The voucher this key issued before, which is the same voucher however often the caller sends the key.
+     *
+     * <p>The key names the reward the caller asks for, so a key whose stored voucher was issued for another reward is
+     * another request, not a replay: two catalog entries may carry the same name and cost, and the spend the key wrote
+     * cannot tell them apart. Answering the stored voucher here would hand the caller a voucher for a reward it did not
+     * name, so the mismatch is a conflict.
+     */
     private Result replay(TenantId tenantId, PointSpender.Receipt receipt, RewardId rewardId) {
         Voucher voucher = vouchers.findByRedemption(receipt.redemptionId()).orElseThrow(() -> RewardRefusal.conflict(
                 "IDEMPOTENCY_CONFLICT",
                 "The same Idempotency-Key was sent before for a plain spend, not for a reward."));
+        if (!voucher.rewardId().equals(rewardId.value())) {
+            throw RewardRefusal.conflict(
+                    "IDEMPOTENCY_CONFLICT", "The same Idempotency-Key was sent before for another reward.");
+        }
         return new Result(receipt.redemptionId(), rewardId, voucher, receipt.available(), receipt.debt(),
                 receipt.createdAt(), true);
     }

@@ -10,7 +10,9 @@ import java.util.Locale;
  * The rules a catalog entry obeys: a name, a cost of points, an optional stock, a window that does not end before it
  * starts, and a voucher lifetime of at least a day.
  *
- * <p>A cost of zero is allowed, because a reward may be a gift the Tenant hands out for nothing; a negative one is not.
+ * <p>The cost is at least one point because a redemption spends it through the one spend function, and a spend of no
+ * points is not a spend: the redemption row a voucher names is a spend, and the points context refuses and cannot store
+ * one of zero. A reward a Tenant hands out for nothing is not a catalog entry — it has nothing to exchange.
  */
 public final class RewardRules {
 
@@ -45,8 +47,8 @@ public final class RewardRules {
     }
 
     public static long pointsCost(Long raw) {
-        if (raw == null || raw < 0) {
-            throw RewardRefusal.invalid("pointsCost is required and is at least 0.");
+        if (raw == null || raw < 1) {
+            throw RewardRefusal.invalid("pointsCost is required and is at least 1.");
         }
         return raw;
     }

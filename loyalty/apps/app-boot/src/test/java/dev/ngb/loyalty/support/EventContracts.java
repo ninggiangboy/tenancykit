@@ -85,6 +85,10 @@ public final class EventContracts {
 
     private static void assertConformsToField(String eventType, String name, JsonNode value, JsonNode spec) {
         String where = eventType + "." + name;
+        if (spec.has("oneOf")) {
+            assertOneOf(where, value, spec.get("oneOf"));
+            return;
+        }
         String declared = spec.get("type").asString();
         switch (declared) {
             case "string" -> assertString(where, value, spec);
@@ -92,6 +96,28 @@ public final class EventContracts {
             case "array" -> assertArray(where, value, spec);
             default -> throw new IllegalStateException(where + " has a type this check does not read: " + declared);
         }
+    }
+
+    /** A field the contract allows more than one shape for: the value must satisfy one of the listed types. */
+    private static void assertOneOf(String where, JsonNode value, JsonNode options) {
+        for (JsonNode option : options) {
+            String type = option.get("type").asString();
+            if ("null".equals(type)) {
+                if (value.isNull()) {
+                    return;
+                }
+                continue;
+            }
+            if ("string".equals(type) && value.isString()) {
+                assertString(where, value, option);
+                return;
+            }
+            if ("integer".equals(type) && value.isIntegralNumber()) {
+                assertInteger(where, value, option);
+                return;
+            }
+        }
+        throw new AssertionError(where + " is one of the shapes its contract lists, but was " + value);
     }
 
     private static void assertString(String where, JsonNode value, JsonNode spec) {
