@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Shared visitor library in core"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [1]

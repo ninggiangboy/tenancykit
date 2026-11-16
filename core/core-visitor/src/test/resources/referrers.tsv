@@ -1,0 +1,23 @@
+# The referrer fixture, one referrer per line: the header value TAB the registrable domain, or nothing.
+#
+# A blank second field means the referrer names no registrable domain and the app stores nothing: an IP literal, a
+# localhost name, a malformed URL, a bare public suffix or an empty header.
+https://www.bbc.co.uk/news?x=1	bbc.co.uk
+https://www.bbc.co.uk	bbc.co.uk
+https://shop.example.com.vn/checkout	example.com.vn
+https://example.com.vn	example.com.vn
+https://a.b.example.co.uk/deep/path	example.co.uk
+https://news.ycombinator.com/item?id=1	ycombinator.com
+https://google.com/	google.com
+https://www.google.com/search?q=acme	google.com
+https://t.co/abc123	t.co
+https://www.facebook.com/acme	facebook.com
+http://example.org/x?utm_source=a	example.org
+https://xn--e1afmkfd.xn--p1ai/	xn--e1afmkfd.xn--p1ai
+https://192.168.1.1/tracking	
+https://[2001:db8::1]/x	
+http://localhost:3000/x	
+not a url	
+https://co.uk/x	
+https://com.vn/	
+	 

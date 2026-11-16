@@ -49,6 +49,7 @@ class ArchitectureRulesTest {
             "core-is-self-contained",
             "core-messaging-is-self-contained",
             "core-spring-is-self-contained",
+            "core-visitor-is-self-contained",
             "core-webhook-is-self-contained");
 
     @Test

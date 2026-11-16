@@ -149,6 +149,7 @@ public final class ArchitectureRules {
                 new NamedRule("core-is-self-contained", coreIsSelfContained(core)),
                 new NamedRule("core-messaging-is-self-contained", coreMessagingIsSelfContained(core)),
                 new NamedRule("core-spring-is-self-contained", coreSpringIsSelfContained(core)),
+                new NamedRule("core-visitor-is-self-contained", coreVisitorIsSelfContained(core)),
                 new NamedRule("core-webhook-is-self-contained", coreWebhookIsSelfContained(core)));
     }
 
@@ -617,6 +618,18 @@ public final class ArchitectureRules {
                 .should().onlyDependOnClassesThat()
                 .resideInAnyPackage(concat(JDK, "jakarta..", core + "..", "org.springframework..", "org.jooq.."))
                 .because("the core's Spring implementation sees the JDK, the core, Spring and the jOOQ audit log only")
+                .allowEmptyShould(true);
+    }
+
+    /**
+     * The shared visitor library sees the JDK, the core, the public-suffix list and the MaxMind reader; never a service,
+     * never Spring, because the redirect path and a worker both use it.
+     */
+    private static ArchRule coreVisitorIsSelfContained(String core) {
+        return classes().that().resideInAPackage(core + ".visitor..")
+                .should().onlyDependOnClassesThat()
+                .resideInAnyPackage(concat(JDK, core + "..", "org.apache.hc..", "com.maxmind.."))
+                .because("core-visitor is shared by the apps that measure traffic and names no app's type")
                 .allowEmptyShould(true);
     }
 

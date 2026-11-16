@@ -1,0 +1,55 @@
+# The classifier's fixture list, one real user agent per line: agent TAB device TAB browser TAB traffic.
+#
+# Adding a case is a line. The list carries what a marketing link actually meets: the desktop and mobile browsers, the
+# tablets, the crawlers and the link-preview fetchers that unfurl a shared link (which still receive the 302).
+#
+# A tab inside an agent would break the split, so no agent here contains one.
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36	DESKTOP	Chrome	HUMAN
+Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15	DESKTOP	Safari	HUMAN
+Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36	DESKTOP	Chrome	HUMAN
+Mozilla/5.0 (X11; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0	DESKTOP	Firefox	HUMAN
+Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36	DESKTOP	Chrome	HUMAN
+Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0	DESKTOP	Firefox	HUMAN
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0	DESKTOP	Edge	HUMAN
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 OPR/115.0.0.0	DESKTOP	Opera	HUMAN
+Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36	DESKTOP	Chrome	HUMAN
+Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:128.0) Gecko/20100101 Firefox/128.0	DESKTOP	Firefox	HUMAN
+Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1	MOBILE	Safari	HUMAN
+Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/126.0.6478.54 Mobile/15E148 Safari/604.1	MOBILE	Chrome	HUMAN
+Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/127.0 Mobile/15E148 Safari/605.1.15	MOBILE	Firefox	HUMAN
+Mozilla/5.0 (Linux; Android 14; Pixel 8 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36	MOBILE	Chrome	HUMAN
+Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.0 Chrome/121.0.0.0 Mobile Safari/537.36	MOBILE	Samsung Internet	HUMAN
+Mozilla/5.0 (Android 14; Mobile; rv:132.0) Gecko/132.0 Firefox/132.0	MOBILE	Firefox	HUMAN
+Mozilla/5.0 (Linux; Android 12; moto g32) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36	MOBILE	Chrome	HUMAN
+Mozilla/5.0 (iPhone; CPU iPhone OS 16_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1	MOBILE	Safari	HUMAN
+Mozilla/5.0 (Linux; Android 11; SM-A125F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36	MOBILE	Chrome	HUMAN
+Mozilla/5.0 (Windows Phone 10.0; Android 6.0.1; Microsoft; Lumia 950) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Mobile Safari/537.36 Edge/15.15063	MOBILE	Edge	HUMAN
+Mozilla/5.0 (iPad; CPU OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1	TABLET	Safari	HUMAN
+Mozilla/5.0 (iPad; CPU OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1	TABLET	Safari	HUMAN
+Mozilla/5.0 (Linux; Android 13; SM-X700) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36	TABLET	Chrome	HUMAN
+Mozilla/5.0 (Linux; Android 14; SM-X910) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.0 Chrome/121.0.0.0 Safari/537.36	TABLET	Samsung Internet	HUMAN
+Mozilla/5.0 (Linux; Android 9; KFTRWI) AppleWebKit/537.36 (KHTML, like Gecko) Silk/120.3.1 like Chrome/120.0.6099.230 Safari/537.36	TABLET	Chrome	HUMAN
+Mozilla/5.0 (Linux; Android 11; Lenovo TB-X606F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36	TABLET	Chrome	HUMAN
+Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)	UNKNOWN	Unknown	BOT
+Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)	UNKNOWN	Unknown	BOT
+Mozilla/5.0 (compatible; DuckDuckBot/1.0; +http://duckduckgo.com/duckduckbot)	UNKNOWN	Unknown	BOT
+facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)	UNKNOWN	Unknown	BOT
+Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 FacebookExternalHit/1.1	DESKTOP	Chrome	BOT
+WhatsApp/2.23.20.0 A	UNKNOWN	Unknown	BOT
+Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)	UNKNOWN	Unknown	BOT
+Twitterbot/1.0	UNKNOWN	Unknown	BOT
+LinkedInBot/1.0 (compatible; Mozilla/5.0; Apache-HttpClient +http://www.linkedin.com)	UNKNOWN	Unknown	BOT
+TelegramBot (like TwitterBot)	UNKNOWN	Unknown	BOT
+Discordbot/2.0; +https://discordapp.com	UNKNOWN	Unknown	BOT
+Mozilla/5.0 (compatible; Pinterestbot/1.0; +http://www.pinterest.com/bot.html)	UNKNOWN	Unknown	BOT
+Mozilla/5.0 (compatible; AhrefsBot/7.0; +http://ahrefs.com/robot/)	UNKNOWN	Unknown	BOT
+python-requests/2.32.3	UNKNOWN	Unknown	BOT
+curl/8.7.1	UNKNOWN	Unknown	BOT
+Wget/1.21.4	UNKNOWN	Unknown	BOT
+Java/25.0.4	UNKNOWN	Unknown	BOT
+okhttp/4.12.0	UNKNOWN	Unknown	BOT
+Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)	UNKNOWN	Unknown	BOT
+Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/131.0.0.0 Safari/537.36	DESKTOP	Chrome	BOT
+Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Pingdom.com_bot_version_1.4	DESKTOP	Chrome	BOT
+Mozilla/5.0 (compatible; SemrushBot/7~bl; +http://www.semrush.com/bot.html)	UNKNOWN	Unknown	BOT
+Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/16A366 WhatsApp/2.23.20.0	MOBILE	Unknown	BOT

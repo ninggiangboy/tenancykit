@@ -5,6 +5,7 @@ spring-cloud = "2025.1.4"
 spring-retry = "2.0.13"
 feign = "13.6.1"
 archunit = "1.5.1"
+maxmind-db = "4.2.0"
 jdk = "25"
 
 [libraries]
@@ -16,5 +17,6 @@ feign-core = { module = "io.github.openfeign:feign-core", version.ref = "feign" 
 feign-java11 = { module = "io.github.openfeign:feign-java11", version.ref = "feign" }
 spring-retry = { module = "org.springframework.retry:spring-retry", version.ref = "spring-retry" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+maxmind-db = { module = "com.maxmind.db:maxmind-db", version.ref = "maxmind-db" }
 
 [plugins]

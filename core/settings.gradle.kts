@@ -9,4 +9,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "core"
 
-include("core-kernel", "core-spring", "core-messaging", "core-replica", "core-platform-sync", "core-suite", "core-feign", "core-webhook", "core-arch")
+include("core-kernel", "core-spring", "core-messaging", "core-replica", "core-platform-sync", "core-suite", "core-feign", "core-webhook", "core-visitor", "core-arch")
