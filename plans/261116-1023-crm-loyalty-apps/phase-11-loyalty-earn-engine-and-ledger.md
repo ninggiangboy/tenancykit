@@ -1,7 +1,7 @@
 ---
 phase: 11
 title: "loyalty earn engine, lots and the order/return API"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [10]

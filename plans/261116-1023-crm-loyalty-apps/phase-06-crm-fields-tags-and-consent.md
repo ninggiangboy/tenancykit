@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "crm custom fields, tags and consent"
-status: pending
+status: done
 priority: P2
 effort: "M"
 dependencies: [5]
