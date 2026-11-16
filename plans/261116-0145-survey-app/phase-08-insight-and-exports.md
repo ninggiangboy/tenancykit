@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "Insight: analytics, funnel, respondents, exports"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [7]
