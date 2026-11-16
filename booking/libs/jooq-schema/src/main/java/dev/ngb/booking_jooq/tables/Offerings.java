@@ -8,6 +8,8 @@ import dev.ngb.booking_jooq.Keys;
 import dev.ngb.booking_jooq.Public;
 import dev.ngb.booking_jooq.tables.CancellationWindows.CancellationWindowsPath;
 import dev.ngb.booking_jooq.tables.OfferingRequirements.OfferingRequirementsPath;
+import dev.ngb.booking_jooq.tables.SessionSeries.SessionSeriesPath;
+import dev.ngb.booking_jooq.tables.Sessions.SessionsPath;
 import dev.ngb.booking_jooq.tables.records.OfferingsRecord;
 
 import java.time.Instant;
@@ -277,6 +279,32 @@ public class Offerings extends TableImpl<OfferingsRecord> {
             _offeringRequirements = new OfferingRequirementsPath(this, null, Keys.OFFERING_REQUIREMENTS__OFFERING_REQUIREMENTS_OFFERING_ID_FKEY.getInverseKey());
 
         return _offeringRequirements;
+    }
+
+    private transient SessionSeriesPath _sessionSeries;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.session_series</code> table
+     */
+    public SessionSeriesPath sessionSeries() {
+        if (_sessionSeries == null)
+            _sessionSeries = new SessionSeriesPath(this, null, Keys.SESSION_SERIES__SESSION_SERIES_OFFERING_ID_FKEY.getInverseKey());
+
+        return _sessionSeries;
+    }
+
+    private transient SessionsPath _sessions;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.sessions</code>
+     * table
+     */
+    public SessionsPath sessions() {
+        if (_sessions == null)
+            _sessions = new SessionsPath(this, null, Keys.SESSIONS__SESSIONS_OFFERING_ID_FKEY.getInverseKey());
+
+        return _sessions;
     }
 
     @Override

@@ -52,7 +52,11 @@ final class ArchitectureRules {
                 "GroupMembers",
                 "Offerings",
                 "OfferingRequirements",
-                "CancellationWindows")) {
+                "CancellationWindows",
+                "Blocks",
+                "SessionSeries",
+                "Sessions",
+                "SessionPools")) {
             TABLE_OWNER.put(table, "catalog");
         }
     }

@@ -170,6 +170,60 @@ class RowLevelSecurityTest {
                         )
                         insert into cancellation_windows (tenant_id, offering_id, minutes_before_start, code)
                         select '%1$s', o.id, 1440, 'full-refund' from o
+                        """),
+                Arguments.of("blocks", """
+                        with r as (
+                            insert into resources (tenant_id, id, code, name, zone, status, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'r-bl-%1$s', 'Resource', 'UTC', 'ACTIVE', now(), now())
+                            returning id
+                        )
+                        insert into blocks (tenant_id, id, resource_id, reason, starts_at, ends_at, rule,
+                                            duration_minutes, created_at, updated_at)
+                        select '%1$s', gen_random_uuid(), r.id, 'Maintenance', now(), now() + interval '2 hours',
+                               '{}'::text[], 120, now(), now() from r
+                        """),
+                Arguments.of("session_series", """
+                        with o as (
+                            insert into offerings (tenant_id, id, code, name, kind, status, duration_min, slot_step,
+                                                   horizon_days, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'o-ss-%1$s', 'Offering', 'CAPACITY', 'ACTIVE', 60, 60,
+                                    90, now(), now())
+                            returning id
+                        )
+                        insert into session_series (tenant_id, id, offering_id, zone, dtstart, rule, duration_minutes,
+                                                    capacity, status, created_at, updated_at)
+                        select '%1$s', gen_random_uuid(), o.id, 'Europe/Berlin', '2026-03-23T18:00:00',
+                               array['RRULE:FREQ=WEEKLY;BYDAY=MO;COUNT=3'], 60, 10, 'ACTIVE', now(), now() from o
+                        """),
+                Arguments.of("sessions", """
+                        with o as (
+                            insert into offerings (tenant_id, id, code, name, kind, status, duration_min, slot_step,
+                                                   horizon_days, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'o-se-%1$s', 'Offering', 'CAPACITY', 'ACTIVE', 60, 60,
+                                    90, now(), now())
+                            returning id
+                        )
+                        insert into sessions (tenant_id, id, offering_id, starts_at, ends_at, status, capacity,
+                                              created_at, updated_at)
+                        select '%1$s', gen_random_uuid(), o.id, now() + interval '1 day',
+                               now() + interval '1 day 1 hour', 'SCHEDULED', 10, now(), now() from o
+                        """),
+                Arguments.of("session_pools", """
+                        with o as (
+                            insert into offerings (tenant_id, id, code, name, kind, status, duration_min, slot_step,
+                                                   horizon_days, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'o-sp-%1$s', 'Offering', 'CAPACITY', 'ACTIVE', 60, 60,
+                                    90, now(), now())
+                            returning id
+                        ), s as (
+                            insert into sessions (tenant_id, id, offering_id, starts_at, ends_at, status, capacity,
+                                                  created_at, updated_at)
+                            select '%1$s', gen_random_uuid(), o.id, now() + interval '1 day',
+                                   now() + interval '1 day 1 hour', 'SCHEDULED', 10, now(), now() from o
+                            returning id
+                        )
+                        insert into session_pools (tenant_id, session_id, code, capacity)
+                        select '%1$s', s.id, 'default', 10 from s
                         """));
     }
 

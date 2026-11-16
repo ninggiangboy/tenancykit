@@ -5,6 +5,7 @@ package dev.ngb.booking_jooq;
 
 
 import dev.ngb.booking_jooq.tables.AppEntitlements;
+import dev.ngb.booking_jooq.tables.Blocks;
 import dev.ngb.booking_jooq.tables.BookingSettings;
 import dev.ngb.booking_jooq.tables.CalendarExceptions;
 import dev.ngb.booking_jooq.tables.CancellationWindows;
@@ -16,6 +17,9 @@ import dev.ngb.booking_jooq.tables.Outbox;
 import dev.ngb.booking_jooq.tables.ReplicaState;
 import dev.ngb.booking_jooq.tables.ResourceGroups;
 import dev.ngb.booking_jooq.tables.Resources;
+import dev.ngb.booking_jooq.tables.SessionPools;
+import dev.ngb.booking_jooq.tables.SessionSeries;
+import dev.ngb.booking_jooq.tables.Sessions;
 import dev.ngb.booking_jooq.tables.TenantDomains;
 import dev.ngb.booking_jooq.tables.TenantSystems;
 import dev.ngb.booking_jooq.tables.Tenants;
@@ -33,6 +37,11 @@ public class Tables {
      * The table <code>public.app_entitlements</code>.
      */
     public static final AppEntitlements APP_ENTITLEMENTS = AppEntitlements.APP_ENTITLEMENTS;
+
+    /**
+     * The table <code>public.blocks</code>.
+     */
+    public static final Blocks BLOCKS = Blocks.BLOCKS;
 
     /**
      * The table <code>public.booking_settings</code>.
@@ -88,6 +97,21 @@ public class Tables {
      * The table <code>public.resources</code>.
      */
     public static final Resources RESOURCES = Resources.RESOURCES;
+
+    /**
+     * The table <code>public.session_pools</code>.
+     */
+    public static final SessionPools SESSION_POOLS = SessionPools.SESSION_POOLS;
+
+    /**
+     * The table <code>public.session_series</code>.
+     */
+    public static final SessionSeries SESSION_SERIES = SessionSeries.SESSION_SERIES;
+
+    /**
+     * The table <code>public.sessions</code>.
+     */
+    public static final Sessions SESSIONS = Sessions.SESSIONS;
 
     /**
      * The table <code>public.tenant_domains</code>.

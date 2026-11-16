@@ -5,6 +5,7 @@ package dev.ngb.booking_jooq;
 
 
 import dev.ngb.booking_jooq.tables.AppEntitlements;
+import dev.ngb.booking_jooq.tables.Blocks;
 import dev.ngb.booking_jooq.tables.BookingSettings;
 import dev.ngb.booking_jooq.tables.CalendarExceptions;
 import dev.ngb.booking_jooq.tables.CancellationWindows;
@@ -16,6 +17,9 @@ import dev.ngb.booking_jooq.tables.Outbox;
 import dev.ngb.booking_jooq.tables.ReplicaState;
 import dev.ngb.booking_jooq.tables.ResourceGroups;
 import dev.ngb.booking_jooq.tables.Resources;
+import dev.ngb.booking_jooq.tables.SessionPools;
+import dev.ngb.booking_jooq.tables.SessionSeries;
+import dev.ngb.booking_jooq.tables.Sessions;
 import dev.ngb.booking_jooq.tables.TenantDomains;
 import dev.ngb.booking_jooq.tables.TenantSystems;
 import dev.ngb.booking_jooq.tables.Tenants;
@@ -48,6 +52,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.app_entitlements</code>.
      */
     public final AppEntitlements APP_ENTITLEMENTS = AppEntitlements.APP_ENTITLEMENTS;
+
+    /**
+     * The table <code>public.blocks</code>.
+     */
+    public final Blocks BLOCKS = Blocks.BLOCKS;
 
     /**
      * The table <code>public.booking_settings</code>.
@@ -105,6 +114,21 @@ public class Public extends SchemaImpl {
     public final Resources RESOURCES = Resources.RESOURCES;
 
     /**
+     * The table <code>public.session_pools</code>.
+     */
+    public final SessionPools SESSION_POOLS = SessionPools.SESSION_POOLS;
+
+    /**
+     * The table <code>public.session_series</code>.
+     */
+    public final SessionSeries SESSION_SERIES = SessionSeries.SESSION_SERIES;
+
+    /**
+     * The table <code>public.sessions</code>.
+     */
+    public final Sessions SESSIONS = Sessions.SESSIONS;
+
+    /**
      * The table <code>public.tenant_domains</code>.
      */
     public final TenantDomains TENANT_DOMAINS = TenantDomains.TENANT_DOMAINS;
@@ -146,6 +170,7 @@ public class Public extends SchemaImpl {
     public final List<Table<?>> getTables() {
         return Arrays.asList(
             AppEntitlements.APP_ENTITLEMENTS,
+            Blocks.BLOCKS,
             BookingSettings.BOOKING_SETTINGS,
             CalendarExceptions.CALENDAR_EXCEPTIONS,
             CancellationWindows.CANCELLATION_WINDOWS,
@@ -157,6 +182,9 @@ public class Public extends SchemaImpl {
             ReplicaState.REPLICA_STATE,
             ResourceGroups.RESOURCE_GROUPS,
             Resources.RESOURCES,
+            SessionPools.SESSION_POOLS,
+            SessionSeries.SESSION_SERIES,
+            Sessions.SESSIONS,
             TenantDomains.TENANT_DOMAINS,
             TenantSystems.TENANT_SYSTEMS,
             Tenants.TENANTS,

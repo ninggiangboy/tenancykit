@@ -6,6 +6,7 @@ package dev.ngb.booking_jooq.tables;
 
 import dev.ngb.booking_jooq.Keys;
 import dev.ngb.booking_jooq.Public;
+import dev.ngb.booking_jooq.tables.Blocks.BlocksPath;
 import dev.ngb.booking_jooq.tables.CalendarExceptions.CalendarExceptionsPath;
 import dev.ngb.booking_jooq.tables.GroupMembers.GroupMembersPath;
 import dev.ngb.booking_jooq.tables.OfferingRequirements.OfferingRequirementsPath;
@@ -188,6 +189,19 @@ public class Resources extends TableImpl<ResourcesRecord> {
     @Override
     public List<UniqueKey<ResourcesRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.RESOURCES_TENANT_ID_CODE_KEY);
+    }
+
+    private transient BlocksPath _blocks;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.blocks</code>
+     * table
+     */
+    public BlocksPath blocks() {
+        if (_blocks == null)
+            _blocks = new BlocksPath(this, null, Keys.BLOCKS__BLOCKS_RESOURCE_ID_FKEY.getInverseKey());
+
+        return _blocks;
     }
 
     private transient CalendarExceptionsPath _calendarExceptions;
