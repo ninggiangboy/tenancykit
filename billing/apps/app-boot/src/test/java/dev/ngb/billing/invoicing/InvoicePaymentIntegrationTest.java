@@ -296,7 +296,7 @@ class InvoicePaymentIntegrationTest {
         relayEvents(debt);
 
         assertThatThrownBy(() -> scopes.inTenant(debt.money().tenant().id(), () -> refund.execute(
-                new RequestRefundUseCase.Command(new PaymentId(started.payment().paymentId()), null, "changed my mind", "refund-1", AUDIT))))
+                new RequestRefundUseCase.Command(new PaymentId(started.payment().paymentId()), null, "changed my mind", "refund-1", null, AUDIT))))
                 .isInstanceOf(ConflictException.class).hasMessageContaining("invoice");
     }
 

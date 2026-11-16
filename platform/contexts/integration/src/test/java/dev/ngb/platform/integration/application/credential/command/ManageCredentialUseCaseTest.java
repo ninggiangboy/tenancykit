@@ -21,6 +21,7 @@ import dev.ngb.platform.integration.domain.credential.ApiCredential;
 import dev.ngb.platform.integration.domain.credential.ApiCredentialId;
 import dev.ngb.platform.integration.domain.credential.CredentialStatus;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystem;
+import dev.ngb.platform.integration.domain.tenantsystem.TenantSystemPurpose;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
@@ -44,11 +45,14 @@ class ManageCredentialUseCaseTest {
     private static final Instant NOW = Instant.parse("2026-11-13T10:00:00Z");
     private static final TenantId TENANT = new TenantId(UUID.randomUUID());
     private static final TenantSystemId SYSTEM = new TenantSystemId(UUID.randomUUID());
+    private static final TenantSystemId WORKFLOW_SYSTEM = new TenantSystemId(UUID.randomUUID());
     private static final Audit CALLER = new Audit("user/admin", "req-1");
 
     private final Map<String, ApiCredential> byKeyId = new LinkedHashMap<>();
     private final List<AuditEntry> audited = new ArrayList<>();
-    private final TenantSystem system = TenantSystem.create(SYSTEM, TENANT, "svc", NOW);
+    private final TenantSystem system = TenantSystem.create(SYSTEM, TENANT, "svc", TenantSystemPurpose.GENERIC, NOW);
+    private final TenantSystem workflowSystem =
+            TenantSystem.create(WORKFLOW_SYSTEM, TENANT, "flow", TenantSystemPurpose.WORKFLOW, NOW);
     private Instant now = NOW;
 
     private final UnitOfWork passThrough = new UnitOfWork() {
@@ -94,7 +98,10 @@ class ManageCredentialUseCaseTest {
 
         @Override
         public Optional<TenantSystem> findById(TenantSystemId id) {
-            return id.equals(SYSTEM) ? Optional.of(system) : Optional.empty();
+            if (id.equals(SYSTEM)) {
+                return Optional.of(system);
+            }
+            return id.equals(WORKFLOW_SYSTEM) ? Optional.of(workflowSystem) : Optional.empty();
         }
 
         @Override
@@ -103,8 +110,10 @@ class ManageCredentialUseCaseTest {
         }
     };
 
-    private final TenantSystemScopes grantable =
-            code -> Set.of("billing:invoice:read", "billing:usage:write").contains(code);
+    private final TenantSystemScopes grantable = code -> Set.of(
+                    "billing:invoice:read", "billing:usage:write", "billing:refund:create", "workflow:definition:read",
+                    "platform:replica:read")
+            .contains(code);
 
     private final TenantContext tenantContext = new TenantContext() {
         @Override
@@ -235,6 +244,31 @@ class ManageCredentialUseCaseTest {
         assertThatThrownBy(() -> useCase.create(CALLER, missing, "svc", Set.of("billing:invoice:read")))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessageContaining("tenant system");
+    }
+
+    @Test
+    void aWorkflowSystemCannotCarryAPlatformCode() {
+        assertThatThrownBy(() -> useCase.create(CALLER, WORKFLOW_SYSTEM, "flow", Set.of("platform:replica:read")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("workflow tenant system");
+
+        assertThat(byKeyId).isEmpty();
+    }
+
+    @Test
+    void aWorkflowSystemMayCarryAppAndWorkflowCodes() {
+        ManageCredentialUseCase.Issued issued = useCase.create(
+                CALLER, WORKFLOW_SYSTEM, "flow", Set.of("billing:refund:create", "workflow:definition:read"));
+
+        assertThat(issued.credential().scopes())
+                .containsExactlyInAnyOrder("billing:refund:create", "workflow:definition:read");
+    }
+
+    @Test
+    void aGenericSystemMayStillCarryAWorkflowCode() {
+        ManageCredentialUseCase.Issued issued = create("workflow:definition:read");
+
+        assertThat(issued.credential().scopes()).containsExactly("workflow:definition:read");
     }
 
     private String keyIdOtherThan(ManageCredentialUseCase.Issued issued) {

@@ -201,6 +201,8 @@ services:
       LOYALTY_DB_PASSWORD: ${LOYALTY_DB_PASSWORD:?set it in .env}
       BOOKING_MIGRATION_DB_PASSWORD: ${BOOKING_MIGRATION_DB_PASSWORD:?set it in .env}
       BOOKING_DB_PASSWORD: ${BOOKING_DB_PASSWORD:?set it in .env}
+      WORKFLOW_MIGRATION_DB_PASSWORD: ${WORKFLOW_MIGRATION_DB_PASSWORD:?set it in .env}
+      WORKFLOW_DB_PASSWORD: ${WORKFLOW_DB_PASSWORD:?set it in .env}
     ports:
       - "5432:5432"
     volumes:
@@ -248,6 +250,7 @@ services:
       CRM_BROKER_PASSWORD: ${CRM_RABBITMQ_PASSWORD:?set it in .env}
       LOYALTY_BROKER_PASSWORD: ${LOYALTY_RABBITMQ_PASSWORD:?set it in .env}
       BOOKING_BROKER_PASSWORD: ${BOOKING_RABBITMQ_PASSWORD:?set it in .env}
+      WORKFLOW_BROKER_PASSWORD: ${WORKFLOW_RABBITMQ_PASSWORD:?set it in .env}
     entrypoint: ["/bin/sh", "-c"]
     command: ["sh /ops/rabbitmq/declare-users.sh"]
     volumes:
@@ -333,6 +336,8 @@ services:
       PLATFORM_CRM_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_CRM_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
       PLATFORM_LOYALTY_SERVICE_CLIENT_ID: loyalty
       PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
+      PLATFORM_WORKFLOW_SERVICE_CLIENT_ID: workflow
+      PLATFORM_WORKFLOW_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_WORKFLOW_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
     ports:
       - "8082:8080"
     networks:

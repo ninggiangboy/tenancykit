@@ -111,6 +111,21 @@ public class TenantSystemsRecord extends UpdatableRecordImpl<TenantSystemsRecord
         return (Long) get(5);
     }
 
+    /**
+     * Setter for <code>public.tenant_systems.purpose</code>.
+     */
+    public TenantSystemsRecord setPurpose(String value) {
+        set(6, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.tenant_systems.purpose</code>.
+     */
+    public String getPurpose() {
+        return (String) get(6);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -134,7 +149,7 @@ public class TenantSystemsRecord extends UpdatableRecordImpl<TenantSystemsRecord
     /**
      * Create a detached, initialised TenantSystemsRecord
      */
-    public TenantSystemsRecord(UUID id, UUID tenantId, String name, String status, Instant createdAt, Long version) {
+    public TenantSystemsRecord(UUID id, UUID tenantId, String name, String status, Instant createdAt, Long version, String purpose) {
         super(TenantSystems.TENANT_SYSTEMS);
 
         setId(id);
@@ -143,6 +158,7 @@ public class TenantSystemsRecord extends UpdatableRecordImpl<TenantSystemsRecord
         setStatus(status);
         setCreatedAt(createdAt);
         setVersion(version);
+        setPurpose(purpose);
         resetTouchedOnNotNull();
     }
 }

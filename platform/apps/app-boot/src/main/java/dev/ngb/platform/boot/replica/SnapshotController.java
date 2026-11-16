@@ -119,6 +119,7 @@ class SnapshotController {
         item.put("id", system.id());
         item.put("tenant_id", system.tenantId());
         item.put("name", system.name());
+        item.put("purpose", system.purpose());
         item.put("status", system.status());
         item.put("created_at", system.createdAt().toString());
         item.put("version", system.version());

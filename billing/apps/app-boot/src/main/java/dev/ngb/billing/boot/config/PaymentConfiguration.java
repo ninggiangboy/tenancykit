@@ -271,9 +271,9 @@ class PaymentConfiguration {
 
     @Bean
     RefundRequests refundRequests(
-            PaymentRepository payments, RefundRepository refunds, ReserveBudget reserve, RefundGateway gateway, PaymentSettings settings,
-            AuditPreamble audit, IdGenerator ids, Clock clock) {
-        return new RefundRequests(payments, refunds, reserve, gateway, settings, audit, ids, clock);
+            PaymentRepository payments, RefundRepository refunds, ReserveBudget reserve, RefundGateway gateway, CustomerLookup customers,
+            PaymentSettings settings, AuditPreamble audit, IdGenerator ids, Clock clock) {
+        return new RefundRequests(payments, refunds, reserve, gateway, customers, settings, audit, ids, clock);
     }
 
     @Bean

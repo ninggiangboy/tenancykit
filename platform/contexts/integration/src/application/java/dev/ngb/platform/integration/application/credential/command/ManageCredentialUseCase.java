@@ -19,6 +19,7 @@ import dev.ngb.platform.integration.domain.credential.ApiCredential;
 import dev.ngb.platform.integration.domain.credential.ApiCredentialId;
 import dev.ngb.platform.integration.domain.credential.ApiKey;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystem;
+import dev.ngb.platform.integration.domain.tenantsystem.TenantSystemPurpose;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
@@ -76,8 +77,8 @@ public class ManageCredentialUseCase {
     public Issued create(Audit caller, TenantSystemId systemId, String label, Set<String> scopes) {
         return unitOfWork.transactional(() -> {
             TenantId tenantId = tenantContext.requireTenant();
-            requireActiveSystem(systemId);
-            requireGrantable(scopes);
+            TenantSystem system = requireActiveSystem(systemId);
+            requireGrantable(system, scopes);
             Issued issued = issue(tenantId, systemId, label, scopes);
             audit(caller, tenantId, "credential.created", issued.credential());
             return issued;
@@ -141,10 +142,17 @@ public class ManageCredentialUseCase {
         return new Issued(credential, key.plaintext());
     }
 
-    private void requireGrantable(Set<String> scopes) {
+    /**
+     * A code must be grantable by the catalog. A {@code WORKFLOW} system additionally may never carry a
+     * {@code platform:*} code: the workflow app drives tenants' own apps, so platform administration stays with people.
+     */
+    private void requireGrantable(TenantSystem system, Set<String> scopes) {
         for (String code : scopes) {
             if (!this.scopes.grantable(code)) {
                 throw new IllegalArgumentException(code + " cannot be granted to a tenant system");
+            }
+            if (system.purpose() == TenantSystemPurpose.WORKFLOW && code.startsWith("platform:")) {
+                throw new IllegalArgumentException(code + " cannot be granted to a workflow tenant system");
             }
         }
     }

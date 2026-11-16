@@ -65,6 +65,7 @@ public class JooqTenantSystemReadRepository implements TenantSystemReadRepositor
 
     private static TenantSystemView toView(TenantSystemsRecord row) {
         return new TenantSystemView(
-                row.getId(), row.getTenantId(), row.getName(), row.getStatus(), row.getCreatedAt(), row.getVersion());
+                row.getId(), row.getTenantId(), row.getName(), row.getPurpose(), row.getStatus(), row.getCreatedAt(),
+                row.getVersion());
     }
 }

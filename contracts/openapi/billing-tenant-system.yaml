@@ -4309,6 +4309,53 @@ paths:
       - "tenant-system"
       security:
       - apiKey: []
+  /api/v1/payments/{id}/refunds:
+    post:
+      tags:
+      - "refund-controller"
+      operationId: "requestRefund"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "Idempotency-Key"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefundRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RefundResponse"
+        "200":
+          description: "An earlier identical request already created it; that resource\
+            \ is returned"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RefundResponse"
+      x-required-permission: "billing:refund:create"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+      security:
+      - apiKey: []
   /api/v1/payments/top-ups:
     post:
       tags:

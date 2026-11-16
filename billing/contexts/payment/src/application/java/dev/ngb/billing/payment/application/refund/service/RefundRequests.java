@@ -7,6 +7,8 @@ import dev.ngb.core.audit.AuditPreamble;
 import dev.ngb.core.idempotency.Fingerprint;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
+import dev.ngb.billing.customer.api.lookup.CustomerLookup;
+import dev.ngb.billing.customer.api.lookup.CustomerVisibility;
 import dev.ngb.billing.money.api.reservation.ReservationResult;
 import dev.ngb.billing.money.api.reservation.ReserveBudget;
 import dev.ngb.billing.money.api.reservation.ReserveBudgetCommand;
@@ -27,6 +29,7 @@ import dev.ngb.core.error.NotFoundException;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * The local half of a refund request: what may be refunded and how much, the hold that protects the unspent
@@ -35,7 +38,8 @@ import java.util.Optional;
  */
 public class RefundRequests {
 
-    public record Request(PaymentId paymentId, Money amount, String reason, Audit audit) {}
+    /** {@code caller} is the acting Tenant System, or null for a Tenant User. */
+    public record Request(PaymentId paymentId, Money amount, String reason, UUID caller, Audit audit) {}
 
     /** The refund as it now stands, and the payment and configuration the caller will ask the provider with. */
     public record Prepared(Refund refund, Payment payment, StripeConfiguration configuration, boolean replayed) {}
@@ -44,18 +48,20 @@ public class RefundRequests {
     private final RefundRepository refunds;
     private final ReserveBudget reserve;
     private final RefundGateway gateway;
+    private final CustomerVisibility visibility;
     private final PaymentSettings settings;
     private final AuditPreamble audit;
     private final IdGenerator ids;
     private final Clock clock;
 
     public RefundRequests(
-            PaymentRepository payments, RefundRepository refunds, ReserveBudget reserve, RefundGateway gateway, PaymentSettings settings,
-            AuditPreamble audit, IdGenerator ids, Clock clock) {
+            PaymentRepository payments, RefundRepository refunds, ReserveBudget reserve, RefundGateway gateway, CustomerLookup customers,
+            PaymentSettings settings, AuditPreamble audit, IdGenerator ids, Clock clock) {
         this.payments = Objects.requireNonNull(payments, "payments");
         this.refunds = Objects.requireNonNull(refunds, "refunds");
         this.reserve = Objects.requireNonNull(reserve, "reserve");
         this.gateway = Objects.requireNonNull(gateway, "gateway");
+        this.visibility = new CustomerVisibility(Objects.requireNonNull(customers, "customers"));
         this.settings = Objects.requireNonNull(settings, "settings");
         this.audit = Objects.requireNonNull(audit, "audit");
         this.ids = Objects.requireNonNull(ids, "ids");
@@ -66,6 +72,7 @@ public class RefundRequests {
         // Lock order is payment, then refund, then wallet, everywhere. The key is read after the payment lock,
         // so a concurrent duplicate waits here and then sees the refund the first request wrote.
         Payment payment = payments.lockById(request.paymentId()).orElseThrow(() -> new NotFoundException("payment not found"));
+        visibility.requireVisible(payment.customerId(), request.caller(), () -> new NotFoundException("payment not found"));
         Optional<Refund> existing = refunds.findByIdempotencyKey(key);
         if (existing.isPresent()) {
             Fingerprint.requireSameRequest("refund", key, existing.get().requestHash(), hash);

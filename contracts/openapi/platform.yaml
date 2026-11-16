@@ -2483,6 +2483,8 @@ components:
           type: string
         name:
           type: string
+        purpose:
+          type: string
         status:
           type: string
         createdAt:
@@ -2561,6 +2563,8 @@ components:
       type: object
       properties:
         name:
+          type: string
+        purpose:
           type: string
     CreateCredentialRequest:
       type: object

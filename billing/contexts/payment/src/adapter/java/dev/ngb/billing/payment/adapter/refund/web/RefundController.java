@@ -81,7 +81,9 @@ public class RefundController {
             }
             amount = Money.of(request.amount(), Currency.of(request.currency()));
         }
-        RequestRefundUseCase.Result result = refund.execute(new RequestRefundUseCase.Command(PaymentId.of(id), amount, request.reason(), key, Audit.of(currentActor.get().auditName(), requestId)));
+        RequestRefundUseCase.Result result = refund.execute(new RequestRefundUseCase.Command(
+                PaymentId.of(id), amount, request.reason(), key, currentActor.caller(),
+                Audit.of(currentActor.get().auditName(), requestId)));
         return ResponseEntity.status(result.replayed() ? HttpStatus.OK : HttpStatus.CREATED).body(RefundResponse.of(result.refund()));
     }
 

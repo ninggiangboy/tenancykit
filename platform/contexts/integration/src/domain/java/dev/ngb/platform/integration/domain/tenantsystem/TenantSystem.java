@@ -14,28 +14,33 @@ import java.util.Objects;
 public final class TenantSystem extends AggregateRoot<TenantSystemId> {
 
     private final TenantId tenantId;
+    private final TenantSystemPurpose purpose;
     private final Instant createdAt;
     private String name;
     private TenantSystemStatus status;
     private long version;
 
     private TenantSystem(
-            TenantSystemId id, TenantId tenantId, String name, TenantSystemStatus status, Instant createdAt, long version) {
+            TenantSystemId id, TenantId tenantId, String name, TenantSystemPurpose purpose, TenantSystemStatus status,
+            Instant createdAt, long version) {
         super(id);
         this.tenantId = Objects.requireNonNull(tenantId, "tenantId");
         this.name = requireName(name);
+        this.purpose = Objects.requireNonNull(purpose, "purpose");
         this.status = Objects.requireNonNull(status, "status");
         this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
         this.version = version;
     }
 
-    public static TenantSystem create(TenantSystemId id, TenantId tenantId, String name, Instant now) {
-        return new TenantSystem(id, tenantId, name, TenantSystemStatus.ACTIVE, now, 1);
+    public static TenantSystem create(
+            TenantSystemId id, TenantId tenantId, String name, TenantSystemPurpose purpose, Instant now) {
+        return new TenantSystem(id, tenantId, name, purpose, TenantSystemStatus.ACTIVE, now, 1);
     }
 
     public static TenantSystem restore(
-            TenantSystemId id, TenantId tenantId, String name, TenantSystemStatus status, Instant createdAt, long version) {
-        return new TenantSystem(id, tenantId, name, status, createdAt, version);
+            TenantSystemId id, TenantId tenantId, String name, TenantSystemPurpose purpose, TenantSystemStatus status,
+            Instant createdAt, long version) {
+        return new TenantSystem(id, tenantId, name, purpose, status, createdAt, version);
     }
 
     /** @return false when the name is unchanged, so no event is published for a no-op */
@@ -69,6 +74,10 @@ public final class TenantSystem extends AggregateRoot<TenantSystemId> {
 
     public String name() {
         return name;
+    }
+
+    public TenantSystemPurpose purpose() {
+        return purpose;
     }
 
     public TenantSystemStatus status() {

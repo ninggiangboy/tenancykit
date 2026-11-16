@@ -246,7 +246,7 @@ class RefundIntegrationTest extends PaymentWorld {
         PayWorld w = worlds.direct(0);
         Payment p = settledPayment(w, 5000);
         var tenant = w.money().tenant().id();
-        var command = new RequestRefundUseCase.Command(p.id(), null, "requested", "held-refund", AUDIT);
+        var command = new RequestRefundUseCase.Command(p.id(), null, "requested", "held-refund", null, AUDIT);
 
         var race = UncommittedRace.run(unitOfWork, scopes, owner, tenant, "%from %\"payments\"%for update%",
                 () -> scopes.inTenant(tenant, () -> refund.execute(command)), () -> scopes.inTenant(tenant, () -> refund.execute(command)));

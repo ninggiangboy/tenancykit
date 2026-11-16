@@ -141,3 +141,15 @@ declare_user booking \
   '^(booking\\.platform-events|booking\\.platform-events\\.dlq|suite\\.dlx)$' \
   '^(booking\\.platform-events|booking\\.platform-events\\.dlq|suite\\.dlx)$' \
   '^(platform\\.events|booking\\.platform-events|booking\\.platform-events\\.dlq|suite\\.dlx)$'
+
+# Workflow is a replica consumer on the Tenant side of the suite rule. It binds one queue to platform.events for the
+# state-transfer keys and declares one internal queue, `workflow.runnable`, for its own wake-ups; it owns no exchange,
+# and the facts it emits leave as signed webhooks. `write` therefore stops at its own queues (declaring a queue with a
+# dead-letter exchange and binding the DLQ both check write on the queue, and a publish would check write on the
+# exchange), which is what refuses a publish to platform.events. `read` covers platform.events (a queue.bind checks
+# read on the source) and its own queues only.
+declare_user workflow \
+  "${WORKFLOW_BROKER_PASSWORD:?set the workflow broker password}" \
+  '^(workflow\\.platform-events|workflow\\.platform-events\\.dlq|workflow\\.runnable|workflow\\.runnable\\.dlq|suite\\.dlx)$' \
+  '^(workflow\\.platform-events|workflow\\.platform-events\\.dlq|workflow\\.runnable|workflow\\.runnable\\.dlq|suite\\.dlx)$' \
+  '^(platform\\.events|workflow\\.platform-events|workflow\\.platform-events\\.dlq|workflow\\.runnable|workflow\\.runnable\\.dlq|suite\\.dlx)$'

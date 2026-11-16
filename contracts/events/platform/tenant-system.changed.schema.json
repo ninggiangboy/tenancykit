@@ -8,6 +8,7 @@
     "id",
     "tenant_id",
     "name",
+    "purpose",
     "status",
     "created_at",
     "version"
@@ -24,6 +25,13 @@
     },
     "name": {
       "type": "string"
+    },
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "GENERIC",
+        "WORKFLOW"
+      ]
     },
     "status": {
       "type": "string",

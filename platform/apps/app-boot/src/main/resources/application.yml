@@ -100,6 +100,10 @@ platform:
     - id: ${PLATFORM_BOOKING_SERVICE_CLIENT_ID:booking}
       secret-hash: ${PLATFORM_BOOKING_SERVICE_CLIENT_SECRET_HASH:}
       scopes: [platform:replica:read]
+    # Workflow is the Tenant side of the suite rule, but its replica is the same seam: one entry and a secret hash.
+    - id: ${PLATFORM_WORKFLOW_SERVICE_CLIENT_ID:workflow}
+      secret-hash: ${PLATFORM_WORKFLOW_SERVICE_CLIENT_SECRET_HASH:}
+      scopes: [platform:replica:read]
   outbox:
     poll-delay: PT1S
 

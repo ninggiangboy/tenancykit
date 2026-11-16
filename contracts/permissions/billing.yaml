@@ -103,7 +103,7 @@
 - code: billing:refund:create
   description: Send money back to a customer's card.
   scopes: [tenant]
-  grantable_to_tenant_system: false
+  grantable_to_tenant_system: true
 
 - code: billing:invoice:read
   description: Read invoices and invoice payments.

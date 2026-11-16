@@ -91,6 +91,11 @@ public class TenantSystems extends TableImpl<TenantSystemsRecord> {
      */
     public final TableField<TenantSystemsRecord, Long> VERSION = createField(DSL.name("version"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("1"), SQLDataType.BIGINT)), this, "");
 
+    /**
+     * The column <code>public.tenant_systems.purpose</code>.
+     */
+    public final TableField<TenantSystemsRecord, String> PURPOSE = createField(DSL.name("purpose"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field(DSL.raw("'GENERIC'::text"), SQLDataType.CLOB)), this, "");
+
     private TenantSystems(Name alias, Table<TenantSystemsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -202,6 +207,7 @@ public class TenantSystems extends TableImpl<TenantSystemsRecord> {
     public List<Check<TenantSystemsRecord>> getChecks() {
         return Arrays.asList(
             Internal.createCheck(this, DSL.name("tenant_systems_name_check"), "(((length(name) >= 1) AND (length(name) <= 100)))", true),
+            Internal.createCheck(this, DSL.name("tenant_systems_purpose_check"), "((purpose = ANY (ARRAY['GENERIC'::text, 'WORKFLOW'::text])))", true),
             Internal.createCheck(this, DSL.name("tenant_systems_status_check"), "((status = ANY (ARRAY['ACTIVE'::text, 'DISABLED'::text])))", true)
         );
     }

@@ -65,6 +65,8 @@ class PaymentHttpIntegrationTest {
     String viewerToken;
     String customerId;
     String walletId;
+    String refunderKey;
+    String refunderWalletId;
 
     @BeforeAll
     void createWorld() {
@@ -79,6 +81,13 @@ class PaymentHttpIntegrationTest {
                 HttpWorld.Map2.of("externalUserId", "u-" + UUID.randomUUID(), "displayName", "Payer"))).get("id").asString();
         walletId = world.body(call(HttpMethod.POST, acme, systemKey, "/api/v1/wallets", null,
                 HttpWorld.Map2.of("customerId", customerId, "currency", "USD", "mode", "PREPAID"))).get("id").asString();
+        refunderKey = world.newSystem(acme,
+                "billing:refund:create", "billing:payment:create", "billing:payment:read", "billing:wallet:manage",
+                "billing:wallet:read", "billing:customer:write", "billing:customer:read").token();
+        String refunderCustomerId = world.body(call(HttpMethod.POST, acme, refunderKey, "/api/v1/customers", "rc-" + UUID.randomUUID(),
+                HttpWorld.Map2.of("externalUserId", "ru-" + UUID.randomUUID(), "displayName", "Refunded Payer"))).get("id").asString();
+        refunderWalletId = world.body(call(HttpMethod.POST, acme, refunderKey, "/api/v1/wallets", null,
+                HttpWorld.Map2.of("customerId", refunderCustomerId, "currency", "USD", "mode", "PREPAID"))).get("id").asString();
         connectDirect();
     }
 
@@ -207,15 +216,39 @@ class PaymentHttpIntegrationTest {
         assertThat(call(HttpMethod.GET, acme, systemKey, "/api/v1/stripe/configuration", null, null).getResponse().getStatus()).isEqualTo(403);
         assertThat(call(HttpMethod.GET, acme, viewerToken, "/api/v1/stripe/configuration", null, null).getResponse().getStatus()).as("a viewer may read").isEqualTo(200);
         assertThat(call(HttpMethod.POST, acme, systemKey, "/api/v1/payments/" + UUID.randomUUID() + "/refunds", "k", HttpWorld.Map2.of()).getResponse().getStatus())
-                .as("refunds are never granted to a tenant system").isEqualTo(403);
+                .as("a machine without billing:refund:create is refused").isEqualTo(403);
         assertThat(call(HttpMethod.POST, acme, viewerToken, "/api/v1/payments/top-ups", "k",
                 HttpWorld.Map2.of("walletId", walletId, "amount", 100, "currency", "USD")).getResponse().getStatus()).as("a viewer cannot top up").isEqualTo(403);
-        // Billing no longer issues credentials; Platform refuses billing:refund:create to a machine. A machine token
+        // Billing no longer issues credentials; Platform decides which codes a machine may carry. A machine token
         // that simply lacks the code is refused by Billing's own check, which is what this asserts.
         String noRefund = world.newSystem(acme, "billing:payment:read").token();
         assertThat(call(HttpMethod.POST, acme, noRefund, "/api/v1/payments/" + UUID.randomUUID() + "/refunds", "k",
                 HttpWorld.Map2.of("amount", 100, "currency", "USD", "reason", "requested_by_customer")).getResponse().getStatus())
                 .as("a machine without billing:refund:create is refused").isEqualTo(403);
+    }
+
+    @Test
+    void aTenantSystemHoldingTheRefundCodeRefundsAPaymentOfItsOwnCustomer() throws Exception {
+        JsonNode payment = world.body(call(HttpMethod.POST, acme, refunderKey, "/api/v1/payments/top-ups", "refund-top-up",
+                HttpWorld.Map2.of("walletId", refunderWalletId, "amount", 900, "currency", "USD")));
+        deliverPaid(payment, "pi_refund_" + UUID.randomUUID().toString().substring(0, 8));
+
+        MvcResult refund = call(HttpMethod.POST, acme, refunderKey,
+                "/api/v1/payments/" + payment.get("id").asString() + "/refunds", "refund-key-1", java.util.Map.of());
+
+        assertThat(refund.getResponse().getStatus()).isEqualTo(201);
+        assertThat(world.body(refund).get("paymentId").asString()).isEqualTo(payment.get("id").asString());
+    }
+
+    @Test
+    void aTenantSystemCannotRefundAnotherSystemsCustomer() throws Exception {
+        JsonNode payment = topUp(1100, "other-system-top-up");
+        deliverPaid(payment, "pi_other_" + UUID.randomUUID().toString().substring(0, 8));
+
+        MvcResult refund = call(HttpMethod.POST, acme, refunderKey,
+                "/api/v1/payments/" + payment.get("id").asString() + "/refunds", "refund-key-2", java.util.Map.of());
+
+        assertThat(refund.getResponse().getStatus()).as("another Tenant System's customer is answered as absent").isEqualTo(404);
     }
 
     @Test

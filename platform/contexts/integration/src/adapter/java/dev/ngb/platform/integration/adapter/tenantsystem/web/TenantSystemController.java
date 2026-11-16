@@ -21,6 +21,7 @@ import dev.ngb.platform.integration.api.tenantsystem.TenantSystemView;
 import dev.ngb.platform.integration.domain.credential.ApiCredential;
 import dev.ngb.platform.integration.domain.credential.ApiCredentialId;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystem;
+import dev.ngb.platform.integration.domain.tenantsystem.TenantSystemPurpose;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -43,7 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/tenant-systems")
 class TenantSystemController {
 
-    record CreateSystemRequest(String name) {}
+    record CreateSystemRequest(String name, String purpose) {}
 
     record UpdateSystemRequest(String action, String name) {}
 
@@ -51,16 +52,18 @@ class TenantSystemController {
 
     record RotateRequest(Long overlapMinutes) {}
 
-    record SystemResponse(String id, String name, String status, Instant createdAt, long version) {
+    record SystemResponse(String id, String name, String purpose, String status, Instant createdAt, long version) {
 
         static SystemResponse of(TenantSystem system) {
             return new SystemResponse(
-                    system.id().toString(), system.name(), system.status().name(), system.createdAt(), system.version());
+                    system.id().toString(), system.name(), system.purpose().name(), system.status().name(),
+                    system.createdAt(), system.version());
         }
 
         static SystemResponse ofView(TenantSystemView system) {
             return new SystemResponse(
-                    system.id().toString(), system.name(), system.status(), system.createdAt(), system.version());
+                    system.id().toString(), system.name(), system.purpose(), system.status(), system.createdAt(),
+                    system.version());
         }
     }
 
@@ -116,7 +119,8 @@ class TenantSystemController {
     SystemResponse create(
             @RequestBody CreateSystemRequest request,
             @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
-        return SystemResponse.of(systems.create(caller(requestId), request.name()));
+        return SystemResponse.of(systems.create(
+                caller(requestId), request.name(), purpose(request.purpose())));
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link TenantSystemListing}. */
@@ -190,6 +194,12 @@ class TenantSystemController {
 
     private Audit caller(String requestId) {
         return Audit.of(currentActor.get().auditName(), requestId);
+    }
+
+    private static TenantSystemPurpose purpose(String requested) {
+        return requested == null || requested.isBlank()
+                ? TenantSystemPurpose.GENERIC
+                : TenantSystemPurpose.valueOf(requested);
     }
 
     private static IssuedCredentialResponse issued(ManageCredentialUseCase.Issued issued) {

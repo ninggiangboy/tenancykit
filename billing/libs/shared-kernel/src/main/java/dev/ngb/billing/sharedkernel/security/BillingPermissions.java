@@ -42,7 +42,7 @@ public final class BillingPermissions {
     public static final String PAYMENT_READ = "billing:payment:read";
     /** Starts a wallet top-up through the Tenant's Stripe configuration. */
     public static final String PAYMENT_CREATE = "billing:payment:create";
-    /** Sends money back to a customer's card. Administrators only: never granted to a Tenant System. */
+    /** Sends money back to a customer's card. A Tenant System may hold it, and then sees only its mapped customers. */
     public static final String REFUND_CREATE = "billing:refund:create";
 
     public static final String INVOICE_READ = "billing:invoice:read";

@@ -134,7 +134,7 @@ abstract class PaymentWorld {
 
     Refund requestRefund(PayWorld w, Payment p, Long amount, String key) {
         Money money = amount == null ? null : Money.of(amount, p.amount().currency());
-        return scopes.inTenant(w.money().tenant().id(), () -> refund.execute(new RequestRefundUseCase.Command(p.id(), money, "requested", key, AUDIT)).refund());
+        return scopes.inTenant(w.money().tenant().id(), () -> refund.execute(new RequestRefundUseCase.Command(p.id(), money, "requested", key, null, AUDIT)).refund());
     }
 
     RefundView reloadRefund(PayWorld w, Refund r) {

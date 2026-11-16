@@ -40,6 +40,7 @@ public final class TenantSystemEvents {
             payload.put("id", system.id().toString());
             payload.put("tenant_id", system.tenantId().toString());
             payload.put("name", system.name());
+            payload.put("purpose", system.purpose().name());
             payload.put("status", system.status().name());
             payload.put("created_at", system.createdAt().toString());
             payload.put("version", system.version());

@@ -4725,6 +4725,7 @@ paths:
       x-required-permission: billing:refund:create
       x-allowed-callers:
       - tenant-user
+      - tenant-system
   /api/v1/payments/top-ups:
     post:
       tags:

@@ -8,6 +8,7 @@ import dev.ngb.core.id.TenantSystemId;
 import dev.ngb.core.util.Causes;
 import dev.ngb.platform.integration.application.tenantsystem.port.TenantSystemRepository;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystem;
+import dev.ngb.platform.integration.domain.tenantsystem.TenantSystemPurpose;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystemStatus;
 import dev.ngb.platform_jooq.tables.records.TenantSystemsRecord;
 import java.util.Optional;
@@ -29,6 +30,7 @@ public class JooqTenantSystemRepository implements TenantSystemRepository {
                     .set(TENANT_SYSTEMS.ID, system.id().value())
                     .set(TENANT_SYSTEMS.TENANT_ID, system.tenantId().value())
                     .set(TENANT_SYSTEMS.NAME, system.name())
+                    .set(TENANT_SYSTEMS.PURPOSE, system.purpose().name())
                     .set(TENANT_SYSTEMS.STATUS, system.status().name())
                     .set(TENANT_SYSTEMS.CREATED_AT, system.createdAt())
                     .set(TENANT_SYSTEMS.VERSION, system.version())
@@ -76,6 +78,7 @@ public class JooqTenantSystemRepository implements TenantSystemRepository {
                 new TenantSystemId(row.getId()),
                 new TenantId(row.getTenantId()),
                 row.getName(),
+                TenantSystemPurpose.valueOf(row.getPurpose()),
                 TenantSystemStatus.valueOf(row.getStatus()),
                 row.getCreatedAt(),
                 row.getVersion());

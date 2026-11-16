@@ -16,6 +16,7 @@ import dev.ngb.core.error.ConflictException;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.idempotency.Fingerprint;
 import java.time.Duration;
+import java.util.UUID;
 
 /**
  * Sends money back to the customer's card, in full or in part. Three rules protect the books:
@@ -28,7 +29,7 @@ public class RequestRefundUseCase {
     /** Well inside the 24 hours Stripe remembers an idempotency key for. */
     private static final Duration RETRY_WINDOW = Duration.ofHours(12);
 
-    public record Command(PaymentId paymentId, Money amount, String reason, String idempotencyKey, Audit audit) {}
+    public record Command(PaymentId paymentId, Money amount, String reason, String idempotencyKey, UUID caller, Audit audit) {}
 
     public record Result(Refund refund, boolean replayed) {}
 
@@ -59,7 +60,8 @@ public class RequestRefundUseCase {
         String hash = Fingerprint.of(command.paymentId().toString(), command.amount() == null ? "all" : command.amount().toString(),
                 String.valueOf(command.reason()));
         RefundRequests.Prepared prepared = unitOfWork.transactional(() -> requests.prepare(
-                new RefundRequests.Request(command.paymentId(), command.amount(), command.reason(), command.audit()), key, hash));
+                new RefundRequests.Request(
+                        command.paymentId(), command.amount(), command.reason(), command.caller(), command.audit()), key, hash));
         Refund refund = prepared.refund();
         if (refund.stripeRefundId() != null || refund.status().isFinal()) {
             return new Result(refund, prepared.replayed());

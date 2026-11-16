@@ -15,6 +15,7 @@ import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.integration.application.tenantsystem.port.TenantSystemRepository;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystem;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystemEvents;
+import dev.ngb.platform.integration.domain.tenantsystem.TenantSystemPurpose;
 
 /** Creates, renames and disables the Tenant Systems of the current Tenant. Each change publishes its state. */
 public class ManageTenantSystemUseCase {
@@ -43,10 +44,15 @@ public class ManageTenantSystemUseCase {
         this.clock = clock;
     }
 
+    /** A Tenant's own business system, the default and by far the common case. */
     public TenantSystem create(Audit caller, String name) {
+        return create(caller, name, TenantSystemPurpose.GENERIC);
+    }
+
+    public TenantSystem create(Audit caller, String name, TenantSystemPurpose purpose) {
         return unitOfWork.transactional(() -> {
             TenantId tenantId = tenantContext.requireTenant();
-            TenantSystem system = TenantSystem.create(new TenantSystemId(ids.newId()), tenantId, name, clock.now());
+            TenantSystem system = TenantSystem.create(new TenantSystemId(ids.newId()), tenantId, name, purpose, clock.now());
             systems.add(system);
             publish(system);
             auditLog.record(AuditEntry.tenant(
