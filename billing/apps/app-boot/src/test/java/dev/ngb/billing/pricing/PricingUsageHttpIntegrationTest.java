@@ -166,7 +166,7 @@ class PricingUsageHttpIntegrationTest {
                         Map2.of("model", "EVENT_BASED", "metric", m5, "unit", "request", "unitPrice", "0.01"),
                         Map2.of("model", "USAGE_BASED", "metric", metric(), "unit", "gb", "unitPrice", "2"))))))).get("id").asString();
 
-        JsonNode listed = ok(call(acme, ops, HttpMethod.GET, "/api/v1/pricing-plans?status=ACTIVE", null));
+        JsonNode listed = ok(call(acme, ops, HttpMethod.GET, "/api/v1/pricing-plans?filter[status][eq]=ACTIVE", null)).get("data");
         List<String> ids = listed.valueStream().map(n -> n.get("id").asString()).toList();
         assertThat(ids).contains(time, usage, workload, event, result, hybrid);
         JsonNode eventPlan = ok(call(acme, ops, HttpMethod.GET, "/api/v1/pricing-plans/" + event, null));
@@ -240,7 +240,8 @@ class PricingUsageHttpIntegrationTest {
         assertThat(call(acme, acme.adminToken(), HttpMethod.POST, "/api/v1/pricing-plans/" + id + "/retire", null).getResponse().getStatus()).isEqualTo(409);
         assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/pricing/estimates", Map2.of("planId", id, "usage", List.of(Map2.of("metric", metric, "quantity", "1"))))
                 .getResponse().getStatus()).as("a retired plan is not offered").isEqualTo(409);
-        assertThat(ok(call(acme, ops, HttpMethod.GET, "/api/v1/pricing-plans?status=ACTIVE", null)).valueStream().map(n -> n.get("id").asString())).doesNotContain(id);
+        assertThat(ok(call(acme, ops, HttpMethod.GET, "/api/v1/pricing-plans?filter[status][eq]=ACTIVE", null)).get("data").valueStream()
+                .map(n -> n.get("id").asString())).doesNotContain(id);
     }
 
     // ---- estimation
@@ -307,7 +308,7 @@ class PricingUsageHttpIntegrationTest {
         MvcResult bad = call(acme, ops, HttpMethod.POST, "/api/v1/usage-events/batch", Map2.of("events", List.of(
                 usageEvent(customer, metric, "call", "1", k1), usageEvent(customer, metric, "call", "-1", k2))));
         assertThat(bad.getResponse().getStatus()).isEqualTo(400);
-        assertThat(ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?customerId=" + customer, null))).isEmpty();
+        assertThat(ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?filter[customer_id][eq]=" + customer, null)).get("data")).isEmpty();
 
         JsonNode good = ok(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events/batch", Map2.of("events", List.of(
                 usageEvent(customer, metric, "call", "1", k1), usageEvent(customer, metric, "call", "2", k2)))));
@@ -315,7 +316,7 @@ class PricingUsageHttpIntegrationTest {
         JsonNode retry = ok(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events/batch", Map2.of("events", List.of(
                 usageEvent(customer, metric, "call", "1", k1), usageEvent(customer, metric, "call", "2", k2)))));
         assertThat(retry.get("results").valueStream().map(n -> n.get("replayed").asBoolean())).containsExactly(true, true);
-        assertThat(ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?customerId=" + customer, null))).hasSize(2);
+        assertThat(ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?filter[customer_id][eq]=" + customer, null)).get("data")).hasSize(2);
         assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events/batch", Map2.of("events", List.of())).getResponse().getStatus()).isEqualTo(400);
     }
 
@@ -327,10 +328,12 @@ class PricingUsageHttpIntegrationTest {
         for (int i = 0; i < 5; i++) {
             ok(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", usageEvent(customer, metric, "call", String.valueOf(i + 1), "h-" + UUID.randomUUID())));
         }
-        JsonNode first = ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?customerId=" + customer + "&limit=3", null));
-        JsonNode second = ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?customerId=" + customer + "&limit=3&before=" + first.get(2).get("id").asString(), null));
-        assertThat(first).hasSize(3);
-        assertThat(second).hasSize(2);
+        String mine = "filter[customer_id][eq]=" + customer;
+        JsonNode first = ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?" + mine + "&limit=3&page_info=true", null));
+        JsonNode second = ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?" + mine + "&limit=3&page_info=true&cursor="
+                + first.get("page").get("next_cursor").asString(), null));
+        assertThat(first.get("data")).hasSize(3);
+        assertThat(second.get("data")).hasSize(2);
 
         JsonNode totals = ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-aggregates?customerId=" + customer + "&from=" + FROM + "&to=" + TO, null));
         assertThat(totals).hasSize(1);
@@ -338,8 +341,9 @@ class PricingUsageHttpIntegrationTest {
         assertThat(totals.get(0).get("quantity").asString()).isEqualTo("15");
         assertThat(totals.get(0).get("events").asInt()).isEqualTo(5);
         assertThat(call(acme, ops, HttpMethod.GET, "/api/v1/usage-aggregates?customerId=" + customer + "&from=" + TO + "&to=" + FROM, null).getResponse().getStatus()).isEqualTo(400);
-        assertThat(call(acme, readOnly, HttpMethod.GET, "/api/v1/usage-events?customerId=" + customer, null).getResponse().getStatus()).isEqualTo(403);
-        assertThat(call(globex, globex.adminToken(), HttpMethod.GET, "/api/v1/usage-events?customerId=" + customer, null).getResponse().getStatus()).isEqualTo(404);
+        assertThat(call(acme, readOnly, HttpMethod.GET, "/api/v1/usage-events?filter[customer_id][eq]=" + customer, null).getResponse().getStatus()).isEqualTo(403);
+        assertThat(call(globex, globex.adminToken(), HttpMethod.GET, "/api/v1/usage-events?filter[customer_id][eq]=" + customer, null)
+                .getResponse().getStatus()).isEqualTo(200);
     }
 
     // ---- charging and reserving

@@ -30,6 +30,9 @@ spring:
     timeout-per-shutdown-phase: 30s
 server:
   shutdown: graceful
+  tomcat:
+    # The list-query contract writes filter[field][op]=value; clients send the brackets as they are.
+    relaxed-query-chars: "[,]"
 management:
   endpoint:
     health:

@@ -6,6 +6,7 @@ import static dev.ngb.billing_jooq.Tables.INVOICE_PAYMENTS;
 import static org.jooq.impl.DSL.noCondition;
 
 import dev.ngb.billing.invoicing.application.invoice.query.InvoiceItemView;
+import dev.ngb.billing.invoicing.application.invoice.query.InvoiceListing;
 import dev.ngb.billing.invoicing.application.invoice.query.InvoicePaymentView;
 import dev.ngb.billing.invoicing.application.invoice.query.InvoiceReadRepository;
 import dev.ngb.billing.invoicing.application.invoice.query.InvoiceView;
@@ -19,6 +20,10 @@ import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.billing_jooq.tables.records.InvoicesRecord;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.JooqLists;
+import dev.ngb.core.spring.query.ListBinding;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,27 +33,43 @@ import org.jooq.DSLContext;
 /** Selects invoices, lines and payment history straight into views; no aggregate is built. */
 public class JooqInvoiceReadRepository implements InvoiceReadRepository {
 
+    /** The invoice fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding BINDING = ListBinding.of(InvoiceListing.SCHEMA)
+            .column("id", INVOICES.ID)
+            .column("customer_id", INVOICES.CUSTOMER_ID)
+            .column("wallet_id", INVOICES.WALLET_ID)
+            .column("currency", INVOICES.CURRENCY)
+            .column("number", INVOICES.NUMBER)
+            .column("origin", INVOICES.ORIGIN)
+            .column("status", INVOICES.STATUS)
+            .column("total", INVOICES.TOTAL)
+            .column("period_start", INVOICES.PERIOD_START)
+            .column("period_end", INVOICES.PERIOD_END)
+            .column("settlement", INVOICES.SETTLEMENT)
+            .column("created_at", INVOICES.CREATED_AT)
+            .column("issued_at", INVOICES.ISSUED_AT)
+            .column("paid_at", INVOICES.PAID_AT)
+            .column("voided_at", INVOICES.VOIDED_AT)
+            .build();
+
     private final DSLContext dsl;
+
+    /** @return the binding of the invoice listing, for the test that checks every sortable field has an index */
+    public static ListBinding listBinding() {
+        return BINDING;
+    }
 
     public JooqInvoiceReadRepository(DSLContext dsl) {
         this.dsl = dsl;
     }
 
     @Override
-    public List<InvoiceView> list(UUID customerId, UUID walletId, InvoiceStatus status, UUID before, int limit, List<UUID> customerIds) {
+    public Page<InvoiceView> list(ListQuery query, List<UUID> customerIds) {
         if (customerIds != null && customerIds.isEmpty()) {
-            return List.of();
+            return query.emptyPage();
         }
-        Condition filter = (customerId == null ? noCondition() : INVOICES.CUSTOMER_ID.eq(customerId))
-                .and(walletId == null ? noCondition() : INVOICES.WALLET_ID.eq(walletId))
-                .and(customerIds == null ? noCondition() : INVOICES.CUSTOMER_ID.in(customerIds))
-                .and(status == null ? noCondition() : INVOICES.STATUS.eq(status.name()))
-                .and(before == null ? noCondition() : INVOICES.ID.lt(before));
-        return dsl.selectFrom(INVOICES)
-                .where(filter)
-                .orderBy(INVOICES.ID.desc())
-                .limit(limit)
-                .fetch(JooqInvoiceReadRepository::toView);
+        Condition scope = customerIds == null ? noCondition() : INVOICES.CUSTOMER_ID.in(customerIds);
+        return JooqLists.fetch(dsl, INVOICES, scope, BINDING, query, JooqInvoiceReadRepository::toView);
     }
 
     @Override

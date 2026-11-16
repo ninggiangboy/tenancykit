@@ -3,9 +3,14 @@ package dev.ngb.billing.coupon.adapter.coupon.web;
 import dev.ngb.billing.coupon.application.coupon.command.CreateCouponUseCase;
 import dev.ngb.billing.coupon.application.coupon.command.DeactivateCouponUseCase;
 import dev.ngb.billing.coupon.application.coupon.command.ManagePromotionCodeUseCase;
+import dev.ngb.billing.coupon.application.coupon.query.CouponListing;
 import dev.ngb.billing.coupon.application.coupon.query.CouponQueries;
 import dev.ngb.billing.coupon.application.coupon.query.CouponView;
+import dev.ngb.billing.coupon.application.coupon.query.PromotionCodeListing;
 import dev.ngb.billing.coupon.application.coupon.query.PromotionCodeView;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.billing.coupon.domain.coupon.Benefit;
 import dev.ngb.billing.coupon.domain.coupon.ChargeKind;
 import dev.ngb.billing.coupon.domain.coupon.Coupon;
@@ -167,12 +172,12 @@ public class CouponController {
         return new CreateCouponResponse(CouponResponse.of(coupon), code);
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link CouponListing}. */
     @GetMapping("/coupons")
+    @Listing(CouponListing.class)
     @RequiresPermission(BillingPermissions.COUPON_READ)
-    public List<CouponResponse> coupons(
-            @RequestParam(required = false) String status, @RequestParam(defaultValue = "50") int limit,
-            @RequestParam(defaultValue = "0") int offset) {
-        return queries.coupons(status, limit, offset).stream().map(CouponResponse::of).toList();
+    public Page<CouponResponse> coupons(ListQuery query) {
+        return queries.coupons(query).map(CouponResponse::of);
     }
 
     @GetMapping("/coupons/{id}")
@@ -204,10 +209,12 @@ public class CouponController {
         return PromotionCodeResponse.of(code);
     }
 
+    /** Filter, sort and paging follow the list-query contract; the coupon is fixed by the path. */
     @GetMapping("/coupons/{id}/codes")
+    @Listing(PromotionCodeListing.class)
     @RequiresPermission(BillingPermissions.COUPON_READ)
-    public List<PromotionCodeResponse> codes(@PathVariable String id) {
-        return queries.codesOf(UUID.fromString(id)).stream().map(PromotionCodeResponse::of).toList();
+    public Page<PromotionCodeResponse> codes(@PathVariable String id, ListQuery query) {
+        return queries.codesOf(UUID.fromString(id), query).map(PromotionCodeResponse::of);
     }
 
     @PostMapping("/promotion-codes/{id}/deactivate")

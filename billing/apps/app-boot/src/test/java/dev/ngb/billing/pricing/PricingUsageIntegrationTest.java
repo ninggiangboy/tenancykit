@@ -20,6 +20,7 @@ import dev.ngb.core.error.IdempotencyConflictException;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.pricing.api.plan.BillingCycle;
 import dev.ngb.billing.pricing.application.plan.command.ManagePlanUseCase;
+import dev.ngb.billing.pricing.application.plan.query.PlanListing;
 import dev.ngb.billing.pricing.application.plan.query.PlanQueries;
 import dev.ngb.billing.pricing.application.plan.query.PricingPlanView;
 import dev.ngb.billing.pricing.application.rating.command.ChargeFromUsageUseCase;
@@ -36,6 +37,7 @@ import dev.ngb.billing.pricing.domain.plan.PricingPlanId;
 import dev.ngb.billing.pricing.domain.rating.UsageRating;
 import dev.ngb.billing.pricing.domain.rule.EventBased;
 import dev.ngb.billing.sharedkernel.money.Money;
+import dev.ngb.billing.support.ListQueries;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
 import dev.ngb.billing.support.ScopeTestSupport;
@@ -214,7 +216,8 @@ class PricingUsageIntegrationTest {
         assertThatThrownBy(() -> worlds.record(globex.tenant().id(), acme.customerId(), metric, "call", "1", DAY)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("unknown metric");
         assertThatThrownBy(() -> scopes.inTenant(globex.tenant().id(), () -> planAdmin.get(acmePlan.id()))).isInstanceOf(NotFoundException.class);
-        assertThat(scopes.inTenant(globex.tenant().id(), () -> planQueries.list(null))).isEmpty();
+        assertThat(scopes.inTenant(globex.tenant().id(), () -> planQueries.list(
+                ListQueries.of(PlanListing.SCHEMA, "limit", "200")).data())).isEmpty();
         worlds.plan(globex.tenant().id(), "calls", worlds.calls(metric));
         assertThatThrownBy(() -> worlds.record(globex.tenant().id(), acme.customerId(), metric, "call", "1", DAY)).isInstanceOf(NotFoundException.class);
     }
@@ -278,8 +281,10 @@ class PricingUsageIntegrationTest {
                 .isInstanceOf(ConflictException.class).hasMessageContaining("already measured in 'call'");
 
         scopes.inTenant(tenant, () -> planAdmin.retire(AUDIT, plan.id()));
-        assertThat(scopes.inTenant(tenant, () -> planQueries.list(dev.ngb.billing.pricing.domain.plan.PlanStatus.ACTIVE))).extracting(PricingPlanView::id).doesNotContain(plan.id().value());
-        assertThat(scopes.inTenant(tenant, () -> planQueries.list(dev.ngb.billing.pricing.domain.plan.PlanStatus.RETIRED))).extracting(PricingPlanView::id).contains(plan.id().value());
+        assertThat(scopes.inTenant(tenant, () -> planQueries.list(ListQueries.of(PlanListing.SCHEMA,
+                "filter[status][eq]", "ACTIVE", "limit", "200")).data())).extracting(PricingPlanView::id).doesNotContain(plan.id().value());
+        assertThat(scopes.inTenant(tenant, () -> planQueries.list(ListQueries.of(PlanListing.SCHEMA,
+                "filter[status][eq]", "RETIRED", "limit", "200")).data())).extracting(PricingPlanView::id).contains(plan.id().value());
         assertThatThrownBy(() -> scopes.inTenant(tenant, () -> planAdmin.publishVersion(AUDIT, plan.id(), new ManagePlanUseCase.Terms(
                 worlds.calls(metric), null, null, null, null, null, null)))).isInstanceOf(ConflictException.class).hasMessageContaining("retired");
         assertThatThrownBy(() -> scopes.inTenant(tenant, () -> planAdmin.retire(AUDIT, plan.id()))).isInstanceOf(ConflictException.class);

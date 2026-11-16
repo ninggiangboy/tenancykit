@@ -8,6 +8,7 @@ dependencies {
     "applicationImplementation"(project(":contexts:money"))
     "adapterImplementation"(project(":contexts:customer"))
     "adapterImplementation"(project(":contexts:money"))
+    "adapterImplementation"("dev.ngb:core-spring")
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-jooq")
     "adapterImplementation"(project(":libs:jooq-schema"))
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-webmvc")

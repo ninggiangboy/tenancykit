@@ -3,9 +3,13 @@ package dev.ngb.billing.coupon.adapter.redemption.web;
 import dev.ngb.billing.coupon.application.coupon.query.CouponQueries;
 import dev.ngb.billing.coupon.application.redemption.command.RedeemCouponUseCase;
 import dev.ngb.billing.coupon.application.redemption.command.RevokeRedemptionUseCase;
+import dev.ngb.billing.coupon.application.redemption.query.RedemptionListing;
 import dev.ngb.billing.coupon.application.redemption.query.RedemptionView;
 import dev.ngb.billing.coupon.domain.redemption.Redemption;
 import dev.ngb.billing.coupon.domain.redemption.RedemptionId;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.http.HttpHeaders;
@@ -115,11 +119,12 @@ public class RedemptionController {
         return redemptionResponse(result);
     }
 
+    /** Filter, sort and paging follow the list-query contract; the wallet is fixed by the path. */
     @GetMapping("/wallets/{walletId}/coupon-redemptions")
+    @Listing(RedemptionListing.class)
     @RequiresPermission(BillingPermissions.COUPON_READ)
-    public List<RedemptionResponse> redemptionsOfWallet(
-            @PathVariable String walletId, @RequestParam(defaultValue = "50") int limit, @RequestParam(defaultValue = "0") int offset) {
-        return queries.redemptionsOfWallet(UUID.fromString(walletId), currentActor.caller(), limit, offset).stream().map(RedemptionResponse::of).toList();
+    public Page<RedemptionResponse> redemptionsOfWallet(@PathVariable String walletId, ListQuery query) {
+        return queries.redemptionsOfWallet(UUID.fromString(walletId), currentActor.caller(), query).map(RedemptionResponse::of);
     }
 
     @GetMapping("/coupon-redemptions/{id}")

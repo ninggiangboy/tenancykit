@@ -1,16 +1,17 @@
 package dev.ngb.billing.usage.application.usage.query;
 
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.core.util.PageSize;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
-import dev.ngb.billing.usage.api.lookup.UsageEventId;
 import dev.ngb.billing.usage.api.lookup.UsageRecord;
 import dev.ngb.billing.usage.api.lookup.UsageTotal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /** Reads usage of the current tenant: history and totals for the API, and the period reads behind the usage lookup. */
 public class UsageQueries {
@@ -25,21 +26,24 @@ public class UsageQueries {
         this.customers = customers;
     }
 
-    public List<UsageEventView> history(CustomerId customerId, String metric, Instant from, Instant to, UsageEventId before, int limit) {
-        return history(customerId, metric, from, to, before, limit, null);
+    /** A Tenant System sees only the usage of the customers it mapped; any other caller sees the whole tenant. */
+    public Page<UsageEventView> history(ListQuery query, UUID caller) {
+        return unitOfWork.transactional(() -> {
+            List<UUID> visible = null;
+            if (caller != null) {
+                List<CustomerId> mapped = customers.mappedTo(caller);
+                if (mapped.isEmpty()) {
+                    return query.<UsageEventView>emptyPage();
+                }
+                visible = mapped.stream().map(CustomerId::value).toList();
+            }
+            return events.page(query, visible);
+        });
     }
 
-    /** Newest first; {@code metric}, {@code from}, {@code to} and {@code before} are optional filters. */
-    public List<UsageEventView> history(
-            CustomerId customerId, String metric, Instant from, Instant to, UsageEventId before, int limit, java.util.UUID caller) {
-        if (limit < 1) {
-            throw new IllegalArgumentException("limit must be at least 1");
-        }
-        requireWindow(from, to);
-        return unitOfWork.transactional(() -> {
-            requireCustomer(customerId, caller);
-            return events.page(customerId, metric, from, to, before, PageSize.of(limit));
-        });
+    /** Usage events of one customer, for the portal principal that is fixed to that customer. */
+    public Page<UsageEventView> historyForCustomer(CustomerId customerId, ListQuery query) {
+        return unitOfWork.transactional(() -> events.page(query, List.of(customerId.value())));
     }
 
     public List<UsageRecord> find(CustomerId customerId, Set<String> metrics, Instant from, Instant to, int limit) {

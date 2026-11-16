@@ -239,7 +239,7 @@ class CouponChargeIntegrationTest {
         assertThat(failedBody.get("status").asString()).isEqualTo("FAILED");
         assertThat(failedBody.get("discounts")).isEmpty();
         JsonNode redemption = world.body(world.call(HttpMethod.GET, acme.host(), system.token(),
-                "/api/v1/wallets/" + poor + "/coupon-redemptions", null));
+                "/api/v1/wallets/" + poor + "/coupon-redemptions", null)).get("data");
         assertThat(redemption.get(0).get("applicationsUsed").asInt()).as("a failed charge consumed nothing").isZero();
 
         scopes.runInTenant(new TenantId(UUID.fromString(acme.tenantId())), () -> creditWallet.credit(new CreditCommand(

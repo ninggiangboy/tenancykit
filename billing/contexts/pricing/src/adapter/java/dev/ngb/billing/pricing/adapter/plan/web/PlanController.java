@@ -8,9 +8,13 @@ import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.pricing.adapter.plan.json.RuleDto;
 import dev.ngb.billing.pricing.api.plan.BillingCycle;
 import dev.ngb.billing.pricing.application.plan.command.ManagePlanUseCase;
+import dev.ngb.billing.pricing.application.plan.query.PlanListing;
 import dev.ngb.billing.pricing.application.plan.query.PlanQueries;
 import dev.ngb.billing.pricing.application.plan.query.PlanVersionView;
 import dev.ngb.billing.pricing.application.plan.query.PricingPlanView;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.billing.pricing.domain.plan.PricingPlanId;
 import dev.ngb.billing.pricing.domain.plan.PlanStatus;
 import dev.ngb.billing.pricing.domain.plan.PlanVersion;
@@ -97,11 +101,12 @@ public class PlanController {
                 terms(request.version(), model)));
     }
 
-    /** Tenant systems list the plans they may offer: pass {@code status=ACTIVE}. */
+    /** Tenant systems list the plans they may offer; filter, sort and paging follow the list-query contract. */
     @GetMapping("/pricing-plans")
+    @Listing(PlanListing.class)
     @RequiresPermission(BillingPermissions.PRICING_READ)
-    public List<PlanResponse> listPlans(@RequestParam(required = false) String status) {
-        return planQueries.list(status == null ? null : PlanStatus.valueOf(status)).stream().map(v -> PlanResponse.ofView(v, json)).toList();
+    public Page<PlanResponse> listPlans(ListQuery query) {
+        return planQueries.list(query).map(view -> PlanResponse.ofView(view, json));
     }
 
     @GetMapping("/pricing-plans/{id}")

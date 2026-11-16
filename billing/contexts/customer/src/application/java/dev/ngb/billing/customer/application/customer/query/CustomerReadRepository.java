@@ -1,6 +1,8 @@
 package dev.ngb.billing.customer.application.customer.query;
 
 import dev.ngb.billing.sharedkernel.id.CustomerId;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -8,10 +10,8 @@ import java.util.UUID;
 /** Read-only projections of the current tenant's customers. */
 public interface CustomerReadRepository {
 
-    List<CustomerView> list();
-
-    /** Customers mapped to one Tenant System, with only that system's identity in the view. */
-    List<CustomerView> listMappedTo(UUID tenantSystemId);
+    /** One page of customers; {@code tenantSystemId} narrows it to the system's mappings, and null reads the whole tenant. */
+    Page<CustomerView> list(ListQuery query, UUID tenantSystemId);
 
     Optional<CustomerView> findById(CustomerId id);
 

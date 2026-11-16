@@ -6,8 +6,9 @@ import dev.ngb.billing.customer.api.lookup.CustomerLookup;
 import dev.ngb.billing.customer.api.lookup.CustomerVisibility;
 import dev.ngb.billing.sharedkernel.error.Messages;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -37,12 +38,12 @@ public class CouponQueries {
         return unitOfWork.transactional(() -> coupons.findById(id).orElseThrow(Messages::couponNotFound));
     }
 
-    public List<CouponView> coupons(String status, int limit, int offset) {
-        return unitOfWork.transactional(() -> coupons.list(status, clamp(limit), Math.max(0, offset)));
+    public Page<CouponView> coupons(ListQuery query) {
+        return unitOfWork.transactional(() -> coupons.list(query));
     }
 
-    public List<PromotionCodeView> codesOf(UUID couponId) {
-        return unitOfWork.transactional(() -> codes.findByCoupon(couponId));
+    public Page<PromotionCodeView> codesOf(UUID couponId, ListQuery query) {
+        return unitOfWork.transactional(() -> codes.list(query, couponId));
     }
 
     public PromotionCodeView code(UUID id) {
@@ -50,11 +51,11 @@ public class CouponQueries {
     }
 
     /** A wallet has one customer, so one visibility check on its first redemption covers the page. */
-    public List<RedemptionView> redemptionsOfWallet(UUID walletId, UUID caller, int limit, int offset) {
+    public Page<RedemptionView> redemptionsOfWallet(UUID walletId, UUID caller, ListQuery query) {
         return unitOfWork.transactional(() -> {
-            List<RedemptionView> found = redemptions.findByWallet(walletId, clamp(limit), Math.max(0, offset));
-            if (!found.isEmpty()) {
-                requireVisible(found.get(0), caller);
+            Page<RedemptionView> found = redemptions.list(query, walletId);
+            if (!found.data().isEmpty()) {
+                requireVisible(found.data().get(0), caller);
             }
             return found;
         });
@@ -70,9 +71,5 @@ public class CouponQueries {
 
     private void requireVisible(RedemptionView redemption, UUID caller) {
         visibility.requireVisible(new CustomerId(redemption.customerId()), caller, Messages::couponRedemptionNotFound);
-    }
-
-    private static int clamp(int limit) {
-        return Math.min(200, Math.max(1, limit));
     }
 }

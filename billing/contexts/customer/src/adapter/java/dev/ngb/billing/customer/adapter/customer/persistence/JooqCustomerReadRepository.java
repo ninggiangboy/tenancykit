@@ -8,11 +8,16 @@ import static org.jooq.impl.DSL.noCondition;
 import static org.jooq.impl.DSL.selectOne;
 
 import dev.ngb.billing.customer.application.customer.query.CustomerIdentityView;
+import dev.ngb.billing.customer.application.customer.query.CustomerListing;
 import dev.ngb.billing.customer.application.customer.query.CustomerReadRepository;
 import dev.ngb.billing.customer.application.customer.query.CustomerView;
 import dev.ngb.billing.customer.domain.customer.CustomerStatus;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing_jooq.tables.records.CustomersRecord;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.JooqLists;
+import dev.ngb.core.spring.query.ListBinding;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,27 +31,33 @@ import org.jooq.Record3;
 /** Selects customers and their mappings straight into views; the aggregate is never built. */
 public class JooqCustomerReadRepository implements CustomerReadRepository {
 
+    /** The customer fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding BINDING = ListBinding.of(CustomerListing.SCHEMA)
+            .column("id", CUSTOMERS.ID)
+            .column("display_name", CUSTOMERS.DISPLAY_NAME)
+            .column("email", CUSTOMERS.EMAIL)
+            .column("status", CUSTOMERS.STATUS)
+            .column("created_at", CUSTOMERS.CREATED_AT)
+            .build();
+
     private final DSLContext dsl;
+
+    /** @return the binding of the customer listing, for the test that checks every sortable field has an index */
+    public static ListBinding listBinding() {
+        return BINDING;
+    }
 
     public JooqCustomerReadRepository(DSLContext dsl) {
         this.dsl = dsl;
     }
 
     @Override
-    public List<CustomerView> list() {
-        List<CustomersRecord> rows = dsl.selectFrom(CUSTOMERS).orderBy(CUSTOMERS.CREATED_AT, CUSTOMERS.ID).fetch();
-        return withIdentities(rows, null);
-    }
-
-    @Override
-    public List<CustomerView> listMappedTo(UUID tenantSystemId) {
-        List<CustomersRecord> rows = dsl.select(CUSTOMERS.fields())
-                .from(CUSTOMERS)
-                .join(CUSTOMER_MAPPINGS)
-                .on(CUSTOMER_MAPPINGS.CUSTOMER_ID.eq(CUSTOMERS.ID).and(CUSTOMER_MAPPINGS.TENANT_SYSTEM_ID.eq(tenantSystemId)))
-                .orderBy(CUSTOMERS.CREATED_AT, CUSTOMERS.ID)
-                .fetchInto(CUSTOMERS);
-        return withIdentities(rows, tenantSystemId);
+    public Page<CustomerView> list(ListQuery query, UUID tenantSystemId) {
+        Condition scope = tenantSystemId == null ? noCondition() : exists(selectOne()
+                .from(CUSTOMER_MAPPINGS)
+                .where(CUSTOMER_MAPPINGS.CUSTOMER_ID.eq(CUSTOMERS.ID))
+                .and(CUSTOMER_MAPPINGS.TENANT_SYSTEM_ID.eq(tenantSystemId)));
+        return JooqLists.fetchPage(dsl, CUSTOMERS, scope, BINDING, query, rows -> withIdentities(rows, tenantSystemId));
     }
 
     @Override

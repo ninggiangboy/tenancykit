@@ -4,11 +4,14 @@ import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.invoicing.application.subscription.command.CancelSubscriptionUseCase;
 import dev.ngb.billing.invoicing.application.subscription.command.CreateSubscriptionUseCase;
 import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionHistoryEntryView;
+import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionListing;
 import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionQueries;
 import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionView;
 import dev.ngb.billing.invoicing.domain.subscription.Subscription;
 import dev.ngb.billing.invoicing.domain.subscription.SubscriptionId;
-import dev.ngb.billing.invoicing.domain.subscription.SubscriptionStatus;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -95,14 +98,12 @@ public class SubscriptionController {
         return ResponseEntity.status(result.replayed() ? HttpStatus.OK : HttpStatus.CREATED).body(subscriptionDetail(result.subscription().id().value()));
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link SubscriptionListing}. */
     @GetMapping("/subscriptions")
+    @Listing(SubscriptionListing.class)
     @RequiresPermission(BillingPermissions.SUBSCRIPTION_READ)
-    public List<SubscriptionResponse> subscriptions(
-            @RequestParam(required = false) String customerId, @RequestParam(required = false) String walletId, @RequestParam(required = false) String status,
-            @RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
-        return subscriptionQueries.list(customerId == null ? null : UUID.fromString(customerId), walletId == null ? null : UUID.fromString(walletId),
-                status == null ? null : SubscriptionStatus.valueOf(status), before == null ? null : UUID.fromString(before), limit, currentActor.caller())
-                .stream().map(SubscriptionResponse::of).toList();
+    public Page<SubscriptionResponse> subscriptions(ListQuery query) {
+        return subscriptionQueries.list(query, currentActor.caller()).map(SubscriptionResponse::of);
     }
 
     @GetMapping("/subscriptions/{id}")

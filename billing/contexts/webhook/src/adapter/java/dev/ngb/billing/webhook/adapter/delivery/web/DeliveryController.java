@@ -7,11 +7,15 @@ import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.webhook.application.delivery.command.ManageDeliveryUseCase;
 import dev.ngb.billing.webhook.application.delivery.query.DeliveryAttemptView;
+import dev.ngb.billing.webhook.application.delivery.query.DeliveryListing;
 import dev.ngb.billing.webhook.application.delivery.query.DeliveryQueries;
 import dev.ngb.billing.webhook.application.delivery.query.WebhookDeliveryView;
 import dev.ngb.billing.webhook.domain.delivery.DeliveryStatus;
 import dev.ngb.billing.webhook.domain.delivery.WebhookDelivery;
 import dev.ngb.billing.webhook.domain.delivery.WebhookDeliveryId;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -66,19 +70,12 @@ public class DeliveryController {
         this.currentActor = currentActor;
     }
 
-    /** Newest first. Pass the last {@code id} of a page as {@code before} for the next one. */
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link DeliveryListing}. */
     @GetMapping("/webhook-deliveries")
+    @Listing(DeliveryListing.class)
     @RequiresPermission(BillingPermissions.WEBHOOK_READ)
-    public List<DeliveryResponse> listDeliveries(
-            @RequestParam(required = false) String status, @RequestParam(required = false) String endpointId,
-            @RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
-        return deliveryQueries.list(
-                        status == null ? null : DeliveryStatus.valueOf(status),
-                        endpointId == null ? null : UUID.fromString(endpointId),
-                        before == null ? null : UUID.fromString(before),
-                        limit,
-                        currentActor.caller())
-                .stream().map(DeliveryResponse::ofView).toList();
+    public Page<DeliveryResponse> listDeliveries(ListQuery query) {
+        return deliveryQueries.list(query, currentActor.caller()).map(DeliveryResponse::ofView);
     }
 
     @GetMapping("/webhook-deliveries/{id}")

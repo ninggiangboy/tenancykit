@@ -5,8 +5,9 @@ import dev.ngb.billing.customer.application.customer.port.CustomerRepository;
 import dev.ngb.billing.customer.application.customer.service.TenantSystems;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.id.TenantSystemId;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
-import java.util.List;
 
 /** Read access to the current tenant's customers. */
 public class CustomerQueries {
@@ -19,13 +20,13 @@ public class CustomerQueries {
         this.customers = customers;
     }
 
-    public List<CustomerView> list() {
-        return list(null);
+    public Page<CustomerView> list(ListQuery query) {
+        return list(query, null);
     }
 
     /** A Tenant System sees only the customers mapped to it; any other caller sees the whole tenant. */
-    public List<CustomerView> list(TenantSystemId caller) {
-        return unitOfWork.transactional(() -> caller == null ? customers.list() : customers.listMappedTo(caller.value()));
+    public Page<CustomerView> list(ListQuery query, TenantSystemId caller) {
+        return unitOfWork.transactional(() -> customers.list(query, caller == null ? null : caller.value()));
     }
 
     public CustomerView get(CustomerId id) {

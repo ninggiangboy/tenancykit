@@ -2,7 +2,6 @@ package dev.ngb.billing.money.application.wallet.query;
 
 import dev.ngb.billing.sharedkernel.error.Messages;
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.core.util.PageSize;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
 import dev.ngb.billing.customer.api.lookup.CustomerVisibility;
 import dev.ngb.billing.money.api.charge.ChargeId;
@@ -14,6 +13,8 @@ import dev.ngb.billing.money.application.ledger.query.LedgerReadRepository;
 import dev.ngb.billing.money.application.reservation.query.ReservationReadRepository;
 import dev.ngb.billing.money.application.reservation.query.ReservationView;
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import java.util.List;
@@ -23,12 +24,12 @@ import java.util.function.Supplier;
 /** Read side of the money module, within the current tenant. */
 public class WalletQueries {
 
-
     private final UnitOfWork unitOfWork;
     private final WalletReadRepository wallets;
     private final LedgerReadRepository ledger;
     private final ReservationReadRepository reservations;
     private final ChargeReadRepository charges;
+    private final CustomerLookup customers;
     private final CustomerVisibility visibility;
 
     public WalletQueries(
@@ -39,6 +40,7 @@ public class WalletQueries {
         this.ledger = ledger;
         this.reservations = reservations;
         this.charges = charges;
+        this.customers = customers;
         this.visibility = new CustomerVisibility(customers);
     }
 
@@ -54,38 +56,40 @@ public class WalletQueries {
         });
     }
 
-    public List<WalletView> walletsOf(CustomerId customerId) {
-        return walletsOf(customerId, null);
+    /** A Tenant System sees only wallets of the customers it mapped; any other caller sees the whole tenant. */
+    public Page<WalletView> wallets(ListQuery query, UUID caller) {
+        return unitOfWork.transactional(() -> wallets.list(query, visibleCustomers(caller)));
     }
 
-    public List<WalletView> walletsOf(CustomerId customerId, UUID caller) {
-        return unitOfWork.transactional(() -> {
-            visibility.requireVisible(customerId, caller, Messages::customerNotFound);
-            return wallets.listByCustomer(customerId);
-        });
+    /** Wallets of one customer, for the portal principal that is fixed to that customer. */
+    public Page<WalletView> walletsForCustomer(CustomerId customerId, ListQuery query) {
+        return unitOfWork.transactional(() -> wallets.list(query, List.of(customerId.value())));
     }
 
-    /** Entries after {@code afterSequence}, oldest first, at most {@link PageSize#MAX}. */
-    public List<LedgerEntryView> ledger(WalletId walletId, long afterSequence, int limit) {
-        return ledger(walletId, afterSequence, limit, null);
+    public Page<LedgerEntryView> ledger(WalletId walletId, ListQuery query) {
+        return ledger(walletId, query, null);
     }
 
-    /** Charges of the given wallets, newest first; the caller has already established that they belong to the customer. */
-    public List<ChargeView> charges(List<WalletId> walletIds, UUID before, int limit) {
-        if (walletIds.isEmpty()) {
-            return List.of();
-        }
-        return unitOfWork.transactional(() -> charges.list(walletIds.stream().map(WalletId::value).toList(), before, PageSize.of(limit)));
-    }
-
-    public List<LedgerEntryView> ledger(WalletId walletId, long afterSequence, int limit, UUID caller) {
-        if (afterSequence < 0) {
-            throw new IllegalArgumentException("afterSequence must not be negative");
-        }
+    public Page<LedgerEntryView> ledger(WalletId walletId, ListQuery query, UUID caller) {
         return unitOfWork.transactional(() -> {
             visibleWallet(walletId, caller, Messages::walletNotFound);
-            return ledger.page(walletId, afterSequence, PageSize.of(limit));
+            return ledger.list(query, walletId);
         });
+    }
+
+    /** Charges of the wallets the caller may see. */
+    public Page<ChargeView> charges(ListQuery query, UUID caller) {
+        return unitOfWork.transactional(() -> charges.list(query, walletIdsFor(caller)));
+    }
+
+    /** Charges of one customer's wallets, for the portal principal that is fixed to that customer. */
+    public Page<ChargeView> chargesForCustomer(CustomerId customerId, ListQuery query) {
+        return unitOfWork.transactional(() -> charges.list(query, walletIdsOf(List.of(customerId.value()))));
+    }
+
+    /** Reservations of the wallets the caller may see. */
+    public Page<ReservationView> reservations(ListQuery query, UUID caller) {
+        return unitOfWork.transactional(() -> reservations.list(query, walletIdsFor(caller)));
     }
 
     public ReservationView reservation(ReservationId id) {
@@ -110,6 +114,31 @@ public class WalletQueries {
             visibleWallet(charge.walletId(), caller, Messages::chargeNotFound);
             return charge;
         });
+    }
+
+    /** @return the customers a listing may cover, or null for the whole tenant */
+    private List<UUID> visibleCustomers(UUID caller) {
+        if (caller == null) {
+            return null;
+        }
+        return customers.mappedTo(caller).stream().map(CustomerId::value).toList();
+    }
+
+    /** @return every wallet of {@code customerIds} */
+    private List<UUID> walletIdsOf(List<UUID> customerIds) {
+        return wallets.idsOf(customerIds);
+    }
+
+    /** The wallet ids a listing of the caller's customers may cover; null for the whole tenant, empty for none. */
+    private List<UUID> walletIdsFor(UUID caller) {
+        List<UUID> visible = visibleCustomers(caller);
+        if (visible == null) {
+            return null;
+        }
+        if (visible.isEmpty()) {
+            return List.of();
+        }
+        return walletIdsOf(visible);
     }
 
     /**

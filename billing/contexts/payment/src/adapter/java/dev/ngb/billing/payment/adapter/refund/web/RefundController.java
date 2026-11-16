@@ -2,10 +2,14 @@ package dev.ngb.billing.payment.adapter.refund.web;
 
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.payment.application.refund.command.RequestRefundUseCase;
+import dev.ngb.billing.payment.application.refund.query.RefundListing;
 import dev.ngb.billing.payment.application.refund.query.RefundQueries;
 import dev.ngb.billing.payment.application.refund.query.RefundView;
 import dev.ngb.billing.payment.domain.payment.PaymentId;
 import dev.ngb.billing.payment.domain.refund.Refund;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -79,6 +83,14 @@ public class RefundController {
         }
         RequestRefundUseCase.Result result = refund.execute(new RequestRefundUseCase.Command(PaymentId.of(id), amount, request.reason(), key, Audit.of(currentActor.get().auditName(), requestId)));
         return ResponseEntity.status(result.replayed() ? HttpStatus.OK : HttpStatus.CREATED).body(RefundResponse.of(result.refund()));
+    }
+
+    /** Filter, sort and paging follow the list-query contract; a Tenant System sees only its customers' refunds. */
+    @GetMapping("/refunds")
+    @Listing(RefundListing.class)
+    @RequiresPermission(BillingPermissions.PAYMENT_READ)
+    public Page<RefundResponse> refunds(ListQuery query) {
+        return refundQueries.list(query, currentActor.caller()).map(RefundResponse::ofView);
     }
 
     @GetMapping("/refunds/{id}")

@@ -1,6 +1,7 @@
 package dev.ngb.billing.coupon.application.redemption.query;
 
-import java.util.List;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -9,5 +10,5 @@ public interface RedemptionReadRepository {
 
     Optional<RedemptionView> findById(UUID id);
 
-    List<RedemptionView> findByWallet(UUID walletId, int limit, int offset);
+    Page<RedemptionView> list(ListQuery query, UUID walletId);
 }

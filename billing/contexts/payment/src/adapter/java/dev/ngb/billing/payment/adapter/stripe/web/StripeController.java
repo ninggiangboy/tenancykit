@@ -7,6 +7,7 @@ import dev.ngb.billing.payment.application.stripe.command.ReconcileStripeUseCase
 import dev.ngb.billing.payment.application.stripe.query.EventAttemptView;
 import dev.ngb.billing.payment.application.stripe.query.StripeConfigurationQueries;
 import dev.ngb.billing.payment.application.stripe.query.StripeConfigurationView;
+import dev.ngb.billing.payment.application.stripe.query.StripeEventListing;
 import dev.ngb.billing.payment.application.stripe.query.StripeEventQueries;
 import dev.ngb.billing.payment.application.stripe.query.StripeEventView;
 import dev.ngb.billing.payment.application.stripe.service.StripeConfigurationService;
@@ -19,6 +20,9 @@ import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -153,13 +157,12 @@ public class StripeController {
         configuration.disconnect(Audit.of(currentActor.get().auditName(), requestId));
     }
 
-    /** Newest first. Pass the last {@code id} of a page as {@code before} for the next one. */
+    /** Newest received first by default; filter, sort and paging follow the list-query contract. */
     @GetMapping("/stripe/events")
+    @Listing(StripeEventListing.class)
     @RequiresPermission(BillingPermissions.STRIPE_READ)
-    public List<EventResponse> events(
-            @RequestParam(required = false) String status, @RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
-        return eventQueries.list(status == null ? null : EventStatus.valueOf(status),
-                before == null ? null : UUID.fromString(before), limit).stream().map(EventResponse::ofView).toList();
+    public Page<EventResponse> events(ListQuery query) {
+        return eventQueries.list(query).map(EventResponse::ofView);
     }
 
     @GetMapping("/stripe/events/{id}")

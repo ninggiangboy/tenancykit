@@ -1,15 +1,14 @@
 package dev.ngb.billing.payment.application.payment.query;
 
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.core.util.PageSize;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
 import dev.ngb.billing.customer.api.lookup.CustomerVisibility;
 import dev.ngb.billing.payment.application.refund.query.RefundReadRepository;
 import dev.ngb.billing.payment.application.refund.query.RefundView;
-import dev.ngb.billing.payment.domain.payment.PaymentStatus;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
-import dev.ngb.billing.sharedkernel.id.WalletId;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,22 +31,18 @@ public class PaymentQueries {
         this.visibility = new CustomerVisibility(customers);
     }
 
-    public List<PaymentView> list(WalletId walletId, PaymentStatus status, UUID before, int limit) {
-        return list(walletId, status, before, limit, null);
-    }
-
     /** A Tenant System sees only payments of the customers it mapped; any other caller sees the whole tenant. */
-    public List<PaymentView> list(WalletId walletId, PaymentStatus status, UUID before, int limit, UUID caller) {
+    public Page<PaymentView> list(ListQuery query, UUID caller) {
         return unitOfWork.transactional(() -> {
             List<UUID> visible = null;
             if (caller != null) {
                 List<CustomerId> mapped = customers.mappedTo(caller);
                 if (mapped.isEmpty()) {
-                    return List.of();
+                    return query.<PaymentView>emptyPage();
                 }
                 visible = mapped.stream().map(CustomerId::value).toList();
             }
-            return payments.list(walletId, status, before, PageSize.of(limit), visible);
+            return payments.list(query, visible);
         });
     }
 
@@ -55,9 +50,9 @@ public class PaymentQueries {
         return payment(id, null);
     }
 
-    /** Payments of one customer, newest first, for the portal principal that is fixed to that customer. */
-    public List<PaymentView> listForCustomer(CustomerId customerId, UUID before, int limit) {
-        return unitOfWork.transactional(() -> payments.list(null, null, before, PageSize.of(limit), List.of(customerId.value())));
+    /** Payments of one customer, for the portal principal that is fixed to that customer. */
+    public Page<PaymentView> listForCustomer(CustomerId customerId, ListQuery query) {
+        return unitOfWork.transactional(() -> payments.list(query, List.of(customerId.value())));
     }
 
     /** The payment only when it belongs to {@code customerId}. */

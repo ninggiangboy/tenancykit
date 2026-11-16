@@ -109,7 +109,7 @@ class PortalHttpIntegrationTest {
         assertThat(sessionBody.get("customerId").asString()).isEqualTo(customerA);
         assertThat(sessionBody.get("permissions").toString()).contains("customer:view").contains("wallet:view");
 
-        JsonNode wallets = portal.body("/portal/api/wallets");
+        JsonNode wallets = portal.body("/portal/api/wallets").get("data");
         assertThat(wallets.size()).isEqualTo(1);
         assertThat(wallets.get(0).get("id").asString()).isEqualTo(walletA);
         assertThat(portal.status(HttpMethod.GET, "/portal/api/wallets/" + walletB, null)).isEqualTo(404);

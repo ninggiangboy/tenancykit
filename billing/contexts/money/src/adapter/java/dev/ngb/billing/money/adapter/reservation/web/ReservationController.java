@@ -6,8 +6,12 @@ import dev.ngb.billing.money.api.reservation.ReservationResult;
 import dev.ngb.billing.money.api.reservation.ReserveBudgetCommand;
 import dev.ngb.billing.money.application.reservation.command.ReleaseReservationUseCase;
 import dev.ngb.billing.money.application.reservation.command.ReserveBudgetUseCase;
+import dev.ngb.billing.money.application.reservation.query.ReservationListing;
 import dev.ngb.billing.money.application.reservation.query.ReservationView;
 import dev.ngb.billing.money.application.wallet.query.WalletQueries;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -66,6 +70,14 @@ public class ReservationController {
                 Duration.ofSeconds(request.ttlSeconds() == null ? 900 : request.ttlSeconds()), request.reference(), key, currentActor.caller()));
         return ResponseEntity.status(result.replayed() ? HttpStatus.OK : HttpStatus.CREATED)
                 .body(ReservationResponse.ofView(queries.reservation(result.id(), currentActor.caller())));
+    }
+
+    /** Filter, sort and paging follow the list-query contract; a Tenant System sees only its customers' wallets. */
+    @GetMapping("/reservations")
+    @Listing(ReservationListing.class)
+    @RequiresPermission(BillingPermissions.WALLET_READ)
+    public Page<ReservationResponse> reservations(ListQuery query) {
+        return queries.reservations(query, currentActor.caller()).map(ReservationResponse::ofView);
     }
 
     @GetMapping("/reservations/{id}")

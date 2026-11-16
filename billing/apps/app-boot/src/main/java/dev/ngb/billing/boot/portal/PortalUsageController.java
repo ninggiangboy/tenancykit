@@ -3,7 +3,11 @@ package dev.ngb.billing.boot.portal;
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
 import dev.ngb.billing.usage.api.lookup.UsageTotal;
+import dev.ngb.billing.usage.application.usage.query.UsageEventListing;
 import dev.ngb.billing.usage.application.usage.query.UsageEventView;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -39,12 +43,12 @@ public class PortalUsageController {
         this.portal = portal;
     }
 
+    /** Filter, sort and paging follow the list-query contract; the customer is fixed by the portal session. */
     @GetMapping("/history")
+    @Listing(UsageEventListing.class)
     @RequiresPortalPermission(PortalPermission.USAGE_VIEW)
-    public List<UsageEventResponse> history(
-            @RequestParam(required = false) String metric, @RequestParam(required = false) Instant from, @RequestParam(required = false) Instant to,
-            @RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
-        return portal.usage(metric, from, to, before, limit).stream().map(UsageEventResponse::of).toList();
+    public Page<UsageEventResponse> history(ListQuery query) {
+        return portal.usage(query).map(UsageEventResponse::of);
     }
 
     @GetMapping("/totals")

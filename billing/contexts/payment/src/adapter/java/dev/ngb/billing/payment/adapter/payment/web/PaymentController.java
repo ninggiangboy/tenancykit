@@ -4,6 +4,7 @@ import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.payment.adapter.refund.web.RefundController.RefundResponse;
 import dev.ngb.billing.payment.application.payment.command.CreateTopUpUseCase;
 import dev.ngb.billing.payment.application.payment.query.PaymentAttemptView;
+import dev.ngb.billing.payment.application.payment.query.PaymentListing;
 import dev.ngb.billing.payment.application.payment.query.PaymentQueries;
 import dev.ngb.billing.payment.application.payment.query.PaymentView;
 import dev.ngb.billing.payment.domain.payment.Payment;
@@ -12,6 +13,9 @@ import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
@@ -29,7 +33,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Wallet top-ups and the payment history. Money-moving POSTs need an {@code Idempotency-Key}. Creating a payment never changes a balance; only a verified Stripe event does. */
@@ -95,13 +98,12 @@ public class PaymentController {
         return ResponseEntity.status(result.replayed() ? HttpStatus.OK : HttpStatus.CREATED).body(PaymentResponse.of(result.payment()));
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link PaymentListing}. */
     @GetMapping("/payments")
+    @Listing(PaymentListing.class)
     @RequiresPermission(BillingPermissions.PAYMENT_READ)
-    public List<PaymentResponse> payments(
-            @RequestParam(required = false) String walletId, @RequestParam(required = false) String status, @RequestParam(required = false) String before,
-            @RequestParam(defaultValue = "50") int limit) {
-        return queries.list(walletId == null ? null : WalletId.of(walletId), status == null ? null : PaymentStatus.valueOf(status),
-                before == null ? null : UUID.fromString(before), limit, currentActor.caller()).stream().map(PaymentResponse::ofView).toList();
+    public Page<PaymentResponse> payments(ListQuery query) {
+        return queries.list(query, currentActor.caller()).map(PaymentResponse::ofView);
     }
 
     @GetMapping("/payments/{id}")

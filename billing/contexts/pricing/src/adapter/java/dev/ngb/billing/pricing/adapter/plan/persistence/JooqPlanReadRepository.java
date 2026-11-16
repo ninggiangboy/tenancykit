@@ -5,6 +5,7 @@ import static dev.ngb.billing_jooq.Tables.PRICING_PLAN_VERSIONS;
 import static org.jooq.impl.DSL.noCondition;
 
 import dev.ngb.billing.pricing.api.plan.BillingCycle;
+import dev.ngb.billing.pricing.application.plan.query.PlanListing;
 import dev.ngb.billing.pricing.application.plan.query.PlanReadRepository;
 import dev.ngb.billing.pricing.application.plan.query.PlanVersionView;
 import dev.ngb.billing.pricing.application.plan.query.PricingPlanView;
@@ -13,6 +14,10 @@ import dev.ngb.billing.pricing.domain.plan.PlanStatus;
 import dev.ngb.billing.pricing.domain.plan.RoundingPolicy;
 import dev.ngb.billing_jooq.tables.records.PricingPlanVersionsRecord;
 import dev.ngb.billing_jooq.tables.records.PricingPlansRecord;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.JooqLists;
+import dev.ngb.core.spring.query.ListBinding;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,19 +29,32 @@ import org.jooq.DSLContext;
 /** Selects plans and their versions straight into views; no domain plan is built. */
 public class JooqPlanReadRepository implements PlanReadRepository {
 
+    /** The plan fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding BINDING = ListBinding.of(PlanListing.SCHEMA)
+            .column("id", PRICING_PLANS.ID)
+            .column("code", PRICING_PLANS.CODE)
+            .column("name", PRICING_PLANS.NAME)
+            .column("model", PRICING_PLANS.MODEL)
+            .column("currency", PRICING_PLANS.CURRENCY)
+            .column("status", PRICING_PLANS.STATUS)
+            .column("created_at", PRICING_PLANS.CREATED_AT)
+            .column("retired_at", PRICING_PLANS.RETIRED_AT)
+            .build();
+
     private final DSLContext dsl;
+
+    /** @return the binding of the plan listing, for the test that checks every sortable field has an index */
+    public static ListBinding listBinding() {
+        return BINDING;
+    }
 
     public JooqPlanReadRepository(DSLContext dsl) {
         this.dsl = dsl;
     }
 
     @Override
-    public List<PricingPlanView> list(PlanStatus status) {
-        List<PricingPlansRecord> rows = dsl.selectFrom(PRICING_PLANS)
-                .where(status == null ? noCondition() : PRICING_PLANS.STATUS.eq(status.name()))
-                .orderBy(PRICING_PLANS.ID.desc())
-                .fetch();
-        return withVersions(rows);
+    public Page<PricingPlanView> list(ListQuery query) {
+        return JooqLists.fetchPage(dsl, PRICING_PLANS, noCondition(), BINDING, query, this::withVersions);
     }
 
     @Override

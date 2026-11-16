@@ -9,11 +9,15 @@ import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.billing.webhook.application.endpoint.command.CreateEndpointUseCase;
 import dev.ngb.billing.webhook.application.endpoint.command.ManageEndpointUseCase;
+import dev.ngb.billing.webhook.application.endpoint.query.EndpointListing;
 import dev.ngb.billing.webhook.application.endpoint.query.EndpointQueries;
 import dev.ngb.billing.webhook.application.endpoint.query.WebhookEndpointView;
 import dev.ngb.billing.webhook.domain.endpoint.EndpointStatus;
 import dev.ngb.billing.webhook.domain.endpoint.WebhookEndpoint;
 import dev.ngb.billing.webhook.domain.endpoint.WebhookEndpointId;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -80,10 +84,12 @@ public class EndpointController {
         return new EndpointWithSecretResponse(EndpointResponse.of(result.endpoint()), result.signingSecret());
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link EndpointListing}. */
     @GetMapping("/webhook-endpoints")
+    @Listing(EndpointListing.class)
     @RequiresPermission(BillingPermissions.WEBHOOK_READ)
-    public List<EndpointResponse> listEndpoints() {
-        return endpointQueries.list(currentActor.caller()).stream().map(EndpointResponse::ofView).toList();
+    public Page<EndpointResponse> listEndpoints(ListQuery query) {
+        return endpointQueries.list(query, currentActor.caller()).map(EndpointResponse::ofView);
     }
 
     @GetMapping("/webhook-endpoints/{id}")

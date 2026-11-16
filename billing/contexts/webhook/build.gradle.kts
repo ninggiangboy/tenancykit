@@ -5,6 +5,7 @@ plugins {
 dependencies {
     // The platform contract (scope, actor, permissions, audit, shared errors).
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-jooq")
+    "adapterImplementation"("dev.ngb:core-spring")
     "adapterImplementation"(project(":libs:jooq-schema"))
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-webmvc")
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-jackson")

@@ -14,6 +14,7 @@ import dev.ngb.core.audit.Audit;
 import dev.ngb.core.error.ConflictException;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.support.OwnerDatabase;
+import dev.ngb.billing.support.ListQueries;
 import dev.ngb.billing.support.PostgresContainerConfig;
 import dev.ngb.billing.support.ScopeTestSupport;
 import dev.ngb.billing.support.TestEvent;
@@ -23,6 +24,7 @@ import dev.ngb.billing.webhook.application.delivery.command.DeliverWebhooksUseCa
 import dev.ngb.billing.webhook.application.delivery.command.ManageDeliveryUseCase;
 import dev.ngb.billing.webhook.application.delivery.port.WebhookDeliveryRepository;
 import dev.ngb.billing.webhook.application.delivery.query.DeliveryQueries;
+import dev.ngb.billing.webhook.application.delivery.query.DeliveryListing;
 import dev.ngb.billing.webhook.application.delivery.query.WebhookDeliveryView;
 import dev.ngb.billing.webhook.application.endpoint.command.CreateEndpointUseCase;
 import dev.ngb.billing.webhook.application.endpoint.command.ManageEndpointUseCase;
@@ -107,7 +109,8 @@ class WebhookDeliveryIntegrationTest {
     }
 
     private List<WebhookDeliveryView> deliveriesOf(TenantId tenant, WebhookEndpointId endpoint) {
-        return scopes.inTenant(tenant, () -> deliveryQueries.list(null, endpoint.value(), null, 200));
+        return scopes.inTenant(tenant, () -> deliveryQueries.list(ListQueries.of(DeliveryListing.SCHEMA,
+                "filter[endpoint_id][eq]", endpoint.value().toString(), "limit", "200"), null).data());
     }
 
     /** The receiver-side recipe from contracts/events/README.md, written independently of the production signer. */
@@ -470,13 +473,21 @@ class WebhookDeliveryIntegrationTest {
                 // drain
             }
             send(tenant);
-            assertThat(scopes.inTenant(tenant, () -> deliveryQueries.list(DeliveryStatus.SUCCEEDED, hook.endpoint().id().value(), null, 200))).hasSize(5);
-            assertThat(scopes.inTenant(tenant, () -> deliveryQueries.list(DeliveryStatus.DEAD, hook.endpoint().id().value(), null, 200))).isEmpty();
-            List<WebhookDeliveryView> first = scopes.inTenant(tenant, () -> deliveryQueries.list(null, hook.endpoint().id().value(), null, 2));
-            List<WebhookDeliveryView> second = scopes.inTenant(tenant, () -> deliveryQueries.list(null, hook.endpoint().id().value(), first.get(1).id(), 2));
-            assertThat(first).hasSize(2);
-            assertThat(second).hasSize(2);
-            assertThat(second.get(0).id()).isLessThan(first.get(1).id());
+            assertThat(scopes.inTenant(tenant, () -> deliveryQueries.list(ListQueries.of(DeliveryListing.SCHEMA,
+                    "filter[endpoint_id][eq]", hook.endpoint().id().value().toString(),
+                    "filter[status][eq]", "SUCCEEDED", "limit", "200"), null).data())).hasSize(5);
+            assertThat(scopes.inTenant(tenant, () -> deliveryQueries.list(ListQueries.of(DeliveryListing.SCHEMA,
+                    "filter[endpoint_id][eq]", hook.endpoint().id().value().toString(),
+                    "filter[status][eq]", "DEAD", "limit", "200"), null).data())).isEmpty();
+            var first = scopes.inTenant(tenant, () -> deliveryQueries.list(ListQueries.of(DeliveryListing.SCHEMA,
+                    "filter[endpoint_id][eq]", hook.endpoint().id().value().toString(),
+                    "limit", "2", "page_info", "true"), null));
+            var second = scopes.inTenant(tenant, () -> deliveryQueries.list(ListQueries.of(DeliveryListing.SCHEMA,
+                    "filter[endpoint_id][eq]", hook.endpoint().id().value().toString(),
+                    "limit", "2", "page_info", "true", "cursor", first.page().nextCursor()), null));
+            assertThat(first.data()).hasSize(2);
+            assertThat(second.data()).hasSize(2);
+            assertThat(second.data().get(0).id()).isLessThan(first.data().get(1).id());
             WebhookDeliveryId unknown = new WebhookDeliveryId(UUID.randomUUID());
             org.assertj.core.api.Assertions.assertThatThrownBy(() -> scopes.inTenant(tenant, () -> deliveryQueries.get(unknown.value())))
                     .isInstanceOf(dev.ngb.core.error.NotFoundException.class);

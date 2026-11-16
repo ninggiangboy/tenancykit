@@ -1,6 +1,8 @@
 package dev.ngb.billing.money.application.charge.query;
 
 import dev.ngb.billing.money.api.charge.ChargeId;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -10,6 +12,6 @@ public interface ChargeReadRepository {
 
     Optional<ChargeView> findById(ChargeId id);
 
-    /** Newest first; {@code before} is the id of the last charge of the previous page. */
-    List<ChargeView> list(List<UUID> walletIds, UUID before, int limit);
+    /** One page of charges of {@code walletIds}; null reads the whole tenant. */
+    Page<ChargeView> list(ListQuery query, List<UUID> walletIds);
 }

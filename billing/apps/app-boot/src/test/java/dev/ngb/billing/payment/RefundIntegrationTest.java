@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import dev.ngb.billing.money.api.charge.ChargeCommand;
 import dev.ngb.billing.money.api.charge.ChargeStatus;
 import dev.ngb.billing.payment.PaymentTestWorld.PayWorld;
+import dev.ngb.billing.payment.application.incident.query.IncidentListing;
 import dev.ngb.billing.payment.application.refund.command.RequestRefundUseCase;
 import dev.ngb.billing.payment.application.stripe.command.ReceiveStripeWebhookUseCase.Disposition;
 import dev.ngb.billing.payment.application.stripe.exception.ProviderRejectedException;
@@ -16,6 +17,7 @@ import dev.ngb.billing.payment.domain.refund.RefundStatus;
 import dev.ngb.billing.payment.application.refund.query.RefundView;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.support.FakePaymentProvider;
+import dev.ngb.billing.support.ListQueries;
 import dev.ngb.billing.support.StripeEvents;
 import dev.ngb.billing.support.UncommittedRace;
 import dev.ngb.core.error.ConflictException;
@@ -315,7 +317,8 @@ class RefundIntegrationTest extends PaymentWorld {
         deliver(w, StripeEvents.refund(StripeEvents.newEventId(), null, "re_dashboard", p.paymentIntentId(), null, "succeeded", 1000));
 
         assertThat(balance(w)).as("Billing does not guess which wallet movement a foreign refund implies").isEqualTo(5000);
-        assertThat(scopes.inTenant(w.money().tenant().id(), () -> incidentQueries.list(true, 10))).extracting(i -> i.kind().name())
+        assertThat(scopes.inTenant(w.money().tenant().id(), () -> incidentQueries.list(ListQueries.of(IncidentListing.SCHEMA,
+                "filter[resolved_at][is_null]", "true", "limit", "10")).data())).extracting(i -> i.kind().name())
                 .contains("RECONCILIATION_MISMATCH");
     }
 }

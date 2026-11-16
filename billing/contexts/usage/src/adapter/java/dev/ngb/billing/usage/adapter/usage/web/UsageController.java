@@ -10,10 +10,14 @@ import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.usage.api.lookup.UsageEventId;
 import dev.ngb.billing.usage.api.lookup.UsageTotal;
 import dev.ngb.billing.usage.application.usage.command.RecordUsageUseCase;
+import dev.ngb.billing.usage.application.usage.query.UsageEventListing;
 import dev.ngb.billing.usage.application.usage.query.UsageEventView;
 import dev.ngb.billing.usage.application.usage.query.UsageQueries;
 import dev.ngb.billing.usage.domain.usage.UsageEvent;
 import dev.ngb.billing.usage.domain.usage.UsageTrace;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashSet;
@@ -106,14 +110,12 @@ public class UsageController {
                 .map(RecordedResponse::of).toList());
     }
 
-    /** Newest first. Pass the last {@code id} of a page as {@code before} for the next one. */
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link UsageEventListing}. */
     @GetMapping("/usage-events")
+    @Listing(UsageEventListing.class)
     @RequiresPermission(BillingPermissions.USAGE_READ)
-    public List<UsageEventResponse> history(
-            @RequestParam String customerId, @RequestParam(required = false) String metric, @RequestParam(required = false) Instant from,
-            @RequestParam(required = false) Instant to, @RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
-        return queries.history(CustomerId.of(customerId), metric, from, to, before == null ? null : UsageEventId.of(before), limit, currentActor.caller()).stream()
-                .map(UsageEventResponse::ofView).toList();
+    public Page<UsageEventResponse> history(ListQuery query) {
+        return queries.history(query, currentActor.caller()).map(UsageEventResponse::ofView);
     }
 
     /** Quantity and event count per metric over {@code [from, to)}, for rating and for invoices. */

@@ -199,16 +199,17 @@ class MoneyHttpIntegrationTest {
         for (int i = 0; i < 5; i++) {
             credit(wallet, 10, "USD");
         }
-        JsonNode firstPage = world.body(world.call(HttpMethod.GET, acme.host(), key, "/api/v1/wallets/" + wallet + "/ledger?limit=3", null));
+        JsonNode firstPage = world.body(world.call(HttpMethod.GET, acme.host(), key,
+                "/api/v1/wallets/" + wallet + "/ledger?limit=3", null)).get("data");
         assertThat(firstPage).hasSize(3);
         assertThat(firstPage.get(0).get("sequence").asLong()).isEqualTo(1);
         JsonNode secondPage = world.body(world.call(HttpMethod.GET, acme.host(), key,
-                "/api/v1/wallets/" + wallet + "/ledger?afterSequence=3&limit=3", null));
+                "/api/v1/wallets/" + wallet + "/ledger?filter[seq][gt]=3&limit=3", null)).get("data");
         assertThat(secondPage).hasSize(2);
         assertThat(secondPage.get(0).get("sequence").asLong()).isEqualTo(4);
         assertThat(secondPage.get(0).get("type").asString()).isEqualTo("CREDIT");
         assertThat(secondPage.get(0).get("amount").get("amount").asLong()).isEqualTo(10);
-        assertThat(world.body(world.call(HttpMethod.GET, acme.host(), key, "/api/v1/wallets/" + wallet + "/ledger?limit=0", null)))
+        assertThat(world.body(world.call(HttpMethod.GET, acme.host(), key, "/api/v1/wallets/" + wallet + "/ledger?limit=0", null)).get("data"))
                 .as("a page size below one is raised to one")
                 .hasSize(1);
     }
@@ -263,7 +264,7 @@ class MoneyHttpIntegrationTest {
         assertThat(world.status(HttpMethod.POST, acme.host(), viewer, "/api/v1/wallets", HttpWorld.Map2.of("customerId", customerId, "currency", "USD", "mode", "PREPAID"))).isEqualTo(403);
 
         assertThat(world.status(HttpMethod.GET, acme.host(), nobody, "/api/v1/wallets/" + wallet, null)).isEqualTo(403);
-        assertThat(world.status(HttpMethod.GET, acme.host(), nobody, "/api/v1/wallets?customerId=" + customerId, null)).isEqualTo(403);
+        assertThat(world.status(HttpMethod.GET, acme.host(), nobody, "/api/v1/wallets?filter[customer_id][eq]=" + customerId, null)).isEqualTo(403);
 
         assertThat(world.status(HttpMethod.GET, acme.host(), readOnlyKey, "/api/v1/wallets/" + wallet, null)).isEqualTo(200);
         assertThat(post(acme, readOnlyKey, "r-" + UUID.randomUUID(), "/api/v1/charges", HttpWorld.Map2.of("walletId", wallet, "amount", 1, "currency", "USD")).getResponse().getStatus()).isEqualTo(403);
@@ -278,7 +279,8 @@ class MoneyHttpIntegrationTest {
         credit(wallet, 1_000, "USD");
         assertThat(world.status(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/wallets/" + wallet, null)).isEqualTo(404);
         assertThat(world.status(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/wallets/" + wallet + "/ledger", null)).isEqualTo(404);
-        assertThat(world.status(HttpMethod.GET, acme.host(), acme.adminToken(), "/api/v1/wallets?customerId=" + customerId, null)).isEqualTo(200);
-        assertThat(world.body(world.call(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/wallets?customerId=" + customerId, null))).isEmpty();
+        assertThat(world.status(HttpMethod.GET, acme.host(), acme.adminToken(), "/api/v1/wallets?filter[customer_id][eq]=" + customerId, null)).isEqualTo(200);
+        assertThat(world.body(world.call(HttpMethod.GET, globex.host(), globex.adminToken(),
+                "/api/v1/wallets?filter[customer_id][eq]=" + customerId, null)).get("data")).isEmpty();
     }
 }

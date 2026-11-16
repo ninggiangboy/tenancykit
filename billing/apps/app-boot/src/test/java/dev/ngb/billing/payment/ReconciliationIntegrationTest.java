@@ -4,14 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.billing.payment.PaymentTestWorld.PayWorld;
+import dev.ngb.billing.payment.application.incident.query.IncidentListing;
 import dev.ngb.billing.payment.application.payment.port.PaymentProvider;
 import dev.ngb.billing.payment.application.stripe.command.ReconcileStripeUseCase;
+import dev.ngb.billing.payment.application.stripe.query.StripeEventListing;
 import dev.ngb.billing.payment.domain.payment.Payment;
 import dev.ngb.billing.payment.domain.payment.PaymentStatus;
 import dev.ngb.billing.payment.domain.refund.Refund;
 import dev.ngb.billing.payment.domain.refund.RefundStatus;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.billing.support.EventSchemas;
+import dev.ngb.billing.support.ListQueries;
 import dev.ngb.billing.support.StripeEvents;
 import dev.ngb.core.error.NotFoundException;
 import java.util.LinkedHashMap;
@@ -40,7 +43,8 @@ class ReconciliationIntegrationTest extends PaymentWorld {
 
         assertThat(report.corrected()).isEqualTo(1);
         assertThat(balance(w)).isEqualTo(5000);
-        assertThat(scopes.inTenant(w.money().tenant().id(), () -> incidentQueries.list(true, 10))).extracting(i -> i.subject())
+        assertThat(scopes.inTenant(w.money().tenant().id(), () -> incidentQueries.list(ListQueries.of(IncidentListing.SCHEMA,
+                "filter[resolved_at][is_null]", "true", "limit", "10")).data())).extracting(i -> i.subject())
                 .anyMatch(subject -> subject.startsWith("checkout/" + unreadable.checkoutSessionId()));
     }
 
@@ -57,7 +61,8 @@ class ReconciliationIntegrationTest extends PaymentWorld {
         assertThat(reload(w, p).status()).isEqualTo(PaymentStatus.SUCCEEDED);
         assertThat(balance(w)).isEqualTo(5000);
         assertThat(outbox(w, "payment.succeeded")).isEqualTo(1);
-        assertThat(scopes.inTenant(w.money().tenant().id(), () -> incidentQueries.list(true, 10))).hasSize(1);
+        assertThat(scopes.inTenant(w.money().tenant().id(), () -> incidentQueries.list(ListQueries.of(IncidentListing.SCHEMA,
+                "filter[resolved_at][is_null]", "true", "limit", "10")).data())).hasSize(1);
 
         ReconcileStripeUseCase.Report again = scopes.inTenant(w.money().tenant().id(), reconcile::runOnce);
         assertThat(again.corrected()).isZero();
@@ -110,6 +115,10 @@ class ReconciliationIntegrationTest extends PaymentWorld {
         assertThat(balance(w)).isZero();
     }
 
+    private static dev.ngb.core.query.ListQuery everything() {
+        return dev.ngb.core.query.QueryParser.parse(dev.ngb.billing.payment.application.payment.query.PaymentListing.SCHEMA, java.util.Map.of());
+    }
+
     @Test
     void aTenantCannotSeeAnotherTenantsPaymentsOrEvents() {
         PayWorld a = worlds.direct(0);
@@ -117,8 +126,9 @@ class ReconciliationIntegrationTest extends PaymentWorld {
         Payment p = startTopUp(a, 5000);
         paid(a, p, StripeEvents.newEventId(), "pi_1" + sfx);
 
-        assertThat(scopes.inTenant(b.money().tenant().id(), () -> queries.list((WalletId) null, null, null, 50))).isEmpty();
-        assertThat(scopes.inTenant(b.money().tenant().id(), () -> eventQueries.list(null, null, 50))).isEmpty();
+        assertThat(scopes.inTenant(b.money().tenant().id(), () -> queries.list(everything(), null).data())).isEmpty();
+        assertThat(scopes.inTenant(b.money().tenant().id(), () -> eventQueries.list(
+                ListQueries.of(StripeEventListing.SCHEMA, "limit", "50")).data())).isEmpty();
         assertThatThrownBy(() -> scopes.inTenant(b.money().tenant().id(), () -> queries.payment(p.id().value())))
                 .isInstanceOf(NotFoundException.class);
     }

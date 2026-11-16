@@ -1,9 +1,9 @@
 package dev.ngb.billing.webhook.application.delivery.query;
 
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.core.util.PageSize;
 import dev.ngb.core.error.NotFoundException;
-import dev.ngb.billing.webhook.domain.delivery.DeliveryStatus;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,16 +21,9 @@ public class DeliveryQueries {
         this.deliveries = deliveries;
     }
 
-    public List<WebhookDeliveryView> list(DeliveryStatus status, UUID endpointId, UUID before, int limit) {
-        return list(status, endpointId, before, limit, null);
-    }
-
-    /** Newest first. {@code status}, {@code endpointId} and {@code before} (the last id of the previous page) are optional filters. */
-    public List<WebhookDeliveryView> list(DeliveryStatus status, UUID endpointId, UUID before, int limit, UUID caller) {
-        if (limit < 1) {
-            throw new IllegalArgumentException("limit must be at least 1");
-        }
-        return unitOfWork.transactional(() -> deliveries.list(status, endpointId, before, PageSize.of(limit), caller));
+    /** A Tenant System sees only the deliveries of its own endpoints; any other caller sees the whole tenant. */
+    public Page<WebhookDeliveryView> list(ListQuery query, UUID caller) {
+        return unitOfWork.transactional(() -> deliveries.list(query, caller));
     }
 
     public Detail get(UUID id) {

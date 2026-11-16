@@ -5,6 +5,7 @@ import static dev.ngb.billing_jooq.Tables.SUBSCRIPTION_EVENTS;
 import static org.jooq.impl.DSL.noCondition;
 
 import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionHistoryEntryView;
+import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionListing;
 import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionReadRepository;
 import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionView;
 import dev.ngb.billing.invoicing.domain.subscription.SubscriptionHistoryEntry;
@@ -15,6 +16,10 @@ import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.billing_jooq.tables.records.SubscriptionsRecord;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.JooqLists;
+import dev.ngb.core.spring.query.ListBinding;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -25,27 +30,43 @@ import org.jooq.DSLContext;
 /** Selects subscriptions and their history straight into views; no aggregate is built. */
 public class JooqSubscriptionReadRepository implements SubscriptionReadRepository {
 
+    /** The subscription fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding BINDING = ListBinding.of(SubscriptionListing.SCHEMA)
+            .column("id", SUBSCRIPTIONS.ID)
+            .column("customer_id", SUBSCRIPTIONS.CUSTOMER_ID)
+            .column("wallet_id", SUBSCRIPTIONS.WALLET_ID)
+            .column("plan_id", SUBSCRIPTIONS.PLAN_ID)
+            .column("plan_code", SUBSCRIPTIONS.PLAN_CODE)
+            .column("cycle", SUBSCRIPTIONS.CYCLE)
+            .column("status", SUBSCRIPTIONS.STATUS)
+            .column("anchor", SUBSCRIPTIONS.ANCHOR)
+            .column("periods_charged", SUBSCRIPTIONS.PERIODS_CHARGED)
+            .column("cancel_at_period_end", SUBSCRIPTIONS.CANCEL_AT_PERIOD_END)
+            .column("canceled_at", SUBSCRIPTIONS.CANCELED_AT)
+            .column("next_renewal_at", SUBSCRIPTIONS.NEXT_RENEWAL_AT)
+            .column("renewal_attempts", SUBSCRIPTIONS.RENEWAL_ATTEMPTS)
+            .column("created_at", SUBSCRIPTIONS.CREATED_AT)
+            .column("updated_at", SUBSCRIPTIONS.UPDATED_AT)
+            .build();
+
     private final DSLContext dsl;
+
+    /** @return the binding of the subscription listing, for the test that checks every sortable field has an index */
+    public static ListBinding listBinding() {
+        return BINDING;
+    }
 
     public JooqSubscriptionReadRepository(DSLContext dsl) {
         this.dsl = dsl;
     }
 
     @Override
-    public List<SubscriptionView> list(UUID customerId, UUID walletId, SubscriptionStatus status, UUID before, int limit, List<UUID> customerIds) {
+    public Page<SubscriptionView> list(ListQuery query, List<UUID> customerIds) {
         if (customerIds != null && customerIds.isEmpty()) {
-            return List.of();
+            return query.emptyPage();
         }
-        Condition filter = (customerId == null ? noCondition() : SUBSCRIPTIONS.CUSTOMER_ID.eq(customerId))
-                .and(walletId == null ? noCondition() : SUBSCRIPTIONS.WALLET_ID.eq(walletId))
-                .and(customerIds == null ? noCondition() : SUBSCRIPTIONS.CUSTOMER_ID.in(customerIds))
-                .and(status == null ? noCondition() : SUBSCRIPTIONS.STATUS.eq(status.name()))
-                .and(before == null ? noCondition() : SUBSCRIPTIONS.ID.lt(before));
-        return dsl.selectFrom(SUBSCRIPTIONS)
-                .where(filter)
-                .orderBy(SUBSCRIPTIONS.ID.desc())
-                .limit(limit)
-                .fetch(JooqSubscriptionReadRepository::toView);
+        Condition scope = customerIds == null ? noCondition() : SUBSCRIPTIONS.CUSTOMER_ID.in(customerIds);
+        return JooqLists.fetch(dsl, SUBSCRIPTIONS, scope, BINDING, query, JooqSubscriptionReadRepository::toView);
     }
 
     @Override

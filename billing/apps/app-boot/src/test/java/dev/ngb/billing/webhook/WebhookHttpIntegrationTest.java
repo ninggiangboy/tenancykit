@@ -151,7 +151,7 @@ class WebhookHttpIntegrationTest {
         assertThat(world.status(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/webhook-endpoints/" + id, null)).isEqualTo(404);
         assertThat(world.status(HttpMethod.PATCH, globex.host(), globex.adminToken(), "/api/v1/webhook-endpoints/" + id, HttpWorld.Map2.of("status", "DISABLED"))).isEqualTo(404);
         assertThat(world.status(HttpMethod.POST, globex.host(), globex.adminToken(), "/api/v1/webhook-endpoints/" + id + "/rotate-secret", null)).isEqualTo(404);
-        assertThat(json(world.call(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/webhook-endpoints", null))).isEmpty();
+        assertThat(json(world.call(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/webhook-endpoints", null)).get("data")).isEmpty();
     }
 
     @Test
@@ -172,7 +172,8 @@ class WebhookHttpIntegrationTest {
             scopes.runInTenant(tenant, relay::relayDue);
             scopes.runInTenant(tenant, deliver::runOnce);
 
-            JsonNode list = json(world.call(HttpMethod.GET, acme.host(), readKey, "/api/v1/webhook-deliveries?status=SUCCEEDED&endpointId=" + endpointId, null));
+            JsonNode list = json(world.call(HttpMethod.GET, acme.host(), readKey,
+                    "/api/v1/webhook-deliveries?filter[status][eq]=SUCCEEDED&filter[endpoint_id][eq]=" + endpointId, null)).get("data");
             assertThat(list).hasSize(1);
             assertThat(list.get(0).get("eventType").asString()).isEqualTo("customer.created");
             String deliveryId = list.get(0).get("id").asString();
@@ -195,7 +196,7 @@ class WebhookHttpIntegrationTest {
             assertThat(receiver.requests()).hasSize(2);
             assertThat(receiver.requests().get(1).header("Billing-Event-Id")).isEqualTo(receiver.requests().get(0).header("Billing-Event-Id"));
 
-            assertThat(world.status(HttpMethod.GET, acme.host(), readKey, "/api/v1/webhook-deliveries?status=NOPE", null)).isEqualTo(400);
+            assertThat(world.status(HttpMethod.GET, acme.host(), readKey, "/api/v1/webhook-deliveries?filter[status][eq]=NOPE", null)).isEqualTo(400);
             assertThat(world.status(HttpMethod.GET, acme.host(), readKey, "/api/v1/webhook-deliveries/" + UUID.randomUUID(), null)).isEqualTo(404);
             assertThat(world.status(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/webhook-deliveries/" + deliveryId, null)).isEqualTo(404);
         }

@@ -26,6 +26,7 @@ import dev.ngb.billing.money.application.ledger.command.VerifyLedgerUseCase;
 import dev.ngb.billing.money.application.ledger.port.LedgerRepository;
 import dev.ngb.billing.money.application.ledger.port.LedgerVerifier;
 import dev.ngb.billing.money.application.ledger.query.LedgerEntryView;
+import dev.ngb.billing.money.application.ledger.query.LedgerListing;
 import dev.ngb.billing.money.application.reservation.command.ExpireReservationsUseCase;
 import dev.ngb.billing.money.application.reservation.command.ReleaseReservationUseCase;
 import dev.ngb.billing.money.application.wallet.query.WalletQueries;
@@ -34,6 +35,7 @@ import dev.ngb.core.error.ConflictException;
 import dev.ngb.core.error.IdempotencyConflictException;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.sharedkernel.money.Money;
+import dev.ngb.billing.support.ListQueries;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
 import dev.ngb.billing.support.ScopeTestSupport;
@@ -360,7 +362,8 @@ class MoneyIntegrationTest {
                 wrong.ledgerEntryId(), "wrong_price",
                 new ReverseEntryUseCase.Replacement(EntryType.DEBIT, usd(30_000), "charge:corrected"), "user/admin")));
 
-        List<LedgerEntryView> entries = scopes.inTenant(w.tenant().id(), () -> queries.ledger(w.wallet().id(), 0, 50));
+        List<LedgerEntryView> entries = scopes.inTenant(w.tenant().id(), () -> queries.ledger(w.wallet().id(),
+                ListQueries.of(LedgerListing.SCHEMA, "limit", "50")).data());
         assertThat(entries).extracting(LedgerEntryView::type).containsExactly(EntryType.CREDIT, EntryType.DEBIT, EntryType.REVERSAL, EntryType.DEBIT);
         assertThat(entries).extracting(e -> e.amount().minorUnits()).containsExactly(100_000L, -50_000L, 50_000L, -30_000L);
         assertThat(entries.get(2).reversalOf()).isEqualTo(entries.get(1).id());

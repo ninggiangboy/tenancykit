@@ -166,7 +166,7 @@ class CouponHttpIntegrationTest {
         assertThat(world.body(replay).get("id").asString()).isEqualTo(redemptionId);
 
         JsonNode listed = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(),
-                "/api/v1/wallets/" + wallet + "/coupon-redemptions", null));
+                "/api/v1/wallets/" + wallet + "/coupon-redemptions", null)).get("data");
         assertThat(listed).hasSize(1);
         assertThat(listed.get(0).get("status").asString()).isEqualTo("ACTIVE");
     }
@@ -287,7 +287,7 @@ class CouponHttpIntegrationTest {
         String otherWallet = openWallet(acme, couponSystem.token(), newCustomer(acme, couponSystem.token()), "USD");
         assertThat(redeemByCode(couponSystem.token(), otherWallet, "DEACT1", "deact-key-2").getResponse().getStatus()).isEqualTo(404);
         JsonNode running = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(),
-                "/api/v1/wallets/" + wallet + "/coupon-redemptions", null));
+                "/api/v1/wallets/" + wallet + "/coupon-redemptions", null)).get("data");
         assertThat(running.get(0).get("status").asString()).isEqualTo("ACTIVE");
     }
 
@@ -301,7 +301,7 @@ class CouponHttpIntegrationTest {
                 HttpWorld.Map2.of("revokeRedemptions", true)));
 
         JsonNode running = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(),
-                "/api/v1/wallets/" + wallet + "/coupon-redemptions", null));
+                "/api/v1/wallets/" + wallet + "/coupon-redemptions", null)).get("data");
         assertThat(running.get(0).get("status").asString()).isEqualTo("REVOKED");
         assertThat(running.get(0).get("endReason").asString()).isEqualTo("COUPON_DEACTIVATED");
     }
@@ -353,7 +353,7 @@ class CouponHttpIntegrationTest {
         String couponId = created.get("coupon").get("id").asString();
 
         assertThat(world.status(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/coupons/" + couponId, null)).isEqualTo(404);
-        assertThat(world.body(world.call(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/coupons", null))).isEmpty();
+        assertThat(world.body(world.call(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/coupons", null)).get("data")).isEmpty();
     }
 
     @Test

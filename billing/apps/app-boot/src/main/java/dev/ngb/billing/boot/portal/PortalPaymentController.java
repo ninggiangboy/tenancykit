@@ -3,6 +3,7 @@ package dev.ngb.billing.boot.portal;
 import dev.ngb.billing.payment.application.payment.query.PaymentAttemptView;
 import dev.ngb.billing.payment.application.payment.query.PaymentQueries;
 import dev.ngb.billing.payment.application.payment.query.PaymentView;
+import dev.ngb.billing.payment.application.refund.query.RefundListing;
 import dev.ngb.billing.payment.application.refund.query.RefundView;
 import dev.ngb.billing.payment.domain.payment.PaymentStatus;
 import dev.ngb.billing.session.api.portal.PortalPermission;
@@ -10,6 +11,10 @@ import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
+import dev.ngb.billing.payment.application.payment.query.PaymentListing;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -62,10 +67,12 @@ public class PortalPaymentController {
         this.portal = portal;
     }
 
+    /** The customer is fixed by the portal session; the same filter, sort and paging contract as the API applies. */
     @GetMapping("/payments")
+    @Listing(PaymentListing.class)
     @RequiresPortalPermission(PortalPermission.PAYMENT_VIEW)
-    public List<PaymentResponse> payments(@RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
-        return portal.payments(before == null ? null : UUID.fromString(before), limit).stream().map(PaymentResponse::of).toList();
+    public Page<PaymentResponse> payments(ListQuery query) {
+        return portal.payments(query).map(PaymentResponse::of);
     }
 
     @GetMapping("/payments/{id}")
@@ -76,10 +83,12 @@ public class PortalPaymentController {
                 detail.attempts().stream().map(AttemptResponse::of).toList());
     }
 
+    /** Refunds of the session's customer's payments; the same filter, sort and paging contract as the API applies. */
     @GetMapping("/refunds")
+    @Listing(RefundListing.class)
     @RequiresPortalPermission(PortalPermission.REFUND_VIEW)
-    public List<RefundResponse> refunds(@RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
-        return portal.refunds(before == null ? null : UUID.fromString(before), limit).stream().map(RefundResponse::of).toList();
+    public Page<RefundResponse> refunds(ListQuery query) {
+        return portal.refunds(query).map(RefundResponse::of);
     }
 
     /**

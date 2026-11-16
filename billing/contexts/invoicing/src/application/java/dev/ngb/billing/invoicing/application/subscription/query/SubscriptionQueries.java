@@ -1,10 +1,10 @@
 package dev.ngb.billing.invoicing.application.subscription.query;
 
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.core.util.PageSize;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
-import dev.ngb.billing.invoicing.domain.subscription.SubscriptionStatus;
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import java.util.List;
 import java.util.UUID;
@@ -25,18 +25,23 @@ public class SubscriptionQueries {
     }
 
     /** A Tenant System sees only the subscriptions of the customers it mapped; any other caller sees the whole tenant. */
-    public List<SubscriptionView> list(UUID customerId, UUID walletId, SubscriptionStatus status, UUID before, int limit, UUID caller) {
+    public Page<SubscriptionView> list(ListQuery query, UUID caller) {
         return unitOfWork.transactional(() -> {
             List<UUID> visible = null;
             if (caller != null) {
                 List<CustomerId> mapped = customers.mappedTo(caller);
                 if (mapped.isEmpty()) {
-                    return List.of();
+                    return query.<SubscriptionView>emptyPage();
                 }
                 visible = mapped.stream().map(CustomerId::value).toList();
             }
-            return subscriptions.list(customerId, walletId, status, before, PageSize.of(limit), visible);
+            return subscriptions.list(query, visible);
         });
+    }
+
+    /** Subscriptions of one customer, for the portal principal that is fixed to that customer. */
+    public Page<SubscriptionView> listForCustomer(CustomerId customerId, ListQuery query) {
+        return unitOfWork.transactional(() -> subscriptions.list(query, List.of(customerId.value())));
     }
 
     public SubscriptionDetail get(UUID id, UUID caller) {

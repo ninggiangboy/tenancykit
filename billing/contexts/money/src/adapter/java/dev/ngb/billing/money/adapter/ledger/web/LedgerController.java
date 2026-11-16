@@ -4,8 +4,12 @@ import dev.ngb.billing.money.api.ledger.EntryType;
 import dev.ngb.billing.money.api.ledger.LedgerEntryId;
 import dev.ngb.billing.money.application.ledger.command.ReverseEntryUseCase;
 import dev.ngb.billing.money.application.ledger.query.LedgerEntryView;
+import dev.ngb.billing.money.application.ledger.query.LedgerListing;
 import dev.ngb.billing.money.application.wallet.query.WalletQueries;
 import dev.ngb.billing.money.domain.ledger.LedgerEntry;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
@@ -63,11 +67,12 @@ public class LedgerController {
         this.currentActor = currentActor;
     }
 
+    /** Filter, sort and paging follow the list-query contract; the wallet is fixed by the path. */
     @GetMapping("/wallets/{id}/ledger")
+    @Listing(LedgerListing.class)
     @RequiresPermission(BillingPermissions.WALLET_READ)
-    public List<LedgerEntryResponse> ledger(
-            @PathVariable String id, @RequestParam(defaultValue = "0") long afterSequence, @RequestParam(defaultValue = "50") int limit) {
-        return queries.ledger(WalletId.of(id), afterSequence, limit, currentActor.caller()).stream().map(LedgerEntryResponse::ofView).toList();
+    public Page<LedgerEntryResponse> ledger(@PathVariable String id, ListQuery query) {
+        return queries.ledger(WalletId.of(id), query, currentActor.caller()).map(LedgerEntryResponse::ofView);
     }
 
     @PostMapping("/ledger-entries/{id}/reverse")

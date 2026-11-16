@@ -292,12 +292,30 @@ class PaymentHttpIntegrationTest {
     }
 
     @Test
+    void paymentsAreListedByTheContractAndInternalFieldsAreNotFilterable() {
+        topUp(4242, "list-a-" + UUID.randomUUID());
+        topUp(4343, "list-b-" + UUID.randomUUID());
+        topUp(4444, "list-c-" + UUID.randomUUID());
+
+        JsonNode page = world.body(call(HttpMethod.GET, acme, acme.adminToken(),
+                "/api/v1/payments?filter[amount][in]=4242,4343,4444&filter[status][eq]=REQUIRES_ACTION&sort=-amount&limit=2&page_info=true", null, null));
+        assertThat(page.get("data").valueStream().map(p -> p.get("amount").get("amount").asLong())).containsExactly(4444L, 4343L);
+        assertThat(page.get("page").get("total").asLong()).isEqualTo(3);
+        assertThat(page.get("page").get("next_cursor").asString()).isNotBlank();
+
+        for (String internal : new String[] {"payment_intent_id", "checkout_session_id", "idempotency_key", "request_hash"}) {
+            MvcResult refused = call(HttpMethod.GET, acme, acme.adminToken(), "/api/v1/payments?filter[" + internal + "][eq]=x", null, null);
+            assertThat(refused.getResponse().getStatus()).as(internal).isEqualTo(400);
+        }
+    }
+
+    @Test
     void anotherTenantSeesNoneOfThis() {
         JsonNode payment = topUp(100, "iso-" + UUID.randomUUID());
 
         assertThat(call(HttpMethod.GET, globex, globex.adminToken(), "/api/v1/payments/" + payment.get("id").asString(), null, null).getResponse().getStatus())
                 .isEqualTo(404);
-        assertThat(world.body(call(HttpMethod.GET, globex, globex.adminToken(), "/api/v1/payments", null, null)).size()).isZero();
+        assertThat(world.body(call(HttpMethod.GET, globex, globex.adminToken(), "/api/v1/payments", null, null)).get("data").size()).isZero();
         assertThat(call(HttpMethod.POST, globex, globex.adminToken(), "/api/v1/payments/" + payment.get("id").asString() + "/refunds", "iso-r",
                 HttpWorld.Map2.of()).getResponse().getStatus()).isEqualTo(404);
     }
@@ -313,7 +331,8 @@ class PaymentHttpIntegrationTest {
         JsonNode payment = topUp(200, "hist-" + UUID.randomUUID());
         deliverPaid(payment, "pi_hist_" + UUID.randomUUID().toString().substring(0, 8));
 
-        JsonNode events = world.body(call(HttpMethod.GET, acme, acme.adminToken(), "/api/v1/stripe/events?status=PROCESSED", null, null));
+        JsonNode events = world.body(call(HttpMethod.GET, acme, acme.adminToken(),
+                "/api/v1/stripe/events?filter[status][eq]=PROCESSED&limit=50", null, null)).get("data");
         assertThat(events.size()).isGreaterThanOrEqualTo(1);
         String eventId = events.get(0).get("id").asString();
         JsonNode detail = world.body(call(HttpMethod.GET, acme, acme.adminToken(), "/api/v1/stripe/events/" + eventId, null, null));

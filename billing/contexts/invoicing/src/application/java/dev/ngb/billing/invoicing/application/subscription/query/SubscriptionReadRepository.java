@@ -1,6 +1,7 @@
 package dev.ngb.billing.invoicing.application.subscription.query;
 
-import dev.ngb.billing.invoicing.domain.subscription.SubscriptionStatus;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -8,8 +9,8 @@ import java.util.UUID;
 /** Read-only projection of subscriptions and their history. */
 public interface SubscriptionReadRepository {
 
-    /** Newest first; {@code customerIds} restricts the listing as it does for invoices. */
-    List<SubscriptionView> list(UUID customerId, UUID walletId, SubscriptionStatus status, UUID before, int limit, List<UUID> customerIds);
+    /** One page of subscriptions; {@code customerIds} restricts the listing, and null reads the whole tenant. */
+    Page<SubscriptionView> list(ListQuery query, List<UUID> customerIds);
 
     Optional<SubscriptionView> findById(UUID id);
 

@@ -6,6 +6,7 @@ dependencies {
     implementation(platform(libs.spring.modulith.bom))
     implementation(project(":libs:shared-kernel"))
     implementation("dev.ngb:core-spring")
+    implementation("dev.ngb:core-openapi")
     implementation("dev.ngb:core-messaging")
     implementation("dev.ngb:core-replica")
     implementation("dev.ngb:core-platform-sync")

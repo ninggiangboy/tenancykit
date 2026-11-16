@@ -1,8 +1,8 @@
 package dev.ngb.billing.payment.application.incident.query;
 
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.core.util.PageSize;
-import java.util.List;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 
 /** Reads incidents for the GET handler. */
 public class IncidentQueries {
@@ -16,7 +16,7 @@ public class IncidentQueries {
         this.incidents = incidents;
     }
 
-    public List<IncidentView> list(boolean openOnly, int limit) {
-        return unitOfWork.transactional(() -> incidents.list(openOnly, PageSize.of(limit)));
+    public Page<IncidentView> list(ListQuery query) {
+        return unitOfWork.transactional(() -> incidents.list(query));
     }
 }

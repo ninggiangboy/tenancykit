@@ -28,6 +28,8 @@ import dev.ngb.billing.usage.api.lookup.UsageTotal;
 import dev.ngb.billing.usage.application.usage.query.UsageEventView;
 import dev.ngb.billing.usage.application.usage.query.UsageQueries;
 import java.time.Instant;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -80,8 +82,8 @@ public class PortalReadModel {
         return customers.get(customerId());
     }
 
-    public List<WalletView> wallets() {
-        return wallets.walletsOf(customerId());
+    public Page<WalletView> wallets(ListQuery query) {
+        return wallets.walletsForCustomer(customerId(), query);
     }
 
     public WalletView wallet(String walletId) {
@@ -90,26 +92,25 @@ public class PortalReadModel {
         return wallet;
     }
 
-    public List<LedgerEntryView> ledger(String walletId, long afterSequence, int limit) {
+    public Page<LedgerEntryView> ledger(String walletId, ListQuery query) {
         wallet(walletId);
-        return wallets.ledger(WalletId.of(walletId), afterSequence, limit);
+        return wallets.ledger(WalletId.of(walletId), query);
     }
 
-    public List<ChargeView> charges(UUID before, int limit) {
-        List<WalletId> ids = wallets().stream().map(WalletView::id).toList();
-        return wallets.charges(ids, before, limit);
+    public Page<ChargeView> charges(ListQuery query) {
+        return wallets.chargesForCustomer(customerId(), query);
     }
 
-    public List<UsageEventView> usage(String metric, Instant from, Instant to, String before, int limit) {
-        return usage.history(customerId(), metric, from, to, before == null ? null : UsageEventId.of(before), limit);
+    public Page<UsageEventView> usage(ListQuery query) {
+        return usage.historyForCustomer(customerId(), query);
     }
 
     public List<UsageTotal> usageTotals(String metric, Instant from, Instant to) {
         return usage.totals(customerId(), metric == null ? Set.of() : Set.of(metric), from, to, null);
     }
 
-    public List<InvoiceView> invoices(UUID before, int limit) {
-        return invoices.list(customerId().value(), null, null, before, limit, null);
+    public Page<InvoiceView> invoices(ListQuery query) {
+        return invoices.listForCustomer(customerId(), query);
     }
 
     public InvoiceQueries.InvoiceDetail invoice(UUID id) {
@@ -118,8 +119,8 @@ public class PortalReadModel {
         return detail;
     }
 
-    public List<SubscriptionView> subscriptions(UUID before, int limit) {
-        return subscriptions.list(customerId().value(), null, null, before, limit, null);
+    public Page<SubscriptionView> subscriptions(ListQuery query) {
+        return subscriptions.listForCustomer(customerId(), query);
     }
 
     public SubscriptionQueries.SubscriptionDetail subscription(UUID id) {
@@ -128,16 +129,16 @@ public class PortalReadModel {
         return detail;
     }
 
-    public List<PaymentView> payments(UUID before, int limit) {
-        return payments.listForCustomer(customerId(), before, limit);
+    public Page<PaymentView> payments(ListQuery query) {
+        return payments.listForCustomer(customerId(), query);
     }
 
     public PaymentQueries.PaymentDetail payment(UUID id) {
         return payments.paymentForCustomer(id, customerId());
     }
 
-    public List<RefundView> refunds(UUID before, int limit) {
-        return refunds.listForCustomer(customerId(), before, limit);
+    public Page<RefundView> refunds(ListQuery query) {
+        return refunds.listForCustomer(customerId(), query);
     }
 
     public CreateTopUpUseCase.Result topUp(String walletId, Money amount, String idempotencyKey, String requestId) {

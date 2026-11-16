@@ -6,8 +6,13 @@ import static org.jooq.impl.DSL.noCondition;
 
 import dev.ngb.billing.payment.application.payment.query.PaymentAttemptView;
 import dev.ngb.billing.payment.application.payment.query.PaymentReadRepository;
+import dev.ngb.billing.payment.application.payment.query.PaymentListing;
 import dev.ngb.billing.payment.application.payment.query.PaymentView;
 import dev.ngb.billing.payment.domain.payment.PaymentStatus;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.JooqLists;
+import dev.ngb.core.spring.query.ListBinding;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.money.Money;
@@ -22,26 +27,40 @@ import org.jooq.DSLContext;
 /** Selects payments and their failed attempts straight into views. */
 public class JooqPaymentReadRepository implements PaymentReadRepository {
 
+    /** The payment fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding BINDING = ListBinding.of(PaymentListing.SCHEMA)
+            .column("id", PAYMENTS.ID)
+            .column("wallet_id", PAYMENTS.WALLET_ID)
+            .column("customer_id", PAYMENTS.CUSTOMER_ID)
+            .column("status", PAYMENTS.STATUS)
+            .column("currency", PAYMENTS.CURRENCY)
+            .column("amount", PAYMENTS.AMOUNT)
+            .column("refunded_amount", PAYMENTS.REFUNDED_AMOUNT)
+            .column("invoice_id", PAYMENTS.INVOICE_ID)
+            .column("ledger_entry_id", PAYMENTS.LEDGER_ENTRY_ID)
+            .column("created_at", PAYMENTS.CREATED_AT)
+            .column("updated_at", PAYMENTS.UPDATED_AT)
+            .column("completed_at", PAYMENTS.COMPLETED_AT)
+            .build();
+
     private final DSLContext dsl;
+
+    /** @return the binding of the payment listing, for the test that checks every sortable field has an index */
+    public static ListBinding listBinding() {
+        return BINDING;
+    }
 
     public JooqPaymentReadRepository(DSLContext dsl) {
         this.dsl = dsl;
     }
 
     @Override
-    public List<PaymentView> list(WalletId walletId, PaymentStatus status, UUID before, int limit, List<UUID> customerIds) {
+    public Page<PaymentView> list(ListQuery query, List<UUID> customerIds) {
         if (customerIds != null && customerIds.isEmpty()) {
-            return List.of();
+            return query.emptyPage();
         }
-        Condition filter = (walletId == null ? noCondition() : PAYMENTS.WALLET_ID.eq(walletId.value()))
-                .and(customerIds == null ? noCondition() : PAYMENTS.CUSTOMER_ID.in(customerIds))
-                .and(status == null ? noCondition() : PAYMENTS.STATUS.eq(status.name()))
-                .and(before == null ? noCondition() : PAYMENTS.ID.lt(before));
-        return dsl.selectFrom(PAYMENTS)
-                .where(filter)
-                .orderBy(PAYMENTS.ID.desc())
-                .limit(limit)
-                .fetch(JooqPaymentReadRepository::toView);
+        Condition scope = customerIds == null ? noCondition() : PAYMENTS.CUSTOMER_ID.in(customerIds);
+        return JooqLists.fetch(dsl, PAYMENTS, scope, BINDING, query, JooqPaymentReadRepository::toView);
     }
 
     @Override

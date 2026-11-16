@@ -1,6 +1,7 @@
 package dev.ngb.billing.payment.application.stripe.query;
 
-import dev.ngb.billing.payment.domain.stripe.EventStatus;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -8,8 +9,8 @@ import java.util.UUID;
 /** Read-only projections of Stripe events and their attempt history. */
 public interface StripeEventReadRepository {
 
-    /** Newest first; {@code before} is the id of the last event of the previous page. */
-    List<StripeEventView> list(EventStatus status, UUID before, int limit);
+    /** One page of events, newest received first unless the query says otherwise. */
+    Page<StripeEventView> list(ListQuery query);
 
     Optional<StripeEventView> findById(UUID id);
 

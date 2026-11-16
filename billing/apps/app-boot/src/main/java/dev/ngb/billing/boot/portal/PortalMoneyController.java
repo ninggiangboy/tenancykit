@@ -1,13 +1,19 @@
 package dev.ngb.billing.boot.portal;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.billing.money.application.charge.query.ChargeListing;
 import dev.ngb.billing.money.application.charge.query.ChargeView;
 import dev.ngb.billing.money.application.ledger.query.LedgerEntryView;
+import dev.ngb.billing.money.application.ledger.query.LedgerListing;
+import dev.ngb.billing.money.application.wallet.query.WalletListing;
 import dev.ngb.billing.money.application.wallet.query.WalletView;
 import dev.ngb.billing.payment.application.payment.command.CreateTopUpUseCase;
 import dev.ngb.billing.payment.domain.payment.Payment;
 import dev.ngb.billing.payment.domain.payment.PaymentStatus;
 import dev.ngb.core.idempotency.RepeatableCreate;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
 import dev.ngb.billing.sharedkernel.money.Currency;
@@ -82,10 +88,12 @@ public class PortalMoneyController {
         this.portal = portal;
     }
 
+    /** Filter, sort and paging follow the list-query contract; the customer is fixed by the portal session. */
     @GetMapping("/wallets")
+    @Listing(WalletListing.class)
     @RequiresPortalPermission(PortalPermission.WALLET_VIEW)
-    public List<WalletResponse> wallets() {
-        return portal.wallets().stream().map(WalletResponse::of).toList();
+    public Page<WalletResponse> wallets(ListQuery query) {
+        return portal.wallets(query).map(WalletResponse::of);
     }
 
     @GetMapping("/wallets/{id}")
@@ -94,18 +102,20 @@ public class PortalMoneyController {
         return WalletResponse.of(portal.wallet(id));
     }
 
+    /** The wallet is fixed by the path; filter, sort and paging follow the list-query contract. */
     @GetMapping("/wallets/{id}/ledger")
+    @Listing(LedgerListing.class)
     @RequiresPortalPermission(PortalPermission.LEDGER_VIEW)
-    public List<LedgerEntryResponse> ledger(
-            @PathVariable String id, @RequestParam(defaultValue = "0") long afterSequence, @RequestParam(defaultValue = "50") int limit) {
-        return portal.ledger(id, afterSequence, limit).stream().map(LedgerEntryResponse::of).toList();
+    public Page<LedgerEntryResponse> ledger(@PathVariable String id, ListQuery query) {
+        return portal.ledger(id, query).map(LedgerEntryResponse::of);
     }
 
-    /** Pass the last {@code id} of a page as {@code before} for the next one. */
+    /** Charges of the session's customer's wallets; the same filter, sort and paging contract as the API applies. */
     @GetMapping("/charges")
+    @Listing(ChargeListing.class)
     @RequiresPortalPermission(PortalPermission.CHARGE_VIEW)
-    public List<ChargeResponse> charges(@RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
-        return portal.charges(before == null ? null : UUID.fromString(before), limit).stream().map(ChargeResponse::of).toList();
+    public Page<ChargeResponse> charges(ListQuery query) {
+        return portal.charges(query).map(ChargeResponse::of);
     }
 
     /** Starts a top-up through the Tenant's Stripe configuration; the wallet is credited only by the verified event. */

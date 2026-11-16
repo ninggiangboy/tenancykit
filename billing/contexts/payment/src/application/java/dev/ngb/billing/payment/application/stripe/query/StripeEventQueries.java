@@ -1,9 +1,9 @@
 package dev.ngb.billing.payment.application.stripe.query;
 
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.core.util.PageSize;
-import dev.ngb.billing.payment.domain.stripe.EventStatus;
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,8 +21,8 @@ public class StripeEventQueries {
         this.events = events;
     }
 
-    public List<StripeEventView> list(EventStatus status, UUID before, int limit) {
-        return unitOfWork.transactional(() -> events.list(status, before, PageSize.of(limit)));
+    public Page<StripeEventView> list(ListQuery query) {
+        return unitOfWork.transactional(() -> events.list(query));
     }
 
     public Detail get(UUID id) {

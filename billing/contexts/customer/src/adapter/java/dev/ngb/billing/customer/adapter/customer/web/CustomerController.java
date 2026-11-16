@@ -4,8 +4,12 @@ import dev.ngb.core.http.HttpHeaders;
 import org.springframework.context.annotation.Profile;
 import dev.ngb.billing.customer.application.customer.command.CreateCustomerUseCase;
 import dev.ngb.billing.customer.application.customer.command.ManageCustomerUseCase;
+import dev.ngb.billing.customer.application.customer.query.CustomerListing;
 import dev.ngb.billing.customer.application.customer.query.CustomerQueries;
 import dev.ngb.billing.customer.application.customer.query.CustomerView;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.billing.customer.application.customer.query.CustomerIdentityView;
 import dev.ngb.billing.customer.domain.customer.Customer;
 import dev.ngb.billing.customer.domain.customer.ExternalIdentity;
@@ -103,10 +107,12 @@ public class CustomerController {
         return ResponseEntity.status(status).body(CustomerResponse.of(result.customer()));
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link CustomerListing}. */
     @GetMapping
+    @Listing(CustomerListing.class)
     @RequiresPermission(BillingPermissions.CUSTOMER_READ)
-    public List<CustomerResponse> list() {
-        return queries.list(currentActor.callerId()).stream().map(CustomerResponse::ofView).toList();
+    public Page<CustomerResponse> list(ListQuery query) {
+        return queries.list(query, currentActor.callerId()).map(CustomerResponse::ofView);
     }
 
     @GetMapping("/by-external-user/{externalUserId}")

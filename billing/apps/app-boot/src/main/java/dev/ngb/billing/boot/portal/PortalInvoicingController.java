@@ -5,12 +5,17 @@ import dev.ngb.billing.invoicing.application.invoice.query.InvoicePaymentView;
 import dev.ngb.billing.invoicing.application.invoice.query.InvoiceQueries;
 import dev.ngb.billing.invoicing.application.invoice.query.InvoiceView;
 import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionHistoryEntryView;
+import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionListing;
 import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionQueries;
 import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionView;
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import java.time.Instant;
+import dev.ngb.billing.invoicing.application.invoice.query.InvoiceListing;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -101,10 +106,12 @@ public class PortalInvoicingController {
         this.portal = portal;
     }
 
+    /** The customer is fixed by the portal session; the same filter, sort and paging contract as the API applies. */
     @GetMapping("/invoices")
+    @Listing(InvoiceListing.class)
     @RequiresPortalPermission(PortalPermission.INVOICE_VIEW)
-    public List<InvoiceResponse> invoices(@RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
-        return portal.invoices(before == null ? null : UUID.fromString(before), limit).stream().map(InvoiceResponse::of).toList();
+    public Page<InvoiceResponse> invoices(ListQuery query) {
+        return portal.invoices(query).map(InvoiceResponse::of);
     }
 
     @GetMapping("/invoices/{id}")
@@ -113,10 +120,12 @@ public class PortalInvoicingController {
         return InvoiceDetailResponse.of(portal.invoice(UUID.fromString(id)));
     }
 
+    /** The customer is fixed by the portal session; the same filter, sort and paging contract as the API applies. */
     @GetMapping("/subscriptions")
+    @Listing(SubscriptionListing.class)
     @RequiresPortalPermission(PortalPermission.SUBSCRIPTION_VIEW)
-    public List<SubscriptionResponse> subscriptions(@RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
-        return portal.subscriptions(before == null ? null : UUID.fromString(before), limit).stream().map(SubscriptionResponse::of).toList();
+    public Page<SubscriptionResponse> subscriptions(ListQuery query) {
+        return portal.subscriptions(query).map(SubscriptionResponse::of);
     }
 
     @GetMapping("/subscriptions/{id}")

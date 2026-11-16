@@ -1,9 +1,9 @@
 package dev.ngb.billing.invoicing.application.invoice.query;
 
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.core.util.PageSize;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
-import dev.ngb.billing.invoicing.domain.invoice.InvoiceStatus;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import java.util.List;
@@ -25,18 +25,23 @@ public class InvoiceQueries {
     }
 
     /** A Tenant System sees only the invoices of the customers it mapped; any other caller sees the whole tenant. */
-    public List<InvoiceView> list(UUID customerId, UUID walletId, InvoiceStatus status, UUID before, int limit, UUID caller) {
+    public Page<InvoiceView> list(ListQuery query, UUID caller) {
         return unitOfWork.transactional(() -> {
             List<UUID> visible = null;
             if (caller != null) {
                 List<CustomerId> mapped = customers.mappedTo(caller);
                 if (mapped.isEmpty()) {
-                    return List.of();
+                    return query.<InvoiceView>emptyPage();
                 }
                 visible = mapped.stream().map(CustomerId::value).toList();
             }
-            return invoices.list(customerId, walletId, status, before, PageSize.of(limit), visible);
+            return invoices.list(query, visible);
         });
+    }
+
+    /** Invoices of one customer, for the portal principal that is fixed to that customer. */
+    public Page<InvoiceView> listForCustomer(CustomerId customerId, ListQuery query) {
+        return unitOfWork.transactional(() -> invoices.list(query, List.of(customerId.value())));
     }
 
     public InvoiceDetail get(UUID id, UUID caller) {

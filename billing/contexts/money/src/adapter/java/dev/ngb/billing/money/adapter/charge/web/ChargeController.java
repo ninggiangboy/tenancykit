@@ -8,8 +8,12 @@ import dev.ngb.billing.money.api.charge.ChargeStatus;
 import dev.ngb.billing.money.api.charge.DiscountLine;
 import dev.ngb.billing.money.api.reservation.ReservationId;
 import dev.ngb.billing.money.application.charge.command.ChargeUseCase;
+import dev.ngb.billing.money.application.charge.query.ChargeListing;
 import dev.ngb.billing.money.application.charge.query.ChargeView;
 import dev.ngb.billing.money.application.wallet.query.WalletQueries;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -55,6 +59,13 @@ public class ChargeController {
                     result.ledgerEntryId() == null ? null : result.ledgerEntryId().toString(),
                     charge.reservationId() == null ? null : charge.reservationId().toString(), charge.usageRef(), charge.reference());
         }
+
+        static ChargeResponse ofView(ChargeView charge) {
+            return new ChargeResponse(charge.id().toString(), charge.status().name(), charge.failureReason(), MoneyDto.of(charge.amount()),
+                    MoneyDto.of(charge.grossAmount()),
+                    charge.discounts().stream().map(DiscountLineResponse::of).toList(),
+                    null, charge.reservationId() == null ? null : charge.reservationId().toString(), charge.usageRef(), charge.reference());
+        }
     }
 
     private final ChargeUseCase charge;
@@ -86,6 +97,14 @@ public class ChargeController {
                 WalletId.of(request.walletId()), null, new MoneyDto(request.amount(), request.currency()).toMoney(), request.usageRef(),
                 request.reference(), key, currentActor.caller()));
         return chargeResponse(result, currentActor.caller());
+    }
+
+    /** Filter, sort and paging follow the list-query contract; a Tenant System sees only its customers' wallets. */
+    @GetMapping("/charges")
+    @Listing(ChargeListing.class)
+    @RequiresPermission(BillingPermissions.WALLET_READ)
+    public Page<ChargeResponse> charges(ListQuery query) {
+        return queries.charges(query, currentActor.caller()).map(ChargeResponse::ofView);
     }
 
     @GetMapping("/charges/{id}")

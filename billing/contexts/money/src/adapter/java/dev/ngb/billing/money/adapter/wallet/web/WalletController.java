@@ -3,6 +3,7 @@ package dev.ngb.billing.money.adapter.wallet.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.money.api.wallet.WalletMode;
 import dev.ngb.billing.money.application.wallet.command.OpenWalletUseCase;
+import dev.ngb.billing.money.application.wallet.query.WalletListing;
 import dev.ngb.billing.money.application.wallet.query.WalletQueries;
 import dev.ngb.billing.money.application.wallet.query.WalletView;
 import dev.ngb.billing.money.domain.wallet.Wallet;
@@ -15,6 +16,9 @@ import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.context.annotation.Profile;
@@ -81,10 +85,12 @@ public class WalletController {
         return ResponseEntity.status(result.created() ? HttpStatus.CREATED : HttpStatus.OK).body(WalletResponse.of(result.wallet()));
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link WalletListing}. */
     @GetMapping("/wallets")
+    @Listing(WalletListing.class)
     @RequiresPermission(BillingPermissions.WALLET_READ)
-    public List<WalletResponse> wallets(@RequestParam String customerId) {
-        return queries.walletsOf(CustomerId.of(customerId), currentActor.caller()).stream().map(WalletResponse::ofView).toList();
+    public Page<WalletResponse> wallets(ListQuery query) {
+        return queries.wallets(query, currentActor.caller()).map(WalletResponse::ofView);
     }
 
     @GetMapping("/wallets/{id}")

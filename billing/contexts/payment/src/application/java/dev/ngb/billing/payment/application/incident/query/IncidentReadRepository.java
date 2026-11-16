@@ -1,9 +1,10 @@
 package dev.ngb.billing.payment.application.incident.query;
 
-import java.util.List;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 
 /** Read-only projection of incidents. */
 public interface IncidentReadRepository {
 
-    List<IncidentView> list(boolean openOnly, int limit);
+    Page<IncidentView> list(ListQuery query);
 }

@@ -6,16 +6,19 @@ import dev.ngb.billing.invoicing.application.invoice.command.ManageInvoiceUseCas
 import dev.ngb.billing.invoicing.application.invoice.command.PayInvoiceUseCase;
 import dev.ngb.billing.invoicing.application.invoice.query.InvoiceItemView;
 import dev.ngb.billing.invoicing.application.invoice.query.InvoicePaymentView;
+import dev.ngb.billing.invoicing.application.invoice.query.InvoiceListing;
 import dev.ngb.billing.invoicing.application.invoice.query.InvoiceQueries;
 import dev.ngb.billing.invoicing.application.invoice.query.InvoiceView;
 import dev.ngb.billing.invoicing.domain.invoice.Invoice;
 import dev.ngb.billing.invoicing.domain.invoice.InvoiceId;
-import dev.ngb.billing.invoicing.domain.invoice.InvoiceStatus;
 import dev.ngb.billing.money.api.charge.ChargeId;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import java.time.Instant;
@@ -30,7 +33,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Invoices. An invoice becomes paid only from a verified payment (or because the wallet already paid the charge it documents); no request here marks one paid. A Tenant System sees and acts on the customers mapped to it only. */
@@ -97,15 +99,12 @@ public class InvoiceController {
         this.currentActor = currentActor;
     }
 
-    /** Newest first. Pass the last {@code id} of a page as {@code before} for the next one. */
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link InvoiceListing}. */
     @GetMapping("/invoices")
+    @Listing(InvoiceListing.class)
     @RequiresPermission(BillingPermissions.INVOICE_READ)
-    public List<InvoiceResponse> invoices(
-            @RequestParam(required = false) String customerId, @RequestParam(required = false) String walletId, @RequestParam(required = false) String status,
-            @RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
-        return invoiceQueries.list(customerId == null ? null : UUID.fromString(customerId), walletId == null ? null : UUID.fromString(walletId),
-                status == null ? null : InvoiceStatus.valueOf(status), before == null ? null : UUID.fromString(before), limit, currentActor.caller())
-                .stream().map(InvoiceResponse::of).toList();
+    public Page<InvoiceResponse> invoices(ListQuery query) {
+        return invoiceQueries.list(query, currentActor.caller()).map(InvoiceResponse::of);
     }
 
     @GetMapping("/invoices/{id}")

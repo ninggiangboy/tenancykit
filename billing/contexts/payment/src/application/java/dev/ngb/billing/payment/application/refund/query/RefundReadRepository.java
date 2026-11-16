@@ -1,5 +1,7 @@
 package dev.ngb.billing.payment.application.refund.query;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,6 +13,6 @@ public interface RefundReadRepository {
 
     Optional<RefundView> findById(UUID id);
 
-    /** Newest first; {@code before} is the id of the last refund of the previous page. */
-    List<RefundView> listByCustomer(UUID customerId, UUID before, int limit);
+    /** One page of refunds; {@code customerIds} restricts it to the customers of their payments, and null reads the tenant. */
+    Page<RefundView> list(ListQuery query, List<UUID> customerIds);
 }

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.billing.Application;
 import dev.ngb.billing.payment.PaymentTestWorld.PayWorld;
+import dev.ngb.billing.payment.application.incident.query.IncidentListing;
 import dev.ngb.billing.payment.application.incident.query.IncidentQueries;
 import dev.ngb.billing.payment.application.payment.port.PaymentProvider;
 import dev.ngb.billing.payment.application.stripe.command.ReconcileStripeUseCase;
@@ -11,6 +12,7 @@ import dev.ngb.billing.payment.domain.payment.Payment;
 import dev.ngb.billing.payment.domain.payment.PaymentId;
 import dev.ngb.billing.support.FakePaymentProvider;
 import dev.ngb.billing.support.FakePaymentProviderConfig;
+import dev.ngb.billing.support.ListQueries;
 import dev.ngb.billing.support.OwnerDatabase;
 import dev.ngb.billing.support.PostgresContainerConfig;
 import dev.ngb.billing.support.ScopeTestSupport;
@@ -61,7 +63,8 @@ class ReconciliationLockContentionIntegrationTest {
             }
         }
 
-        assertThat(scopes.inTenant(world.money().tenant().id(), () -> incidents.list(true, 10)))
+        assertThat(scopes.inTenant(world.money().tenant().id(), () -> incidents.list(ListQueries.of(IncidentListing.SCHEMA,
+                "filter[resolved_at][is_null]", "true", "limit", "10")).data()))
                 .as("no incident is opened for a payment that was merely locked")
                 .isEmpty();
 

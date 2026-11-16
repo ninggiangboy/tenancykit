@@ -1,6 +1,7 @@
 package dev.ngb.billing.coupon.application.coupon.query;
 
-import java.util.List;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -9,5 +10,5 @@ public interface PromotionCodeReadRepository {
 
     Optional<PromotionCodeView> findById(UUID id);
 
-    List<PromotionCodeView> findByCoupon(UUID couponId);
+    Page<PromotionCodeView> list(ListQuery query, UUID couponId);
 }

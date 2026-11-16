@@ -1,9 +1,13 @@
 package dev.ngb.billing.payment.adapter.incident.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.billing.payment.application.incident.query.IncidentListing;
 import dev.ngb.billing.payment.application.incident.query.IncidentQueries;
 import dev.ngb.billing.payment.application.incident.query.IncidentView;
 import dev.ngb.billing.payment.application.stripe.command.ManageStripeEventUseCase;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -46,10 +50,12 @@ public class IncidentController {
         this.currentActor = currentActor;
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link IncidentListing}. */
     @GetMapping("/stripe/incidents")
+    @Listing(IncidentListing.class)
     @RequiresPermission(BillingPermissions.STRIPE_READ)
-    public List<IncidentResponse> incidents(@RequestParam(defaultValue = "true") boolean open, @RequestParam(defaultValue = "50") int limit) {
-        return incidentQueries.list(open, limit).stream().map(IncidentResponse::ofView).toList();
+    public Page<IncidentResponse> incidents(ListQuery query) {
+        return incidentQueries.list(query).map(IncidentResponse::ofView);
     }
 
     @PostMapping("/stripe/incidents/{id}/resolve")
