@@ -8,7 +8,9 @@ import dev.ngb.survey_jooq.Keys;
 import dev.ngb.survey_jooq.Public;
 import dev.ngb.survey_jooq.tables.QuestionLineage.QuestionLineagePath;
 import dev.ngb.survey_jooq.tables.SurveyDrafts.SurveyDraftsPath;
+import dev.ngb.survey_jooq.tables.SurveyLinks.SurveyLinksPath;
 import dev.ngb.survey_jooq.tables.SurveyVersions.SurveyVersionsPath;
+import dev.ngb.survey_jooq.tables.Visits.VisitsPath;
 import dev.ngb.survey_jooq.tables.records.SurveysRecord;
 
 import java.time.Instant;
@@ -200,6 +202,19 @@ public class Surveys extends TableImpl<SurveysRecord> {
         return _surveyDrafts;
     }
 
+    private transient SurveyLinksPath _surveyLinks;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.survey_links</code> table
+     */
+    public SurveyLinksPath surveyLinks() {
+        if (_surveyLinks == null)
+            _surveyLinks = new SurveyLinksPath(this, null, Keys.SURVEY_LINKS__SURVEY_LINKS_SURVEY_ID_FKEY.getInverseKey());
+
+        return _surveyLinks;
+    }
+
     private transient SurveyVersionsPath _surveyVersions;
 
     /**
@@ -211,6 +226,19 @@ public class Surveys extends TableImpl<SurveysRecord> {
             _surveyVersions = new SurveyVersionsPath(this, null, Keys.SURVEY_VERSIONS__SURVEY_VERSIONS_SURVEY_ID_FKEY.getInverseKey());
 
         return _surveyVersions;
+    }
+
+    private transient VisitsPath _visits;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.visits</code>
+     * table
+     */
+    public VisitsPath visits() {
+        if (_visits == null)
+            _visits = new VisitsPath(this, null, Keys.VISITS__VISITS_SURVEY_ID_FKEY.getInverseKey());
+
+        return _visits;
     }
 
     @Override

@@ -10,6 +10,7 @@ import dev.ngb.survey_jooq.tables.Outbox;
 import dev.ngb.survey_jooq.tables.QuestionLineage;
 import dev.ngb.survey_jooq.tables.ReplicaState;
 import dev.ngb.survey_jooq.tables.SurveyDrafts;
+import dev.ngb.survey_jooq.tables.SurveyLinks;
 import dev.ngb.survey_jooq.tables.SurveySettings;
 import dev.ngb.survey_jooq.tables.SurveyVersions;
 import dev.ngb.survey_jooq.tables.Surveys;
@@ -17,6 +18,8 @@ import dev.ngb.survey_jooq.tables.TenantDomains;
 import dev.ngb.survey_jooq.tables.TenantSystems;
 import dev.ngb.survey_jooq.tables.Tenants;
 import dev.ngb.survey_jooq.tables.UserGrants;
+import dev.ngb.survey_jooq.tables.VisitPageEvents;
+import dev.ngb.survey_jooq.tables.Visits;
 
 import java.util.Arrays;
 import java.util.List;
@@ -71,6 +74,11 @@ public class Public extends SchemaImpl {
     public final SurveyDrafts SURVEY_DRAFTS = SurveyDrafts.SURVEY_DRAFTS;
 
     /**
+     * The table <code>public.survey_links</code>.
+     */
+    public final SurveyLinks SURVEY_LINKS = SurveyLinks.SURVEY_LINKS;
+
+    /**
      * The table <code>public.survey_settings</code>.
      */
     public final SurveySettings SURVEY_SETTINGS = SurveySettings.SURVEY_SETTINGS;
@@ -106,6 +114,16 @@ public class Public extends SchemaImpl {
     public final UserGrants USER_GRANTS = UserGrants.USER_GRANTS;
 
     /**
+     * The table <code>public.visit_page_events</code>.
+     */
+    public final VisitPageEvents VISIT_PAGE_EVENTS = VisitPageEvents.VISIT_PAGE_EVENTS;
+
+    /**
+     * The table <code>public.visits</code>.
+     */
+    public final Visits VISITS = Visits.VISITS;
+
+    /**
      * No further instances allowed
      */
     private Public() {
@@ -127,13 +145,16 @@ public class Public extends SchemaImpl {
             QuestionLineage.QUESTION_LINEAGE,
             ReplicaState.REPLICA_STATE,
             SurveyDrafts.SURVEY_DRAFTS,
+            SurveyLinks.SURVEY_LINKS,
             SurveySettings.SURVEY_SETTINGS,
             SurveyVersions.SURVEY_VERSIONS,
             Surveys.SURVEYS,
             TenantDomains.TENANT_DOMAINS,
             TenantSystems.TENANT_SYSTEMS,
             Tenants.TENANTS,
-            UserGrants.USER_GRANTS
+            UserGrants.USER_GRANTS,
+            VisitPageEvents.VISIT_PAGE_EVENTS,
+            Visits.VISITS
         );
     }
 }
