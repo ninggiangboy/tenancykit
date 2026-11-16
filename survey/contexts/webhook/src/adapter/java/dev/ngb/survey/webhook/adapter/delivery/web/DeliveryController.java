@@ -1,13 +1,16 @@
 package dev.ngb.survey.webhook.adapter.delivery.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.survey.shared.SurveyPermissions;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.survey.webhook.application.delivery.command.ManageDeliveryUseCase;
 import dev.ngb.survey.webhook.application.delivery.query.DeliveryAttemptView;
+import dev.ngb.survey.webhook.application.delivery.query.DeliveryListing;
 import dev.ngb.survey.webhook.application.delivery.query.DeliveryQueries;
 import dev.ngb.survey.webhook.application.delivery.query.WebhookDeliveryView;
-import dev.ngb.survey.webhook.domain.delivery.DeliveryStatus;
 import dev.ngb.survey.webhook.domain.delivery.WebhookDelivery;
 import dev.ngb.survey.webhook.domain.delivery.WebhookDeliveryId;
 import java.time.Instant;
@@ -20,7 +23,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -60,18 +62,12 @@ public class DeliveryController {
         this.deliveryQueries = deliveryQueries;
     }
 
-    /** Newest first. Pass the last {@code id} of a page as {@code before} for the next one. */
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link DeliveryListing}. */
     @GetMapping("/webhook-deliveries")
+    @Listing(DeliveryListing.class)
     @RequiresPermission(SurveyPermissions.WEBHOOK_MANAGE)
-    public List<DeliveryResponse> listDeliveries(
-            @RequestParam(required = false) String status, @RequestParam(required = false) String endpointId,
-            @RequestParam(required = false) String before, @RequestParam(defaultValue = "50") int limit) {
-        return deliveryQueries.list(
-                        status == null ? null : DeliveryStatus.valueOf(status),
-                        endpointId == null ? null : UUID.fromString(endpointId),
-                        before == null ? null : UUID.fromString(before),
-                        limit)
-                .stream().map(DeliveryResponse::ofView).toList();
+    public Page<DeliveryResponse> listDeliveries(ListQuery query) {
+        return deliveryQueries.list(query).map(DeliveryResponse::ofView);
     }
 
     @GetMapping("/webhook-deliveries/{id}")

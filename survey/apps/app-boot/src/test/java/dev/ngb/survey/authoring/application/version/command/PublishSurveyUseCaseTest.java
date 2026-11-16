@@ -15,11 +15,13 @@ import dev.ngb.survey.authoring.application.draft.exception.DraftInvalidExceptio
 import dev.ngb.survey.authoring.application.draft.query.DraftQueries;
 import dev.ngb.survey.authoring.application.survey.command.CreateSurveyUseCase;
 import dev.ngb.survey.authoring.application.survey.query.SurveyQueries;
+import dev.ngb.survey.authoring.application.version.query.VersionListing;
 import dev.ngb.survey.authoring.application.version.query.VersionQueries;
 import dev.ngb.survey.authoring.domain.survey.Survey;
 import dev.ngb.survey.authoring.domain.survey.SurveyStatus;
 import dev.ngb.survey.authoring.domain.version.SurveyVersion;
 import dev.ngb.survey.support.Documents;
+import dev.ngb.survey.support.ListQueries;
 import dev.ngb.survey.support.SurveyIntegrationTest;
 import java.util.Map;
 import java.util.UUID;
@@ -133,7 +135,9 @@ class PublishSurveyUseCaseTest extends SurveyIntegrationTest {
 
         assertThatThrownBy(() -> publish(publishable, "\"2\""))
                 .isInstanceOf(PreconditionFailedException.class);
-        assertThat(inTenant(publishable.tenant(), () -> versionQueries.list(publishable.survey().id())))
+        assertThat(inTenant(publishable.tenant(), () -> versionQueries.list(
+                                publishable.survey().id(), ListQueries.of(VersionListing.SCHEMA)))
+                        .data())
                 .hasSize(1);
     }
 

@@ -1,5 +1,7 @@
 package dev.ngb.survey.collection.api.response;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -16,7 +18,16 @@ import java.util.UUID;
 public interface ResponseReader {
 
     /**
-     * A page of responses matching a filter, in submit order.
+     * One page of the response listing, the way the list-query contract asks for it.
+     *
+     * @param query the filter, ordering and position the caller sent, checked against {@link ResponseListing}
+     */
+    Page<ResponseRow> list(UUID surveyId, ListQuery query);
+
+    /**
+     * A batch of responses matching a filter, in submit order, which an export and a cross-tab walk page by page.
+     *
+     * <p>It is the scan a report runs, not the endpoint: the listing a caller reads is {@link #list}.
      *
      * @param filter the version, window, source and identity the Tenant narrowed by
      * @param offset how many matching rows to skip
@@ -54,6 +65,22 @@ public interface ResponseReader {
 
     /** The visits one funnel row is built from. */
     List<VisitRow> visits(UUID surveyId, Instant from, Instant to);
+
+    /**
+     * One page of the respondents list, the way the list-query contract asks for it.
+     *
+     * @param query the filter, ordering and position the caller sent, checked against {@link RespondentListing}
+     */
+    Page<RespondentRow> respondents(UUID surveyId, ListQuery query);
+
+    /** One respondent, as the listing returns it: the arrival and the identity of the response it produced, if any. */
+    record RespondentRow(
+            UUID id,
+            UUID responseId,
+            String respondentIdentity,
+            String source,
+            String state,
+            Instant lastActivityAt) {}
 
     /** One response, as a report row. */
     record ResponseRow(

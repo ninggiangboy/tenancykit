@@ -1,7 +1,6 @@
 package dev.ngb.survey.insight.application.respondent.query;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -19,28 +18,4 @@ public record RespondentView(
         String source,
         String state,
         Instant lastActivityAt,
-        UUID responseId) {
-
-    /** The state a Tenant narrows the list by, or null for every one. */
-    public enum State {
-        COMPLETED,
-        STARTED,
-        ABANDONED;
-
-        /** The state a query parameter names, or null when it names none. */
-        public static State named(String value) {
-            if (value == null || value.isBlank()) {
-                return null;
-            }
-            return switch (value.toUpperCase(java.util.Locale.ROOT)) {
-                case "COMPLETED" -> COMPLETED;
-                case "STARTED", "OPENED" -> STARTED;
-                case "ABANDONED" -> ABANDONED;
-                default -> null;
-            };
-        }
-    }
-
-    /** The rows and the total the caller should say it saw. */
-    public record Page(List<RespondentView> rows, long total) {}
-}
+        UUID responseId) {}

@@ -1,6 +1,7 @@
 package dev.ngb.survey.insight.application.export.query;
 
-import java.util.List;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,5 +15,5 @@ public interface ExportReadRepository {
 
     Optional<ExportRecord> find(UUID exportId);
 
-    List<ExportRecord> ofSurvey(UUID surveyId, int limit);
+    Page<ExportRecord> ofSurvey(ListQuery query, UUID surveyId);
 }

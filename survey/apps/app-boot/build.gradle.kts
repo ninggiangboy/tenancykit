@@ -11,6 +11,7 @@ dependencies {
     implementation(project(":contexts:insight"))
     implementation(project(":contexts:webhook"))
     implementation("dev.ngb:core-spring")
+    implementation("dev.ngb:core-openapi")
     implementation("dev.ngb:core-messaging")
     implementation("dev.ngb:core-replica")
     implementation("dev.ngb:core-platform-sync")

@@ -1,16 +1,19 @@
 package dev.ngb.survey.authoring.adapter.version.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.survey.authoring.application.version.command.PublishSurveyUseCase;
+import dev.ngb.survey.authoring.application.version.query.VersionListing;
 import dev.ngb.survey.authoring.application.version.query.VersionQueries;
 import dev.ngb.survey.authoring.application.version.query.VersionView;
 import dev.ngb.survey.authoring.domain.version.SurveyVersion;
 import dev.ngb.survey.shared.ConditionalRequests;
 import dev.ngb.survey.shared.SurveyPermissions;
 import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -51,9 +54,10 @@ class VersionController {
     }
 
     @GetMapping("/versions")
+    @Listing(VersionListing.class)
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
-    List<VersionSummary> list(@PathVariable UUID id) {
-        return queries.list(id).stream().map(VersionSummary::of).toList();
+    Page<VersionSummary> list(@PathVariable UUID id, ListQuery query) {
+        return queries.list(id, query).map(VersionSummary::of);
     }
 
     @GetMapping("/versions/{no}")

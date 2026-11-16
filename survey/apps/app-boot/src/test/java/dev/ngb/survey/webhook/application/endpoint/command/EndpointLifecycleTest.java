@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.security.SecretCipher;
 import dev.ngb.core.spring.security.AesGcmSecretCipher;
+import dev.ngb.survey.support.ListQueries;
+import dev.ngb.survey.webhook.application.endpoint.query.EndpointListing;
 import dev.ngb.survey.webhook.application.endpoint.query.EndpointQueries;
 import dev.ngb.survey.webhook.application.endpoint.query.WebhookEndpointView;
 import dev.ngb.survey.support.SurveyIntegrationTest;
@@ -82,7 +84,7 @@ class EndpointLifecycleTest extends SurveyIntegrationTest {
 
         assertThatThrownBy(() -> inTenant(other, () -> queries.get(created.endpoint().id().value())))
                 .isInstanceOf(dev.ngb.core.error.NotFoundException.class);
-        assertThat(inTenant(other, () -> queries.list())).isEmpty();
+        assertThat(inTenant(other, () -> queries.list(ListQueries.of(EndpointListing.SCHEMA))).data()).isEmpty();
     }
 
     @Test

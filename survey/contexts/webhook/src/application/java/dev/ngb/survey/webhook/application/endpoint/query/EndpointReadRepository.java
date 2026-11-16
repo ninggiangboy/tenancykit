@@ -1,14 +1,15 @@
 package dev.ngb.survey.webhook.application.endpoint.query;
 
-import java.util.List;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.Optional;
 import java.util.UUID;
 
 /** Read-only projections of the current tenant's endpoints. */
 public interface EndpointReadRepository {
 
-    /** A null system means the Tenant User's view: every endpoint of the tenant. */
-    List<WebhookEndpointView> list();
+    /** One page of the tenant's endpoints, oldest first unless the caller sorts otherwise. */
+    Page<WebhookEndpointView> list(ListQuery query);
 
     Optional<WebhookEndpointView> findById(UUID id);
 }

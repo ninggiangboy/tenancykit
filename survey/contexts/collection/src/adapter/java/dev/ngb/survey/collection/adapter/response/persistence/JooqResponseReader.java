@@ -4,13 +4,23 @@ import static dev.ngb.survey_jooq.Tables.ANSWERS;
 import static dev.ngb.survey_jooq.Tables.RESPONSES;
 import static dev.ngb.survey_jooq.Tables.VISITS;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.JooqLists;
+import dev.ngb.core.spring.query.ListBinding;
+import dev.ngb.survey.collection.api.response.ResponseListing;
 import dev.ngb.survey.collection.api.response.ResponseReader;
+import dev.ngb.survey.collection.api.response.RespondentListing;
+import dev.ngb.survey_jooq.tables.records.VisitsRecord;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Record;
@@ -30,12 +40,79 @@ public class JooqResponseReader implements ResponseReader {
 
     private static final TypeReference<Map<String, Object>> JSON = new TypeReference<>() {};
 
+    /** The response fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding RESPONSE_BINDING = ListBinding.of(ResponseListing.SCHEMA)
+            .column("id", RESPONSES.ID)
+            .column("survey_id", RESPONSES.SURVEY_ID)
+            .column("version_id", RESPONSES.VERSION_ID)
+            .column("locale", RESPONSES.LOCALE)
+            .column("source", RESPONSES.SOURCE)
+            .column("respondent_identity", RESPONSES.RESPONDENT_IDENTITY)
+            .column("external_ref", RESPONSES.EXTERNAL_REF)
+            .column("score", RESPONSES.SCORE)
+            .column("started_at", RESPONSES.STARTED_AT)
+            .column("submitted_at", RESPONSES.SUBMITTED_AT)
+            .build();
+
+    /** The visit fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding RESPONDENT_BINDING = ListBinding.of(RespondentListing.SCHEMA)
+            .column("id", VISITS.ID)
+            .column("link_id", VISITS.LINK_ID)
+            .column("source", VISITS.SOURCE)
+            .column("state", VISITS.STATE)
+            .column("country", VISITS.COUNTRY)
+            .column("device_class", VISITS.DEVICE_CLASS)
+            .column("traffic_class", VISITS.TRAFFIC_CLASS)
+            .column("response_id", VISITS.RESPONSE_ID)
+            .column("opened_at", VISITS.OPENED_AT)
+            .column("last_activity_at", VISITS.LAST_ACTIVITY_AT)
+            .build();
+
     private final DSLContext dsl;
     private final JsonMapper json;
+
+    /** @return the bindings of the response and respondent listings, for the test that checks every sortable field */
+    public static Map<String, ListBinding> listBindings() {
+        return Map.of("response", RESPONSE_BINDING, "respondent", RESPONDENT_BINDING);
+    }
 
     public JooqResponseReader(DSLContext dsl, JsonMapper json) {
         this.dsl = dsl;
         this.json = json;
+    }
+
+    @Override
+    public Page<ResponseRow> list(UUID surveyId, ListQuery query) {
+        return JooqLists.fetch(dsl, RESPONSES, completed(surveyId), RESPONSE_BINDING, query, this::toRow);
+    }
+
+    @Override
+    public Page<RespondentRow> respondents(UUID surveyId, ListQuery query) {
+        return JooqLists.fetchPage(
+                dsl, VISITS, VISITS.SURVEY_ID.eq(surveyId), RESPONDENT_BINDING, query, this::respondents);
+    }
+
+    /** Fills in each arrival's identity with one query for the page, instead of one per row. */
+    private List<RespondentRow> respondents(List<VisitsRecord> rows) {
+        Set<UUID> responseIds = rows.stream()
+                .map(VisitsRecord::getResponseId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<UUID, String> identities = responseIds.isEmpty()
+                ? Map.of()
+                : dsl.select(RESPONSES.ID, RESPONSES.RESPONDENT_IDENTITY)
+                        .from(RESPONSES)
+                        .where(RESPONSES.ID.in(responseIds))
+                        .fetchMap(RESPONSES.ID, RESPONSES.RESPONDENT_IDENTITY);
+        return rows.stream()
+                .map(row -> new RespondentRow(
+                        row.getId(),
+                        row.getResponseId(),
+                        identities.get(row.getResponseId()),
+                        row.getSource(),
+                        row.getState(),
+                        row.getLastActivityAt()))
+                .toList();
     }
 
     @Override
@@ -150,11 +227,18 @@ public class JooqResponseReader implements ResponseReader {
 
     /** A completed response of this survey that matches the filter. */
     private static Condition completed(UUID surveyId, ResponseFilter filter) {
-        return RESPONSES.SURVEY_ID.eq(surveyId)
-                .and(RESPONSES.STATUS.eq("COMPLETED"))
+        return completed(surveyId)
                 .and(window(filter))
                 .and(filter.source() == null ? DSL.noCondition() : RESPONSES.SOURCE.eq(filter.source()))
                 .and(filter.externalRef() == null ? DSL.noCondition() : RESPONSES.EXTERNAL_REF.eq(filter.externalRef()));
+    }
+
+    /**
+     * The scope every read of the response table shares: this survey's submitted responses. A draft still being filled
+     * in is not a response a report or a listing answers with.
+     */
+    private static Condition completed(UUID surveyId) {
+        return RESPONSES.SURVEY_ID.eq(surveyId).and(RESPONSES.STATUS.eq("COMPLETED"));
     }
 
     /** The typed rows of a response that matches the filter, joined so the window and source apply. */

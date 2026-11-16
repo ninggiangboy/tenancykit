@@ -5,7 +5,12 @@ import static dev.ngb.survey_jooq.Tables.WEBHOOK_DELIVERY_ATTEMPTS;
 import static dev.ngb.survey_jooq.Tables.WEBHOOK_ENDPOINTS;
 import static org.jooq.impl.DSL.noCondition;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.JooqLists;
+import dev.ngb.core.spring.query.ListBinding;
 import dev.ngb.survey.webhook.application.delivery.query.DeliveryAttemptView;
+import dev.ngb.survey.webhook.application.delivery.query.DeliveryListing;
 import dev.ngb.survey.webhook.application.delivery.query.DeliveryReadRepository;
 import dev.ngb.survey.webhook.application.delivery.query.WebhookDeliveryView;
 import dev.ngb.survey.webhook.domain.delivery.DeliveryStatus;
@@ -13,31 +18,41 @@ import dev.ngb.survey_jooq.tables.records.WebhookDeliveriesRecord;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.jooq.Condition;
 import org.jooq.DSLContext;
 
 /** Selects deliveries and attempts straight into the views; the domain aggregate is never built. */
 public class JooqWebhookDeliveryReadRepository implements DeliveryReadRepository {
 
+    /** The delivery fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding BINDING = ListBinding.of(DeliveryListing.SCHEMA)
+            .column("id", WEBHOOK_DELIVERIES.ID)
+            .column("endpoint_id", WEBHOOK_DELIVERIES.ENDPOINT_ID)
+            .column("event_id", WEBHOOK_DELIVERIES.EVENT_ID)
+            .column("event_type", WEBHOOK_DELIVERIES.EVENT_TYPE)
+            .column("status", WEBHOOK_DELIVERIES.STATUS)
+            .column("attempts", WEBHOOK_DELIVERIES.ATTEMPTS)
+            .column("next_attempt_at", WEBHOOK_DELIVERIES.NEXT_ATTEMPT_AT)
+            .column("last_status_code", WEBHOOK_DELIVERIES.LAST_STATUS_CODE)
+            .column("last_error", WEBHOOK_DELIVERIES.LAST_ERROR)
+            .column("created_at", WEBHOOK_DELIVERIES.CREATED_AT)
+            .column("completed_at", WEBHOOK_DELIVERIES.COMPLETED_AT)
+            .build();
+
     private final DSLContext dsl;
+
+    /** @return the binding of the delivery listing, for the test that checks every sortable field has an index */
+    public static ListBinding listBinding() {
+        return BINDING;
+    }
 
     public JooqWebhookDeliveryReadRepository(DSLContext dsl) {
         this.dsl = dsl;
     }
 
     @Override
-    public List<WebhookDeliveryView> list(DeliveryStatus status, UUID endpointId, UUID before, int limit) {
-        Condition filter = (status == null ? noCondition() : WEBHOOK_DELIVERIES.STATUS.eq(status.name()))
-                .and(endpointId == null ? noCondition() : WEBHOOK_DELIVERIES.ENDPOINT_ID.eq(endpointId))
-                .and(before == null ? noCondition() : WEBHOOK_DELIVERIES.ID.lt(before));
-        return dsl.select(WEBHOOK_DELIVERIES.asterisk())
-                .from(WEBHOOK_DELIVERIES)
-                .join(WEBHOOK_ENDPOINTS)
-                .on(WEBHOOK_ENDPOINTS.TENANT_ID.eq(WEBHOOK_DELIVERIES.TENANT_ID).and(WEBHOOK_ENDPOINTS.ID.eq(WEBHOOK_DELIVERIES.ENDPOINT_ID)))
-                .where(filter)
-                .orderBy(WEBHOOK_DELIVERIES.ID.desc())
-                .limit(limit)
-                .fetch(row -> toView(row.into(WEBHOOK_DELIVERIES)));
+    public Page<WebhookDeliveryView> list(ListQuery query) {
+        return JooqLists.fetch(
+                dsl, WEBHOOK_DELIVERIES, noCondition(), BINDING, query, JooqWebhookDeliveryReadRepository::toView);
     }
 
     @Override
@@ -47,7 +62,6 @@ public class JooqWebhookDeliveryReadRepository implements DeliveryReadRepository
                 .join(WEBHOOK_ENDPOINTS)
                 .on(WEBHOOK_ENDPOINTS.TENANT_ID.eq(WEBHOOK_DELIVERIES.TENANT_ID).and(WEBHOOK_ENDPOINTS.ID.eq(WEBHOOK_DELIVERIES.ENDPOINT_ID)))
                 .where(WEBHOOK_DELIVERIES.ID.eq(id))
-                
                 .fetchOptional(row -> toView(row.into(WEBHOOK_DELIVERIES)));
     }
 

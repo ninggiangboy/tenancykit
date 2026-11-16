@@ -8,6 +8,8 @@ import dev.ngb.core.webhook.WebhookSigner;
 import dev.ngb.survey.collection.domain.response.Response;
 import dev.ngb.survey.collection.domain.response.ResponseEvents;
 import dev.ngb.survey.support.SurveyIntegrationTest;
+import dev.ngb.survey.support.ListQueries;
+import dev.ngb.survey.webhook.application.delivery.query.DeliveryListing;
 import dev.ngb.survey.webhook.application.delivery.query.DeliveryQueries;
 import dev.ngb.survey.webhook.application.endpoint.command.CreateEndpointUseCase;
 import java.io.IOException;
@@ -91,7 +93,10 @@ class WebhookDeliveryTest extends SurveyIntegrationTest {
     }
 
     private UUID firstDeliveryId(TenantId tenant) {
-        return inTenant(tenant, () -> deliveries.list(null, null, null, 10).get(0).id());
+        return inTenant(tenant, () -> deliveries.list(ListQueries.of(DeliveryListing.SCHEMA, "limit", "10"))
+                .data()
+                .get(0)
+                .id());
     }
 
     private static ResponseEvents.ResponseSubmitted submittedEvent(TenantId tenant) {

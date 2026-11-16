@@ -2,13 +2,17 @@ package dev.ngb.survey.insight.adapter.export.persistence;
 
 import static dev.ngb.survey_jooq.Tables.EXPORTS;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.JooqLists;
+import dev.ngb.core.spring.query.ListBinding;
+import dev.ngb.survey.insight.application.export.query.ExportListing;
 import dev.ngb.survey.insight.application.export.query.ExportReadRepository;
 import dev.ngb.survey.insight.application.export.query.ExportRecord;
-import java.util.List;
+import dev.ngb.survey_jooq.tables.records.ExportsRecord;
 import java.util.Optional;
 import java.util.UUID;
 import org.jooq.DSLContext;
-import org.jooq.Record;
 
 /**
  * The read side of the export ledger, sitting beside its write repository.
@@ -18,7 +22,24 @@ import org.jooq.Record;
  */
 public class JooqExportReadRepository implements ExportReadRepository {
 
+    /** The export fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding BINDING = ListBinding.of(ExportListing.SCHEMA)
+            .column("id", EXPORTS.ID)
+            .column("survey_id", EXPORTS.SURVEY_ID)
+            .column("status", EXPORTS.STATUS)
+            .column("object_key", EXPORTS.OBJECT_KEY)
+            .column("rows", EXPORTS.ROWS)
+            .column("requested_by", EXPORTS.REQUESTED_BY)
+            .column("created_at", EXPORTS.CREATED_AT)
+            .column("finished_at", EXPORTS.FINISHED_AT)
+            .build();
+
     private final DSLContext dsl;
+
+    /** @return the binding of the export listing, for the test that checks every sortable field has an index */
+    public static ListBinding listBinding() {
+        return BINDING;
+    }
 
     public JooqExportReadRepository(DSLContext dsl) {
         this.dsl = dsl;
@@ -30,25 +51,21 @@ public class JooqExportReadRepository implements ExportReadRepository {
     }
 
     @Override
-    public List<ExportRecord> ofSurvey(UUID surveyId, int limit) {
-        return dsl.selectFrom(EXPORTS)
-                .where(EXPORTS.SURVEY_ID.eq(surveyId))
-                .orderBy(EXPORTS.CREATED_AT.desc())
-                .limit(limit)
-                .fetch(this::toRecord);
+    public Page<ExportRecord> ofSurvey(ListQuery query, UUID surveyId) {
+        return JooqLists.fetch(dsl, EXPORTS, EXPORTS.SURVEY_ID.eq(surveyId), BINDING, query, this::toRecord);
     }
 
-    private ExportRecord toRecord(Record row) {
+    private ExportRecord toRecord(ExportsRecord row) {
         return new ExportRecord(
-                row.get(EXPORTS.ID),
-                row.get(EXPORTS.TENANT_ID),
-                row.get(EXPORTS.SURVEY_ID),
-                row.get(EXPORTS.STATUS),
-                Filters.read(row.get(EXPORTS.FILTER)),
-                row.get(EXPORTS.OBJECT_KEY),
-                row.get(EXPORTS.ROWS),
-                row.get(EXPORTS.REQUESTED_BY),
-                row.get(EXPORTS.CREATED_AT),
-                row.get(EXPORTS.FINISHED_AT));
+                row.getId(),
+                row.getTenantId(),
+                row.getSurveyId(),
+                row.getStatus(),
+                Filters.read(row.getFilter()),
+                row.getObjectKey(),
+                row.getRows(),
+                row.getRequestedBy(),
+                row.getCreatedAt(),
+                row.getFinishedAt());
     }
 }

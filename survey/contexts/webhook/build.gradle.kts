@@ -6,6 +6,8 @@ plugins {
 // are shared from core-webhook; the tables and the delivery state stay here, shaped like Billing's and never shared.
 dependencies {
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-jooq")
+    // The list-query compiler and the argument resolver the read adapters need.
+    "adapterImplementation"("dev.ngb:core-spring")
     "adapterImplementation"(project(":libs:jooq-schema"))
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-webmvc")
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-jackson")

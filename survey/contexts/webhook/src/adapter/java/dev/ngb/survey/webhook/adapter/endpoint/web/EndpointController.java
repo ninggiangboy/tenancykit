@@ -1,13 +1,17 @@
 package dev.ngb.survey.webhook.adapter.endpoint.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.survey.shared.SurveyPermissions;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.survey.webhook.application.endpoint.command.CreateEndpointUseCase;
 import dev.ngb.survey.webhook.application.endpoint.command.ManageEndpointUseCase;
+import dev.ngb.survey.webhook.application.endpoint.query.EndpointListing;
 import dev.ngb.survey.webhook.application.endpoint.query.EndpointQueries;
 import dev.ngb.survey.webhook.application.endpoint.query.WebhookEndpointView;
 import dev.ngb.survey.webhook.domain.endpoint.EndpointStatus;
@@ -79,10 +83,12 @@ public class EndpointController {
         return new EndpointWithSecretResponse(EndpointResponse.of(result.endpoint()), result.signingSecret());
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link EndpointListing}. */
     @GetMapping("/webhook-endpoints")
+    @Listing(EndpointListing.class)
     @RequiresPermission(SurveyPermissions.WEBHOOK_MANAGE)
-    public List<EndpointResponse> listEndpoints() {
-        return endpointQueries.list().stream().map(EndpointResponse::ofView).toList();
+    public Page<EndpointResponse> listEndpoints(ListQuery query) {
+        return endpointQueries.list(query).map(EndpointResponse::ofView);
     }
 
     @GetMapping("/webhook-endpoints/{id}")

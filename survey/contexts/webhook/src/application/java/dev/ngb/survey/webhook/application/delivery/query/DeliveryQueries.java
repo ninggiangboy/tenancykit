@@ -1,16 +1,13 @@
 package dev.ngb.survey.webhook.application.delivery.query;
 
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.core.util.PageSize;
-import dev.ngb.survey.webhook.domain.delivery.DeliveryStatus;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * The delivery history a Tenant reads: newest first, optionally narrowed by status, endpoint or the last id of the
- * previous page.
- */
+/** The delivery history a Tenant reads, narrowed and paged the way the list-query contract asks. */
 public class DeliveryQueries {
 
     /** One delivery and the attempts that were made for it. */
@@ -24,12 +21,8 @@ public class DeliveryQueries {
         this.deliveries = deliveries;
     }
 
-    public List<WebhookDeliveryView> list(
-            DeliveryStatus status, UUID endpointId, UUID before, int limit) {
-        if (limit < 1) {
-            throw new IllegalArgumentException("limit must be at least 1");
-        }
-        return unitOfWork.transactional(() -> deliveries.list(status, endpointId, before, PageSize.of(limit)));
+    public Page<WebhookDeliveryView> list(ListQuery query) {
+        return unitOfWork.transactional(() -> deliveries.list(query));
     }
 
     public Detail get(UUID id) {

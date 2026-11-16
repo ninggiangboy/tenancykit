@@ -1,10 +1,14 @@
 package dev.ngb.survey.collection.adapter.link.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.survey.collection.application.link.command.CreatePersonalLinksUseCase;
 import dev.ngb.survey.collection.application.link.command.CreatePublicLinkUseCase;
 import dev.ngb.survey.collection.application.link.command.RevokeLinkUseCase;
+import dev.ngb.survey.collection.application.link.query.LinkListing;
 import dev.ngb.survey.collection.application.link.query.LinkQueries;
 import dev.ngb.survey.collection.application.link.query.LinkView;
 import dev.ngb.survey.collection.domain.link.SurveyLink;
@@ -70,9 +74,10 @@ class LinkController {
     }
 
     @GetMapping("/surveys/{id}/links")
+    @Listing(LinkListing.class)
     @RequiresPermission(SurveyPermissions.LINK_MANAGE)
-    List<LinkResponse> list(@PathVariable UUID id) {
-        return queries.list(id).stream().map(LinkResponse::of).toList();
+    Page<LinkResponse> list(@PathVariable UUID id, ListQuery query) {
+        return queries.list(id, query).map(LinkResponse::of);
     }
 
     @GetMapping("/links/{linkId}")

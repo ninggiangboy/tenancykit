@@ -1,8 +1,9 @@
 package dev.ngb.survey.authoring.application.version.query;
 
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
-import java.util.List;
 import java.util.UUID;
 
 /** The version history and one version's document, read inside a tenant-scoped transaction. */
@@ -16,8 +17,8 @@ public class VersionQueries {
         this.versions = versions;
     }
 
-    public List<VersionView> list(UUID surveyId) {
-        return unitOfWork.transactional(() -> versions.list(surveyId));
+    public Page<VersionView> list(UUID surveyId, ListQuery query) {
+        return unitOfWork.transactional(() -> versions.list(query, surveyId));
     }
 
     public VersionView get(UUID surveyId, int versionNo) {

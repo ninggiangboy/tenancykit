@@ -1,13 +1,15 @@
 package dev.ngb.survey.insight.adapter.export.web;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.survey.insight.application.export.command.RequestExportUseCase;
+import dev.ngb.survey.insight.application.export.query.ExportListing;
 import dev.ngb.survey.insight.application.export.query.ExportQueries;
 import dev.ngb.survey.insight.domain.export.Export;
 import dev.ngb.survey.shared.SurveyPermissions;
-import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -16,7 +18,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -52,10 +53,10 @@ class ExportController {
     }
 
     @GetMapping("/surveys/{id}/exports")
+    @Listing(ExportListing.class)
     @RequiresPermission(SurveyPermissions.EXPORT_MANAGE)
-    List<ExportQueries.ExportView> list(
-            @PathVariable UUID id, @RequestParam(defaultValue = "20") int limit) {
-        return exports.ofSurvey(id, Math.min(Math.max(1, limit), 100));
+    Page<ExportQueries.ExportView> list(@PathVariable UUID id, ListQuery query) {
+        return exports.ofSurvey(id, query);
     }
 
     @GetMapping("/exports/{exportId}")

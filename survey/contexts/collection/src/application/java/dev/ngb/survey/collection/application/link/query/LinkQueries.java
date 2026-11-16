@@ -1,9 +1,10 @@
 package dev.ngb.survey.collection.application.link.query;
 
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.survey.collection.application.link.service.LinkUrls;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -24,8 +25,8 @@ public class LinkQueries {
         this.urls = urls;
     }
 
-    public List<LinkView> list(UUID surveyId) {
-        return unitOfWork.transactional(() -> links.list(surveyId).stream().map(this::withUrl).toList());
+    public Page<LinkView> list(UUID surveyId, ListQuery query) {
+        return unitOfWork.transactional(() -> links.list(query, surveyId).map(this::withUrl));
     }
 
     public LinkView get(UUID linkId) {

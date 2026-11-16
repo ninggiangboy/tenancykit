@@ -1,11 +1,12 @@
 package dev.ngb.survey.insight.application.export.query;
 
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,9 +31,8 @@ public class ExportQueries {
         this.downloads = downloads;
     }
 
-    public List<ExportView> ofSurvey(UUID surveyId, int limit) {
-        return unitOfWork.transactional(() ->
-                exports.ofSurvey(surveyId, limit).stream().map(this::viewOf).toList());
+    public Page<ExportView> ofSurvey(UUID surveyId, ListQuery query) {
+        return unitOfWork.transactional(() -> exports.ofSurvey(query, surveyId).map(this::viewOf));
     }
 
     public ExportView get(UUID exportId) {

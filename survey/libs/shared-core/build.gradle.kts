@@ -7,5 +7,8 @@ plugins {
 dependencies {
     // Every layer that sees shared-core sees the kernel too, so a port never has to be re-exported by hand.
     api("dev.ngb:core-kernel")
+    // A listing declares its filter schema in the application layer and its binding in the adapter, so both see the
+    // list-query contract without naming the Spring implementation.
+    api("dev.ngb:core-query")
     testImplementation("org.assertj:assertj-core")
 }

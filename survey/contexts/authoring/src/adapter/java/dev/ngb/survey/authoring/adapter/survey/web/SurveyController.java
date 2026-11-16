@@ -1,16 +1,19 @@
 package dev.ngb.survey.authoring.adapter.survey.web;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.survey.authoring.application.survey.command.CloseSurveyUseCase;
 import dev.ngb.survey.authoring.application.survey.command.CreateSurveyUseCase;
 import dev.ngb.survey.authoring.application.survey.command.ReopenSurveyUseCase;
+import dev.ngb.survey.authoring.application.survey.query.SurveyListing;
 import dev.ngb.survey.authoring.application.survey.query.SurveyQueries;
 import dev.ngb.survey.authoring.application.survey.query.SurveyView;
 import dev.ngb.survey.authoring.domain.survey.Survey;
 import dev.ngb.survey.authoring.domain.survey.SurveyStatus;
 import dev.ngb.survey.shared.SurveyPermissions;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,9 +50,10 @@ class SurveyController {
     }
 
     @GetMapping
+    @Listing(SurveyListing.class)
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
-    List<SurveyResponse> list() {
-        return queries.list().stream().map(SurveyResponse::of).toList();
+    Page<SurveyResponse> list(ListQuery query) {
+        return queries.list(query).map(SurveyResponse::of);
     }
 
     @GetMapping("/{id}")
