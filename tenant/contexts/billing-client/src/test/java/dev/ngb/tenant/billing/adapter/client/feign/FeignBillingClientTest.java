@@ -12,6 +12,8 @@ import dev.ngb.tenant.billing.api.client.BillingCharges.ChargeRequest;
 import dev.ngb.tenant.billing.api.client.BillingCustomers.NewCustomer;
 import dev.ngb.tenant.billing.api.client.BillingPricing.EstimateRequest;
 import dev.ngb.tenant.billing.api.client.BillingPricing.ReserveRequest;
+import dev.ngb.tenant.billing.api.model.Invoice;
+import dev.ngb.tenant.billing.api.model.Payment;
 import dev.ngb.tenant.billing.api.model.Charge;
 import dev.ngb.tenant.billing.api.model.Customer;
 import dev.ngb.tenant.billing.api.model.Estimate;
@@ -69,6 +71,51 @@ class FeignBillingClientTest {
         assertThat(request.header("Content-Type")).isEqualTo("application/json");
         assertThat(request.header("Accept")).isEqualTo("application/json");
         assertThat(request.body()).contains("\"externalUserId\":\"user_1\"");
+    }
+
+    @Test
+    void invoicesAreReadPageByPageFollowingTheCursorUntilTheLimit() {
+        billing.respond(200, """
+                {"data":[{"id":"inv_1"},{"id":"inv_2"},{"id":"inv_3"}],"page":{"limit":5,"offset":null,"total":9,"next_cursor":"cur_1"}}
+                """);
+        billing.respond(200, """
+                {"data":[{"id":"inv_4"},{"id":"inv_5"}],"page":{"limit":2,"offset":null,"total":9,"next_cursor":"cur_2"}}
+                """);
+
+        var invoices = client.invoices("cus_1", null, "OPEN", 5);
+
+        assertThat(invoices).extracting(Invoice::id).containsExactly("inv_1", "inv_2", "inv_3", "inv_4", "inv_5");
+        assertThat(billing.requests()).hasSize(2);
+        String first = billing.request(0).path();
+        assertThat(first).startsWith("/api/v1/invoices?").contains("filter%5Bcustomer_id%5D%5Beq%5D=cus_1")
+                .contains("filter%5Bstatus%5D%5Beq%5D=OPEN").contains("limit=5").contains("page_info=true").doesNotContain("cursor=");
+        // The second request asks only for what is still missing and continues where the first stopped.
+        assertThat(billing.request(1).path()).contains("limit=2").contains("cursor=cur_1").contains("filter%5Bcustomer_id%5D%5Beq%5D=cus_1");
+    }
+
+    @Test
+    void readingStopsWhenBillingHasNoNextCursorEvenBelowTheLimit() {
+        billing.respond(200, """
+                {"data":[{"id":"pay_1"}],"page":{"limit":50,"offset":null,"total":1,"next_cursor":null}}
+                """);
+
+        var payments = client.payments("wal_1", null, 50);
+
+        assertThat(payments).extracting(Payment::id).containsExactly("pay_1");
+        assertThat(billing.requests()).hasSize(1);
+        assertThat(billing.request(0).path()).startsWith("/api/v1/payments?").contains("filter%5Bwallet_id%5D%5Beq%5D=wal_1");
+    }
+
+    @Test
+    void aLimitAbovePageSizeIsReadAsSeveralPagesOfAtMost200() {
+        String rows = java.util.stream.IntStream.range(0, 200).mapToObj(i -> "{\"id\":\"inv_" + i + "\"}").collect(java.util.stream.Collectors.joining(","));
+        billing.respond(200, "{\"data\":[" + rows + "],\"page\":{\"limit\":200,\"offset\":null,\"total\":300,\"next_cursor\":\"c\"}}");
+        billing.respond(200, "{\"data\":[],\"page\":{\"limit\":100,\"offset\":null,\"total\":300,\"next_cursor\":null}}");
+
+        assertThat(client.invoices("cus_1", null, null, 300)).hasSize(200);
+
+        assertThat(billing.request(0).path()).contains("limit=200");
+        assertThat(billing.request(1).path()).contains("limit=100").contains("cursor=c");
     }
 
     @Test
@@ -139,15 +186,16 @@ class FeignBillingClientTest {
     @Test
     void walletReadsCarryTheCustomerQuery() {
         billing.respond(200, """
-                [{"id":"wal_1","customerId":"cus_1","currency":"USD","mode":"PREPAID",
+                {"data":[{"id":"wal_1","customerId":"cus_1","currency":"USD","mode":"PREPAID",
                   "balance":{"amount":500,"currency":"USD"},"held":{"amount":0,"currency":"USD"},
-                  "available":{"amount":500,"currency":"USD"}}]
+                  "available":{"amount":500,"currency":"USD"}}],"page":null}
                 """);
 
         List<Wallet> wallets = client.wallets("cus_1");
 
         assertThat(wallets).singleElement().satisfies(wallet -> assertThat(wallet.mode()).isEqualTo("PREPAID"));
-        assertThat(billing.request(0).path()).isEqualTo("/api/v1/wallets?customerId=cus_1");
+        assertThat(billing.request(0).path()).startsWith("/api/v1/wallets?")
+                .contains("filter%5Bcustomer_id%5D%5Beq%5D=cus_1").contains("page_info=true");
     }
 
     @Test
@@ -189,12 +237,15 @@ class FeignBillingClientTest {
     }
 
     @Test
-    void omitsAnAbsentQueryParameter() {
-        billing.respond(200, "[]");
+    void anAbsentFilterLeavesOnlyThePagingParameters() {
+        billing.respond(200, """
+                {"data":[],"page":null}
+                """);
 
         client.plans(null);
 
-        assertThat(billing.request(0).path()).isEqualTo("/api/v1/pricing-plans");
+        assertThat(billing.request(0).path()).startsWith("/api/v1/pricing-plans?")
+                .contains("limit=200").contains("page_info=true").doesNotContain("filter%5B");
     }
 
     @Test

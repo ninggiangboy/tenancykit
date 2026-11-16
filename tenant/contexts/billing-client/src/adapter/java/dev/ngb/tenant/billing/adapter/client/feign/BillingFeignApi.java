@@ -31,7 +31,9 @@ import dev.ngb.tenant.billing.api.model.SubscriptionDetail;
 import dev.ngb.tenant.billing.api.model.UsageEvent;
 import dev.ngb.tenant.billing.api.model.UsageEventRequest;
 import dev.ngb.tenant.billing.api.model.Wallet;
+import dev.ngb.core.query.Page;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -56,8 +58,9 @@ interface BillingFeignApi {
     @GetMapping("/api/v1/customers/by-external-user/{externalUserId}")
     Customer customerByExternalUser(@PathVariable("externalUserId") String externalUserId);
 
+    /** @param query the list-query parameters: {@code filter[field][op]}, {@code sort}, {@code limit}, {@code cursor}, {@code page_info} */
     @GetMapping("/api/v1/pricing-plans")
-    List<PricingPlan> plans(@RequestParam(value = "status", required = false) String status);
+    Page<PricingPlan> plans(@RequestParam Map<String, String> query);
 
     @GetMapping("/api/v1/pricing-plans/{id}")
     PricingPlan plan(@PathVariable("id") String id);
@@ -68,8 +71,9 @@ interface BillingFeignApi {
     @PostMapping(value = "/api/v1/pricing/reservations", consumes = MediaType.APPLICATION_JSON_VALUE)
     ReserveResult reserve(@RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String idempotencyKey, @RequestBody ReserveRequest request);
 
+    /** @param query the list-query parameters: {@code filter[field][op]}, {@code sort}, {@code limit}, {@code cursor}, {@code page_info} */
     @GetMapping("/api/v1/wallets")
-    List<Wallet> wallets(@RequestParam("customerId") String customerId);
+    Page<Wallet> wallets(@RequestParam Map<String, String> query);
 
     @GetMapping("/api/v1/wallets/{id}")
     Wallet wallet(@PathVariable("id") String id);
@@ -98,13 +102,9 @@ interface BillingFeignApi {
     @PostMapping(value = "/api/v1/usage-events", consumes = MediaType.APPLICATION_JSON_VALUE)
     RecordedUsage record(@RequestBody UsageEventRequest request);
 
+    /** @param query the list-query parameters: {@code filter[field][op]}, {@code sort}, {@code limit}, {@code cursor}, {@code page_info} */
     @GetMapping("/api/v1/usage-events")
-    List<UsageEvent> history(
-            @RequestParam("customerId") String customerId,
-            @RequestParam(value = "metric", required = false) String metric,
-            @RequestParam(value = "from", required = false) String from,
-            @RequestParam(value = "to", required = false) String to,
-            @RequestParam("limit") int limit);
+    Page<UsageEvent> history(@RequestParam Map<String, String> query);
 
     @PostMapping(value = "/api/v1/billing-sessions", consumes = MediaType.APPLICATION_JSON_VALUE)
     BillingSession createSession(@RequestBody SessionRequest request);
@@ -112,11 +112,9 @@ interface BillingFeignApi {
     @PostMapping("/api/v1/billing-sessions/{id}/revoke")
     void revokeSession(@PathVariable("id") String id);
 
+    /** @param query the list-query parameters: {@code filter[field][op]}, {@code sort}, {@code limit}, {@code cursor}, {@code page_info} */
     @GetMapping("/api/v1/payments")
-    List<Payment> payments(
-            @RequestParam(value = "walletId", required = false) String walletId,
-            @RequestParam(value = "status", required = false) String status,
-            @RequestParam("limit") int limit);
+    Page<Payment> payments(@RequestParam Map<String, String> query);
 
     @GetMapping("/api/v1/payments/{id}")
     PaymentDetail payment(@PathVariable("id") String id);
@@ -124,12 +122,9 @@ interface BillingFeignApi {
     @PostMapping(value = "/api/v1/payments/top-ups", consumes = MediaType.APPLICATION_JSON_VALUE)
     Payment createTopUp(@RequestHeader(HttpHeaders.IDEMPOTENCY_KEY) String idempotencyKey, @RequestBody TopUpRequest request);
 
+    /** @param query the list-query parameters: {@code filter[field][op]}, {@code sort}, {@code limit}, {@code cursor}, {@code page_info} */
     @GetMapping("/api/v1/invoices")
-    List<Invoice> invoices(
-            @RequestParam(value = "customerId", required = false) String customerId,
-            @RequestParam(value = "walletId", required = false) String walletId,
-            @RequestParam(value = "status", required = false) String status,
-            @RequestParam("limit") int limit);
+    Page<Invoice> invoices(@RequestParam Map<String, String> query);
 
     @GetMapping("/api/v1/invoices/{id}")
     InvoiceDetail invoice(@PathVariable("id") String id);
@@ -144,18 +139,16 @@ interface BillingFeignApi {
     @PostMapping("/api/v1/subscriptions/{id}/cancel")
     SubscriptionDetail cancel(@PathVariable("id") String id);
 
+    /** @param query the list-query parameters: {@code filter[field][op]}, {@code sort}, {@code limit}, {@code cursor}, {@code page_info} */
     @GetMapping("/api/v1/subscriptions")
-    List<Subscription> subscriptions(
-            @RequestParam(value = "customerId", required = false) String customerId,
-            @RequestParam(value = "walletId", required = false) String walletId,
-            @RequestParam(value = "status", required = false) String status,
-            @RequestParam("limit") int limit);
+    Page<Subscription> subscriptions(@RequestParam Map<String, String> query);
 
     @PostMapping(value = "/api/v1/pricing-plans", consumes = MediaType.APPLICATION_JSON_VALUE)
     PricingPlan createPlan(@RequestBody CreatePlanRequest request);
 
+    /** @param query the list-query parameters: {@code filter[field][op]}, {@code sort}, {@code limit}, {@code cursor}, {@code page_info} */
     @GetMapping("/api/v1/webhook-endpoints")
-    List<Endpoint> endpoints();
+    Page<Endpoint> endpoints(@RequestParam Map<String, String> query);
 
     @PostMapping(value = "/api/v1/webhook-endpoints", consumes = MediaType.APPLICATION_JSON_VALUE)
     EndpointWithSecret createEndpoint(@RequestBody CreateEndpointRequest request);

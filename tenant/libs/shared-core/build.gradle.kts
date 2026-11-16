@@ -7,5 +7,7 @@ plugins {
 dependencies {
     // Every layer that sees shared-core sees the kernel too, so a port never has to be re-exported by hand.
     api("dev.ngb:core-kernel")
+    // The list-query contract every Billing listing answers with; the client reads its pages.
+    api("dev.ngb:core-query")
     testImplementation("org.assertj:assertj-core")
 }

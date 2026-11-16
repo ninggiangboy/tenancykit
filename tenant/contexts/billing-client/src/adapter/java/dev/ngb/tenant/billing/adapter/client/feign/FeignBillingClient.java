@@ -44,6 +44,12 @@ import dev.ngb.tenant.billing.api.model.Wallet;
 import dev.ngb.core.error.UpstreamUnavailableException;
 import feign.RetryableException;
 import java.time.Instant;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.util.PageSize;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -90,7 +96,9 @@ public class FeignBillingClient
 
     @Override
     public List<PricingPlan> plans(String status) {
-        return call(() -> api.plans(status));
+        Map<String, String> filters = new LinkedHashMap<>();
+        equal(filters, "status", status);
+        return readUpTo(PageSize.MAX, filters, api::plans);
     }
 
     @Override
@@ -111,7 +119,9 @@ public class FeignBillingClient
 
     @Override
     public List<Wallet> wallets(String customerId) {
-        return call(() -> api.wallets(customerId));
+        Map<String, String> filters = new LinkedHashMap<>();
+        equal(filters, "customer_id", customerId);
+        return readUpTo(PageSize.MAX, filters, api::wallets);
     }
 
     @Override
@@ -159,7 +169,16 @@ public class FeignBillingClient
 
     @Override
     public List<UsageEvent> history(String customerId, String metric, Instant from, Instant to, int limit) {
-        return call(() -> api.history(customerId, metric, instant(from), instant(to), limit));
+        Map<String, String> filters = new LinkedHashMap<>();
+        equal(filters, "customer_id", customerId);
+        equal(filters, "metric", metric);
+        if (from != null) {
+            filters.put("filter[occurred_at][gte]", instant(from));
+        }
+        if (to != null) {
+            filters.put("filter[occurred_at][lt]", instant(to));
+        }
+        return readUpTo(limit, filters, api::history);
     }
 
     @Override
@@ -175,7 +194,10 @@ public class FeignBillingClient
 
     @Override
     public List<Payment> payments(String walletId, String status, int limit) {
-        return call(() -> api.payments(walletId, status, limit));
+        Map<String, String> filters = new LinkedHashMap<>();
+        equal(filters, "wallet_id", walletId);
+        equal(filters, "status", status);
+        return readUpTo(limit, filters, api::payments);
     }
 
     @Override
@@ -191,7 +213,41 @@ public class FeignBillingClient
 
     @Override
     public List<Invoice> invoices(String customerId, String walletId, String status, int limit) {
-        return call(() -> api.invoices(customerId, walletId, status, limit));
+        Map<String, String> filters = new LinkedHashMap<>();
+        equal(filters, "customer_id", customerId);
+        equal(filters, "wallet_id", walletId);
+        equal(filters, "status", status);
+        return readUpTo(limit, filters, api::invoices);
+    }
+
+    private static void equal(Map<String, String> filters, String field, String value) {
+        if (value != null) {
+            filters.put("filter[" + field + "][eq]", value);
+        }
+    }
+
+    /**
+     * Reads rows page by page until {@code limit} rows are collected or the listing is exhausted, following the cursor
+     * Billing hands back. A page holds at most {@link PageSize#MAX} rows, so a larger {@code limit} needs several.
+     */
+    private <T> List<T> readUpTo(int limit, Map<String, String> filters, Function<Map<String, String>, Page<T>> fetch) {
+        List<T> rows = new ArrayList<>();
+        String cursor = null;
+        while (rows.size() < limit) {
+            Map<String, String> query = new LinkedHashMap<>(filters);
+            query.put("limit", Integer.toString(Math.min(limit - rows.size(), PageSize.MAX)));
+            query.put("page_info", "true");
+            if (cursor != null) {
+                query.put("cursor", cursor);
+            }
+            Page<T> page = call(() -> fetch.apply(query));
+            rows.addAll(page.data());
+            cursor = page.page() == null ? null : page.page().nextCursor();
+            if (cursor == null) {
+                break;
+            }
+        }
+        return rows;
     }
 
     @Override
@@ -217,7 +273,11 @@ public class FeignBillingClient
 
     @Override
     public List<Subscription> subscriptions(String customerId, String walletId, String status, int limit) {
-        return call(() -> api.subscriptions(customerId, walletId, status, limit));
+        Map<String, String> filters = new LinkedHashMap<>();
+        equal(filters, "customer_id", customerId);
+        equal(filters, "wallet_id", walletId);
+        equal(filters, "status", status);
+        return readUpTo(limit, filters, api::subscriptions);
     }
 
     @Override
@@ -227,7 +287,7 @@ public class FeignBillingClient
 
     @Override
     public List<Endpoint> endpoints() {
-        return call(api::endpoints);
+        return readUpTo(PageSize.MAX, new LinkedHashMap<>(), api::endpoints);
     }
 
     @Override
