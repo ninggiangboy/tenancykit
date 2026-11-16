@@ -121,7 +121,9 @@ class LinksIntegrationTest {
                 new TestScopeHook(tenantContext, new org.springframework.jdbc.core.JdbcTemplate(proxied)));
         campaignRepository = new JooqCampaignRepository(dsl);
         createCampaign = new CreateCampaignUseCase(unitOfWork, tenantContext, campaignRepository, ids, clock);
-        updateCampaign = new UpdateCampaignUseCase(unitOfWork, campaignRepository, clock);
+        updateCampaign = new UpdateCampaignUseCase(
+                unitOfWork, campaignRepository,
+                dev.ngb.attribution.links.application.campaign.port.RecomputeTrigger.none(), clock);
         campaignQueries = new CampaignQueries(unitOfWork, new JooqCampaignReadRepository(dsl));
         linkRepository = new JooqLinkRepository(dsl, json);
         ClickParamProvider clickParam = () -> "aid";

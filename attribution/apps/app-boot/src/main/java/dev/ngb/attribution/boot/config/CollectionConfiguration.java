@@ -1,17 +1,18 @@
 package dev.ngb.attribution.boot.config;
 
 import dev.ngb.attribution.boot.web.ClickDailyLimiterImpl;
-import dev.ngb.attribution.boot.web.CollectController;
-import dev.ngb.attribution.boot.web.DataSubjectController;
 import dev.ngb.attribution.boot.web.OriginPolicyImpl;
-import dev.ngb.attribution.boot.web.SettingsController;
-import dev.ngb.attribution.links.adapter.redirect.ratelimit.PublicRateLimiter;
 import dev.ngb.attribution.links.adapter.settings.persistence.JooqSettingsRepository;
 import dev.ngb.attribution.links.application.settings.command.UpdateSettingsUseCase;
 import dev.ngb.attribution.links.application.settings.query.SettingsReadRepository;
 import dev.ngb.attribution.tracking.adapter.collect.persistence.JooqErasureStore;
+import dev.ngb.attribution.boot.web.CollectController;
+import dev.ngb.attribution.boot.web.CollectRateLimiter;
 import dev.ngb.attribution.tracking.adapter.collect.persistence.JooqPageViewStore;
+import dev.ngb.attribution.tracking.adapter.collect.persistence.JooqTouchpointReader;
+import dev.ngb.attribution.tracking.api.chain.TouchpointReader;
 import dev.ngb.attribution.tracking.application.collect.command.CollectPageViewsUseCase;
+import dev.ngb.attribution.tracking.api.erasure.ConversionPersonEraser;
 import dev.ngb.attribution.tracking.application.collect.port.ErasureStore;
 import dev.ngb.attribution.tracking.application.collect.port.PageViewStore;
 import dev.ngb.core.runtime.Clock;
@@ -45,6 +46,11 @@ class CollectionConfiguration {
     }
 
     @Bean
+    TouchpointReader touchpointReader(DSLContext dsl) {
+        return new JooqTouchpointReader(dsl);
+    }
+
+    @Bean
     CollectPageViewsUseCase collectPageViewsUseCase(
             UnitOfWork unitOfWork,
             TenantContext tenantContext,
@@ -74,22 +80,11 @@ class CollectionConfiguration {
     }
 
     @Bean
-    CollectController collectController(
-            CollectPageViewsUseCase useCase,
-            CollectController.OriginPolicy originPolicy,
-            CollectController.ClickDailyLimiter clickDailyLimiter,
-            TenantContext tenantContext,
-            AttributionSettings settings,
-            Clock clock) {
-        return new CollectController(
-                useCase,
-                originPolicy,
-                new PublicRateLimiter(
-                        settings.redirect().visitorPerMinute(), settings.redirect().unlockWindow()),
-                clickDailyLimiter,
-                tenantContext,
-                clock);
+    CollectRateLimiter collectRateLimiter(AttributionSettings settings) {
+        return new CollectRateLimiter(
+                settings.redirect().visitorPerMinute(), settings.redirect().unlockWindow());
     }
+
 
     @Bean
     JooqSettingsRepository settingsRepository(DSLContext dsl, TenantContext tenantContext) {
@@ -105,21 +100,5 @@ class CollectionConfiguration {
         return new UpdateSettingsUseCase(unitOfWork, tenantContext, settings, clock);
     }
 
-    @Bean
-    SettingsController settingsController(
-            UpdateSettingsUseCase update, JooqSettingsRepository settings, UnitOfWork unitOfWork,
-            AttributionSettings attributionSettings) {
-        return new SettingsController(
-                update,
-                settings,
-                unitOfWork,
-                attributionSettings.defaults().clickParam(),
-                attributionSettings.defaults().defaultWindowDays());
-    }
 
-    @Bean
-    DataSubjectController dataSubjectController(
-            ErasureStore erasure, UnitOfWork unitOfWork, TenantContext tenantContext) {
-        return new DataSubjectController(erasure, unitOfWork, tenantContext);
-    }
 }

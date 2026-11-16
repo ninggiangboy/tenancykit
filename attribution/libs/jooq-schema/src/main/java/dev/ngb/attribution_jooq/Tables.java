@@ -9,13 +9,17 @@ import dev.ngb.attribution_jooq.tables.AttributionSettings;
 import dev.ngb.attribution_jooq.tables.BulkLinkRequests;
 import dev.ngb.attribution_jooq.tables.Campaigns;
 import dev.ngb.attribution_jooq.tables.ClickEvents;
+import dev.ngb.attribution_jooq.tables.ConversionCredits;
+import dev.ngb.attribution_jooq.tables.Conversions;
 import dev.ngb.attribution_jooq.tables.EventInbox;
+import dev.ngb.attribution_jooq.tables.Goals;
 import dev.ngb.attribution_jooq.tables.LinkCounters;
 import dev.ngb.attribution_jooq.tables.LinkDestinations;
 import dev.ngb.attribution_jooq.tables.Links;
 import dev.ngb.attribution_jooq.tables.Outbox;
 import dev.ngb.attribution_jooq.tables.PageEvents;
 import dev.ngb.attribution_jooq.tables.PartitionManagedTables;
+import dev.ngb.attribution_jooq.tables.RecomputeRuns;
 import dev.ngb.attribution_jooq.tables.ReplicaState;
 import dev.ngb.attribution_jooq.tables.Sessions;
 import dev.ngb.attribution_jooq.tables.TenantDomains;
@@ -57,9 +61,24 @@ public class Tables {
     public static final ClickEvents CLICK_EVENTS = ClickEvents.CLICK_EVENTS;
 
     /**
+     * The table <code>public.conversion_credits</code>.
+     */
+    public static final ConversionCredits CONVERSION_CREDITS = ConversionCredits.CONVERSION_CREDITS;
+
+    /**
+     * The table <code>public.conversions</code>.
+     */
+    public static final Conversions CONVERSIONS = Conversions.CONVERSIONS;
+
+    /**
      * The table <code>public.event_inbox</code>.
      */
     public static final EventInbox EVENT_INBOX = EventInbox.EVENT_INBOX;
+
+    /**
+     * The table <code>public.goals</code>.
+     */
+    public static final Goals GOALS = Goals.GOALS;
 
     /**
      * The table <code>public.link_counters</code>.
@@ -90,6 +109,11 @@ public class Tables {
      * The table <code>public.partition_managed_tables</code>.
      */
     public static final PartitionManagedTables PARTITION_MANAGED_TABLES = PartitionManagedTables.PARTITION_MANAGED_TABLES;
+
+    /**
+     * The table <code>public.recompute_runs</code>.
+     */
+    public static final RecomputeRuns RECOMPUTE_RUNS = RecomputeRuns.RECOMPUTE_RUNS;
 
     /**
      * The table <code>public.replica_state</code>.

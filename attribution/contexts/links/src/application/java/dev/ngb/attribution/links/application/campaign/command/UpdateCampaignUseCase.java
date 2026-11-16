@@ -1,6 +1,7 @@
 package dev.ngb.attribution.links.application.campaign.command;
 
 import dev.ngb.attribution.links.application.campaign.port.CampaignRepository;
+import dev.ngb.attribution.links.application.campaign.port.RecomputeTrigger;
 import dev.ngb.attribution.links.domain.campaign.AttributionModel;
 import dev.ngb.attribution.links.domain.campaign.Campaign;
 import dev.ngb.core.error.NotFoundException;
@@ -27,11 +28,14 @@ public class UpdateCampaignUseCase {
 
     private final UnitOfWork unitOfWork;
     private final CampaignRepository campaigns;
+    private final RecomputeTrigger recompute;
     private final Clock clock;
 
-    public UpdateCampaignUseCase(UnitOfWork unitOfWork, CampaignRepository campaigns, Clock clock) {
+    public UpdateCampaignUseCase(
+            UnitOfWork unitOfWork, CampaignRepository campaigns, RecomputeTrigger recompute, Clock clock) {
         this.unitOfWork = unitOfWork;
         this.campaigns = campaigns;
+        this.recompute = recompute;
         this.clock = clock;
     }
 
@@ -45,6 +49,13 @@ public class UpdateCampaignUseCase {
                     change.endsOn(), clock.now());
             if (!campaigns.update(updated, current.version())) {
                 throw new PreconditionFailedException(null);
+            }
+            // A model or window change invalidates every credit the campaign owns, so a recompute is requested once the
+            // new policy is stored; the run reads the snapshot, so the raw events do not have to still exist.
+            if (updated.model() != current.model() || updated.windowDays() != current.windowDays()) {
+                recompute.request(
+                        campaignId,
+                        updated.model() != current.model() ? "model" : "window");
             }
             return updated;
         });

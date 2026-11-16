@@ -1,5 +1,6 @@
 package dev.ngb.attribution.boot.config;
 
+import dev.ngb.attribution.links.adapter.campaign.persistence.JooqCampaignPolicyReader;
 import dev.ngb.attribution.links.adapter.campaign.persistence.JooqCampaignReadRepository;
 import dev.ngb.attribution.links.adapter.campaign.persistence.JooqCampaignRepository;
 import dev.ngb.attribution.links.adapter.link.crypto.BcryptPasswordHasher;
@@ -12,7 +13,9 @@ import dev.ngb.attribution.links.adapter.link.qr.ZxingQrRenderer;
 import dev.ngb.attribution.links.application.campaign.command.ArchiveCampaignUseCase;
 import dev.ngb.attribution.links.application.campaign.command.CreateCampaignUseCase;
 import dev.ngb.attribution.links.application.campaign.command.UpdateCampaignUseCase;
+import dev.ngb.attribution.links.api.campaign.CampaignPolicyReader;
 import dev.ngb.attribution.links.application.campaign.port.CampaignRepository;
+import dev.ngb.attribution.links.application.campaign.port.RecomputeTrigger;
 import dev.ngb.attribution.links.application.campaign.query.CampaignQueries;
 import dev.ngb.attribution.links.application.campaign.query.CampaignReadRepository;
 import dev.ngb.attribution.links.application.link.command.ChangeLinkStateUseCase;
@@ -64,6 +67,11 @@ class LinksConfiguration {
     }
 
     @Bean
+    CampaignPolicyReader campaignPolicyReader(DSLContext dsl) {
+        return new JooqCampaignPolicyReader(dsl);
+    }
+
+    @Bean
     CampaignQueries campaignQueries(UnitOfWork unitOfWork, CampaignReadRepository campaigns) {
         return new CampaignQueries(unitOfWork, campaigns);
     }
@@ -77,8 +85,8 @@ class LinksConfiguration {
 
     @Bean
     UpdateCampaignUseCase updateCampaignUseCase(
-            UnitOfWork unitOfWork, CampaignRepository campaigns, Clock clock) {
-        return new UpdateCampaignUseCase(unitOfWork, campaigns, clock);
+            UnitOfWork unitOfWork, CampaignRepository campaigns, RecomputeTrigger recompute, Clock clock) {
+        return new UpdateCampaignUseCase(unitOfWork, campaigns, recompute, clock);
     }
 
     @Bean

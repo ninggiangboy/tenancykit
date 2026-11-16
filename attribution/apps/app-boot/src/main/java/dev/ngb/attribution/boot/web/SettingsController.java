@@ -1,5 +1,6 @@
 package dev.ngb.attribution.boot.web;
 
+import dev.ngb.attribution.boot.config.AttributionSettings;
 import dev.ngb.attribution.links.application.settings.command.UpdateSettingsUseCase;
 import dev.ngb.attribution.links.application.settings.query.SettingsReadRepository;
 import dev.ngb.attribution.links.application.settings.query.SettingsView;
@@ -26,27 +27,24 @@ public class SettingsController {
 
     private final UpdateSettingsUseCase update;
     private final SettingsReadRepository settings;
+    private final AttributionSettings attribution;
     private final UnitOfWork unitOfWork;
-    private final String defaultClickParam;
-    private final int defaultWindowDays;
 
     public SettingsController(
             UpdateSettingsUseCase update,
             SettingsReadRepository settings,
             UnitOfWork unitOfWork,
-            String defaultClickParam,
-            int defaultWindowDays) {
+            AttributionSettings attribution) {
         this.update = update;
         this.settings = settings;
         this.unitOfWork = unitOfWork;
-        this.defaultClickParam = defaultClickParam;
-        this.defaultWindowDays = defaultWindowDays;
+        this.attribution = attribution;
     }
 
     @GetMapping
     @RequiresPermission(AttributionPermissions.SETTINGS_MANAGE)
     SettingsView get() {
-        return unitOfWork.transactional(() -> settings.load(defaultClickParam, defaultWindowDays));
+        return load();
     }
 
     @PutMapping
@@ -55,7 +53,12 @@ public class SettingsController {
         update.execute(new UpdateSettingsUseCase.Change(
                 request.click_param(), request.allowed_origins(), request.default_window_days()));
         // Reloaded through the read side, so the answer is what was stored and not what the request hoped for.
-        return unitOfWork.transactional(() -> settings.load(defaultClickParam, defaultWindowDays));
+        return load();
+    }
+
+    private SettingsView load() {
+        return unitOfWork.transactional(() -> settings.load(
+                attribution.defaults().clickParam(), attribution.defaults().defaultWindowDays()));
     }
 
     /** The wire shape uses snake_case, as the contract does; the view speaks the domain's names. */

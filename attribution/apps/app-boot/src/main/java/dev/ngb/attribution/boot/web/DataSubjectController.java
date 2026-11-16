@@ -1,6 +1,7 @@
 package dev.ngb.attribution.boot.web;
 
 import dev.ngb.attribution.shared.AttributionPermissions;
+import dev.ngb.attribution.tracking.api.erasure.ConversionPersonEraser;
 import dev.ngb.attribution.tracking.application.collect.port.ErasureStore;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.security.RequiresPermission;
@@ -21,11 +22,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class DataSubjectController {
 
     private final ErasureStore erasure;
+    private final ConversionPersonEraser conversions;
     private final UnitOfWork unitOfWork;
     private final TenantContext tenantContext;
 
-    public DataSubjectController(ErasureStore erasure, UnitOfWork unitOfWork, TenantContext tenantContext) {
+    public DataSubjectController(
+            ErasureStore erasure,
+            ConversionPersonEraser conversions,
+            UnitOfWork unitOfWork,
+            TenantContext tenantContext) {
         this.erasure = erasure;
+        this.conversions = conversions;
         this.unitOfWork = unitOfWork;
         this.tenantContext = tenantContext;
     }
@@ -34,10 +41,12 @@ public class DataSubjectController {
     @RequiresPermission(AttributionPermissions.DATA_ERASE)
     ErasureView erase(@RequestBody ErasureRequest request) {
         tenantContext.requireTenant();
-        ErasureStore.Removed removed =
-                unitOfWork.transactional(() -> erasure.erase(request == null ? null : request.visitor_id()));
+        String visitorId = request == null ? null : request.visitor_id();
+        ErasureStore.Removed removed = unitOfWork.transactional(() -> erasure.erase(visitorId));
+        // The conversions lose their person, not their amount: a report's revenue stays and the visitor does not.
+        int conversionsErased = unitOfWork.transactional(() -> conversions.erase(visitorId));
         return new ErasureView(
-                removed.pageViews(), removed.sessions(), removed.bindings(), removed.clicks(), 0);
+                removed.pageViews(), removed.sessions(), removed.bindings(), removed.clicks(), conversionsErased);
     }
 
     record ErasureRequest(String visitor_id) {}

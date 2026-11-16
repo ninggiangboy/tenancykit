@@ -1,6 +1,6 @@
 package dev.ngb.attribution.boot.web;
 
-import dev.ngb.attribution.links.adapter.redirect.ratelimit.PublicRateLimiter;
+import dev.ngb.attribution.boot.web.CollectRateLimiter;
 import dev.ngb.attribution.tracking.application.collect.command.CollectPageViewsUseCase;
 import dev.ngb.attribution.tracking.application.collect.port.ErasureStore;
 import dev.ngb.core.runtime.Clock;
@@ -44,7 +44,7 @@ public class CollectController {
 
     private final CollectPageViewsUseCase useCase;
     private final OriginPolicy origins;
-    private final PublicRateLimiter visitors;
+    private final CollectRateLimiter visitors;
     private final ClickDailyLimiter clicks;
     private final TenantContext tenantContext;
     private final Clock clock;
@@ -52,7 +52,7 @@ public class CollectController {
     public CollectController(
             CollectPageViewsUseCase useCase,
             OriginPolicy origins,
-            PublicRateLimiter visitors,
+            CollectRateLimiter visitors,
             ClickDailyLimiter clicks,
             TenantContext tenantContext,
             Clock clock) {

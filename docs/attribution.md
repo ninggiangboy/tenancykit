@@ -169,6 +169,35 @@ binding still names. Rollups hold aggregates only and are untouched, so a report
 `GET/PUT /api/v1/settings` manage the click parameter, the allowed origins and the default window; an origin must be an
 absolute `https` origin (or `http://localhost`), and a wildcard, a path or a bare host is refused.
 
+## Conversions and the attribution engine
+
+A goal is a conversion kind a Tenant names by a stable key (`purchase`, `signup`), with an optional default value and
+currency. A conversion is reported by the Tenant's backend (the postback, `POST /api/v1/conversions`) or by the site
+snippet's `goal(key)`. The postback verifies the signed click token; a token that does not verify is stored
+**`UNATTRIBUTED`** rather than rejected, because a Tenant's order flow must not fail on its own reporting. Only a
+postback that names neither a click nor a visitor is a client error.
+
+A postback is idempotent on `(tenant, Idempotency-Key)`: the same key and body returns the first conversion with `200`,
+and the same key with a different body is `422`. A conversion waits a settle delay (five minutes by default) before it is
+credited, so a page view or binding that names the same visitor from a slightly later click is still inside the chain.
+
+The chain is the conversion's own click plus every **human** click bound to the same visitor inside the window before
+the conversion, deduplicated and capped at 200. Bots and suspect clicks are filtered out. The campaign of the **last
+click in the chain** owns the conversion: its model and window govern it, and every click in the chain receives credit
+under that model, whatever campaign it belongs to — one conversion is credited once.
+
+The three models are `FIRST`, `LAST` and `LINEAR`. All arithmetic is `BigDecimal` at the currency's fraction digits;
+linear credit floors each share and gives the residual to the last touch, so the credits sum exactly to the value
+(`10.00` over three is `3.33, 3.33, 3.34`). The engine is written against
+`contracts/attribution/attribution-vectors/`: adding model behaviour means adding a case there, and the vector runner
+fails the build when the engine does not reproduce one.
+
+The chain is snapshotted on the conversion the first time credit is computed, so a recompute after the raw click
+partitions are dropped still reproduces the same credits. Changing a campaign's model or window enqueues a recompute run,
+which pages the campaign's conversions by id and replaces each conversion's credits atomically. One run per campaign at a
+time; an interrupted run resumes from its cursor. Erasure removes a visitor's page views, sessions and bindings, and
+strips the visitor and click from their conversions while the amount and credits stay.
+
 ## Cross-plan coordination
 
 This plan creates `core/core-visitor` (device class, browser family, traffic class, referrer domain, GeoIP country and

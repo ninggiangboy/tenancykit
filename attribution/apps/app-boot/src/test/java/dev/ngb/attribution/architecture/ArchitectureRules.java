@@ -50,6 +50,14 @@ final class ArchitectureRules {
         // partition-managed allow list is the migration's own bookkeeping and belongs to no context.
         TABLE_OWNER.put("ClickEvents", "tracking");
         TABLE_OWNER.put("PartitionManagedTables", "boot");
+        // The collected page views, sessions and bindings are the tracking context's too.
+        for (String table : List.of("PageEvents", "Sessions", "VisitorClicks")) {
+            TABLE_OWNER.put(table, "tracking");
+        }
+        // Goals, conversions, their credits and the recompute queue are the attribution context's.
+        for (String table : List.of("Goals", "Conversions", "ConversionCredits", "RecomputeRuns")) {
+            TABLE_OWNER.put(table, "attribution");
+        }
     }
 
     /** Every use case opens a unit of work; attribution has no exception and should never grow one. */
