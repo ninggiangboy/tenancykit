@@ -7,10 +7,12 @@ import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.survey.authoring.adapter.document.schema.JsonSchemaDocumentVerifier;
 import dev.ngb.survey.authoring.adapter.draft.persistence.JooqDraftReadRepository;
 import dev.ngb.survey.authoring.adapter.draft.persistence.JooqDraftRepository;
+import dev.ngb.survey.authoring.adapter.flow.persistence.JooqFlowDocumentReadRepository;
 import dev.ngb.survey.authoring.adapter.survey.persistence.JooqSurveyReadRepository;
 import dev.ngb.survey.authoring.adapter.survey.persistence.JooqSurveyRepository;
 import dev.ngb.survey.authoring.adapter.version.persistence.JooqVersionReadRepository;
 import dev.ngb.survey.authoring.adapter.version.persistence.JooqVersionRepository;
+import dev.ngb.survey.authoring.api.flow.SurveyFlow;
 import dev.ngb.survey.authoring.application.draft.command.SaveDraftUseCase;
 import dev.ngb.survey.authoring.application.draft.command.ValidateDraftUseCase;
 import dev.ngb.survey.authoring.application.draft.port.DocumentVerifier;
@@ -18,6 +20,11 @@ import dev.ngb.survey.authoring.application.draft.port.DraftRepository;
 import dev.ngb.survey.authoring.application.draft.query.DraftQueries;
 import dev.ngb.survey.authoring.application.draft.query.DraftReadRepository;
 import dev.ngb.survey.authoring.application.draft.service.DraftValidationService;
+import dev.ngb.survey.authoring.application.flow.query.FlowDocumentReadRepository;
+import dev.ngb.survey.authoring.application.flow.query.PreviewQueries;
+import dev.ngb.survey.authoring.application.flow.query.SimulateQueries;
+import dev.ngb.survey.authoring.application.flow.service.PreviewService;
+import dev.ngb.survey.authoring.application.flow.service.SurveyFlowService;
 import dev.ngb.survey.authoring.application.survey.command.CloseSurveyUseCase;
 import dev.ngb.survey.authoring.application.survey.command.CreateSurveyUseCase;
 import dev.ngb.survey.authoring.application.survey.command.ReopenSurveyUseCase;
@@ -143,5 +150,32 @@ class AuthoringConfiguration {
             IdGenerator ids,
             Clock clock) {
         return new PublishSurveyUseCase(unitOfWork, surveys, drafts, versions, validation, ids, clock);
+    }
+
+    @Bean
+    SurveyFlow surveyFlow() {
+        return new SurveyFlowService();
+    }
+
+    @Bean
+    FlowDocumentReadRepository flowDocumentReadRepository(DSLContext dsl, JsonMapper json) {
+        return new JooqFlowDocumentReadRepository(dsl, json);
+    }
+
+    @Bean
+    PreviewService previewService() {
+        return new PreviewService();
+    }
+
+    @Bean
+    PreviewQueries previewQueries(
+            UnitOfWork unitOfWork, FlowDocumentReadRepository documents, PreviewService preview) {
+        return new PreviewQueries(unitOfWork, documents, preview);
+    }
+
+    @Bean
+    SimulateQueries simulateQueries(
+            UnitOfWork unitOfWork, FlowDocumentReadRepository documents, SurveyFlow flow) {
+        return new SimulateQueries(unitOfWork, documents, flow);
     }
 }
