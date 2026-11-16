@@ -1,844 +1,5158 @@
-openapi: 3.1.0
+---
+openapi: "3.1.0"
 info:
-  title: Mailroom API
-  version: v1
-  description: |
-    The API a Tenant System uses to email a Tenant's own customers, plus the public tracking endpoints a recipient's
-    mail client calls without credentials.
-
-    This is a resource skeleton: every path carries its operation, the permission it requires and the shape it will
-    settle on. Each phase fills the schema it owns. `x-required-permission` names a code from
-    contracts/permissions/mailroom.yaml; a public operation carries `x-public: true` instead and requires no suite token.
+  title: "Mailroom API"
+  description: "The API a Tenant System uses to email a Tenant's own customers, plus\
+    \ the public tracking endpoints a recipient's mail client calls without credentials."
+  version: "v1"
 servers:
-- url: /
+- url: "/mailroom"
   description: "Any tenant hostname: <tenant-code>.<base-domain>/mailroom"
 paths:
-  /mailroom/api/v1/templates:
+  /api/v1/templates/{id}:
     get:
       tags:
-      - template-controller
-      operationId: list
-      x-required-permission: mailroom:template:read
-      responses:
-        "200":
-          description: OK
-    post:
-      tags:
-      - template-controller
-      operationId: create
-      x-required-permission: mailroom:template:manage
-      requestBody:
+      - "template-controller"
+      operationId: "get"
+      parameters:
+      - name: "id"
+        in: "path"
         required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TemplateRequest"
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TemplateView"
-  /mailroom/api/v1/templates/{id}:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - template-controller
-      operationId: get
-      x-required-permission: mailroom:template:read
+        schema:
+          type: "string"
+          format: "uuid"
       responses:
         "200":
-          description: OK
+          description: "OK"
           content:
-            application/json:
+            '*/*':
               schema:
-                $ref: "#/components/schemas/TemplateView"
+                $ref: "#/components/schemas/TemplateResponse"
+      x-required-permission: "mailroom:template:read"
     put:
       tags:
-      - template-controller
-      operationId: update
-      x-required-permission: mailroom:template:manage
+      - "template-controller"
+      operationId: "update"
       parameters:
-      - $ref: "#/components/parameters/IfMatch"
-      requestBody:
+      - name: "id"
+        in: "path"
         required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/TemplateRequest"
+        required: true
       responses:
         "200":
-          description: OK
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TemplateResponse"
+      x-required-permission: "mailroom:template:manage"
     delete:
       tags:
-      - template-controller
-      operationId: delete
-      x-required-permission: mailroom:template:manage
+      - "template-controller"
+      operationId: "delete"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
       responses:
         "204":
-          description: No Content
-  /mailroom/api/v1/templates/{id}/revisions:
-    parameters:
-    - $ref: "#/components/parameters/Id"
+          description: "No Content"
+      x-required-permission: "mailroom:template:manage"
+  /api/v1/settings:
     get:
       tags:
-      - template-controller
-      operationId: revisions
-      x-required-permission: mailroom:template:read
+      - "settings-controller"
+      operationId: "current"
       responses:
         "200":
-          description: OK
-  /mailroom/api/v1/templates/{id}/preview:
-    parameters:
-    - $ref: "#/components/parameters/Id"
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+      x-required-permission: "mailroom:email:read"
+    put:
+      tags:
+      - "settings-controller"
+      operationId: "save"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+      x-required-permission: "mailroom:settings:manage"
+  /api/v1/segments/{id}:
+    get:
+      tags:
+      - "segment-controller"
+      operationId: "get_1"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SegmentResponse"
+      x-required-permission: "mailroom:receiver:read"
+    put:
+      tags:
+      - "segment-controller"
+      operationId: "update_1"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SegmentRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SegmentResponse"
+      x-required-permission: "mailroom:receiver:manage"
+    delete:
+      tags:
+      - "segment-controller"
+      operationId: "delete_1"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "204":
+          description: "No Content"
+      x-required-permission: "mailroom:receiver:manage"
+  /api/v1/receivers:
+    get:
+      tags:
+      - "receiver-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: "list"
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[email][eq]"
+        in: "query"
+        description: "`email` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[email][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `email`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[email][neq]"
+        in: "query"
+        description: "`email` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[email][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `email`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[email][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `email`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[first_name][eq]"
+        in: "query"
+        description: "`first_name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[first_name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `first_name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[first_name][is_null]"
+        in: "query"
+        description: "`true` for rows where `first_name` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[first_name][neq]"
+        in: "query"
+        description: "`first_name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[first_name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `first_name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[first_name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `first_name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_name][eq]"
+        in: "query"
+        description: "`last_name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[last_name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `last_name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_name][is_null]"
+        in: "query"
+        description: "`true` for rows where `last_name` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[last_name][neq]"
+        in: "query"
+        description: "`last_name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[last_name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `last_name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `last_name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "SUBSCRIBED"
+          - "UNSUBSCRIBED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "SUBSCRIBED"
+          - "UNSUBSCRIBED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[version][eq]"
+        in: "query"
+        description: "`version` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][gt]"
+        in: "query"
+        description: "`version` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][gte]"
+        in: "query"
+        description: "`version` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[version][lt]"
+        in: "query"
+        description: "`version` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][lte]"
+        in: "query"
+        description: "`version` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][neq]"
+        in: "query"
+        description: "`version` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, email, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageReceiverResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "mailroom:receiver:read"
+    put:
+      tags:
+      - "receiver-controller"
+      operationId: "upsert"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceiverRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReceiverResponse"
+      x-required-permission: "mailroom:receiver:manage"
+  /api/v1/groups/{id}:
+    get:
+      tags:
+      - "group-controller"
+      operationId: "get_2"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+      x-required-permission: "mailroom:receiver:read"
+    put:
+      tags:
+      - "group-controller"
+      operationId: "update_2"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+      x-required-permission: "mailroom:receiver:manage"
+    delete:
+      tags:
+      - "group-controller"
+      operationId: "delete_2"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "204":
+          description: "No Content"
+      x-required-permission: "mailroom:receiver:manage"
+  /api/v1/campaigns/{id}:
+    get:
+      tags:
+      - "campaign-controller"
+      operationId: "get_3"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CampaignResponse"
+      x-required-permission: "mailroom:campaign:read"
+    put:
+      tags:
+      - "campaign-controller"
+      operationId: "update_3"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CampaignResponse"
+      x-required-permission: "mailroom:campaign:manage"
+  /t/u/{token}:
+    get:
+      tags:
+      - "public-tracking-controller"
+      operationId: "unsubscribePage_1"
+      parameters:
+      - name: "token"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+      x-public: true
     post:
       tags:
-      - template-controller
-      operationId: preview
-      x-required-permission: mailroom:template:read
-      requestBody:
+      - "public-tracking-controller"
+      operationId: "unsubscribe_1"
+      parameters:
+      - name: "token"
+        in: "path"
         required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+      x-public: true
+  /api/v1/templates:
+    get:
+      tags:
+      - "template-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: "list_1"
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[current_revision][eq]"
+        in: "query"
+        description: "`current_revision` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[current_revision][gt]"
+        in: "query"
+        description: "`current_revision` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[current_revision][gte]"
+        in: "query"
+        description: "`current_revision` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[current_revision][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `current_revision`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[current_revision][lt]"
+        in: "query"
+        description: "`current_revision` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[current_revision][lte]"
+        in: "query"
+        description: "`current_revision` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[current_revision][neq]"
+        in: "query"
+        description: "`current_revision` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[current_revision][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `current_revision`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[key][eq]"
+        in: "query"
+        description: "`key` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[key][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `key`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[key][neq]"
+        in: "query"
+        description: "`key` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[key][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `key`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[key][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `key`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][eq]"
+        in: "query"
+        description: "`name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][neq]"
+        in: "query"
+        description: "`name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[version][eq]"
+        in: "query"
+        description: "`version` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][gt]"
+        in: "query"
+        description: "`version` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][gte]"
+        in: "query"
+        description: "`version` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[version][lt]"
+        in: "query"
+        description: "`version` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][lte]"
+        in: "query"
+        description: "`version` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][neq]"
+        in: "query"
+        description: "`version` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id, key, name. At most 4 fields; `id`\
+          \ is appended to make the order total. Default: `-id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageTemplateResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "mailroom:template:read"
+    post:
+      tags:
+      - "template-controller"
+      operationId: "create"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TemplateRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TemplateResponse"
+      x-required-permission: "mailroom:template:manage"
+  /api/v1/templates/{id}/preview:
+    post:
+      tags:
+      - "template-controller"
+      operationId: "preview"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/PreviewRequest"
       responses:
         "200":
-          description: OK
+          description: "OK"
           content:
-            application/json:
+            '*/*':
               schema:
-                $ref: "#/components/schemas/RenderedEmail"
-  /mailroom/api/v1/receivers:
+                $ref: "#/components/schemas/RenderedResponse"
+      x-required-permission: "mailroom:template:read"
+  /api/v1/suppressions:
     get:
       tags:
-      - receiver-controller
-      operationId: listReceivers
-      x-required-permission: mailroom:receiver:read
+      - "suppression-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: "list_2"
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[email_normalized][eq]"
+        in: "query"
+        description: "`email_normalized` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[email_normalized][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `email_normalized`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[email_normalized][neq]"
+        in: "query"
+        description: "`email_normalized` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[email_normalized][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `email_normalized`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[email_normalized][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `email_normalized`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[reason][eq]"
+        in: "query"
+        description: "`reason` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "MANUAL"
+          - "UNSUBSCRIBED"
+      - name: "filter[reason][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `reason`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[reason][neq]"
+        in: "query"
+        description: "`reason` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "MANUAL"
+          - "UNSUBSCRIBED"
+      - name: "filter[reason][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `reason`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[scope][eq]"
+        in: "query"
+        description: "`scope` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ALL"
+          - "MARKETING"
+      - name: "filter[scope][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `scope`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[scope][neq]"
+        in: "query"
+        description: "`scope` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ALL"
+          - "MARKETING"
+      - name: "filter[scope][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `scope`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, email_normalized. At most 4 fields; `email_normalized`\
+          \ is appended to make the order total. Default: `email_normalized`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: "boolean"
+          default: false
       responses:
         "200":
-          description: OK
-    put:
-      tags:
-      - receiver-controller
-      operationId: upsertReceiver
-      x-required-permission: mailroom:receiver:manage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ReceiverRequest"
-      responses:
-        "200":
-          description: OK
-  /mailroom/api/v1/receivers/{id}:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - receiver-controller
-      operationId: getReceiver
-      x-required-permission: mailroom:receiver:read
-      responses:
-        "200":
-          description: OK
-    patch:
-      tags:
-      - receiver-controller
-      operationId: patchReceiver
-      x-required-permission: mailroom:receiver:manage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ReceiverRequest"
-      responses:
-        "200":
-          description: OK
-    delete:
-      tags:
-      - receiver-controller
-      operationId: deleteReceiver
-      x-required-permission: mailroom:receiver:manage
-      responses:
-        "204":
-          description: No Content
-  /mailroom/api/v1/receivers/bulk:
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageSuppressionResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "mailroom:receiver:read"
     post:
       tags:
-      - receiver-controller
-      operationId: bulkReceivers
-      x-required-permission: mailroom:receiver:manage
+      - "suppression-controller"
+      operationId: "add"
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/BulkReceiverRequest"
-      responses:
-        "200":
-          description: OK
-  /mailroom/api/v1/groups:
-    get:
-      tags:
-      - group-controller
-      operationId: listGroups
-      x-required-permission: mailroom:receiver:read
-      responses:
-        "200":
-          description: OK
-    post:
-      tags:
-      - group-controller
-      operationId: createGroup
-      x-required-permission: mailroom:receiver:manage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/GroupRequest"
-      responses:
-        "201":
-          description: Created
-  /mailroom/api/v1/groups/{id}:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    put:
-      tags:
-      - group-controller
-      operationId: updateGroup
-      x-required-permission: mailroom:receiver:manage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/GroupRequest"
-      responses:
-        "200":
-          description: OK
-    delete:
-      tags:
-      - group-controller
-      operationId: deleteGroup
-      x-required-permission: mailroom:receiver:manage
-      responses:
-        "204":
-          description: No Content
-  /mailroom/api/v1/groups/{id}/members:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - group-controller
-      operationId: listMembers
-      x-required-permission: mailroom:receiver:read
-      responses:
-        "200":
-          description: OK
-    post:
-      tags:
-      - group-controller
-      operationId: addMembers
-      x-required-permission: mailroom:receiver:manage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/MemberIds"
-      responses:
-        "200":
-          description: OK
-    delete:
-      tags:
-      - group-controller
-      operationId: removeMembers
-      x-required-permission: mailroom:receiver:manage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/MemberIds"
-      responses:
-        "200":
-          description: OK
-  /mailroom/api/v1/suppressions:
-    get:
-      tags:
-      - suppression-controller
-      operationId: listSuppressions
-      x-required-permission: mailroom:receiver:read
-      responses:
-        "200":
-          description: OK
-    post:
-      tags:
-      - suppression-controller
-      operationId: addSuppression
-      x-required-permission: mailroom:receiver:manage
-      requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/SuppressionRequest"
+        required: true
       responses:
         "200":
-          description: OK
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SuppressionResponse"
+      x-required-permission: "mailroom:receiver:manage"
     delete:
       tags:
-      - suppression-controller
-      operationId: removeSuppression
-      x-required-permission: mailroom:receiver:manage
-      responses:
-        "204":
-          description: No Content
-  /mailroom/api/v1/segments:
-    get:
-      tags:
-      - segment-controller
-      operationId: listSegments
-      x-required-permission: mailroom:receiver:read
-      responses:
-        "200":
-          description: OK
-    post:
-      tags:
-      - segment-controller
-      operationId: createSegment
-      x-required-permission: mailroom:receiver:manage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SegmentRequest"
-      responses:
-        "201":
-          description: Created
-  /mailroom/api/v1/segments/{id}:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - segment-controller
-      operationId: getSegment
-      x-required-permission: mailroom:receiver:read
-      responses:
-        "200":
-          description: OK
-    put:
-      tags:
-      - segment-controller
-      operationId: updateSegment
-      x-required-permission: mailroom:receiver:manage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SegmentRequest"
-      responses:
-        "200":
-          description: OK
-    delete:
-      tags:
-      - segment-controller
-      operationId: deleteSegment
-      x-required-permission: mailroom:receiver:manage
-      responses:
-        "204":
-          description: No Content
-  /mailroom/api/v1/segments/{id}/preview:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - segment-controller
-      operationId: previewSegment
-      x-required-permission: mailroom:receiver:read
-      responses:
-        "200":
-          description: OK
-  /mailroom/api/v1/emails:
-    get:
-      tags:
-      - email-controller
-      operationId: listEmails
-      x-required-permission: mailroom:email:read
-      responses:
-        "200":
-          description: OK
-    post:
-      tags:
-      - email-controller
-      operationId: sendEmail
-      x-required-permission: mailroom:email:send
+      - "suppression-controller"
+      operationId: "remove"
       parameters:
-      - name: Idempotency-Key
-        in: header
+      - name: "email"
+        in: "query"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "204":
+          description: "No Content"
+      x-required-permission: "mailroom:receiver:manage"
+  /api/v1/segments:
+    get:
+      tags:
+      - "segment-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: "list_3"
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
         required: false
         schema:
-          type: string
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][eq]"
+        in: "query"
+        description: "`name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][neq]"
+        in: "query"
+        description: "`name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[version][eq]"
+        in: "query"
+        description: "`version` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][gt]"
+        in: "query"
+        description: "`version` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][gte]"
+        in: "query"
+        description: "`version` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[version][lt]"
+        in: "query"
+        description: "`version` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][lte]"
+        in: "query"
+        description: "`version` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][neq]"
+        in: "query"
+        description: "`version` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id, name. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageSegmentResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "mailroom:receiver:read"
+    post:
+      tags:
+      - "segment-controller"
+      operationId: "create_1"
       requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SegmentRequest"
         required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SegmentResponse"
+      x-required-permission: "mailroom:receiver:manage"
+  /api/v1/segments/{id}/preview:
+    post:
+      tags:
+      - "segment-controller"
+      operationId: "preview_1"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Preview"
+      x-required-permission: "mailroom:receiver:read"
+  /api/v1/receivers/bulk:
+    post:
+      tags:
+      - "receiver-controller"
+      operationId: "bulk"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/BulkResult"
+      x-required-permission: "mailroom:receiver:manage"
+  /api/v1/groups:
+    get:
+      tags:
+      - "group-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: "list_4"
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][eq]"
+        in: "query"
+        description: "`name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][neq]"
+        in: "query"
+        description: "`name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[version][eq]"
+        in: "query"
+        description: "`version` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][gt]"
+        in: "query"
+        description: "`version` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][gte]"
+        in: "query"
+        description: "`version` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[version][lt]"
+        in: "query"
+        description: "`version` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][lte]"
+        in: "query"
+        description: "`version` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][neq]"
+        in: "query"
+        description: "`version` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id, name. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageGroupResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "mailroom:receiver:read"
+    post:
+      tags:
+      - "group-controller"
+      operationId: "create_2"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+      x-required-permission: "mailroom:receiver:manage"
+  /api/v1/groups/{id}/members:
+    get:
+      tags:
+      - "group-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: "members"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[email][eq]"
+        in: "query"
+        description: "`email` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[email][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `email`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[email][neq]"
+        in: "query"
+        description: "`email` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[email][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `email`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[email][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `email`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[first_name][eq]"
+        in: "query"
+        description: "`first_name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[first_name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `first_name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[first_name][is_null]"
+        in: "query"
+        description: "`true` for rows where `first_name` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[first_name][neq]"
+        in: "query"
+        description: "`first_name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[first_name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `first_name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[first_name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `first_name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_name][eq]"
+        in: "query"
+        description: "`last_name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[last_name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `last_name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_name][is_null]"
+        in: "query"
+        description: "`true` for rows where `last_name` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[last_name][neq]"
+        in: "query"
+        description: "`last_name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[last_name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `last_name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `last_name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "SUBSCRIBED"
+          - "UNSUBSCRIBED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "SUBSCRIBED"
+          - "UNSUBSCRIBED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[version][eq]"
+        in: "query"
+        description: "`version` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][gt]"
+        in: "query"
+        description: "`version` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][gte]"
+        in: "query"
+        description: "`version` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[version][lt]"
+        in: "query"
+        description: "`version` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][lte]"
+        in: "query"
+        description: "`version` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][neq]"
+        in: "query"
+        description: "`version` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, email, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageMemberResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "mailroom:receiver:read"
+    post:
+      tags:
+      - "group-controller"
+      operationId: "addMembers"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberIds"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/MemberChange"
+      x-required-permission: "mailroom:receiver:manage"
+    delete:
+      tags:
+      - "group-controller"
+      operationId: "removeMembers"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberIds"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/MemberChange"
+      x-required-permission: "mailroom:receiver:manage"
+  /api/v1/emails:
+    get:
+      tags:
+      - "email-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: "list_5"
+      parameters:
+      - name: "filter[body_purged_at][eq]"
+        in: "query"
+        description: "`body_purged_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[body_purged_at][gt]"
+        in: "query"
+        description: "`body_purged_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[body_purged_at][gte]"
+        in: "query"
+        description: "`body_purged_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[body_purged_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `body_purged_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[body_purged_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `body_purged_at` is null, `false` for\
+          \ rows where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[body_purged_at][lt]"
+        in: "query"
+        description: "`body_purged_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[body_purged_at][lte]"
+        in: "query"
+        description: "`body_purged_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[body_purged_at][neq]"
+        in: "query"
+        description: "`body_purged_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[body_purged_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `body_purged_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[campaign_id][eq]"
+        in: "query"
+        description: "`campaign_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[campaign_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `campaign_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[campaign_id][is_null]"
+        in: "query"
+        description: "`true` for rows where `campaign_id` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[campaign_id][neq]"
+        in: "query"
+        description: "`campaign_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[campaign_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `campaign_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[delivery_updated_at][eq]"
+        in: "query"
+        description: "`delivery_updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[delivery_updated_at][gt]"
+        in: "query"
+        description: "`delivery_updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[delivery_updated_at][gte]"
+        in: "query"
+        description: "`delivery_updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[delivery_updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `delivery_updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[delivery_updated_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `delivery_updated_at` is null, `false`\
+          \ for rows where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[delivery_updated_at][lt]"
+        in: "query"
+        description: "`delivery_updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[delivery_updated_at][lte]"
+        in: "query"
+        description: "`delivery_updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[delivery_updated_at][neq]"
+        in: "query"
+        description: "`delivery_updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[delivery_updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `delivery_updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[from_key][eq]"
+        in: "query"
+        description: "`from_key` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[from_key][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `from_key`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[from_key][neq]"
+        in: "query"
+        description: "`from_key` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[from_key][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `from_key`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[from_key][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `from_key`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[kind][eq]"
+        in: "query"
+        description: "`kind` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "MARKETING"
+          - "TRANSACTIONAL"
+      - name: "filter[kind][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `kind`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[kind][neq]"
+        in: "query"
+        description: "`kind` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "MARKETING"
+          - "TRANSACTIONAL"
+      - name: "filter[kind][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `kind`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[receiver_id][eq]"
+        in: "query"
+        description: "`receiver_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[receiver_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `receiver_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[receiver_id][is_null]"
+        in: "query"
+        description: "`true` for rows where `receiver_id` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[receiver_id][neq]"
+        in: "query"
+        description: "`receiver_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[receiver_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `receiver_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "FAILED"
+          - "QUEUED"
+          - "SENT"
+          - "SKIPPED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "FAILED"
+          - "QUEUED"
+          - "SENT"
+          - "SKIPPED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status_reason][eq]"
+        in: "query"
+        description: "`status_reason` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[status_reason][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status_reason`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status_reason][is_null]"
+        in: "query"
+        description: "`true` for rows where `status_reason` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[status_reason][neq]"
+        in: "query"
+        description: "`status_reason` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[status_reason][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status_reason`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status_reason][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `status_reason`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[subject][eq]"
+        in: "query"
+        description: "`subject` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[subject][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `subject`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[subject][neq]"
+        in: "query"
+        description: "`subject` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[subject][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `subject`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[subject][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `subject`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[template_id][eq]"
+        in: "query"
+        description: "`template_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[template_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `template_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[template_id][is_null]"
+        in: "query"
+        description: "`true` for rows where `template_id` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[template_id][neq]"
+        in: "query"
+        description: "`template_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[template_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `template_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[template_revision][eq]"
+        in: "query"
+        description: "`template_revision` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[template_revision][gt]"
+        in: "query"
+        description: "`template_revision` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[template_revision][gte]"
+        in: "query"
+        description: "`template_revision` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[template_revision][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `template_revision`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[template_revision][is_null]"
+        in: "query"
+        description: "`true` for rows where `template_revision` is null, `false` for\
+          \ rows where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[template_revision][lt]"
+        in: "query"
+        description: "`template_revision` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[template_revision][lte]"
+        in: "query"
+        description: "`template_revision` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[template_revision][neq]"
+        in: "query"
+        description: "`template_revision` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[template_revision][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `template_revision`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[to_address][contains]"
+        in: "query"
+        description: "Case-insensitive substring match on `to_address`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[to_address][eq]"
+        in: "query"
+        description: "`to_address` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[to_address][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `to_address`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[to_address][neq]"
+        in: "query"
+        description: "`to_address` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[to_address][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `to_address`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[to_address][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `to_address`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageEmailResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "mailroom:email:read"
+    post:
+      tags:
+      - "email-controller"
+      operationId: "send"
+      parameters:
+      - name: "Idempotency-Key"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/SendEmailRequest"
+        required: true
       responses:
         "201":
-          description: Created
-  /mailroom/api/v1/emails/batch:
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EmailResponse"
+      x-required-permission: "mailroom:email:send"
+  /api/v1/emails/batch:
     post:
       tags:
-      - email-controller
-      operationId: sendBatch
-      x-required-permission: mailroom:email:send
+      - "email-controller"
+      operationId: "batch"
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/BatchRequest"
+        required: true
       responses:
         "200":
-          description: OK
-  /mailroom/api/v1/emails/{id}:
-    parameters:
-    - $ref: "#/components/parameters/Id"
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/BatchResultResponse"
+      x-required-permission: "mailroom:email:send"
+  /api/v1/campaigns:
     get:
       tags:
-      - email-controller
-      operationId: getEmail
-      x-required-permission: mailroom:email:read
+      - "campaign-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: "list_6"
+      parameters:
+      - name: "filter[completed_at][eq]"
+        in: "query"
+        description: "`completed_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][gt]"
+        in: "query"
+        description: "`completed_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][gte]"
+        in: "query"
+        description: "`completed_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `completed_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[completed_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `completed_at` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[completed_at][lt]"
+        in: "query"
+        description: "`completed_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][lte]"
+        in: "query"
+        description: "`completed_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][neq]"
+        in: "query"
+        description: "`completed_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `completed_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[from_key][eq]"
+        in: "query"
+        description: "`from_key` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[from_key][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `from_key`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[from_key][neq]"
+        in: "query"
+        description: "`from_key` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[from_key][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `from_key`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[from_key][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `from_key`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[from_name][eq]"
+        in: "query"
+        description: "`from_name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[from_name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `from_name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[from_name][is_null]"
+        in: "query"
+        description: "`true` for rows where `from_name` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[from_name][neq]"
+        in: "query"
+        description: "`from_name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[from_name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `from_name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[from_name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `from_name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][eq]"
+        in: "query"
+        description: "`name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][neq]"
+        in: "query"
+        description: "`name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[reply_to][eq]"
+        in: "query"
+        description: "`reply_to` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[reply_to][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `reply_to`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[reply_to][is_null]"
+        in: "query"
+        description: "`true` for rows where `reply_to` is null, `false` for rows where\
+          \ it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[reply_to][neq]"
+        in: "query"
+        description: "`reply_to` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[reply_to][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `reply_to`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[reply_to][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `reply_to`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[scheduled_at][eq]"
+        in: "query"
+        description: "`scheduled_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[scheduled_at][gt]"
+        in: "query"
+        description: "`scheduled_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[scheduled_at][gte]"
+        in: "query"
+        description: "`scheduled_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[scheduled_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `scheduled_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[scheduled_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `scheduled_at` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[scheduled_at][lt]"
+        in: "query"
+        description: "`scheduled_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[scheduled_at][lte]"
+        in: "query"
+        description: "`scheduled_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[scheduled_at][neq]"
+        in: "query"
+        description: "`scheduled_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[scheduled_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `scheduled_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[started_at][eq]"
+        in: "query"
+        description: "`started_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[started_at][gt]"
+        in: "query"
+        description: "`started_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[started_at][gte]"
+        in: "query"
+        description: "`started_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[started_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `started_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[started_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `started_at` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[started_at][lt]"
+        in: "query"
+        description: "`started_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[started_at][lte]"
+        in: "query"
+        description: "`started_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[started_at][neq]"
+        in: "query"
+        description: "`started_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[started_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `started_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "CANCELLED"
+          - "COMPLETED"
+          - "DRAFT"
+          - "PAUSED"
+          - "SCHEDULED"
+          - "SENDING"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "CANCELLED"
+          - "COMPLETED"
+          - "DRAFT"
+          - "PAUSED"
+          - "SCHEDULED"
+          - "SENDING"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[target_id][eq]"
+        in: "query"
+        description: "`target_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[target_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `target_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[target_id][neq]"
+        in: "query"
+        description: "`target_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[target_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `target_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[target_type][eq]"
+        in: "query"
+        description: "`target_type` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "GROUP"
+          - "SEGMENT"
+      - name: "filter[target_type][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `target_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[target_type][neq]"
+        in: "query"
+        description: "`target_type` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "GROUP"
+          - "SEGMENT"
+      - name: "filter[target_type][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `target_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[template_id][eq]"
+        in: "query"
+        description: "`template_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[template_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `template_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[template_id][neq]"
+        in: "query"
+        description: "`template_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[template_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `template_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[template_revision][eq]"
+        in: "query"
+        description: "`template_revision` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[template_revision][gt]"
+        in: "query"
+        description: "`template_revision` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[template_revision][gte]"
+        in: "query"
+        description: "`template_revision` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[template_revision][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `template_revision`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[template_revision][lt]"
+        in: "query"
+        description: "`template_revision` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[template_revision][lte]"
+        in: "query"
+        description: "`template_revision` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[template_revision][neq]"
+        in: "query"
+        description: "`template_revision` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[template_revision][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `template_revision`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[version][eq]"
+        in: "query"
+        description: "`version` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][gt]"
+        in: "query"
+        description: "`version` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][gte]"
+        in: "query"
+        description: "`version` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[version][lt]"
+        in: "query"
+        description: "`version` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][lte]"
+        in: "query"
+        description: "`version` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][neq]"
+        in: "query"
+        description: "`version` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[version][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id, name. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: "boolean"
+          default: false
       responses:
         "200":
-          description: OK
-  /mailroom/api/v1/campaigns:
-    get:
-      tags:
-      - campaign-controller
-      operationId: listCampaigns
-      x-required-permission: mailroom:campaign:read
-      responses:
-        "200":
-          description: OK
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageCampaignResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "mailroom:campaign:read"
     post:
       tags:
-      - campaign-controller
-      operationId: createCampaign
-      x-required-permission: mailroom:campaign:manage
+      - "campaign-controller"
+      operationId: "create_3"
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/CampaignRequest"
+        required: true
       responses:
         "201":
-          description: Created
-  /mailroom/api/v1/campaigns/{id}:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CampaignResponse"
+      x-required-permission: "mailroom:campaign:manage"
+  /api/v1/campaigns/{id}/test:
+    post:
       tags:
-      - campaign-controller
-      operationId: getCampaign
-      x-required-permission: mailroom:campaign:read
-      responses:
-        "200":
-          description: OK
-    put:
-      tags:
-      - campaign-controller
-      operationId: updateCampaign
-      x-required-permission: mailroom:campaign:manage
-      requestBody:
+      - "campaign-controller"
+      operationId: "test"
+      parameters:
+      - name: "id"
+        in: "path"
         required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CampaignRequest"
+              $ref: "#/components/schemas/TestRequest"
+        required: true
       responses:
         "200":
-          description: OK
-  /mailroom/api/v1/campaigns/{id}/schedule:
-    parameters:
-    - $ref: "#/components/parameters/Id"
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Result"
+      x-required-permission: "mailroom:campaign:manage"
+  /api/v1/campaigns/{id}/send:
     post:
       tags:
-      - campaign-controller
-      operationId: scheduleCampaign
-      x-required-permission: mailroom:campaign:manage
-      requestBody:
+      - "campaign-controller"
+      operationId: "send_1"
+      parameters:
+      - name: "id"
+        in: "path"
         required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CampaignResponse"
+      x-required-permission: "mailroom:campaign:manage"
+  /api/v1/campaigns/{id}/schedule:
+    post:
+      tags:
+      - "campaign-controller"
+      operationId: "schedule"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/ScheduleRequest"
+        required: true
       responses:
         "200":
-          description: OK
-  /mailroom/api/v1/campaigns/{id}/send:
-    parameters:
-    - $ref: "#/components/parameters/Id"
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CampaignResponse"
+      x-required-permission: "mailroom:campaign:manage"
+  /api/v1/campaigns/{id}/resume:
     post:
       tags:
-      - campaign-controller
-      operationId: sendCampaign
-      x-required-permission: mailroom:campaign:manage
-      responses:
-        "200":
-          description: OK
-  /mailroom/api/v1/campaigns/{id}/pause:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - campaign-controller
-      operationId: pauseCampaign
-      x-required-permission: mailroom:campaign:manage
-      responses:
-        "200":
-          description: OK
-  /mailroom/api/v1/campaigns/{id}/resume:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - campaign-controller
-      operationId: resumeCampaign
-      x-required-permission: mailroom:campaign:manage
-      responses:
-        "200":
-          description: OK
-  /mailroom/api/v1/campaigns/{id}/cancel:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - campaign-controller
-      operationId: cancelCampaign
-      x-required-permission: mailroom:campaign:manage
-      responses:
-        "200":
-          description: OK
-  /mailroom/api/v1/campaigns/{id}/test:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - campaign-controller
-      operationId: testCampaign
-      x-required-permission: mailroom:campaign:manage
-      responses:
-        "200":
-          description: OK
-  /mailroom/api/v1/campaigns/{id}/stats:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - campaign-controller
-      operationId: campaignStats
-      x-required-permission: mailroom:campaign:read
-      responses:
-        "200":
-          description: OK
-  /mailroom/api/v1/settings:
-    get:
-      tags:
-      - settings-controller
-      operationId: currentSettings
-      x-required-permission: mailroom:email:read
-      responses:
-        "200":
-          description: OK
-    put:
-      tags:
-      - settings-controller
-      operationId: saveSettings
-      x-required-permission: mailroom:settings:manage
-      responses:
-        "200":
-          description: OK
-  /mailroom/t/o/{token}.gif:
-    get:
-      tags:
-      - public-tracking-controller
-      operationId: open
-      x-public: true
+      - "campaign-controller"
+      operationId: "resume"
       parameters:
-      - name: token
-        in: path
+      - name: "id"
+        in: "path"
         required: true
         schema:
-          type: string
+          type: "string"
+          format: "uuid"
       responses:
         "200":
-          description: A 1x1 GIF, whatever the token says
-  /mailroom/t/c/{token}:
-    get:
-      tags:
-      - public-tracking-controller
-      operationId: click
-      x-public: true
-      parameters:
-      - name: token
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "302":
-          description: Redirect to the URL recorded at render time
-        "200":
-          description: The static "link expired" page
-  /mailroom/t/u/{token}:
-    get:
-      tags:
-      - public-tracking-controller
-      operationId: unsubscribePage
-      x-public: true
-      parameters:
-      - name: token
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: A static confirmation page
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CampaignResponse"
+      x-required-permission: "mailroom:campaign:manage"
+  /api/v1/campaigns/{id}/pause:
     post:
       tags:
-      - public-tracking-controller
-      operationId: unsubscribe
-      x-public: true
+      - "campaign-controller"
+      operationId: "pause"
       parameters:
-      - name: token
-        in: path
+      - name: "id"
+        in: "path"
         required: true
         schema:
-          type: string
+          type: "string"
+          format: "uuid"
       responses:
         "200":
-          description: Idempotent unsubscribe
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CampaignResponse"
+      x-required-permission: "mailroom:campaign:manage"
+  /api/v1/campaigns/{id}/cancel:
+    post:
+      tags:
+      - "campaign-controller"
+      operationId: "cancel"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CampaignResponse"
+      x-required-permission: "mailroom:campaign:manage"
+  /api/v1/receivers/{id}:
+    get:
+      tags:
+      - "receiver-controller"
+      operationId: "get_4"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReceiverResponse"
+      x-required-permission: "mailroom:receiver:read"
+    delete:
+      tags:
+      - "receiver-controller"
+      operationId: "delete_3"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "204":
+          description: "No Content"
+      x-required-permission: "mailroom:receiver:manage"
+    patch:
+      tags:
+      - "receiver-controller"
+      operationId: "patch"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceiverPatch"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReceiverResponse"
+      x-required-permission: "mailroom:receiver:manage"
+  /t/o/{token}:
+    get:
+      tags:
+      - "public-tracking-controller"
+      operationId: "open_1"
+      parameters:
+      - name: "token"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+                format: "byte"
+      x-public: true
+  /t/c/{token}:
+    get:
+      tags:
+      - "public-tracking-controller"
+      operationId: "click_1"
+      parameters:
+      - name: "token"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+      x-public: true
+  /api/v1/templates/{id}/revisions:
+    get:
+      tags:
+      - "template-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: "revisions"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[revision][eq]"
+        in: "query"
+        description: "`revision` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[revision][gt]"
+        in: "query"
+        description: "`revision` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[revision][gte]"
+        in: "query"
+        description: "`revision` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[revision][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `revision`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[revision][lt]"
+        in: "query"
+        description: "`revision` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[revision][lte]"
+        in: "query"
+        description: "`revision` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[revision][neq]"
+        in: "query"
+        description: "`revision` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[revision][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `revision`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[subject][eq]"
+        in: "query"
+        description: "`subject` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[subject][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `subject`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[subject][neq]"
+        in: "query"
+        description: "`subject` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[subject][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `subject`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[subject][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `subject`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id, revision. At most 4 fields; `id` is\
+          \ appended to make the order total. Default: `-revision,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageTemplateRevisionView"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "mailroom:template:read"
+  /api/v1/emails/{id}:
+    get:
+      tags:
+      - "email-controller"
+      operationId: "get_5"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EmailResponse"
+      x-required-permission: "mailroom:email:read"
+  /api/v1/campaigns/{id}/stats:
+    get:
+      tags:
+      - "campaign-controller"
+      operationId: "stats"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CampaignStatsView"
+      x-required-permission: "mailroom:campaign:read"
 components:
-  parameters:
-    Id:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-    IfMatch:
-      name: If-Match
-      in: header
-      required: false
-      schema:
-        type: string
   schemas:
     TemplateRequest:
-      type: object
-      additionalProperties: false
-      required: [key, name, subject, html]
+      type: "object"
       properties:
         key:
-          type: string
-          maxLength: 64
-          pattern: "^[a-z0-9][a-z0-9._-]*$"
+          type: "string"
         name:
-          type: string
-          maxLength: 200
+          type: "string"
         subject:
-          type: string
-          maxLength: 998
-          pattern: "^[^\\r\\n]*$"
+          type: "string"
         html:
-          type: string
-          maxLength: 262144
+          type: "string"
         text:
-          type: string
-          maxLength: 262144
-    TemplateView:
-      type: object
+          type: "string"
+    TemplateResponse:
+      type: "object"
       properties:
         id:
-          type: string
-          format: uuid
+          type: "string"
+          format: "uuid"
         key:
-          type: string
+          type: "string"
         name:
-          type: string
+          type: "string"
         revision:
-          type: integer
+          type: "integer"
+          format: "int32"
         version:
-          type: integer
-    PreviewRequest:
-      type: object
+          type: "integer"
+          format: "int64"
+    SettingsRequest:
+      type: "object"
       properties:
-        variables:
-          type: object
-          additionalProperties: true
-    RenderedEmail:
-      type: object
+        fromKey:
+          type: "string"
+        fromName:
+          type: "string"
+        replyTo:
+          type: "string"
+        bodyRetentionDays:
+          type: "integer"
+          format: "int32"
+        campaignPublishPerMinute:
+          type: "integer"
+          format: "int32"
+    SettingsResponse:
+      type: "object"
       properties:
-        subject:
-          type: string
-        html:
-          type: string
-        text:
-          type: string
+        fromKey:
+          type: "string"
+        fromName:
+          type: "string"
+        replyTo:
+          type: "string"
+        bodyRetentionDays:
+          type: "integer"
+          format: "int32"
+        campaignPublishPerMinute:
+          type: "integer"
+          format: "int32"
+        version:
+          type: "integer"
+          format: "int64"
+    SegmentRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        filter:
+          type: "object"
+          additionalProperties: {}
+    SegmentResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        filter:
+          type: "object"
+          additionalProperties: {}
+        version:
+          type: "integer"
+          format: "int64"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
     ReceiverRequest:
-      type: object
-      additionalProperties: false
-      required: [email]
+      type: "object"
       properties:
         email:
-          type: string
-          format: email
-          maxLength: 320
+          type: "string"
         firstName:
-          type: string
-          maxLength: 200
+          type: "string"
         lastName:
-          type: string
-          maxLength: 200
+          type: "string"
         attributes:
-          type: object
-          additionalProperties: true
-    BulkReceiverRequest:
-      type: object
-      additionalProperties: false
-      required: [receivers]
+          type: "object"
+          additionalProperties: {}
+    ReceiverResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        email:
+          type: "string"
+        firstName:
+          type: "string"
+        lastName:
+          type: "string"
+        attributes:
+          type: "object"
+          additionalProperties: {}
+        status:
+          type: "string"
+        version:
+          type: "integer"
+          format: "int64"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+    GroupRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+    GroupResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        version:
+          type: "integer"
+          format: "int64"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+    CampaignRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        templateKey:
+          type: "string"
+        targetType:
+          type: "string"
+        targetId:
+          type: "string"
+          format: "uuid"
+        fromKey:
+          type: "string"
+    CampaignResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        status:
+          type: "string"
+        templateId:
+          type: "string"
+          format: "uuid"
+        templateRevision:
+          type: "integer"
+          format: "int32"
+        targetType:
+          type: "string"
+        targetId:
+          type: "string"
+          format: "uuid"
+        fromKey:
+          type: "string"
+        fromName:
+          type: "string"
+        replyTo:
+          type: "string"
+        scheduledAt:
+          type: "string"
+          format: "date-time"
+        startedAt:
+          type: "string"
+          format: "date-time"
+        completedAt:
+          type: "string"
+          format: "date-time"
+        version:
+          type: "integer"
+          format: "int64"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+    PreviewRequest:
+      type: "object"
+      properties:
+        variables:
+          type: "object"
+          additionalProperties: {}
+    RenderedResponse:
+      type: "object"
+      properties:
+        subject:
+          type: "string"
+        html:
+          type: "string"
+        text:
+          type: "string"
+    SuppressionRequest:
+      type: "object"
+      properties:
+        email:
+          type: "string"
+        scope:
+          type: "string"
+    SuppressionResponse:
+      type: "object"
+      properties:
+        email:
+          type: "string"
+        scope:
+          type: "string"
+        reason:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+    Preview:
+      type: "object"
+      properties:
+        count:
+          type: "integer"
+          format: "int64"
+        capped:
+          type: "boolean"
+        sample:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ReceiverSummary"
+    ReceiverSummary:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        email:
+          type: "string"
+        firstName:
+          type: "string"
+        lastName:
+          type: "string"
+        attributes:
+          type: "object"
+          additionalProperties: {}
+    BulkRequest:
+      type: "object"
       properties:
         receivers:
-          type: array
-          maxItems: 1000
+          type: "array"
           items:
             $ref: "#/components/schemas/ReceiverRequest"
-    GroupRequest:
-      type: object
-      additionalProperties: false
-      required: [name]
+    BulkResult:
+      type: "object"
       properties:
-        name:
-          type: string
-          maxLength: 200
+        index:
+          type: "integer"
+          format: "int32"
+        receiverId:
+          type: "string"
+          format: "uuid"
+        error:
+          type: "string"
     MemberIds:
-      type: object
-      additionalProperties: false
-      required: [receiverIds]
+      type: "object"
       properties:
         receiverIds:
-          type: array
-          maxItems: 1000
+          type: "array"
           items:
-            type: string
-            format: uuid
-    SuppressionRequest:
-      type: object
-      additionalProperties: false
-      required: [email, scope]
+            type: "string"
+            format: "uuid"
+    MemberChange:
+      type: "object"
       properties:
-        email:
-          type: string
-          format: email
-        scope:
-          type: string
-          enum: [MARKETING, ALL]
-    SegmentRequest:
-      type: object
-      additionalProperties: false
-      required: [name, filter]
-      properties:
-        name:
-          type: string
-          maxLength: 200
-        filter:
-          type: object
-          additionalProperties: true
+        changed:
+          type: "integer"
+          format: "int32"
     SendEmailRequest:
-      type: object
-      additionalProperties: false
-      required: [to, kind, fromKey]
+      type: "object"
       properties:
         to:
-          type: string
-          format: email
+          type: "string"
         kind:
-          type: string
-          enum: [TRANSACTIONAL, MARKETING]
+          type: "string"
         fromKey:
-          type: string
-          maxLength: 64
+          type: "string"
         templateKey:
-          type: string
-          maxLength: 64
+          type: "string"
         variables:
-          type: object
-          additionalProperties: true
+          type: "object"
+          additionalProperties: {}
         subject:
-          type: string
-          maxLength: 998
+          type: "string"
         html:
-          type: string
-          maxLength: 262144
+          type: "string"
         text:
-          type: string
-          maxLength: 262144
+          type: "string"
         idempotencyKey:
-          type: string
-          maxLength: 194
-          description: >-
-            A batch item's own idempotency key, so a client retrying a whole batch after a timeout does not send every
-            item twice. It namespaces the request id exactly as the single-send `Idempotency-Key` header does; omitted,
-            the item's generated id is the key. 194 is the longest value that fits mailer's 200-character request id
-            after the `email/` namespace.
+          type: "string"
+    EmailResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        kind:
+          type: "string"
+        status:
+          type: "string"
+        statusReason:
+          type: "string"
+        to:
+          type: "string"
+        subject:
+          type: "string"
+        campaignId:
+          type: "string"
+          format: "uuid"
+        receiverId:
+          type: "string"
+          format: "uuid"
+        templateId:
+          type: "string"
+          format: "uuid"
+        templateRevision:
+          type: "integer"
+          format: "int32"
+        html:
+          type: "string"
+        text:
+          type: "string"
+        bodyPurged:
+          type: "boolean"
+        deliveryUpdatedAt:
+          type: "string"
+          format: "date-time"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+        events:
+          type: "array"
+          items: {}
     BatchRequest:
-      type: object
-      additionalProperties: false
-      required: [items]
+      type: "object"
       properties:
         items:
-          type: array
-          maxItems: 100
+          type: "array"
           items:
             $ref: "#/components/schemas/SendEmailRequest"
-    CampaignRequest:
-      type: object
-      additionalProperties: false
-      required: [name, templateKey, targetType, targetId, fromKey]
+    BatchResultResponse:
+      type: "object"
       properties:
-        name:
-          type: string
-          maxLength: 200
-        templateKey:
-          type: string
-          maxLength: 64
-        targetType:
-          type: string
-          enum: [GROUP, SEGMENT]
-        targetId:
-          type: string
-          format: uuid
-        fromKey:
-          type: string
-          maxLength: 64
+        index:
+          type: "integer"
+          format: "int32"
+        emailId:
+          type: "string"
+          format: "uuid"
+        status:
+          type: "string"
+        reason:
+          type: "string"
+        error:
+          type: "string"
+    TestRequest:
+      type: "object"
+      properties:
+        addresses:
+          type: "array"
+          items:
+            type: "string"
+    Result:
+      type: "object"
+      properties:
+        to:
+          type: "string"
+        status:
+          type: "string"
+        reason:
+          type: "string"
     ScheduleRequest:
-      type: object
-      additionalProperties: false
-      required: [scheduledAt]
+      type: "object"
       properties:
         scheduledAt:
-          type: string
-          format: date-time
+          type: "string"
+          format: "date-time"
+    ReceiverPatch:
+      type: "object"
+      properties:
+        firstName:
+          type: "string"
+        lastName:
+          type: "string"
+        attributes:
+          type: "object"
+          additionalProperties: {}
+    PageInfo:
+      type: "object"
+      properties:
+        limit:
+          type: "integer"
+          format: "int32"
+        offset:
+          type: "integer"
+          format: "int32"
+        total:
+          type: "integer"
+          format: "int64"
+        next_cursor:
+          type: "string"
+    PageTemplateResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/TemplateResponse"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    PageTemplateRevisionView:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/TemplateRevisionView"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    TemplateRevisionView:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        revision:
+          type: "integer"
+          format: "int32"
+        subject:
+          type: "string"
+        html:
+          type: "string"
+        text:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+    PageSuppressionResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SuppressionResponse"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    PageSegmentResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SegmentResponse"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    PageReceiverResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ReceiverResponse"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    PageGroupResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/GroupResponse"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    MemberResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        email:
+          type: "string"
+        firstName:
+          type: "string"
+        lastName:
+          type: "string"
+    PageMemberResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/MemberResponse"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    PageEmailResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/EmailResponse"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    PageCampaignResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CampaignResponse"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    CampaignStatsView:
+      type: "object"
+      properties:
+        recipients:
+          type: "integer"
+          format: "int64"
+        published:
+          type: "integer"
+          format: "int64"
+        sent:
+          type: "integer"
+          format: "int64"
+        failed:
+          type: "integer"
+          format: "int64"
+        skipped:
+          type: "integer"
+          format: "int64"
+        opened:
+          type: "integer"
+          format: "int64"
+        openEvents:
+          type: "integer"
+          format: "int64"
+        clicked:
+          type: "integer"
+          format: "int64"
+        clickEvents:
+          type: "integer"
+          format: "int64"
+        unsubscribed:
+          type: "integer"
+          format: "int64"
+  securitySchemes:
+    oidc:
+      type: "http"
+      description: "A suite token issued by Platform for this tenant"
+      scheme: "bearer"
+      bearerFormat: "JWT"

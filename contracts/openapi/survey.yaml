@@ -1,201 +1,2020 @@
 openapi: 3.1.0
 info:
   title: Survey API
+  description: "The API a Tenant System uses to build versioned surveys, issue links\
+    \ and read what came back, plus the public endpoints a respondent's browser calls\
+    \ without credentials."
   version: v1
-  description: |
-    The API a Tenant System uses to build versioned surveys, issue links and read what came back, plus the public
-    endpoints a respondent's browser calls without credentials.
-
-    This is a resource skeleton: every path carries its operation, the permission it requires and the shape it will
-    settle on. Each phase fills the schema it owns. `x-required-permission` names a code from
-    contracts/permissions/survey.yaml; a public operation carries `x-public: true` instead and requires no suite token.
-
-    The tenant always comes from the verified host, never from a request body or a query parameter. Every tenant
-    endpoint answers `404` for a resource in another tenant, exactly as it does for one that does not exist.
 servers:
-- url: /
+- url: /survey
   description: "Any tenant hostname: <tenant-code>.<base-domain>/survey"
-tags:
-- name: survey-controller
-  description: Surveys, their status and their lifecycle
-- name: draft-controller
-  description: The editable draft of one survey, with optimistic concurrency
-- name: version-controller
-  description: Publish and read immutable versions; preview and simulate a flow
-- name: link-controller
-  description: Public and personal links, and their revocation
-- name: response-controller
-  description: Responses, their files, and their deletion
-- name: analytics-controller
-  description: Aggregates, cross-tabs, trends and the funnel
-- name: respondent-controller
-  description: The respondents list a Tenant imports into a mailroom group
-- name: export-controller
-  description: A CSV export and its download
-- name: webhook-controller
-  description: Webhook endpoints and the delivery history
-- name: public-controller
-  description: The unauthenticated fill surface a respondent's browser calls
 paths:
-  /survey/api/v1/surveys:
+  /p/v/{visitToken}/draft:
     get:
       tags:
-      - survey-controller
-      operationId: listSurveys
-      x-required-permission: survey:survey:read
+      - answer-controller
+      operationId: readDraft
+      parameters:
+      - name: visitToken
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: OK
-    post:
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DraftResponse"
+      x-public: true
+    put:
       tags:
-      - survey-controller
-      operationId: createSurvey
-      x-required-permission: survey:survey:manage
-      requestBody:
+      - answer-controller
+      operationId: saveDraft
+      parameters:
+      - name: visitToken
+        in: path
         required: true
+        schema:
+          type: string
+      requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SurveyRequest"
+              $ref: "#/components/schemas/AnswersRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DraftResponse"
+      x-public: true
+  /api/v1/surveys/{id}/draft:
+    get:
+      tags:
+      - draft-controller
+      operationId: get
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DraftResponse"
+      x-required-permission: survey:survey:read
+    put:
+      tags:
+      - draft-controller
+      operationId: save
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DraftRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DraftResponse"
+      x-required-permission: survey:survey:manage
+  /p/v/{visitToken}/uploads:
+    post:
+      tags:
+      - answer-controller
+      operationId: upload
+      parameters:
+      - name: visitToken
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Signed"
+      x-public: true
+  /p/v/{visitToken}/submit:
+    post:
+      tags:
+      - answer-controller
+      operationId: submit
+      parameters:
+      - name: visitToken
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Idempotency-Key
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswersRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SubmitResult"
+      x-public: true
+  /p/v/{visitToken}/pages/{pageId}/view:
+    post:
+      tags:
+      - public-controller
+      operationId: pageViewed
+      parameters:
+      - name: visitToken
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: pageId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+      x-public: true
+  /p/l/{token}/open:
+    post:
+      tags:
+      - public-controller
+      operationId: open
+      parameters:
+      - name: token
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Referer
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: User-Agent
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: query
+        in: query
+        required: true
+        schema:
+          type: object
+          additionalProperties:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OpenedResponse"
+      x-public: true
+  /api/v1/webhook-endpoints:
+    get:
+      tags:
+      - endpoint-controller
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: listEndpoints
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: query
+        description: '`created_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][gt]"
+        in: query
+        description: '`created_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][gte]"
+        in: query
+        description: '`created_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `created_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[created_at][lt]"
+        in: query
+        description: '`created_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][lte]"
+        in: query
+        description: '`created_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][neq]"
+        in: query
+        description: '`created_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `created_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[description][eq]"
+        in: query
+        description: '`description` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[description][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `description`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[description][is_null]"
+        in: query
+        description: "`true` for rows where `description` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[description][neq]"
+        in: query
+        description: '`description` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[description][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `description`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[description][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `description`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: query
+        description: '`id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[id][neq]"
+        in: query
+        description: '`id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[key_id][eq]"
+        in: query
+        description: '`key_id` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[key_id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `key_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[key_id][neq]"
+        in: query
+        description: '`key_id` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[key_id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `key_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[key_id][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `key_id`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[secret_rotated_at][eq]"
+        in: query
+        description: '`secret_rotated_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[secret_rotated_at][gt]"
+        in: query
+        description: '`secret_rotated_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[secret_rotated_at][gte]"
+        in: query
+        description: '`secret_rotated_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[secret_rotated_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `secret_rotated_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[secret_rotated_at][is_null]"
+        in: query
+        description: "`true` for rows where `secret_rotated_at` is null, `false` for\
+          \ rows where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[secret_rotated_at][lt]"
+        in: query
+        description: '`secret_rotated_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[secret_rotated_at][lte]"
+        in: query
+        description: '`secret_rotated_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[secret_rotated_at][neq]"
+        in: query
+        description: '`secret_rotated_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[secret_rotated_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `secret_rotated_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[status][eq]"
+        in: query
+        description: '`status` eq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - DISABLED
+      - name: "filter[status][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `status`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[status][neq]"
+        in: query
+        description: '`status` neq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - DISABLED
+      - name: "filter[status][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `status`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[updated_at][eq]"
+        in: query
+        description: '`updated_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[updated_at][gt]"
+        in: query
+        description: '`updated_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[updated_at][gte]"
+        in: query
+        description: '`updated_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[updated_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `updated_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[updated_at][lt]"
+        in: query
+        description: '`updated_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[updated_at][lte]"
+        in: query
+        description: '`updated_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[updated_at][neq]"
+        in: query
+        description: '`updated_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[updated_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `updated_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[url][eq]"
+        in: query
+        description: '`url` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[url][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `url`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[url][neq]"
+        in: query
+        description: '`url` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[url][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `url`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[url][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `url`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: sort
+        in: query
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `created_at,id`."
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: offset
+        in: query
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: cursor
+        in: query
+        description: The `next_cursor` of the previous page. Valid only with the same
+          filter and sort.
+        required: false
+        schema:
+          type: string
+      - name: page_info
+        in: query
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageEndpointResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: survey:webhook:manage
+    post:
+      tags:
+      - endpoint-controller
+      operationId: createEndpoint
+      parameters:
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEndpointRequest"
+        required: true
       responses:
         "201":
           description: Created
           content:
-            application/json:
+            '*/*':
               schema:
-                $ref: "#/components/schemas/SurveyView"
-  /survey/api/v1/surveys/{id}:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - survey-controller
-      operationId: getSurvey
-      x-required-permission: survey:survey:read
-      responses:
-        "200":
-          description: OK
-          headers:
-            ETag:
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SurveyView"
-  /survey/api/v1/surveys/{id}/close:
-    parameters:
-    - $ref: "#/components/parameters/Id"
+                $ref: "#/components/schemas/EndpointWithSecretResponse"
+      x-required-permission: survey:webhook:manage
+  /api/v1/webhook-endpoints/{id}/rotate-secret:
     post:
       tags:
-      - survey-controller
-      operationId: closeSurvey
-      x-required-permission: survey:survey:manage
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SurveyView"
-  /survey/api/v1/surveys/{id}/reopen:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - survey-controller
-      operationId: reopenSurvey
-      x-required-permission: survey:survey:manage
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SurveyView"
-  /survey/api/v1/surveys/{id}/draft:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - draft-controller
-      operationId: getDraft
-      x-required-permission: survey:survey:read
-      responses:
-        "200":
-          description: OK
-          headers:
-            ETag:
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DraftView"
-    put:
-      tags:
-      - draft-controller
-      operationId: saveDraft
-      x-required-permission: survey:survey:manage
+      - endpoint-controller
+      operationId: rotateSecret
       parameters:
-      - $ref: "#/components/parameters/IfMatch"
-      requestBody:
+      - name: id
+        in: path
         required: true
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointWithSecretResponse"
+      x-required-permission: survey:webhook:manage
+  /api/v1/webhook-deliveries/{id}/resend:
+    post:
+      tags:
+      - delivery-controller
+      operationId: resend
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      responses:
+        "202":
+          description: Accepted
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DeliveryResponse"
+      x-required-permission: survey:webhook:manage
+  /api/v1/surveys:
+    get:
+      tags:
+      - survey-controller
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: list
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: query
+        description: '`created_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][gt]"
+        in: query
+        description: '`created_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][gte]"
+        in: query
+        description: '`created_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `created_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[created_at][lt]"
+        in: query
+        description: '`created_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][lte]"
+        in: query
+        description: '`created_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][neq]"
+        in: query
+        description: '`created_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `created_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[current_version_id][eq]"
+        in: query
+        description: '`current_version_id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[current_version_id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `current_version_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[current_version_id][is_null]"
+        in: query
+        description: "`true` for rows where `current_version_id` is null, `false`\
+          \ for rows where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[current_version_id][neq]"
+        in: query
+        description: '`current_version_id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[current_version_id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `current_version_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[id][eq]"
+        in: query
+        description: '`id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[id][neq]"
+        in: query
+        description: '`id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[name][contains]"
+        in: query
+        description: Case-insensitive substring match on `name`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[name][eq]"
+        in: query
+        description: '`name` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[name][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `name`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[name][neq]"
+        in: query
+        description: '`name` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[name][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `name`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[name][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `name`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[status][eq]"
+        in: query
+        description: '`status` eq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - CLOSED
+          - DRAFT
+          - OPEN
+      - name: "filter[status][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `status`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[status][neq]"
+        in: query
+        description: '`status` neq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - CLOSED
+          - DRAFT
+          - OPEN
+      - name: "filter[status][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `status`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[updated_at][eq]"
+        in: query
+        description: '`updated_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[updated_at][gt]"
+        in: query
+        description: '`updated_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[updated_at][gte]"
+        in: query
+        description: '`updated_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[updated_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `updated_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[updated_at][lt]"
+        in: query
+        description: '`updated_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[updated_at][lte]"
+        in: query
+        description: '`updated_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[updated_at][neq]"
+        in: query
+        description: '`updated_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[updated_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `updated_at`.
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id, name, updated_at. At most 4 fields;\
+          \ `id` is appended to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: offset
+        in: query
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: cursor
+        in: query
+        description: The `next_cursor` of the previous page. Valid only with the same
+          filter and sort.
+        required: false
+        schema:
+          type: string
+      - name: page_info
+        in: query
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageSurveyResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: survey:survey:read
+    post:
+      tags:
+      - survey-controller
+      operationId: create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SurveyRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SurveyResponse"
+      x-required-permission: survey:survey:manage
+  /api/v1/surveys/{id}/versions/{no}/simulate:
+    post:
+      tags:
+      - flow-controller
+      operationId: simulateVersion
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: "no"
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimulateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/FlowResult"
+      x-required-permission: survey:survey:read
+  /api/v1/surveys/{id}/reopen:
+    post:
+      tags:
+      - survey-controller
+      operationId: reopen
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SurveyResponse"
+      x-required-permission: survey:survey:manage
+  /api/v1/surveys/{id}/publish:
+    post:
+      tags:
+      - version-controller
+      operationId: publish
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VersionResponse"
+      x-required-permission: survey:survey:manage
+  /api/v1/surveys/{id}/links:
+    get:
+      tags:
+      - link-controller
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: list_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[created_at][eq]"
+        in: query
+        description: '`created_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][gt]"
+        in: query
+        description: '`created_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][gte]"
+        in: query
+        description: '`created_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `created_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[created_at][lt]"
+        in: query
+        description: '`created_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][lte]"
+        in: query
+        description: '`created_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][neq]"
+        in: query
+        description: '`created_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `created_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[expires_at][eq]"
+        in: query
+        description: '`expires_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[expires_at][gt]"
+        in: query
+        description: '`expires_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[expires_at][gte]"
+        in: query
+        description: '`expires_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[expires_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `expires_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[expires_at][is_null]"
+        in: query
+        description: "`true` for rows where `expires_at` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[expires_at][lt]"
+        in: query
+        description: '`expires_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[expires_at][lte]"
+        in: query
+        description: '`expires_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[expires_at][neq]"
+        in: query
+        description: '`expires_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[expires_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `expires_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[external_ref][eq]"
+        in: query
+        description: '`external_ref` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[external_ref][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `external_ref`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[external_ref][is_null]"
+        in: query
+        description: "`true` for rows where `external_ref` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[external_ref][neq]"
+        in: query
+        description: '`external_ref` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[external_ref][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `external_ref`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[external_ref][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `external_ref`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: query
+        description: '`id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[id][neq]"
+        in: query
+        description: '`id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[kind][eq]"
+        in: query
+        description: '`kind` eq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - PERSONAL
+          - PUBLIC
+      - name: "filter[kind][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `kind`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[kind][neq]"
+        in: query
+        description: '`kind` neq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - PERSONAL
+          - PUBLIC
+      - name: "filter[kind][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `kind`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[source][eq]"
+        in: query
+        description: '`source` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[source][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `source`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[source][neq]"
+        in: query
+        description: '`source` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[source][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `source`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[source][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `source`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[status][eq]"
+        in: query
+        description: '`status` eq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - REVOKED
+      - name: "filter[status][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `status`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[status][neq]"
+        in: query
+        description: '`status` neq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - REVOKED
+      - name: "filter[status][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `status`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[survey_id][eq]"
+        in: query
+        description: '`survey_id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[survey_id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `survey_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[survey_id][neq]"
+        in: query
+        description: '`survey_id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[survey_id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `survey_id`.
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: offset
+        in: query
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: cursor
+        in: query
+        description: The `next_cursor` of the previous page. Valid only with the same
+          filter and sort.
+        required: false
+        schema:
+          type: string
+      - name: page_info
+        in: query
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageLinkResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: survey:link:manage
+    post:
+      tags:
+      - link-controller
+      operationId: createPublic
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicLinkRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LinkResponse"
+      x-required-permission: survey:link:manage
+  /api/v1/surveys/{id}/links/personal:
+    post:
+      tags:
+      - link-controller
+      operationId: createPersonal
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PersonalLinksRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LinkResponse"
+      x-required-permission: survey:link:manage
+  /api/v1/surveys/{id}/exports:
+    get:
+      tags:
+      - export-controller
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: list_2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[created_at][eq]"
+        in: query
+        description: '`created_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][gt]"
+        in: query
+        description: '`created_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][gte]"
+        in: query
+        description: '`created_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `created_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[created_at][lt]"
+        in: query
+        description: '`created_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][lte]"
+        in: query
+        description: '`created_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][neq]"
+        in: query
+        description: '`created_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `created_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[finished_at][eq]"
+        in: query
+        description: '`finished_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[finished_at][gt]"
+        in: query
+        description: '`finished_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[finished_at][gte]"
+        in: query
+        description: '`finished_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[finished_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `finished_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[finished_at][is_null]"
+        in: query
+        description: "`true` for rows where `finished_at` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[finished_at][lt]"
+        in: query
+        description: '`finished_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[finished_at][lte]"
+        in: query
+        description: '`finished_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[finished_at][neq]"
+        in: query
+        description: '`finished_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[finished_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `finished_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[id][eq]"
+        in: query
+        description: '`id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[id][neq]"
+        in: query
+        description: '`id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[object_key][eq]"
+        in: query
+        description: '`object_key` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[object_key][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `object_key`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[object_key][is_null]"
+        in: query
+        description: "`true` for rows where `object_key` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[object_key][neq]"
+        in: query
+        description: '`object_key` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[object_key][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `object_key`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[object_key][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `object_key`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[requested_by][eq]"
+        in: query
+        description: '`requested_by` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[requested_by][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `requested_by`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[requested_by][is_null]"
+        in: query
+        description: "`true` for rows where `requested_by` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[requested_by][neq]"
+        in: query
+        description: '`requested_by` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[requested_by][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `requested_by`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[requested_by][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `requested_by`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[rows][eq]"
+        in: query
+        description: '`rows` eq the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[rows][gt]"
+        in: query
+        description: '`rows` gt the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[rows][gte]"
+        in: query
+        description: '`rows` gte the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[rows][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `rows`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[rows][is_null]"
+        in: query
+        description: "`true` for rows where `rows` is null, `false` for rows where\
+          \ it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[rows][lt]"
+        in: query
+        description: '`rows` lt the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[rows][lte]"
+        in: query
+        description: '`rows` lte the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[rows][neq]"
+        in: query
+        description: '`rows` neq the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[rows][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `rows`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[status][eq]"
+        in: query
+        description: '`status` eq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - DONE
+          - FAILED
+          - QUEUED
+          - RUNNING
+      - name: "filter[status][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `status`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[status][neq]"
+        in: query
+        description: '`status` neq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - DONE
+          - FAILED
+          - QUEUED
+          - RUNNING
+      - name: "filter[status][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `status`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[survey_id][eq]"
+        in: query
+        description: '`survey_id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[survey_id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `survey_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[survey_id][neq]"
+        in: query
+        description: '`survey_id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[survey_id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `survey_id`.
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: offset
+        in: query
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: cursor
+        in: query
+        description: The `next_cursor` of the previous page. Valid only with the same
+          filter and sort.
+        required: false
+        schema:
+          type: string
+      - name: page_info
+        in: query
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageExportView"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: survey:export:manage
+    post:
+      tags:
+      - export-controller
+      operationId: create_1
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExportRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ExportView"
+      x-required-permission: survey:export:manage
+  /api/v1/surveys/{id}/draft/validate:
+    post:
+      tags:
+      - draft-controller
+      operationId: validate
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/DraftRequest"
-      responses:
-        "200":
-          description: The stored document, including the ids the server assigned
-          headers:
-            ETag:
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DraftView"
-        "412":
-          description: The If-Match tag is stale; the current tag is in the response
-        "428":
-          description: If-Match is required
-        "422":
-          description: The document does not have the version schema's shape
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ValidationResult"
-  /survey/api/v1/surveys/{id}/draft/validate:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - draft-controller
-      operationId: validateDraft
-      x-required-permission: survey:survey:read
-      requestBody:
         required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/DraftRequest"
       responses:
         "200":
           description: OK
           content:
-            application/json:
+            '*/*':
               schema:
                 $ref: "#/components/schemas/ValidationResult"
-  /survey/api/v1/surveys/{id}/draft/preview:
-    parameters:
-    - $ref: "#/components/parameters/Id"
+      x-required-permission: survey:survey:read
+  /api/v1/surveys/{id}/draft/simulate:
     post:
       tags:
-      - draft-controller
-      operationId: previewDraft
-      x-required-permission: survey:survey:read
+      - flow-controller
+      operationId: simulateDraft
       parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimulateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/FlowResult"
+      x-required-permission: survey:survey:read
+  /api/v1/surveys/{id}/draft/preview:
+    post:
+      tags:
+      - flow-controller
+      operationId: preview
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       - name: locale
         in: query
         required: false
@@ -205,213 +2024,2038 @@ paths:
         "200":
           description: OK
           content:
-            application/json:
+            '*/*':
               schema:
-                $ref: "#/components/schemas/SurveyPreview"
-  /survey/api/v1/surveys/{id}/draft/simulate:
-    parameters:
-    - $ref: "#/components/parameters/Id"
+                $ref: "#/components/schemas/PreviewView"
+      x-required-permission: survey:survey:read
+  /api/v1/surveys/{id}/close:
     post:
       tags:
-      - draft-controller
-      operationId: simulateDraft
-      x-required-permission: survey:survey:read
-      requestBody:
+      - survey-controller
+      operationId: close
+      parameters:
+      - name: id
+        in: path
         required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SimulateRequest"
+        schema:
+          type: string
+          format: uuid
       responses:
         "200":
           description: OK
           content:
-            application/json:
+            '*/*':
               schema:
-                $ref: "#/components/schemas/FlowResult"
-  /survey/api/v1/surveys/{id}/publish:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - version-controller
-      operationId: publishVersion
+                $ref: "#/components/schemas/SurveyResponse"
       x-required-permission: survey:survey:manage
+  /api/v1/surveys/{id}/analytics/trend:
+    post:
+      tags:
+      - analytics-controller
+      operationId: trend
       parameters:
-      - $ref: "#/components/parameters/IfMatch"
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/VersionView"
-        "412":
-          description: The If-Match tag is stale
-        "428":
-          description: If-Match is required; a publish always compares the draft it freezes
-        "422":
-          description: The draft has structural errors
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ValidationResult"
-  /survey/api/v1/surveys/{id}/versions:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - version-controller
-      operationId: listVersions
-      x-required-permission: survey:survey:read
-      responses:
-        "200":
-          description: OK
-  /survey/api/v1/surveys/{id}/versions/{no}:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    - name: no
-      in: path
-      required: true
-      schema:
-        type: integer
-        minimum: 1
-    get:
-      tags:
-      - version-controller
-      operationId: getVersion
-      x-required-permission: survey:survey:read
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/VersionView"
-  /survey/api/v1/surveys/{id}/versions/{no}/simulate:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    - name: no
-      in: path
-      required: true
-      schema:
-        type: integer
-        minimum: 1
-    post:
-      tags:
-      - version-controller
-      operationId: simulateVersion
-      x-required-permission: survey:survey:read
-      requestBody:
+      - name: id
+        in: path
         required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SimulateRequest"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FlowResult"
-  /survey/api/v1/surveys/{id}/links:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - link-controller
-      operationId: listLinks
-      x-required-permission: survey:link:manage
-      responses:
-        "200":
-          description: OK
-    post:
-      tags:
-      - link-controller
-      operationId: createPublicLink
-      x-required-permission: survey:link:manage
-      requestBody:
+              $ref: "#/components/schemas/TrendRequest"
         required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PublicLinkRequest"
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LinkView"
-        "409":
-          description: A public link for that source already exists
-  /survey/api/v1/surveys/{id}/links/personal:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - link-controller
-      operationId: createPersonalLinks
-      x-required-permission: survey:link:manage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PersonalLinksRequest"
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PersonalLinksResponse"
-  /survey/api/v1/links/{id}:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - link-controller
-      operationId: getLink
-      x-required-permission: survey:link:manage
       responses:
         "200":
           description: OK
           content:
-            application/json:
+            '*/*':
               schema:
-                $ref: "#/components/schemas/LinkView"
-  /survey/api/v1/links/{id}/revoke:
-    parameters:
-    - $ref: "#/components/parameters/Id"
+                $ref: "#/components/schemas/TrendView"
+      x-required-permission: survey:analytics:read
+  /api/v1/surveys/{id}/analytics/crosstab:
     post:
       tags:
-      - link-controller
-      operationId: revokeLink
-      x-required-permission: survey:link:manage
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LinkView"
-  /survey/api/v1/surveys/{id}/responses:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - response-controller
-      operationId: listResponses
-      x-required-permission: survey:response:read
+      - analytics-controller
+      operationId: crosstab
       parameters:
-      - name: version
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CrossTabRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CrossTabView"
+      x-required-permission: survey:analytics:read
+  /api/v1/surveys/{id}/analytics/aggregate:
+    post:
+      tags:
+      - analytics-controller
+      operationId: aggregate
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FilterRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AggregateView"
+      x-required-permission: survey:analytics:read
+  /api/v1/links/{linkId}/revoke:
+    post:
+      tags:
+      - link-controller
+      operationId: revoke
+      parameters:
+      - name: linkId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LinkResponse"
+      x-required-permission: survey:link:manage
+  /api/v1/webhook-endpoints/{id}:
+    get:
+      tags:
+      - endpoint-controller
+      operationId: getEndpoint
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointResponse"
+      x-required-permission: survey:webhook:manage
+    patch:
+      tags:
+      - endpoint-controller
+      operationId: updateEndpoint
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEndpointRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointResponse"
+      x-required-permission: survey:webhook:manage
+  /api/v1/settings:
+    get:
+      tags:
+      - settings-controller
+      operationId: get_1
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+      x-required-permission: survey:settings:manage
+    patch:
+      tags:
+      - settings-controller
+      operationId: change
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangeRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+      x-required-permission: survey:settings:manage
+  /p/v/{visitToken}/schema:
+    get:
+      tags:
+      - public-controller
+      operationId: schema
+      parameters:
+      - name: visitToken
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: locale
         in: query
         required: false
         schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SchemaResponse"
+      x-public: true
+  /api/v1/webhook-deliveries:
+    get:
+      tags:
+      - delivery-controller
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: listDeliveries
+      parameters:
+      - name: "filter[attempts][eq]"
+        in: query
+        description: '`attempts` eq the value.'
+        required: false
+        schema:
           type: integer
+          format: int64
+      - name: "filter[attempts][gt]"
+        in: query
+        description: '`attempts` gt the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[attempts][gte]"
+        in: query
+        description: '`attempts` gte the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[attempts][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `attempts`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[attempts][lt]"
+        in: query
+        description: '`attempts` lt the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[attempts][lte]"
+        in: query
+        description: '`attempts` lte the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[attempts][neq]"
+        in: query
+        description: '`attempts` neq the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[attempts][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `attempts`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[completed_at][eq]"
+        in: query
+        description: '`completed_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[completed_at][gt]"
+        in: query
+        description: '`completed_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[completed_at][gte]"
+        in: query
+        description: '`completed_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[completed_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `completed_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[completed_at][is_null]"
+        in: query
+        description: "`true` for rows where `completed_at` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[completed_at][lt]"
+        in: query
+        description: '`completed_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[completed_at][lte]"
+        in: query
+        description: '`completed_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[completed_at][neq]"
+        in: query
+        description: '`completed_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[completed_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `completed_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[created_at][eq]"
+        in: query
+        description: '`created_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][gt]"
+        in: query
+        description: '`created_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][gte]"
+        in: query
+        description: '`created_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `created_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[created_at][lt]"
+        in: query
+        description: '`created_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][lte]"
+        in: query
+        description: '`created_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][neq]"
+        in: query
+        description: '`created_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `created_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[endpoint_id][eq]"
+        in: query
+        description: '`endpoint_id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[endpoint_id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `endpoint_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[endpoint_id][neq]"
+        in: query
+        description: '`endpoint_id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[endpoint_id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `endpoint_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[event_id][eq]"
+        in: query
+        description: '`event_id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[event_id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `event_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[event_id][neq]"
+        in: query
+        description: '`event_id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[event_id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `event_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[event_type][eq]"
+        in: query
+        description: '`event_type` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[event_type][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `event_type`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[event_type][neq]"
+        in: query
+        description: '`event_type` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[event_type][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `event_type`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[event_type][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `event_type`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: query
+        description: '`id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[id][neq]"
+        in: query
+        description: '`id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[last_error][eq]"
+        in: query
+        description: '`last_error` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[last_error][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `last_error`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[last_error][is_null]"
+        in: query
+        description: "`true` for rows where `last_error` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[last_error][neq]"
+        in: query
+        description: '`last_error` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[last_error][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `last_error`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[last_error][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `last_error`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[last_status_code][eq]"
+        in: query
+        description: '`last_status_code` eq the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[last_status_code][gt]"
+        in: query
+        description: '`last_status_code` gt the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[last_status_code][gte]"
+        in: query
+        description: '`last_status_code` gte the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[last_status_code][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `last_status_code`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[last_status_code][is_null]"
+        in: query
+        description: "`true` for rows where `last_status_code` is null, `false` for\
+          \ rows where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[last_status_code][lt]"
+        in: query
+        description: '`last_status_code` lt the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[last_status_code][lte]"
+        in: query
+        description: '`last_status_code` lte the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[last_status_code][neq]"
+        in: query
+        description: '`last_status_code` neq the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[last_status_code][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `last_status_code`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[next_attempt_at][eq]"
+        in: query
+        description: '`next_attempt_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[next_attempt_at][gt]"
+        in: query
+        description: '`next_attempt_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[next_attempt_at][gte]"
+        in: query
+        description: '`next_attempt_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[next_attempt_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `next_attempt_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[next_attempt_at][lt]"
+        in: query
+        description: '`next_attempt_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[next_attempt_at][lte]"
+        in: query
+        description: '`next_attempt_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[next_attempt_at][neq]"
+        in: query
+        description: '`next_attempt_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[next_attempt_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `next_attempt_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[status][eq]"
+        in: query
+        description: '`status` eq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - DEAD
+          - IN_PROGRESS
+          - PENDING
+          - SUCCEEDED
+      - name: "filter[status][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `status`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[status][neq]"
+        in: query
+        description: '`status` neq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - DEAD
+          - IN_PROGRESS
+          - PENDING
+          - SUCCEEDED
+      - name: "filter[status][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `status`.
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          maximum: 200
           minimum: 1
+      - name: offset
+        in: query
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: cursor
+        in: query
+        description: The `next_cursor` of the previous page. Valid only with the same
+          filter and sort.
+        required: false
+        schema:
+          type: string
+      - name: page_info
+        in: query
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageDeliveryResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: survey:webhook:manage
+  /api/v1/webhook-deliveries/{id}:
+    get:
+      tags:
+      - delivery-controller
+      operationId: getDelivery
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DeliveryDetailResponse"
+      x-required-permission: survey:webhook:manage
+  /api/v1/surveys/{id}:
+    get:
+      tags:
+      - survey-controller
+      operationId: get_2
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SurveyResponse"
+      x-required-permission: survey:survey:read
+  /api/v1/surveys/{id}/versions:
+    get:
+      tags:
+      - version-controller
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: list_3
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][eq]"
+        in: query
+        description: '`id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[id][neq]"
+        in: query
+        description: '`id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[published_at][eq]"
+        in: query
+        description: '`published_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[published_at][gt]"
+        in: query
+        description: '`published_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[published_at][gte]"
+        in: query
+        description: '`published_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[published_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `published_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[published_at][lt]"
+        in: query
+        description: '`published_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[published_at][lte]"
+        in: query
+        description: '`published_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[published_at][neq]"
+        in: query
+        description: '`published_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[published_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `published_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[published_by][eq]"
+        in: query
+        description: '`published_by` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[published_by][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `published_by`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[published_by][is_null]"
+        in: query
+        description: "`true` for rows where `published_by` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[published_by][neq]"
+        in: query
+        description: '`published_by` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[published_by][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `published_by`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[published_by][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `published_by`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[survey_id][eq]"
+        in: query
+        description: '`survey_id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[survey_id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `survey_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[survey_id][neq]"
+        in: query
+        description: '`survey_id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[survey_id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `survey_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[version_no][eq]"
+        in: query
+        description: '`version_no` eq the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[version_no][gt]"
+        in: query
+        description: '`version_no` gt the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[version_no][gte]"
+        in: query
+        description: '`version_no` gte the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[version_no][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `version_no`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[version_no][lt]"
+        in: query
+        description: '`version_no` lt the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[version_no][lte]"
+        in: query
+        description: '`version_no` lte the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[version_no][neq]"
+        in: query
+        description: '`version_no` neq the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[version_no][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `version_no`.
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: id, version_no. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-version_no,id`."
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: offset
+        in: query
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: cursor
+        in: query
+        description: The `next_cursor` of the previous page. Valid only with the same
+          filter and sort.
+        required: false
+        schema:
+          type: string
+      - name: page_info
+        in: query
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageVersionSummary"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: survey:survey:read
+  /api/v1/surveys/{id}/versions/{no}:
+    get:
+      tags:
+      - version-controller
+      operationId: get_3
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: "no"
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VersionResponse"
+      x-required-permission: survey:survey:read
+  /api/v1/surveys/{id}/responses:
+    get:
+      tags:
+      - response-controller
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: list_4
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[external_ref][eq]"
+        in: query
+        description: '`external_ref` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[external_ref][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `external_ref`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[external_ref][is_null]"
+        in: query
+        description: "`true` for rows where `external_ref` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[external_ref][neq]"
+        in: query
+        description: '`external_ref` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[external_ref][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `external_ref`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[external_ref][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `external_ref`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: query
+        description: '`id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[id][neq]"
+        in: query
+        description: '`id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[locale][eq]"
+        in: query
+        description: '`locale` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[locale][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `locale`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[locale][is_null]"
+        in: query
+        description: "`true` for rows where `locale` is null, `false` for rows where\
+          \ it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[locale][neq]"
+        in: query
+        description: '`locale` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[locale][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `locale`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[locale][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `locale`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[respondent_identity][eq]"
+        in: query
+        description: '`respondent_identity` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[respondent_identity][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `respondent_identity`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[respondent_identity][is_null]"
+        in: query
+        description: "`true` for rows where `respondent_identity` is null, `false`\
+          \ for rows where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[respondent_identity][neq]"
+        in: query
+        description: '`respondent_identity` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[respondent_identity][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `respondent_identity`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[respondent_identity][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `respondent_identity`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[score][eq]"
+        in: query
+        description: '`score` eq the value.'
+        required: false
+        schema:
+          type: number
+      - name: "filter[score][gt]"
+        in: query
+        description: '`score` gt the value.'
+        required: false
+        schema:
+          type: number
+      - name: "filter[score][gte]"
+        in: query
+        description: '`score` gte the value.'
+        required: false
+        schema:
+          type: number
+      - name: "filter[score][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `score`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[score][is_null]"
+        in: query
+        description: "`true` for rows where `score` is null, `false` for rows where\
+          \ it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[score][lt]"
+        in: query
+        description: '`score` lt the value.'
+        required: false
+        schema:
+          type: number
+      - name: "filter[score][lte]"
+        in: query
+        description: '`score` lte the value.'
+        required: false
+        schema:
+          type: number
+      - name: "filter[score][neq]"
+        in: query
+        description: '`score` neq the value.'
+        required: false
+        schema:
+          type: number
+      - name: "filter[score][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `score`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[source][eq]"
+        in: query
+        description: '`source` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[source][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `source`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[source][neq]"
+        in: query
+        description: '`source` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[source][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `source`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[source][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `source`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[started_at][eq]"
+        in: query
+        description: '`started_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[started_at][gt]"
+        in: query
+        description: '`started_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[started_at][gte]"
+        in: query
+        description: '`started_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[started_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `started_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[started_at][lt]"
+        in: query
+        description: '`started_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[started_at][lte]"
+        in: query
+        description: '`started_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[started_at][neq]"
+        in: query
+        description: '`started_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[started_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `started_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[submitted_at][eq]"
+        in: query
+        description: '`submitted_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[submitted_at][gt]"
+        in: query
+        description: '`submitted_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[submitted_at][gte]"
+        in: query
+        description: '`submitted_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[submitted_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `submitted_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[submitted_at][is_null]"
+        in: query
+        description: "`true` for rows where `submitted_at` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[submitted_at][lt]"
+        in: query
+        description: '`submitted_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[submitted_at][lte]"
+        in: query
+        description: '`submitted_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[submitted_at][neq]"
+        in: query
+        description: '`submitted_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[submitted_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `submitted_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[survey_id][eq]"
+        in: query
+        description: '`survey_id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[survey_id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `survey_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[survey_id][neq]"
+        in: query
+        description: '`survey_id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[survey_id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `survey_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[version_id][eq]"
+        in: query
+        description: '`version_id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[version_id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `version_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[version_id][neq]"
+        in: query
+        description: '`version_id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[version_id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `version_id`.
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: id, started_at. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-started_at,id`."
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: offset
+        in: query
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: cursor
+        in: query
+        description: The `next_cursor` of the previous page. Valid only with the same
+          filter and sort.
+        required: false
+        schema:
+          type: string
+      - name: page_info
+        in: query
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageResponseRow"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: survey:response:read
+  /api/v1/surveys/{id}/respondents:
+    get:
+      tags:
+      - respondent-controller
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+      operationId: list_5
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[country][eq]"
+        in: query
+        description: '`country` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[country][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `country`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[country][is_null]"
+        in: query
+        description: "`true` for rows where `country` is null, `false` for rows where\
+          \ it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[country][neq]"
+        in: query
+        description: '`country` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[country][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `country`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[country][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `country`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[device_class][eq]"
+        in: query
+        description: '`device_class` eq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - DESKTOP
+          - MOBILE
+          - TABLET
+          - UNKNOWN
+      - name: "filter[device_class][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `device_class`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[device_class][neq]"
+        in: query
+        description: '`device_class` neq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - DESKTOP
+          - MOBILE
+          - TABLET
+          - UNKNOWN
+      - name: "filter[device_class][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `device_class`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[id][eq]"
+        in: query
+        description: '`id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[id][neq]"
+        in: query
+        description: '`id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[last_activity_at][eq]"
+        in: query
+        description: '`last_activity_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[last_activity_at][gt]"
+        in: query
+        description: '`last_activity_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[last_activity_at][gte]"
+        in: query
+        description: '`last_activity_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[last_activity_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `last_activity_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[last_activity_at][lt]"
+        in: query
+        description: '`last_activity_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[last_activity_at][lte]"
+        in: query
+        description: '`last_activity_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[last_activity_at][neq]"
+        in: query
+        description: '`last_activity_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[last_activity_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `last_activity_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[link_id][eq]"
+        in: query
+        description: '`link_id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[link_id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `link_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[link_id][neq]"
+        in: query
+        description: '`link_id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[link_id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `link_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[opened_at][eq]"
+        in: query
+        description: '`opened_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[opened_at][gt]"
+        in: query
+        description: '`opened_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[opened_at][gte]"
+        in: query
+        description: '`opened_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[opened_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `opened_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[opened_at][lt]"
+        in: query
+        description: '`opened_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[opened_at][lte]"
+        in: query
+        description: '`opened_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[opened_at][neq]"
+        in: query
+        description: '`opened_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[opened_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `opened_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[response_id][eq]"
+        in: query
+        description: '`response_id` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[response_id][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `response_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[response_id][is_null]"
+        in: query
+        description: "`true` for rows where `response_id` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[response_id][neq]"
+        in: query
+        description: '`response_id` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: "filter[response_id][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `response_id`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[source][eq]"
+        in: query
+        description: '`source` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[source][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `source`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[source][neq]"
+        in: query
+        description: '`source` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[source][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `source`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[source][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `source`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[state][eq]"
+        in: query
+        description: '`state` eq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - ABANDONED
+          - COMPLETED
+          - OPENED
+          - STARTED
+      - name: "filter[state][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `state`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[state][neq]"
+        in: query
+        description: '`state` neq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - ABANDONED
+          - COMPLETED
+          - OPENED
+          - STARTED
+      - name: "filter[state][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `state`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[traffic_class][eq]"
+        in: query
+        description: '`traffic_class` eq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - BOT
+          - HUMAN
+      - name: "filter[traffic_class][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `traffic_class`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[traffic_class][neq]"
+        in: query
+        description: '`traffic_class` neq the value.'
+        required: false
+        schema:
+          type: string
+          enum:
+          - BOT
+          - HUMAN
+      - name: "filter[traffic_class][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `traffic_class`.
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: id, last_activity_at, opened_at. At most 4 fields;\
+          \ `id` is appended to make the order total. Default: `-last_activity_at,id`."
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: offset
+        in: query
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: cursor
+        in: query
+        description: The `next_cursor` of the previous page. Valid only with the same
+          filter and sort.
+        required: false
+        schema:
+          type: string
+      - name: page_info
+        in: query
+        description: "Fills `page` with the limit, offset, total and next cursor."
+        required: false
+        schema:
+          type: boolean
+          default: false
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageRespondentView"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: survey:response:read
+  /api/v1/surveys/{id}/analytics/funnel:
+    get:
+      tags:
+      - analytics-controller
+      operationId: funnel
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: group_by
+        in: query
+        required: false
+        schema:
+          type: string
       - name: from
         in: query
         required: false
@@ -424,914 +4068,127 @@ paths:
         schema:
           type: string
           format: date-time
-      - name: source
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: external_ref
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: status
-        in: query
-        required: false
-        schema:
-          type: string
-          enum: [IN_PROGRESS, COMPLETED]
-      responses:
-        "200":
-          description: OK
-  /survey/api/v1/responses/{id}:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - response-controller
-      operationId: getResponse
-      x-required-permission: survey:response:read
       responses:
         "200":
           description: OK
           content:
-            application/json:
+            '*/*':
               schema:
-                $ref: "#/components/schemas/ResponseView"
+                $ref: "#/components/schemas/FunnelView"
+      x-required-permission: survey:analytics:read
+  /api/v1/responses/{responseId}:
+    get:
+      tags:
+      - response-controller
+      operationId: get_4
+      parameters:
+      - name: responseId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResponseRow"
+      x-required-permission: survey:response:read
     delete:
       tags:
       - response-controller
-      operationId: deleteResponse
+      operationId: delete
+      parameters:
+      - name: responseId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
       x-required-permission: survey:response:delete
-      responses:
-        "204":
-          description: Deleted, with its answers and objects
-  /survey/api/v1/responses/{id}/files/{uploadId}:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    - name: uploadId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+  /api/v1/links/{linkId}:
     get:
       tags:
-      - response-controller
-      operationId: downloadFile
-      x-required-permission: survey:response:read
-      responses:
-        "200":
-          description: A presigned GET URL answering as an attachment
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PresignedUrl"
-  /survey/api/v1/surveys/{id}/analytics/aggregate:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - analytics-controller
-      operationId: aggregate
-      x-required-permission: survey:analytics:read
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AnalyticsRequest"
-      responses:
-        "200":
-          description: OK
-  /survey/api/v1/surveys/{id}/analytics/crosstab:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - analytics-controller
-      operationId: crosstab
-      x-required-permission: survey:analytics:read
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CrosstabRequest"
-      responses:
-        "200":
-          description: OK
-  /survey/api/v1/surveys/{id}/analytics/trend:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - analytics-controller
-      operationId: trend
-      x-required-permission: survey:analytics:read
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TrendRequest"
-      responses:
-        "200":
-          description: OK
-  /survey/api/v1/surveys/{id}/analytics/funnel:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - analytics-controller
-      operationId: funnel
-      x-required-permission: survey:analytics:read
+      - link-controller
+      operationId: get_5
       parameters:
-      - name: group_by
-        in: query
-        required: false
-        schema:
-          type: string
-          enum: [source, country, device_class]
-          default: source
-      responses:
-        "200":
-          description: OK
-  /survey/api/v1/surveys/{id}/respondents:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - respondent-controller
-      operationId: listRespondents
-      x-required-permission: survey:response:read
-      parameters:
-      - name: state
-        in: query
-        required: false
-        schema:
-          type: string
-          enum: [COMPLETED, STARTED, ABANDONED]
-      - name: source
-        in: query
-        required: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-  /survey/api/v1/surveys/{id}/exports:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - export-controller
-      operationId: createExport
-      x-required-permission: survey:export:manage
-      requestBody:
+      - name: linkId
+        in: path
         required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ExportRequest"
-      responses:
-        "202":
-          description: Accepted; the export runs in the worker
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExportView"
-  /survey/api/v1/exports/{id}:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - export-controller
-      operationId: getExport
-      x-required-permission: survey:export:manage
-      responses:
-        "200":
-          description: OK, with a presigned GET when the export is done
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ExportView"
-  /survey/api/v1/webhook-endpoints:
-    get:
-      tags:
-      - webhook-controller
-      operationId: listEndpoints
-      x-required-permission: survey:webhook:manage
-      responses:
-        "200":
-          description: OK
-    post:
-      tags:
-      - webhook-controller
-      operationId: createEndpoint
-      x-required-permission: survey:webhook:manage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/EndpointRequest"
-      responses:
-        "201":
-          description: Created; the signing secret is returned once
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EndpointCreated"
-  /survey/api/v1/webhook-endpoints/{id}:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    get:
-      tags:
-      - webhook-controller
-      operationId: getEndpoint
-      x-required-permission: survey:webhook:manage
-      responses:
-        "200":
-          description: OK
-    put:
-      tags:
-      - webhook-controller
-      operationId: updateEndpoint
-      x-required-permission: survey:webhook:manage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/EndpointRequest"
-      responses:
-        "200":
-          description: OK
-    delete:
-      tags:
-      - webhook-controller
-      operationId: deleteEndpoint
-      x-required-permission: survey:webhook:manage
-      responses:
-        "204":
-          description: Deleted with its delivery history
-  /survey/api/v1/webhook-endpoints/{id}/rotate-secret:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - webhook-controller
-      operationId: rotateSecret
-      x-required-permission: survey:webhook:manage
-      responses:
-        "200":
-          description: The new secret, shown once
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EndpointCreated"
-  /survey/api/v1/webhook-deliveries:
-    get:
-      tags:
-      - webhook-controller
-      operationId: listDeliveries
-      x-required-permission: survey:webhook:manage
-      parameters:
-      - name: endpoint
-        in: query
-        required: false
         schema:
           type: string
           format: uuid
-      - name: status
-        in: query
-        required: false
-        schema:
-          type: string
-          enum: [PENDING, DELIVERED, DEAD]
       responses:
         "200":
           description: OK
-  /survey/api/v1/webhook-deliveries/{id}/retry:
-    parameters:
-    - $ref: "#/components/parameters/Id"
-    post:
-      tags:
-      - webhook-controller
-      operationId: retryDelivery
-      x-required-permission: survey:webhook:manage
-      responses:
-        "202":
-          description: Accepted; the delivery is due again
-  /survey/p/l/{token}/open:
-    parameters:
-    - name: token
-      in: path
-      required: true
-      schema:
-        type: string
-    post:
-      tags:
-      - public-controller
-      operationId: openLink
-      x-public: true
-      responses:
-        "200":
-          description: A visit token, the version and the locale
           content:
-            application/json:
+            '*/*':
               schema:
-                $ref: "#/components/schemas/OpenResponse"
-        "404":
-          description: The same body for every invalid, revoked, expired or unknown token
-        "409":
-          description: already_completed on a personal link that already completed
-        "429":
-          description: Rate limited
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-  /survey/p/v/{visitToken}/schema:
-    parameters:
-    - $ref: "#/components/parameters/VisitToken"
+                $ref: "#/components/schemas/LinkResponse"
+      x-required-permission: survey:link:manage
+  /api/v1/exports/{exportId}:
     get:
       tags:
-      - public-controller
-      operationId: visitSchema
-      x-public: true
+      - export-controller
+      operationId: get_6
       parameters:
-      - name: locale
-        in: query
-        required: false
+      - name: exportId
+        in: path
+        required: true
         schema:
           type: string
-      responses:
-        "200":
-          description: The version for one locale, without scores
-  /survey/p/v/{visitToken}/draft:
-    parameters:
-    - $ref: "#/components/parameters/VisitToken"
-    get:
-      tags:
-      - public-controller
-      operationId: readDraft
-      x-public: true
+          format: uuid
       responses:
         "200":
           description: OK
-    put:
-      tags:
-      - public-controller
-      operationId: saveDraftAnswers
-      x-public: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AnswersRequest"
-      responses:
-        "200":
-          description: OK; the first save moves the visit to STARTED
-  /survey/p/v/{visitToken}/pages/{pageId}/view:
-    parameters:
-    - $ref: "#/components/parameters/VisitToken"
-    - name: pageId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-    post:
-      tags:
-      - public-controller
-      operationId: recordPageView
-      x-public: true
-      responses:
-        "202":
-          description: Accepted
-        "429":
-          description: The visit already recorded 200 page events
-  /survey/p/v/{visitToken}/uploads:
-    parameters:
-    - $ref: "#/components/parameters/VisitToken"
-    post:
-      tags:
-      - public-controller
-      operationId: createUpload
-      x-public: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UploadRequest"
-      responses:
-        "201":
-          description: A presigned PUT URL and the headers it needs
           content:
-            application/json:
+            '*/*':
               schema:
-                $ref: "#/components/schemas/UploadCreated"
-  /survey/p/v/{visitToken}/submit:
-    parameters:
-    - $ref: "#/components/parameters/VisitToken"
-    post:
-      tags:
-      - public-controller
-      operationId: submitResponse
-      x-public: true
-      parameters:
-      - name: Idempotency-Key
-        in: header
-        required: true
-        schema:
-          type: string
-          maxLength: 200
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AnswersRequest"
-      responses:
-        "200":
-          description: The completed response; a repeated Idempotency-Key returns the first result
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SubmitResult"
-        "202":
-          description: Accepted and discarded; the honeypot was filled
-        "409":
-          description: cap_reached, already_completed or window_closed
-        "428":
-          description: Idempotency-Key is required
-        "422":
-          description: A required answer is missing or a constraint failed
+                $ref: "#/components/schemas/ExportView"
+      x-required-permission: survey:export:manage
 components:
-  parameters:
-    Id:
-      name: id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-    IfMatch:
-      name: If-Match
-      in: header
-      required: false
-      schema:
-        type: string
-    VisitToken:
-      name: visitToken
-      in: path
-      required: true
-      schema:
-        type: string
   schemas:
-    SurveyRequest:
-      type: object
-      additionalProperties: false
-      required: [name]
-      properties:
-        name:
-          type: string
-          maxLength: 200
-    SurveyView:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        status:
-          type: string
-          enum: [DRAFT, OPEN, CLOSED]
-        currentVersionId:
-          type: string
-          format: uuid
-        currentVersionNo:
-          type: integer
-        version:
-          type: integer
-    DraftRequest:
-      type: object
-      additionalProperties: false
-      required: [document]
-      properties:
-        document:
-          type: object
-          additionalProperties: true
-          description: |
-            A document validated against contracts/survey/version.schema.json. The server assigns a UUID to every
-            page, question, option, matrix row and column that arrives without one and returns the stored document,
-            so a client must keep the ids it is given: dropping them makes every publish create new questions.
-    DraftView:
-      type: object
-      description: The stored document and the tag the next write must carry.
-      properties:
-        document:
-          type: object
-          additionalProperties: true
-          description: The document exactly as stored, with the ids the server assigned. A new survey starts from a minimal document with no page.
-        etag:
-          type: string
-          description: The draft's tag as a decimal. The ETag header carries the same number quoted; a publish moves it too, because a publish may rewrite a retyped question's id.
-        updatedAt:
-          type: string
-          format: date-time
-    ValidationResult:
-      type: object
-      properties:
-        errors:
-          type: array
-          items:
-            $ref: "#/components/schemas/ValidationError"
-    ValidationError:
-      type: object
-      required: [pointer, code, message]
-      properties:
-        pointer:
-          type: string
-        code:
-          type: string
-          enum:
-          - required
-          - unknown_type
-          - duplicate_id
-          - dangling_reference
-          - translation_missing
-          - limit_exceeded
-          - cycle
-          - expression_invalid
-        message:
-          type: string
-    VersionView:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        versionNo:
-          type: integer
-        publishedAt:
-          type: string
-          format: date-time
-        document:
-          type: object
-          additionalProperties: true
-    SimulateRequest:
-      type: object
-      additionalProperties: false
-      required: [answers]
-      properties:
-        answers:
-          type: object
-          additionalProperties: true
-        locale:
-          type: string
-    FlowResult:
-      type: object
-      properties:
-        path:
-          type: array
-          items:
-            type: string
-            format: uuid
-        visible:
-          type: object
-          additionalProperties:
-            type: boolean
-        vars:
-          type: object
-          additionalProperties: true
-        score:
-          type: number
-          nullable: true
-        errors:
-          type: array
-          items:
-            $ref: "#/components/schemas/ValidationError"
-    SurveyPreview:
-      type: object
-      description: |
-        The draft rendered for one locale, pages in presentation order. This is presentation, not evaluation: no page
-        is skipped and no value is substituted. A piped token renders as a placeholder naming what it will show —
-        `{{answer:<questionId>}}` or `{{var:<name>}}` — so a builder sees its own sentence rather than an empty string.
-      properties:
-        locale:
-          type: string
-          description: The locale rendered, which is the requested one when the version enables it and the default otherwise.
-        pages:
-          type: array
-          items:
-            $ref: "#/components/schemas/PreviewPage"
-    PreviewPage:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        title:
-          type: string
-          nullable: true
-        questions:
-          type: array
-          items:
-            $ref: "#/components/schemas/PreviewQuestion"
-    PreviewQuestion:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        type:
-          type: string
-        required:
-          type: boolean
-        label:
-          type: string
-          nullable: true
-        help:
-          type: string
-          nullable: true
-        options:
-          type: array
-          items:
-            $ref: "#/components/schemas/PreviewOption"
-    PreviewOption:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        value:
-          type: string
-        label:
-          type: string
-          nullable: true
-    PublicLinkRequest:
-      type: object
-      additionalProperties: false
-      required: [source]
-      properties:
-        source:
-          type: string
-          maxLength: 100
-          pattern: "^[a-z0-9][a-z0-9._-]*$"
-    PersonalLinksRequest:
-      type: object
-      additionalProperties: false
-      required: [links]
-      properties:
-        links:
-          type: array
-          minItems: 1
-          maxItems: 1000
-          items:
-            $ref: "#/components/schemas/PersonalLinkRequest"
-    PersonalLinkRequest:
-      type: object
-      additionalProperties: false
-      required: [external_ref]
-      properties:
-        external_ref:
-          type: string
-          maxLength: 200
-        source:
-          type: string
-          maxLength: 100
-        expires_at:
-          type: string
-          format: date-time
-    PersonalLinksResponse:
-      type: object
-      properties:
-        links:
-          type: array
-          items:
-            $ref: "#/components/schemas/LinkView"
-    LinkView:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        kind:
-          type: string
-          enum: [PUBLIC, PERSONAL]
-        source:
-          type: string
-        externalRef:
-          type: string
-        url:
-          type: string
-        status:
-          type: string
-          enum: [ACTIVE, REVOKED]
-        expiresAt:
-          type: string
-          format: date-time
-    ResponseView:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        surveyId:
-          type: string
-          format: uuid
-        versionId:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum: [IN_PROGRESS, COMPLETED]
-        locale:
-          type: string
-        answers:
-          type: object
-          additionalProperties: true
-        vars:
-          type: object
-          additionalProperties: true
-        score:
-          type: number
-          nullable: true
-        respondentIdentity:
-          type: string
-          nullable: true
-        externalRef:
-          type: string
-          nullable: true
-        source:
-          type: string
-        startedAt:
-          type: string
-          format: date-time
-        submittedAt:
-          type: string
-          format: date-time
-    PresignedUrl:
-      type: object
-      properties:
-        url:
-          type: string
-        expiresAt:
-          type: string
-          format: date-time
-    AnalyticsRequest:
-      type: object
-      additionalProperties: false
-      properties:
-        where:
-          type: object
-          description: An expression from contracts/survey/expression.schema.json
-          additionalProperties: true
-        version:
-          type: integer
-        from:
-          type: string
-          format: date-time
-        to:
-          type: string
-          format: date-time
-        source:
-          type: string
-    CrosstabRequest:
-      type: object
-      additionalProperties: false
-      required: [row, column]
-      properties:
-        row:
-          type: string
-        column:
-          type: string
-        where:
-          type: object
-          additionalProperties: true
-    TrendRequest:
-      type: object
-      additionalProperties: false
-      required: [metric, bucket]
-      properties:
-        metric:
-          type: string
-          enum: [count, mean, nps]
-        question:
-          type: string
-        bucket:
-          type: string
-          enum: [day, week]
-        where:
-          type: object
-          additionalProperties: true
-    ExportRequest:
-      type: object
-      additionalProperties: false
-      properties:
-        where:
-          type: object
-          additionalProperties: true
-        version:
-          type: integer
-    ExportView:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum: [QUEUED, RUNNING, DONE, FAILED]
-        rows:
-          type: integer
-        url:
-          type: string
-          nullable: true
-        finishedAt:
-          type: string
-          format: date-time
-    EndpointRequest:
-      type: object
-      additionalProperties: false
-      required: [url, event_types]
-      properties:
-        url:
-          type: string
-          format: uri
-        event_types:
-          type: array
-          minItems: 1
-          uniqueItems: true
-          items:
-            type: string
-            enum:
-            - survey-version.published
-            - survey.closed
-            - survey-response.submitted
-        enabled:
-          type: boolean
-    EndpointCreated:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        url:
-          type: string
-        eventTypes:
-          type: array
-          items:
-            type: string
-        secret:
-          type: string
-          description: Shown once, on create and on rotate; never again
-    OpenResponse:
-      type: object
-      properties:
-        visitToken:
-          type: string
-        version:
-          type: integer
-        locale:
-          type: string
-        expiresAt:
-          type: string
-          format: date-time
     AnswersRequest:
       type: object
-      additionalProperties: false
-      required: [answers]
       properties:
         answers:
           type: object
-          additionalProperties: true
+          additionalProperties: {}
         locale:
           type: string
+    DraftResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        answers:
+          type: object
+          additionalProperties: {}
+    DraftRequest:
+      type: object
+      properties:
+        document:
+          type: object
+          additionalProperties: {}
     UploadRequest:
       type: object
-      additionalProperties: false
-      required: [question_id, filename, size, mime]
       properties:
-        question_id:
+        questionId:
           type: string
           format: uuid
         filename:
           type: string
-          maxLength: 255
         size:
           type: integer
-          minimum: 1
+          format: int64
         mime:
           type: string
-          maxLength: 100
-    UploadCreated:
+    Signed:
       type: object
       properties:
         uploadId:
@@ -1343,6 +4200,13 @@ components:
           type: object
           additionalProperties:
             type: string
+    Problem:
+      type: object
+      properties:
+        field:
+          type: string
+        code:
+          type: string
     SubmitResult:
       type: object
       properties:
@@ -1351,15 +4215,741 @@ components:
           format: uuid
         score:
           type: number
-          nullable: true
+        problems:
+          type: array
+          items:
+            $ref: "#/components/schemas/Problem"
+    FlowResult:
+      type: object
+      properties:
+        path:
+          type: array
+          items:
+            type: string
+        visible:
+          type: object
+          additionalProperties:
+            type: boolean
+        vars:
+          type: object
+          additionalProperties: {}
+        score:
+          type: number
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationError"
+    OpenedResponse:
+      type: object
+      properties:
+        visitToken:
+          type: string
+        surveyId:
+          type: string
+          format: uuid
+        versionNo:
+          type: integer
+          format: int32
+        honeypot:
+          type: string
+        flow:
+          $ref: "#/components/schemas/FlowResult"
+    ValidationError:
+      type: object
+      properties:
+        pointer:
+          type: string
+        code:
+          type: string
+          enum:
+          - REQUIRED
+          - UNKNOWN_TYPE
+          - DUPLICATE_ID
+          - DANGLING_REFERENCE
+          - TRANSLATION_MISSING
+          - LIMIT_EXCEEDED
+          - CYCLE
+          - EXPRESSION_INVALID
+        message:
+          type: string
+    CreateEndpointRequest:
+      type: object
+      properties:
+        url:
+          type: string
+        description:
+          type: string
+        eventTypes:
+          type: array
+          items:
+            type: string
+    EndpointResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        description:
+          type: string
+        eventTypes:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        keyId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        secretRotatedAt:
+          type: string
+          format: date-time
+    EndpointWithSecretResponse:
+      type: object
+      properties:
+        endpoint:
+          $ref: "#/components/schemas/EndpointResponse"
+        signingSecret:
+          type: string
+    DeliveryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        endpointId:
+          type: string
+        eventId:
+          type: string
+        eventType:
+          type: string
+        status:
+          type: string
+        attempts:
+          type: integer
+          format: int32
+        nextAttemptAt:
+          type: string
+          format: date-time
+        lastStatusCode:
+          type: integer
+          format: int32
+        lastError:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+    SurveyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+    SurveyResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - OPEN
+          - CLOSED
+        currentVersionId:
+          type: string
+          format: uuid
+        currentVersionNo:
+          type: integer
+          format: int32
+        version:
+          type: integer
+          format: int64
+    SimulateRequest:
+      type: object
+      properties:
+        answers:
+          type: object
+          additionalProperties: {}
+        locale:
+          type: string
+    VersionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        versionNo:
+          type: integer
+          format: int32
+        publishedAt:
+          type: string
+          format: date-time
+        document:
+          type: object
+          additionalProperties: {}
+    PublicLinkRequest:
+      type: object
+      properties:
+        source:
+          type: string
+    LinkResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        surveyId:
+          type: string
+          format: uuid
+        kind:
+          type: string
+        source:
+          type: string
+        externalRef:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        url:
+          type: string
+    PersonalLinksRequest:
+      type: object
+      properties:
+        source:
+          type: string
+        links:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecipientRequest"
+    RecipientRequest:
+      type: object
+      properties:
+        externalRef:
+          type: string
+        source:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+    ExportRequest:
+      type: object
+      properties:
+        filter:
+          type: object
+          additionalProperties: {}
+    ExportView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        surveyId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        rows:
+          type: integer
+          format: int64
+        requestedBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+        downloadUrl:
+          type: string
+    ValidationResult:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/Problem"
+    OptionView:
+      type: object
+      properties:
+        id:
+          type: string
+        value:
+          type: string
+        label:
+          type: string
+    PageView:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestionView"
+    PreviewView:
+      type: object
+      properties:
+        locale:
+          type: string
+        pages:
+          type: array
+          items:
+            $ref: "#/components/schemas/PageView"
+    QuestionView:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        required:
+          type: boolean
+        label:
+          type: string
+        help:
+          type: string
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/OptionView"
+    TrendRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          format: int32
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        source:
+          type: string
+        externalRef:
+          type: string
+        bucket:
+          type: string
+        timezone:
+          type: string
+    BucketCount:
+      type: object
+      properties:
+        bucket:
+          type: string
+        count:
+          type: integer
+          format: int64
+    TrendView:
+      type: object
+      properties:
+        bucket:
+          type: string
+        timezone:
+          type: string
+        points:
+          type: array
+          items:
+            $ref: "#/components/schemas/BucketCount"
+    CrossTabRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          format: int32
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        source:
+          type: string
+        externalRef:
+          type: string
+        rowQuestionId:
+          type: string
+          format: uuid
+        columnQuestionId:
+          type: string
+          format: uuid
+    CrossTabView:
+      type: object
+      properties:
+        rowDimension:
+          type: string
+        columnDimension:
+          type: string
+        total:
+          type: integer
+          format: int64
+        cells:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+    FilterRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          format: int32
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        source:
+          type: string
+        externalRef:
+          type: string
+    AggregateView:
+      type: object
+      properties:
+        surveyId:
+          type: string
+          format: uuid
+        responses:
+          type: integer
+          format: int64
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestionAggregate"
+        crossTabs:
+          type: array
+          items:
+            $ref: "#/components/schemas/CrossTabView"
+    QuestionAggregate:
+      type: object
+      properties:
+        questionId:
+          type: string
+          format: uuid
+        type:
+          type: string
+        answered:
+          type: integer
+          format: int64
+        counts:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        mean:
+          type: number
+        median:
+          type: number
+        distribution:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        matrixCells:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+    UpdateEndpointRequest:
+      type: object
+      properties:
+        url:
+          type: string
+        description:
+          type: string
+        eventTypes:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+    ChangeRequest:
+      type: object
+      properties:
+        defaultLocale:
+          type: string
+        abandonAfter:
+          type: string
+          format: duration
+        uploadMaxBytes:
+          type: integer
+          format: int64
+        publicRatePerMinute:
+          type: integer
+          format: int32
+        timezone:
+          type: string
+    SettingsResponse:
+      type: object
+      properties:
+        defaultLocale:
+          type: string
+        abandonAfter:
+          type: string
+          format: duration
+        uploadMaxBytes:
+          type: integer
+          format: int64
+        publicRatePerMinute:
+          type: integer
+          format: int32
+        timezone:
+          type: string
+        version:
+          type: integer
+          format: int64
+    SchemaResponse:
+      type: object
+      properties:
+        versionNo:
+          type: integer
+          format: int32
+        locale:
+          type: string
+        document:
+          type: object
+          additionalProperties: {}
+        honeypot:
+          type: string
+    PageEndpointResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/EndpointResponse"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    PageInfo:
+      type: object
+      properties:
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
+        next_cursor:
+          type: string
+    PageDeliveryResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeliveryResponse"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    AttemptResponse:
+      type: object
+      properties:
+        attemptNo:
+          type: integer
+          format: int32
+        statusCode:
+          type: integer
+          format: int32
+        error:
+          type: string
+        responseExcerpt:
+          type: string
+        latencyMs:
+          type: integer
+          format: int64
+        attemptedAt:
+          type: string
+          format: date-time
+    DeliveryDetailResponse:
+      type: object
+      properties:
+        delivery:
+          $ref: "#/components/schemas/DeliveryResponse"
+        body:
+          type: string
+        attempts:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttemptResponse"
+    PageSurveyResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/SurveyResponse"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    PageVersionSummary:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/VersionSummary"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    VersionSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        versionNo:
+          type: integer
+          format: int32
+        publishedAt:
+          type: string
+          format: date-time
+    PageResponseRow:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseRow"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    ResponseRow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        versionId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        locale:
+          type: string
+        answers:
+          type: object
+          additionalProperties: {}
+        vars:
+          type: object
+          additionalProperties: {}
+        score:
+          type: number
+        respondentIdentity:
+          type: string
+        externalRef:
+          type: string
+        source:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        submittedAt:
+          type: string
+          format: date-time
+    PageRespondentView:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RespondentView"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    RespondentView:
+      type: object
+      properties:
+        respondentIdentity:
+          type: string
+        externalRef:
+          type: string
+        source:
+          type: string
+        state:
+          type: string
+        lastActivityAt:
+          type: string
+          format: date-time
+        responseId:
+          type: string
+          format: uuid
+    PageLinkResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/LinkResponse"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    PageExportView:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExportView"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    FunnelView:
+      type: object
+      properties:
+        groupBy:
+          type: string
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/Row"
+        opened:
+          type: integer
+          format: int64
+        started:
+          type: integer
+          format: int64
+        completed:
+          type: integer
+          format: int64
+        abandoned:
+          type: integer
+          format: int64
+    Row:
+      type: object
+      properties:
+        key:
+          type: string
+        opened:
+          type: integer
+          format: int64
+        started:
+          type: integer
+          format: int64
+        completed:
+          type: integer
+          format: int64
+        abandoned:
+          type: integer
+          format: int64
+        lastPage:
+          type: string
   securitySchemes:
     oidc:
       type: http
-      description: A tenant user signed in through Keycloak
-      scheme: bearer
-      bearerFormat: JWT
-    suiteToken:
-      type: http
-      description: Platform suite token for a Tenant System; obtain it from POST /oauth/token on Platform
+      description: A suite token issued by Platform for this tenant
       scheme: bearer
       bearerFormat: JWT
