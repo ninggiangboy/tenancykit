@@ -1,6 +1,7 @@
 package dev.ngb.survey.authoring.application.version.command;
 
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.error.PreconditionFailedException;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -17,6 +18,7 @@ import dev.ngb.survey.authoring.domain.draft.SurveyDraft;
 import dev.ngb.survey.authoring.domain.survey.Survey;
 import dev.ngb.survey.authoring.domain.version.QuestionLineage;
 import dev.ngb.survey.authoring.domain.version.QuestionRetyping;
+import dev.ngb.survey.authoring.domain.version.SurveyLifecycleEvents;
 import dev.ngb.survey.authoring.domain.version.SurveyVersion;
 import java.time.Instant;
 import java.util.List;
@@ -38,6 +40,7 @@ public class PublishSurveyUseCase {
     private final DraftRepository drafts;
     private final VersionRepository versions;
     private final DraftValidationService validation;
+    private final EventPublisher events;
     private final IdGenerator ids;
     private final Clock clock;
 
@@ -47,6 +50,7 @@ public class PublishSurveyUseCase {
             DraftRepository drafts,
             VersionRepository versions,
             DraftValidationService validation,
+            EventPublisher events,
             IdGenerator ids,
             Clock clock) {
         this.unitOfWork = unitOfWork;
@@ -54,6 +58,7 @@ public class PublishSurveyUseCase {
         this.drafts = drafts;
         this.versions = versions;
         this.validation = validation;
+        this.events = events;
         this.ids = ids;
         this.clock = clock;
     }
@@ -94,6 +99,10 @@ public class PublishSurveyUseCase {
             if (!surveys.update(published, survey.version())) {
                 throw new PreconditionFailedException(null);
             }
+            // The event is appended in the same transaction as the version it reports, so a rolled-back publish announces
+            // nothing.
+            events.publish(new SurveyLifecycleEvents.VersionPublished(
+                    ids.newId(), version.tenantId(), surveyId, version.id(), version.versionNo(), now));
             return version;
         });
     }

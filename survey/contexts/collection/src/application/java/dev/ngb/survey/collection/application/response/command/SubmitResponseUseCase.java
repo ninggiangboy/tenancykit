@@ -1,5 +1,6 @@
 package dev.ngb.survey.collection.application.response.command;
 
+import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -19,6 +20,7 @@ import dev.ngb.survey.collection.application.upload.service.UploadVerifier;
 import dev.ngb.survey.collection.application.visit.port.VisitRepository;
 import dev.ngb.survey.collection.domain.link.SurveyLink;
 import dev.ngb.survey.collection.domain.response.Response;
+import dev.ngb.survey.collection.domain.response.ResponseEvents;
 import dev.ngb.survey.collection.domain.visit.Visit;
 import java.time.Instant;
 import java.util.List;
@@ -51,6 +53,7 @@ public class SubmitResponseUseCase {
     private final AnswerIndexer answers;
     private final UploadRepository uploads;
     private final UploadVerifier verifier;
+    private final EventPublisher events;
     private final IdGenerator ids;
     private final Clock clock;
 
@@ -63,6 +66,7 @@ public class SubmitResponseUseCase {
             AnswerIndexer answers,
             UploadRepository uploads,
             UploadVerifier verifier,
+            EventPublisher events,
             IdGenerator ids,
             Clock clock) {
         this.unitOfWork = unitOfWork;
@@ -73,6 +77,7 @@ public class SubmitResponseUseCase {
         this.answers = answers;
         this.uploads = uploads;
         this.verifier = verifier;
+        this.events = events;
         this.ids = ids;
         this.clock = clock;
     }
@@ -160,6 +165,8 @@ public class SubmitResponseUseCase {
             }
             verifier.attach(referenced);
             visits.save(visit.completed(completed.id(), now), visit.state().name());
+            // The event is appended in the same transaction as the response it reports, and carries no answers.
+            events.publish(ResponseEvents.submitted(ids.newId(), completed));
             return new Submitted(completed.id(), completed.score(), false);
         });
     }

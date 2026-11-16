@@ -117,8 +117,13 @@ class AuthoringConfiguration {
     }
 
     @Bean
-    CloseSurveyUseCase closeSurveyUseCase(UnitOfWork unitOfWork, SurveyRepository surveys, Clock clock) {
-        return new CloseSurveyUseCase(unitOfWork, surveys, clock);
+    CloseSurveyUseCase closeSurveyUseCase(
+            UnitOfWork unitOfWork,
+            SurveyRepository surveys,
+            dev.ngb.core.event.EventPublisher events,
+            IdGenerator ids,
+            Clock clock) {
+        return new CloseSurveyUseCase(unitOfWork, surveys, events, ids, clock);
     }
 
     @Bean
@@ -153,9 +158,10 @@ class AuthoringConfiguration {
             DraftRepository drafts,
             VersionRepository versions,
             DraftValidationService validation,
+            dev.ngb.core.event.EventPublisher events,
             IdGenerator ids,
             Clock clock) {
-        return new PublishSurveyUseCase(unitOfWork, surveys, drafts, versions, validation, ids, clock);
+        return new PublishSurveyUseCase(unitOfWork, surveys, drafts, versions, validation, events, ids, clock);
     }
 
     @Bean

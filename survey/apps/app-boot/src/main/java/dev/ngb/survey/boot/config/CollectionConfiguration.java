@@ -254,10 +254,11 @@ class CollectionConfiguration {
             AnswerIndexer answers,
             UploadRepository uploads,
             UploadVerifier verifier,
+            dev.ngb.core.event.EventPublisher events,
             IdGenerator ids,
             Clock clock) {
         return new SubmitResponseUseCase(
-                unitOfWork, visits, responses, versions, flow, answers, uploads, verifier, ids, clock);
+                unitOfWork, visits, responses, versions, flow, answers, uploads, verifier, events, ids, clock);
     }
 
     @Bean
