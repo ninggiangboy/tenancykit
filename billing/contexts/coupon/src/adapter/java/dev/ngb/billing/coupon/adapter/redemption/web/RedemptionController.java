@@ -119,13 +119,13 @@ public class RedemptionController {
     @RequiresPermission(BillingPermissions.COUPON_READ)
     public List<RedemptionResponse> redemptionsOfWallet(
             @PathVariable String walletId, @RequestParam(defaultValue = "50") int limit, @RequestParam(defaultValue = "0") int offset) {
-        return queries.redemptionsOfWallet(UUID.fromString(walletId), limit, offset).stream().map(RedemptionResponse::of).toList();
+        return queries.redemptionsOfWallet(UUID.fromString(walletId), currentActor.caller(), limit, offset).stream().map(RedemptionResponse::of).toList();
     }
 
     @GetMapping("/coupon-redemptions/{id}")
     @RequiresPermission(BillingPermissions.COUPON_READ)
     public RedemptionResponse redemption(@PathVariable String id) {
-        return RedemptionResponse.of(queries.redemption(UUID.fromString(id)));
+        return RedemptionResponse.of(queries.redemption(UUID.fromString(id), currentActor.caller()));
     }
 
     /** Ends the redemption early; nothing already discounted is released. Idempotent. */
@@ -135,11 +135,11 @@ public class RedemptionController {
             @PathVariable String id, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         Redemption redemption = revokeRedemption.execute(new RevokeRedemptionUseCase.Command(RedemptionId.of(id),
                 Audit.of(currentActor.get().auditName(), requestId), currentActor.caller()));
-        return RedemptionResponse.of(queries.redemption(redemption.id().value()));
+        return RedemptionResponse.of(queries.redemption(redemption.id().value(), currentActor.caller()));
     }
 
     private ResponseEntity<RedemptionResponse> redemptionResponse(RedeemCouponUseCase.Result result) {
-        RedemptionResponse body = RedemptionResponse.of(queries.redemption(result.redemption().id().value()));
+        RedemptionResponse body = RedemptionResponse.of(queries.redemption(result.redemption().id().value(), currentActor.caller()));
         return ResponseEntity.status(result.replayed() ? HttpStatus.OK : HttpStatus.CREATED).body(body);
     }
 }

@@ -69,8 +69,9 @@ class CouponConfiguration {
 
     @Bean
     CouponQueries couponQueries(
-            UnitOfWork unitOfWork, CouponReadRepository coupons, PromotionCodeReadRepository codes, RedemptionReadRepository redemptions) {
-        return new CouponQueries(unitOfWork, coupons, codes, redemptions);
+            UnitOfWork unitOfWork, CouponReadRepository coupons, PromotionCodeReadRepository codes, RedemptionReadRepository redemptions,
+            CustomerLookup customers) {
+        return new CouponQueries(unitOfWork, coupons, codes, redemptions, customers);
     }
 
     @Bean

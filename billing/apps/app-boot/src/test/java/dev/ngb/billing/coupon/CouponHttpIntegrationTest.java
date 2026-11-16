@@ -302,6 +302,23 @@ class CouponHttpIntegrationTest {
     }
 
     @Test
+    void aTenantSystemCannotReadTheRedemptionsOfAnUnmappedCustomer() {
+        System narrow = world.newSystem(acme, "billing:coupon:read");
+        createPercentCoupon(couponSystem.token(), 2_000, 100, "SEEN");
+        String ownWallet = openWallet(acme, couponSystem.token(), newCustomer(acme, couponSystem.token()), "USD");
+        String redemptionId = world.body(redeemByCode(couponSystem.token(), ownWallet, "SEEN", "seen-key")).get("id").asString();
+
+        assertThat(world.status(HttpMethod.GET, acme.host(), couponSystem.token(), "/api/v1/wallets/" + ownWallet + "/coupon-redemptions", null))
+                .isEqualTo(200);
+        assertThat(world.status(HttpMethod.GET, acme.host(), narrow.token(), "/api/v1/wallets/" + ownWallet + "/coupon-redemptions", null))
+                .as("the customer is not mapped to this system").isEqualTo(404);
+        assertThat(world.status(HttpMethod.GET, acme.host(), narrow.token(), "/api/v1/coupon-redemptions/" + redemptionId, null))
+                .isEqualTo(404);
+        assertThat(world.status(HttpMethod.GET, acme.host(), couponSystem.token(), "/api/v1/coupon-redemptions/" + redemptionId, null))
+                .isEqualTo(200);
+    }
+
+    @Test
     void anotherTenantSeesNoCouponOrRedemption() {
         JsonNode created = createPercentCoupon(couponSystem.token(), 2_000, 100, "HIDDEN");
         String couponId = created.get("coupon").get("id").asString();
