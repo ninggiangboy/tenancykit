@@ -25,6 +25,9 @@ import dev.ngb.survey_jooq.tables.Uploads;
 import dev.ngb.survey_jooq.tables.UserGrants;
 import dev.ngb.survey_jooq.tables.VisitPageEvents;
 import dev.ngb.survey_jooq.tables.Visits;
+import dev.ngb.survey_jooq.tables.WebhookDeliveries;
+import dev.ngb.survey_jooq.tables.WebhookDeliveryAttempts;
+import dev.ngb.survey_jooq.tables.WebhookEndpoints;
 
 
 /**
@@ -137,4 +140,19 @@ public class Tables {
      * The table <code>public.visits</code>.
      */
     public static final Visits VISITS = Visits.VISITS;
+
+    /**
+     * The table <code>public.webhook_deliveries</code>.
+     */
+    public static final WebhookDeliveries WEBHOOK_DELIVERIES = WebhookDeliveries.WEBHOOK_DELIVERIES;
+
+    /**
+     * The table <code>public.webhook_delivery_attempts</code>.
+     */
+    public static final WebhookDeliveryAttempts WEBHOOK_DELIVERY_ATTEMPTS = WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS;
+
+    /**
+     * The table <code>public.webhook_endpoints</code>.
+     */
+    public static final WebhookEndpoints WEBHOOK_ENDPOINTS = WebhookEndpoints.WEBHOOK_ENDPOINTS;
 }

@@ -21,7 +21,8 @@ public record SurveySettings(
         Links links,
         Geoip geoip,
         Uploads uploads,
-        PublicApi publicApi) {
+        PublicApi publicApi,
+        Webhooks webhooks) {
 
     /** The Platform state-transfer events this service consumes on its own queue. */
     public record Messaging(String exchange, String queue) {}
@@ -88,4 +89,26 @@ public record SurveySettings(
      * @param maxBodyBytes the largest request body any public endpoint accepts
      */
     public record PublicApi(int ratePerMinute, int maxBodyBytes) {}
+
+    /**
+     * The outbound webhook sender: what it may target, how it retries and how its HTTP pool is sized.
+     *
+     * @param masterKey the AES key the endpoint secrets are encrypted with; a deployment must supply one
+     * @param allowInsecureTargets whether http and loopback/private destinations are accepted (development only)
+     */
+    public record Webhooks(
+            String masterKey,
+            String masterKeyId,
+            boolean allowInsecureTargets,
+            int batchSize,
+            int maxAttempts,
+            Duration backoffBase,
+            Duration backoffCap,
+            Duration lease,
+            int maxConnections,
+            int maxConnectionsPerRoute,
+            Duration connectionRequestTimeout,
+            Duration connectTimeout,
+            Duration readTimeout,
+            Duration deadline) {}
 }

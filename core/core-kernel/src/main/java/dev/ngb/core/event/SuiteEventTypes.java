@@ -51,6 +51,11 @@ public final class SuiteEventTypes {
     public static final String USER_ACCESS_CHANGED = "user-access.changed";
     public static final String ENTITLEMENT_CHANGED = "entitlement.changed";
 
+    // Survey: the three facts a Tenant reacts to.
+    public static final String SURVEY_VERSION_PUBLISHED = "survey-version.published";
+    public static final String SURVEY_CLOSED = "survey.closed";
+    public static final String SURVEY_RESPONSE_SUBMITTED = "survey-response.submitted";
+
     /** The five {@code *.changed} types of the replica, in the order a rebuild pages them. */
     public static final Set<String> PLATFORM_REPLICA_TYPES = Set.of(
             TENANT_CHANGED, TENANT_DOMAIN_CHANGED, TENANT_SYSTEM_CHANGED, USER_ACCESS_CHANGED, ENTITLEMENT_CHANGED);
@@ -71,10 +76,16 @@ public final class SuiteEventTypes {
         return PLATFORM_REPLICA_TYPES;
     }
 
+    /** Every type Survey produces, matching the schemas under {@code contracts/events/survey}. */
+    public static Set<String> survey() {
+        return Set.of(SURVEY_VERSION_PUBLISHED, SURVEY_CLOSED, SURVEY_RESPONSE_SUBMITTED);
+    }
+
     /** Every type of the suite, producers together. */
     public static Set<String> all() {
         Set<String> types = new TreeSet<>(billing());
         types.addAll(platform());
+        types.addAll(survey());
         return Set.copyOf(types);
     }
 }

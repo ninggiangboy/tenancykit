@@ -25,6 +25,9 @@ import dev.ngb.survey_jooq.tables.Uploads;
 import dev.ngb.survey_jooq.tables.UserGrants;
 import dev.ngb.survey_jooq.tables.VisitPageEvents;
 import dev.ngb.survey_jooq.tables.Visits;
+import dev.ngb.survey_jooq.tables.WebhookDeliveries;
+import dev.ngb.survey_jooq.tables.WebhookDeliveryAttempts;
+import dev.ngb.survey_jooq.tables.WebhookEndpoints;
 import dev.ngb.survey_jooq.tables.records.AnswersRecord;
 import dev.ngb.survey_jooq.tables.records.AppEntitlementsRecord;
 import dev.ngb.survey_jooq.tables.records.EventInboxRecord;
@@ -46,6 +49,9 @@ import dev.ngb.survey_jooq.tables.records.UploadsRecord;
 import dev.ngb.survey_jooq.tables.records.UserGrantsRecord;
 import dev.ngb.survey_jooq.tables.records.VisitPageEventsRecord;
 import dev.ngb.survey_jooq.tables.records.VisitsRecord;
+import dev.ngb.survey_jooq.tables.records.WebhookDeliveriesRecord;
+import dev.ngb.survey_jooq.tables.records.WebhookDeliveryAttemptsRecord;
+import dev.ngb.survey_jooq.tables.records.WebhookEndpointsRecord;
 
 import org.jooq.ForeignKey;
 import org.jooq.TableField;
@@ -92,6 +98,10 @@ public class Keys {
     public static final UniqueKey<UserGrantsRecord> USER_GRANTS_PKEY = Internal.createUniqueKey(UserGrants.USER_GRANTS, DSL.name("user_grants_pkey"), new TableField[] { UserGrants.USER_GRANTS.USER_ID }, true);
     public static final UniqueKey<VisitPageEventsRecord> VISIT_PAGE_EVENTS_PKEY = Internal.createUniqueKey(VisitPageEvents.VISIT_PAGE_EVENTS, DSL.name("visit_page_events_pkey"), new TableField[] { VisitPageEvents.VISIT_PAGE_EVENTS.ID }, true);
     public static final UniqueKey<VisitsRecord> VISITS_PKEY = Internal.createUniqueKey(Visits.VISITS, DSL.name("visits_pkey"), new TableField[] { Visits.VISITS.ID }, true);
+    public static final UniqueKey<WebhookDeliveriesRecord> WEBHOOK_DELIVERIES_PKEY = Internal.createUniqueKey(WebhookDeliveries.WEBHOOK_DELIVERIES, DSL.name("webhook_deliveries_pkey"), new TableField[] { WebhookDeliveries.WEBHOOK_DELIVERIES.ID }, true);
+    public static final UniqueKey<WebhookDeliveryAttemptsRecord> WEBHOOK_DELIVERY_ATTEMPTS_DELIVERY_ID_ATTEMPT_NO_KEY = Internal.createUniqueKey(WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS, DSL.name("webhook_delivery_attempts_delivery_id_attempt_no_key"), new TableField[] { WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS.DELIVERY_ID, WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS.ATTEMPT_NO }, true);
+    public static final UniqueKey<WebhookDeliveryAttemptsRecord> WEBHOOK_DELIVERY_ATTEMPTS_PKEY = Internal.createUniqueKey(WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS, DSL.name("webhook_delivery_attempts_pkey"), new TableField[] { WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS.ID }, true);
+    public static final UniqueKey<WebhookEndpointsRecord> WEBHOOK_ENDPOINTS_PKEY = Internal.createUniqueKey(WebhookEndpoints.WEBHOOK_ENDPOINTS, DSL.name("webhook_endpoints_pkey"), new TableField[] { WebhookEndpoints.WEBHOOK_ENDPOINTS.ID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
@@ -118,4 +128,6 @@ public class Keys {
     public static final ForeignKey<VisitPageEventsRecord, VisitsRecord> VISIT_PAGE_EVENTS__VISIT_PAGE_EVENTS_VISIT_ID_FKEY = Internal.createForeignKey(VisitPageEvents.VISIT_PAGE_EVENTS, DSL.name("visit_page_events_visit_id_fkey"), new TableField[] { VisitPageEvents.VISIT_PAGE_EVENTS.VISIT_ID }, Keys.VISITS_PKEY, new TableField[] { Visits.VISITS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<VisitsRecord, SurveyLinksRecord> VISITS__VISITS_LINK_ID_FKEY = Internal.createForeignKey(Visits.VISITS, DSL.name("visits_link_id_fkey"), new TableField[] { Visits.VISITS.LINK_ID }, Keys.SURVEY_LINKS_PKEY, new TableField[] { SurveyLinks.SURVEY_LINKS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<VisitsRecord, SurveysRecord> VISITS__VISITS_SURVEY_ID_FKEY = Internal.createForeignKey(Visits.VISITS, DSL.name("visits_survey_id_fkey"), new TableField[] { Visits.VISITS.SURVEY_ID }, Keys.SURVEYS_PKEY, new TableField[] { Surveys.SURVEYS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<WebhookDeliveriesRecord, WebhookEndpointsRecord> WEBHOOK_DELIVERIES__WEBHOOK_DELIVERIES_ENDPOINT_ID_FKEY = Internal.createForeignKey(WebhookDeliveries.WEBHOOK_DELIVERIES, DSL.name("webhook_deliveries_endpoint_id_fkey"), new TableField[] { WebhookDeliveries.WEBHOOK_DELIVERIES.ENDPOINT_ID }, Keys.WEBHOOK_ENDPOINTS_PKEY, new TableField[] { WebhookEndpoints.WEBHOOK_ENDPOINTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<WebhookDeliveryAttemptsRecord, WebhookDeliveriesRecord> WEBHOOK_DELIVERY_ATTEMPTS__WEBHOOK_DELIVERY_ATTEMPTS_DELIVERY_ID_FKEY = Internal.createForeignKey(WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS, DSL.name("webhook_delivery_attempts_delivery_id_fkey"), new TableField[] { WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS.DELIVERY_ID }, Keys.WEBHOOK_DELIVERIES_PKEY, new TableField[] { WebhookDeliveries.WEBHOOK_DELIVERIES.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }
