@@ -1,0 +1,193 @@
+package dev.ngb.workflow.boot.persistence;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import dev.ngb.workflow.support.PostgresContainerConfig;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Map;
+import java.util.UUID;
+import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+
+/**
+ * The isolation guarantee, proved rather than asserted: the migrations run as the owner and every assertion connects as
+ * {@code workflow_app}, the unprivileged role a deployment uses. A superuser would bypass every policy and leave the
+ * promise unverified.
+ *
+ * <p>The skeleton's tenant tables are the inbox, the outbox and the three webhook tables; later phases add one case per
+ * table they create.
+ */
+class RowLevelSecurityTest {
+
+    private static final PostgreSQLContainer POSTGRES = PostgresContainerConfig.postgres();
+
+    @BeforeAll
+    static void migrate() {
+        Flyway.configure()
+                .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
+                .locations("classpath:db/migration")
+                .placeholders(Map.of("appDbPassword", PostgresContainerConfig.APP_PASSWORD))
+                .load()
+                .migrate();
+    }
+
+    @Test
+    void theAppRoleCannotSeeAnythingBeforeATenantIsBound() throws SQLException {
+        UUID tenant = UUID.randomUUID();
+        insertEndpointAsOwner(tenant);
+
+        try (Connection app = appRole()) {
+            assertThat(count(app, "webhook_endpoints", null)).isZero();
+            assertThat(count(app, "outbox", null)).isZero();
+            assertThat(count(app, "event_inbox", null)).isZero();
+        }
+    }
+
+    @Test
+    void oneTenantSeesOnlyItsOwnRowsAndCannotWriteAnothers() throws SQLException {
+        UUID tenantA = UUID.randomUUID();
+        UUID tenantB = UUID.randomUUID();
+        insertEndpointAsOwner(tenantA);
+        insertEndpointAsOwner(tenantB);
+
+        try (Connection app = appRole()) {
+            assertThat(count(app, "webhook_endpoints", tenantA)).isEqualTo(1);
+            assertThat(count(app, "webhook_endpoints", tenantB)).isEqualTo(1);
+
+            assertThatThrownBy(() -> insertEndpointAs(app, tenantA, tenantB))
+                    .isInstanceOf(SQLException.class)
+                    .hasMessageContaining("row-level security");
+        }
+    }
+
+    // ------------------------------------------------------------------ every tenant table
+
+    /**
+     * One row per tenant table, inserted as the owner. The case is the same for every table: the app role sees nothing
+     * until a tenant is bound, and exactly one row once it is. The pattern is the migration's {@code enable_tenant_rls}
+     * call, so a table that forgot it fails here.
+     */
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.MethodSource("tenantTableRows")
+    void everyTenantTableIsIsolated(String table, String insert) throws SQLException {
+        UUID tenantA = UUID.randomUUID();
+        UUID tenantB = UUID.randomUUID();
+        executeAsOwner(insert.formatted(tenantA));
+        executeAsOwner(insert.formatted(tenantB));
+
+        try (Connection app = appRole()) {
+            assertThat(count(app, table, null)).as(table + " is visible before a tenant is bound").isZero();
+            assertThat(count(app, table, tenantA)).as(table + " hides tenant A from its owner").isEqualTo(1);
+            assertThat(count(app, table, tenantB)).as(table + " hides tenant B from its owner").isEqualTo(1);
+        }
+    }
+
+    static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> tenantTableRows() {
+        return java.util.stream.Stream.of(
+                row("event_inbox", """
+                        insert into event_inbox (tenant_id, consumer, event_id)
+                        values ('%1$s', 'workflow', gen_random_uuid())
+                        """),
+                row("outbox", """
+                        insert into outbox (id, tenant_id, aggregate, type, payload, created_at, next_attempt_at)
+                        values (gen_random_uuid(), '%1$s', 'instance/1', 'instance.completed', '{}', now(), now())
+                        """),
+                row("webhook_endpoints", """
+                        insert into webhook_endpoints (id, tenant_id, url, event_types, status, key_id, secret_ciphertext,
+                                                       created_at, updated_at)
+                        values (gen_random_uuid(), '%1$s', 'https://example.com/hook', array['instance.completed'],
+                                'ACTIVE', 'k1', 'v1.ciphertext', now(), now())
+                        """),
+                row("webhook_deliveries", """
+                        with e as (
+                            insert into webhook_endpoints (id, tenant_id, url, event_types, status, key_id, secret_ciphertext,
+                                                           created_at, updated_at)
+                            values (gen_random_uuid(), '%1$s', 'https://example.com/hook', array['instance.completed'],
+                                    'ACTIVE', 'k1', 'v1.ciphertext', now(), now()) returning id
+                        )
+                        insert into webhook_deliveries (id, tenant_id, endpoint_id, event_id, event_type, body, status,
+                                                        next_attempt_at, created_at)
+                        select gen_random_uuid(), '%1$s', e.id, gen_random_uuid(), 'instance.completed', '{}', 'PENDING',
+                               now(), now() from e
+                        """),
+                row("webhook_delivery_attempts", """
+                        with e as (
+                            insert into webhook_endpoints (id, tenant_id, url, event_types, status, key_id, secret_ciphertext,
+                                                           created_at, updated_at)
+                            values (gen_random_uuid(), '%1$s', 'https://example.com/hook', array['instance.completed'],
+                                    'ACTIVE', 'k1', 'v1.ciphertext', now(), now()) returning id
+                        ), d as (
+                            insert into webhook_deliveries (id, tenant_id, endpoint_id, event_id, event_type, body, status,
+                                                            next_attempt_at, created_at)
+                            select gen_random_uuid(), '%1$s', e.id, gen_random_uuid(), 'instance.completed', '{}', 'PENDING',
+                                   now(), now() from e returning id
+                        )
+                        insert into webhook_delivery_attempts (id, tenant_id, delivery_id, attempt_no, latency_ms, attempted_at)
+                        select gen_random_uuid(), '%1$s', d.id, 1, 12, now() from d
+                        """));
+    }
+
+    private static org.junit.jupiter.params.provider.Arguments row(String table, String insert) {
+        return org.junit.jupiter.params.provider.Arguments.of(table, insert);
+    }
+
+    private static void executeAsOwner(String sql) {
+        try (Connection owner = DriverManager.getConnection(
+                        POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+                Statement statement = owner.createStatement()) {
+            statement.execute(sql);
+        } catch (SQLException e) {
+            throw new IllegalStateException("could not seed a row", e);
+        }
+    }
+
+    // ------------------------------------------------------------------ helpers
+
+    private static Connection appRole() throws SQLException {
+        return DriverManager.getConnection(
+                POSTGRES.getJdbcUrl(), PostgresContainerConfig.APP_ROLE, PostgresContainerConfig.APP_PASSWORD);
+    }
+
+    private static void bind(Connection connection, UUID tenant) throws SQLException {
+        try (Statement statement = connection.createStatement()) {
+            // Session-local, not transaction-local: this connection runs each statement in its own transaction, so a
+            // transaction-local setting would be gone before the statement that needs it.
+            statement.execute("select set_config('app.tenant_id', '" + tenant + "', false)");
+        }
+    }
+
+    private static int count(Connection connection, String table, UUID tenant) throws SQLException {
+        try (Statement statement = connection.createStatement()) {
+            if (tenant != null) {
+                bind(connection, tenant);
+            }
+            try (ResultSet rows = statement.executeQuery("select count(*) from " + table)) {
+                rows.next();
+                return rows.getInt(1);
+            }
+        }
+    }
+
+    private static void insertEndpointAsOwner(UUID tenant) {
+        executeAsOwner("insert into webhook_endpoints (id, tenant_id, url, event_types, status, key_id, secret_ciphertext, "
+                + "created_at, updated_at) values ('" + UUID.randomUUID() + "', '" + tenant
+                + "', 'https://example.com/hook', array['instance.completed'], 'ACTIVE', 'k1', 'v1.ciphertext', now(), now())");
+    }
+
+    private static void insertEndpointAs(Connection app, UUID bound, UUID target) throws SQLException {
+        bind(app, bound);
+        try (Statement statement = app.createStatement()) {
+            statement.execute("insert into webhook_endpoints (id, tenant_id, url, event_types, status, key_id, "
+                    + "secret_ciphertext, created_at, updated_at) values (gen_random_uuid(), '" + target
+                    + "', 'https://example.com/hook', array['instance.completed'], 'ACTIVE', 'k1', 'v1.ciphertext', "
+                    + "now(), now())");
+        }
+    }
+}

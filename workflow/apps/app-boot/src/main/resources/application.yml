@@ -1,0 +1,88 @@
+spring:
+  application:
+    name: workflow
+  profiles:
+    # With no active profile (dev, bootRun and every default-mode test) both runtime profiles are active, which
+    # keeps the all-in-one behaviour. The two profile files stay out of that run: each guards itself with an
+    # on-profile expression so only a runtime that runs alone applies its settings.
+    default: api,worker
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${WORKFLOW_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}
+          jwk-set-uri: ${WORKFLOW_OIDC_JWK_SET_URI:${WORKFLOW_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}/protocol/openid-connect/certs}
+          audiences: workflow
+  datasource:
+    url: ${WORKFLOW_DB_URL:jdbc:postgresql://localhost:5432/workflow}
+    username: ${WORKFLOW_DB_USER:workflow_app}
+    password: ${WORKFLOW_DB_PASSWORD:workflow_app}
+  rabbitmq:
+    host: ${WORKFLOW_RABBITMQ_HOST:localhost}
+    port: ${WORKFLOW_RABBITMQ_PORT:5672}
+    username: ${WORKFLOW_RABBITMQ_USER:workflow}
+    password: ${WORKFLOW_RABBITMQ_PASSWORD:workflow}
+  flyway:
+    locations: classpath:db/migration
+    # Migrations run as the table owner; the application connects as workflow_app, which owns nothing.
+    url: ${WORKFLOW_MIGRATION_DB_URL:${WORKFLOW_DB_URL:jdbc:postgresql://localhost:5432/workflow}}
+    user: ${WORKFLOW_MIGRATION_DB_USER:workflow_owner}
+    password: ${WORKFLOW_MIGRATION_DB_PASSWORD:workflow_owner}
+    placeholders:
+      # The baseline creates workflow_app with this password. Without the placeholder Flyway aborts the whole set.
+      appDbPassword: ${WORKFLOW_DB_PASSWORD:workflow_app}
+  task:
+    scheduling:
+      pool:
+        size: ${WORKFLOW_SCHEDULER_POOL_SIZE:4}
+      shutdown:
+        await-termination: true
+        await-termination-period: 30s
+
+server:
+  port: ${WORKFLOW_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db,replicaState
+
+suite:
+  app-code: workflow
+  replica:
+    platform-base-url: ${WORKFLOW_PLATFORM_BASE_URL:http://localhost:8082}
+    client-id: ${PLATFORM_WORKFLOW_SERVICE_CLIENT_ID:workflow}
+    client-secret: ${PLATFORM_WORKFLOW_SERVICE_CLIENT_SECRET:workflow}
+    rebuild-on-start: ${WORKFLOW_REPLICA_REBUILD_ON_START:true}
+    page-limit: 200
+    request-timeout: PT10S
+    platform-issuer: ${WORKFLOW_PLATFORM_ISSUER:http://localhost:8082}
+    platform-jwk-set-uri: ${WORKFLOW_PLATFORM_JWK_SET_URI:http://localhost:8082/.well-known/jwks.json}
+    # The worker's queue; the api runtime serves HTTP and consumes nothing.
+    queue: workflow.platform-events
+    exchange: platform.events
+    max-attempts: 3
+    retry-backoff: PT0.5S
+    refresh-skew: PT30S
+
+workflow:
+  jobs:
+    enabled: ${WORKFLOW_JOBS_ENABLED:true}
+    # At most this many tenants run at once across all jobs; keep it below the connection pool.
+    tenant-parallelism: ${WORKFLOW_WORKER_TENANT_PARALLELISM:4}
+  housekeeping:
+    enabled: ${WORKFLOW_HOUSEKEEPING_ENABLED:true}
+    inbox-retention: P30D
+    dead-outbox-retention: P7D
+    batch-size: 500
+    interval: PT1H

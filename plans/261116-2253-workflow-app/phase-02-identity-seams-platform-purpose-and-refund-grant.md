@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Identity seams, Platform purpose and refund grant"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [1]

@@ -1,0 +1,18 @@
+---
+openapi: "3.1.0"
+info:
+  title: "Workflow API"
+  description: "The API a Tenant System uses to publish and run workflows, take part\
+    \ in human tasks and manage the connections and triggers that drive them."
+  version: "v1"
+servers:
+- url: "/workflow"
+  description: "Any tenant hostname: <tenant-code>.<base-domain>/workflow"
+paths: {}
+components:
+  securitySchemes:
+    oidc:
+      type: "http"
+      description: "A suite token issued by Platform for this tenant"
+      scheme: "bearer"
+      bearerFormat: "JWT"
