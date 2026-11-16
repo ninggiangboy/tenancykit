@@ -10,18 +10,21 @@ import dev.ngb.attribution.links.adapter.link.persistence.JooqLinkReadRepository
 import dev.ngb.attribution.links.adapter.link.persistence.JooqLinkRepository;
 import dev.ngb.attribution.links.application.campaign.command.CreateCampaignUseCase;
 import dev.ngb.attribution.links.application.campaign.command.UpdateCampaignUseCase;
+import dev.ngb.attribution.links.application.campaign.query.CampaignListing;
 import dev.ngb.attribution.links.application.campaign.query.CampaignQueries;
 import dev.ngb.attribution.links.application.link.command.CreateBulkLinksUseCase;
 import dev.ngb.attribution.links.application.link.command.CreateLinkUseCase;
 import dev.ngb.attribution.links.application.link.command.UpdateLinkUseCase;
 import dev.ngb.attribution.links.application.link.port.BulkRequestStore;
 import dev.ngb.attribution.links.application.link.port.ClickParamProvider;
+import dev.ngb.attribution.links.application.link.query.LinkListing;
 import dev.ngb.attribution.links.application.link.query.LinkQueries;
 import dev.ngb.attribution.links.application.link.service.SuiteHosts;
 import dev.ngb.attribution.links.domain.campaign.AttributionModel;
 import dev.ngb.attribution.links.domain.campaign.Campaign;
 import dev.ngb.attribution.links.domain.link.Link;
 import dev.ngb.attribution.links.domain.link.LinkKind;
+import dev.ngb.attribution.support.ListQueries;
 import dev.ngb.attribution.support.PostgresContainerConfig;
 import dev.ngb.core.error.IdempotencyConflictException;
 import dev.ngb.core.error.PreconditionFailedException;
@@ -189,8 +192,8 @@ class LinksIntegrationTest {
         Campaign campaign = asTenant(tenantA, () -> createCampaign.execute(command("Spring", "spring-sale")));
         Link link = asTenant(tenantA, () -> createLink.execute(linkCommand(campaign.id())));
 
-        assertThat(asTenant(tenantB, () -> campaignQueries.list(null, null, null))).isEmpty();
-        assertThat(asTenant(tenantB, () -> linkQueries.list(null, null, null, null, null))).isEmpty();
+        assertThat(asTenant(tenantB, () -> campaignQueries.list(ListQueries.of(CampaignListing.SCHEMA)).data())).isEmpty();
+        assertThat(asTenant(tenantB, () -> linkQueries.list(ListQueries.of(LinkListing.SCHEMA)).data())).isEmpty();
         assertThatThrownBy(() -> asTenant(tenantB, () -> campaignQueries.get(campaign.id())))
                 .isInstanceOf(dev.ngb.core.error.NotFoundException.class);
         assertThatThrownBy(() -> asTenant(tenantB, () -> linkQueries.get(link.id())))

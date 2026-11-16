@@ -3,18 +3,21 @@ package dev.ngb.attribution.links.adapter.campaign.web;
 import dev.ngb.attribution.links.application.campaign.command.ArchiveCampaignUseCase;
 import dev.ngb.attribution.links.application.campaign.command.CreateCampaignUseCase;
 import dev.ngb.attribution.links.application.campaign.command.UpdateCampaignUseCase;
+import dev.ngb.attribution.links.application.campaign.query.CampaignListing;
 import dev.ngb.attribution.links.application.campaign.query.CampaignQueries;
 import dev.ngb.attribution.links.application.campaign.query.CampaignView;
 import dev.ngb.attribution.links.domain.campaign.AttributionModel;
 import dev.ngb.attribution.links.domain.campaign.Campaign;
 import dev.ngb.attribution.shared.AttributionPermissions;
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +28,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -53,13 +55,12 @@ class CampaignController {
         this.queries = queries;
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link CampaignListing}. */
     @GetMapping
+    @Listing(CampaignListing.class)
     @RequiresPermission(AttributionPermissions.CAMPAIGN_READ)
-    List<CampaignResponse> list(
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) UUID after,
-            @RequestParam(required = false) Integer limit) {
-        return queries.list(status, after, limit).stream().map(CampaignResponse::of).toList();
+    Page<CampaignResponse> list(ListQuery query) {
+        return queries.list(query).map(CampaignResponse::of);
     }
 
     @PostMapping

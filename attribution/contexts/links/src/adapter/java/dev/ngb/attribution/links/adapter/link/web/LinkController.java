@@ -6,6 +6,7 @@ import dev.ngb.attribution.links.application.link.command.CreateBulkLinksUseCase
 import dev.ngb.attribution.links.application.link.command.CreateLinkUseCase;
 import dev.ngb.attribution.links.application.link.command.UpdateLinkUseCase;
 import dev.ngb.attribution.links.application.link.port.BulkRequestStore;
+import dev.ngb.attribution.links.application.link.query.LinkListing;
 import dev.ngb.attribution.links.application.link.query.LinkQueries;
 import dev.ngb.attribution.links.application.link.query.LinkStatsQueries;
 import dev.ngb.attribution.links.application.link.query.LinkStatsView;
@@ -14,7 +15,10 @@ import dev.ngb.attribution.links.domain.link.Link;
 import dev.ngb.attribution.links.application.link.service.SuiteHosts;
 import dev.ngb.attribution.shared.AttributionPermissions;
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
 import java.time.Instant;
@@ -77,17 +81,12 @@ class LinkController {
         this.hosts = hosts;
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link LinkListing}. */
     @GetMapping
+    @Listing(LinkListing.class)
     @RequiresPermission(AttributionPermissions.LINK_READ)
-    List<LinkResponse> list(
-            @RequestParam(required = false) UUID campaignId,
-            @RequestParam(name = "external_ref", required = false) String externalRef,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) UUID after,
-            @RequestParam(required = false) Integer limit) {
-        return queries.list(campaignId, externalRef, status, after, limit).stream()
-                .map(view -> LinkResponse.of(view, publicUrl(view.slug())))
-                .toList();
+    Page<LinkResponse> list(ListQuery query) {
+        return queries.list(query).map(view -> LinkResponse.of(view, publicUrl(view.slug())));
     }
 
     @PostMapping

@@ -1,9 +1,9 @@
 package dev.ngb.attribution.attribution.application.goal.query;
 
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
-import java.util.Comparator;
-import java.util.List;
 import java.util.UUID;
 
 /** The goal read side, opened in a unit of work so row-level security scopes the query to the caller's tenant. */
@@ -17,10 +17,9 @@ public class GoalQueries {
         this.goals = goals;
     }
 
-    public List<GoalView> list() {
-        return unitOfWork.transactional(() -> goals.list().stream()
-                .sorted(Comparator.comparing(GoalView::key))
-                .toList());
+    /** @param query the caller's filter, order and page position, already validated against the listing's schema */
+    public Page<GoalView> list(ListQuery query) {
+        return unitOfWork.transactional(() -> goals.list(query));
     }
 
     public GoalView get(UUID goalId) {

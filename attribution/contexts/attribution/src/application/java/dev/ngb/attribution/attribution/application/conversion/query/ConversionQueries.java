@@ -1,8 +1,8 @@
 package dev.ngb.attribution.attribution.application.conversion.query;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
-import java.time.Instant;
-import java.util.List;
 
 /** The conversion read side, opened in a unit of work so row-level security scopes it to the caller's tenant. */
 public class ConversionQueries {
@@ -15,7 +15,8 @@ public class ConversionQueries {
         this.conversions = conversions;
     }
 
-    public List<ConversionView> list(Instant from, Instant to) {
-        return unitOfWork.transactional(() -> conversions.list(from, to));
+    /** @param query the caller's filter, order and page position, already validated against the listing's schema */
+    public Page<ConversionView> list(ListQuery query) {
+        return unitOfWork.transactional(() -> conversions.list(query));
     }
 }

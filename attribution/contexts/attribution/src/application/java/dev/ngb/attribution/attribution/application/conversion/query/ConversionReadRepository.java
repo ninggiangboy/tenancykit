@@ -1,10 +1,10 @@
 package dev.ngb.attribution.attribution.application.conversion.query;
 
-import java.time.Instant;
-import java.util.List;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 
-/** The conversion read side: the conversions in a window, for the API. */
+/** The conversion read side: one page of the conversions the filter admits, for the API. */
 public interface ConversionReadRepository {
 
-    List<ConversionView> list(Instant from, Instant to);
+    Page<ConversionView> list(ListQuery query);
 }

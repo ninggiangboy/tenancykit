@@ -2,17 +2,20 @@ package dev.ngb.attribution.attribution.adapter.goal.web;
 
 import dev.ngb.attribution.attribution.application.goal.command.CreateGoalUseCase;
 import dev.ngb.attribution.attribution.application.goal.command.UpdateGoalUseCase;
+import dev.ngb.attribution.attribution.application.goal.query.GoalListing;
 import dev.ngb.attribution.attribution.application.goal.query.GoalQueries;
 import dev.ngb.attribution.attribution.application.goal.query.GoalView;
 import dev.ngb.attribution.attribution.domain.goal.Goal;
 import dev.ngb.attribution.shared.AttributionPermissions;
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,10 +46,12 @@ public class GoalController {
         this.unitOfWork = unitOfWork;
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link GoalListing}. */
     @GetMapping
+    @Listing(GoalListing.class)
     @RequiresPermission(AttributionPermissions.GOAL_READ)
-    List<GoalResponse> list() {
-        return queries.list().stream().map(GoalResponse::ofView).toList();
+    Page<GoalResponse> list(ListQuery query) {
+        return queries.list(query).map(GoalResponse::ofView);
     }
 
     @PostMapping

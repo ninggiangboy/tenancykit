@@ -1,22 +1,43 @@
 package dev.ngb.attribution.links.adapter.campaign.persistence;
 
 import static dev.ngb.attribution_jooq.Tables.CAMPAIGNS;
+import static org.jooq.impl.DSL.noCondition;
 
+import dev.ngb.attribution.links.application.campaign.query.CampaignListing;
 import dev.ngb.attribution.links.application.campaign.query.CampaignReadRepository;
 import dev.ngb.attribution.links.application.campaign.query.CampaignView;
 import dev.ngb.attribution.links.domain.campaign.AttributionModel;
 import dev.ngb.attribution.links.domain.campaign.CampaignStatus;
-import java.util.List;
-import java.util.Locale;
+import dev.ngb.attribution_jooq.tables.records.CampaignsRecord;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.JooqLists;
+import dev.ngb.core.spring.query.ListBinding;
 import java.util.Optional;
 import java.util.UUID;
-import org.jooq.Condition;
 import org.jooq.DSLContext;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
 
-/** The campaign listing and detail. A status filter and a keyset cursor, so a long list pages without an offset. */
+/**
+ * The campaign listing and detail. The listing compiles the caller's {@link ListQuery} against the columns
+ * {@link CampaignListing} whitelists, so a filter, an order and a page position are the contract's, not this class's.
+ *
+ * <p>Tenant isolation is the database's: every statement runs inside the unit of work's transaction, where row-level
+ * security has bound the tenant, so a listing never widens past the caller's own campaigns.
+ */
 public class JooqCampaignReadRepository implements CampaignReadRepository {
+
+    /** The campaign fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding BINDING = ListBinding.of(CampaignListing.SCHEMA)
+            .column("id", CAMPAIGNS.ID)
+            .column("name", CAMPAIGNS.NAME)
+            .column("slug", CAMPAIGNS.SLUG)
+            .column("channel", CAMPAIGNS.CHANNEL)
+            .column("status", CAMPAIGNS.STATUS)
+            .column("attribution_model", CAMPAIGNS.ATTRIBUTION_MODEL)
+            .column("currency", CAMPAIGNS.CURRENCY)
+            .column("created_at", CAMPAIGNS.CREATED_AT)
+            .column("updated_at", CAMPAIGNS.UPDATED_AT)
+            .build();
 
     private final DSLContext dsl;
 
@@ -24,54 +45,38 @@ public class JooqCampaignReadRepository implements CampaignReadRepository {
         this.dsl = dsl;
     }
 
+    /** @return the binding of the campaign listing, for the test that checks every sortable field has an index */
+    public static ListBinding listBinding() {
+        return BINDING;
+    }
+
     @Override
-    public List<CampaignView> list(String status, UUID afterId, int limit) {
-        Condition where = DSL.noCondition();
-        if (status != null && !status.isBlank()) {
-            where = where.and(CAMPAIGNS.STATUS.eq(status.strip().toUpperCase(Locale.ROOT)));
-        }
-        if (afterId != null) {
-            where = where.and(CAMPAIGNS.ID.lt(afterId));
-        }
-        return dsl.select(
-                        CAMPAIGNS.ID, CAMPAIGNS.TENANT_ID, CAMPAIGNS.NAME, CAMPAIGNS.SLUG, CAMPAIGNS.CHANNEL,
-                        CAMPAIGNS.STATUS, CAMPAIGNS.ATTRIBUTION_MODEL, CAMPAIGNS.WINDOW_DAYS, CAMPAIGNS.CURRENCY,
-                        CAMPAIGNS.STARTS_ON, CAMPAIGNS.ENDS_ON, CAMPAIGNS.VERSION, CAMPAIGNS.CREATED_AT,
-                        CAMPAIGNS.UPDATED_AT)
-                .from(CAMPAIGNS)
-                .where(where)
-                .orderBy(CAMPAIGNS.ID.desc())
-                .limit(limit)
-                .fetch(this::toView);
+    public Page<CampaignView> list(ListQuery query) {
+        return JooqLists.fetch(dsl, CAMPAIGNS, noCondition(), BINDING, query, JooqCampaignReadRepository::toView);
     }
 
     @Override
     public Optional<CampaignView> find(UUID campaignId) {
-        return dsl.select(
-                        CAMPAIGNS.ID, CAMPAIGNS.TENANT_ID, CAMPAIGNS.NAME, CAMPAIGNS.SLUG, CAMPAIGNS.CHANNEL,
-                        CAMPAIGNS.STATUS, CAMPAIGNS.ATTRIBUTION_MODEL, CAMPAIGNS.WINDOW_DAYS, CAMPAIGNS.CURRENCY,
-                        CAMPAIGNS.STARTS_ON, CAMPAIGNS.ENDS_ON, CAMPAIGNS.VERSION, CAMPAIGNS.CREATED_AT,
-                        CAMPAIGNS.UPDATED_AT)
-                .from(CAMPAIGNS)
+        return dsl.selectFrom(CAMPAIGNS)
                 .where(CAMPAIGNS.ID.eq(campaignId))
-                .fetchOptional(this::toView);
+                .fetchOptional(JooqCampaignReadRepository::toView);
     }
 
-    private CampaignView toView(Record row) {
+    private static CampaignView toView(CampaignsRecord row) {
         return new CampaignView(
-                row.get(CAMPAIGNS.ID),
-                new dev.ngb.core.id.TenantId(row.get(CAMPAIGNS.TENANT_ID)),
-                row.get(CAMPAIGNS.NAME),
-                row.get(CAMPAIGNS.SLUG),
-                row.get(CAMPAIGNS.CHANNEL),
-                CampaignStatus.valueOf(row.get(CAMPAIGNS.STATUS)),
-                AttributionModel.valueOf(row.get(CAMPAIGNS.ATTRIBUTION_MODEL)),
-                row.get(CAMPAIGNS.WINDOW_DAYS),
-                row.get(CAMPAIGNS.CURRENCY),
-                row.get(CAMPAIGNS.STARTS_ON),
-                row.get(CAMPAIGNS.ENDS_ON),
-                row.get(CAMPAIGNS.VERSION),
-                row.get(CAMPAIGNS.CREATED_AT),
-                row.get(CAMPAIGNS.UPDATED_AT));
+                row.getId(),
+                new dev.ngb.core.id.TenantId(row.getTenantId()),
+                row.getName(),
+                row.getSlug(),
+                row.getChannel(),
+                CampaignStatus.valueOf(row.getStatus()),
+                AttributionModel.valueOf(row.getAttributionModel()),
+                row.getWindowDays(),
+                row.getCurrency(),
+                row.getStartsOn(),
+                row.getEndsOn(),
+                row.getVersion(),
+                row.getCreatedAt(),
+                row.getUpdatedAt());
     }
 }

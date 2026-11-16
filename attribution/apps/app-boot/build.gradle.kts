@@ -12,6 +12,8 @@ dependencies {
     implementation(project(":contexts:spend"))
     implementation(project(":contexts:insight"))
     implementation("dev.ngb:core-spring")
+    // Documents every @Listing operation from the schema it names, so the served contract cannot drift from the code.
+    implementation("dev.ngb:core-openapi")
     implementation("dev.ngb:core-messaging")
     implementation("dev.ngb:core-replica")
     implementation("dev.ngb:core-platform-sync")

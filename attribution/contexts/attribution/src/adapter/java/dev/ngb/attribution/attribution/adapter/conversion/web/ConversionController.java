@@ -2,6 +2,7 @@ package dev.ngb.attribution.attribution.adapter.conversion.web;
 
 import dev.ngb.attribution.attribution.application.conversion.command.RecordConversionUseCase;
 import dev.ngb.attribution.attribution.application.conversion.port.ConversionRepository;
+import dev.ngb.attribution.attribution.application.conversion.query.ConversionListing;
 import dev.ngb.attribution.attribution.application.conversion.query.ConversionQueries;
 import dev.ngb.attribution.attribution.application.conversion.query.ConversionView;
 import dev.ngb.attribution.attribution.domain.credit.CreditEngine;
@@ -9,8 +10,11 @@ import dev.ngb.attribution.attribution.domain.conversion.Conversion;
 import dev.ngb.attribution.shared.AttributionPermissions;
 import dev.ngb.core.error.BadRequestException;
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.Listing;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -23,7 +27,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -70,11 +73,12 @@ public class ConversionController {
                 .body(ConversionResponse.of(result.conversion(), creditsOf(result.conversion().id())));
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link ConversionListing}. */
     @GetMapping
+    @Listing(ConversionListing.class)
     @RequiresPermission(AttributionPermissions.REPORT_READ)
-    List<ConversionResponse> list(
-            @RequestParam(required = false) Instant from, @RequestParam(required = false) Instant to) {
-        return queries.list(from, to).stream().map(ConversionResponse::ofView).toList();
+    Page<ConversionResponse> list(ListQuery query) {
+        return queries.list(query).map(ConversionResponse::ofView);
     }
 
     @GetMapping("/{id}")
