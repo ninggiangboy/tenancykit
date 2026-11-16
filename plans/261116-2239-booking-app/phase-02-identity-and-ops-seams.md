@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Identity and ops seams"
-status: pending
+status: completed
 priority: P1
 effort: "M"
 dependencies: [1]
