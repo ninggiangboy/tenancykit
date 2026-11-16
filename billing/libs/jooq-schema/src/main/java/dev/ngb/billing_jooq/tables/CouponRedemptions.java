@@ -6,6 +6,7 @@ package dev.ngb.billing_jooq.tables;
 
 import dev.ngb.billing_jooq.Keys;
 import dev.ngb.billing_jooq.Public;
+import dev.ngb.billing_jooq.tables.ChargeDiscounts.ChargeDiscountsPath;
 import dev.ngb.billing_jooq.tables.Coupons.CouponsPath;
 import dev.ngb.billing_jooq.tables.Customers.CustomersPath;
 import dev.ngb.billing_jooq.tables.PromotionCodes.PromotionCodesPath;
@@ -300,6 +301,19 @@ public class CouponRedemptions extends TableImpl<CouponRedemptionsRecord> {
             _wallets = new WalletsPath(this, Keys.COUPON_REDEMPTIONS__COUPON_REDEMPTIONS_TENANT_ID_WALLET_ID_CURRENCY_FKEY, null);
 
         return _wallets;
+    }
+
+    private transient ChargeDiscountsPath _chargeDiscounts;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.charge_discounts</code> table
+     */
+    public ChargeDiscountsPath chargeDiscounts() {
+        if (_chargeDiscounts == null)
+            _chargeDiscounts = new ChargeDiscountsPath(this, null, Keys.CHARGE_DISCOUNTS__CHARGE_DISCOUNTS_TENANT_ID_REDEMPTION_ID_FKEY.getInverseKey());
+
+        return _chargeDiscounts;
     }
 
     @Override

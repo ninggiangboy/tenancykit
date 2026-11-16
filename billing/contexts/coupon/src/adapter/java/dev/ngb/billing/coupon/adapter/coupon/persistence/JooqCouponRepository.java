@@ -110,6 +110,12 @@ public class JooqCouponRepository implements CouponRepository {
         return updated == 1 ? amount : 0;
     }
 
+    @Override
+    public long budgetUsed(CouponId id) {
+        Long used = dsl.select(COUPONS.BUDGET_USED).from(COUPONS).where(COUPONS.ID.eq(id.value())).fetchOne(COUPONS.BUDGET_USED);
+        return used == null ? 0 : used;
+    }
+
     private static Coupon toDomain(CouponsRecord row) {
         Currency currency = Currency.of(row.getCurrency().strip());
         Benefit benefit = switch (row.getBenefitType()) {

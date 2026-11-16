@@ -1,11 +1,13 @@
 package dev.ngb.billing.money.adapter.charge.persistence;
 
 import static dev.ngb.billing_jooq.Tables.CHARGES;
+import static dev.ngb.billing_jooq.Tables.CHARGE_DISCOUNTS;
 import static org.jooq.impl.DSL.noCondition;
 
 import dev.ngb.billing.money.api.charge.ChargeId;
 import dev.ngb.billing.money.api.charge.ChargeSource;
 import dev.ngb.billing.money.api.charge.ChargeStatus;
+import dev.ngb.billing.money.api.charge.DiscountLine;
 import dev.ngb.billing.money.api.reservation.ReservationId;
 import dev.ngb.billing.money.application.charge.query.ChargeReadRepository;
 import dev.ngb.billing.money.application.charge.query.ChargeView;
@@ -19,7 +21,7 @@ import java.util.UUID;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 
-/** Selects a charge straight into the view; the aggregate is never built. */
+/** Selects a charge straight into the view, with its discount lines; the aggregate is never built. */
 public class JooqChargeReadRepository implements ChargeReadRepository {
 
     private final DSLContext dsl;
@@ -32,7 +34,7 @@ public class JooqChargeReadRepository implements ChargeReadRepository {
     public Optional<ChargeView> findById(ChargeId id) {
         return dsl.selectFrom(CHARGES)
                 .where(CHARGES.ID.eq(id.value()))
-                .fetchOptional(JooqChargeReadRepository::toView);
+                .fetchOptional(row -> toView(row, discountsOf(row.getId())));
     }
 
     @Override
@@ -46,16 +48,29 @@ public class JooqChargeReadRepository implements ChargeReadRepository {
                 .where(filter)
                 .orderBy(CHARGES.ID.desc())
                 .limit(limit)
-                .fetch(JooqChargeReadRepository::toView);
+                .fetch(row -> toView(row, discountsOf(row.getId())));
     }
 
-    private static ChargeView toView(ChargesRecord row) {
+    private List<DiscountLine> discountsOf(UUID chargeId) {
+        return dsl.selectFrom(CHARGE_DISCOUNTS)
+                .where(CHARGE_DISCOUNTS.CHARGE_ID.eq(chargeId))
+                .orderBy(CHARGE_DISCOUNTS.SEQ)
+                .fetch(row -> new DiscountLine(row.getRedemptionId(), row.getCouponId(), row.getCouponName(), row.getBenefitType(),
+                        Money.of(row.getAmount(), Currency.of(row.getCurrency().strip()))));
+    }
+
+    private static ChargeView toView(ChargesRecord row, List<DiscountLine> discounts) {
+        Currency currency = Currency.of(row.getCurrency().strip());
+        Money net = Money.of(row.getAmount(), currency);
+        Money gross = net.plus(Money.of(row.getDiscountTotal(), currency));
         return new ChargeView(
                 new ChargeId(row.getId()),
                 new WalletId(row.getWalletId()),
                 ChargeStatus.valueOf(row.getStatus()),
                 row.getFailureReason(),
-                Money.of(row.getAmount(), Currency.of(row.getCurrency().strip())),
+                net,
+                gross,
+                discounts,
                 row.getReservationId() == null ? null : new ReservationId(row.getReservationId()),
                 row.getUsageRef(),
                 row.getReference(),

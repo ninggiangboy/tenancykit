@@ -16,6 +16,7 @@ import dev.ngb.billing.coupon.application.coupon.port.PromotionCodeRepository;
 import dev.ngb.billing.coupon.application.coupon.query.CouponQueries;
 import dev.ngb.billing.coupon.application.coupon.query.CouponReadRepository;
 import dev.ngb.billing.coupon.application.coupon.query.PromotionCodeReadRepository;
+import dev.ngb.billing.coupon.application.discount.service.ChargeDiscountsService;
 import dev.ngb.billing.coupon.application.redemption.command.RedeemCouponUseCase;
 import dev.ngb.billing.coupon.application.redemption.command.RevokeRedemptionUseCase;
 import dev.ngb.billing.coupon.application.redemption.port.RedemptionRepository;
@@ -80,6 +81,13 @@ class CouponConfiguration {
         return new EndingRedemptions(redemptions, events, ids);
     }
 
+    /** The discount seam the charge path calls. Money names the port; this is the only implementation. */
+    @Bean
+    dev.ngb.billing.money.api.charge.ChargeDiscounts chargeDiscounts(
+            CouponRepository coupons, RedemptionRepository redemptions, EndingRedemptions endingRedemptions, Clock clock) {
+        return new ChargeDiscountsService(coupons, redemptions, endingRedemptions, clock);
+    }
+
     @Bean
     CreateCouponUseCase createCouponUseCase(
             UnitOfWork unitOfWork, CouponRepository coupons, PromotionCodeRepository codes, AuditLog auditLog, TenantContext tenantContext,
@@ -102,10 +110,10 @@ class CouponConfiguration {
 
     @Bean
     RedeemCouponUseCase redeemCouponUseCase(
-            UnitOfWork unitOfWork, WalletLookup wallets, CouponRepository coupons, PromotionCodeRepository codes,
+            UnitOfWork unitOfWork, dev.ngb.billing.money.api.wallet.LockWallet walletLocks, CouponRepository coupons, PromotionCodeRepository codes,
             RedemptionRepository redemptions, CreditWallet creditWallet, CustomerLookup customers, EventPublisher events, AuditLog auditLog,
             TenantContext tenantContext, IdGenerator ids, Clock clock) {
-        return new RedeemCouponUseCase(unitOfWork, wallets, coupons, codes, redemptions, creditWallet, customers, events, auditLog,
+        return new RedeemCouponUseCase(unitOfWork, walletLocks, coupons, codes, redemptions, creditWallet, customers, events, auditLog,
                 tenantContext, ids, clock);
     }
 

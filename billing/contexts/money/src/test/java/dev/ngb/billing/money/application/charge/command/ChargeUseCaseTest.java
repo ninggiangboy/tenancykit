@@ -192,7 +192,7 @@ class ChargeUseCaseTest {
     };
 
     private final ChargeUseCase useCase = new ChargeUseCase(passThrough, wallets, reservations, charges, ledgerRepository, published::add, customers,
-            UUID::randomUUID, () -> NOW);
+            dev.ngb.billing.money.api.charge.ChargeDiscounts.NONE, UUID::randomUUID, () -> NOW);
 
     @Test
     void aChargeFromAReservationReadsTheReservationOnce() {

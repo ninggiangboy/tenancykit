@@ -55,7 +55,7 @@ public class ChargeInvoiceIssuer {
         this.clock = Objects.requireNonNull(clock, "clock");
     }
 
-    /** @throws ConflictException when the charge failed, so it cannot be billed */
+    /** @throws ConflictException when the charge failed or cost nothing, so it cannot be billed */
     public Issued issue(ChargeSummary charge, WalletSummary wallet, Audit caller) {
         Optional<Invoice> existing = invoices.findByCharge(charge.id().value());
         if (existing.isPresent()) {
@@ -63,6 +63,10 @@ public class ChargeInvoiceIssuer {
         }
         if (charge.status() != ChargeStatus.SUCCEEDED) {
             throw new ConflictException("a failed charge cannot be invoiced");
+        }
+        if (!charge.amount().isPositive()) {
+            // A fully discounted charge cost the wallet nothing, so there is nothing to invoice.
+            throw new ConflictException("a charge that cost nothing cannot be invoiced");
         }
         Instant now = clock.now();
         Optional<UnbilledLine> waiting = unbilled.lockByCharge(charge.id().value());

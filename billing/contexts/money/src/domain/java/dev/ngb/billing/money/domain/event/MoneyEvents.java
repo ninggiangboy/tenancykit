@@ -147,8 +147,10 @@ public final class MoneyEvents {
 
         @Override
         public Map<String, Object> payload() {
-            return MoneyEventPayload.payload("chargeId", charge.id().toString(), "walletId", charge.walletId().toString(), "entryId", entry.id().toString(),
-                    "amount", MoneyEventPayload.money(charge.amount()), "source", charge.source().name(), "usageRef", charge.usageRef(),
+            return MoneyEventPayload.payload("chargeId", charge.id().toString(), "walletId", charge.walletId().toString(),
+                    "entryId", entry == null ? null : entry.id().toString(),
+                    "amount", MoneyEventPayload.money(charge.amount()), "grossAmount", MoneyEventPayload.money(charge.grossAmount()),
+                    "discounts", discounts(charge), "source", charge.source().name(), "usageRef", charge.usageRef(),
                     "reservationId", charge.reservationId() == null ? null : charge.reservationId().toString(), "reference", charge.reference());
         }
     }
@@ -173,9 +175,22 @@ public final class MoneyEvents {
 
         @Override
         public Map<String, Object> payload() {
-            return MoneyEventPayload.payload("chargeId", charge.id().toString(), "walletId", charge.walletId().toString(), "amount", MoneyEventPayload.money(charge.amount()),
-                    "source", charge.source().name(), "usageRef", charge.usageRef(), "reason", charge.failureReason(), "reference", charge.reference());
+            return MoneyEventPayload.payload("chargeId", charge.id().toString(), "walletId", charge.walletId().toString(),
+                    "amount", MoneyEventPayload.money(charge.amount()), "grossAmount", MoneyEventPayload.money(charge.grossAmount()),
+                    "source", charge.source().name(), "usageRef", charge.usageRef(), "reason", charge.failureReason(),
+                    "reference", charge.reference());
         }
+    }
+
+    /** The discount lines of a charge, in the order they applied, or null when there were none. */
+    private static java.util.List<Map<String, Object>> discounts(Charge charge) {
+        if (charge.discounts().isEmpty()) {
+            return null;
+        }
+        return charge.discounts().stream()
+                .map(line -> MoneyEventPayload.payload("redemptionId", line.redemptionId().toString(), "couponId", line.couponId().toString(),
+                        "couponName", line.couponName(), "benefitType", line.benefitType(), "amount", MoneyEventPayload.money(line.amount())))
+                .toList();
     }
 
     /** An earlier entry was corrected. Invoicing reacts to this; the original entry is never edited. */

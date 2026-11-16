@@ -5,6 +5,7 @@ import dev.ngb.billing.money.api.charge.ChargeCommand;
 import dev.ngb.billing.money.api.charge.ChargeId;
 import dev.ngb.billing.money.api.charge.ChargeResult;
 import dev.ngb.billing.money.api.charge.ChargeStatus;
+import dev.ngb.billing.money.api.charge.DiscountLine;
 import dev.ngb.billing.money.api.reservation.ReservationId;
 import dev.ngb.billing.money.application.charge.command.ChargeUseCase;
 import dev.ngb.billing.money.application.charge.query.ChargeView;
@@ -37,11 +38,20 @@ public class ChargeController {
 
     public record ChargeRequest(String walletId, long amount, String currency, String usageRef, String reference) {}
 
+    public record DiscountLineResponse(String redemptionId, String couponId, String couponName, String benefitType, MoneyDto amount) {
+        static DiscountLineResponse of(DiscountLine line) {
+            return new DiscountLineResponse(line.redemptionId().toString(), line.couponId().toString(), line.couponName(), line.benefitType(),
+                    MoneyDto.of(line.amount()));
+        }
+    }
+
     public record ChargeResponse(
-            String id, String status, String failureReason, MoneyDto amount, String ledgerEntryId, String reservationId, String usageRef,
-            String reference) {
+            String id, String status, String failureReason, MoneyDto amount, MoneyDto grossAmount, java.util.List<DiscountLineResponse> discounts,
+            String ledgerEntryId, String reservationId, String usageRef, String reference) {
         static ChargeResponse ofView(ChargeResult result, ChargeView charge) {
             return new ChargeResponse(result.id().toString(), result.status().name(), result.failureReason(), MoneyDto.of(result.amount()),
+                    MoneyDto.of(charge.grossAmount()),
+                    charge.discounts().stream().map(DiscountLineResponse::of).toList(),
                     result.ledgerEntryId() == null ? null : result.ledgerEntryId().toString(),
                     charge.reservationId() == null ? null : charge.reservationId().toString(), charge.usageRef(), charge.reference());
         }
@@ -82,7 +92,9 @@ public class ChargeController {
     @RequiresPermission(BillingPermissions.WALLET_READ)
     public ChargeResponse getCharge(@PathVariable String id) {
         ChargeView found = queries.charge(ChargeId.of(id), currentActor.caller());
-        return ChargeResponse.ofView(new ChargeResult(found.id(), found.status(), found.failureReason(), found.amount(), null, false), found);
+        return ChargeResponse.ofView(
+                new ChargeResult(found.id(), found.status(), found.failureReason(), found.amount(), null, false, found.grossAmount(),
+                        found.discounts()), found);
     }
 
     /**

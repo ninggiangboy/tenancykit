@@ -9,6 +9,7 @@ import dev.ngb.billing_jooq.Public;
 import dev.ngb.billing_jooq.tables.AppEntitlements.AppEntitlementsPath;
 import dev.ngb.billing_jooq.tables.AuditLog.AuditLogPath;
 import dev.ngb.billing_jooq.tables.BillingSessions.BillingSessionsPath;
+import dev.ngb.billing_jooq.tables.ChargeDiscounts.ChargeDiscountsPath;
 import dev.ngb.billing_jooq.tables.Charges.ChargesPath;
 import dev.ngb.billing_jooq.tables.CouponRedemptions.CouponRedemptionsPath;
 import dev.ngb.billing_jooq.tables.Coupons.CouponsPath;
@@ -243,6 +244,19 @@ public class Tenants extends TableImpl<TenantsRecord> {
             _billingSessions = new BillingSessionsPath(this, null, Keys.BILLING_SESSIONS__BILLING_SESSIONS_TENANT_ID_FKEY.getInverseKey());
 
         return _billingSessions;
+    }
+
+    private transient ChargeDiscountsPath _chargeDiscounts;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.charge_discounts</code> table
+     */
+    public ChargeDiscountsPath chargeDiscounts() {
+        if (_chargeDiscounts == null)
+            _chargeDiscounts = new ChargeDiscountsPath(this, null, Keys.CHARGE_DISCOUNTS__CHARGE_DISCOUNTS_TENANT_ID_FKEY.getInverseKey());
+
+        return _chargeDiscounts;
     }
 
     private transient ChargesPath _charges;

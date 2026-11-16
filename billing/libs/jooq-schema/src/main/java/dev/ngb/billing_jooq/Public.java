@@ -7,6 +7,7 @@ package dev.ngb.billing_jooq;
 import dev.ngb.billing_jooq.tables.AppEntitlements;
 import dev.ngb.billing_jooq.tables.AuditLog;
 import dev.ngb.billing_jooq.tables.BillingSessions;
+import dev.ngb.billing_jooq.tables.ChargeDiscounts;
 import dev.ngb.billing_jooq.tables.Charges;
 import dev.ngb.billing_jooq.tables.CouponRedemptions;
 import dev.ngb.billing_jooq.tables.Coupons;
@@ -87,6 +88,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.billing_sessions</code>.
      */
     public final BillingSessions BILLING_SESSIONS = BillingSessions.BILLING_SESSIONS;
+
+    /**
+     * The table <code>public.charge_discounts</code>.
+     */
+    public final ChargeDiscounts CHARGE_DISCOUNTS = ChargeDiscounts.CHARGE_DISCOUNTS;
 
     /**
      * The table <code>public.charges</code>.
@@ -322,6 +328,7 @@ public class Public extends SchemaImpl {
             AppEntitlements.APP_ENTITLEMENTS,
             AuditLog.AUDIT_LOG,
             BillingSessions.BILLING_SESSIONS,
+            ChargeDiscounts.CHARGE_DISCOUNTS,
             Charges.CHARGES,
             CouponRedemptions.COUPON_REDEMPTIONS,
             Coupons.COUPONS,

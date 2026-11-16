@@ -98,6 +98,20 @@ public final class Reservation {
         close(ReservationStatus.CAPTURED, now);
     }
 
+    /**
+     * Settles the reservation for a charge that a coupon discounted to nothing: it is captured at zero and the whole
+     * hold goes back, so no budget is held against a charge that cost the wallet nothing.
+     */
+    public void captureNothing(Wallet wallet, Instant now) {
+        requireActive();
+        if (isExpired(now)) {
+            throw new IllegalStateException("the reservation has expired");
+        }
+        wallet.unhold(amount);
+        captured = Money.zero(amount.currency());
+        close(ReservationStatus.CAPTURED, now);
+    }
+
     public void release(Wallet wallet, Instant now) {
         requireActive();
         wallet.unhold(amount);

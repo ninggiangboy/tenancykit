@@ -66,6 +66,11 @@ public final class EventPayload {
         }
     }
 
+    /** An optional money field: absent reads as empty, but a value that is not money is still malformed. */
+    public static java.util.Optional<Money> optionalMoney(Map<String, Object> data, String key) {
+        return data.get(key) == null ? java.util.Optional.empty() : java.util.Optional.of(money(data, key));
+    }
+
     private static UUID uuidOf(String key, String value) {
         try {
             return UUID.fromString(value);

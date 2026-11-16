@@ -20,6 +20,9 @@ public interface RedemptionRepository {
 
     Optional<Redemption> findByIdempotencyKey(String idempotencyKey);
 
+    /** The wallet's ACTIVE redemptions, ascending by id, ascending lock order. Takes no lock. */
+    List<Redemption> findActiveByWallet(WalletId walletId);
+
     /** The wallet's ACTIVE redemptions, ascending by id, locked until the transaction ends. */
     List<Redemption> lockActiveByWallet(WalletId walletId);
 

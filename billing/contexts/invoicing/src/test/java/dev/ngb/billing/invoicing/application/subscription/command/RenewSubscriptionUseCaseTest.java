@@ -125,7 +125,7 @@ class RenewSubscriptionUseCaseTest {
                     new SQLException("canceling statement due to lock timeout", "55P03"));
         }
         charged.add(command);
-        return new ChargeResult(new ChargeId(UUID.randomUUID()), ChargeStatus.SUCCEEDED, null, command.amount(), new LedgerEntryId(UUID.randomUUID()), false);
+        return ChargeResult.of(new ChargeId(UUID.randomUUID()), ChargeStatus.SUCCEEDED, null, command.amount(), new LedgerEntryId(UUID.randomUUID()), false);
     };
 
     private final RenewSubscriptionUseCase useCase = new RenewSubscriptionUseCase(passThrough, repository, pricing, charging, published::add,

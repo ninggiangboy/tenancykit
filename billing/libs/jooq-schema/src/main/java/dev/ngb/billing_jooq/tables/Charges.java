@@ -6,6 +6,7 @@ package dev.ngb.billing_jooq.tables;
 
 import dev.ngb.billing_jooq.Keys;
 import dev.ngb.billing_jooq.Public;
+import dev.ngb.billing_jooq.tables.ChargeDiscounts.ChargeDiscountsPath;
 import dev.ngb.billing_jooq.tables.InvoiceItems.InvoiceItemsPath;
 import dev.ngb.billing_jooq.tables.LedgerEntries.LedgerEntriesPath;
 import dev.ngb.billing_jooq.tables.Reservations.ReservationsPath;
@@ -135,6 +136,11 @@ public class Charges extends TableImpl<ChargesRecord> {
      */
     public final TableField<ChargesRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.INSTANT.nullable(false), this, "");
 
+    /**
+     * The column <code>public.charges.discount_total</code>.
+     */
+    public final TableField<ChargesRecord, Long> DISCOUNT_TOTAL = createField(DSL.name("discount_total"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.BIGINT)), this, "");
+
     private Charges(Name alias, Table<ChargesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -253,6 +259,19 @@ public class Charges extends TableImpl<ChargesRecord> {
         return _wallets;
     }
 
+    private transient ChargeDiscountsPath _chargeDiscounts;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.charge_discounts</code> table
+     */
+    public ChargeDiscountsPath chargeDiscounts() {
+        if (_chargeDiscounts == null)
+            _chargeDiscounts = new ChargeDiscountsPath(this, null, Keys.CHARGE_DISCOUNTS__CHARGE_DISCOUNTS_TENANT_ID_CHARGE_ID_FKEY.getInverseKey());
+
+        return _chargeDiscounts;
+    }
+
     private transient InvoiceItemsPath _invoiceItems;
 
     /**
@@ -295,8 +314,9 @@ public class Charges extends TableImpl<ChargesRecord> {
     @Override
     public List<Check<ChargesRecord>> getChecks() {
         return Arrays.asList(
-            Internal.createCheck(this, DSL.name("charges_amount_check"), "((amount > 0))", true),
+            Internal.createCheck(this, DSL.name("charges_amount_check"), "(((amount > 0) OR ((amount = 0) AND (discount_total > 0) AND (status = 'SUCCEEDED'::text))))", true),
             Internal.createCheck(this, DSL.name("charges_check"), "(((status = 'FAILED'::text) = (failure_reason IS NOT NULL)))", true),
+            Internal.createCheck(this, DSL.name("charges_discount_total_check"), "((discount_total >= 0))", true),
             Internal.createCheck(this, DSL.name("charges_source_check"), "((source = ANY (ARRAY['USAGE'::text, 'RESERVATION'::text, 'STANDALONE'::text])))", true),
             Internal.createCheck(this, DSL.name("charges_status_check"), "((status = ANY (ARRAY['SUCCEEDED'::text, 'FAILED'::text])))", true)
         );

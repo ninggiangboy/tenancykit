@@ -15,7 +15,7 @@ import dev.ngb.billing.customer.api.lookup.CustomerVisibility;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
 import dev.ngb.billing.money.api.wallet.CreditCommand;
 import dev.ngb.billing.money.api.wallet.CreditWallet;
-import dev.ngb.billing.money.api.wallet.WalletLookup;
+import dev.ngb.billing.money.api.wallet.LockWallet;
 import dev.ngb.billing.money.api.wallet.WalletSummary;
 import dev.ngb.billing.sharedkernel.error.Messages;
 import dev.ngb.billing.sharedkernel.id.WalletId;
@@ -57,7 +57,7 @@ public class RedeemCouponUseCase {
     public record Result(Redemption redemption, Coupon coupon, boolean replayed) {}
 
     private final UnitOfWork unitOfWork;
-    private final WalletLookup wallets;
+    private final LockWallet walletLocks;
     private final CouponRepository coupons;
     private final PromotionCodeRepository codes;
     private final RedemptionRepository redemptions;
@@ -70,11 +70,11 @@ public class RedeemCouponUseCase {
     private final Clock clock;
 
     public RedeemCouponUseCase(
-            UnitOfWork unitOfWork, WalletLookup wallets, CouponRepository coupons, PromotionCodeRepository codes,
+            UnitOfWork unitOfWork, LockWallet walletLocks, CouponRepository coupons, PromotionCodeRepository codes,
             RedemptionRepository redemptions, CreditWallet creditWallet, CustomerLookup customers, EventPublisher events, AuditLog auditLog,
             TenantContext tenantContext, IdGenerator ids, Clock clock) {
         this.unitOfWork = unitOfWork;
-        this.wallets = wallets;
+        this.walletLocks = walletLocks;
         this.coupons = coupons;
         this.codes = codes;
         this.redemptions = redemptions;
@@ -100,7 +100,7 @@ public class RedeemCouponUseCase {
     }
 
     private Result redeem(Command command, String normalizedCode, String hash) {
-        WalletSummary wallet = wallets.lockById(command.walletId()).orElseThrow(Messages::walletNotFound);
+        WalletSummary wallet = walletLocks.lockById(command.walletId()).orElseThrow(Messages::walletNotFound);
         visibility.requireVisible(wallet.customerId(), command.caller(), Messages::walletNotFound);
 
         Instant now = clock.now();

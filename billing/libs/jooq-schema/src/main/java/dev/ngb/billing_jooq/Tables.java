@@ -7,6 +7,7 @@ package dev.ngb.billing_jooq;
 import dev.ngb.billing_jooq.tables.AppEntitlements;
 import dev.ngb.billing_jooq.tables.AuditLog;
 import dev.ngb.billing_jooq.tables.BillingSessions;
+import dev.ngb.billing_jooq.tables.ChargeDiscounts;
 import dev.ngb.billing_jooq.tables.Charges;
 import dev.ngb.billing_jooq.tables.CouponRedemptions;
 import dev.ngb.billing_jooq.tables.Coupons;
@@ -72,6 +73,11 @@ public class Tables {
      * The table <code>public.billing_sessions</code>.
      */
     public static final BillingSessions BILLING_SESSIONS = BillingSessions.BILLING_SESSIONS;
+
+    /**
+     * The table <code>public.charge_discounts</code>.
+     */
+    public static final ChargeDiscounts CHARGE_DISCOUNTS = ChargeDiscounts.CHARGE_DISCOUNTS;
 
     /**
      * The table <code>public.charges</code>.

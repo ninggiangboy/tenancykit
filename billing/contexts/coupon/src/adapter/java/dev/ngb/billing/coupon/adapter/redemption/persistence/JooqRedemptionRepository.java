@@ -68,6 +68,15 @@ public class JooqRedemptionRepository implements RedemptionRepository {
     }
 
     @Override
+    public List<Redemption> findActiveByWallet(WalletId walletId) {
+        return dsl.selectFrom(COUPON_REDEMPTIONS)
+                .where(COUPON_REDEMPTIONS.WALLET_ID.eq(walletId.value()))
+                .and(COUPON_REDEMPTIONS.STATUS.eq(RedemptionStatus.ACTIVE.name()))
+                .orderBy(COUPON_REDEMPTIONS.ID)
+                .fetch(JooqRedemptionRepository::toDomain);
+    }
+
+    @Override
     public List<Redemption> lockActiveByWallet(WalletId walletId) {
         return dsl.selectFrom(COUPON_REDEMPTIONS)
                 .where(COUPON_REDEMPTIONS.WALLET_ID.eq(walletId.value()))

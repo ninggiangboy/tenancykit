@@ -231,6 +231,21 @@ public class ChargesRecord extends UpdatableRecordImpl<ChargesRecord> {
         return (Instant) get(13);
     }
 
+    /**
+     * Setter for <code>public.charges.discount_total</code>.
+     */
+    public ChargesRecord setDiscountTotal(Long value) {
+        set(14, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.charges.discount_total</code>.
+     */
+    public Long getDiscountTotal() {
+        return (Long) get(14);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -254,7 +269,7 @@ public class ChargesRecord extends UpdatableRecordImpl<ChargesRecord> {
     /**
      * Create a detached, initialised ChargesRecord
      */
-    public ChargesRecord(UUID id, UUID tenantId, UUID walletId, String currency, Long amount, String source, String status, String failureReason, UUID reservationId, String usageRef, String reference, String idempotencyKey, String requestHash, Instant createdAt) {
+    public ChargesRecord(UUID id, UUID tenantId, UUID walletId, String currency, Long amount, String source, String status, String failureReason, UUID reservationId, String usageRef, String reference, String idempotencyKey, String requestHash, Instant createdAt, Long discountTotal) {
         super(Charges.CHARGES);
 
         setId(id);
@@ -271,6 +286,7 @@ public class ChargesRecord extends UpdatableRecordImpl<ChargesRecord> {
         setIdempotencyKey(idempotencyKey);
         setRequestHash(requestHash);
         setCreatedAt(createdAt);
+        setDiscountTotal(discountTotal);
         resetTouchedOnNotNull();
     }
 }

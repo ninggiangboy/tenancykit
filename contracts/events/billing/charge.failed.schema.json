@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://billing.io/events/charge.failed.schema.json",
   "title": "Charge failed",
-  "description": "A charge could not be paid and was recorded as failed; nothing was posted to the ledger. This schema describes the `data` member of the delivered document; the envelope (id, type, tenantId, occurredAt, data) is described in README.md.",
+  "description": "A charge could not be paid and was recorded as failed; nothing was posted to the ledger. The amount is what was owed; no coupon was consumed. This schema describes the `data` member of the delivered document; the envelope (id, type, tenantId, occurredAt, data) is described in README.md.",
   "type": "object",
   "required": [
     "chargeId",
@@ -54,6 +54,48 @@
           "type": "null"
         }
       ]
+    },
+    "grossAmount": {
+      "$ref": "#/$defs/money"
+    },
+    "discounts": {
+      "type": "array",
+      "description": "One entry per coupon that took part, in the order the engine applied them.",
+      "items": {
+        "type": "object",
+        "required": [
+          "redemptionId",
+          "couponId",
+          "couponName",
+          "benefitType",
+          "amount"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "redemptionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "couponId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "couponName": {
+            "type": "string"
+          },
+          "benefitType": {
+            "type": "string",
+            "enum": [
+              "PERCENT_OFF",
+              "AMOUNT_OFF",
+              "WALLET_CREDIT"
+            ]
+          },
+          "amount": {
+            "$ref": "#/$defs/money"
+          }
+        }
+      }
     }
   },
   "$defs": {

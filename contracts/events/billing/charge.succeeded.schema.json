@@ -66,6 +66,48 @@
           "type": "null"
         }
       ]
+    },
+    "grossAmount": {
+      "$ref": "#/$defs/money"
+    },
+    "discounts": {
+      "type": "array",
+      "description": "One entry per coupon that took part, in the order the engine applied them.",
+      "items": {
+        "type": "object",
+        "required": [
+          "redemptionId",
+          "couponId",
+          "couponName",
+          "benefitType",
+          "amount"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "redemptionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "couponId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "couponName": {
+            "type": "string"
+          },
+          "benefitType": {
+            "type": "string",
+            "enum": [
+              "PERCENT_OFF",
+              "AMOUNT_OFF",
+              "WALLET_CREDIT"
+            ]
+          },
+          "amount": {
+            "$ref": "#/$defs/money"
+          }
+        }
+      }
     }
   },
   "$defs": {

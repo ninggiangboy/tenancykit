@@ -124,8 +124,9 @@ class MoneyConfiguration {
     @Bean
     ChargeUseCase chargeUseCase(
             UnitOfWork unitOfWork, WalletRepository wallets, ReservationRepository reservations, ChargeRepository charges, LedgerRepository ledger,
-            EventPublisher events, CustomerLookup customers, IdGenerator ids, Clock clock) {
-        return new ChargeUseCase(unitOfWork, wallets, reservations, charges, ledger, events, customers, ids, clock);
+            EventPublisher events, CustomerLookup customers, dev.ngb.billing.money.api.charge.ChargeDiscounts discounts, IdGenerator ids,
+            Clock clock) {
+        return new ChargeUseCase(unitOfWork, wallets, reservations, charges, ledger, events, customers, discounts, ids, clock);
     }
 
     @Bean
@@ -159,8 +160,13 @@ class MoneyConfiguration {
     }
 
     @Bean
-    WalletLookup walletLookup(UnitOfWork unitOfWork, WalletReadRepository wallets, WalletRepository walletRepository) {
-        return new WalletLookupService(unitOfWork, wallets, walletRepository);
+    WalletLookup walletLookup(UnitOfWork unitOfWork, WalletReadRepository wallets) {
+        return new WalletLookupService(unitOfWork, wallets);
+    }
+
+    @Bean
+    dev.ngb.billing.money.api.wallet.LockWallet lockWallet(UnitOfWork unitOfWork, WalletRepository wallets) {
+        return new dev.ngb.billing.money.application.wallet.service.LockWalletService(unitOfWork, wallets);
     }
 
     @Bean

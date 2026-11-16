@@ -77,6 +77,10 @@ public class CollectChargeUseCase {
             if (wallet == null || wallet.mode() != WalletMode.POSTPAID) {
                 return false;
             }
+            if (!charged.amount().isPositive()) {
+                // A fully discounted charge cost the wallet nothing, so there is nothing to collect.
+                return false;
+            }
             if (!charged.amount().currency().equals(wallet.currency())) {
                 throw new IllegalStateException("a charge is in the currency of its wallet");
             }

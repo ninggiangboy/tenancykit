@@ -34,4 +34,7 @@ public interface CouponRepository {
      * @return the amount actually spent, in minor units; 0 when the budget is already gone
      */
     long spendBudget(CouponId id, long amount);
+
+    /** What has been spent of the coupon's budget, in minor units; 0 when it has none. */
+    long budgetUsed(CouponId id);
 }

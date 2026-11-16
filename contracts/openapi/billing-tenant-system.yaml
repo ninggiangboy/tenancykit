@@ -2595,6 +2595,12 @@ components:
           type: "string"
         amount:
           $ref: "#/components/schemas/MoneyDto"
+        grossAmount:
+          $ref: "#/components/schemas/MoneyDto"
+        discounts:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DiscountLineResponse"
         ledgerEntryId:
           type: "string"
         reservationId:
@@ -2603,6 +2609,19 @@ components:
           type: "string"
         reference:
           type: "string"
+    DiscountLineResponse:
+      type: "object"
+      properties:
+        redemptionId:
+          type: "string"
+        couponId:
+          type: "string"
+        couponName:
+          type: "string"
+        benefitType:
+          type: "string"
+        amount:
+          $ref: "#/components/schemas/MoneyDto"
     PromotionCodeResponse:
       type: "object"
       properties:
