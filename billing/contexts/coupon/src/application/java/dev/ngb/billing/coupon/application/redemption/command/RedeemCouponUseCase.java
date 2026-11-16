@@ -107,8 +107,10 @@ public class RedeemCouponUseCase {
         PromotionCode code = null;
         Coupon coupon;
         if (normalizedCode != null) {
+            // The documented order is wallet, coupon, then code, so the unlocked read only names the coupon to lock.
+            PromotionCode found = codes.findByCode(normalizedCode).orElseThrow(Messages::couponNotRedeemable);
+            coupon = coupons.lockById(found.couponId()).orElseThrow(Messages::couponNotRedeemable);
             code = codes.lockByCode(normalizedCode).orElseThrow(Messages::couponNotRedeemable);
-            coupon = coupons.findById(code.couponId()).orElseThrow(Messages::couponNotRedeemable);
         } else {
             coupon = coupons.lockById(CouponId.of(command.couponId())).orElseThrow(Messages::couponNotFound);
         }

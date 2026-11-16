@@ -163,7 +163,8 @@ fi
 CREDENTIAL=$(call POST "${PROXY}/platform/api/v1/tenant-systems/${SYSTEM_ID}/credentials" \
   "${TENANT_CODE}.localhost" "${TENANT_ADMIN_TOKEN}" \
   '{"label":"smoke","scopes":["billing:customer:read","billing:customer:write","billing:charge:create","billing:invoice:create","billing:invoice:read",
-  "billing:wallet:manage","billing:wallet:read","billing:webhook:manage","billing:webhook:read"]}')
+  "billing:wallet:manage","billing:wallet:read","billing:webhook:manage","billing:webhook:read",
+  "billing:coupon:read","billing:coupon:manage","billing:coupon:redeem"]}')
 KEY=$(printf '%s' "${CREDENTIAL}" | json .key)
 KEY_ID=$(printf '%s' "${CREDENTIAL}" | json .credential.keyId)
 KEY_SECRET="${KEY##*_}"
@@ -224,6 +225,21 @@ CHARGE_ID=$(call POST "${PROXY}/api/v1/charges" "${TENANT_CODE}.localhost" "${SY
   "{\"walletId\":\"${WALLET_ID}\",\"amount\":1200,\"currency\":\"USD\",\"reference\":\"smoke-${RUN_ID}\"}" "smoke-charge-${RUN_ID}" | json .id)
 call POST "${PROXY}/api/v1/invoices" "${TENANT_CODE}.localhost" "${SYSTEM_TOKEN}" \
   "{\"chargeId\":\"${CHARGE_ID}\"}" > /dev/null
+
+# ------------------------------ 6b. a coupon, redeemed and applied ------------------------------
+step "redeeming a coupon and charging a discounted amount"
+COUPON_ID=$(call POST "${PROXY}/api/v1/coupons" "${TENANT_CODE}.localhost" "${SYSTEM_TOKEN}" \
+  "{\"name\":\"Smoke 20\",\"currency\":\"USD\",\"benefit\":{\"type\":\"PERCENT_OFF\",\"basisPoints\":2000}, \
+    \"limits\":{\"redeemBy\":\"2099-01-01T00:00:00Z\"},\"stackable\":true,\"code\":\"SMOKE20-${RUN_ID}\"}" | json .coupon.id)
+call POST "${PROXY}/api/v1/wallets/${WALLET_ID}/coupon-redemptions" "${TENANT_CODE}.localhost" "${SYSTEM_TOKEN}" \
+  "{\"code\":\"SMOKE20-${RUN_ID}\"}" "smoke-redeem-${RUN_ID}" > /dev/null
+# 20% off 1,000 is 800; the ledger takes the net, and the charge keeps its gross.
+COUPON_CHARGE=$(call POST "${PROXY}/api/v1/charges" "${TENANT_CODE}.localhost" "${SYSTEM_TOKEN}" \
+  "{\"walletId\":\"${WALLET_ID}\",\"amount\":1000,\"currency\":\"USD\",\"reference\":\"smoke-coupon-${RUN_ID}\"}" "smoke-coupon-charge-${RUN_ID}")
+if [ "$(printf '%s' "${COUPON_CHARGE}" | json .amount.amount)" != "800" ] || \
+   [ "$(printf '%s' "${COUPON_CHARGE}" | json .grossAmount.amount)" != "1000" ]; then
+  fail "a coupon did not discount the charge as expected: ${COUPON_CHARGE}"
+fi
 
 # ------------------------------ 7. the tenant recorded a verified webhook ------------------------------
 step "asserting the tenant app accepted one invoice.created webhook"
