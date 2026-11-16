@@ -47,7 +47,8 @@ public class RatingController {
     /** Expected usage of one metric; {@code events} defaults to 1 and only matters to workload prices. */
     public record UsageInput(String metric, String quantity, Long events) {}
 
-    public record EstimateRequest(String planId, Integer version, Instant at, List<UsageInput> usage) {}
+    /** {@code walletId} is optional: naming one adds the net that wallet would pay and the coupons that produced it. */
+    public record EstimateRequest(String planId, Integer version, Instant at, List<UsageInput> usage, String walletId) {}
 
     public record LineResponse(String description, String metric, String quantity, String amount) {
         static LineResponse of(PriceLine line) {
@@ -61,12 +62,31 @@ public class RatingController {
         }
     }
 
+    public record DiscountLineDto(String redemptionId, String couponId, String couponName, String benefitType, MoneyDto amount) {
+        static DiscountLineDto of(dev.ngb.billing.money.api.charge.DiscountLine line) {
+            return new DiscountLineDto(line.redemptionId().toString(), line.couponId().toString(), line.couponName(), line.benefitType(),
+                    MoneyDto.of(line.amount()));
+        }
+    }
+
+    /**
+     * Without a wallet the estimate is the gross alone. With one it also carries {@code grossAmount} (what the plan
+     * priced), {@code amount} as the net the wallet would pay, and the coupons that produced the difference.
+     */
     public record EstimateResponse(
-            String planId, String planCode, int planVersion, MoneyDto amount, String exactAmount, String adjustment, List<LineResponse> lines) {
+            String planId, String planCode, int planVersion, MoneyDto amount, MoneyDto grossAmount, List<DiscountLineDto> discounts,
+            String exactAmount, String adjustment, List<LineResponse> lines) {
         static EstimateResponse of(EstimateCostUseCase.Estimate e) {
-            return new EstimateResponse(e.plan().id().toString(), e.plan().code(), e.version().number(), MoneyDto.of(e.quote().amount()),
-                    e.quote().exactAmount().stripTrailingZeros().toPlainString(), e.quote().adjustment().name(),
-                    e.quote().lines().stream().map(LineResponse::of).toList());
+            var quote = e.quote();
+            var discount = e.discount();
+            MoneyDto amount = discount == null ? MoneyDto.of(quote.amount()) : MoneyDto.of(discount.net());
+            MoneyDto gross = discount == null ? null : MoneyDto.of(discount.gross());
+            List<DiscountLineDto> lines = discount == null
+                    ? null
+                    : discount.lines().stream().map(DiscountLineDto::of).toList();
+            return new EstimateResponse(e.plan().id().toString(), e.plan().code(), e.version().number(), amount, gross, lines,
+                    quote.exactAmount().stripTrailingZeros().toPlainString(), quote.adjustment().name(),
+                    quote.lines().stream().map(LineResponse::of).toList());
         }
     }
 
@@ -130,7 +150,9 @@ public class RatingController {
     @PostMapping("/pricing/estimates")
     @RequiresPermission(BillingPermissions.PRICING_READ)
     public EstimateResponse estimate(@RequestBody EstimateRequest request) {
-        return EstimateResponse.of(estimates.estimate(new EstimateCostUseCase.Request(PricingPlanId.of(required(request.planId(), "planId")), request.version(), request.at(), measures(request.usage()))));
+        return EstimateResponse.of(estimates.estimate(new EstimateCostUseCase.Request(PricingPlanId.of(required(request.planId(), "planId")),
+                request.version(), request.at(), measures(request.usage()), request.walletId() == null ? null : WalletId.of(request.walletId()),
+                currentActor.caller())));
     }
 
     /** Holds the estimated cost on the wallet. 201 for a new reservation, 200 when the key replays one, 402 when the wallet cannot cover it. */

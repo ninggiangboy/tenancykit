@@ -58,8 +58,8 @@ public class JooqSubscriptionReadRepository implements SubscriptionReadRepositor
     @Override
     public List<SubscriptionHistoryEntryView> history(UUID subscriptionId) {
         return dsl.select(SUBSCRIPTION_EVENTS.ID, SUBSCRIPTION_EVENTS.TYPE, SUBSCRIPTION_EVENTS.PERIOD_NUMBER, SUBSCRIPTION_EVENTS.PERIOD_START,
-                        SUBSCRIPTION_EVENTS.PERIOD_END, SUBSCRIPTION_EVENTS.AMOUNT, SUBSCRIPTIONS.CURRENCY, SUBSCRIPTION_EVENTS.CHARGE_ID,
-                        SUBSCRIPTION_EVENTS.DETAIL, SUBSCRIPTION_EVENTS.OCCURRED_AT)
+                        SUBSCRIPTION_EVENTS.PERIOD_END, SUBSCRIPTION_EVENTS.AMOUNT, SUBSCRIPTIONS.CURRENCY, SUBSCRIPTION_EVENTS.PAID_AMOUNT,
+                        SUBSCRIPTION_EVENTS.CHARGE_ID, SUBSCRIPTION_EVENTS.DETAIL, SUBSCRIPTION_EVENTS.OCCURRED_AT)
                 .from(SUBSCRIPTION_EVENTS)
                 .join(SUBSCRIPTIONS)
                 .on(SUBSCRIPTIONS.ID.eq(SUBSCRIPTION_EVENTS.SUBSCRIPTION_ID).and(SUBSCRIPTIONS.TENANT_ID.eq(SUBSCRIPTION_EVENTS.TENANT_ID)))
@@ -72,9 +72,10 @@ public class JooqSubscriptionReadRepository implements SubscriptionReadRepositor
                         row.value4(),
                         row.value5(),
                         row.value6() == null ? null : Money.of(row.value6(), Currency.of(row.value7().strip())),
-                        row.value8(),
+                        row.value8() == null ? null : Money.of(row.value8(), Currency.of(row.value7().strip())),
                         row.value9(),
-                        row.value10()));
+                        row.value10(),
+                        row.value11()));
     }
 
     private static SubscriptionView toView(SubscriptionsRecord row) {

@@ -186,6 +186,21 @@ public class SubscriptionEventsRecord extends UpdatableRecordImpl<SubscriptionEv
         return (Instant) get(10);
     }
 
+    /**
+     * Setter for <code>public.subscription_events.paid_amount</code>.
+     */
+    public SubscriptionEventsRecord setPaidAmount(Long value) {
+        set(11, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.subscription_events.paid_amount</code>.
+     */
+    public Long getPaidAmount() {
+        return (Long) get(11);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -209,7 +224,7 @@ public class SubscriptionEventsRecord extends UpdatableRecordImpl<SubscriptionEv
     /**
      * Create a detached, initialised SubscriptionEventsRecord
      */
-    public SubscriptionEventsRecord(UUID id, UUID tenantId, UUID subscriptionId, String type, Integer periodNumber, Instant periodStart, Instant periodEnd, Long amount, UUID chargeId, String detail, Instant occurredAt) {
+    public SubscriptionEventsRecord(UUID id, UUID tenantId, UUID subscriptionId, String type, Integer periodNumber, Instant periodStart, Instant periodEnd, Long amount, UUID chargeId, String detail, Instant occurredAt, Long paidAmount) {
         super(SubscriptionEvents.SUBSCRIPTION_EVENTS);
 
         setId(id);
@@ -223,6 +238,7 @@ public class SubscriptionEventsRecord extends UpdatableRecordImpl<SubscriptionEv
         setChargeId(chargeId);
         setDetail(detail);
         setOccurredAt(occurredAt);
+        setPaidAmount(paidAmount);
         resetTouchedOnNotNull();
     }
 }

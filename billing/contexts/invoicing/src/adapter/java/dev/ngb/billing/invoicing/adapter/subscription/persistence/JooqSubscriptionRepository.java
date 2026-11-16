@@ -140,6 +140,7 @@ public class JooqSubscriptionRepository implements SubscriptionRepository {
                 .set(SUBSCRIPTION_EVENTS.PERIOD_START, event.periodStart())
                 .set(SUBSCRIPTION_EVENTS.PERIOD_END, event.periodEnd())
                 .set(SUBSCRIPTION_EVENTS.AMOUNT, event.amount() == null ? null : event.amount().minorUnits())
+                .set(SUBSCRIPTION_EVENTS.PAID_AMOUNT, event.paidAmount() == null ? null : event.paidAmount().minorUnits())
                 .set(SUBSCRIPTION_EVENTS.CHARGE_ID, event.chargeId())
                 .set(SUBSCRIPTION_EVENTS.DETAIL, event.detail())
                 .set(SUBSCRIPTION_EVENTS.OCCURRED_AT, event.occurredAt())

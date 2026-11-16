@@ -38,8 +38,12 @@ public final class SubscriptionEvents {
     /**
      * A period was paid. Period 0 is the first one and is reported when the subscription starts.
      * {@code chargeId} is null only for a plan whose recurring price is zero.
+     *
+     * <p>{@code amount} is the period price before coupons; {@code paidAmount} is what the wallet actually paid.
      */
-    public record Renewed(UUID eventId, Subscription subscription, int periodNumber, Money amount, UUID chargeId, Instant occurredAt) implements DomainEvent {
+    public record Renewed(
+            UUID eventId, Subscription subscription, int periodNumber, Money amount, Money paidAmount, UUID chargeId, Instant occurredAt)
+            implements DomainEvent {
         public static final String TYPE = SuiteEventTypes.SUBSCRIPTION_RENEWED;
 
         @Override
@@ -60,6 +64,9 @@ public final class SubscriptionEvents {
         @Override
         public Map<String, Object> payload() {
             Map<String, Object> map = common(subscription, periodNumber, amount);
+            if (paidAmount != null) {
+                map.put("paidAmount", MoneyEventPayload.money(paidAmount));
+            }
             if (chargeId != null) {
                 map.put("chargeId", chargeId.toString());
             }

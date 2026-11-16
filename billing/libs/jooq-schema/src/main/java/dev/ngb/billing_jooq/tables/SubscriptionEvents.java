@@ -116,6 +116,11 @@ public class SubscriptionEvents extends TableImpl<SubscriptionEventsRecord> {
      */
     public final TableField<SubscriptionEventsRecord, Instant> OCCURRED_AT = createField(DSL.name("occurred_at"), SQLDataType.INSTANT.nullable(false), this, "");
 
+    /**
+     * The column <code>public.subscription_events.paid_amount</code>.
+     */
+    public final TableField<SubscriptionEventsRecord, Long> PAID_AMOUNT = createField(DSL.name("paid_amount"), SQLDataType.BIGINT, this, "");
+
     private SubscriptionEvents(Name alias, Table<SubscriptionEventsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -223,6 +228,7 @@ public class SubscriptionEvents extends TableImpl<SubscriptionEventsRecord> {
         return Arrays.asList(
             Internal.createCheck(this, DSL.name("subscription_events_amount_check"), "((amount > 0))", true),
             Internal.createCheck(this, DSL.name("subscription_events_detail_check"), "((length(detail) <= 500))", true),
+            Internal.createCheck(this, DSL.name("subscription_events_paid_amount_check"), "((paid_amount >= 0))", true),
             Internal.createCheck(this, DSL.name("subscription_events_period_number_check"), "((period_number >= 0))", true),
             Internal.createCheck(this, DSL.name("subscription_events_type_check"), "((type = ANY (ARRAY['CREATED'::text, 'RENEWED'::text, 'PAYMENT_FAILED'::text, 'CANCEL_REQUESTED'::text, 'CANCELED'::text])))", true)
         );

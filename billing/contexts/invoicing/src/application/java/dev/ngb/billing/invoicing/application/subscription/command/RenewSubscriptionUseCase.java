@@ -163,18 +163,23 @@ public class RenewSubscriptionUseCase {
         }
         Money amount = price.get().amount();
         UUID chargeId = null;
+        Money paid = Money.zero(amount.currency());
         if (amount.isPositive()) {
             ChargeResult charge = money.charge(new ChargeCommand(subscription.walletId(), null, amount, null, SubscriptionCharges.reference(subscription.id(), number),
-                    SubscriptionCharges.idempotencyKey(subscription.id(), number, subscription.nextAttempt())));
+                    SubscriptionCharges.idempotencyKey(subscription.id(), number, subscription.nextAttempt()), null,
+                    new dev.ngb.billing.money.api.charge.ChargeContext(dev.ngb.billing.money.api.charge.ChargeKind.SUBSCRIPTION_RENEWAL,
+                            subscription.planId(), java.util.Map.of())));
             if (charge.status() == ChargeStatus.FAILED) {
                 return failed(subscription, number, amount, charge.failureReason(), now);
             }
             chargeId = charge.id().value();
+            paid = charge.amount();
         }
         subscription.recordRenewed(now);
         subscriptions.update(subscription);
-        subscriptions.appendEvent(SubscriptionHistoryEntry.renewed(ids.newId(), subscription, number, amount, chargeId, now));
-        events.publish(new SubscriptionEvents.Renewed(ids.newId(), subscription, number, amount, chargeId, now));
+        // The history keeps the gross as its amount and adds what the wallet actually paid after coupons.
+        subscriptions.appendEvent(SubscriptionHistoryEntry.renewed(ids.newId(), subscription, number, amount, paid, chargeId, now));
+        events.publish(new SubscriptionEvents.Renewed(ids.newId(), subscription, number, amount, paid, chargeId, now));
         return Outcome.RENEWED;
     }
 

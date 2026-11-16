@@ -85,8 +85,10 @@ class PricingConfiguration {
     }
 
     @Bean
-    EstimateCostUseCase estimateCostUseCase(UnitOfWork unitOfWork, PlanRepository plans, Clock clock) {
-        return new EstimateCostUseCase(unitOfWork, plans, clock);
+    EstimateCostUseCase estimateCostUseCase(
+            UnitOfWork unitOfWork, PlanRepository plans, WalletLookup wallets, CustomerLookup customers,
+            dev.ngb.billing.money.api.charge.ChargeDiscounts discounts, Clock clock) {
+        return new EstimateCostUseCase(unitOfWork, plans, wallets, customers, discounts, clock);
     }
 
     @Bean

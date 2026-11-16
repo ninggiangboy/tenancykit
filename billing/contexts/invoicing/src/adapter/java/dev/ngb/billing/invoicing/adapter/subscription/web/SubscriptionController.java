@@ -48,11 +48,14 @@ public class SubscriptionController {
         }
     }
 
+    /** {@code amount} is the period price; {@code paidAmount} is what the wallet paid after coupons. */
     public record SubscriptionEventResponse(
-            String id, String type, Integer periodNumber, Instant periodStart, Instant periodEnd, MoneyDto amount, String chargeId, String detail, Instant occurredAt) {
+            String id, String type, Integer periodNumber, Instant periodStart, Instant periodEnd, MoneyDto amount, MoneyDto paidAmount, String chargeId,
+            String detail, Instant occurredAt) {
         static SubscriptionEventResponse of(SubscriptionHistoryEntryView e) {
             return new SubscriptionEventResponse(e.id().toString(), e.type().name(), e.periodNumber(), e.periodStart(), e.periodEnd(),
-                    e.amount() == null ? null : MoneyDto.of(e.amount()), e.chargeId() == null ? null : e.chargeId().toString(), e.detail(), e.occurredAt());
+                    e.amount() == null ? null : MoneyDto.of(e.amount()), e.paidAmount() == null ? null : MoneyDto.of(e.paidAmount()),
+                    e.chargeId() == null ? null : e.chargeId().toString(), e.detail(), e.occurredAt());
         }
     }
 

@@ -3376,6 +3376,8 @@ components:
           format: date-time
         amount:
           $ref: "#/components/schemas/MoneyDto"
+        paidAmount:
+          $ref: "#/components/schemas/MoneyDto"
         chargeId:
           type: string
         detail:
@@ -3681,6 +3683,19 @@ components:
         events:
           type: integer
           format: int64
+    DiscountLineDto:
+      type: object
+      properties:
+        redemptionId:
+          type: string
+        couponId:
+          type: string
+        couponName:
+          type: string
+        benefitType:
+          type: string
+        amount:
+          $ref: "#/components/schemas/MoneyDto"
     EstimateResponse:
       type: object
       properties:
@@ -3693,6 +3708,12 @@ components:
           format: int32
         amount:
           $ref: "#/components/schemas/MoneyDto"
+        grossAmount:
+          $ref: "#/components/schemas/MoneyDto"
+        discounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/DiscountLineDto"
         exactAmount:
           type: string
         adjustment:
@@ -3737,6 +3758,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UsageInput"
+        walletId:
+          type: string
     CreatePlanRequest:
       type: object
       properties:
