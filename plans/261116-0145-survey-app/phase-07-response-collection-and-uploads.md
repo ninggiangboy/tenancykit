@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "Response collection and uploads"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [5, 6]
