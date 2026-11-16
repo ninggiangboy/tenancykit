@@ -44,11 +44,11 @@
       "translations": {
         "en": {
           "survey.title": "T",
-          "question.q2.label": [
+          "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": [
             "You chose ",
             {
               "ref": {
-                "answer": "q1"
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
               }
             },
             "?"
@@ -70,7 +70,7 @@
       "vars": {},
       "score": null,
       "rendered": {
-        "question.q2.label": "You chose green?"
+        "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": "You chose green?"
       },
       "errors": []
     }
@@ -110,11 +110,11 @@
       "translations": {
         "en": {
           "survey.title": "T",
-          "question.q2.label": [
+          "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": [
             "You chose ",
             {
               "ref": {
-                "answer": "q1"
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
               }
             }
           ]
@@ -135,7 +135,7 @@
       "vars": {},
       "score": null,
       "rendered": {
-        "question.q2.label": "You chose &lt;script&gt;alert(1)&lt;/script&gt;"
+        "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": "You chose &lt;script&gt;alert(1)&lt;/script&gt;"
       },
       "errors": []
     }
@@ -175,11 +175,11 @@
       "translations": {
         "en": {
           "survey.title": "T",
-          "question.q2.label": [
+          "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": [
             "A & B said ",
             {
               "ref": {
-                "answer": "q1"
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
               }
             }
           ]
@@ -200,7 +200,7 @@
       "vars": {},
       "score": null,
       "rendered": {
-        "question.q2.label": "A & B said &quot;hi&quot;"
+        "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": "A & B said &quot;hi&quot;"
       },
       "errors": []
     }
@@ -240,11 +240,11 @@
       "translations": {
         "en": {
           "survey.title": "T",
-          "question.q2.label": [
+          "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": [
             "You chose",
             {
               "ref": {
-                "answer": "q1"
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
               }
             }
           ]
@@ -263,7 +263,7 @@
       "vars": {},
       "score": null,
       "rendered": {
-        "question.q2.label": "You chose"
+        "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": "You chose"
       },
       "errors": []
     }
@@ -303,11 +303,11 @@
       "translations": {
         "en": {
           "survey.title": "T",
-          "question.q2.label": [
+          "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": [
             "Score: ",
             {
               "ref": {
-                "answer": "q1"
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
               }
             }
           ]
@@ -328,7 +328,7 @@
       "vars": {},
       "score": null,
       "rendered": {
-        "question.q2.label": "Score: 0.5"
+        "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": "Score: 0.5"
       },
       "errors": []
     }
@@ -368,11 +368,11 @@
       "translations": {
         "en": {
           "survey.title": "T",
-          "question.q2.label": [
+          "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": [
             "Score: ",
             {
               "ref": {
-                "answer": "q1"
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
               }
             }
           ]
@@ -393,7 +393,7 @@
       "vars": {},
       "score": null,
       "rendered": {
-        "question.q2.label": "Score: 42"
+        "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": "Score: 42"
       },
       "errors": []
     }
@@ -446,11 +446,11 @@
       "translations": {
         "en": {
           "survey.title": "T",
-          "question.q2.label": [
+          "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": [
             "Twice ",
             {
               "ref": {
-                "answer": "q1"
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
               }
             },
             " is ",
@@ -479,7 +479,7 @@
       },
       "score": null,
       "rendered": {
-        "question.q2.label": "Twice 3 is 6"
+        "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": "Twice 3 is 6"
       },
       "errors": []
     }
@@ -529,11 +529,11 @@
       "translations": {
         "en": {
           "survey.title": "T",
-          "question.q2.label": [
+          "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": [
             "You picked ",
             {
               "ref": {
-                "answer": "q1"
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
               }
             }
           ]
@@ -557,7 +557,7 @@
       "vars": {},
       "score": null,
       "rendered": {
-        "question.q2.label": "You picked red, green"
+        "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": "You picked red, green"
       },
       "errors": []
     }
@@ -597,11 +597,11 @@
       "translations": {
         "en": {
           "survey.title": "T",
-          "question.q2.label": [
+          "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": [
             "You said: ",
             {
               "ref": {
-                "answer": "q1"
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
               }
             }
           ]
@@ -622,7 +622,7 @@
       "vars": {},
       "score": null,
       "rendered": {
-        "question.q2.label": "You said: "
+        "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": "You said: "
       },
       "errors": []
     }
@@ -662,11 +662,11 @@
       "translations": {
         "en": {
           "survey.title": "T",
-          "question.q2.label": [
+          "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": [
             "You chose ",
             {
               "ref": {
-                "answer": "q1"
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
               }
             }
           ]
@@ -687,7 +687,7 @@
       "vars": {},
       "score": null,
       "rendered": {
-        "question.q2.label": "You chose {{answer.q1}}"
+        "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": "You chose {{answer.q1}}"
       },
       "errors": []
     }
@@ -723,7 +723,7 @@
       "translations": {
         "en": {
           "survey.title": "T",
-          "question.q1.label": "A plain label"
+          "question.00210257-69ad-8cf6-dce4-12aac7c47365.label": "A plain label"
         }
       }
     },
@@ -738,7 +738,7 @@
       "vars": {},
       "score": null,
       "rendered": {
-        "question.q1.label": "A plain label"
+        "question.00210257-69ad-8cf6-dce4-12aac7c47365.label": "A plain label"
       },
       "errors": []
     }
@@ -779,22 +779,22 @@
       "translations": {
         "en": {
           "survey.title": "T",
-          "question.q2.label": [
+          "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": [
             "You chose ",
             {
               "ref": {
-                "answer": "q1"
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
               }
             }
           ]
         },
         "vi": {
           "survey.title": "T",
-          "question.q2.label": [
+          "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": [
             "Bạn chọn ",
             {
               "ref": {
-                "answer": "q1"
+                "answer": "00210257-69ad-8cf6-dce4-12aac7c47365"
               }
             }
           ]
@@ -815,7 +815,7 @@
       "vars": {},
       "score": null,
       "rendered": {
-        "question.q2.label": "You chose green"
+        "question.476319a0-3d69-84a4-5e81-ace3332fbee9.label": "You chose green"
       },
       "errors": []
     }
