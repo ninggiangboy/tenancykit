@@ -1,7 +1,7 @@
 ---
 phase: 14
 title: "loyalty point expiry"
-status: pending
+status: done
 priority: P2
 effort: "M"
 dependencies: [11]

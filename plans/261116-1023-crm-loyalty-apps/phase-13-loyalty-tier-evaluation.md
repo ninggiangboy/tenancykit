@@ -1,7 +1,7 @@
 ---
 phase: 13
 title: "loyalty tier evaluation"
-status: pending
+status: done
 priority: P2
 effort: "M"
 dependencies: [11]
