@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "crm customers, batch upsert and lookup"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [3]

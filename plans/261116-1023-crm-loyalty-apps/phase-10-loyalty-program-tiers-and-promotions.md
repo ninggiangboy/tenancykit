@@ -1,7 +1,7 @@
 ---
 phase: 10
 title: "loyalty program, tiers and promotion rules"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [4]

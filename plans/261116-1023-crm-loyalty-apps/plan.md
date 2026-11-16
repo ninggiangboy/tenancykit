@@ -1,7 +1,7 @@
 ---
 title: "CRM and loyalty apps — a retail Tenant's customer data hub and its points program"
 description: "Two API-only deployables delivered together that never link to each other: crm/ keeps a retail Tenant's customers, orders with line items, activities, custom fields, tags and consent and sends signed webhooks to the Tenant; loyalty/ takes orders from the Tenant's own system, runs points, tiers, expiry, rewards and promotions, and sends signed webhooks of every points, tier and voucher change. The Tenant System is the only integrator."
-status: pending
+status: in-progress
 priority: P1
 effort: "16 phases, 8 × M, 8 × L"
 branch: dev
