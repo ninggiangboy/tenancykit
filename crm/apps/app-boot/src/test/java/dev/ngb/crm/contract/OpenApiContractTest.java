@@ -111,11 +111,11 @@ class OpenApiContractTest {
     }
 
     /**
-     * What crm serves today: the customer surface with the fields, tags and consent that belong to it, and the webhook
-     * surface. A new endpoint extends this set.
+     * What crm serves today: the customer surface with the fields, tags and consent that belong to it, the orders with
+     * their returns and one customer's order history, and the webhook surface. A new endpoint extends this set.
      */
     @Test
-    void theServedSurfaceIsTheCustomerFieldsTagsConsentAndWebhookSurface() throws Exception {
+    void theServedSurfaceIsTheCustomerFieldsTagsConsentOrderAndWebhookSurface() throws Exception {
         JsonNode served = YAML.readTree(mvc.perform(get("/v3/api-docs.yaml"))
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8));
         Set<String> servedPaths = new TreeSet<>(List.of(served.get("paths").propertyNames().toArray(String[]::new)));
@@ -128,6 +128,10 @@ class OpenApiContractTest {
                 "/api/v1/customers/batch",
                 "/api/v1/customers/{externalRef}",
                 "/api/v1/customers/{externalRef}/consents",
+                "/api/v1/customers/{externalRef}/orders",
+                "/api/v1/orders/batch",
+                "/api/v1/orders/{orderRef}",
+                "/api/v1/orders/{orderRef}/returns/{returnRef}",
                 "/api/v1/tags",
                 "/api/v1/webhook-deliveries",
                 "/api/v1/webhook-deliveries/{id}/retry",

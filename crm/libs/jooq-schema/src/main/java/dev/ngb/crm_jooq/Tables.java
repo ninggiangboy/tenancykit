@@ -13,6 +13,10 @@ import dev.ngb.crm_jooq.tables.EventInbox;
 import dev.ngb.crm_jooq.tables.FieldDefinitions;
 import dev.ngb.crm_jooq.tables.JobLeases;
 import dev.ngb.crm_jooq.tables.JobRuns;
+import dev.ngb.crm_jooq.tables.OrderLines;
+import dev.ngb.crm_jooq.tables.OrderReturnLines;
+import dev.ngb.crm_jooq.tables.OrderReturns;
+import dev.ngb.crm_jooq.tables.Orders;
 import dev.ngb.crm_jooq.tables.Outbox;
 import dev.ngb.crm_jooq.tables.ReplicaState;
 import dev.ngb.crm_jooq.tables.TenantDomains;
@@ -74,6 +78,26 @@ public class Tables {
      * The table <code>public.job_runs</code>.
      */
     public static final JobRuns JOB_RUNS = JobRuns.JOB_RUNS;
+
+    /**
+     * The table <code>public.order_lines</code>.
+     */
+    public static final OrderLines ORDER_LINES = OrderLines.ORDER_LINES;
+
+    /**
+     * The table <code>public.order_return_lines</code>.
+     */
+    public static final OrderReturnLines ORDER_RETURN_LINES = OrderReturnLines.ORDER_RETURN_LINES;
+
+    /**
+     * The table <code>public.order_returns</code>.
+     */
+    public static final OrderReturns ORDER_RETURNS = OrderReturns.ORDER_RETURNS;
+
+    /**
+     * The table <code>public.orders</code>.
+     */
+    public static final Orders ORDERS = Orders.ORDERS;
 
     /**
      * The table <code>public.outbox</code>.

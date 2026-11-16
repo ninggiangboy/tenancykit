@@ -2,6 +2,7 @@ package dev.ngb.crm.customers.application.customer.port;
 
 import dev.ngb.crm.customers.domain.customer.Customer;
 import java.util.Optional;
+import java.util.UUID;
 
 /** How the write side stores customers. The Tenant's reference is the key; the id is crm's own. */
 public interface CustomerRepository {
@@ -18,6 +19,9 @@ public interface CustomerRepository {
     void update(Customer customer);
 
     Optional<Customer> findByExternalRef(String externalRef);
+
+    /** The customer with crm's own id, for the contexts that store the id and report the reference. */
+    Optional<Customer> findById(UUID id);
 
     /** The customer with its row locked until the transaction ends, so two callers of one reference change it in turn. */
     Optional<Customer> lockByExternalRef(String externalRef);

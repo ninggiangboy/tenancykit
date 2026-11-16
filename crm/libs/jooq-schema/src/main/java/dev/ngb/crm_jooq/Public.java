@@ -13,6 +13,10 @@ import dev.ngb.crm_jooq.tables.EventInbox;
 import dev.ngb.crm_jooq.tables.FieldDefinitions;
 import dev.ngb.crm_jooq.tables.JobLeases;
 import dev.ngb.crm_jooq.tables.JobRuns;
+import dev.ngb.crm_jooq.tables.OrderLines;
+import dev.ngb.crm_jooq.tables.OrderReturnLines;
+import dev.ngb.crm_jooq.tables.OrderReturns;
+import dev.ngb.crm_jooq.tables.Orders;
 import dev.ngb.crm_jooq.tables.Outbox;
 import dev.ngb.crm_jooq.tables.ReplicaState;
 import dev.ngb.crm_jooq.tables.TenantDomains;
@@ -91,6 +95,26 @@ public class Public extends SchemaImpl {
     public final JobRuns JOB_RUNS = JobRuns.JOB_RUNS;
 
     /**
+     * The table <code>public.order_lines</code>.
+     */
+    public final OrderLines ORDER_LINES = OrderLines.ORDER_LINES;
+
+    /**
+     * The table <code>public.order_return_lines</code>.
+     */
+    public final OrderReturnLines ORDER_RETURN_LINES = OrderReturnLines.ORDER_RETURN_LINES;
+
+    /**
+     * The table <code>public.order_returns</code>.
+     */
+    public final OrderReturns ORDER_RETURNS = OrderReturns.ORDER_RETURNS;
+
+    /**
+     * The table <code>public.orders</code>.
+     */
+    public final Orders ORDERS = Orders.ORDERS;
+
+    /**
      * The table <code>public.outbox</code>.
      */
     public final Outbox OUTBOX = Outbox.OUTBOX;
@@ -160,6 +184,10 @@ public class Public extends SchemaImpl {
             FieldDefinitions.FIELD_DEFINITIONS,
             JobLeases.JOB_LEASES,
             JobRuns.JOB_RUNS,
+            OrderLines.ORDER_LINES,
+            OrderReturnLines.ORDER_RETURN_LINES,
+            OrderReturns.ORDER_RETURNS,
+            Orders.ORDERS,
             Outbox.OUTBOX,
             ReplicaState.REPLICA_STATE,
             TenantDomains.TENANT_DOMAINS,

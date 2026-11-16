@@ -45,8 +45,6 @@ class PermissionCatalogTest {
     private static final Set<String> NOT_YET_SERVED = Set.of(
             CrmPermissions.CUSTOMER_EXPORT,
             CrmPermissions.CUSTOMER_ERASE,
-            CrmPermissions.ORDER_READ,
-            CrmPermissions.ORDER_RECORD,
             CrmPermissions.ACTIVITY_READ,
             CrmPermissions.ACTIVITY_RECORD);
 

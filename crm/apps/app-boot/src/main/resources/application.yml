@@ -102,7 +102,12 @@ crm:
     max-orders: ${CRM_MAX_ORDERS_PER_BATCH:100}
     max-order-lines: ${CRM_MAX_ORDER_LINES_PER_BATCH:5000}
   orders:
+    # The largest order one call may record. It also bounds one outbox row and one webhook body, so a deployment with
+    # a slow endpoint can lower it.
     max-lines-per-order: ${CRM_MAX_LINES_PER_ORDER:500}
+    # An order or a return may not be dated further in the future than this. There is no lower bound: a Tenant that
+    # imports historic orders sends dates no window can accept.
+    max-future-skew: ${CRM_ORDER_MAX_FUTURE_SKEW:PT5M}
   fields:
     # The Tenant's own customer attributes: how many definitions may accept values, and how large one customer's
     # values may be serialized. These bound one Tenant's vocabulary and one row, so a deployment sets them.

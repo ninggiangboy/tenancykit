@@ -53,6 +53,9 @@ final class ArchitectureRules {
         for (String table : List.of("Customers", "FieldDefinitions", "CustomerTags", "ConsentTopics", "ConsentEvents")) {
             TABLE_OWNER.put(table, "customers");
         }
+        for (String table : List.of("Orders", "OrderLines", "OrderReturns", "OrderReturnLines")) {
+            TABLE_OWNER.put(table, "orders");
+        }
     }
 
     /** Every use case opens a unit of work; crm has no exception and should never grow one. */

@@ -95,11 +95,22 @@ public record CrmSettings(
         }
     }
 
-    /** @param maxLinesPerOrder the largest order one call may record, 500 lines by default */
-    public record Orders(int maxLinesPerOrder) {
+    /**
+     * How large one order may be, and how far ahead of the service's clock it may be dated.
+     *
+     * @param maxLinesPerOrder the largest order one call may record, 500 lines by default. It is a setting rather than
+     *     a constant because it also bounds the size of one outbox row and one webhook body, so an installation with a
+     *     slow endpoint can lower it
+     * @param maxFutureSkew how far ahead of the service's clock an order or a return may be dated; there is no lower
+     *     bound, because a Tenant that imports historic orders sends dates no window can accept
+     */
+    public record Orders(int maxLinesPerOrder, Duration maxFutureSkew) {
 
         public Orders {
             positive(maxLinesPerOrder, "crm.orders.max-lines-per-order");
+            if (maxFutureSkew == null || maxFutureSkew.isNegative()) {
+                throw new IllegalArgumentException("crm.orders.max-future-skew must not be negative");
+            }
         }
     }
 

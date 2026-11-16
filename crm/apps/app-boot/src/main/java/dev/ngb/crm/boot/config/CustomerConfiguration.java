@@ -5,9 +5,11 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
+import dev.ngb.crm.customers.adapter.customer.persistence.JooqCustomerDirectory;
 import dev.ngb.crm.customers.adapter.customer.persistence.JooqCustomerReadRepository;
 import dev.ngb.crm.customers.adapter.customer.persistence.JooqCustomerRepository;
 import dev.ngb.crm.customers.adapter.field.json.JacksonFieldValues;
+import dev.ngb.crm.customers.api.customer.CustomerDirectory;
 import dev.ngb.crm.customers.application.customer.command.PatchCustomerUseCase;
 import dev.ngb.crm.customers.application.customer.command.UpsertCustomerUseCase;
 import dev.ngb.crm.customers.application.customer.command.UpsertCustomersBatchUseCase;
@@ -36,6 +38,15 @@ class CustomerConfiguration {
     @Bean
     CustomerRepository customerRepository(DSLContext dsl, JacksonFieldValues fieldValues) {
         return new JooqCustomerRepository(dsl, fieldValues);
+    }
+
+    /**
+     * The context's contract for the contexts that record something about a customer. It reads through the context's
+     * own repository and creates through the same upsert a {@code PUT} takes, so both paths announce a customer alike.
+     */
+    @Bean
+    CustomerDirectory customerDirectory(CustomerRepository customers, UpsertCustomerUseCase upsert) {
+        return new JooqCustomerDirectory(customers, upsert);
     }
 
     @Bean

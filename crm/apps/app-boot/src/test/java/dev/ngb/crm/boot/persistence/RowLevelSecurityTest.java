@@ -137,6 +137,10 @@ class RowLevelSecurityTest {
                 Arguments.of("customer_tags", customerTagRow()),
                 Arguments.of("consent_topics", consentTopicRow()),
                 Arguments.of("consent_events", consentRow()),
+                Arguments.of("orders", orderRow()),
+                Arguments.of("order_lines", orderLineRow()),
+                Arguments.of("order_returns", orderReturnRow()),
+                Arguments.of("order_return_lines", orderReturnLineRow()),
                 Arguments.of("webhook_endpoints", endpointRow()),
                 Arguments.of("webhook_deliveries", deliveryRow()),
                 Arguments.of("webhook_delivery_attempts", attemptRow()));
@@ -196,6 +200,89 @@ class RowLevelSecurityTest {
                 select gen_random_uuid(), '%1$s', customer.id, 'profiling', 'GRANTED', now(), now(), 'pos',
                        'ref-' || gen_random_uuid()
                 from customer
+                """;
+    }
+
+    private static String orderRow() {
+        return """
+                with customer as (
+                    insert into customers (tenant_id, id, external_ref, status, version, created_at, updated_at)
+                    values ('%1$s', gen_random_uuid(), 'cust-' || gen_random_uuid(), 'ACTIVE', 1, now(), now())
+                    returning id
+                )
+                insert into orders (tenant_id, id, order_ref, customer_id, currency, total, occurred_at, store_code,
+                                    channel, status, version, fingerprint, created_at)
+                select '%1$s', gen_random_uuid(), 'order-' || gen_random_uuid(), customer.id, 'EUR', 1299, now(), 'S1',
+                       'pos', 'RECORDED', 1, 'fingerprint', now()
+                from customer
+                """;
+    }
+
+    private static String orderLineRow() {
+        return """
+                with customer as (
+                    insert into customers (tenant_id, id, external_ref, status, version, created_at, updated_at)
+                    values ('%1$s', gen_random_uuid(), 'cust-' || gen_random_uuid(), 'ACTIVE', 1, now(), now())
+                    returning id
+                ), placed as (
+                    insert into orders (tenant_id, id, order_ref, customer_id, currency, total, occurred_at, store_code,
+                                        channel, status, version, fingerprint, created_at)
+                    select '%1$s', gen_random_uuid(), 'order-' || gen_random_uuid(), customer.id, 'EUR', 1299, now(),
+                           'S1', 'pos', 'RECORDED', 1, 'fingerprint', now()
+                    from customer
+                    returning id
+                )
+                insert into order_lines (tenant_id, order_id, line_no, sku, name, category, quantity, amount,
+                                          earn_eligible, returned_quantity, returned_amount)
+                select '%1$s', placed.id, 1, 'SKU-1', 'Coffee', 'grocery', 2.000, 1299, true, 0, 0 from placed
+                """;
+    }
+
+    private static String orderReturnRow() {
+        return """
+                with customer as (
+                    insert into customers (tenant_id, id, external_ref, status, version, created_at, updated_at)
+                    values ('%1$s', gen_random_uuid(), 'cust-' || gen_random_uuid(), 'ACTIVE', 1, now(), now())
+                    returning id
+                ), placed as (
+                    insert into orders (tenant_id, id, order_ref, customer_id, currency, total, occurred_at, store_code,
+                                        channel, status, version, fingerprint, created_at)
+                    select '%1$s', gen_random_uuid(), 'order-' || gen_random_uuid(), customer.id, 'EUR', 1299, now(),
+                           'S1', 'pos', 'RECORDED', 1, 'fingerprint', now()
+                    from customer
+                    returning id
+                )
+                insert into order_returns (tenant_id, id, order_id, return_ref, occurred_at, version, fingerprint,
+                                            created_at)
+                select '%1$s', gen_random_uuid(), placed.id, 'return-' || gen_random_uuid(), now(), 2, 'fingerprint',
+                       now()
+                from placed
+                """;
+    }
+
+    private static String orderReturnLineRow() {
+        return """
+                with customer as (
+                    insert into customers (tenant_id, id, external_ref, status, version, created_at, updated_at)
+                    values ('%1$s', gen_random_uuid(), 'cust-' || gen_random_uuid(), 'ACTIVE', 1, now(), now())
+                    returning id
+                ), placed as (
+                    insert into orders (tenant_id, id, order_ref, customer_id, currency, total, occurred_at, store_code,
+                                        channel, status, version, fingerprint, created_at)
+                    select '%1$s', gen_random_uuid(), 'order-' || gen_random_uuid(), customer.id, 'EUR', 1299, now(),
+                           'S1', 'pos', 'RECORDED', 1, 'fingerprint', now()
+                    from customer
+                    returning id
+                ), returned as (
+                    insert into order_returns (tenant_id, id, order_id, return_ref, occurred_at, version, fingerprint,
+                                                created_at)
+                    select '%1$s', gen_random_uuid(), placed.id, 'return-' || gen_random_uuid(), now(), 2,
+                           'fingerprint', now()
+                    from placed
+                    returning id
+                )
+                insert into order_return_lines (tenant_id, return_id, line_no, quantity, amount)
+                select '%1$s', returned.id, 1, 1.000, 650 from returned
                 """;
     }
 

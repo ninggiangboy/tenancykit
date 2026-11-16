@@ -99,6 +99,11 @@ public class JooqCustomerRepository implements CustomerRepository {
                 .fetchOptional(this::toDomain);
     }
 
+    @Override
+    public Optional<Customer> findById(UUID id) {
+        return dsl.selectFrom(CUSTOMERS).where(CUSTOMERS.ID.eq(id)).fetchOptional(this::toDomain);
+    }
+
     /** The tag set of one customer: what it carries after this write, and nothing it carried before. */
     private void storeTags(Customer c) {
         dsl.deleteFrom(CUSTOMER_TAGS)

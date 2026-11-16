@@ -8,6 +8,7 @@ import dev.ngb.crm_jooq.Keys;
 import dev.ngb.crm_jooq.Public;
 import dev.ngb.crm_jooq.tables.ConsentEvents.ConsentEventsPath;
 import dev.ngb.crm_jooq.tables.CustomerTags.CustomerTagsPath;
+import dev.ngb.crm_jooq.tables.Orders.OrdersPath;
 import dev.ngb.crm_jooq.tables.records.CustomersRecord;
 
 import java.time.Instant;
@@ -223,6 +224,19 @@ public class Customers extends TableImpl<CustomersRecord> {
             _customerTags = new CustomerTagsPath(this, null, Keys.CUSTOMER_TAGS__CUSTOMER_TAGS_CUSTOMER_ID_FKEY.getInverseKey());
 
         return _customerTags;
+    }
+
+    private transient OrdersPath _orders;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.orders</code>
+     * table
+     */
+    public OrdersPath orders() {
+        if (_orders == null)
+            _orders = new OrdersPath(this, null, Keys.ORDERS__ORDERS_CUSTOMER_ID_FKEY.getInverseKey());
+
+        return _orders;
     }
 
     @Override

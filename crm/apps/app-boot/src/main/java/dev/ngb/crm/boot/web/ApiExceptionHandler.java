@@ -8,6 +8,8 @@ import dev.ngb.crm.customers.application.customer.exception.IfMatchRequiredExcep
 import dev.ngb.crm.customers.application.customer.exception.InvalidBatchException;
 import dev.ngb.crm.customers.application.customer.exception.InvalidCustomerException;
 import dev.ngb.crm.customers.application.field.exception.FieldProblem;
+import dev.ngb.crm.orders.application.order.exception.InvalidOrderBatchException;
+import dev.ngb.crm.orders.application.order.exception.OrderProblem;
 import dev.ngb.crm.webhook.application.endpoint.exception.PreconditionRequiredException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -58,6 +60,21 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
         return problem(HttpStatus.BAD_REQUEST, e);
     }
 
+    /** An order or return batch's envelope is wrong: no orders, or more orders or lines than one call may carry. */
+    @ExceptionHandler(InvalidOrderBatchException.class)
+    ProblemDetail invalidOrderBatch(InvalidOrderBatchException e) {
+        return problem(HttpStatus.BAD_REQUEST, e);
+    }
+
+    /**
+     * An order refusal: a missing order is 404, an erased customer's reference is 409, and every other refusal — an
+     * unknown customer, more lines than a call may carry, a cumulative return above the sale — is 422.
+     */
+    @ExceptionHandler(OrderProblem.class)
+    ProblemDetail orderProblem(OrderProblem e) {
+        return problem(orderStatusOf(e.code()), e);
+    }
+
     /** A field or consent refusal: a missing definition is 404, a taken key or an immutable type 409, the rest 422. */
     @ExceptionHandler({FieldProblem.class, ConsentProblem.class})
     ProblemDetail definitionProblem(CustomerProblem e) {
@@ -80,9 +97,28 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
         return HttpStatus.UNPROCESSABLE_CONTENT;
     }
 
+    /** An order refusal's status: a missing order or customer is 404, an erased customer is 409, the rest is 422. */
+    private static HttpStatus orderStatusOf(String code) {
+        if (code.endsWith("_NOT_FOUND")) {
+            return HttpStatus.NOT_FOUND;
+        }
+        if (code.equals("CUSTOMER_ERASED")) {
+            return HttpStatus.CONFLICT;
+        }
+        return HttpStatus.UNPROCESSABLE_CONTENT;
+    }
+
     private static ProblemDetail problem(HttpStatus status, CustomerProblem e) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, e.getMessage());
-        problem.setProperty("code", e.code());
+        return problem(status, e.code(), e.getMessage());
+    }
+
+    private static ProblemDetail problem(HttpStatus status, OrderProblem e) {
+        return problem(status, e.code(), e.getMessage());
+    }
+
+    private static ProblemDetail problem(HttpStatus status, String code, String detail) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
+        problem.setProperty("code", code);
         return problem;
     }
 }
