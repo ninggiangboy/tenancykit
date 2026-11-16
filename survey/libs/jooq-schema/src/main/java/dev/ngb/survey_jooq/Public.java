@@ -7,8 +7,12 @@ package dev.ngb.survey_jooq;
 import dev.ngb.survey_jooq.tables.AppEntitlements;
 import dev.ngb.survey_jooq.tables.EventInbox;
 import dev.ngb.survey_jooq.tables.Outbox;
+import dev.ngb.survey_jooq.tables.QuestionLineage;
 import dev.ngb.survey_jooq.tables.ReplicaState;
+import dev.ngb.survey_jooq.tables.SurveyDrafts;
 import dev.ngb.survey_jooq.tables.SurveySettings;
+import dev.ngb.survey_jooq.tables.SurveyVersions;
+import dev.ngb.survey_jooq.tables.Surveys;
 import dev.ngb.survey_jooq.tables.TenantDomains;
 import dev.ngb.survey_jooq.tables.TenantSystems;
 import dev.ngb.survey_jooq.tables.Tenants;
@@ -52,14 +56,34 @@ public class Public extends SchemaImpl {
     public final Outbox OUTBOX = Outbox.OUTBOX;
 
     /**
+     * The table <code>public.question_lineage</code>.
+     */
+    public final QuestionLineage QUESTION_LINEAGE = QuestionLineage.QUESTION_LINEAGE;
+
+    /**
      * The table <code>public.replica_state</code>.
      */
     public final ReplicaState REPLICA_STATE = ReplicaState.REPLICA_STATE;
 
     /**
+     * The table <code>public.survey_drafts</code>.
+     */
+    public final SurveyDrafts SURVEY_DRAFTS = SurveyDrafts.SURVEY_DRAFTS;
+
+    /**
      * The table <code>public.survey_settings</code>.
      */
     public final SurveySettings SURVEY_SETTINGS = SurveySettings.SURVEY_SETTINGS;
+
+    /**
+     * The table <code>public.survey_versions</code>.
+     */
+    public final SurveyVersions SURVEY_VERSIONS = SurveyVersions.SURVEY_VERSIONS;
+
+    /**
+     * The table <code>public.surveys</code>.
+     */
+    public final Surveys SURVEYS = Surveys.SURVEYS;
 
     /**
      * The table <code>public.tenant_domains</code>.
@@ -100,8 +124,12 @@ public class Public extends SchemaImpl {
             AppEntitlements.APP_ENTITLEMENTS,
             EventInbox.EVENT_INBOX,
             Outbox.OUTBOX,
+            QuestionLineage.QUESTION_LINEAGE,
             ReplicaState.REPLICA_STATE,
+            SurveyDrafts.SURVEY_DRAFTS,
             SurveySettings.SURVEY_SETTINGS,
+            SurveyVersions.SURVEY_VERSIONS,
+            Surveys.SURVEYS,
             TenantDomains.TENANT_DOMAINS,
             TenantSystems.TENANT_SYSTEMS,
             Tenants.TENANTS,

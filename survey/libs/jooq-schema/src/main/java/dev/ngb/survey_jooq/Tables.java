@@ -7,8 +7,12 @@ package dev.ngb.survey_jooq;
 import dev.ngb.survey_jooq.tables.AppEntitlements;
 import dev.ngb.survey_jooq.tables.EventInbox;
 import dev.ngb.survey_jooq.tables.Outbox;
+import dev.ngb.survey_jooq.tables.QuestionLineage;
 import dev.ngb.survey_jooq.tables.ReplicaState;
+import dev.ngb.survey_jooq.tables.SurveyDrafts;
 import dev.ngb.survey_jooq.tables.SurveySettings;
+import dev.ngb.survey_jooq.tables.SurveyVersions;
+import dev.ngb.survey_jooq.tables.Surveys;
 import dev.ngb.survey_jooq.tables.TenantDomains;
 import dev.ngb.survey_jooq.tables.TenantSystems;
 import dev.ngb.survey_jooq.tables.Tenants;
@@ -37,14 +41,34 @@ public class Tables {
     public static final Outbox OUTBOX = Outbox.OUTBOX;
 
     /**
+     * The table <code>public.question_lineage</code>.
+     */
+    public static final QuestionLineage QUESTION_LINEAGE = QuestionLineage.QUESTION_LINEAGE;
+
+    /**
      * The table <code>public.replica_state</code>.
      */
     public static final ReplicaState REPLICA_STATE = ReplicaState.REPLICA_STATE;
 
     /**
+     * The table <code>public.survey_drafts</code>.
+     */
+    public static final SurveyDrafts SURVEY_DRAFTS = SurveyDrafts.SURVEY_DRAFTS;
+
+    /**
      * The table <code>public.survey_settings</code>.
      */
     public static final SurveySettings SURVEY_SETTINGS = SurveySettings.SURVEY_SETTINGS;
+
+    /**
+     * The table <code>public.survey_versions</code>.
+     */
+    public static final SurveyVersions SURVEY_VERSIONS = SurveyVersions.SURVEY_VERSIONS;
+
+    /**
+     * The table <code>public.surveys</code>.
+     */
+    public static final Surveys SURVEYS = Surveys.SURVEYS;
 
     /**
      * The table <code>public.tenant_domains</code>.
