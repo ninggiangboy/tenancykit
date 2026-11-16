@@ -102,6 +102,8 @@ survey:
     dead-outbox-retention: P7D
     # A pending upload that never became part of a submit is deleted with its object after this.
     orphaned-upload-retention: PT24H
+    # An unfinished visit that has been idle this long becomes ABANDONED; a tenant setting overrides it per survey.
+    abandoned-visit-after: PT24H
     batch-size: 500
     interval: PT1H
   links:

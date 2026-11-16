@@ -41,12 +41,17 @@ public record SurveySettings(
     /** @param tenantParallelism at most this many tenants run at once, kept below the connection pool */
     public record Jobs(boolean enabled, int tenantParallelism) {}
 
-    /** Bounded retention for the messaging tables: without a purge the inbox and dead outbox rows grow without bound. */
+    /**
+     * Bounded retention for the messaging tables: without a purge the inbox and dead outbox rows grow without bound.
+     *
+     * @param abandonedVisitAfter how long an unfinished visit may stay idle before the sweep abandons it
+     */
     public record Housekeeping(
             boolean enabled,
             Duration inboxRetention,
             Duration deadOutboxRetention,
             Duration orphanedUploadRetention,
+            Duration abandonedVisitAfter,
             int batchSize,
             Duration interval) {}
 

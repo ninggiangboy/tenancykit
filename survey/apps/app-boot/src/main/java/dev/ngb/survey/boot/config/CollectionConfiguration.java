@@ -10,6 +10,7 @@ import dev.ngb.survey.collection.adapter.guard.web.PublicGuardFilter;
 import dev.ngb.survey.collection.adapter.link.persistence.JooqLinkReadRepository;
 import dev.ngb.survey.collection.adapter.link.persistence.JooqLinkRepository;
 import dev.ngb.survey.collection.adapter.response.persistence.JooqResponseReadRepository;
+import dev.ngb.survey.collection.adapter.response.persistence.JooqResponseReader;
 import dev.ngb.survey.collection.adapter.response.persistence.JooqResponseRepository;
 import dev.ngb.survey.collection.adapter.upload.persistence.JooqUploadRepository;
 import dev.ngb.survey.collection.adapter.upload.s3.S3UploadStore;
@@ -25,6 +26,7 @@ import dev.ngb.survey.collection.application.link.query.LinkQueries;
 import dev.ngb.survey.collection.application.link.query.LinkReadRepository;
 import dev.ngb.survey.collection.application.link.service.LinkUrls;
 import dev.ngb.survey.collection.application.link.service.SurveyState;
+import dev.ngb.survey.collection.application.visit.command.AbandonIdleVisitsUseCase;
 import dev.ngb.survey.collection.application.visit.command.OpenLinkUseCase;
 import dev.ngb.survey.collection.application.visit.command.RecordPageViewUseCase;
 import dev.ngb.survey.collection.application.visit.command.StartVisitUseCase;
@@ -36,7 +38,10 @@ import dev.ngb.survey.collection.application.visit.service.VisitLookup;
 import dev.ngb.survey.collection.application.response.command.DeleteResponseUseCase;
 import dev.ngb.survey.collection.application.response.command.SaveDraftUseCase;
 import dev.ngb.survey.collection.application.response.command.SubmitResponseUseCase;
+import dev.ngb.survey.collection.api.response.ResponseDeleter;
+import dev.ngb.survey.collection.api.response.ResponseReader;
 import dev.ngb.survey.collection.application.response.port.ResponseRepository;
+import dev.ngb.survey.collection.application.response.service.ResponseDeleterService;
 import dev.ngb.survey.authoring.api.flow.AnswerIndexer;
 import dev.ngb.survey.collection.application.response.query.ResponseQueries;
 import dev.ngb.survey.collection.application.response.query.ResponseReadRepository;
@@ -210,6 +215,16 @@ class CollectionConfiguration {
     }
 
     @Bean
+    ResponseReader responseReader(DSLContext dsl, JsonMapper json) {
+        return new JooqResponseReader(dsl, json);
+    }
+
+    @Bean
+    ResponseDeleter responseDeleter(DeleteResponseUseCase deleteResponseUseCase) {
+        return new ResponseDeleterService(deleteResponseUseCase);
+    }
+
+    @Bean
     UploadVerifier uploadVerifier(UploadRepository uploads, UploadStore store, AnswerIndexer indexer) {
         return new UploadVerifier(uploads, store, indexer);
     }
@@ -254,6 +269,11 @@ class CollectionConfiguration {
             IdGenerator ids,
             Clock clock) {
         return new PresignUploadUseCase(unitOfWork, uploads, store, limits, ids, clock);
+    }
+
+    @Bean
+    AbandonIdleVisitsUseCase abandonIdleVisitsUseCase(UnitOfWork unitOfWork, VisitRepository visits, Clock clock) {
+        return new AbandonIdleVisitsUseCase(unitOfWork, visits, clock);
     }
 
     @Bean
