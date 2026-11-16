@@ -34,6 +34,7 @@ public final class HttpWorld {
             "billing:payment:read", "billing:payment:create", "billing:refund:create",
             "billing:invoice:read", "billing:invoice:create", "billing:invoice:manage",
             "billing:subscription:read", "billing:subscription:manage",
+            "billing:coupon:read", "billing:coupon:manage", "billing:coupon:redeem",
             "billing:webhook:read", "billing:webhook:manage");
 
     /** A seeded tenant: its id, code, hostname and the token of an administrator who holds every Billing code. */

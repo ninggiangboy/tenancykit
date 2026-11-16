@@ -59,6 +59,27 @@ public final class Messages {
         return new NotFoundException("subscription not found");
     }
 
+    /** A coupon, a code or a redemption is not there; none of them is probed for existence by a caller. */
+    public static NotFoundException couponNotFound() {
+        return new NotFoundException("coupon not found");
+    }
+
+    public static NotFoundException promotionCodeNotFound() {
+        return new NotFoundException("promotion code not found");
+    }
+
+    public static NotFoundException couponRedemptionNotFound() {
+        return new NotFoundException("coupon redemption not found");
+    }
+
+    /**
+     * The one answer for a coupon or code that cannot be redeemed now: unknown, inactive, expired or exhausted all
+     * read the same, so a caller cannot probe which codes exist or which are spent.
+     */
+    public static NotFoundException couponNotRedeemable() {
+        return new NotFoundException("coupon not found");
+    }
+
     public static NotFoundException pricingPlanNotFound() {
         return new NotFoundException("pricing plan not found");
     }

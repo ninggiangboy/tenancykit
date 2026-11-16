@@ -10,4 +10,11 @@ import java.util.Optional;
 public interface WalletLookup {
 
     Optional<WalletSummary> find(WalletId id);
+
+    /**
+     * Reads the wallet and holds its row lock until the caller's transaction ends, for a flow that must serialise
+     * against a charge on the same wallet before it decides anything. Its lock order is the charge path's: wallet
+     * first, then anything the wallet's own rows point at.
+     */
+    Optional<WalletSummary> lockById(WalletId id);
 }

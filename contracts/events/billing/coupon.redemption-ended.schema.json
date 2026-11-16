@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://billing.io/events/coupon.redemption-ended.schema.json",
+  "title": "Coupon redemption ended",
+  "description": "A redemption stopped discounting charges: it exhausted its application cap, its total-discount cap or its end time, an administrator revoked it, or its coupon was deactivated with revocation. A redemption that simply runs out of time writes nothing and publishes nothing; the Tenant has its endsAt from coupon.redeemed. This schema describes the `data` member of the delivered document; the envelope (id, type, tenantId, occurredAt, data) is described in README.md.",
+  "type": "object",
+  "required": [
+    "redemptionId",
+    "couponId",
+    "walletId",
+    "customerId",
+    "status",
+    "reason",
+    "applicationsUsed",
+    "discountTotal",
+    "endedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "redemptionId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "couponId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "walletId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "customerId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ENDED",
+        "REVOKED"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "EXHAUSTED",
+        "REVOKED",
+        "COUPON_DEACTIVATED"
+      ]
+    },
+    "applicationsUsed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "discountTotal": {
+      "$ref": "#/$defs/money"
+    },
+    "endedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "money": {
+      "type": "object",
+      "description": "An amount in minor units (cents, dong) of one ISO 4217 currency.",
+      "required": [
+        "minorUnits",
+        "currency"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "minorUnits": {
+          "type": "integer"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        }
+      }
+    }
+  }
+}

@@ -44,6 +44,10 @@ public final class SuiteEventTypes {
     public static final String SUBSCRIPTION_RENEWED = "subscription.renewed";
     public static final String SUBSCRIPTION_PAYMENT_FAILED = "subscription.payment_failed";
 
+    // Billing: coupons.
+    public static final String COUPON_REDEEMED = "coupon.redeemed";
+    public static final String COUPON_REDEMPTION_ENDED = "coupon.redemption-ended";
+
     // Platform: the state-transfer events every consumer replicates.
     public static final String TENANT_CHANGED = "tenant.changed";
     public static final String TENANT_DOMAIN_CHANGED = "tenant-domain.changed";
@@ -68,7 +72,7 @@ public final class SuiteEventTypes {
                 WALLET_CREDITED, WALLET_DEBITED, RESERVATION_CREATED, RESERVATION_RELEASED, RESERVATION_EXPIRED, CHARGE_SUCCEEDED,
                 CHARGE_FAILED, LEDGER_ENTRY_REVERSED, CUSTOMER_CREATED, PRICING_PLAN_VERSION_PUBLISHED, PRICING_PLAN_RETIRED,
                 USAGE_RATED, PAYMENT_SUCCEEDED, PAYMENT_FAILED, REFUND_SUCCEEDED, INVOICE_CREATED, INVOICE_PAID, SUBSCRIPTION_RENEWED,
-                SUBSCRIPTION_PAYMENT_FAILED);
+                SUBSCRIPTION_PAYMENT_FAILED, COUPON_REDEEMED, COUPON_REDEMPTION_ENDED);
     }
 
     /** Every type Platform produces, matching the schemas under {@code contracts/events/platform}. */

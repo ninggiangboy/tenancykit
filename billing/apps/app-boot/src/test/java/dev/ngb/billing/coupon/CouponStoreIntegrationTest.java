@@ -231,9 +231,9 @@ class CouponStoreIntegrationTest {
         List<Redemption> locked = inTenant(world.tenant().id(), () -> redemptions.lockActiveByWallet(world.wallet().id()));
 
         assertThat(locked).extracting(Redemption::id).containsExactlyInAnyOrder(first.id(), second.id());
-        assertThat(locked).extracting(redemption -> redemption.id().value())
+        assertThat(locked).extracting(redemption -> redemption.id().value().toString())
                 .as("locked in ascending id order, so two charges cannot deadlock")
-                .isSortedAccordingTo(java.util.Comparator.naturalOrder());
+                .isSorted();
         assertThat(inTenant(world.tenant().id(), () -> redemptions.countForCustomer(world.customerId(), firstCoupon.id()))).isEqualTo(1);
         assertThat(inTenant(world.tenant().id(), () -> redemptions.lockActiveByCoupon(firstCoupon.id())))
                 .extracting(Redemption::id).containsExactly(first.id());

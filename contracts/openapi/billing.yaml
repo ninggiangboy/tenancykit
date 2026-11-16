@@ -458,6 +458,133 @@ paths:
       x-allowed-callers:
       - tenant-user
       - tenant-system
+  /api/v1/wallets/{walletId}/coupon-redemptions:
+    get:
+      tags:
+      - redemption-controller
+      operationId: redemptionsOfWallet
+      parameters:
+      - name: walletId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RedemptionResponse"
+      x-required-permission: billing:coupon:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
+    post:
+      tags:
+      - redemption-controller
+      operationId: redeemByCode
+      parameters:
+      - name: walletId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RedeemRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+        "200":
+          description: An earlier identical request already created it; that resource
+            is returned
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+      x-required-permission: billing:coupon:redeem
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
+  /api/v1/wallets/{walletId}/coupon-redemptions/attach:
+    post:
+      tags:
+      - redemption-controller
+      operationId: attach
+      parameters:
+      - name: walletId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RedeemRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+        "200":
+          description: An earlier identical request already created it; that resource
+            is returned
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+      x-required-permission: billing:coupon:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/usage-events:
     get:
       tags:
@@ -893,6 +1020,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChargeResponse"
       x-required-permission: billing:charge:create
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
+  /api/v1/promotion-codes/{id}/deactivate:
+    post:
+      tags:
+      - coupon-controller
+      operationId: deactivateCode
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PromotionCodeResponse"
+      x-required-permission: billing:coupon:manage
       x-allowed-callers:
       - tenant-user
       - tenant-system
@@ -1481,6 +1635,186 @@ paths:
       x-allowed-callers:
       - tenant-user
       - tenant-system
+  /api/v1/coupons:
+    get:
+      tags:
+      - coupon-controller
+      operationId: coupons
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CouponResponse"
+      x-required-permission: billing:coupon:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
+    post:
+      tags:
+      - coupon-controller
+      operationId: createCoupon
+      parameters:
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCouponRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CreateCouponResponse"
+      x-required-permission: billing:coupon:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
+  /api/v1/coupons/{id}/deactivate:
+    post:
+      tags:
+      - coupon-controller
+      operationId: deactivateCoupon
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeactivateCouponRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CouponResponse"
+      x-required-permission: billing:coupon:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
+  /api/v1/coupons/{id}/codes:
+    get:
+      tags:
+      - coupon-controller
+      operationId: codes
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PromotionCodeResponse"
+      x-required-permission: billing:coupon:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
+    post:
+      tags:
+      - coupon-controller
+      operationId: addCode
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCodeRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PromotionCodeResponse"
+      x-required-permission: billing:coupon:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
+  /api/v1/coupon-redemptions/{id}/revoke:
+    post:
+      tags:
+      - redemption-controller
+      operationId: revoke
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+      x-required-permission: billing:coupon:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/charges:
     post:
       tags:
@@ -1548,7 +1882,7 @@ paths:
     post:
       tags:
       - billing-session-controller
-      operationId: revoke
+      operationId: revoke_1
       parameters:
       - name: id
         in: path
@@ -2560,6 +2894,50 @@ paths:
       x-allowed-callers:
       - tenant-user
       - tenant-system
+  /api/v1/coupons/{id}:
+    get:
+      tags:
+      - coupon-controller
+      operationId: coupon
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CouponResponse"
+      x-required-permission: billing:coupon:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
+  /api/v1/coupon-redemptions/{id}:
+    get:
+      tags:
+      - redemption-controller
+      operationId: redemption
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+      x-required-permission: billing:coupon:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/charges/{id}:
     get:
       tags:
@@ -2845,6 +3223,55 @@ components:
           type: integer
           format: int64
         createdAt:
+          type: string
+          format: date-time
+    RedeemRequest:
+      type: object
+      properties:
+        code:
+          type: string
+        couponId:
+          type: string
+    RedemptionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        couponId:
+          type: string
+        couponName:
+          type: string
+        codeId:
+          type: string
+        walletId:
+          type: string
+        customerId:
+          type: string
+        status:
+          type: string
+        maxApplications:
+          type: integer
+          format: int32
+        applicationsUsed:
+          type: integer
+          format: int32
+        maxTotalDiscount:
+          type: integer
+          format: int64
+        discountTotal:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        redeemedAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        endReason:
+          type: string
+        endedAt:
           type: string
           format: date-time
     UsageEventRequest:
@@ -3140,6 +3567,29 @@ components:
           type: string
         reference:
           type: string
+    PromotionCodeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        couponId:
+          type: string
+        maxRedemptions:
+          type: integer
+          format: int64
+        redeemedCount:
+          type: integer
+          format: int64
+        redeemBy:
+          type: string
+          format: date-time
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
     ChargeUsageRequest:
       type: object
       properties:
@@ -3640,6 +4090,193 @@ components:
           type: string
         email:
           type: string
+    BenefitRequest:
+      type: object
+      properties:
+        type:
+          type: string
+        basisPoints:
+          type: integer
+          format: int32
+        amount:
+          type: integer
+          format: int64
+    CreateCouponRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        currency:
+          type: string
+        benefit:
+          $ref: "#/components/schemas/BenefitRequest"
+        window:
+          $ref: "#/components/schemas/WindowRequest"
+        maxApplications:
+          type: integer
+          format: int32
+        maxTotalDiscount:
+          type: integer
+          format: int64
+        limits:
+          $ref: "#/components/schemas/LimitsRequest"
+        scope:
+          $ref: "#/components/schemas/ScopeRequest"
+        stackable:
+          type: boolean
+        code:
+          type: string
+        codeMaxRedemptions:
+          type: integer
+          format: int64
+    LimitsRequest:
+      type: object
+      properties:
+        redeemBy:
+          type: string
+          format: date-time
+        maxRedemptions:
+          type: integer
+          format: int64
+        maxPerCustomer:
+          type: integer
+          format: int32
+        minCharge:
+          type: integer
+          format: int64
+        maxDiscountPerApplication:
+          type: integer
+          format: int64
+        budget:
+          type: integer
+          format: int64
+    ScopeRequest:
+      type: object
+      properties:
+        kinds:
+          type: array
+          items:
+            type: string
+        planIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+        metrics:
+          type: array
+          items:
+            type: string
+    WindowRequest:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: int32
+        unit:
+          type: string
+    CouponResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        benefitType:
+          type: string
+        percentBasisPoints:
+          type: integer
+          format: int32
+        amountOff:
+          type: integer
+          format: int64
+        creditAmount:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        redeemBy:
+          type: string
+          format: date-time
+        maxRedemptions:
+          type: integer
+          format: int64
+        maxPerCustomer:
+          type: integer
+          format: int32
+        redemptionsCount:
+          type: integer
+          format: int64
+        budget:
+          type: integer
+          format: int64
+        budgetUsed:
+          type: integer
+          format: int64
+        stackable:
+          type: boolean
+        status:
+          type: string
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        deactivatedAt:
+          type: string
+          format: date-time
+        planIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+    CreateCouponResponse:
+      type: object
+      properties:
+        coupon:
+          $ref: "#/components/schemas/CouponResponse"
+        code:
+          $ref: "#/components/schemas/PromotionCodeView"
+    PromotionCodeView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        couponId:
+          type: string
+          format: uuid
+        maxRedemptions:
+          type: integer
+          format: int64
+        redeemedCount:
+          type: integer
+          format: int64
+        redeemBy:
+          type: string
+          format: date-time
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+    DeactivateCouponRequest:
+      type: object
+      properties:
+        revokeRedemptions:
+          type: boolean
+    AddCodeRequest:
+      type: object
+      properties:
+        code:
+          type: string
+        maxRedemptions:
+          type: integer
+          format: int64
+        redeemBy:
+          type: string
+          format: date-time
     ChargeRequest:
       type: object
       properties:

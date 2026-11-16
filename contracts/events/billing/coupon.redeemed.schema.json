@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://billing.io/events/coupon.redeemed.schema.json",
+  "title": "Coupon redeemed",
+  "description": "A coupon was redeemed onto a wallet, so its benefit starts now. A credit coupon has already credited the wallet; a percent or amount coupon applies to the next eligible charge. This schema describes the `data` member of the delivered document; the envelope (id, type, tenantId, occurredAt, data) is described in README.md.",
+  "type": "object",
+  "required": [
+    "redemptionId",
+    "couponId",
+    "walletId",
+    "customerId",
+    "benefit",
+    "status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "redemptionId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "couponId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "codeId": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "walletId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "customerId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "benefit": {
+      "$ref": "#/$defs/benefit"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "ENDED"
+      ],
+      "description": "ENDED for a wallet-credit coupon, whose benefit is handed over at redeem; ACTIVE for a coupon that runs."
+    },
+    "maxApplications": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "maxTotalDiscount": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/money"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "endsAt": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "actor": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "money": {
+      "type": "object",
+      "description": "An amount in minor units (cents, dong) of one ISO 4217 currency.",
+      "required": [
+        "minorUnits",
+        "currency"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "minorUnits": {
+          "type": "integer"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        }
+      }
+    },
+    "benefit": {
+      "type": "object",
+      "description": "What a coupon gives: a percentage in basis points, a fixed amount off, or a credit added to the wallet once.",
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "PERCENT_OFF",
+            "AMOUNT_OFF",
+            "WALLET_CREDIT"
+          ]
+        },
+        "basisPoints": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "amount": {
+          "$ref": "#/$defs/money"
+        }
+      }
+    }
+  }
+}

@@ -159,8 +159,8 @@ class MoneyConfiguration {
     }
 
     @Bean
-    WalletLookup walletLookup(UnitOfWork unitOfWork, WalletReadRepository wallets) {
-        return new WalletLookupService(unitOfWork, wallets);
+    WalletLookup walletLookup(UnitOfWork unitOfWork, WalletReadRepository wallets, WalletRepository walletRepository) {
+        return new WalletLookupService(unitOfWork, wallets, walletRepository);
     }
 
     @Bean

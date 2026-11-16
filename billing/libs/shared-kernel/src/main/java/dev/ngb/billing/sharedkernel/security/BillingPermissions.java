@@ -55,12 +55,18 @@ public final class BillingPermissions {
     /** Starts and cancels subscriptions. */
     public static final String SUBSCRIPTION_MANAGE = "billing:subscription:manage";
 
+    public static final String COUPON_READ = "billing:coupon:read";
+    /** Creates and deactivates coupons and promotion codes; attaches a coupon to a wallet; revokes a redemption. */
+    public static final String COUPON_MANAGE = "billing:coupon:manage";
+    /** Redeems a promotion code onto a wallet, so the code's own limits still apply. */
+    public static final String COUPON_REDEEM = "billing:coupon:redeem";
+
     /** Every code above, so a test can prove the constants, the endpoints and the catalog are one set. */
     public static final Set<String> CODES = Set.of(
             CUSTOMER_READ, CUSTOMER_WRITE, BILLING_SESSION_CREATE, PORTAL_SETTINGS_MANAGE, WALLET_READ, WALLET_MANAGE, RESERVATION_MANAGE,
             CHARGE_CREATE, LEDGER_REVERSE, WEBHOOK_READ, WEBHOOK_MANAGE, PRICING_READ, PRICING_MANAGE, USAGE_RECORD, USAGE_READ, STRIPE_READ,
             STRIPE_MANAGE, PAYMENT_READ, PAYMENT_CREATE, REFUND_CREATE, INVOICE_READ, INVOICE_CREATE, INVOICE_MANAGE, SUBSCRIPTION_READ,
-            SUBSCRIPTION_MANAGE);
+            SUBSCRIPTION_MANAGE, COUPON_READ, COUPON_MANAGE, COUPON_REDEEM);
 
     private BillingPermissions() {}
 }

@@ -129,3 +129,18 @@
   description: Start and cancel subscriptions.
   scopes: [tenant]
   grantable_to_tenant_system: true
+
+- code: billing:coupon:read
+  description: Read coupons, promotion codes and redemptions.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:coupon:manage
+  description: Create and deactivate coupons and promotion codes; attach a coupon to a wallet; revoke a redemption.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: billing:coupon:redeem
+  description: Redeem a promotion code onto a wallet.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
