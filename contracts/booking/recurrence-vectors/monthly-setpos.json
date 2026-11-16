@@ -1,0 +1,16 @@
+{
+  "name": "monthly BYSETPOS=-1: the last weekday of each month",
+  "note": "BYSETPOS=-1 takes the last entry of the month's BYDAY candidate set. January 2026 ends on Saturday Jan 31, so the last weekday is Friday Jan 30. February 2026 (not a leap year) ends on Saturday Feb 28, so the last weekday is Friday Feb 27. March 2026 ends on Tuesday Mar 31. Jan 30 and Feb 27 are EST (UTC-5) at 15:00Z; Mar 31 is EDT (UTC-4) after the 2026-03-08 transition, so 10:00 local is 14:00Z.",
+  "zone": "America/New_York",
+  "dtstart": "2026-01-01T10:00:00",
+  "rule": [
+    "RRULE:FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1;COUNT=3"
+  ],
+  "from": "2026-01-01T00:00:00Z",
+  "to": "2026-05-01T00:00:00Z",
+  "expect": [
+    "2026-01-30T15:00:00Z",
+    "2026-02-27T15:00:00Z",
+    "2026-03-31T14:00:00Z"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "DST gap: a start inside the spring-forward gap moves forward by the gap",
+  "note": "America/New_York skips 02:00 to 02:59 on 2026-03-08, so 02:30 local does not exist. RFC 5545 and the JDK resolve a nonexistent local time by moving forward by the gap: 02:30 becomes 03:30 EDT (UTC-4), which is 07:30Z. The next day, 2026-03-09, is an ordinary EDT day, so 02:30 local is 06:30Z. A library that instead moves backward or drops the occurrence disagrees with this vector.",
+  "zone": "America/New_York",
+  "dtstart": "2026-03-08T02:30:00",
+  "rule": [
+    "RRULE:FREQ=DAILY;COUNT=2"
+  ],
+  "from": "2026-03-08T00:00:00Z",
+  "to": "2026-03-11T00:00:00Z",
+  "expect": [
+    "2026-03-08T07:30:00Z",
+    "2026-03-09T06:30:00Z"
+  ]
+}

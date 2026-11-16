@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/booking/booking.expired.schema.json",
+  "title": "Booking expired",
+  "description": "A held booking was not confirmed or extended before `holdExpiresAt` plus the grace window, so the worker expired it and released its claims. A Tenant that charged for it can refund through Billing; booking holds no money. The event carries the booking's complete current state. The event's `aggregate` is `booking/<bookingId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "bookingId",
+    "bookingVersion",
+    "status",
+    "customerRef",
+    "offeringId",
+    "offeringKind",
+    "source",
+    "qty",
+    "resources",
+    "holdExpiresAt",
+    "expiredAt",
+    "occurredAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "bookingId": { "type": "string", "format": "uuid" },
+    "bookingVersion": { "type": "integer", "minimum": 1 },
+    "status": { "const": "EXPIRED" },
+    "customerRef": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "offeringId": { "type": "string", "format": "uuid" },
+    "offeringKind": { "enum": ["INTERVAL", "CAPACITY"] },
+    "source": { "enum": ["TENANT", "GATE", "WAITLIST"] },
+    "qty": { "type": "integer", "minimum": 1 },
+    "sessionId": { "type": ["string", "null"], "format": "uuid" },
+    "poolCode": { "type": ["string", "null"], "maxLength": 60 },
+    "startsAt": { "type": ["string", "null"], "format": "date-time" },
+    "endsAt": { "type": ["string", "null"], "format": "date-time" },
+    "resources": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["slotCode", "resourceId"],
+        "additionalProperties": false,
+        "properties": {
+          "slotCode": { "type": "string", "maxLength": 60 },
+          "resourceId": { "type": "string", "format": "uuid" }
+        }
+      }
+    },
+    "seriesId": { "type": ["string", "null"], "format": "uuid" },
+    "holdExpiresAt": { "type": "string", "format": "date-time" },
+    "expiredAt": { "type": "string", "format": "date-time", "description": "When the worker moved the booking to EXPIRED." },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  },
+  "examples": [
+    {
+      "bookingId": "0198c1a0-0000-7000-8000-00000000b001",
+      "bookingVersion": 2,
+      "status": "EXPIRED",
+      "customerRef": "cust-9001",
+      "offeringId": "0198c1a0-0000-7000-8000-00000000a001",
+      "offeringKind": "CAPACITY",
+      "source": "GATE",
+      "qty": 2,
+      "sessionId": "0198c1a0-0000-7000-8000-00000000c001",
+      "poolCode": "default",
+      "resources": [],
+      "holdExpiresAt": "2026-11-16T10:10:00Z",
+      "expiredAt": "2026-11-16T10:11:05Z",
+      "occurredAt": "2026-11-16T10:11:05Z"
+    }
+  ]
+}

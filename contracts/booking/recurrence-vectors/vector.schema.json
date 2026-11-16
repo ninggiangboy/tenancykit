@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/booking/recurrence-vectors/vector.schema.json",
+  "title": "Recurrence vector",
+  "description": "One RFC 5545 expansion case the recurrence adapter must reproduce exactly. The expectation is computed from the tz database by hand, never copied from the recurrence library: a library that disagrees with a vector is the thing under test. `dtstart` is a local date-time in `zone`; `from` and `to` bound the expansion window as UTC instants, inclusive `from`, exclusive `to`. `expect` is the expanded start instants in UTC, ascending. The test globs `*.json` in this directory and skips this schema file by name.",
+  "type": "object",
+  "required": [
+    "name",
+    "note",
+    "zone",
+    "dtstart",
+    "rule",
+    "from",
+    "to",
+    "expect"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What this vector proves, in one line."
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "description": "How the expectation was computed: the zone's offset before and after the transition, the local times, and why the instant changes or does not change."
+    },
+    "zone": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The IANA zone of the resource the rule is expanded in."
+    },
+    "dtstart": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$",
+      "description": "The first local start, wall-clock in `zone`, without an offset. A value inside a spring-forward gap moves forward by the gap; a value inside a fall-back overlap takes the first occurrence."
+    },
+    "rule": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The recurrence as iCalendar content lines, `RRULE` first and any `EXDATE`/`RDATE` after it, without the trailing CRLF.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "from": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "description": "Inclusive lower bound of the expansion window, a UTC instant."
+    },
+    "to": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "description": "Exclusive upper bound of the expansion window, a UTC instant."
+    },
+    "expect": {
+      "type": "array",
+      "description": "The expanded start instants in UTC, ascending, exactly as the adapter must return them for the window.",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+      }
+    }
+  }
+}

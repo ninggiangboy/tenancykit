@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/booking/waitlist.offered.schema.json",
+  "title": "Waitlist offered",
+  "description": "A place freed and the worker offered it to the next waitlist entry that fits, as a short hold owned by that customer. The entry follows the offered booking's fate: a confirmation accepts it, a lapse offers it to the next entry. `offeredBookingId` is the hold to poll or to confirm through the Tenant's own flow. The event's `aggregate` is `waitlist/<waitlistEntryId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "waitlistEntryId",
+    "offeringId",
+    "customerRef",
+    "offeringKind",
+    "qty",
+    "offeredBookingId",
+    "offeredUntil",
+    "occurredAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "waitlistEntryId": { "type": "string", "format": "uuid" },
+    "offeringId": { "type": "string", "format": "uuid" },
+    "customerRef": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "offeringKind": { "enum": ["INTERVAL", "CAPACITY"] },
+    "qty": { "type": "integer", "minimum": 1 },
+    "sessionId": { "type": ["string", "null"], "format": "uuid" },
+    "poolCode": { "type": ["string", "null"], "maxLength": 60 },
+    "startsAt": { "type": ["string", "null"], "format": "date-time" },
+    "endsAt": { "type": ["string", "null"], "format": "date-time" },
+    "position": { "type": "integer", "minimum": 0, "description": "How many waiting entries were ahead of this one when it was offered; informational, not a reorderable rank." },
+    "offeredBookingId": { "type": "string", "format": "uuid", "description": "The HELD booking created for this entry; confirming it accepts the offer." },
+    "offeredUntil": { "type": "string", "format": "date-time", "description": "When the offer lapses and the next entry is tried." },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  },
+  "examples": [
+    {
+      "waitlistEntryId": "0198c1a0-0000-7000-8000-00000000d001",
+      "offeringId": "0198c1a0-0000-7000-8000-00000000a001",
+      "customerRef": "cust-9001",
+      "offeringKind": "CAPACITY",
+      "qty": 1,
+      "sessionId": "0198c1a0-0000-7000-8000-00000000c001",
+      "poolCode": "default",
+      "position": 0,
+      "offeredBookingId": "0198c1a0-0000-7000-8000-00000000b002",
+      "offeredUntil": "2026-11-16T10:10:00Z",
+      "occurredAt": "2026-11-16T10:00:00Z"
+    }
+  ]
+}

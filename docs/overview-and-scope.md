@@ -10,7 +10,7 @@ while keeping independent data, accounts, integration configuration and billing 
 The goal is that a new business app (CRM, HR, …) joins the suite by adding a build, a permission catalog, an
 `AppCode` and a proxy route, with Platform and Billing unchanged.
 
-## Eight deployables
+## Nine deployables
 
 | System | Owns | Reached at |
 |---|---|---|
@@ -20,6 +20,7 @@ The goal is that a new business app (CRM, HR, …) joins the suite by adding a b
 | **Mailroom** (`mailroom/`) | A Tenant's templates, receivers, groups, segments, suppressions, the sent-email ledger, campaigns and tracking events for the Tenant's **own customers**. It keeps the Platform replica, renders with a sandboxed Mustache and publishes `email.send`; delivery stays with `mailer/`, which reports the outcome back on `mailer.events` | `<tenant-code>.<base-domain>` through the `/mailroom` prefix; `/mailroom/t/*` is public for recipients |
 | **Survey** (`survey/`) | A Tenant's surveys, their immutable versions, links, visits, page events, responses, answers, uploads and the analysis of all of it, including the one expression language that decides branching, computed variables, scoring and piping. It keeps the Platform replica, consumes no business data from another app and sends nothing: it issues links and the Tenant places them | `<tenant-code>.<base-domain>` through the `/survey` prefix; `/survey/p/*` is public for respondents |
 | **Attribution** (`attribution/`) | A Tenant's campaigns and tracked links, the clicks, page views, sessions and conversions they produce, the credit each click receives under a per-campaign model, and the advertising cost behind it, entered by hand or imported from Google Ads and Meta Ads. It keeps the Platform replica, writes `attribution.ingest` for its own worker, and reads no other app's business data | `<tenant-code>.<base-domain>` through the `/attribution` prefix; `/go/*` is the public redirect and `/t/*` the public collection surface |
+| **Booking** (`booking/`) | A Tenant's bookable time and places: resources with a zone and weekly hours, exceptions, groups, interval and capacity offerings, repeating sessions, holds, confirmations, reschedules, series, a waitlist and a waiting room, and the signed webhooks a Tenant acts on. Two inventory engines behind one `Booking` lifecycle; the public gate lets a Tenant's own customers browse, hold and join a waitlist with a short-lived customer token and never confirm. It keeps the Platform replica, stores no money and no personal data, declares no exchange and calls no app | `<tenant-code>.<base-domain>` through the `/booking` prefix; `/booking/p/*` is public for a Tenant's customers |
 | **Sample Tenant System** (`tenant/`) | Its own users, catalog, orders, usage and the policy it applies to Billing's state changes. It proves the integration and deploys without Billing | its own host |
 | **Workflow** (`workflow/`) | A Tenant's workflow definitions and their immutable published versions, the durable engine that runs them, the instances, the human tasks, the external connections, the triggers and the signed events it emits. It keeps the Platform replica and acts as the Tenant's own system: it calls apps by their public API with a Tenant-owned credential and receives their signed webhooks as triggers | `<tenant-code>.<base-domain>` through the `/workflow` prefix; `/workflow/hooks/*` is public for the signed triggers |
 
@@ -63,6 +64,15 @@ app; its ad-platform connections are read-only. It measures only traffic that ar
 why it is an attribution product rather than a web-analytics one, and it stores no raw IP and sets no cookie before
 consent. It counts as a deployable in the same sense as Survey: a build, a permission catalog, an entitlement and a
 proxy route, with Platform, Billing, mailroom and the shared resolver untouched.
+
+`booking/` is the suite's app for letting a Tenant **sell time or places**. It owns what may be booked, when it is
+open, and who holds what: resources with a zone, weekly hours and exceptions, groups, interval offerings (staff plus
+room, a rental, a table) and capacity offerings (a class or session with N seats), and one `Booking` lifecycle over
+two engines — interval claims refused by a PostgreSQL exclusion constraint, and capacity places claimed row by row
+with `FOR UPDATE SKIP LOCKED`. It never touches money: the Tenant holds, charges through Billing, then confirms. It
+stores a customer as an opaque `customerRef`, publishes ten signed `Booking-*` webhooks, declares no exchange and
+calls no app, which is why it joins the suite the same way Survey and Attribution did, with Platform, Billing,
+mailroom and the shared resolver untouched. Details are in [booking.md](booking.md).
 
 `workflow/` is the suite's app for letting a Tenant **describe a flow instead of writing one**. It owns that Tenant's
 workflow definitions and their immutable published versions, the durable engine that runs them on PostgreSQL and
@@ -163,6 +173,17 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 - Enforces `attribution:*` permissions from its replica of Platform data; it never mints, edits or decides them.
 - Stores no raw IP, sets no cookie before consent, and provides an erasure endpoint keyed by visitor id.
 
+**Booking**
+- Owns a Tenant's bookable resources, weekly hours, exceptions, groups, offerings, requirements, cancellation windows,
+  blocks, session series and sessions.
+- Owns the `Booking` aggregate and its states `HELD`, `CONFIRMED`, `CANCELLED`, `EXPIRED` and `NO_SHOW`, over one
+  inventory port with two engines, and the waitlist offers that reuse the `HELD` state.
+- Holds, confirms after the Tenant has charged through Billing, extends, cancels, reschedules, books series and marks
+  no-shows; it never prices, charges, refunds or sends a message.
+- Enforces `booking:*` permissions from its replica of Platform data; it never mints, edits or decides them.
+- Serves a Tenant's customers only through the public gate and a short-lived customer token the Tenant minted, and
+  reports every fact a Tenant acts on as a signed `Booking-*` webhook.
+
 **Workflow**
 - Owns a Tenant's workflow definitions, their immutable published versions, the instances and their step history, the
   human tasks, the connections and the triggers.
@@ -228,3 +249,7 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 - Migrating existing data from an earlier layout.
 - The Suite Console UI, which is a separate follow-up plan.
 - A first business app beyond Billing; the extension trace is proven a second time with `survey/`.
+- **Reversed (2026-11-16):** `booking/` is a further tenant-facing business app that sells time and places. It joins
+  the same way a third time, and it adds a public gate of its own; it changes no existing app and no code in `core/`.
+  It stores no money and no personal data, so it crosses no boundary a Tenant has not already allowed for its own
+  customers.

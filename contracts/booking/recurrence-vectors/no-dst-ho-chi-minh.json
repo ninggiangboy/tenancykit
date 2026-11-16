@@ -1,0 +1,15 @@
+{
+  "name": "No DST: Ho Chi Minh City keeps a constant offset",
+  "note": "Asia/Ho_Chi_Minh has been UTC+7 with no daylight saving since 1975, so a Monday 08:00 series is 01:00Z every week. This vector guards against an implementation that applies a transition found in another zone or carries a northern-hemisphere assumption; the offset must never change.",
+  "zone": "Asia/Ho_Chi_Minh",
+  "dtstart": "2026-01-05T08:00:00",
+  "rule": [
+    "RRULE:FREQ=WEEKLY;BYDAY=MO;COUNT=2"
+  ],
+  "from": "2026-01-01T00:00:00Z",
+  "to": "2026-02-01T00:00:00Z",
+  "expect": [
+    "2026-01-05T01:00:00Z",
+    "2026-01-12T01:00:00Z"
+  ]
+}

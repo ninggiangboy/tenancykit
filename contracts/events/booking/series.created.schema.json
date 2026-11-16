@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/booking/series.created.schema.json",
+  "title": "Series created",
+  "description": "A repeating booking was created: one hold per occurrence, sharing a recurrence and a hold expiry. In the all-or-nothing mode every occurrence was claimed or none was; in `SKIP_CONFLICTS` the event reports how many of the expanded occurrences were booked. The event's `aggregate` is `series/<seriesId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "seriesId",
+    "seriesVersion",
+    "offeringId",
+    "customerRef",
+    "mode",
+    "status",
+    "occurrenceCount",
+    "bookedCount",
+    "firstStartsAt",
+    "lastEndsAt",
+    "occurredAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "seriesId": { "type": "string", "format": "uuid" },
+    "seriesVersion": { "type": "integer", "minimum": 1, "description": "Monotonic per series, like `bookingVersion`." },
+    "offeringId": { "type": "string", "format": "uuid" },
+    "customerRef": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "mode": { "enum": ["ALL_OR_NOTHING", "SKIP_CONFLICTS"] },
+    "status": { "const": "ACTIVE" },
+    "occurrenceCount": { "type": "integer", "minimum": 1, "maximum": 52, "description": "Occurrences the recurrence expanded, before any conflict." },
+    "bookedCount": { "type": "integer", "minimum": 0, "description": "Occurrences that became holds. Equal to `occurrenceCount` in ALL_OR_NOTHING; may be lower in SKIP_CONFLICTS." },
+    "firstStartsAt": { "type": "string", "format": "date-time" },
+    "lastEndsAt": { "type": "string", "format": "date-time" },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  },
+  "examples": [
+    {
+      "seriesId": "0198c1a0-0000-7000-8000-00000000e001",
+      "seriesVersion": 1,
+      "offeringId": "0198c1a0-0000-7000-8000-00000000a002",
+      "customerRef": "cust-9002",
+      "mode": "ALL_OR_NOTHING",
+      "status": "ACTIVE",
+      "occurrenceCount": 8,
+      "bookedCount": 8,
+      "firstStartsAt": "2026-11-19T09:00:00Z",
+      "lastEndsAt": "2027-01-07T10:00:00Z",
+      "occurredAt": "2026-11-16T11:00:00Z"
+    }
+  ]
+}

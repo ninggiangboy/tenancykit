@@ -1,0 +1,16 @@
+{
+  "name": "DST New York: weekly Friday 09:00 keeps the local hour across spring-forward",
+  "note": "America/New_York enters DST on Sunday 2026-03-08 at 02:00 local. Friday Mar 6 is still EST (UTC-5), so 09:00 local is 14:00Z. Fridays Mar 13 and Mar 20 are EDT (UTC-4), so 09:00 local is 13:00Z. The wall-clock hour the Tenant configured is preserved; only the UTC instant shifts, by one hour.",
+  "zone": "America/New_York",
+  "dtstart": "2026-03-06T09:00:00",
+  "rule": [
+    "RRULE:FREQ=WEEKLY;BYDAY=FR;COUNT=3"
+  ],
+  "from": "2026-03-01T00:00:00Z",
+  "to": "2026-04-01T00:00:00Z",
+  "expect": [
+    "2026-03-06T14:00:00Z",
+    "2026-03-13T13:00:00Z",
+    "2026-03-20T13:00:00Z"
+  ]
+}

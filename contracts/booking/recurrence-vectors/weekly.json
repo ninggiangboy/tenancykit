@@ -1,0 +1,18 @@
+{
+  "name": "weekly: MO and WE at 09:00 local, COUNT bounds the expansion",
+  "note": "America/New_York is on EST (UTC-5) through 2026-03-08, so every 09:00 local start is 14:00Z. 2026-01-05 is a Monday, so the generated order is Monday, Wednesday, Monday, Wednesday, Monday: Jan 5, Jan 7, Jan 12, Jan 14, Jan 19. COUNT=5 stops the fifth occurrence; note the occurrences follow the week, not the order of the BYDAY list.",
+  "zone": "America/New_York",
+  "dtstart": "2026-01-05T09:00:00",
+  "rule": [
+    "RRULE:FREQ=WEEKLY;BYDAY=MO,WE;COUNT=5"
+  ],
+  "from": "2026-01-01T00:00:00Z",
+  "to": "2026-02-01T00:00:00Z",
+  "expect": [
+    "2026-01-05T14:00:00Z",
+    "2026-01-07T14:00:00Z",
+    "2026-01-12T14:00:00Z",
+    "2026-01-14T14:00:00Z",
+    "2026-01-19T14:00:00Z"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "UNTIL is inclusive and is compared as an instant",
+  "note": "A Monday 09:00 series from 2026-03-02 with UNTIL=20260316T130000Z. Mar 2 is EST (UTC-5), so 09:00 local is 14:00Z. America/New_York enters DST on 2026-03-08, so Mar 9 and Mar 16 are EDT (UTC-4) and 09:00 local is 13:00Z. The UNTIL instant equals the Mar 16 occurrence exactly, and UNTIL is inclusive, so Mar 16 is kept and the series stops there.",
+  "zone": "America/New_York",
+  "dtstart": "2026-03-02T09:00:00",
+  "rule": [
+    "RRULE:FREQ=WEEKLY;BYDAY=MO;UNTIL=20260316T130000Z"
+  ],
+  "from": "2026-03-01T00:00:00Z",
+  "to": "2026-04-01T00:00:00Z",
+  "expect": [
+    "2026-03-02T14:00:00Z",
+    "2026-03-09T13:00:00Z",
+    "2026-03-16T13:00:00Z"
+  ]
+}

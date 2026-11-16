@@ -11,24 +11,26 @@ One topic exchange per producer, one durable queue per consuming app, one dead-l
 
 | Exchange (topic, durable) | Producer | Routing key | Queues |
 |---|---|---|---|
-| `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events`, `notification.platform-events`, `mailroom.platform-events`, `survey.platform-events` |
+| `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events`, `notification.platform-events`, `mailroom.platform-events`, `survey.platform-events`, `booking.platform-events` |
 | `billing.events` | Billing | event type | consumed by its own app only |
 | `survey.events` | Survey | event type | no consumer; no other app may bind to it |
 | `mailer.commands` | any producer | command type, today `email.send` | `mailer.commands`, `mailer.commands.dlq` |
 | `mailer.events` | Mailer | event type, today `email-delivery.changed` | `mailroom.mailer-events`, `mailroom.mailer-events.dlq` |
 | `suite.dlx` | — | queue name | `<queue>.dlq` per consumer |
 
-`notification.platform-events`, `mailroom.platform-events` and `survey.platform-events` are durable, bound to
-`platform.events` with the five state-transfer routing keys (`tenant.changed`, `tenant-domain.changed`,
-`tenant-system.changed`, `user-access.changed`, `entitlement.changed`), declare `x-dead-letter-exchange: suite.dlx`,
-and their dead-letter queues are `notification.platform-events.dlq`, `mailroom.platform-events.dlq` and
-`survey.platform-events.dlq`.
+`notification.platform-events`, `mailroom.platform-events`, `survey.platform-events` and `booking.platform-events` are
+durable, bound to `platform.events` with the five state-transfer routing keys (`tenant.changed`,
+`tenant-domain.changed`, `tenant-system.changed`, `user-access.changed`, `entitlement.changed`), declare
+`x-dead-letter-exchange: suite.dlx`, and their dead-letter queues are `notification.platform-events.dlq`,
+`mailroom.platform-events.dlq`, `survey.platform-events.dlq` and `booking.platform-events.dlq`.
 
 Notification declares **no exchange of its own**: it publishes the `email.send` command to `mailer.commands` and owns
 no event that another app consumes. Mailroom declares no exchange either: it publishes `email.send` to
 `mailer.commands` and consumes `email-delivery.changed` on `mailroom.mailer-events`, which binds to mailer's own
 `mailer.events`. Mailer produces one event and no command; before this change it produced nothing. Survey declares
-`survey.events` for its own three facts, which no app consumes yet.
+`survey.events` for its own three facts, which no app consumes yet. Booking declares **no exchange of its own**: its
+ten facts leave only as signed webhooks, so no app may bind to booking and booking binds to nothing but
+`platform.events`.
 
 An exchange carries either events or commands. `mailer.commands` carries commands: a request one app sends to the
 service that owns the work, described by `contracts/commands/` rather than by the sender. The envelope is the same;

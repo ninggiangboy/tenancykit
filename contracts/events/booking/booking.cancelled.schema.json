@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/booking/booking.cancelled.schema.json",
+  "title": "Booking cancelled",
+  "description": "A booking was cancelled and its claims released. When a confirmed booking is cancelled, `policyCode` records which of the offering's cancellation windows the cancellation fell in; booking never charges a fee, it reports the code and the Tenant acts. The event carries the booking's complete current state. The event's `aggregate` is `booking/<bookingId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "bookingId",
+    "bookingVersion",
+    "status",
+    "customerRef",
+    "offeringId",
+    "offeringKind",
+    "source",
+    "qty",
+    "resources",
+    "cancelledAt",
+    "policyCode",
+    "occurredAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "bookingId": { "type": "string", "format": "uuid" },
+    "bookingVersion": { "type": "integer", "minimum": 1 },
+    "status": { "const": "CANCELLED" },
+    "customerRef": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "offeringId": { "type": "string", "format": "uuid" },
+    "offeringKind": { "enum": ["INTERVAL", "CAPACITY"] },
+    "source": { "enum": ["TENANT", "GATE", "WAITLIST"] },
+    "qty": { "type": "integer", "minimum": 1 },
+    "sessionId": { "type": ["string", "null"], "format": "uuid" },
+    "poolCode": { "type": ["string", "null"], "maxLength": 60 },
+    "startsAt": { "type": ["string", "null"], "format": "date-time" },
+    "endsAt": { "type": ["string", "null"], "format": "date-time" },
+    "resources": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["slotCode", "resourceId"],
+        "additionalProperties": false,
+        "properties": {
+          "slotCode": { "type": "string", "maxLength": 60 },
+          "resourceId": { "type": "string", "format": "uuid" }
+        }
+      }
+    },
+    "seriesId": { "type": ["string", "null"], "format": "uuid" },
+    "cancelledAt": { "type": "string", "format": "date-time" },
+    "policyCode": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60,
+      "description": "The Tenant's code for the cancellation window the cancellation fell in, `NONE` when no window matched or the booking was only held, or `AFTER_START` after the start."
+    },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  },
+  "examples": [
+    {
+      "bookingId": "0198c1a0-0000-7000-8000-00000000b001",
+      "bookingVersion": 4,
+      "status": "CANCELLED",
+      "customerRef": "cust-9001",
+      "offeringId": "0198c1a0-0000-7000-8000-00000000a002",
+      "offeringKind": "INTERVAL",
+      "source": "TENANT",
+      "qty": 1,
+      "startsAt": "2026-11-20T09:00:00Z",
+      "endsAt": "2026-11-20T10:00:00Z",
+      "resources": [
+        { "slotCode": "staff", "resourceId": "0198c1a0-0000-7000-8000-00000000f001" }
+      ],
+      "cancelledAt": "2026-11-16T12:00:00Z",
+      "policyCode": "LATE",
+      "occurredAt": "2026-11-16T12:00:00Z"
+    }
+  ]
+}

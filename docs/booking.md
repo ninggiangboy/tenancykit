@@ -1,0 +1,234 @@
+# Booking
+
+The suite's app for letting a Tenant **sell time or places**: an appointment with a staff member and a room, a rental,
+a class or a session with N seats, a table for four, a recurring weekly slot. It is a separate deployable
+(`booking/`, root package `dev.ngb.booking`) with the three runtimes every app has: `migrate`, `api` and `worker`.
+
+Booking never touches money. It holds a place, tells the Tenant the hold exists, and the Tenant charges through
+[Billing](invoicing-and-subscriptions.md) and then confirms. Nothing in this app stores a price, a fee or a currency.
+
+## What it is, and what it is not
+
+| It is | It is not |
+|---|---|
+| The owner of what may be booked, when it is open, and who holds what | A payment system: no price, no charge, no refund. Billing owns money |
+| One `Booking` lifecycle over two inventory engines, capacity and interval | A seat map or a ticket: no named seats, no QR code, no check-in |
+| A producer of signed `Booking-*` webhooks to the Tenant's own endpoints | A consumer of another app's business data, and a caller of another app: it keeps the Platform replica and calls nothing |
+| An API with a thin public gate for the Tenant's own customers | A UI. It has no page, and the gate exists only so a Tenant's own site can call it |
+| A store of a Tenant's customers as an opaque `customerRef` | A CRM: it stores no name, phone, email or any other personal data |
+
+A Tenant's customer is an opaque reference the Tenant chooses. Booking never resolves it, matches it, or reads it back
+other than as the string it was given.
+
+## Runtimes
+
+| Profile | Runs | Migrates |
+|---|---|---|
+| `api` | HTTP: the catalog, availability, bookings, series, waitlist, webhooks, customer tokens and the public gate | no |
+| `worker` | The `platform.events` listener, the outbox relay, webhook delivery, the replica rebuild, hold expiry, session materialization, waitlist offers, queue admission and retention | no |
+| `migrate` | Flyway as the table owner, then exits | yes |
+| default (no profile) | `api` and `worker` together, for dev and tests | yes |
+
+The worker owns every scheduled job, as in every app: `TenantSweep` runs each job per tenant under row-level security
+with bounded virtual threads.
+
+## Contexts
+
+| Context | Owns |
+|---|---|
+| `platform` | A replica of the Platform data booking enforces: `tenants`, `tenant_domains`, `tenant_systems`, `user_grants`, `app_entitlements`, plus the read ports `TenantDirectory` and `UserDirectory`. Nothing else reaches these tables |
+| `catalog` | Resources, weekly hours, calendar exceptions, groups, offerings, requirements, cancellation windows, blocks, session series, sessions and pools, and the recurrence port |
+| `inventory` | The two engines behind one port: interval claims enforced by an exclusion constraint, and capacity places claimed with `FOR UPDATE SKIP LOCKED`; also availability and resource assignment |
+| `booking` | The `Booking` aggregate and its state machine, hold, confirm, extend, cancel, expire, reschedule, series, cancellation policy, no-show and the waitlist |
+| `gate` | Customer tokens, the public guard (rate limit, body limit, honeypot), admission control, CORS and the ordered waiting room |
+| `webhook` | Webhook endpoints, signing keys, deliveries and the event-type catalog |
+
+Allowed edges are one-way: `catalog` ← `inventory` ← `booking` ← `gate`, and `webhook` reads booking events only
+through the outbox. Every cross-context call goes through the other context's `api` package, and ArchUnit fails the
+build otherwise.
+
+## The two engines, one port
+
+`InventoryEngine` has two implementations and no registry. The port states which promise each makes.
+
+**Capacity.** One `capacity_units` row per place. A claim picks `qty` rows with
+`SELECT ... FOR UPDATE SKIP LOCKED` and a conditional `UPDATE`; concurrent callers take different rows instead of
+queueing on one counter. There is no counter column to drift, so the number of places a Tenant sees is exactly the
+number of free rows. This is the flash-sale engine: it promises throughput, not fairness — the ordering a sale needs
+comes from the waiting room in front of the gate.
+
+**Interval.** One `interval_claims` row per resource and claimed range, enforced by PostgreSQL:
+
+```sql
+EXCLUDE USING gist (tenant_id WITH =, resource_id WITH =, during WITH &&)
+```
+
+Ranges are half-open, so back-to-back bookings are legal. The constraint cannot see `expires_at`, so a claim first
+deletes the same resource's lapsed holds in the same transaction and then inserts. A conflict maps SQLSTATE `23P01`
+to `409 slot-taken`.
+
+Both engines are keyed by `booking_id`, and a confirmed claim has no expiry.
+
+## The lifecycle
+
+```
+HELD ──confirm──▶ CONFIRMED ──cancel──▶ CANCELLED
+ │                   └────no-show─────▶ NO_SHOW
+ ├──cancel──▶ CANCELLED
+ └──expire──▶ EXPIRED
+```
+
+`POST /bookings` creates the booking in `HELD`; "hold" is this state, not a second resource. Every transition is a
+conditional update (`WHERE status = :from`) so confirm and expiry race to exactly one winner.
+
+- **Confirm after payment.** Confirm is accepted while the booking is `HELD` and its claims are still held, even a
+  little past `holdExpiresAt` (the grace window, reclaimed only by the worker). Once the worker has expired it, the
+  answer is `409 hold-lapsed`. A Tenant that charged for a lapsed hold refunds through Billing; booking reports the
+  fact and holds no money.
+- **Extend.** `POST /bookings/{id}/extend` lengthens a hold once, up to the cap in settings, before the Tenant charges.
+- **Expiry.** `ExpireHoldsJob` picks `HELD` bookings with `holdExpiresAt + grace < now` using
+  `FOR UPDATE SKIP LOCKED`, moves them to `EXPIRED`, releases their claims and appends `booking.expired`.
+- **Reschedule.** Claims the new place and releases the old one in one transaction, keeping the booking id and its
+  status. If the new place is taken, the booking and its claims are unchanged.
+- **Series.** A repeat booking is one hold per occurrence. `ALL_OR_NOTHING` (the default) claims every occurrence or
+  none; `SKIP_CONFLICTS` books what it can and reports the rest. At most 52 occurrences.
+- **Cancellation policy.** A cancellation of a `CONFIRMED` booking records the Tenant's `policyCode` for the window it
+  fell in (`NONE` with no windows or for a held booking, `AFTER_START` after the start). No amount is stored.
+- **No-show.** Allowed on a `CONFIRMED` booking once its start has passed. The claims stay as history.
+
+## Lock order
+
+Booking row first, then resources by ascending id, then units by ascending id. Reschedule inserts the new claims
+before releasing the old ones in the same transaction, and the interval engine removes a booking's own old range
+before inserting its new one so the exclusion constraint never sees both. This follows
+[concurrency-and-locking.md](concurrency-and-locking.md); PostgreSQL's deadlock detector plus a bounded retry is the
+safety net, and crossing resource sets are tested.
+
+## Time and recurrence
+
+Instants are stored as UTC `timestamptz`; each resource carries its own IANA zone, and recurrence and open hours are
+resolved in that zone, never in the caller's.
+
+- A nonexistent local time (inside a spring-forward gap) moves forward by the gap; an ambiguous one (inside a
+  fall-back overlap) takes the first occurrence, as RFC 5545 says.
+- Recurrence is expanded by a library behind one port, `RecurrenceExpander(rule, zone, window) -> instants`; nothing
+  else in booking names the library. The chosen library is the one that passes every vector in
+  [contracts/booking/recurrence-vectors](../contracts/booking/recurrence-vectors/); the vectors are computed from the
+  tz database and the RFC text, never copied from the library.
+- Availability is computed at query time from weekly hours, exceptions, blocks and existing claims. It is never
+  materialized.
+- Capacity sessions are the exception: a recurring session is materialized into rows inside a rolling horizon
+  (default 120 days) on create and daily by the worker, idempotently by `(series_id, starts_at)`.
+
+## Availability
+
+`GET /offerings/{id}/availability?from&to&resource=` returns start instants on the offering's `slot_step` grid:
+inside open hours (weekly hours, replaced by an `OPEN` exception, cut by `CLOSED` exceptions and blocks), with
+`[start, start + duration)` inside open time (buffers may overhang), at or after `now + leadTime`, within the
+horizon, and with the buffered range free of claims. For several requirements, a start is free only if every
+requirement has a free, distinct resource. Results are keyset-paged by start instant.
+
+## Groups and assignment
+
+A requirement names one resource or one group. The group's strategy picks the member:
+
+| Strategy | Picks |
+|---|---|
+| `PRIORITY` | The candidate with the lowest priority number |
+| `ROUND_ROBIN` | The next member after the last one assigned, advancing the group's cursor in the booking transaction |
+| `LEAST_BUSY` | The member with the fewest booked minutes on the local day of the start, ties by priority |
+| `FIT_SEATS` | The single member with the fewest seats that still fits the party, or the smallest-waste combination of up to `max_combine` members |
+
+Candidates are tried in order under a savepoint; on `slot-taken` the next candidate is tried, and if none succeeds the
+whole claim fails. One booking never uses the same resource for two requirements.
+
+## Waitlist and waiting room
+
+A held place that frees by cancel, expiry, resize or reschedule writes a wake-up row in the releasing transaction; the
+worker processes wake-ups outside it. The next `WAITING` entry that fits receives the place as an ordinary `HELD`
+booking with source `WAITLIST` and the offer window as its TTL; the entry follows that booking's fate. The waitlist
+guarantees order *among waiters* only: a direct hold may take a freed place first, and this is documented rather than
+hidden.
+
+For a rush sale, an offering can set `queueMode = REQUIRED`. A customer enters the gate's queue, receives an
+insert-only numbered ticket and a signed ticket token, and is admitted in ticket order at the offering's
+`admitPerSecond`. Admission advances one watermark row per target, written only by the worker; a poll reads an
+in-memory copy of that watermark refreshed at most once per second, never a ticket row. A hold needs an admitted,
+unexpired ticket of its own, and one ticket funds one hold. `queueMode = NONE` falls back to per-instance admission
+control alone.
+
+## The public gate
+
+The gate is a thin layer over the same use cases, in booking's own build:
+
+- **Tokens.** An HMAC-signed, opaque customer token with a key id and a short lifetime, bound to tenant, `customerRef`,
+  a scope set (`browse`, `hold`, `waitlist`) and optionally one offering. The Tenant System mints it with
+  `POST /customer-tokens`; keys rotate, and previous keys stay valid for verification.
+- **Guard order.** Rate limit and body limit first, then the honeypot, then token verification, then the tenant from
+  the host. A token for another tenant is refused with the same code as a missing one.
+- **Admission control.** A bounded number of in-flight holds per session or offering per instance, answering
+  `429 Retry-After` with jitter. The limit and the admission cap multiply with instances, exactly as survey's
+  documented rate limit does; they blunt a script, they do not account.
+- **CORS.** Only the origins the Tenant registered; no wildcard, no credentials.
+- **What the gate can do.** Browse an offering and its availability, create and release its own `HELD` booking, join
+  and leave the waitlist and read its position. It has no route that confirms, extends, reschedules or reads another
+  customer's data.
+
+## Webhooks
+
+Every fact a Tenant may act on leaves as a signed `Booking-*` webhook to the Tenant's registered endpoints, once per
+endpoint, with retries. The headers are `Booking-Event-Id`, `Booking-Event-Type`, `Booking-Timestamp`,
+`Booking-Key-Id`, `Booking-Signature` (the `v1=` HMAC-SHA256 of `timestamp + "." + rawBody`) and `Booking-Attempt`.
+Booking declares no AMQP exchange of its own, so no app binds to it and it binds to nothing but `platform.events`.
+
+Event types, with a schema each under [contracts/events/booking](../contracts/events/booking/): `booking.held`,
+`booking.confirmed`, `booking.rescheduled`, `booking.cancelled`, `booking.expired`, `booking.no-show`,
+`waitlist.offered`, `waitlist.lapsed`, `series.created`, `series.cancelled`.
+
+## Settings and defaults
+
+Per tenant, reversible, in settings rather than code:
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `holdTtlSeconds` | 600 | How long a hold lives before the worker may expire it |
+| `maxExtensionSeconds` | 1800 | Total extension a Tenant may add to one hold |
+| `graceSeconds` | 60 | How long past the TTL a confirm still succeeds |
+| `offerWindowSeconds` | 600 | How long a waitlist offer holds the place |
+| `horizonDays` | 120 | How far ahead capacity sessions are materialized |
+| `tokenTtlCapSeconds` | 3600 | The longest customer token the Tenant may mint |
+| `rateLimitPerMinute` | 120 | The gate's per-fingerprint request limit, per instance |
+| `admissionCap` | 8 | In-flight holds per session or offering, per instance |
+| `waitlistCapPerTarget` | 1000 | Waiting entries allowed per target |
+| `admitPerSecond` | 50 | Queue admission rate for an offering that requires the queue |
+| `admitWindowSeconds` | 120 | How long an admitted ticket may be used |
+
+The load targets (p95 ≤ 150 ms, p99 ≤ 400 ms at 500 requests per second against a 5,000-place session on the compose
+Postgres) are calibrated by the load test and recorded here when measured.
+
+## Operations
+
+- **Jobs.** Hold expiry, session materialization, waitlist offers, queue admission, queue retention and webhook
+  delivery run in the worker only. Each is lease-guarded and bounded, and each is idempotent on a rerun.
+- **Keys.** Customer tokens and webhook signing secrets rotate; the active key id is in settings and previous keys
+  stay valid for verification.
+- **Invariant check.** `ops/smoke/booking-invariants.sh` proves no pool is oversold, no unit is owned by a booking that
+  is not `HELD` or `CONFIRMED`, no live booking lacks its claims, no interval claim overlaps another on one resource,
+  and no held booking is long past `holdExpiresAt + grace`.
+- **Isolation.** `ops/smoke/isolation.sh` proves the booking broker user can neither publish to nor bind to another
+  app's exchange and that `booking_app` cannot read another database.
+
+## The Tenant recipe
+
+1. `POST /bookings` — a hold; the response carries `holdExpiresAt`.
+2. Charge the customer through Billing with the booking id as your own reference.
+3. If the charge is slow, `POST /bookings/{id}/extend` once, before the cap.
+4. `POST /bookings/{id}/confirm` — `200` and `booking.confirmed`, or `409 hold-lapsed`, in which case refund through
+   Billing.
+
+## Non-goals
+
+Stripe or any money, prices or fee amounts; seat maps, named seats and seat selection; tickets, QR codes and check-in;
+any UI; external calendar sync; storing personal data of a customer; booking sending any message itself; a booking
+AMQP exchange; any call to or from another suite app; third-party CAPTCHA; Redis or any store beyond PostgreSQL and
+RabbitMQ; multi-currency; and any code change in an existing app or in `core/`.

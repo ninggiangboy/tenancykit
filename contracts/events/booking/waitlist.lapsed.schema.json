@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/booking/waitlist.lapsed.schema.json",
+  "title": "Waitlist lapsed",
+  "description": "A waitlist offer ended without an acceptance: the offered hold expired, the customer left, or the offered booking was cancelled. The next waiting entry is then tried. The event's `aggregate` is `waitlist/<waitlistEntryId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "waitlistEntryId",
+    "offeringId",
+    "customerRef",
+    "reason",
+    "occurredAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "waitlistEntryId": { "type": "string", "format": "uuid" },
+    "offeringId": { "type": "string", "format": "uuid" },
+    "customerRef": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "offeredBookingId": { "type": ["string", "null"], "format": "uuid", "description": "The hold whose lapse ended the offer, when there was one." },
+    "reason": {
+      "enum": ["OFFER_EXPIRED", "OFFER_DECLINED", "BOOKING_CANCELLED", "BOOKING_EXPIRED", "ENTRY_LEFT"],
+      "description": "Why the entry stopped waiting."
+    },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  },
+  "examples": [
+    {
+      "waitlistEntryId": "0198c1a0-0000-7000-8000-00000000d001",
+      "offeringId": "0198c1a0-0000-7000-8000-00000000a001",
+      "customerRef": "cust-9001",
+      "offeredBookingId": "0198c1a0-0000-7000-8000-00000000b002",
+      "reason": "OFFER_EXPIRED",
+      "occurredAt": "2026-11-16T10:10:05Z"
+    }
+  ]
+}

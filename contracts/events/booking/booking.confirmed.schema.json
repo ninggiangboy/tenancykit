@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/booking/booking.confirmed.schema.json",
+  "title": "Booking confirmed",
+  "description": "A Tenant confirmed a held booking after charging through Billing, or a series confirmation confirmed every occurrence. The claims are now permanent until cancelled or marked no-show. The event carries the booking's complete current state. The event's `aggregate` is `booking/<bookingId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "bookingId",
+    "bookingVersion",
+    "status",
+    "customerRef",
+    "offeringId",
+    "offeringKind",
+    "source",
+    "qty",
+    "resources",
+    "confirmedAt",
+    "occurredAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "bookingId": { "type": "string", "format": "uuid" },
+    "bookingVersion": { "type": "integer", "minimum": 1 },
+    "status": { "const": "CONFIRMED" },
+    "customerRef": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "offeringId": { "type": "string", "format": "uuid" },
+    "offeringKind": { "enum": ["INTERVAL", "CAPACITY"] },
+    "source": { "enum": ["TENANT", "GATE", "WAITLIST"] },
+    "qty": { "type": "integer", "minimum": 1 },
+    "sessionId": { "type": ["string", "null"], "format": "uuid" },
+    "poolCode": { "type": ["string", "null"], "maxLength": 60 },
+    "startsAt": { "type": ["string", "null"], "format": "date-time" },
+    "endsAt": { "type": ["string", "null"], "format": "date-time" },
+    "resources": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": ["slotCode", "resourceId"],
+        "additionalProperties": false,
+        "properties": {
+          "slotCode": { "type": "string", "maxLength": 60 },
+          "resourceId": { "type": "string", "format": "uuid" }
+        }
+      }
+    },
+    "seriesId": { "type": ["string", "null"], "format": "uuid" },
+    "confirmedAt": { "type": "string", "format": "date-time", "description": "When the Tenant confirmed, in UTC." },
+    "occurredAt": { "type": "string", "format": "date-time" }
+  },
+  "examples": [
+    {
+      "bookingId": "0198c1a0-0000-7000-8000-00000000b001",
+      "bookingVersion": 2,
+      "status": "CONFIRMED",
+      "customerRef": "cust-9001",
+      "offeringId": "0198c1a0-0000-7000-8000-00000000a002",
+      "offeringKind": "INTERVAL",
+      "source": "TENANT",
+      "qty": 1,
+      "sessionId": null,
+      "poolCode": null,
+      "startsAt": "2026-11-19T09:00:00Z",
+      "endsAt": "2026-11-19T10:00:00Z",
+      "resources": [
+        { "slotCode": "staff", "resourceId": "0198c1a0-0000-7000-8000-00000000f001" },
+        { "slotCode": "room", "resourceId": "0198c1a0-0000-7000-8000-00000000f002" }
+      ],
+      "confirmedAt": "2026-11-16T10:03:00Z",
+      "occurredAt": "2026-11-16T10:03:00Z"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "EXDATE and RDATE: remove one occurrence and add another",
+  "note": "A daily 09:00 series from Monday 2026-02-02 bounded by UNTIL=20260205T140000Z generates Feb 2, 3, 4 and 5, each at 14:00Z (EST, UTC-5). EXDATE removes Feb 3. RDATE adds Feb 6 at the same local time, which UNTIL does not bound because RDATE is outside the rule's own count. The expected set is therefore Feb 2, Feb 4, Feb 5 and Feb 6, ascending; the added Feb 6 sorts last because the expansion is ordered by instant, not by rule source.",
+  "zone": "America/New_York",
+  "dtstart": "2026-02-02T09:00:00",
+  "rule": [
+    "RRULE:FREQ=DAILY;UNTIL=20260205T140000Z",
+    "EXDATE;TZID=America/New_York:20260203T090000",
+    "RDATE;TZID=America/New_York:20260206T090000"
+  ],
+  "from": "2026-02-01T00:00:00Z",
+  "to": "2026-02-10T00:00:00Z",
+  "expect": [
+    "2026-02-02T14:00:00Z",
+    "2026-02-04T14:00:00Z",
+    "2026-02-05T14:00:00Z",
+    "2026-02-06T14:00:00Z"
+  ]
+}

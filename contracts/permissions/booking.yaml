@@ -1,0 +1,115 @@
+# Booking's permission catalog.
+#
+# codes are namespaced by the app that enforces them: <app>:<resource>:<action>. A role may hold only a code whose
+# `scopes` include the role's scope.
+#
+# scopes: platform and/or tenant. grantable_to_tenant_system: whether an API credential may carry the code.
+#
+# Every code is tenant scope: what may be booked, when it is open, the holds and bookings a Tenant's own customers
+# make, the series, the waitlist, the webhook endpoints and the customer tokens all belong to one tenant. Booking
+# never touches money, so no code here is about a charge or an invoice; a Tenant charges through Billing and then
+# confirms. Booking is an app a Tenant's own system is expected to drive: it defines the catalog, holds, confirms,
+# reschedules and reads its facts, so every code is grantable except the two administrative ones below.
+#
+# `booking:settings:manage` changes the tenant's public gate settings, the admission cap and the default timings. It is
+# deliberately not grantable to a Tenant System credential: it is an administrative decision a person makes, the same
+# way survey keeps its own settings out of a machine's reach.
+#
+# `booking:token:issue` mints a short-lived customer token for the public gate. It is grantable because the Tenant's
+# own system is the only party that decides which of its customers may reach booking; the token it receives is bound
+# to one customer, a scope set, an optional offering and a short expiry.
+
+- code: booking:resource:read
+  description: Read resources, their weekly hours, exceptions and the groups they belong to.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:resource:manage
+  description: Create, update, archive and re-open resources and set their weekly hours, exceptions and group membership.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:offering:read
+  description: Read offerings, their requirements, cancellation windows, sessions and remaining places.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:offering:manage
+  description: Create, update and archive offerings, set their requirements, cancellation windows and queue mode.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:calendar:read
+  description: Read blocks, session series and sessions, and preview a recurrence expansion.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:calendar:manage
+  description: Create and remove blocks and recurring series, materialize sessions and cancel one occurrence.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:booking:read
+  description: Read one booking, the booking list and the waitlist of an offering.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:booking:hold
+  description: Create a hold, extend or cancel a held booking, and join or leave a waitlist.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:booking:confirm
+  description: Confirm a held booking after the Tenant has charged through Billing.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:booking:manage
+  description: Cancel a confirmed booking, reschedule a booking, mark a no-show and adjust a session's capacity.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:series:read
+  description: Read a booking series and its occurrences.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:series:manage
+  description: Create, confirm and cancel a booking series.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:waitlist:read
+  description: Read waitlist entries and a customer's position on a waitlist.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:waitlist:manage
+  description: Remove a waitlist entry and read or change the waitlist settings.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:webhook:read
+  description: Read webhook endpoints and their delivery history.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:webhook:manage
+  description: Create, update, disable and rotate the secret of a webhook endpoint, and resend a delivery.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:token:issue
+  description: Mint a short-lived customer token for the public gate, bound to one customer, a scope set and an optional offering.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:settings:read
+  description: Read the tenant's booking settings, default timings and public gate settings.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: booking:settings:manage
+  description: Change the tenant's default timings, admission cap, token lifetime cap and public gate allowed origins.
+  scopes: [tenant]
+  grantable_to_tenant_system: false

@@ -1,6 +1,6 @@
 # TenancyKit Documentation
 
-Documentation for the suite: the **Platform** service, the **Billing** and **Notification** and **Mailroom** and **Survey** and **Attribution** apps, and the **Sample Tenant System** (a Cloud Resource Management reference tenant), each independently deployable. It is written for people and AI collaborators who need to know what the systems must do, why they are shaped this way, and where each rule is owned.
+Documentation for the suite: the **Platform** service, the **Billing** and **Notification** and **Mailroom** and **Survey** and **Attribution** and **Booking** apps, and the **Sample Tenant System** (a Cloud Resource Management reference tenant), each independently deployable. It is written for people and AI collaborators who need to know what the systems must do, why they are shaped this way, and where each rule is owned.
 
 ## Authority
 
@@ -20,6 +20,7 @@ Documentation for the suite: the **Platform** service, the **Billing** and **Not
 | [mailroom.md](mailroom.md) | The mailroom app: a Tenant's templates, receivers, groups, segments, campaigns, tracking and retention for its own customers |
 | [survey.md](survey.md) | The survey app: versioned surveys, the expression language that decides branching and scoring, links, visits, responses, analytics, uploads and webhooks |
 | [attribution.md](attribution.md) | The attribution app: campaigns and tracked links, the redirect and its click token, visitor identity and consent, the three attribution models and the owning-campaign rule, rollups and reports, advertising cost and the ad-platform import |
+| [booking.md](booking.md) | The booking app: resources, hours and exceptions, groups, interval and capacity offerings, the two inventory engines, the one `Booking` lifecycle, recurrence and DST, availability, assignment, the waitlist, the public customer gate and its waiting room, signed webhooks and the Tenant's hold-charge-confirm recipe |
 | [workflow.md](workflow.md) | The workflow app: versioned JSON workflows a Tenant publishes, the durable engine that runs them, human tasks, HTTP calls to apps and external systems, connections and the credential vault, triggers, guarantees, limits and the sample flows |
 | [mailer.md](mailer.md) | The delivery service: its command queue, the delivery status machine, the DLQ runbook |
 | [mailer-tenant-onboarding.md](mailer-tenant-onboarding.md) | The trust policy a Tenant creates so mailer sends under the Tenant's own SES identity |

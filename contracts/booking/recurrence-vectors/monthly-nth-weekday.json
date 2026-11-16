@@ -1,0 +1,16 @@
+{
+  "name": "monthly nth weekday: BYDAY=2TU across a DST transition",
+  "note": "The second Tuesday of each month at 10:00 local. January 2026 has Tuesdays 6, 13, 20 and 27, so the second is Jan 13; February has 3, 10, 17 and 24, so Feb 10; March has 3, 10, 17 and 24, so Mar 10. January and February are EST (UTC-5) at 15:00Z; America/New_York enters DST on 2026-03-08, so Mar 10 10:00 local is EDT (UTC-4) at 14:00Z. The local hour is preserved and the UTC instant moves back one hour.",
+  "zone": "America/New_York",
+  "dtstart": "2026-01-01T10:00:00",
+  "rule": [
+    "RRULE:FREQ=MONTHLY;BYDAY=2TU;COUNT=3"
+  ],
+  "from": "2026-01-01T00:00:00Z",
+  "to": "2026-05-01T00:00:00Z",
+  "expect": [
+    "2026-01-13T15:00:00Z",
+    "2026-02-10T15:00:00Z",
+    "2026-03-10T14:00:00Z"
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/booking/booking.held.schema.json",
+  "title": "Booking held",
+  "description": "A place or a time range is held for a customer and the Tenant may now charge through Billing and then confirm. The event carries the booking's complete current state. `bookingVersion` is monotonic per booking, so a receiver that keeps the booking's state drops a delivery whose version is not newer than the one it holds. The event's `aggregate` is `booking/<bookingId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "bookingId",
+    "bookingVersion",
+    "status",
+    "customerRef",
+    "offeringId",
+    "offeringKind",
+    "source",
+    "qty",
+    "resources",
+    "holdExpiresAt",
+    "occurredAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "bookingId": { "type": "string", "format": "uuid", "description": "Booking's own opaque id." },
+    "bookingVersion": { "type": "integer", "minimum": 1, "description": "Monotonic per booking; a receiver drops a delivery whose version is not newer than the one it holds." },
+    "status": { "const": "HELD", "description": "The booking is held, not yet confirmed." },
+    "customerRef": { "type": "string", "minLength": 1, "maxLength": 200, "description": "The Tenant's opaque reference for its customer. Booking stores no personal data." },
+    "offeringId": { "type": "string", "format": "uuid", "description": "The offering that was booked." },
+    "offeringKind": { "enum": ["INTERVAL", "CAPACITY"], "description": "Which engine claimed the place." },
+    "source": { "enum": ["TENANT", "GATE", "WAITLIST"], "description": "Who asked for the hold: the Tenant System, the public gate, or the waitlist worker." },
+    "qty": { "type": "integer", "minimum": 1, "description": "Number of places held; 1 for an interval booking." },
+    "sessionId": { "type": ["string", "null"], "format": "uuid", "description": "The capacity session, for a CAPACITY offering." },
+    "poolCode": { "type": ["string", "null"], "maxLength": 60, "description": "The session pool the places came from, for a CAPACITY offering." },
+    "startsAt": { "type": ["string", "null"], "format": "date-time", "description": "The claimed start instant in UTC, for an INTERVAL offering." },
+    "endsAt": { "type": ["string", "null"], "format": "date-time", "description": "The claimed end instant in UTC, for an INTERVAL offering." },
+    "resources": {
+      "type": "array",
+      "maxItems": 20,
+      "description": "Every resource the booking claimed, with the requirement it satisfies. Empty for a capacity booking.",
+      "items": {
+        "type": "object",
+        "required": ["slotCode", "resourceId"],
+        "additionalProperties": false,
+        "properties": {
+          "slotCode": { "type": "string", "maxLength": 60, "description": "The offering requirement's slot code." },
+          "resourceId": { "type": "string", "format": "uuid" }
+        }
+      }
+    },
+    "seriesId": { "type": ["string", "null"], "format": "uuid", "description": "The series this occurrence belongs to, when the hold came from a series." },
+    "holdExpiresAt": { "type": "string", "format": "date-time", "description": "When the hold lapses unless confirmed or extended." },
+    "occurredAt": { "type": "string", "format": "date-time", "description": "When the hold was created, in UTC." }
+  },
+  "examples": [
+    {
+      "bookingId": "0198c1a0-0000-7000-8000-00000000b001",
+      "bookingVersion": 1,
+      "status": "HELD",
+      "customerRef": "cust-9001",
+      "offeringId": "0198c1a0-0000-7000-8000-00000000a001",
+      "offeringKind": "CAPACITY",
+      "source": "GATE",
+      "qty": 2,
+      "sessionId": "0198c1a0-0000-7000-8000-00000000c001",
+      "poolCode": "default",
+      "startsAt": null,
+      "endsAt": null,
+      "resources": [],
+      "holdExpiresAt": "2026-11-16T10:10:00Z",
+      "occurredAt": "2026-11-16T10:00:00Z"
+    }
+  ]
+}
