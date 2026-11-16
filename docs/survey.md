@@ -112,8 +112,14 @@ Given a version and a set of answers the server computes a `FlowResult`:
 | `score` | The sum of option, matrix column, rating and NPS scores plus every scoring rule whose condition holds, over questions on the path — or `null` when the version disables quiz scoring |
 | `errors` | The structural errors a draft or version fails at |
 
-The same evaluator answers `POST /surveys/{id}/draft/preview` and `.../simulate`, and a submit runs it over the
-submitted answers.
+The same evaluator answers `POST /surveys/{id}/draft/simulate` and `.../versions/{no}/simulate`, and a submit runs it
+over the submitted answers. Simulate on a half-built draft still answers: a document that does not compile reports its
+`errors` by pointer instead of failing the request, so a builder sees the same pointers a publish would refuse.
+
+`POST /surveys/{id}/draft/preview?locale=` is presentation, not evaluation: it renders every page in order with its
+translated labels and leaves piping as a placeholder naming what the token will show (`{{answer:<id>}}`,
+`{{var:<name>}}`), because no respondent has answered yet. It never skips or hides a page — that is what simulate is
+for.
 
 ## Answers, and why they are stored twice
 

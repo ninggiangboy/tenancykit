@@ -1017,14 +1017,62 @@ components:
             $ref: "#/components/schemas/ValidationError"
     SurveyPreview:
       type: object
+      description: |
+        The draft rendered for one locale, pages in presentation order. This is presentation, not evaluation: no page
+        is skipped and no value is substituted. A piped token renders as a placeholder naming what it will show —
+        `{{answer:<questionId>}}` or `{{var:<name>}}` — so a builder sees its own sentence rather than an empty string.
       properties:
         locale:
           type: string
+          description: The locale rendered, which is the requested one when the version enables it and the default otherwise.
         pages:
           type: array
           items:
-            type: object
-            additionalProperties: true
+            $ref: "#/components/schemas/PreviewPage"
+    PreviewPage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          nullable: true
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/PreviewQuestion"
+    PreviewQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        required:
+          type: boolean
+        label:
+          type: string
+          nullable: true
+        help:
+          type: string
+          nullable: true
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/PreviewOption"
+    PreviewOption:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        value:
+          type: string
+        label:
+          type: string
+          nullable: true
     PublicLinkRequest:
       type: object
       additionalProperties: false
