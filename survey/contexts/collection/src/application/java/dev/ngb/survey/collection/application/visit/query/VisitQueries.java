@@ -3,7 +3,9 @@ package dev.ngb.survey.collection.application.visit.query;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.survey.authoring.api.version.PublishedVersionReader;
+
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * What a respondent's browser reads about its own visit: the version document it pinned and the number it was
@@ -16,18 +18,18 @@ import java.util.Map;
 public class VisitQueries {
 
     private final UnitOfWork unitOfWork;
-    private final VisitReadRepository visits;
+    private final VisitReadRepository reads;
     private final PublishedVersionReader versions;
 
-    public VisitQueries(UnitOfWork unitOfWork, VisitReadRepository visits, PublishedVersionReader versions) {
+    public VisitQueries(UnitOfWork unitOfWork, VisitReadRepository reads, PublishedVersionReader versions) {
         this.unitOfWork = unitOfWork;
-        this.visits = visits;
+        this.reads = reads;
         this.versions = versions;
     }
 
     /** The visit a presented token names, inside the caller's tenant scope. */
     public java.util.Optional<VisitView> byToken(byte[] tokenHash) {
-        return unitOfWork.transactional(() -> visits.findByTokenHash(tokenHash));
+        return unitOfWork.transactional(() -> reads.findByTokenHash(tokenHash));
     }
 
     /** The visit a token names, which the public endpoints require. */

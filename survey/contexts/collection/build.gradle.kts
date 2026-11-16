@@ -16,5 +16,8 @@ dependencies {
     // A visit keeps only the bounded, non-identifying facts the shared visitor library produces.
     "applicationImplementation"("dev.ngb:core-visitor")
     "adapterImplementation"("dev.ngb:core-visitor")
+    // The presigned upload and its magic-byte check run over the same AWS SDK major the mailer uses for SES.
+    "adapterImplementation"(platform(libs.aws.sdk.bom))
+    "adapterImplementation"(libs.aws.s3)
     testImplementation("org.assertj:assertj-core")
 }
