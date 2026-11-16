@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Catalog: resources, groups, offerings and calendars"
-status: pending
+status: completed
 priority: P1
 effort: "L"
 dependencies: [3]
