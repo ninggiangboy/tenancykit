@@ -17,8 +17,8 @@ public final class JooqLists {
 
     /**
      * Reads one page. The window is fetched with one extra row so a following page is known without a second query; a
-     * total is counted only when the caller asked for page info, and counts every row matching the filter whatever the
-     * position of the page.
+     * total is counted only when the caller asked for every paging fact, and counts every row matching the filter
+     * whatever the position of the page. A caller that asked only for the cursor pays no count.
      *
      * @param scope a condition the caller always applies, such as the customers a Tenant System may see
      * @param mapper turns a row into the view the listing returns
@@ -45,11 +45,11 @@ public final class JooqLists {
         boolean more = rows.size() > query.limit();
         List<R> page = more ? rows.subList(0, query.limit()) : rows;
         List<V> data = page.isEmpty() ? List.of() : List.copyOf(mapper.apply(page));
-        if (!query.pageInfo()) {
+        if (!query.pageFacts().included()) {
             return new Page<>(data, null);
         }
         String next = more ? query.nextCursor(binding.sortValues(page.get(page.size() - 1), query)) : null;
-        long total = dsl.fetchCount(table, filtered);
+        Long total = query.pageFacts().total() ? Long.valueOf(dsl.fetchCount(table, filtered)) : null;
         return new Page<>(data, new PageInfo(query.limit(), query.offset() > 0 ? query.offset() : null, total, next));
     }
 }

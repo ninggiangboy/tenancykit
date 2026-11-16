@@ -146,6 +146,25 @@ class ListingQueryTest {
     }
 
     @Test
+    void pageInfoCursorHandsOutTheCursorWithoutCounting() {
+        seedInbox();
+
+        Page<NotificationView> first = asTenant(TENANT, () -> inbox.list(ListQueries.of(
+                NotificationListing.SCHEMA, "limit", "2", "page_info", "cursor")));
+
+        assertThat(first.data()).extracting(NotificationView::title).containsExactly("read", "newest unread");
+        assertThat(first.page().total()).as("a cursor-only page does not count the matching rows").isNull();
+        assertThat(first.page().nextCursor()).isNotNull();
+
+        Page<NotificationView> second = asTenant(TENANT, () -> inbox.list(ListQueries.of(
+                NotificationListing.SCHEMA, "limit", "2", "page_info", "cursor", "cursor", first.page().nextCursor())));
+
+        assertThat(second.data()).extracting(NotificationView::title).containsExactly("oldest unread");
+        assertThat(second.page().total()).isNull();
+        assertThat(second.page().nextCursor()).as("the last page has no next cursor").isNull();
+    }
+
+    @Test
     void aRemovedParameterIsRefusedRatherThanIgnored() {
         assertThatThrownBy(() -> ListQueries.of(NotificationListing.SCHEMA, "before", UUID.randomUUID().toString()))
                 .isInstanceOf(BadRequestException.class)

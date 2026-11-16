@@ -12,7 +12,7 @@ import java.util.List;
  * @param limit the page size, within {@code [1, PageSize.MAX]}
  * @param offset rows to skip, zero when a cursor positions the page
  * @param cursorValues the sort values of the last row of the previous page, or null for a first or offset page
- * @param pageInfo whether the response carries paging facts
+ * @param pageFacts what the answer's {@code page} carries: nothing, the cursor, or every fact
  * @param shape a digest of the filter and sort a cursor was issued for
  */
 public record ListQuery(
@@ -22,7 +22,7 @@ public record ListQuery(
         int limit,
         int offset,
         List<Object> cursorValues,
-        boolean pageInfo,
+        PageFacts pageFacts,
         String shape) {
 
     public ListQuery {
@@ -44,6 +44,10 @@ public record ListQuery(
 
     /** @return the page of a listing whose scope admits no row at all, shaped as the query asks */
     public <T> Page<T> emptyPage() {
-        return new Page<>(List.of(), pageInfo ? new PageInfo(limit, offset > 0 ? offset : null, 0, null) : null);
+        if (!pageFacts.included()) {
+            return new Page<>(List.of(), null);
+        }
+        Long total = pageFacts.total() ? 0L : null;
+        return new Page<>(List.of(), new PageInfo(limit, offset > 0 ? offset : null, total, null));
     }
 }

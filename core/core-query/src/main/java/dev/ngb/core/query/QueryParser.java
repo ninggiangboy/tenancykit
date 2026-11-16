@@ -20,8 +20,8 @@ import java.util.regex.Pattern;
  *
  * <p>Grammar: {@code filter[field][op]=value} joined with AND; {@code filter[or][i][field][op]=value} forms OR branches
  * (predicates sharing an {@code i} are AND-ed, branches are OR-ed); {@code sort=-a,b}; {@code limit}; {@code offset}
- * or {@code cursor}; {@code page_info=true}. {@code in} and {@code nin} take comma-separated values. A parameter the
- * parser does not know is refused rather than ignored, because a silently dropped filter returns more rows than the
+ * or {@code cursor}; {@code page_info=true|cursor}. {@code in} and {@code nin} take comma-separated values. A parameter
+ * the parser does not know is refused rather than ignored, because a silently dropped filter returns more rows than the
  * caller asked for.
  */
 public final class QueryParser {
@@ -92,7 +92,19 @@ public final class QueryParser {
             throw new BadRequestException("send either offset or cursor, not both");
         }
         List<Object> after = cursor == null ? null : Cursor.decode(cursor, order, shape);
-        return new ListQuery(all, anyOf, order, size, skip, after, bool("page_info", pageInfo), shape);
+        return new ListQuery(all, anyOf, order, size, skip, after, pageFacts(pageInfo), shape);
+    }
+
+    /** @return what the answer's {@code page} carries: nothing, the cursor alone, or every fact */
+    private static PageFacts pageFacts(String raw) {
+        if (raw == null || raw.equals("false")) {
+            return PageFacts.NONE;
+        }
+        return switch (raw) {
+            case "true" -> PageFacts.FULL;
+            case "cursor" -> PageFacts.CURSOR;
+            default -> throw new BadRequestException("the parameter page_info takes true, false or cursor");
+        };
     }
 
     private static Filter filter(FilterSchema schema, String fieldName, String opName, List<String> raw, int[] predicates) {

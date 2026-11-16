@@ -297,7 +297,9 @@ paths:
         \ and `nin` do not match rows where the field is null. Send `limit` with either\
         \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
         \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`, and `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows."
       operationId: list
       parameters:
       - name: "filter[created_at][eq]"
@@ -630,11 +632,17 @@ paths:
           type: string
       - name: page_info
         in: query
-        description: "Fills `page` with the limit, offset, total and next cursor."
+        description: "`true` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted."
         required: false
         schema:
-          type: boolean
-          default: false
+          type: string
+          default: "false"
+          enum:
+          - "true"
+          - "false"
+          - cursor
       responses:
         "200":
           description: OK
@@ -681,7 +689,9 @@ paths:
         \ and `nin` do not match rows where the field is null. Send `limit` with either\
         \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
         \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`, and `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows."
       operationId: list_1
       parameters:
       - name: "filter[code][eq]"
@@ -958,11 +968,17 @@ paths:
           type: string
       - name: page_info
         in: query
-        description: "Fills `page` with the limit, offset, total and next cursor."
+        description: "`true` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted."
         required: false
         schema:
-          type: boolean
-          default: false
+          type: string
+          default: "false"
+          enum:
+          - "true"
+          - "false"
+          - cursor
       responses:
         "200":
           description: OK
@@ -1060,7 +1076,9 @@ paths:
         \ and `nin` do not match rows where the field is null. Send `limit` with either\
         \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
         \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`, and `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows."
       operationId: list_2
       parameters:
       - name: "filter[created_at][eq]"
@@ -1330,11 +1348,17 @@ paths:
           type: string
       - name: page_info
         in: query
-        description: "Fills `page` with the limit, offset, total and next cursor."
+        description: "`true` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted."
         required: false
         schema:
-          type: boolean
-          default: false
+          type: string
+          default: "false"
+          enum:
+          - "true"
+          - "false"
+          - cursor
       responses:
         "200":
           description: OK
@@ -1381,7 +1405,9 @@ paths:
         \ and `nin` do not match rows where the field is null. Send `limit` with either\
         \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
         \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`, and `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows."
       operationId: listCredentials
       parameters:
       - name: id
@@ -1785,11 +1811,17 @@ paths:
           type: string
       - name: page_info
         in: query
-        description: "Fills `page` with the limit, offset, total and next cursor."
+        description: "`true` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted."
         required: false
         schema:
-          type: boolean
-          default: false
+          type: string
+          default: "false"
+          enum:
+          - "true"
+          - "false"
+          - cursor
       responses:
         "200":
           description: OK
@@ -1870,7 +1902,9 @@ paths:
         \ and `nin` do not match rows where the field is null. Send `limit` with either\
         \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
         \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`, and `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows."
       operationId: list_3
       parameters:
       - name: "filter[created_at][eq]"
@@ -2152,11 +2186,17 @@ paths:
           type: string
       - name: page_info
         in: query
-        description: "Fills `page` with the limit, offset, total and next cursor."
+        description: "`true` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted."
         required: false
         schema:
-          type: boolean
-          default: false
+          type: string
+          default: "false"
+          enum:
+          - "true"
+          - "false"
+          - cursor
       responses:
         "200":
           description: OK
@@ -2598,7 +2638,9 @@ components:
           - "null"
           format: int32
         total:
-          type: integer
+          type:
+          - integer
+          - "null"
           format: int64
         next_cursor:
           type:

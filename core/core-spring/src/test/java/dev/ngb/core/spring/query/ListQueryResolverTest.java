@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.core.error.BadRequestException;
 import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.PageFacts;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
@@ -58,7 +59,7 @@ class ListQueryResolverTest {
         ListQuery query = (ListQuery) resolve("list", request);
         assertThat(query.all()).hasSize(1);
         assertThat(query.limit()).isEqualTo(10);
-        assertThat(query.pageInfo()).isTrue();
+        assertThat(query.pageFacts()).isEqualTo(PageFacts.FULL);
         assertThat(query.sort()).extracting(key -> key.wire()).containsExactly("-amount", "id");
     }
 

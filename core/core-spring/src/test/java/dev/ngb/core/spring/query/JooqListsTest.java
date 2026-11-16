@@ -100,6 +100,17 @@ class JooqListsTest {
     }
 
     @Test
+    void askingOnlyForTheCursorSkipsTheCount() {
+        Fake fake = Fake.serving(3);
+        Page<UUID> page = fetch(fake, parse("limit", "2", "page_info", "cursor"));
+
+        assertThat(page.page().limit()).isEqualTo(2);
+        assertThat(page.page().nextCursor()).isNotBlank();
+        assertThat(page.page().total()).isNull();
+        assertThat(fake.sql()).hasSize(1);
+    }
+
+    @Test
     void theLastPageHasNoNextCursor() {
         Page<UUID> page = fetch(Fake.serving(1), parse("limit", "2", "page_info", "true"));
         assertThat(page.data()).hasSize(1);
@@ -141,5 +152,8 @@ class JooqListsTest {
         assertThat(withInfo.page().total()).isZero();
         assertThat(withInfo.page().limit()).isEqualTo(5);
         assertThat(withInfo.page().nextCursor()).isNull();
+        Page<UUID> cursorOnly = parse("page_info", "cursor", "limit", "5").emptyPage();
+        assertThat(cursorOnly.page().total()).isNull();
+        assertThat(cursorOnly.page().nextCursor()).isNull();
     }
 }

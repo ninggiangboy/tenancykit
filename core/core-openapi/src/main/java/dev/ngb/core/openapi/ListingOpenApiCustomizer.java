@@ -33,9 +33,9 @@ import org.springframework.web.method.HandlerMethod;
  * operator, the sortable fields, and the paging parameters. The document therefore always describes what the endpoint
  * accepts. The {@link ListQuery} parameter itself is not part of the request and is hidden.
  *
- * <p>It also marks the paging facts the contract leaves absent: {@code page} is null unless the caller sent
- * {@code page_info=true}, and inside it {@code offset} is null when a cursor positioned the page and
- * {@code next_cursor} is null on the last page.
+ * <p>It also marks the paging facts the contract leaves absent: {@code page} is null unless the caller asked for it,
+ * and inside it {@code offset} is null when a cursor positioned the page, {@code total} is null when the caller asked
+ * only for the cursor, and {@code next_cursor} is null on the last page.
  */
 public class ListingOpenApiCustomizer implements OperationCustomizer, OpenApiCustomizer {
 
@@ -54,7 +54,8 @@ public class ListingOpenApiCustomizer implements OperationCustomizer, OpenApiCus
             the branches are OR-ed (at most %d branches, %d predicates in all, %d values in an `in` list). \
             `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most %d) \
             or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`; \
-            `page_info=true` fills `page` with `limit`, `offset`, `total` and `next_cursor`.""";
+            `page_info=true` fills `page` with `limit`, `offset`, `total` and `next_cursor`, and `page_info=cursor` \
+            fills it with `limit` and `next_cursor` alone, without counting the matching rows.""";
 
     static {
         SpringDocUtils.getConfig().addRequestWrapperToIgnore(ListQuery.class);
@@ -75,9 +76,12 @@ public class ListingOpenApiCustomizer implements OperationCustomizer, OpenApiCus
         operation.addParametersItem(query("offset", "Rows to skip, at most " + QueryParser.MAX_OFFSET + ". Not combinable with `cursor`.",
                 bounded(0, QueryParser.MAX_OFFSET, 0)));
         operation.addParametersItem(query("cursor", "The `next_cursor` of the previous page. Valid only with the same filter and sort.", new StringSchema()));
-        BooleanSchema pageInfo = new BooleanSchema();
-        pageInfo.setDefault(false);
-        operation.addParametersItem(query("page_info", "Fills `page` with the limit, offset, total and next cursor.", pageInfo));
+        StringSchema pageInfo = new StringSchema();
+        pageInfo.setDefault("false");
+        pageInfo.setEnum(List.of("true", "false", "cursor"));
+        operation.addParametersItem(query("page_info", "`true` fills `page` with the limit, offset, total and next cursor; "
+                + "`cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted.",
+                pageInfo));
         String note = CONTRACT_NOTE.formatted(QueryParser.MAX_OR_BRANCHES, QueryParser.MAX_PREDICATES, QueryParser.MAX_IN_VALUES, QueryParser.MAX_OFFSET);
         operation.setDescription(operation.getDescription() == null ? note.strip() : operation.getDescription() + "\n" + note);
         if (operation.getResponses() != null && !operation.getResponses().containsKey("400")) {
@@ -96,6 +100,7 @@ public class ListingOpenApiCustomizer implements OperationCustomizer, OpenApiCus
         api.getComponents().getSchemas().forEach((name, schema) -> {
             if (PAGE_INFO.equals(name)) {
                 absentable(schema, "offset", openApi30);
+                absentable(schema, "total", openApi30);
                 absentable(schema, "next_cursor", openApi30);
             } else if (name.startsWith(PAGE_WRAPPER_PREFIX)) {
                 absentable(schema, "page", openApi30);

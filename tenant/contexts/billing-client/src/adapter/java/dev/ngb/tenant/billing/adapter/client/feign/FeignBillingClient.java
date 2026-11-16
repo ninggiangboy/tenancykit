@@ -228,7 +228,8 @@ public class FeignBillingClient
 
     /**
      * Reads rows page by page until {@code limit} rows are collected or the listing is exhausted, following the cursor
-     * Billing hands back. A page holds at most {@link PageSize#MAX} rows, so a larger {@code limit} needs several.
+     * Billing hands back. A page holds at most {@link PageSize#MAX} rows, so a larger {@code limit} needs several. It
+     * asks for the cursor alone, which spares Billing the count of every matching row on every page.
      */
     private <T> List<T> readUpTo(int limit, Map<String, String> filters, Function<Map<String, String>, Page<T>> fetch) {
         List<T> rows = new ArrayList<>();
@@ -236,7 +237,7 @@ public class FeignBillingClient
         while (rows.size() < limit) {
             Map<String, String> query = new LinkedHashMap<>(filters);
             query.put("limit", Integer.toString(Math.min(limit - rows.size(), PageSize.MAX)));
-            query.put("page_info", "true");
+            query.put("page_info", "cursor");
             if (cursor != null) {
                 query.put("cursor", cursor);
             }

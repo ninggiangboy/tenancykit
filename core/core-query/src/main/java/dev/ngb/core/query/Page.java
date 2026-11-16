@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 /**
  * Every listing answers with this one shape, so a client declares a single type per resource. {@code page} is null
- * unless the caller sent {@code page_info=true}.
+ * unless the caller asked for paging facts with {@code page_info}.
  */
 public record Page<T>(List<T> data, PageInfo page) {
 

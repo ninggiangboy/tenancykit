@@ -47,7 +47,7 @@ class QueryParserTest {
         assertThat(query.limit()).isEqualTo(50);
         assertThat(query.offset()).isZero();
         assertThat(query.seeking()).isFalse();
-        assertThat(query.pageInfo()).isFalse();
+        assertThat(query.pageFacts()).isEqualTo(PageFacts.NONE);
         assertThat(query.sort()).extracting(SortKey::wire).containsExactly("-created_at", "id");
     }
 
@@ -191,10 +191,12 @@ class QueryParserTest {
     }
 
     @Test
-    void pageInfoIsOptIn() {
-        assertThat(parse("page_info", "true").pageInfo()).isTrue();
-        assertThat(parse("page_info", "false").pageInfo()).isFalse();
-        rejects("true or false", "page_info", "1");
+    void pageInfoIsOptInAndMayAskOnlyForTheCursor() {
+        assertThat(parse().pageFacts()).isEqualTo(PageFacts.NONE);
+        assertThat(parse("page_info", "false").pageFacts()).isEqualTo(PageFacts.NONE);
+        assertThat(parse("page_info", "true").pageFacts()).isEqualTo(PageFacts.FULL);
+        assertThat(parse("page_info", "cursor").pageFacts()).isEqualTo(PageFacts.CURSOR);
+        rejects("true, false or cursor", "page_info", "1");
     }
 
     @Test

@@ -86,13 +86,15 @@ class ListingOpenApiCustomizerTest {
         assertThat(named(operation, "sort").getDescription()).contains("amount, created_at, id").contains("Default: `-created_at,id`");
         assertThat(named(operation, "limit").getSchema().getMaximum()).isEqualByComparingTo("200");
         assertThat(named(operation, "offset").getSchema().getMaximum()).isEqualByComparingTo("10000");
-        assertThat(named(operation, "page_info").getSchema().getDefault()).isEqualTo(false);
+        assertThat(named(operation, "page_info").getSchema().getDefault()).isEqualTo("false");
+        assertThat(values(named(operation, "page_info").getSchema().getEnum())).containsExactly("true", "false", "cursor");
     }
 
     @Test
     void theOperationExplainsOrAndDocumentsTheBadRequest() throws Exception {
         Operation operation = customized("list");
-        assertThat(operation.getDescription()).contains("filter[or][i][field][op]").contains("page_info=true");
+        assertThat(operation.getDescription()).contains("filter[or][i][field][op]").contains("page_info=true")
+                .contains("page_info=cursor");
         assertThat(operation.getResponses().get("400").getDescription()).contains("not allowed");
     }
 
@@ -131,6 +133,7 @@ class ListingOpenApiCustomizerTest {
 
         assertThat(property(pageInfo, "offset").getTypes()).containsExactlyInAnyOrder("integer", "null");
         assertThat(property(pageInfo, "next_cursor").getTypes()).containsExactlyInAnyOrder("string", "null");
+        assertThat(property(pageInfo, "total").getTypes()).containsExactlyInAnyOrder("integer", "null");
         assertThat(property(pageInfo, "limit").getTypes()).doesNotContain("null");
         // A reference cannot carry the null type, so it becomes a choice between the reference and null.
         List<Schema<?>> options = variants(property(pageResponse, "page").getOneOf());
@@ -143,7 +146,9 @@ class ListingOpenApiCustomizerTest {
 
     @Test
     void anOpenApi30DocumentUsesTheNullableKeyword() {
-        Schema<?> pageInfo = new ObjectSchema().addProperty("offset", new IntegerSchema());
+        Schema<?> pageInfo = new ObjectSchema()
+                .addProperty("offset", new IntegerSchema())
+                .addProperty("total", new IntegerSchema().format("int64"));
         Schema<?> pageResponse = new ObjectSchema()
                 .addProperty("page", new Schema<>().$ref("#/components/schemas/PageInfo"));
         OpenAPI api = new OpenAPI().openapi("3.0.3").components(new Components()
@@ -153,6 +158,7 @@ class ListingOpenApiCustomizerTest {
         customizer.customise(api);
 
         assertThat(property(pageInfo, "offset").getNullable()).isTrue();
+        assertThat(property(pageInfo, "total").getNullable()).isTrue();
         Schema<?> page = property(pageResponse, "page");
         assertThat(page.getNullable()).isTrue();
         List<Schema<?>> refs = variants(page.getAllOf());
@@ -173,5 +179,9 @@ class ListingOpenApiCustomizerTest {
 
     private static List<Schema<?>> variants(List<?> schemas) {
         return schemas.stream().<Schema<?>>map(given -> (Schema<?>) given).toList();
+    }
+
+    private static List<String> values(List<?> values) {
+        return values.stream().<String>map(value -> (String) value).toList();
     }
 }

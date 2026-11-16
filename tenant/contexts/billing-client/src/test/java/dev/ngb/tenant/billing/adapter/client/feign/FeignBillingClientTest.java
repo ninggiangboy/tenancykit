@@ -75,11 +75,12 @@ class FeignBillingClientTest {
 
     @Test
     void invoicesAreReadPageByPageFollowingTheCursorUntilTheLimit() {
+        // A cursor-only page carries no total: the client never asks Billing to count the rows it walks.
         billing.respond(200, """
-                {"data":[{"id":"inv_1"},{"id":"inv_2"},{"id":"inv_3"}],"page":{"limit":5,"offset":null,"total":9,"next_cursor":"cur_1"}}
+                {"data":[{"id":"inv_1"},{"id":"inv_2"},{"id":"inv_3"}],"page":{"limit":5,"next_cursor":"cur_1"}}
                 """);
         billing.respond(200, """
-                {"data":[{"id":"inv_4"},{"id":"inv_5"}],"page":{"limit":2,"offset":null,"total":9,"next_cursor":"cur_2"}}
+                {"data":[{"id":"inv_4"},{"id":"inv_5"}],"page":{"limit":2,"next_cursor":"cur_2"}}
                 """);
 
         var invoices = client.invoices("cus_1", null, "OPEN", 5);
@@ -88,7 +89,7 @@ class FeignBillingClientTest {
         assertThat(billing.requests()).hasSize(2);
         String first = billing.request(0).path();
         assertThat(first).startsWith("/api/v1/invoices?").contains("filter%5Bcustomer_id%5D%5Beq%5D=cus_1")
-                .contains("filter%5Bstatus%5D%5Beq%5D=OPEN").contains("limit=5").contains("page_info=true").doesNotContain("cursor=");
+                .contains("filter%5Bstatus%5D%5Beq%5D=OPEN").contains("limit=5").contains("page_info=cursor").doesNotContain("cursor=");
         // The second request asks only for what is still missing and continues where the first stopped.
         assertThat(billing.request(1).path()).contains("limit=2").contains("cursor=cur_1").contains("filter%5Bcustomer_id%5D%5Beq%5D=cus_1");
     }
@@ -195,7 +196,7 @@ class FeignBillingClientTest {
 
         assertThat(wallets).singleElement().satisfies(wallet -> assertThat(wallet.mode()).isEqualTo("PREPAID"));
         assertThat(billing.request(0).path()).startsWith("/api/v1/wallets?")
-                .contains("filter%5Bcustomer_id%5D%5Beq%5D=cus_1").contains("page_info=true");
+                .contains("filter%5Bcustomer_id%5D%5Beq%5D=cus_1").contains("page_info=cursor");
     }
 
     @Test
@@ -245,7 +246,7 @@ class FeignBillingClientTest {
         client.plans(null);
 
         assertThat(billing.request(0).path()).startsWith("/api/v1/pricing-plans?")
-                .contains("limit=200").contains("page_info=true").doesNotContain("filter%5B");
+                .contains("limit=200").contains("page_info=cursor").doesNotContain("filter%5B");
     }
 
     @Test

@@ -20,7 +20,7 @@ attribution) carries that prefix in the document's server URL rather than in eve
 | Sort | `sort=-created_at,total`: sortable fields, `-` for descending, at most 4 |
 | Page size | `limit`, default 50, at most 200 (a larger value is lowered to 200) |
 | Position | `offset` (at most 10 000) **or** `cursor`; sending both is a 400 |
-| Paging facts | `page_info=true` |
+| Paging facts | `page_info=true` for every fact, `page_info=cursor` for the cursor alone |
 
 Example, the open invoices of one customer that are either large or recent, largest first:
 
@@ -73,19 +73,26 @@ The body is always one shape, so a client declares one type per resource:
 { "data": [ ... ], "page": null }
 ```
 
-`page` is `null` unless `page_info=true`, and then it is
+`page` is `null` unless the caller asks for paging facts, and then it is
 
 ```json
 { "limit": 50, "offset": null, "total": 1342, "next_cursor": "eyJ..." }
 ```
 
-- `total` counts every row matching the filter, wherever the page starts.
+with `page_info=true`. `page_info=cursor` answers the same shape without counting the matching rows, so `total` is
+`null` and no `count` query runs:
+
+```json
+{ "limit": 50, "offset": null, "total": null, "next_cursor": "eyJ..." }
+```
+
+- `total` counts every row matching the filter, wherever the page starts. It is `null` in `cursor` mode.
 - `next_cursor` is `null` on the last page. Pass it as `cursor`, with the same filter and sort, to read the next page.
   A cursor is opaque. It is refused with a different filter or sort, and when it is malformed; it is not signed, because
   a forged one only moves where a read starts inside rows the caller may already see.
 - `offset` is the number of rows skipped, or `null` when a cursor positioned the page. A client that walks a whole
-  listing should use the cursor: an offset page can skip or repeat rows when data changes between calls and gets slower
-  as it deepens.
+  listing should use the cursor and `page_info=cursor`: an offset page can skip or repeat rows when data changes
+  between calls and gets slower as it deepens, and every page of a walk costs a count when `total` is asked for too.
 
 ## Errors
 
