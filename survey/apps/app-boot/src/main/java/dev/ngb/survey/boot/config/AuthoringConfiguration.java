@@ -13,6 +13,8 @@ import dev.ngb.survey.authoring.adapter.survey.persistence.JooqSurveyRepository;
 import dev.ngb.survey.authoring.adapter.version.persistence.JooqVersionReadRepository;
 import dev.ngb.survey.authoring.adapter.version.persistence.JooqVersionRepository;
 import dev.ngb.survey.authoring.api.flow.SurveyFlow;
+import dev.ngb.survey.authoring.api.link.SurveyStateReader;
+import dev.ngb.survey.authoring.api.version.PublishedVersionReader;
 import dev.ngb.survey.authoring.application.draft.command.SaveDraftUseCase;
 import dev.ngb.survey.authoring.application.draft.command.ValidateDraftUseCase;
 import dev.ngb.survey.authoring.application.draft.port.DocumentVerifier;
@@ -25,6 +27,7 @@ import dev.ngb.survey.authoring.application.flow.query.PreviewQueries;
 import dev.ngb.survey.authoring.application.flow.query.SimulateQueries;
 import dev.ngb.survey.authoring.application.flow.service.PreviewService;
 import dev.ngb.survey.authoring.application.flow.service.SurveyFlowService;
+import dev.ngb.survey.authoring.application.link.service.SurveyStateReaderService;
 import dev.ngb.survey.authoring.application.survey.command.CloseSurveyUseCase;
 import dev.ngb.survey.authoring.application.survey.command.CreateSurveyUseCase;
 import dev.ngb.survey.authoring.application.survey.command.ReopenSurveyUseCase;
@@ -35,6 +38,7 @@ import dev.ngb.survey.authoring.application.version.command.PublishSurveyUseCase
 import dev.ngb.survey.authoring.application.version.port.VersionRepository;
 import dev.ngb.survey.authoring.application.version.query.VersionQueries;
 import dev.ngb.survey.authoring.application.version.query.VersionReadRepository;
+import dev.ngb.survey.authoring.application.version.service.PublishedVersionReaderService;
 import org.jooq.DSLContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -177,5 +181,15 @@ class AuthoringConfiguration {
     SimulateQueries simulateQueries(
             UnitOfWork unitOfWork, FlowDocumentReadRepository documents, SurveyFlow flow) {
         return new SimulateQueries(unitOfWork, documents, flow);
+    }
+
+    @Bean
+    SurveyStateReader surveyStateReader(SurveyRepository surveys) {
+        return new SurveyStateReaderService(surveys);
+    }
+
+    @Bean
+    PublishedVersionReader publishedVersionReader(VersionRepository versions) {
+        return new PublishedVersionReaderService(versions);
     }
 }

@@ -32,8 +32,16 @@ class SecurityConfiguration {
 
     @Bean
     SecurityFilterChain apiSecurity(
-            HttpSecurity http, SuiteJwtDecoders decoders, SuiteActorResolver actorResolver) throws Exception {
+            HttpSecurity http,
+            SuiteJwtDecoders decoders,
+            SuiteActorResolver actorResolver,
+            dev.ngb.survey.collection.adapter.guard.web.PublicGuardFilter publicGuard) throws Exception {
         http.csrf(csrf -> csrf.disable())
+                // The rate and body limits run before authentication, because a public request carries no token and
+                // the cost of parsing one must not be reachable without an allowance.
+                .addFilterBefore(
+                        publicGuard,
+                        org.springframework.security.web.context.SecurityContextHolderFilter.class)
                 .sessionManagement(sessions -> sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/actuator/health", "/actuator/health/**")

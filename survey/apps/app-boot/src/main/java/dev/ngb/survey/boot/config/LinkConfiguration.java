@@ -40,4 +40,14 @@ class LinkConfiguration {
     LinkKeys linkKeys(SurveySettings settings) {
         return new LinkKeys(settings.links().activeKeyId(), settings.links().keys());
     }
+
+    /**
+     * The same keys as the collection context's own value type, which is what signs and verifies a link token.
+     *
+     * <p>The domain holds no Spring type, so its key set is a plain record; this is the one place the two shapes meet.
+     */
+    @Bean
+    dev.ngb.survey.collection.domain.link.LinkTokens.Keys linkTokenKeys(LinkKeys keys) {
+        return new dev.ngb.survey.collection.domain.link.LinkTokens.Keys(keys.activeKeyId(), keys.keys());
+    }
 }

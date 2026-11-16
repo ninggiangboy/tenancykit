@@ -17,6 +17,8 @@ dependencies {
     implementation("dev.ngb:core-suite")
     implementation("dev.ngb:core-feign")
     implementation("dev.ngb:core-webhook")
+    // The bounded, non-identifying facts a visit stores: the device class, the browser family, the country.
+    implementation("dev.ngb:core-visitor")
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-jackson")
     implementation("org.springframework.boot:spring-boot-starter-jooq")
