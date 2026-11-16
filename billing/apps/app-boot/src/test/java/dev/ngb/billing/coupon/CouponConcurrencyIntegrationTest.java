@@ -63,6 +63,7 @@ class CouponConcurrencyIntegrationTest {
     @Autowired CreditWalletUseCase creditWallet;
     @Autowired dev.ngb.billing.coupon.application.redemption.command.RedeemCouponUseCase redeem;
     @Autowired dev.ngb.billing.customer.application.customer.command.CreateCustomerUseCase createCustomer;
+    @Autowired dev.ngb.billing.coupon.application.redemption.command.RevokeRedemptionUseCase revoke;
     @Autowired OpenWalletUseCase openWallet;
     @Autowired WalletLookup wallets;
     @Autowired ScopeTestSupport scopes;
@@ -127,6 +128,45 @@ class CouponConcurrencyIntegrationTest {
         long discounted = owner.count("select coalesce(sum(amount), 0) from charge_discounts where tenant_id = ?", world.tenant().id().value());
         assertThat(discounted).as("the lines match what the budget allowed").isEqualTo(spent);
         assertThat(totalFailure.get()).isZero();
+    }
+
+    @Test
+    void aRevokeRacingChargesNeverRewindsTheRedemptionCounters() throws Exception {
+        for (int round = 0; round < 5; round++) {
+            World world = worlds.prepaid(50_000_000);
+            Coupon coupon = Coupon.create(new CouponId(UUID.randomUUID()), world.tenant().id(), "Raced", new Benefit.PercentOff(1_000),
+                    Duration.forever(), Scope.everything(), Limits.boundedBy(Instant.parse("2027-01-01T00:00:00Z")), USD, true, "admin", Instant.now());
+            RedemptionId redemptionId = new RedemptionId(UUID.randomUUID());
+            inTenant(world, () -> {
+                coupons.add(coupon);
+                redemptions.add(Redemption.activate(redemptionId, world.tenant().id(), coupon.id(), null, world.wallet().id(), world.customerId(),
+                        null, null, null, "admin", new ReplayIdentity("race-" + UUID.randomUUID(), "h"), USD, Instant.now()));
+                return coupon;
+            });
+
+            ExecutorService pool = Executors.newFixedThreadPool(8);
+            try {
+                List<CompletableFuture<Void>> futures = new ArrayList<>();
+                for (int i = 0; i < 12; i++) {
+                    futures.add(CompletableFuture.runAsync(() -> scopes.inTenant(world.tenant().id(), () -> chargeWallet.charge(
+                            new ChargeCommand(world.wallet().id(), null, Money.of(1_000, USD), null, "race", "rev-" + UUID.randomUUID()))), pool));
+                }
+                futures.add(CompletableFuture.runAsync(() -> scopes.inTenant(world.tenant().id(),
+                        () -> revoke.execute(new dev.ngb.billing.coupon.application.redemption.command.RevokeRedemptionUseCase.Command(
+                                redemptionId, AUDIT, null))), pool));
+                for (CompletableFuture<Void> future : futures) {
+                    future.get(180, TimeUnit.SECONDS);
+                }
+            } finally {
+                pool.shutdownNow();
+            }
+
+            long lines = owner.count("select count(*) from charge_discounts where redemption_id = ?", redemptionId.value());
+            long taken = owner.count("select coalesce(sum(amount), 0) from charge_discounts where redemption_id = ?", redemptionId.value());
+            assertThat(owner.count("select applications_used from coupon_redemptions where id = ?", redemptionId.value()))
+                    .as("the counter equals the discounts that were given, however the revoke interleaved").isEqualTo(lines);
+            assertThat(owner.count("select discount_total from coupon_redemptions where id = ?", redemptionId.value())).isEqualTo(taken);
+        }
     }
 
     @Test

@@ -14,6 +14,7 @@ The order is the order rows are locked, not the order endpoints are called.
 | Charge, credit, debit, reserve, reverse | wallet first, then everything else. A charge's idempotency check runs after the wallet lock |
 | Charge with coupons | wallet first, then the coupon rows that carry a budget, then the wallet's redemption rows ascending by id, all inside `claim` after the idempotency read |
 | Redeem a coupon onto a wallet | wallet, then the coupon row, then the promotion code row, then the new redemption |
+| Revoke a redemption | wallet, then the redemption row, read under its lock so the counters a charge just wrote are not written back stale |
 | Refund | payment, then refund, then wallet. The idempotency key is read after the payment lock |
 | Reservation expiry | wallet with `skip locked`, then reservation (the comment on the statement says why) |
 | Billing cycle close and `InvoiceChargeUseCase` | unbilled lines, then the invoice counter |

@@ -61,6 +61,11 @@ public class JooqRedemptionRepository implements RedemptionRepository {
     }
 
     @Override
+    public Optional<Redemption> lockById(RedemptionId id) {
+        return dsl.selectFrom(COUPON_REDEMPTIONS).where(COUPON_REDEMPTIONS.ID.eq(id.value())).forUpdate().fetchOptional(JooqRedemptionRepository::toDomain);
+    }
+
+    @Override
     public Optional<Redemption> findByIdempotencyKey(String idempotencyKey) {
         return dsl.selectFrom(COUPON_REDEMPTIONS)
                 .where(COUPON_REDEMPTIONS.IDEMPOTENCY_KEY.eq(idempotencyKey))

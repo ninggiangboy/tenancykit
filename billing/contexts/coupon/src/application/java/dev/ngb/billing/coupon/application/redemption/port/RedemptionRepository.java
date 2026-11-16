@@ -18,6 +18,9 @@ public interface RedemptionRepository {
 
     Optional<Redemption> findById(RedemptionId id);
 
+    /** The redemption read under its row lock, held until the transaction ends. */
+    Optional<Redemption> lockById(RedemptionId id);
+
     Optional<Redemption> findByIdempotencyKey(String idempotencyKey);
 
     /** The wallet's ACTIVE redemptions, ascending by id, ascending lock order. Takes no lock. */

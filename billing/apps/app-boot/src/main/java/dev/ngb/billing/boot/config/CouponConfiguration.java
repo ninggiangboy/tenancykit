@@ -116,8 +116,9 @@ class CouponConfiguration {
 
     @Bean
     RevokeRedemptionUseCase revokeRedemptionUseCase(
-            UnitOfWork unitOfWork, RedemptionRepository redemptions, EndingRedemptions endingRedemptions, CustomerLookup customers,
+            UnitOfWork unitOfWork, dev.ngb.billing.money.api.wallet.LockWallet walletLocks, RedemptionRepository redemptions,
+            EndingRedemptions endingRedemptions, CustomerLookup customers,
             AuditLog auditLog, Clock clock) {
-        return new RevokeRedemptionUseCase(unitOfWork, redemptions, endingRedemptions, customers, auditLog, clock);
+        return new RevokeRedemptionUseCase(unitOfWork, walletLocks, redemptions, endingRedemptions, customers, auditLog, clock);
     }
 }
