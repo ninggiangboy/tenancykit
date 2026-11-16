@@ -4,6 +4,7 @@
 package dev.ngb.crm_jooq;
 
 
+import dev.ngb.crm_jooq.tables.Activities;
 import dev.ngb.crm_jooq.tables.AppEntitlements;
 import dev.ngb.crm_jooq.tables.ConsentEvents;
 import dev.ngb.crm_jooq.tables.ConsentTopics;
@@ -33,6 +34,11 @@ import dev.ngb.crm_jooq.tables.WebhookEndpoints;
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Tables {
+
+    /**
+     * The table <code>public.activities</code>.
+     */
+    public static final Activities ACTIVITIES = Activities.ACTIVITIES;
 
     /**
      * The table <code>public.app_entitlements</code>.

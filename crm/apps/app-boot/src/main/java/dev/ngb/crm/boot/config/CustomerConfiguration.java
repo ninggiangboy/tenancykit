@@ -5,15 +5,23 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
+import dev.ngb.crm.boot.export.TenantExportLease;
+import dev.ngb.crm.customers.adapter.customer.persistence.CustomerSearchConditions;
 import dev.ngb.crm.customers.adapter.customer.persistence.JooqCustomerDirectory;
+import dev.ngb.crm.customers.adapter.customer.persistence.JooqCustomerExportReadRepository;
+import dev.ngb.crm.customers.adapter.customer.persistence.JooqCustomerProfileReader;
 import dev.ngb.crm.customers.adapter.customer.persistence.JooqCustomerReadRepository;
 import dev.ngb.crm.customers.adapter.customer.persistence.JooqCustomerRepository;
 import dev.ngb.crm.customers.adapter.field.json.JacksonFieldValues;
 import dev.ngb.crm.customers.api.customer.CustomerDirectory;
+import dev.ngb.crm.customers.api.customer.CustomerProfileReader;
 import dev.ngb.crm.customers.application.customer.command.PatchCustomerUseCase;
 import dev.ngb.crm.customers.application.customer.command.UpsertCustomerUseCase;
 import dev.ngb.crm.customers.application.customer.command.UpsertCustomersBatchUseCase;
 import dev.ngb.crm.customers.application.customer.port.CustomerRepository;
+import dev.ngb.crm.customers.application.customer.query.ExportLease;
+import dev.ngb.crm.customers.application.customer.query.CustomerExportReadRepository;
+import dev.ngb.crm.customers.application.customer.query.CustomerExporter;
 import dev.ngb.crm.customers.application.customer.query.CustomerQueries;
 import dev.ngb.crm.customers.application.customer.query.CustomerReadRepository;
 import dev.ngb.crm.customers.application.customer.service.CustomerFields;
@@ -49,9 +57,47 @@ class CustomerConfiguration {
         return new JooqCustomerDirectory(customers, upsert);
     }
 
+    /** The search terms the customer list and the export share, turned into predicates in one place. */
     @Bean
-    CustomerReadRepository customerReadRepository(DSLContext dsl, JacksonFieldValues fieldValues) {
-        return new JooqCustomerReadRepository(dsl, fieldValues);
+    CustomerSearchConditions customerSearchConditions(DSLContext dsl) {
+        return new CustomerSearchConditions(dsl);
+    }
+
+    @Bean
+    CustomerReadRepository customerReadRepository(
+            DSLContext dsl, JacksonFieldValues fieldValues, CustomerSearchConditions searchConditions) {
+        return new JooqCustomerReadRepository(dsl, fieldValues, searchConditions);
+    }
+
+    /** One customer read whole, which is what the profile context composes its document from. */
+    @Bean
+    CustomerProfileReader customerProfileReader(DSLContext dsl, JacksonFieldValues fieldValues) {
+        return new JooqCustomerProfileReader(dsl, fieldValues);
+    }
+
+    @Bean
+    CustomerExportReadRepository customerExportReadRepository(
+            DSLContext dsl, JacksonFieldValues fieldValues, CustomerSearchConditions searchConditions) {
+        return new JooqCustomerExportReadRepository(dsl, fieldValues, searchConditions);
+    }
+
+    /**
+     * One export per tenant: the claim is a lease in the coordination table every instance reads, so a second request
+     * is refused and a process that died mid-export stops blocking its tenant when the lease runs out.
+     */
+    @Bean
+    ExportLease exportLease(
+            DSLContext dsl, UnitOfWork unitOfWork, TenantContext tenantContext, Clock clock, CrmSettings settings) {
+        return new TenantExportLease(dsl, unitOfWork, tenantContext, clock, settings.exports().lease());
+    }
+
+    @Bean
+    CustomerExporter customerExporter(
+            UnitOfWork unitOfWork,
+            CustomerExportReadRepository customers,
+            ExportLease leases,
+            CrmSettings settings) {
+        return new CustomerExporter(unitOfWork, customers, leases, settings.exports().pageSize());
     }
 
     @Bean

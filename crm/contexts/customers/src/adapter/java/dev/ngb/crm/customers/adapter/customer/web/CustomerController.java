@@ -3,16 +3,13 @@ package dev.ngb.crm.customers.adapter.customer.web;
 import dev.ngb.core.error.IdempotencyConflictException;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.idempotency.RepeatableCreate;
-import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
 import dev.ngb.core.security.RequiresPermission;
-import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.crm.customers.application.customer.command.PatchCustomerUseCase;
 import dev.ngb.crm.customers.application.customer.command.UpsertCustomerUseCase;
 import dev.ngb.crm.customers.application.customer.exception.IfMatchRequiredException;
-import dev.ngb.crm.customers.application.customer.query.CustomerListing;
 import dev.ngb.crm.customers.application.customer.query.CustomerQueries;
 import dev.ngb.crm.customers.application.customer.query.CustomerView;
 import dev.ngb.crm.customers.application.customer.service.CustomerRules;
@@ -24,6 +21,7 @@ import java.util.Map;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,6 +29,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -181,12 +180,15 @@ public class CustomerController {
                 .body(CustomerResponse.ofView(customer));
     }
 
-    /** The list contract's paging, narrowed by what {@link CustomerListing} allows; the search terms come later. */
+    /**
+     * The list contract's paging and sort, narrowed by a search term, the tags the customer must carry, its field
+     * values, its current consent state and a window of when it was created.
+     */
     @GetMapping("/customers")
-    @Listing(CustomerListing.class)
     @RequiresPermission(CrmPermissions.CUSTOMER_READ)
-    public Page<CustomerResponse> listCustomers(ListQuery query) {
-        return customerQueries.list(query).map(CustomerResponse::ofView);
+    public Page<CustomerResponse> listCustomers(@RequestParam MultiValueMap<String, String> params) {
+        CustomerSearchQuery.Parsed parsed = CustomerSearchQuery.parse(params);
+        return customerQueries.search(parsed.listing(), parsed.criteria()).map(CustomerResponse::ofView);
     }
 
     /** The reference is the natural key and is immutable, so a body naming another one would write to a second customer. */

@@ -6,8 +6,10 @@ import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.crm.customers.api.customer.CustomerDirectory;
+import dev.ngb.crm.orders.adapter.order.persistence.JooqOrderHistory;
 import dev.ngb.crm.orders.adapter.order.persistence.JooqOrderReadRepository;
 import dev.ngb.crm.orders.adapter.order.persistence.JooqOrderRepository;
+import dev.ngb.crm.orders.api.order.OrderHistory;
 import dev.ngb.crm.orders.application.order.command.RecordOrderUseCase;
 import dev.ngb.crm.orders.application.order.command.RecordOrdersBatchUseCase;
 import dev.ngb.crm.orders.application.order.port.OrderRepository;
@@ -42,6 +44,12 @@ class OrderConfiguration {
     @Bean
     OrderReadRepository orderReadRepository(DSLContext dsl, CustomerDirectory customers) {
         return new JooqOrderReadRepository(dsl, customers);
+    }
+
+    /** One customer's order history, which is what the profile context shows as its order slice. */
+    @Bean
+    OrderHistory orderHistory(OrderReadRepository orders) {
+        return new JooqOrderHistory(orders);
     }
 
     @Bean

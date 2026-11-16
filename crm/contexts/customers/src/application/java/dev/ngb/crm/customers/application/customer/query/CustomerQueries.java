@@ -22,6 +22,11 @@ public class CustomerQueries {
         return unitOfWork.transactional(() -> customers.list(query));
     }
 
+    /** The list contract's paging, narrowed by the search term, the tags, the field values and the consent states. */
+    public Page<CustomerView> search(ListQuery query, CustomerSearchCriteria criteria) {
+        return unitOfWork.transactional(() -> customers.search(query, criteria));
+    }
+
     /** @throws InvalidCustomerException when the path is not a usable reference */
     public CustomerView get(String externalRef) {
         String ref = CustomerRules.externalRef(externalRef);

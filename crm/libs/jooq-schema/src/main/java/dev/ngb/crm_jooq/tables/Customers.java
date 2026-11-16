@@ -6,6 +6,7 @@ package dev.ngb.crm_jooq.tables;
 
 import dev.ngb.crm_jooq.Keys;
 import dev.ngb.crm_jooq.Public;
+import dev.ngb.crm_jooq.tables.Activities.ActivitiesPath;
 import dev.ngb.crm_jooq.tables.ConsentEvents.ConsentEventsPath;
 import dev.ngb.crm_jooq.tables.CustomerTags.CustomerTagsPath;
 import dev.ngb.crm_jooq.tables.Orders.OrdersPath;
@@ -198,6 +199,19 @@ public class Customers extends TableImpl<CustomersRecord> {
     @Override
     public List<UniqueKey<CustomersRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.CUSTOMERS_TENANT_ID_EXTERNAL_REF_KEY);
+    }
+
+    private transient ActivitiesPath _activities;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.activities</code>
+     * table
+     */
+    public ActivitiesPath activities() {
+        if (_activities == null)
+            _activities = new ActivitiesPath(this, null, Keys.ACTIVITIES__ACTIVITIES_CUSTOMER_ID_FKEY.getInverseKey());
+
+        return _activities;
     }
 
     private transient ConsentEventsPath _consentEvents;

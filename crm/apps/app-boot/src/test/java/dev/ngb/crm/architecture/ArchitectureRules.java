@@ -56,6 +56,7 @@ final class ArchitectureRules {
         for (String table : List.of("Orders", "OrderLines", "OrderReturns", "OrderReturnLines")) {
             TABLE_OWNER.put(table, "orders");
         }
+        TABLE_OWNER.put("Activities", "activity");
     }
 
     /** Every use case opens a unit of work; crm has no exception and should never grow one. */

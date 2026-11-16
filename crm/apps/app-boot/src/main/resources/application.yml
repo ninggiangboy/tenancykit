@@ -123,6 +123,9 @@ crm:
     max-payload-bytes: ${CRM_MAX_ACTIVITY_PAYLOAD_BYTES:8192}
   exports:
     page-size: ${CRM_EXPORT_PAGE_SIZE:500}
+    # One export per tenant at a time: the claim is a lease, so an instance that dies mid-export stops blocking its
+    # tenant once it runs out.
+    lease: ${CRM_EXPORT_LEASE:PT5M}
   housekeeping:
     enabled: ${CRM_HOUSEKEEPING_ENABLED:true}
     inbox-retention: P30D

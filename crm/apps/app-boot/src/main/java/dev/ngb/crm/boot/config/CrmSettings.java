@@ -155,11 +155,20 @@ public record CrmSettings(
         }
     }
 
-    /** @param pageSize how many rows one page of the streamed CSV export holds */
-    public record Exports(int pageSize) {
+    /**
+     * How one streamed CSV export is read and how long its claim lasts.
+     *
+     * @param pageSize how many rows one round trip of the server-side cursor reads
+     * @param lease how long one tenant's export claim is held before another request may take it over, so a process
+     *     that died mid-export does not lock its tenant out for ever
+     */
+    public record Exports(int pageSize, Duration lease) {
 
         public Exports {
             positive(pageSize, "crm.exports.page-size");
+            if (lease == null || lease.isNegative() || lease.isZero()) {
+                throw new IllegalArgumentException("crm.exports.lease must be positive");
+            }
         }
     }
 

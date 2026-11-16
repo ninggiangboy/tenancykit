@@ -120,15 +120,20 @@ class OpenApiContractTest {
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8));
         Set<String> servedPaths = new TreeSet<>(List.of(served.get("paths").propertyNames().toArray(String[]::new)));
         assertThat(servedPaths).containsExactlyInAnyOrder(
+                "/api/v1/activities",
+                "/api/v1/activities/batch",
                 "/api/v1/consent-topics",
                 "/api/v1/consent-topics/{key}",
                 "/api/v1/custom-fields",
                 "/api/v1/custom-fields/{key}",
                 "/api/v1/customers",
                 "/api/v1/customers/batch",
+                "/api/v1/customers/export",
                 "/api/v1/customers/{externalRef}",
+                "/api/v1/customers/{externalRef}/activities",
                 "/api/v1/customers/{externalRef}/consents",
                 "/api/v1/customers/{externalRef}/orders",
+                "/api/v1/customers/{externalRef}/profile",
                 "/api/v1/orders/batch",
                 "/api/v1/orders/{orderRef}",
                 "/api/v1/orders/{orderRef}/returns/{returnRef}",

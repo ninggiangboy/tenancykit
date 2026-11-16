@@ -4,6 +4,7 @@
 package dev.ngb.crm_jooq;
 
 
+import dev.ngb.crm_jooq.tables.Activities;
 import dev.ngb.crm_jooq.tables.AppEntitlements;
 import dev.ngb.crm_jooq.tables.ConsentEvents;
 import dev.ngb.crm_jooq.tables.ConsentTopics;
@@ -26,6 +27,7 @@ import dev.ngb.crm_jooq.tables.UserGrants;
 import dev.ngb.crm_jooq.tables.WebhookDeliveries;
 import dev.ngb.crm_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.crm_jooq.tables.WebhookEndpoints;
+import dev.ngb.crm_jooq.tables.records.ActivitiesRecord;
 import dev.ngb.crm_jooq.tables.records.AppEntitlementsRecord;
 import dev.ngb.crm_jooq.tables.records.ConsentEventsRecord;
 import dev.ngb.crm_jooq.tables.records.ConsentTopicsRecord;
@@ -68,6 +70,7 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final UniqueKey<ActivitiesRecord> ACTIVITIES_PKEY = Internal.createUniqueKey(Activities.ACTIVITIES, DSL.name("activities_pkey"), new TableField[] { Activities.ACTIVITIES.ID }, true);
     public static final UniqueKey<AppEntitlementsRecord> APP_ENTITLEMENTS_PKEY = Internal.createUniqueKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_pkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID, AppEntitlements.APP_ENTITLEMENTS.APP_CODE }, true);
     public static final UniqueKey<ConsentEventsRecord> CONSENT_EVENTS_PKEY = Internal.createUniqueKey(ConsentEvents.CONSENT_EVENTS, DSL.name("consent_events_pkey"), new TableField[] { ConsentEvents.CONSENT_EVENTS.ID }, true);
     public static final UniqueKey<ConsentTopicsRecord> CONSENT_TOPICS_PKEY = Internal.createUniqueKey(ConsentTopics.CONSENT_TOPICS, DSL.name("consent_topics_pkey"), new TableField[] { ConsentTopics.CONSENT_TOPICS.TENANT_ID, ConsentTopics.CONSENT_TOPICS.KEY }, true);
@@ -102,6 +105,7 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final ForeignKey<ActivitiesRecord, CustomersRecord> ACTIVITIES__ACTIVITIES_CUSTOMER_ID_FKEY = Internal.createForeignKey(Activities.ACTIVITIES, DSL.name("activities_customer_id_fkey"), new TableField[] { Activities.ACTIVITIES.CUSTOMER_ID }, Keys.CUSTOMERS_PKEY, new TableField[] { Customers.CUSTOMERS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<AppEntitlementsRecord, TenantsRecord> APP_ENTITLEMENTS__APP_ENTITLEMENTS_TENANT_ID_FKEY = Internal.createForeignKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_tenant_id_fkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<ConsentEventsRecord, CustomersRecord> CONSENT_EVENTS__CONSENT_EVENTS_CUSTOMER_ID_FKEY = Internal.createForeignKey(ConsentEvents.CONSENT_EVENTS, DSL.name("consent_events_customer_id_fkey"), new TableField[] { ConsentEvents.CONSENT_EVENTS.CUSTOMER_ID }, Keys.CUSTOMERS_PKEY, new TableField[] { Customers.CUSTOMERS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<CustomerTagsRecord, CustomersRecord> CUSTOMER_TAGS__CUSTOMER_TAGS_CUSTOMER_ID_FKEY = Internal.createForeignKey(CustomerTags.CUSTOMER_TAGS, DSL.name("customer_tags_customer_id_fkey"), new TableField[] { CustomerTags.CUSTOMER_TAGS.CUSTOMER_ID }, Keys.CUSTOMERS_PKEY, new TableField[] { Customers.CUSTOMERS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);

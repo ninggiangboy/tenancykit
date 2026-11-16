@@ -4,6 +4,7 @@
 package dev.ngb.crm_jooq;
 
 
+import dev.ngb.crm_jooq.tables.Activities;
 import dev.ngb.crm_jooq.tables.AppEntitlements;
 import dev.ngb.crm_jooq.tables.ConsentEvents;
 import dev.ngb.crm_jooq.tables.ConsentTopics;
@@ -48,6 +49,11 @@ public class Public extends SchemaImpl {
      * The reference instance of <code>public</code>
      */
     public static final Public PUBLIC = new Public();
+
+    /**
+     * The table <code>public.activities</code>.
+     */
+    public final Activities ACTIVITIES = Activities.ACTIVITIES;
 
     /**
      * The table <code>public.app_entitlements</code>.
@@ -175,6 +181,7 @@ public class Public extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
+            Activities.ACTIVITIES,
             AppEntitlements.APP_ENTITLEMENTS,
             ConsentEvents.CONSENT_EVENTS,
             ConsentTopics.CONSENT_TOPICS,

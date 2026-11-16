@@ -1,9 +1,11 @@
 package dev.ngb.crm.boot.web;
 
 import dev.ngb.core.spring.web.CoreExceptionHandlers;
+import dev.ngb.crm.activity.application.activity.exception.ActivityProblem;
 import dev.ngb.crm.customers.application.consent.exception.ConsentProblem;
 import dev.ngb.crm.customers.application.customer.exception.CustomerErasedException;
 import dev.ngb.crm.customers.application.customer.exception.CustomerProblem;
+import dev.ngb.crm.customers.application.customer.exception.ExportInProgressException;
 import dev.ngb.crm.customers.application.customer.exception.IfMatchRequiredException;
 import dev.ngb.crm.customers.application.customer.exception.InvalidBatchException;
 import dev.ngb.crm.customers.application.customer.exception.InvalidCustomerException;
@@ -86,6 +88,22 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "The request body is not valid.");
     }
 
+    /**
+     * An activity refusal: an unknown customer or a payload over its bound is {@code 422}, an erased customer's
+     * reference and a reused reference with another body are {@code 409}, and a malformed batch envelope is
+     * {@code 400}.
+     */
+    @ExceptionHandler(ActivityProblem.class)
+    ProblemDetail activityProblem(ActivityProblem e) {
+        return problem(activityStatusOf(e.code()), e.code(), e.getMessage());
+    }
+
+    /** Another export of this tenant is still running: the caller waits for it rather than reading the rows twice. */
+    @ExceptionHandler(ExportInProgressException.class)
+    ProblemDetail exportInProgress(ExportInProgressException e) {
+        return problem(HttpStatus.TOO_MANY_REQUESTS, e.code(), e.getMessage());
+    }
+
     /** The status a refusal code answers with, so a caller branches on the code rather than on the wording. */
     private static HttpStatus statusOf(String code) {
         if (code.endsWith("_NOT_FOUND")) {
@@ -104,6 +122,17 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
         }
         if (code.equals("CUSTOMER_ERASED")) {
             return HttpStatus.CONFLICT;
+        }
+        return HttpStatus.UNPROCESSABLE_CONTENT;
+    }
+
+    /** An activity refusal's status: an erased customer is 409, a malformed batch envelope is 400, the rest is 422. */
+    private static HttpStatus activityStatusOf(String code) {
+        if (code.equals("CUSTOMER_ERASED") || code.equals("IDEMPOTENCY_CONFLICT")) {
+            return HttpStatus.CONFLICT;
+        }
+        if (code.equals("INVALID_REQUEST") || code.equals("BATCH_LIMIT_EXCEEDED")) {
+            return HttpStatus.BAD_REQUEST;
         }
         return HttpStatus.UNPROCESSABLE_CONTENT;
     }

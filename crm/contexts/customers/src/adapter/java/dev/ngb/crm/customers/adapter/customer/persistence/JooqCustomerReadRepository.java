@@ -10,6 +10,7 @@ import dev.ngb.core.spring.query.ListBinding;
 import dev.ngb.crm.customers.adapter.field.json.JacksonFieldValues;
 import dev.ngb.crm.customers.application.customer.query.CustomerListing;
 import dev.ngb.crm.customers.application.customer.query.CustomerReadRepository;
+import dev.ngb.crm.customers.application.customer.query.CustomerSearchCriteria;
 import dev.ngb.crm.customers.application.customer.query.CustomerView;
 import dev.ngb.crm.customers.domain.customer.CustomerStatus;
 import dev.ngb.crm_jooq.tables.records.CustomersRecord;
@@ -20,14 +21,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.SelectQuery;
 import org.jooq.impl.DSL;
 
 /**
  * Selects customers straight into the view; row-level security narrows every statement to the current tenant.
  *
  * <p>A page's tags are read in one statement for the whole page rather than one per customer, so the list stays one
- * query plus one lookup whatever the page size.
+ * query plus one lookup whatever the page size. The search terms the customer list answers are turned into predicates
+ * by {@link CustomerSearchConditions} and applied as the listing's own scope, so a page narrowed by a tag, a field
+ * value or a consent state is still one statement.
  */
 public class JooqCustomerReadRepository implements CustomerReadRepository {
 
@@ -45,21 +50,44 @@ public class JooqCustomerReadRepository implements CustomerReadRepository {
 
     private final DSLContext dsl;
     private final JacksonFieldValues fieldValues;
+    private final CustomerSearchConditions conditions;
 
     /** @return the binding of the customer listing, for a test that checks every sortable field has an index */
     public static ListBinding listBinding() {
         return BINDING;
     }
 
-    public JooqCustomerReadRepository(DSLContext dsl, JacksonFieldValues fieldValues) {
+    public JooqCustomerReadRepository(
+            DSLContext dsl, JacksonFieldValues fieldValues, CustomerSearchConditions conditions) {
         this.dsl = dsl;
         this.fieldValues = fieldValues;
+        this.conditions = conditions;
     }
 
     @Override
     public Page<CustomerView> list(ListQuery query) {
-        return JooqLists.fetchPage(
-                dsl, CUSTOMERS, DSL.noCondition(), BINDING, query, this::toViews);
+        return JooqLists.fetchPage(dsl, CUSTOMERS, DSL.noCondition(), BINDING, query, this::toViews);
+    }
+
+    @Override
+    public Page<CustomerView> search(ListQuery query, CustomerSearchCriteria criteria) {
+        return JooqLists.fetchPage(dsl, CUSTOMERS, conditions.of(criteria), BINDING, query, this::toViews);
+    }
+
+    /**
+     * The statement the search runs for its first page, so a test can ask the database how it would answer it. It is
+     * built exactly like {@link #search}: the same scope, the same ordering and one extra row to know whether a next
+     * page exists.
+     */
+    public SelectQuery<CustomersRecord> searchStatement(ListQuery query, CustomerSearchCriteria criteria) {
+        Condition filtered = conditions.of(criteria).and(BINDING.where(query));
+        Condition positioned = query.seeking() ? filtered.and(BINDING.after(query)) : filtered;
+        return dsl.selectFrom(CUSTOMERS)
+                .where(positioned)
+                .orderBy(BINDING.order(query))
+                .limit(query.limit() + 1)
+                .offset(query.offset())
+                .getQuery();
     }
 
     @Override
