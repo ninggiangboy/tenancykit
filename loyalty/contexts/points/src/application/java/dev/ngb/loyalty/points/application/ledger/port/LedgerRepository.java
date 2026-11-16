@@ -41,4 +41,14 @@ public interface LedgerRepository {
 
     /** The sum of the unexpired lots' remaining points, before debt. */
     long liveBalance(UUID memberId, Instant now);
+
+    /** Every lot of one member that still holds points, expired or not, in ascending id. */
+    List<LiveLot> lotsHolding(UUID memberId);
+
+    /**
+     * Sets a lot's remaining points to zero, which is how an erasure releases what the member could still have spent.
+     *
+     * @return false when the lot held nothing by the time it was reached, so no entry is written for it
+     */
+    boolean zeroLot(UUID lotId);
 }

@@ -7,6 +7,7 @@ import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.loyalty.boot.rewards.RedemptionVoucherHook;
 import dev.ngb.loyalty.points.api.member.MemberDirectory;
+import dev.ngb.loyalty.points.api.member.MemberErasureParticipant;
 import dev.ngb.loyalty.points.api.redemption.PointSpender;
 import dev.ngb.loyalty.points.application.redemption.port.RedemptionReversalHook;
 import dev.ngb.loyalty.rewards.adapter.reward.persistence.JooqRewardReadRepository;
@@ -23,6 +24,7 @@ import dev.ngb.loyalty.rewards.application.voucher.command.UseVoucherUseCase;
 import dev.ngb.loyalty.rewards.application.voucher.port.VoucherRepository;
 import dev.ngb.loyalty.rewards.application.voucher.query.VoucherQueries;
 import dev.ngb.loyalty.rewards.application.voucher.query.VoucherReadRepository;
+import dev.ngb.loyalty.rewards.application.voucher.service.MemberErasureParticipantService;
 import dev.ngb.loyalty.rewards.application.voucher.service.RedemptionVoidService;
 import dev.ngb.loyalty.rewards.application.voucher.service.VoucherEvents;
 import org.jooq.DSLContext;
@@ -123,6 +125,20 @@ class RewardsConfiguration {
             TenantContext tenantContext,
             Clock clock) {
         return new RedemptionVoidService(vouchers, rewards, events, tenantContext, clock);
+    }
+
+    /**
+     * What an erasure does to the member's unused vouchers, handed to the points context's erasure through the seam that
+     * context declares, so neither side imports the other's internals.
+     */
+    @Bean
+    MemberErasureParticipant memberVouchersErasure(
+            VoucherRepository vouchers,
+            RewardRepository rewards,
+            VoucherEvents events,
+            TenantContext tenantContext,
+            Clock clock) {
+        return new MemberErasureParticipantService(vouchers, rewards, events, tenantContext, clock);
     }
 
     /** The reversal undoes a reward redemption's voucher with this, replacing the no-op the points context shipped with. */

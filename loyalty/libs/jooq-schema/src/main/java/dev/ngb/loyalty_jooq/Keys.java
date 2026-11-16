@@ -5,6 +5,7 @@ package dev.ngb.loyalty_jooq;
 
 
 import dev.ngb.loyalty_jooq.tables.AppEntitlements;
+import dev.ngb.loyalty_jooq.tables.ErasureRequests;
 import dev.ngb.loyalty_jooq.tables.EventInbox;
 import dev.ngb.loyalty_jooq.tables.JobLeases;
 import dev.ngb.loyalty_jooq.tables.JobRuns;
@@ -33,6 +34,7 @@ import dev.ngb.loyalty_jooq.tables.WebhookDeliveries;
 import dev.ngb.loyalty_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.loyalty_jooq.tables.WebhookEndpoints;
 import dev.ngb.loyalty_jooq.tables.records.AppEntitlementsRecord;
+import dev.ngb.loyalty_jooq.tables.records.ErasureRequestsRecord;
 import dev.ngb.loyalty_jooq.tables.records.EventInboxRecord;
 import dev.ngb.loyalty_jooq.tables.records.JobLeasesRecord;
 import dev.ngb.loyalty_jooq.tables.records.JobRunsRecord;
@@ -81,6 +83,7 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<AppEntitlementsRecord> APP_ENTITLEMENTS_PKEY = Internal.createUniqueKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_pkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID, AppEntitlements.APP_ENTITLEMENTS.APP_CODE }, true);
+    public static final UniqueKey<ErasureRequestsRecord> ERASURE_REQUESTS_PKEY = Internal.createUniqueKey(ErasureRequests.ERASURE_REQUESTS, DSL.name("erasure_requests_pkey"), new TableField[] { ErasureRequests.ERASURE_REQUESTS.TENANT_ID, ErasureRequests.ERASURE_REQUESTS.REF_HASH }, true);
     public static final UniqueKey<EventInboxRecord> EVENT_INBOX_PKEY = Internal.createUniqueKey(EventInbox.EVENT_INBOX, DSL.name("event_inbox_pkey"), new TableField[] { EventInbox.EVENT_INBOX.TENANT_ID, EventInbox.EVENT_INBOX.CONSUMER, EventInbox.EVENT_INBOX.EVENT_ID }, true);
     public static final UniqueKey<JobLeasesRecord> JOB_LEASES_PKEY = Internal.createUniqueKey(JobLeases.JOB_LEASES, DSL.name("job_leases_pkey"), new TableField[] { JobLeases.JOB_LEASES.NAME }, true);
     public static final UniqueKey<JobRunsRecord> JOB_RUNS_PKEY = Internal.createUniqueKey(JobRuns.JOB_RUNS, DSL.name("job_runs_pkey"), new TableField[] { JobRuns.JOB_RUNS.JOB, JobRuns.JOB_RUNS.RUN_KEY, JobRuns.JOB_RUNS.TENANT_ID }, true);
@@ -124,6 +127,7 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final ForeignKey<AppEntitlementsRecord, TenantsRecord> APP_ENTITLEMENTS__APP_ENTITLEMENTS_TENANT_ID_FKEY = Internal.createForeignKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_tenant_id_fkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<ErasureRequestsRecord, MembersRecord> ERASURE_REQUESTS__ERASURE_REQUESTS_TENANT_ID_MEMBER_ID_FKEY = Internal.createForeignKey(ErasureRequests.ERASURE_REQUESTS, DSL.name("erasure_requests_tenant_id_member_id_fkey"), new TableField[] { ErasureRequests.ERASURE_REQUESTS.TENANT_ID, ErasureRequests.ERASURE_REQUESTS.MEMBER_ID }, Keys.MEMBERS_PKEY, new TableField[] { Members.MEMBERS.TENANT_ID, Members.MEMBERS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<LedgerEntriesRecord, MembersRecord> LEDGER_ENTRIES__LEDGER_ENTRIES_TENANT_ID_MEMBER_ID_FKEY = Internal.createForeignKey(LedgerEntries.LEDGER_ENTRIES, DSL.name("ledger_entries_tenant_id_member_id_fkey"), new TableField[] { LedgerEntries.LEDGER_ENTRIES.TENANT_ID, LedgerEntries.LEDGER_ENTRIES.MEMBER_ID }, Keys.MEMBERS_PKEY, new TableField[] { Members.MEMBERS.TENANT_ID, Members.MEMBERS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<LotAllocationsRecord, LedgerEntriesRecord> LOT_ALLOCATIONS__LOT_ALLOCATIONS_TENANT_ID_ENTRY_ID_FKEY = Internal.createForeignKey(LotAllocations.LOT_ALLOCATIONS, DSL.name("lot_allocations_tenant_id_entry_id_fkey"), new TableField[] { LotAllocations.LOT_ALLOCATIONS.TENANT_ID, LotAllocations.LOT_ALLOCATIONS.ENTRY_ID }, Keys.LEDGER_ENTRIES_PKEY, new TableField[] { LedgerEntries.LEDGER_ENTRIES.TENANT_ID, LedgerEntries.LEDGER_ENTRIES.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<LotAllocationsRecord, PointLotsRecord> LOT_ALLOCATIONS__LOT_ALLOCATIONS_TENANT_ID_LOT_ID_FKEY = Internal.createForeignKey(LotAllocations.LOT_ALLOCATIONS, DSL.name("lot_allocations_tenant_id_lot_id_fkey"), new TableField[] { LotAllocations.LOT_ALLOCATIONS.TENANT_ID, LotAllocations.LOT_ALLOCATIONS.LOT_ID }, Keys.POINT_LOTS_PKEY, new TableField[] { PointLots.POINT_LOTS.TENANT_ID, PointLots.POINT_LOTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);

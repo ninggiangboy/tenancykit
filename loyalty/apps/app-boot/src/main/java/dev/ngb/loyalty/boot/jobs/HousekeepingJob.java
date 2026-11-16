@@ -42,10 +42,18 @@ public class HousekeepingJob {
         sweep.forEachActiveTenant(tenantId -> {
             MessagingHousekeeping.Purged messagingPurged = messaging.runOnce(tenantId);
             int deliveries = purgedDeliveries.execute(limits.batchSize());
-            if (messagingPurged.inbox() > 0 || messagingPurged.outbox() > 0 || deliveries > 0) {
+            if (messagingPurged.inbox() > 0
+                    || messagingPurged.relayed() > 0
+                    || messagingPurged.dead() > 0
+                    || deliveries > 0) {
                 LOG.info(
-                        "tenant {}: purged {} inbox row(s), {} dead outbox row(s), {} finished webhook deliver(ies)",
-                        tenantId, messagingPurged.inbox(), messagingPurged.outbox(), deliveries);
+                        "tenant {}: purged {} inbox row(s), {} relayed outbox row(s), {} dead outbox row(s), "
+                                + "{} finished webhook deliver(ies)",
+                        tenantId,
+                        messagingPurged.inbox(),
+                        messagingPurged.relayed(),
+                        messagingPurged.dead(),
+                        deliveries);
             }
         });
     }

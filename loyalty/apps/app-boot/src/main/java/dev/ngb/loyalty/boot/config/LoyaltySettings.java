@@ -92,10 +92,17 @@ public record LoyaltySettings(
      */
     public record Orders(int maxLinesPerOrder) {}
 
-    /** Bounded retention for the messaging tables: without a purge the inbox and dead outbox rows grow without bound. */
+    /**
+     * Bounded retention for the messaging tables: without a purge the inbox, the relayed outbox rows and the dead ones
+     * grow without bound, and a relayed payload would keep the member's reference past the delivery that carried it.
+     *
+     * @param relayedOutboxRetention how long an outbox row that reached every consumer keeps its payload, 7 days by
+     *     default
+     */
     public record Housekeeping(
             boolean enabled,
             Duration inboxRetention,
+            Duration relayedOutboxRetention,
             Duration deadOutboxRetention,
             int batchSize,
             Duration interval) {}

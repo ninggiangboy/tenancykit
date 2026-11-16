@@ -1,0 +1,112 @@
+# Every text, jsonb and array column of loyalty's schema, classified.
+#
+# `PersonalDataColumnsTest` reads information_schema and fails unless each such column is listed here, so a new column
+# cannot arrive without a decision about what it may hold. There are three answers:
+#
+#   [PERSONAL]  it can hold a person's data, and an erasure clears it: `MemberErasureIntegrationTest` reads this list and
+#               asserts that after an erasure no column here holds a value for the erased member.
+#   [PURGED]    it can hold a person's data, and the row itself leaves within the housekeeping retention, so a test
+#               proves the payload is gone from the table afterwards.
+#   [OTHER]     it cannot hold a person's data: an identifier loyalty owns, an enum, a bounded code the Tenant configured,
+#               a hash of a reference rather than the reference, or a Platform-owned replica column.
+#
+# One line is `table.column`. Removing a column from the schema means removing its line: a line naming a column that no
+# longer exists fails the test in the other direction.
+
+[PERSONAL]
+# The member's own attributes: the Tenant's reference for the person and the name it chose to show.
+members.external_ref
+members.display_name
+# The reference copied onto a voucher at issue time, so a voucher read and its events name the member without reading the
+# member row. An ERASURE void releases it.
+vouchers.external_ref
+# The Tenant's own reference for a spend, for example a POS receipt, which is a document naming the person.
+redemptions.reference
+
+[PURGED]
+# A relayed outbox row keeps the payload it delivered until the retention passes, and every payload of a member's change
+# carries its reference.
+outbox.payload
+outbox.last_error
+# A delivery body is the exact document a receiver got, and the attempt log keeps what came back.
+webhook_deliveries.body
+webhook_deliveries.last_error
+webhook_delivery_attempts.error
+webhook_delivery_attempts.response_excerpt
+
+[OTHER]
+# The erasure record keeps the hash of the reference, never the reference.
+erasure_requests.ref_hash
+# loyalty's own markers. An erased member's reference becomes null, which names the row by nothing and not the person.
+members.status
+members.tier_code
+# A business record with no person in it once the member is anonymized: what was sold, where, when and how much it earned.
+orders.order_ref
+orders.currency
+orders.store_code
+orders.channel
+orders.fingerprint
+order_lines.sku
+order_lines.category
+order_returns.return_ref
+order_returns.fingerprint
+# The rules an order's earn used, which name a currency, a tier code and a promotion id.
+order_earns.snapshot
+ledger_entries.kind
+# The Tenant's catalog and program: its own vocabulary, not a person's data.
+loyalty_programs.currency
+loyalty_programs.time_zone
+tiers.code
+tiers.name
+promotions.name
+promotions.status
+promotions.conditions
+rewards.name
+rewards.description
+rewards.status
+# A voucher's own token and state: the code is not derived from the member, and it stops being usable on the erasure.
+vouchers.code
+vouchers.status
+vouchers.use_ref
+vouchers.void_reason
+# The caller's key for a spend, which it chose for its own request and which is not a person.
+redemptions.idempotency_key
+redemptions.fingerprint
+redemptions.status
+# The outbox row's routing fields and the inbox's deduplication key.
+outbox.type
+outbox.aggregate
+outbox.status
+# The inbox holds no payload: it is the consumer's name and the event id it already handled, and the row leaves within the
+# retention with the id that pointed at the payload.
+event_inbox.consumer
+# A Tenant's own webhook configuration: a URL it chose, a label, the types it subscribes to and the encrypted secret.
+webhook_endpoints.url
+webhook_endpoints.description
+webhook_endpoints.event_types
+webhook_endpoints.key_id
+webhook_endpoints.secret_ciphertext
+webhook_endpoints.status
+webhook_deliveries.event_type
+webhook_deliveries.status
+# Job coordination: a job's name and the instance holding it.
+job_leases.name
+job_leases.owner
+job_runs.job
+job_runs.run_key
+# Platform's replicated rows. Platform owns its tenants and its users; loyalty erases the Tenant's members, and this copy
+# is read-only here.
+tenants.code
+tenants.name
+tenants.status
+tenant_domains.hostname
+tenant_domains.kind
+tenant_systems.name
+tenant_systems.status
+user_grants.keycloak_subject
+user_grants.email
+user_grants.display_name
+user_grants.scope
+user_grants.status
+user_grants.permissions
+app_entitlements.app_code

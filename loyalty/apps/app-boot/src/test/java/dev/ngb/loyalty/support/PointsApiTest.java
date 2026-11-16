@@ -134,6 +134,14 @@ public abstract class PointsApiTest extends LoyaltyApiTest {
         return call(tenant, get(java.net.URI.create("/api/v1/members/" + externalRef)), LoyaltyPermissions.MEMBER_READ);
     }
 
+    /** One erasure as a Tenant calls it; the reference stays in the path because a retry sends the same one. */
+    protected ApiResponse eraseMember(TenantId tenant, String externalRef) {
+        return call(
+                tenant,
+                post(java.net.URI.create("/api/v1/members/" + externalRef + "/erasure")),
+                LoyaltyPermissions.MEMBER_ERASE);
+    }
+
     protected ApiResponse putOrder(TenantId tenant, String orderRef, String body) {
         return call(
                 tenant,

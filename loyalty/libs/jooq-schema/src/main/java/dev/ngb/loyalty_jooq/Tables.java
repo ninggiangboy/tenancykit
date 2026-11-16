@@ -5,6 +5,7 @@ package dev.ngb.loyalty_jooq;
 
 
 import dev.ngb.loyalty_jooq.tables.AppEntitlements;
+import dev.ngb.loyalty_jooq.tables.ErasureRequests;
 import dev.ngb.loyalty_jooq.tables.EventInbox;
 import dev.ngb.loyalty_jooq.tables.JobLeases;
 import dev.ngb.loyalty_jooq.tables.JobRuns;
@@ -44,6 +45,11 @@ public class Tables {
      * The table <code>public.app_entitlements</code>.
      */
     public static final AppEntitlements APP_ENTITLEMENTS = AppEntitlements.APP_ENTITLEMENTS;
+
+    /**
+     * The table <code>public.erasure_requests</code>.
+     */
+    public static final ErasureRequests ERASURE_REQUESTS = ErasureRequests.ERASURE_REQUESTS;
 
     /**
      * The table <code>public.event_inbox</code>.

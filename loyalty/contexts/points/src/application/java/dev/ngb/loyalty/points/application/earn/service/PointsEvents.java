@@ -27,6 +27,7 @@ public class PointsEvents {
     public static final String POINTS_REDEMPTION_REVERSED = "points.redemption-reversed";
     public static final String POINTS_EXPIRING = "points.expiring";
     public static final String POINTS_EXPIRED = "points.expired";
+    public static final String MEMBER_ERASED = "member.erased";
 
     private final EventPublisher publisher;
     private final IdGenerator ids;
@@ -179,6 +180,17 @@ public class PointsEvents {
         payload.put("available", available);
         payload.put("debt", debt);
         publish(tenantId, POINTS_EXPIRED, memberId, at, payload);
+    }
+
+    /**
+     * A member's personal data was erased. The payload carries loyalty's own id and nothing about the person: the
+     * reference the call named was released, and repeating it would undo the erasure. Since the member id appeared on every
+     * earlier event, a receiver already has all it needs to correlate this one.
+     */
+    public void memberErased(TenantId tenantId, Instant at, UUID memberId) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("memberId", memberId.toString());
+        publish(tenantId, MEMBER_ERASED, memberId, at, payload);
     }
 
     private static long total(List<DueLot> lots) {

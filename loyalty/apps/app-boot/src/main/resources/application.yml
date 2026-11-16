@@ -134,6 +134,8 @@ loyalty:
   housekeeping:
     enabled: ${LOYALTY_HOUSEKEEPING_ENABLED:true}
     inbox-retention: P30D
+    # A relayed outbox row keeps the payload it delivered — a member's reference among them — until this passes.
+    relayed-outbox-retention: P7D
     dead-outbox-retention: P7D
     batch-size: 500
     interval: PT1H

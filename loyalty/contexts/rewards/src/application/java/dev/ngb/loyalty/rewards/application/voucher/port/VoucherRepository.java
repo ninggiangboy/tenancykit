@@ -4,6 +4,7 @@ import dev.ngb.loyalty.rewards.domain.voucher.Voucher;
 import dev.ngb.loyalty.rewards.domain.voucher.VoucherId;
 import dev.ngb.loyalty.rewards.domain.voucher.VoidReason;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,4 +37,19 @@ public interface VoucherRepository {
 
     /** Marks an issued voucher voided for the reason the caller decided. */
     void voidIssued(VoucherId id, VoidReason reason);
+
+    /**
+     * The member's vouchers still {@code ISSUED}, under their row locks in ascending id: what an erasure stops and gives
+     * its unit of stock back for.
+     */
+    List<Voucher> lockIssuedOfMember(UUID memberId);
+
+    /**
+     * Voids an issued voucher for an erasure: its reason becomes {@code ERASURE} and the member's reference it copied at
+     * issue time is released, so the voucher names nobody.
+     */
+    void voidForErasure(VoucherId id);
+
+    /** How many of the member's vouchers an erasure stopped, which is what a replayed erasure call answers. */
+    long countVoidedForErasure(UUID memberId);
 }

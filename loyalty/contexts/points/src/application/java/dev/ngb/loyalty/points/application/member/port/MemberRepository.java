@@ -21,4 +21,12 @@ public interface MemberRepository {
     Optional<MemberRow> lockById(UUID memberId);
 
     void update(MemberRow member);
+
+    /**
+     * Turns the member into the anonymous record an erasure leaves: its status becomes {@code ERASED} and its reference
+     * and display name are released, so the reference starts a new member and reaches this one nowhere. Its tier, its
+     * debt and its enrolment instant stay, because they are business facts keyed by the opaque id. The instant the erasure
+     * happened is the erasure record's, not this row's.
+     */
+    void markErased(UUID memberId);
 }

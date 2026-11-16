@@ -23,4 +23,12 @@ public interface RedemptionRepository {
 
     /** Marks the redemption reversed; the caller has already restored its lots. */
     void markReversed(UUID id, Instant reversedAt);
+
+    /**
+     * Clears the Tenant's own reference on every redemption the member made, which is the free text an erasure cannot keep:
+     * the redemption itself stays as an anonymous spend of points keyed by the opaque member id.
+     *
+     * @return how many rows held a reference to clear
+     */
+    int clearMemberReferences(UUID memberId);
 }

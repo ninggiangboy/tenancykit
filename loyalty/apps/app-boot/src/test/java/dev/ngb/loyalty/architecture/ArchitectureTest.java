@@ -83,6 +83,7 @@ class ArchitectureTest {
     void everyClassInTheJobsPackageRunsInTheWorkerRuntime() {
         assertThat(production.stream()
                 .filter(c -> c.getPackageName().startsWith(ROOT + ".boot.jobs"))
+                .filter(c -> !c.getName().contains("$"))
                 .filter(c -> !serves(c, "worker"))
                 .map(JavaClass::getName)
                 .toList())

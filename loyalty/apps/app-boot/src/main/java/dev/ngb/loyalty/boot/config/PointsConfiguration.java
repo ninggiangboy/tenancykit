@@ -7,6 +7,7 @@ import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.loyalty.points.adapter.ledger.persistence.JooqLedgerReadRepository;
 import dev.ngb.loyalty.points.adapter.ledger.persistence.JooqLedgerRepository;
+import dev.ngb.loyalty.points.adapter.member.persistence.JooqErasureRequestRepository;
 import dev.ngb.loyalty.points.adapter.member.persistence.JooqMemberReadRepository;
 import dev.ngb.loyalty.points.adapter.member.persistence.JooqMemberRepository;
 import dev.ngb.loyalty.points.adapter.order.persistence.EarnSnapshotJson;
@@ -21,8 +22,11 @@ import dev.ngb.loyalty.points.application.earn.service.PointsEvents;
 import dev.ngb.loyalty.points.application.ledger.port.LedgerRepository;
 import dev.ngb.loyalty.points.application.ledger.query.LedgerQueries;
 import dev.ngb.loyalty.points.application.ledger.query.LedgerReadRepository;
-import dev.ngb.loyalty.points.application.member.command.EnrolMemberUseCase;
 import dev.ngb.loyalty.points.api.member.MemberDirectory;
+import dev.ngb.loyalty.points.api.member.MemberErasureParticipant;
+import dev.ngb.loyalty.points.application.member.command.EnrolMemberUseCase;
+import dev.ngb.loyalty.points.application.member.command.EraseMemberUseCase;
+import dev.ngb.loyalty.points.application.member.port.ErasureRequestRepository;
 import dev.ngb.loyalty.points.application.member.port.MemberRepository;
 import dev.ngb.loyalty.points.application.member.query.MemberQueries;
 import dev.ngb.loyalty.points.application.member.query.MemberReadRepository;
@@ -42,6 +46,7 @@ import dev.ngb.loyalty.points.application.redemption.query.RedemptionReadReposit
 import dev.ngb.loyalty.points.application.redemption.service.PointSpenderService;
 import dev.ngb.loyalty.points.domain.earn.EarnCalculator;
 import dev.ngb.loyalty.program.api.program.ProgramReader;
+import java.util.List;
 import org.jooq.DSLContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -59,6 +64,11 @@ class PointsConfiguration {
     @Bean
     MemberRepository memberRepository(DSLContext dsl, TenantContext tenantContext) {
         return new JooqMemberRepository(dsl, tenantContext);
+    }
+
+    @Bean
+    ErasureRequestRepository erasureRequestRepository(DSLContext dsl) {
+        return new JooqErasureRequestRepository(dsl);
     }
 
     @Bean
@@ -181,6 +191,22 @@ class PointsConfiguration {
             Clock clock) {
         return new RecordReturnUseCase(unitOfWork, orders, members, ledger, applier, calculator, events,
                 tierEvaluator, tenantContext, ids, clock);
+    }
+
+    @Bean
+    EraseMemberUseCase eraseMemberUseCase(
+            UnitOfWork unitOfWork,
+            MemberRepository members,
+            ErasureRequestRepository requests,
+            LedgerRepository ledger,
+            RedemptionRepository redemptions,
+            List<MemberErasureParticipant> participants,
+            PointsEvents events,
+            TenantContext tenantContext,
+            IdGenerator ids,
+            Clock clock) {
+        return new EraseMemberUseCase(
+                unitOfWork, members, requests, ledger, redemptions, participants, events, tenantContext, ids, clock);
     }
 
     @Bean

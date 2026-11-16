@@ -78,6 +78,16 @@ public class JooqRedemptionRepository implements RedemptionRepository {
         }
     }
 
+    @Override
+    public int clearMemberReferences(UUID memberId) {
+        return dsl.update(REDEMPTIONS)
+                .set(REDEMPTIONS.REFERENCE, (String) null)
+                .where(REDEMPTIONS.MEMBER_ID.eq(memberId))
+                .and(REDEMPTIONS.TENANT_ID.eq(tenantId().value()))
+                .and(REDEMPTIONS.REFERENCE.isNotNull())
+                .execute();
+    }
+
     private TenantId tenantId() {
         return tenantContext.requireTenant();
     }

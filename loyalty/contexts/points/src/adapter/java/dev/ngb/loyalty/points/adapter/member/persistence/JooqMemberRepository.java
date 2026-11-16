@@ -9,6 +9,7 @@ import dev.ngb.loyalty.points.application.member.port.MemberRow;
 import dev.ngb.loyalty.points.domain.member.MemberStatus;
 import dev.ngb.loyalty_jooq.tables.records.MembersRecord;
 import java.util.Optional;
+import java.util.UUID;
 import org.jooq.DSLContext;
 
 /**
@@ -75,6 +76,22 @@ public class JooqMemberRepository implements MemberRepository {
                 .execute();
         if (updated != 1) {
             throw new IllegalStateException("member " + member.id() + " was not updated");
+        }
+    }
+
+    @Override
+    public void markErased(UUID memberId) {
+        int updated = dsl.update(MEMBERS)
+                .set(MEMBERS.STATUS, MemberStatus.ERASED.name())
+                .set(MEMBERS.EXTERNAL_REF, (String) null)
+                .set(MEMBERS.DISPLAY_NAME, (String) null)
+                .set(MEMBERS.VERSION, MEMBERS.VERSION.plus(1))
+                .where(MEMBERS.ID.eq(memberId))
+                .and(MEMBERS.TENANT_ID.eq(tenantId().value()))
+                .and(MEMBERS.STATUS.eq(MemberStatus.ACTIVE.name()))
+                .execute();
+        if (updated != 1) {
+            throw new IllegalStateException("member " + memberId + " was not erased");
         }
     }
 

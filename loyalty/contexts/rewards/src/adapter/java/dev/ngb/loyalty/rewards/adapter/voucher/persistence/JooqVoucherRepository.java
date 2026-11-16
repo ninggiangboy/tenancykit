@@ -11,6 +11,7 @@ import dev.ngb.loyalty.rewards.domain.voucher.VoucherStatus;
 import dev.ngb.loyalty.rewards.domain.voucher.VoidReason;
 import dev.ngb.loyalty_jooq.tables.records.VouchersRecord;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.jooq.DSLContext;
@@ -101,6 +102,39 @@ public class JooqVoucherRepository implements VoucherRepository {
         if (updated != 1) {
             throw new IllegalStateException("voucher " + id + " was not voided");
         }
+    }
+
+    @Override
+    public List<Voucher> lockIssuedOfMember(UUID memberId) {
+        return dsl.selectFrom(VOUCHERS)
+                .where(VOUCHERS.MEMBER_ID.eq(memberId))
+                .and(VOUCHERS.TENANT_ID.eq(tenantId().value()))
+                .and(VOUCHERS.STATUS.eq(VoucherStatus.ISSUED.name()))
+                .orderBy(VOUCHERS.ID)
+                .forUpdate()
+                .fetch(JooqVoucherRepository::toDomain);
+    }
+
+    @Override
+    public void voidForErasure(VoucherId id) {
+        int updated = dsl.update(VOUCHERS)
+                .set(VOUCHERS.STATUS, VoucherStatus.VOIDED.name())
+                .set(VOUCHERS.VOID_REASON, VoidReason.ERASURE.name())
+                .set(VOUCHERS.EXTERNAL_REF, (String) null)
+                .where(VOUCHERS.ID.eq(id.value()))
+                .and(VOUCHERS.TENANT_ID.eq(tenantId().value()))
+                .and(VOUCHERS.STATUS.eq(VoucherStatus.ISSUED.name()))
+                .execute();
+        if (updated != 1) {
+            throw new IllegalStateException("voucher " + id + " was not voided for an erasure");
+        }
+    }
+
+    @Override
+    public long countVoidedForErasure(UUID memberId) {
+        return dsl.fetchCount(VOUCHERS, VOUCHERS.MEMBER_ID.eq(memberId)
+                .and(VOUCHERS.STATUS.eq(VoucherStatus.VOIDED.name()))
+                .and(VOUCHERS.VOID_REASON.eq(VoidReason.ERASURE.name())));
     }
 
     private TenantId tenantId() {

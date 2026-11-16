@@ -141,6 +141,28 @@ public class JooqLedgerRepository implements LedgerRepository {
         return sum == null ? 0L : sum.longValue();
     }
 
+    @Override
+    public List<LiveLot> lotsHolding(UUID memberId) {
+        return dsl.select(POINT_LOTS.ID, POINT_LOTS.ORDER_ID, POINT_LOTS.REMAINING, POINT_LOTS.EXPIRES_AT)
+                .from(POINT_LOTS)
+                .where(POINT_LOTS.MEMBER_ID.eq(memberId))
+                .and(POINT_LOTS.REMAINING.gt(0L))
+                .orderBy(POINT_LOTS.ID)
+                .forUpdate()
+                .fetch(row -> new LiveLot(row.value1(), row.value2(), row.value3(), row.value4()));
+    }
+
+    @Override
+    public boolean zeroLot(UUID lotId) {
+        return dsl.update(POINT_LOTS)
+                        .set(POINT_LOTS.REMAINING, 0L)
+                        .where(POINT_LOTS.ID.eq(lotId))
+                        .and(POINT_LOTS.TENANT_ID.eq(tenantId().value()))
+                        .and(POINT_LOTS.REMAINING.gt(0L))
+                        .execute()
+                == 1;
+    }
+
     private TenantId tenantId() {
         return tenantContext.requireTenant();
     }

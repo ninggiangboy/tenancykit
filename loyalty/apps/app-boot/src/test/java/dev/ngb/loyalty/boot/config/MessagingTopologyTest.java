@@ -101,6 +101,7 @@ class MessagingTopologyTest {
                 new LoyaltySettings.Expiry(100, Duration.ofHours(1)),
                 new LoyaltySettings.TierEvaluation(100, Duration.ofDays(1)),
                 new LoyaltySettings.Orders(500),
-                new LoyaltySettings.Housekeeping(true, Duration.ofDays(30), Duration.ofDays(7), 100, Duration.ofHours(1)));
+                new LoyaltySettings.Housekeeping(
+                        true, Duration.ofDays(30), Duration.ofDays(7), Duration.ofDays(7), 100, Duration.ofHours(1)));
     }
 }

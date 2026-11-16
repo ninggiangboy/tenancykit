@@ -6,6 +6,7 @@ package dev.ngb.loyalty_jooq.tables;
 
 import dev.ngb.loyalty_jooq.Keys;
 import dev.ngb.loyalty_jooq.Public;
+import dev.ngb.loyalty_jooq.tables.ErasureRequests.ErasureRequestsPath;
 import dev.ngb.loyalty_jooq.tables.LedgerEntries.LedgerEntriesPath;
 import dev.ngb.loyalty_jooq.tables.OrderEarns.OrderEarnsPath;
 import dev.ngb.loyalty_jooq.tables.Orders.OrdersPath;
@@ -190,6 +191,19 @@ public class Members extends TableImpl<MembersRecord> {
     @Override
     public List<UniqueKey<MembersRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.MEMBERS_TENANT_ID_EXTERNAL_REF_KEY);
+    }
+
+    private transient ErasureRequestsPath _erasureRequests;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.erasure_requests</code> table
+     */
+    public ErasureRequestsPath erasureRequests() {
+        if (_erasureRequests == null)
+            _erasureRequests = new ErasureRequestsPath(this, null, Keys.ERASURE_REQUESTS__ERASURE_REQUESTS_TENANT_ID_MEMBER_ID_FKEY.getInverseKey());
+
+        return _erasureRequests;
     }
 
     private transient LedgerEntriesPath _ledgerEntries;

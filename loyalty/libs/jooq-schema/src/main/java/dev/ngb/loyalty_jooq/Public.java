@@ -5,6 +5,7 @@ package dev.ngb.loyalty_jooq;
 
 
 import dev.ngb.loyalty_jooq.tables.AppEntitlements;
+import dev.ngb.loyalty_jooq.tables.ErasureRequests;
 import dev.ngb.loyalty_jooq.tables.EventInbox;
 import dev.ngb.loyalty_jooq.tables.JobLeases;
 import dev.ngb.loyalty_jooq.tables.JobRuns;
@@ -59,6 +60,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.app_entitlements</code>.
      */
     public final AppEntitlements APP_ENTITLEMENTS = AppEntitlements.APP_ENTITLEMENTS;
+
+    /**
+     * The table <code>public.erasure_requests</code>.
+     */
+    public final ErasureRequests ERASURE_REQUESTS = ErasureRequests.ERASURE_REQUESTS;
 
     /**
      * The table <code>public.event_inbox</code>.
@@ -212,6 +218,7 @@ public class Public extends SchemaImpl {
     public final List<Table<?>> getTables() {
         return Arrays.asList(
             AppEntitlements.APP_ENTITLEMENTS,
+            ErasureRequests.ERASURE_REQUESTS,
             EventInbox.EVENT_INBOX,
             JobLeases.JOB_LEASES,
             JobRuns.JOB_RUNS,
