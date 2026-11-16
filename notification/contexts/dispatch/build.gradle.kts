@@ -7,6 +7,8 @@ dependencies {
     "applicationImplementation"(project(":contexts:platform"))
     "adapterImplementation"(project(":contexts:platform"))
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-jooq")
+    // The jOOQ compiler of the list-query contract (ListBinding, JooqLists) lives here, not in core-query.
+    "adapterImplementation"("dev.ngb:core-spring")
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-webmvc")
     "adapterImplementation"(project(":libs:jooq-schema"))
     // The renderer is an adapter detail; the application layer names no template engine.

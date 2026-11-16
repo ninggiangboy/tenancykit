@@ -208,19 +208,21 @@ class DispatchConfiguration {
 
     @Bean
     dev.ngb.notification.dispatch.application.notification.query.ListNotificationsQuery listNotificationsQuery(
+            dev.ngb.core.runtime.UnitOfWork unitOfWork,
             dev.ngb.notification.dispatch.application.notification.query.NotificationReadRepository repository,
             dev.ngb.core.tenancy.TenantContext tenantContext,
             dev.ngb.core.security.CurrentActor currentActor) {
         return new dev.ngb.notification.dispatch.application.notification.query.ListNotificationsQuery(
-                repository, tenantContext, currentActor);
+                unitOfWork, repository, tenantContext, currentActor);
     }
 
     @Bean
     dev.ngb.notification.dispatch.application.notification.query.ListDispatchesQuery listDispatchesQuery(
+            dev.ngb.core.runtime.UnitOfWork unitOfWork,
             dev.ngb.notification.dispatch.application.notification.query.DispatchReadRepository repository,
             dev.ngb.core.tenancy.TenantContext tenantContext) {
         return new dev.ngb.notification.dispatch.application.notification.query.ListDispatchesQuery(
-                repository, tenantContext);
+                unitOfWork, repository, tenantContext);
     }
 
     @Bean

@@ -8,6 +8,8 @@ dependencies {
     implementation(project(":contexts:platform"))
     implementation(project(":contexts:dispatch"))
     implementation("dev.ngb:core-spring")
+    // Documents every @Listing operation from the schema it names.
+    implementation("dev.ngb:core-openapi")
     implementation("dev.ngb:core-messaging")
     implementation("dev.ngb:core-replica")
     implementation("dev.ngb:core-platform-sync")

@@ -1,9 +1,11 @@
 package dev.ngb.notification.boot.web;
 
+import dev.ngb.core.openapi.ListingOpenApiCustomizer;
 import dev.ngb.core.security.Authenticated;
 import dev.ngb.core.security.Authorizer;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.ListQueryResolver;
 import dev.ngb.core.spring.security.PermissionInterceptor;
 import dev.ngb.core.tenancy.TenantContext;
 import io.swagger.v3.oas.models.Components;
@@ -17,6 +19,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -48,6 +51,18 @@ class WebConfiguration implements WebMvcConfigurer {
         registry.addInterceptor(new PermissionInterceptor(authorizer)).addPathPatterns("/api/v1/**");
     }
 
+    /** Fills the {@code ListQuery} parameter of every {@code @Listing} method from the schema it names. */
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(new ListQueryResolver());
+    }
+
+    /** Documents every {@code @Listing} operation from the schema it names. */
+    @Bean
+    OperationCustomizer listingParameters() {
+        return new ListingOpenApiCustomizer();
+    }
+
     @Bean
     OpenAPI notificationOpenApi() {
         return new OpenAPI()
@@ -70,6 +85,10 @@ class WebConfiguration implements WebMvcConfigurer {
     @Bean
     OperationCustomizer allowedCallers() {
         return (operation, handlerMethod) -> {
+            RequiresPermission required = handlerMethod.getMethodAnnotation(RequiresPermission.class);
+            if (required != null) {
+                operation.addExtension("x-required-permission", required.value());
+            }
             if (handlerMethod.hasMethodAnnotation(RequiresPermission.class)
                     || handlerMethod.hasMethodAnnotation(Authenticated.class)) {
                 operation.addExtension("x-allowed-callers", callersOf(handlerMethod));

@@ -1,28 +1,32 @@
 package dev.ngb.notification.dispatch.application.notification.query;
 
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
-import java.util.List;
-import java.util.UUID;
 
-/** The tenant's dispatch ledger, for a caller holding {@code notification:dispatch:read}. */
+/**
+ * The tenant's dispatch ledger, for a caller holding {@code notification:dispatch:read}.
+ *
+ * <p>The read runs in a unit of work because row-level security reads the tenant of the open transaction: a query
+ * outside one sees no row at all. Filtering, sorting and paging follow the list-query contract.
+ */
 public class ListDispatchesQuery {
 
-    public record Page(List<DispatchView> items, UUID nextBefore) {}
-
+    private final UnitOfWork unitOfWork;
     private final DispatchReadRepository repository;
     private final TenantContext tenantContext;
 
-    public ListDispatchesQuery(DispatchReadRepository repository, TenantContext tenantContext) {
+    public ListDispatchesQuery(
+            UnitOfWork unitOfWork, DispatchReadRepository repository, TenantContext tenantContext) {
+        this.unitOfWork = unitOfWork;
         this.repository = repository;
         this.tenantContext = tenantContext;
     }
 
-    public Page list(String status, UUID before, int limit) {
+    public Page<DispatchView> list(ListQuery query) {
         TenantId tenantId = tenantContext.requireTenant();
-        int capped = limit <= 0 ? ListNotificationsQuery.DEFAULT_LIMIT : Math.min(limit, ListNotificationsQuery.MAX_LIMIT);
-        List<DispatchView> items = repository.list(tenantId, status, before, capped);
-        UUID next = items.size() == capped ? items.getLast().id() : null;
-        return new Page(items, next);
+        return unitOfWork.transactional(() -> repository.list(query, tenantId));
     }
 }
