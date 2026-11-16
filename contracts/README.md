@@ -20,9 +20,10 @@ Documents the suite's services share, never code. The only code they share is th
 | `survey/` | The version document schema, the expression schema and the behaviour vectors both the server and a future fill UI must pass. See [survey/README.md](survey/README.md). |
 | `attribution/` | The attribution vectors the credit engine must reproduce and the ingest payload schemas. See [attribution/README.md](attribution/README.md). |
 | `loyalty/` | The loyalty earn vectors the earn engine must reproduce: the vector schema and the hand-computed vectors for orders, returns, promotions, tiers and expiry. |
+| `workflow/` | The workflow graph schema, the expression schema and the behaviour vectors the engine must reproduce. See [workflow/README.md](workflow/README.md). |
 | `commands/` | The commands one app sends to the app that owns the work, one JSON Schema per type (`data` only). The consumer owns the type; a producer implements it. See [commands/README.md](commands/README.md). |
 | `messaging/` | The AMQP envelope, topology, delivery guarantees and the dead-letter runbook. See [messaging/README.md](messaging/README.md). |
-| `permissions/` | One permission catalog per app (`billing.yaml`, `notification.yaml`, `mailroom.yaml`, `survey.yaml`, `attribution.yaml`, `platform.yaml`): `code`, `description`, `scopes`, `grantable_to_tenant_system`. Platform validates credential scopes against it and seeds roles from it; the file name is the app code. |
+| `permissions/` | One permission catalog per app (`billing.yaml`, `notification.yaml`, `mailroom.yaml`, `survey.yaml`, `attribution.yaml`, `workflow.yaml`, `platform.yaml`): `code`, `description`, `scopes`, `grantable_to_tenant_system`. Platform validates credential scopes against it and seeds roles from it; the file name is the app code. |
 | `tokens/` | The claims of Platform-issued suite tokens for service clients and Tenant Systems. See [tokens/README.md](tokens/README.md). |
 
 An app's OpenAPI document and event schemas are the executable owners of its API and event shapes; these files are

@@ -10,7 +10,7 @@ while keeping independent data, accounts, integration configuration and billing 
 The goal is that a new business app (CRM, HR, …) joins the suite by adding a build, a permission catalog, an
 `AppCode` and a proxy route, with Platform and Billing unchanged.
 
-## Seven deployables
+## Eight deployables
 
 | System | Owns | Reached at |
 |---|---|---|
@@ -21,6 +21,7 @@ The goal is that a new business app (CRM, HR, …) joins the suite by adding a b
 | **Survey** (`survey/`) | A Tenant's surveys, their immutable versions, links, visits, page events, responses, answers, uploads and the analysis of all of it, including the one expression language that decides branching, computed variables, scoring and piping. It keeps the Platform replica, consumes no business data from another app and sends nothing: it issues links and the Tenant places them | `<tenant-code>.<base-domain>` through the `/survey` prefix; `/survey/p/*` is public for respondents |
 | **Attribution** (`attribution/`) | A Tenant's campaigns and tracked links, the clicks, page views, sessions and conversions they produce, the credit each click receives under a per-campaign model, and the advertising cost behind it, entered by hand or imported from Google Ads and Meta Ads. It keeps the Platform replica, writes `attribution.ingest` for its own worker, and reads no other app's business data | `<tenant-code>.<base-domain>` through the `/attribution` prefix; `/go/*` is the public redirect and `/t/*` the public collection surface |
 | **Sample Tenant System** (`tenant/`) | Its own users, catalog, orders, usage and the policy it applies to Billing's state changes. It proves the integration and deploys without Billing | its own host |
+| **Workflow** (`workflow/`) | A Tenant's workflow definitions and their immutable published versions, the durable engine that runs them, the instances, the human tasks, the external connections, the triggers and the signed events it emits. It keeps the Platform replica and acts as the Tenant's own system: it calls apps by their public API with a Tenant-owned credential and receives their signed webhooks as triggers | `<tenant-code>.<base-domain>` through the `/workflow` prefix; `/workflow/hooks/*` is public for the signed triggers |
 
 `notification/` is the suite's app for **notifying the suite's own users** about platform-side state changes. It
 owns the notification types, the suite-wide templates, locale and user preferences and the stored in-app
@@ -63,6 +64,14 @@ why it is an attribution product rather than a web-analytics one, and it stores 
 consent. It counts as a deployable in the same sense as Survey: a build, a permission catalog, an entitlement and a
 proxy route, with Platform, Billing, mailroom and the shared resolver untouched.
 
+`workflow/` is the suite's app for letting a Tenant **describe a flow instead of writing one**. It owns that Tenant's
+workflow definitions and their immutable published versions, the durable engine that runs them on PostgreSQL and
+RabbitMQ, the instances and their step history, the human tasks, the Tenant's connections to external systems, the
+triggers, and the signed events it emits. It is not an app-to-app link: it acts as the Tenant's own system, so it calls
+apps by their public API with a Tenant-owned credential and receives their signed webhooks as triggers, and it binds to
+no app's exchange. It has its own database and its own broker user, keeps the Platform replica, and stores credentials
+encrypted and write-only. Details are in [workflow.md](workflow.md).
+
 They are separate Gradle builds, separate databases and separate processes. They meet three ways, never by sharing
 code:
 
@@ -82,7 +91,9 @@ Apps stand alone. An app never consumes another app's business events: the broke
 the suite's infrastructure commands and outcomes, and an app's traffic with itself, but no app binds to another app's
 business exchange. A fact a Tenant's own system reacts to leaves the producing app as a signed webhook to that Tenant
 System. A Tenant System is the only party that connects two apps: it decides whether to call both, or to forward one
-app's webhooks to the other, and no app ever calls or listens to another.
+app's webhooks to the other, and no app ever calls or listens to another. `workflow/` is the Tenant side of this rule,
+not an exception to it: it authenticates as a Tenant System, calls apps by their public API under the Tenant's
+hostname, and receives their signed webhooks.
 
 ## Vocabulary
 
@@ -151,6 +162,17 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
   derived from it.
 - Enforces `attribution:*` permissions from its replica of Platform data; it never mints, edits or decides them.
 - Stores no raw IP, sets no cookie before consent, and provides an erasure endpoint keyed by visitor id.
+
+**Workflow**
+- Owns a Tenant's workflow definitions, their immutable published versions, the instances and their step history, the
+  human tasks, the connections and the triggers.
+- Runs the flow durably on PostgreSQL and RabbitMQ, with at-least-once sends and one stable idempotency key per step.
+- Acts as the Tenant's own system: it holds a Tenant-owned credential, calls apps by their public API under the
+  Tenant's hostname and receives their signed webhooks; it never binds to an app's exchange or names an app's internal
+  type.
+- Enforces `workflow:*` permissions from its replica of Platform data; it never mints, edits or decides them.
+- Stores connection secrets encrypted with a key outside the database and write-only through the API, and records only
+  redacted requests and responses.
 
 **Sample Tenant System**
 - Manages its own users, business roles and permissions.

@@ -1,0 +1,57 @@
+# Workflow's permission catalog.
+#
+# codes are namespaced by the app that enforces them: <app>:<resource>:<action>. A role may hold only a code whose
+# `scopes` include the role's scope.
+#
+# scopes: platform and/or tenant. grantable_to_tenant_system: whether an API credential may carry the code.
+#
+# Every code is tenant scope: a definition, an instance, a task, a connection, a trigger and a webhook endpoint all
+# belong to one tenant's own flows, and no platform-scope caller has a legitimate use for them. Workflow is the app
+# a Tenant's **own** system is expected to drive — it publishes definitions, starts and replays instances, completes
+# a task on a person's behalf, registers connections and triggers, and drives its own webhook endpoints — so every
+# code is grantable to a Tenant System credential.
+
+- code: workflow:definition:read
+  description: Read workflow definitions, their published versions and a published version's graph.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: workflow:definition:manage
+  description: Create a definition, edit its draft, publish a version, retire a definition and simulate a draft.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: workflow:instance:read
+  description: Read workflow instances, their current state and the recorded timeline of their steps.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: workflow:instance:manage
+  description: Start an instance, cancel it, retry it from a failed step and replay it from its original input.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: workflow:task:read
+  description: Read the human-task inbox, one task and the tasks waiting on the caller's roles.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: workflow:task:complete
+  description: Claim, complete, reassign and escalate a human task with a decision and its form output.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: workflow:connection:manage
+  description: Register the workflow's Platform credential and create, verify, rotate and delete the connections it calls external systems with.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: workflow:trigger:manage
+  description: Create, update, enable and disable the triggers that start a workflow from an app webhook, an external webhook, a manual call or a schedule.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: workflow:webhook:manage
+  description: Manage the endpoints that receive workflow's own signed events and read or retry their deliveries.
+  scopes: [tenant]
+  grantable_to_tenant_system: true

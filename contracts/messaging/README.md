@@ -98,8 +98,15 @@ Suite apps never bind to another app's business exchange. The broker carries Pla
 infrastructure commands and outcomes (`mailer.commands`, `mailer.events`) and an app's traffic with itself — Billing
 consumes its own `billing.events` in its invoicing cycle, and `survey.events` has no consumer at all. A fact a Tenant's
 own system reacts to leaves the producing app as a signed **webhook** to that Tenant System, and the Tenant System is
-the only party that connects two apps. A new consumer inside the suite is a change of this rule, not a new binding, so
-neither `billing.events` nor `survey.events` is ever bound by another app.
+the only party that connects two apps. A note on `attribution.ingest`: it is a queue an app binds to its own exchange
+for its own worker, not a crossing between apps. A new consumer inside the suite is a change of this rule, not a new
+binding, so neither `billing.events` nor `survey.events` is ever bound by another app.
+
+**Workflow is the Tenant side of this rule, not a new consumer.** It acts as a Tenant System: it calls apps by their
+public API with a Tenant-owned credential, receives their signed webhooks as triggers, and binds to no app's business
+exchange. Its `workflow.platform-events` queue binds to `platform.events` only, for the same five state-transfer keys
+every app replicates, and its `workflow.runnable` queue is internal to the app. A fact another app emits reaches
+workflow exactly as it reaches any Tenant System: as one signed webhook the Tenant points at workflow's hook URL.
 
 ## Delivery guarantees
 
