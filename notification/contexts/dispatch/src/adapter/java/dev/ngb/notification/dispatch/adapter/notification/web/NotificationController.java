@@ -60,7 +60,7 @@ class NotificationController {
 
     /**
      * The caller's own inbox, filtered, sorted and paged by the list-query contract. Unread rows are
-     * {@code filter[read_at][is_null]=true}; {@code page_info=true} adds the limit, offset, total and next cursor.
+     * {@code filter[read_at][is_null]=true}; {@code page_info=full} adds the limit, offset, total and next cursor.
      */
     @GetMapping
     @Listing(NotificationListing.class)

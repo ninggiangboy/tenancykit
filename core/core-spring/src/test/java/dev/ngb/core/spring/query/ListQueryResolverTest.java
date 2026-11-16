@@ -55,7 +55,7 @@ class ListQueryResolverTest {
         request.setParameter("filter[status][in]", "OPEN,PAID");
         request.setParameter("sort", "-amount");
         request.setParameter("limit", "10");
-        request.setParameter("page_info", "true");
+        request.setParameter("page_info", "full");
         ListQuery query = (ListQuery) resolve("list", request);
         assertThat(query.all()).hasSize(1);
         assertThat(query.limit()).isEqualTo(10);

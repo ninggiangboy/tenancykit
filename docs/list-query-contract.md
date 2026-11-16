@@ -20,7 +20,7 @@ attribution) carries that prefix in the document's server URL rather than in eve
 | Sort | `sort=-created_at,total`: sortable fields, `-` for descending, at most 4 |
 | Page size | `limit`, default 50, at most 200 (a larger value is lowered to 200) |
 | Position | `offset` (at most 10 000) **or** `cursor`; sending both is a 400 |
-| Paging facts | `page_info=true` for every fact, `page_info=cursor` for the cursor alone |
+| Paging facts | `page_info=full` for every fact, `page_info=cursor` for the cursor alone; omit it for the rows alone |
 
 Example, the open invoices of one customer that are either large or recent, largest first:
 
@@ -30,7 +30,7 @@ GET /api/v1/invoices
   &filter[status][eq]=OPEN
   &filter[or][0][total][gte]=100000
   &filter[or][1][created_at][gte]=2026-11-01T00:00:00Z
-  &sort=-total&limit=50&page_info=true
+  &sort=-total&limit=50&page_info=full
 ```
 
 Clients send the brackets as they are; the API profile of each service sets
@@ -79,7 +79,7 @@ The body is always one shape, so a client declares one type per resource:
 { "limit": 50, "offset": null, "total": 1342, "next_cursor": "eyJ..." }
 ```
 
-with `page_info=true`. `page_info=cursor` answers the same shape without counting the matching rows, so `total` is
+with `page_info=full`. `page_info=cursor` answers the same shape without counting the matching rows, so `total` is
 `null` and no `count` query runs:
 
 ```json
@@ -104,6 +104,7 @@ A request the contract does not allow is a 400 with a `detail` that names the fi
 | an operator the field does not offer | `the operator contains does not apply to field total; allowed: ...` |
 | a value of the wrong type | `the field total takes a whole number, not 'lots'` |
 | a sort on a field that is not sortable | `the field settlement cannot be sorted; sortable fields: ...` |
+| a `page_info` value other than `full` or `cursor` | `the parameter page_info takes full or cursor` |
 | a parameter the listing does not know, such as an old `before` | `the parameter before is not supported on this listing` |
 
 An unknown parameter is refused rather than ignored, because a silently dropped filter would return more rows than the

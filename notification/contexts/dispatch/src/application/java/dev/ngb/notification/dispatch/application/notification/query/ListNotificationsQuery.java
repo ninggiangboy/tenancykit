@@ -14,7 +14,7 @@ import java.util.UUID;
  *
  * <p>The read runs in a unit of work because row-level security reads the tenant of the open transaction: a query
  * outside one sees no row at all. Filtering, sorting and paging follow the list-query contract;
- * {@code filter[read_at][is_null]=true} with {@code page_info=true} answers the unread count the old response carried.
+ * {@code filter[read_at][is_null]=true} with {@code page_info=full} answers the unread count the old response carried.
  */
 public class ListNotificationsQuery {
 

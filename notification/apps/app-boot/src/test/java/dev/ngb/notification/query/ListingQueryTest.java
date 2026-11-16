@@ -48,8 +48,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 
 /**
  * The two migrated listings answer the list-query contract: the inbox is only the caller's own rows, a filter replaces
- * the removed {@code unread} flag, {@code page_info} counts every matching row and hands out the cursor, and a parameter
- * the contract does not know is refused rather than ignored.
+ * the removed {@code unread} flag, {@code page_info=full} counts every matching row while {@code page_info=cursor}
+ * hands out the cursor alone, and a parameter the contract does not know is refused rather than ignored.
  *
  * <p>The connection is the unprivileged {@code notification_app} role, so the tenant scope below is enforced twice: by
  * the condition the adapter applies and by row-level security.
@@ -128,7 +128,7 @@ class ListingQueryTest {
         seedInbox();
 
         Page<NotificationView> first = asTenant(TENANT, () -> inbox.list(ListQueries.of(
-                NotificationListing.SCHEMA, "limit", "2", "page_info", "true")));
+                NotificationListing.SCHEMA, "limit", "2", "page_info", "full")));
 
         assertThat(first.data()).extracting(NotificationView::title).containsExactly("read", "newest unread");
         assertThat(first.page()).isNotNull();
@@ -138,7 +138,7 @@ class ListingQueryTest {
         assertThat(first.page().nextCursor()).isNotNull();
 
         Page<NotificationView> second = asTenant(TENANT, () -> inbox.list(ListQueries.of(
-                NotificationListing.SCHEMA, "limit", "2", "page_info", "true", "cursor", first.page().nextCursor())));
+                NotificationListing.SCHEMA, "limit", "2", "page_info", "full", "cursor", first.page().nextCursor())));
 
         assertThat(second.data()).extracting(NotificationView::title).containsExactly("oldest unread");
         assertThat(second.page().next_cursor()).as("the last page has no next cursor").isNull();

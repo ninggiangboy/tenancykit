@@ -329,8 +329,8 @@ class PricingUsageHttpIntegrationTest {
             ok(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", usageEvent(customer, metric, "call", String.valueOf(i + 1), "h-" + UUID.randomUUID())));
         }
         String mine = "filter[customer_id][eq]=" + customer;
-        JsonNode first = ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?" + mine + "&limit=3&page_info=true", null));
-        JsonNode second = ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?" + mine + "&limit=3&page_info=true&cursor="
+        JsonNode first = ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?" + mine + "&limit=3&page_info=full", null));
+        JsonNode second = ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?" + mine + "&limit=3&page_info=full&cursor="
                 + first.get("page").get("next_cursor").asString(), null));
         assertThat(first.get("data")).hasSize(3);
         assertThat(second.get("data")).hasSize(2);

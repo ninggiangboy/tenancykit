@@ -53,9 +53,9 @@ public class ListingOpenApiCustomizer implements OperationCustomizer, OpenApiCus
             combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and \
             the branches are OR-ed (at most %d branches, %d predicates in all, %d values in an `in` list). \
             `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most %d) \
-            or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`; \
-            `page_info=true` fills `page` with `limit`, `offset`, `total` and `next_cursor`, and `page_info=cursor` \
-            fills it with `limit` and `next_cursor` alone, without counting the matching rows.""";
+            or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. \
+            `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills \
+            it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.""";
 
     static {
         SpringDocUtils.getConfig().addRequestWrapperToIgnore(ListQuery.class);
@@ -77,10 +77,10 @@ public class ListingOpenApiCustomizer implements OperationCustomizer, OpenApiCus
                 bounded(0, QueryParser.MAX_OFFSET, 0)));
         operation.addParametersItem(query("cursor", "The `next_cursor` of the previous page. Valid only with the same filter and sort.", new StringSchema()));
         StringSchema pageInfo = new StringSchema();
-        pageInfo.setDefault("false");
-        pageInfo.setEnum(List.of("true", "false", "cursor"));
-        operation.addParametersItem(query("page_info", "`true` fills `page` with the limit, offset, total and next cursor; "
-                + "`cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted.",
+        pageInfo.setEnum(List.of("full", "cursor"));
+        operation.addParametersItem(query("page_info", "`full` fills `page` with the limit, offset, total and next cursor; "
+                + "`cursor` fills it with the limit and the next cursor alone, so a walk over a large listing is not counted; "
+                + "omit it for the rows alone.",
                 pageInfo));
         String note = CONTRACT_NOTE.formatted(QueryParser.MAX_OR_BRANCHES, QueryParser.MAX_PREDICATES, QueryParser.MAX_IN_VALUES, QueryParser.MAX_OFFSET);
         operation.setDescription(operation.getDescription() == null ? note.strip() : operation.getDescription() + "\n" + note);

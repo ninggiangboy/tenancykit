@@ -481,10 +481,10 @@ class WebhookDeliveryIntegrationTest {
                     "filter[status][eq]", "DEAD", "limit", "200"), null).data())).isEmpty();
             var first = scopes.inTenant(tenant, () -> deliveryQueries.list(ListQueries.of(DeliveryListing.SCHEMA,
                     "filter[endpoint_id][eq]", hook.endpoint().id().value().toString(),
-                    "limit", "2", "page_info", "true"), null));
+                    "limit", "2", "page_info", "full"), null));
             var second = scopes.inTenant(tenant, () -> deliveryQueries.list(ListQueries.of(DeliveryListing.SCHEMA,
                     "filter[endpoint_id][eq]", hook.endpoint().id().value().toString(),
-                    "limit", "2", "page_info", "true", "cursor", first.page().nextCursor()), null));
+                    "limit", "2", "page_info", "full", "cursor", first.page().nextCursor()), null));
             assertThat(first.data()).hasSize(2);
             assertThat(second.data()).hasSize(2);
             assertThat(second.data().get(0).id()).isLessThan(first.data().get(1).id());

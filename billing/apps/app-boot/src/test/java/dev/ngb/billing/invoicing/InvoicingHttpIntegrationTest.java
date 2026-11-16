@@ -301,7 +301,7 @@ class InvoicingHttpIntegrationTest {
     @Test
     void offsetPagingReportsTheTotalAndTheNextCursor() {
         String totals = fiveInvoices(8000);
-        JsonNode page = list(systemKey, "filter[total][in]=" + totals + "&sort=total&limit=2&offset=2&page_info=true");
+        JsonNode page = list(systemKey, "filter[total][in]=" + totals + "&sort=total&limit=2&offset=2&page_info=full");
 
         assertThat(totals(page)).containsExactly(8033L, 8044L);
         assertThat(page.get("page").get("total").asLong()).isEqualTo(5);
@@ -313,7 +313,7 @@ class InvoicingHttpIntegrationTest {
     @Test
     void cursorPagingVisitsEveryRowOnceInOrder() {
         String totals = fiveInvoices(9000);
-        String base = "filter[total][in]=" + totals + "&sort=-total&limit=2&page_info=true";
+        String base = "filter[total][in]=" + totals + "&sort=-total&limit=2&page_info=full";
         List<Long> seen = new java.util.ArrayList<>();
         String cursor = null;
         int pages = 0;
@@ -331,7 +331,7 @@ class InvoicingHttpIntegrationTest {
     @Test
     void aRequestOutsideTheContractIsRefusedWithAReason() {
         String totals = fiveInvoices(6000);
-        String cursor = list(systemKey, "filter[total][in]=" + totals + "&sort=total&limit=1&page_info=true").get("page").get("next_cursor").asString();
+        String cursor = list(systemKey, "filter[total][in]=" + totals + "&sort=total&limit=1&page_info=full").get("page").get("next_cursor").asString();
         String[][] refused = {
             {"filter[void_reason][eq]=x", "void_reason"},
             {"filter[total][contains]=1", "does not apply"},
@@ -360,7 +360,7 @@ class InvoicingHttpIntegrationTest {
 
     @Test
     void aSystemWithNoMappedCustomerGetsAnEmptyPageEvenWithPageInfo() {
-        JsonNode page = list(otherSystemKey, "page_info=true&limit=5");
+        JsonNode page = list(otherSystemKey, "page_info=full&limit=5");
         assertThat(page.get("data")).isEmpty();
         assertThat(page.get("page").get("total").asLong()).isZero();
         assertThat(page.get("page").get("next_cursor").isNull()).isTrue();

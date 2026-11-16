@@ -46,8 +46,9 @@ plan carries every confirmed decision.
   NOT NULL columns and never relations.
 - Paging: `limit` (max 200) with either `offset` (max 10 000) or an opaque `cursor`; never both. A cursor carries the
   last sort values, the last id and a hash of filter+sort, and is refused with another filter or sort.
-- Response is always `{data, page}`; `page` is `null` unless `page_info=true`, then
-  `{limit, offset, total, next_cursor}`.
+- Response is always `{data, page}`; `page` is `null` unless the caller sends `page_info`, then
+  `{limit, offset, total, next_cursor}` for `page_info=full` and `{limit, next_cursor}` for `page_info=cursor`, which
+  does not count the matching rows.
 - Limits: 20 predicates, 100 values per `in`/`nin`, 10 OR branches.
 - Old parameters are removed with no alias.
 - Billing gains `GET /charges`, `/reservations`, `/refunds`; the ledger uses the contract.

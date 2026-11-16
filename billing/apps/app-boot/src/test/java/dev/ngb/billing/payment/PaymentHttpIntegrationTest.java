@@ -298,7 +298,7 @@ class PaymentHttpIntegrationTest {
         topUp(4444, "list-c-" + UUID.randomUUID());
 
         JsonNode page = world.body(call(HttpMethod.GET, acme, acme.adminToken(),
-                "/api/v1/payments?filter[amount][in]=4242,4343,4444&filter[status][eq]=REQUIRES_ACTION&sort=-amount&limit=2&page_info=true", null, null));
+                "/api/v1/payments?filter[amount][in]=4242,4343,4444&filter[status][eq]=REQUIRES_ACTION&sort=-amount&limit=2&page_info=full", null, null));
         assertThat(page.get("data").valueStream().map(p -> p.get("amount").get("amount").asLong())).containsExactly(4444L, 4343L);
         assertThat(page.get("page").get("total").asLong()).isEqualTo(3);
         assertThat(page.get("page").get("next_cursor").asString()).isNotBlank();

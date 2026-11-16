@@ -88,7 +88,7 @@ class JooqListsTest {
     @Test
     void pageInfoCarriesTheNextCursorAndTheTotal() {
         Fake fake = Fake.serving(3);
-        ListQuery query = parse("limit", "2", "page_info", "true", "sort", "-amount");
+        ListQuery query = parse("limit", "2", "page_info", "full", "sort", "-amount");
         Page<UUID> page = fetch(fake, query);
         assertThat(page.page().limit()).isEqualTo(2);
         assertThat(page.page().offset()).isNull();
@@ -112,7 +112,7 @@ class JooqListsTest {
 
     @Test
     void theLastPageHasNoNextCursor() {
-        Page<UUID> page = fetch(Fake.serving(1), parse("limit", "2", "page_info", "true"));
+        Page<UUID> page = fetch(Fake.serving(1), parse("limit", "2", "page_info", "full"));
         assertThat(page.data()).hasSize(1);
         assertThat(page.page().nextCursor()).isNull();
     }
@@ -120,7 +120,7 @@ class JooqListsTest {
     @Test
     void anOffsetPageReportsItsOffset() {
         Fake fake = Fake.serving(2);
-        Page<UUID> page = fetch(fake, parse("limit", "2", "offset", "100", "page_info", "true"));
+        Page<UUID> page = fetch(fake, parse("limit", "2", "offset", "100", "page_info", "full"));
         assertThat(page.page().offset()).isEqualTo(100);
         assertThat(fake.bindings().get(0)).contains(100L);
     }
@@ -128,10 +128,10 @@ class JooqListsTest {
     @Test
     void theTotalCountsTheFilterNotThePosition() {
         Fake fake = Fake.serving(3);
-        ListQuery first = parse("limit", "2", "page_info", "true", "filter[status][eq]", "OPEN");
+        ListQuery first = parse("limit", "2", "page_info", "full", "filter[status][eq]", "OPEN");
         String cursor = fetch(fake, first).page().nextCursor();
         Fake second = Fake.serving(1);
-        fetch(second, parse("limit", "2", "page_info", "true", "filter[status][eq]", "OPEN", "cursor", cursor));
+        fetch(second, parse("limit", "2", "page_info", "full", "filter[status][eq]", "OPEN", "cursor", cursor));
         assertThat(second.sql()).hasSize(2);
         // The page query binds the cursor values as well; the count must not.
         assertThat(second.bindings().get(1)).hasSizeLessThan(second.bindings().get(0).size());
@@ -140,14 +140,14 @@ class JooqListsTest {
     @Test
     void theScopeAlwaysApplies() {
         Fake fake = Fake.serving(0);
-        JooqLists.fetch(fake.dsl(), PAYMENTS, STATUS.eq("PAID"), binding(), parse("page_info", "true"), row -> row.get(ID));
+        JooqLists.fetch(fake.dsl(), PAYMENTS, STATUS.eq("PAID"), binding(), parse("page_info", "full"), row -> row.get(ID));
         assertThat(fake.sql()).hasSize(2).allMatch(sql -> sql.contains("status"));
     }
 
     @Test
     void anEmptyScopeAnswersWithoutTouchingTheDatabase() {
         assertThat(parse().<UUID>emptyPage().page()).isNull();
-        Page<UUID> withInfo = parse("page_info", "true", "limit", "5").emptyPage();
+        Page<UUID> withInfo = parse("page_info", "full", "limit", "5").emptyPage();
         assertThat(withInfo.data()).isEmpty();
         assertThat(withInfo.page().total()).isZero();
         assertThat(withInfo.page().limit()).isEqualTo(5);

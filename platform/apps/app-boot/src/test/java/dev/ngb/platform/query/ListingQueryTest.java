@@ -68,19 +68,19 @@ class ListingQueryTest {
         String second = newTenant().code().value();
         String filter = "/api/v1/tenants?filter[code][in]=" + first + "," + second + "&sort=code&limit=1";
 
-        JsonNode page = getJson(filter + "&page_info=true");
+        JsonNode page = getJson(filter + "&page_info=full");
         assertThat(page.get("data").size()).isEqualTo(1);
         assertThat(page.get("page").get("limit").asInt()).isEqualTo(1);
         assertThat(page.get("page").get("total").asLong()).as("the total counts both tenants, not the page").isEqualTo(2);
         assertThat(page.get("page").get("next_cursor").asString()).isNotBlank();
 
-        JsonNode next = getJson(filter + "&page_info=true&cursor=" + page.get("page").get("next_cursor").asString());
+        JsonNode next = getJson(filter + "&page_info=full&cursor=" + page.get("page").get("next_cursor").asString());
         assertThat(next.get("data").size()).isEqualTo(1);
         assertThat(next.get("data").get(0).get("code").asString())
                 .isNotEqualTo(page.get("data").get(0).get("code").asString());
         assertThat(next.get("page").get("next_cursor").isNull()).as("the last page has no next cursor").isTrue();
 
-        assertThat(getJson("/api/v1/tenants?filter[code][eq]=platform&page_info=true").get("page").get("total").asLong())
+        assertThat(getJson("/api/v1/tenants?filter[code][eq]=platform&page_info=full").get("page").get("total").asLong())
                 .as("the reserved platform tenant is the caller's own scope, never a listed tenant")
                 .isZero();
     }
@@ -96,7 +96,7 @@ class ListingQueryTest {
         assertThat(page.get("data").size()).as("another tenant's user is never in the page").isEqualTo(1);
         assertThat(page.get("data").get(0).get("id").asString()).isEqualTo(mine.id().value().toString());
         assertThat(page.get("data").get(0).get("tenantId").asString()).isEqualTo(first.id().value().toString());
-        assertThat(page.get("page").isNull()).as("page is null unless page_info=true").isTrue();
+        assertThat(page.get("page").isNull()).as("page is null unless page_info=full").isTrue();
 
         assertThat(status("/api/v1/users?tenantId=" + first.id().value())).as("the removed tenantId parameter").isEqualTo(400);
         assertThat(status("/api/v1/users?filter[keycloak_subject][eq]=kc-x"))
@@ -113,7 +113,7 @@ class ListingQueryTest {
                 tenant.id(), PermissionScope.TENANT, name, Set.of("billing:invoice:read"))));
 
         JsonNode page = getJson("/api/v1/roles?filter[tenant_id][eq]=" + tenant.id().value()
-                + "&filter[name][contains]=reader&sort=name&page_info=true");
+                + "&filter[name][contains]=reader&sort=name&page_info=full");
         assertThat(page.get("data").size()).isEqualTo(1);
         assertThat(page.get("data").get(0).get("name").asString()).isEqualTo(name);
         assertThat(page.get("page").get("total").asLong()).isEqualTo(1);
@@ -128,7 +128,7 @@ class ListingQueryTest {
         onTenant(tenant, () -> systems.create(Audit.of("user/tester", "req-1"), name));
 
         JsonNode page = getJson("/api/v1/tenant-systems?filter[tenant_id][eq]=" + tenant.id().value()
-                + "&filter[name][contains]=" + name + "&page_info=true");
+                + "&filter[name][contains]=" + name + "&page_info=full");
         assertThat(page.get("data").size()).isEqualTo(1);
         assertThat(page.get("data").get(0).get("name").asString()).isEqualTo(name);
         assertThat(page.get("page").get("total").asLong()).isEqualTo(1);
@@ -143,7 +143,7 @@ class ListingQueryTest {
         onTenant(tenant, () -> credential(system, "Backup"));
         onTenant(tenant, () -> credential(other, "Elsewhere"));
 
-        JsonNode page = getJson("/api/v1/tenant-systems/" + system.id().value() + "/credentials?page_info=true&limit=50");
+        JsonNode page = getJson("/api/v1/tenant-systems/" + system.id().value() + "/credentials?page_info=full&limit=50");
         assertThat(page.get("data").size()).as("another system's credential is never in the page").isEqualTo(2);
         assertThat(page.get("data").valueStream().map(row -> row.get("label").asString()))
                 .containsExactly("Primary", "Backup");

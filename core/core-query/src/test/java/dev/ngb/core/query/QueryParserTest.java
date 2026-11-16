@@ -193,10 +193,10 @@ class QueryParserTest {
     @Test
     void pageInfoIsOptInAndMayAskOnlyForTheCursor() {
         assertThat(parse().pageFacts()).isEqualTo(PageFacts.NONE);
-        assertThat(parse("page_info", "false").pageFacts()).isEqualTo(PageFacts.NONE);
-        assertThat(parse("page_info", "true").pageFacts()).isEqualTo(PageFacts.FULL);
+        assertThat(parse("page_info", "full").pageFacts()).isEqualTo(PageFacts.FULL);
         assertThat(parse("page_info", "cursor").pageFacts()).isEqualTo(PageFacts.CURSOR);
-        rejects("true, false or cursor", "page_info", "1");
+        rejects("takes full or cursor", "page_info", "true");
+        rejects("takes full or cursor", "page_info", "1");
     }
 
     @Test
@@ -261,7 +261,7 @@ class QueryParserTest {
         UUID id = UUID.randomUUID();
         Instant at = Instant.parse("2026-11-16T10:15:30Z");
         String cursor = parse("filter[status][eq]", "OPEN", "filter[amount][gte]", "5").nextCursor(List.of(at, id));
-        ListQuery next = parse("filter[amount][gte]", "5", "filter[status][eq]", "OPEN", "cursor", cursor, "limit", "7", "page_info", "true");
+        ListQuery next = parse("filter[amount][gte]", "5", "filter[status][eq]", "OPEN", "cursor", cursor, "limit", "7", "page_info", "full");
         assertThat(next.cursorValues()).containsExactly(at, id);
     }
 

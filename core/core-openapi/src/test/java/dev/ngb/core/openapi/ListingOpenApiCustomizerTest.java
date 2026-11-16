@@ -86,14 +86,14 @@ class ListingOpenApiCustomizerTest {
         assertThat(named(operation, "sort").getDescription()).contains("amount, created_at, id").contains("Default: `-created_at,id`");
         assertThat(named(operation, "limit").getSchema().getMaximum()).isEqualByComparingTo("200");
         assertThat(named(operation, "offset").getSchema().getMaximum()).isEqualByComparingTo("10000");
-        assertThat(named(operation, "page_info").getSchema().getDefault()).isEqualTo("false");
-        assertThat(values(named(operation, "page_info").getSchema().getEnum())).containsExactly("true", "false", "cursor");
+        assertThat(named(operation, "page_info").getSchema().getDefault()).isNull();
+        assertThat(values(named(operation, "page_info").getSchema().getEnum())).containsExactly("full", "cursor");
     }
 
     @Test
     void theOperationExplainsOrAndDocumentsTheBadRequest() throws Exception {
         Operation operation = customized("list");
-        assertThat(operation.getDescription()).contains("filter[or][i][field][op]").contains("page_info=true")
+        assertThat(operation.getDescription()).contains("filter[or][i][field][op]").contains("page_info=full")
                 .contains("page_info=cursor");
         assertThat(operation.getResponses().get("400").getDescription()).contains("not allowed");
     }
