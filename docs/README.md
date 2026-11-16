@@ -27,6 +27,7 @@ Documentation for the suite: the **Platform** service, the **Billing** and **Not
 | [customers-and-tenant-mapping.md](customers-and-tenant-mapping.md) | Billing Customers and the Tenant User mapping |
 | [pricing-and-usage.md](pricing-and-usage.md) | Pricing Engine, Usage Metering, Cost Estimation |
 | [wallet-ledger-and-charging.md](wallet-ledger-and-charging.md) | Wallet, Ledger, Reservation, Charge, Prepaid and Postpaid |
+| [coupons.md](coupons.md) | Coupons and promotion codes: benefits, duration, scope, ordering and stacking, the charge seam, permissions and events |
 | [invoicing-and-subscriptions.md](invoicing-and-subscriptions.md) | Invoice and Subscription |
 | [payments-and-stripe.md](payments-and-stripe.md) | Payment Provider model, Stripe Direct and Connect, Payment, Refund, Stripe webhooks |
 | [billing-session-and-portal.md](billing-session-and-portal.md) | Billing Session and the Customer Portal |

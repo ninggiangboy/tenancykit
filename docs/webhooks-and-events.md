@@ -31,6 +31,10 @@ Billing proactively sends Webhooks when business state changes.
 | `invoice.paid` | An Invoice was paid |
 | `subscription.renewed` | A Subscription was renewed |
 | `subscription.payment_failed` | A Subscription payment failed |
+| `coupon.redeemed` | A Coupon was redeemed onto a Wallet |
+| `coupon.redemption-ended` | A Coupon redemption ended, with the reason `EXHAUSTED`, `REVOKED` or `COUPON_DEACTIVATED` |
+
+`charge.succeeded` and `charge.failed` also carry optional `grossAmount` and `discounts`, and `subscription.renewed` carries `paidAmount`. These fields are additive, so a receiver that ignores them keeps working; see [coupons.md](coupons.md).
 
 This table is the specification's example list and is not complete. The event schemas in [contracts/events](../contracts/events/README.md) now own the event list and the shape of each event's `data`; the application reads the type list from them and rejects a subscription to a type that has no schema.
 

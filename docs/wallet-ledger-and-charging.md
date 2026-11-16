@@ -36,7 +36,7 @@ Lets the Tenant System hold a budget before executing a Resource.
 - Supports Expiration and the handling of expired Reservations.
 - Guarantees Idempotency and avoids duplicate holds.
 
-A capture charges the actual cost, which cannot exceed the held amount, and returns the unused remainder in the same step; capturing after the hold has expired is refused. Release and expiry return the whole hold. Expiry runs per Tenant and skips a wallet that is busy, to be picked up on the next run.
+A capture charges the actual cost, which cannot exceed the held amount, and returns the unused remainder in the same step; capturing after the hold has expired is refused. A capture whose charge was fully discounted is a **capture of zero**: it closes the Reservation and returns the whole hold, so nothing stays held against a charge that cost nothing. Release and expiry return the whole hold. Expiry runs per Tenant and skips a wallet that is busy, to be picked up on the next run.
 
 ## Charge
 
@@ -49,6 +49,10 @@ Calculates and records the actual cost incurred.
 - Updates Wallet and Ledger.
 - Records Charge status and history.
 - A Charge the wallet cannot pay is recorded as failed with the reason `insufficient_funds` and announced as `charge.failed`; it is an outcome, not an error. Repeating the request returns the same recorded failure. The REST API answers 402 for it, and for a reservation or debit that the wallet cannot cover.
+
+A Charge records two amounts: the **gross** — the charge after the single rounding and the plan's minimum and maximum — and the **net** the wallet actually paid after any coupons. `Charge.amount` stays the net, so the ledger debit, the invoice line and replay keep their meaning; the gross and each discount line sit beside it. The discount is applied after the gross is final, in the one place every charge passes through, see [coupons.md](coupons.md).
+
+A charge whose coupons bring the net to zero is still recorded, as a **succeeded Charge of 0** with no ledger entry and no wallet movement, because the application it consumed and a later replay both need a record to point at; it produces no invoice line.
 
 ## Prepaid and Postpaid
 

@@ -12,6 +12,8 @@ The order is the order rows are locked, not the order endpoints are called.
 |---|---|
 | Subscription renewal | subscription, then wallet (through `money.charge`) |
 | Charge, credit, debit, reserve, reverse | wallet first, then everything else. A charge's idempotency check runs after the wallet lock |
+| Charge with coupons | wallet first, then the coupon rows that carry a budget, then the wallet's redemption rows ascending by id, all inside `claim` after the idempotency read |
+| Redeem a coupon onto a wallet | wallet, then the coupon row, then the promotion code row, then the new redemption |
 | Refund | payment, then refund, then wallet. The idempotency key is read after the payment lock |
 | Reservation expiry | wallet with `skip locked`, then reservation (the comment on the statement says why) |
 | Billing cycle close and `InvoiceChargeUseCase` | unbilled lines, then the invoice counter |
@@ -34,6 +36,12 @@ Two consequences:
 - The invoice counter is always the last lock. Invoice numbers are gap-free per Tenant, so issuing an invoice for a
   Tenant is serialised until commit. That is serialization, not deadlock, and it is only acceptable while the
   transaction is short: nothing runs after `InvoiceIssuer.issue`.
+
+The coupon flows keep the same shape: every one of them locks the wallet first and reaches a coupon or redemption row
+only while holding it, so **no flow locks a wallet after a coupon row** and the redeem flow (wallet, coupon, code,
+redemption) and the charge flow (wallet, budgeted coupon rows, redemption rows) cannot wait on each other. Only a
+coupon that carries a budget is a row shared across wallets, so a coupon bounded by an application cap alone adds no
+cross-wallet lock edge. See [coupons.md](coupons.md).
 
 ## Rules
 

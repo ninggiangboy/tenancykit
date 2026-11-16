@@ -57,6 +57,8 @@ Receives and records Usage from the Tenant System.
 
 An API that estimates cost before the Tenant System executes a Resource or Workload. It is a pure calculation from a plan version and expected quantities, writes nothing, and uses the same rules and the same single rounding as the real charge, so an estimate and the charge for identical input are the same amount. The estimate can serve as the basis for a Reservation: reserving from an estimate holds exactly the estimated amount, see [wallet-ledger-and-charging.md](wallet-ledger-and-charging.md).
 
+An estimate may name a wallet. With one it also returns the **net** the wallet would pay and the discount lines that produced it, through the same read-only preview the charge uses: the preview takes no lock, writes nothing and consumes no coupon application. A Reservation made from an estimate holds the **gross**, not the discounted net, because the coupon state at capture is what decides the discount. See [coupons.md](coupons.md).
+
 ## Charging usage
 
 Pricing reads a customer's usage through the usage context's read-only interface, prices the **not yet rated** events in a period under the plan version in force at the end of the period (or a version the caller names), and charges the wallet through money.

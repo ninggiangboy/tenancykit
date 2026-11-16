@@ -11,7 +11,7 @@ For Postpaid customers, Invoices come from the aggregation cycle described in [w
 
 ### What an invoice is
 
-An invoice is a request for payment of what a wallet **already owes**. Every line is backed by a succeeded Charge, which is where the amount was taken from the wallet (for a Postpaid wallet that is the debt). So an invoice never creates debt and never changes a Charge: paying it credits the wallet by the invoice total, and voiding it leaves the wallet alone. A Charge is billed on at most one line.
+An invoice is a request for payment of what a wallet **already owes**. Every line is backed by a succeeded Charge, which is where the amount was taken from the wallet (for a Postpaid wallet that is the debt). A line shows the Charge's **net** — what the wallet paid after any coupons — so an invoice total is the sum of nets, and a Charge whose net is zero carries no line. So an invoice never creates debt and never changes a Charge: paying it credits the wallet by the invoice total, and voiding it leaves the wallet alone. A Charge is billed on at most one line.
 
 A line is either a plain Charge (from usage, a reservation or on its own) or the renewal Charge of one subscription period, which names the subscription and the period it covers. Totals are in the wallet's currency.
 
@@ -27,8 +27,8 @@ Invoice numbers (`INV-000042`) are a gap-free sequence per Tenant, taken from a 
 
 ### How invoices are created
 
-- **Postpaid aggregation cycle.** A succeeded Charge on a Postpaid wallet becomes an *unbilled line* of the calendar period (UTC) it was incurred in, through the outbox, deduplicated by the inbox and by the Charge. The cycle job closes every period that has ended: the unbilled lines of one wallet and period become one invoice, announced as `invoice.created`. Running the job twice, or on two instances, bills a period once. A period that cannot be closed is logged, counted as a failure and left untouched for the next run, so it never holds back the periods behind it. A Charge that reaches Billing late, for a period that was already invoiced, waits for the period that is open. A Charge on a Prepaid wallet is never collected, because the wallet already paid it. The period is set by `billing.invoicing.postpaid-cycle` (`MONTHLY` by default).
-- **On request.** A Tenant asks for an invoice for one succeeded Charge. Asking again returns the invoice that exists. A Postpaid Charge is still owed, so its invoice opens for payment (and a line already waiting for its cycle moves onto it); a Prepaid Charge was paid when it was made, so its invoice is a `PAID` record with the settlement `WALLET`.
+- **Postpaid aggregation cycle.** A succeeded Charge on a Postpaid wallet becomes an *unbilled line* of the calendar period (UTC) it was incurred in, through the outbox, deduplicated by the inbox and by the Charge. A Charge whose net is zero was fully discounted and is not collected, so it becomes no unbilled line. The cycle job closes every period that has ended: the unbilled lines of one wallet and period become one invoice, announced as `invoice.created`. Running the job twice, or on two instances, bills a period once. A period that cannot be closed is logged, counted as a failure and left untouched for the next run, so it never holds back the periods behind it. A Charge that reaches Billing late, for a period that was already invoiced, waits for the period that is open. A Charge on a Prepaid wallet is never collected, because the wallet already paid it. The period is set by `billing.invoicing.postpaid-cycle` (`MONTHLY` by default).
+- **On request.** A Tenant asks for an invoice for one succeeded Charge. Asking again returns the invoice that exists. A Charge whose net is zero has nothing to invoice, so a request for one is refused with 409. A Postpaid Charge is still owed, so its invoice opens for payment (and a line already waiting for its cycle moves onto it); a Prepaid Charge was paid when it was made, so its invoice is a `PAID` record with the settlement `WALLET`.
 - **Subscription renewals** reach the cycle invoice through the first path, as subscription-period lines.
 
 ### Paying an invoice
@@ -59,7 +59,7 @@ The price of a period is the plan's recurring amount under the plan version in f
 
 ### Renewal
 
-The renewal job takes one due subscription at a time (`for update skip locked`, so two workers never renew the same one), charges the wallet through the money context, and moves the schedule forward, writes the history record and the `subscription.renewed` notice in the same transaction as that charge. Period 0 is reported as `subscription.renewed` too, with `periodNumber` 0. A Prepaid wallet pays from its balance; a Postpaid wallet is charged the same way, which records the debt, and the Charge reaches the cycle invoice as a subscription line.
+The renewal job takes one due subscription at a time (`for update skip locked`, so two workers never renew the same one), charges the wallet through the money context, and moves the schedule forward, writes the history record and the `subscription.renewed` notice in the same transaction as that charge. The notice carries `paidAmount`, the net the wallet paid for the period after any coupons. Period 0 is reported as `subscription.renewed` too, with `periodNumber` 0. A Prepaid wallet pays from its balance; a Postpaid wallet is charged the same way, which records the debt, and the Charge reaches the cycle invoice as a subscription line.
 
 A period is charged **once**, however the job is repeated: the subscription row is locked, the charge key names the subscription, the period and the attempt, the schedule moves in the charge's transaction, and a unique index allows one renewed record per period. A catch-up after downtime charges each missed period once, oldest first.
 
@@ -98,7 +98,7 @@ A Tenant System sees and acts on the customers mapped to it only; another system
 | `subscription.renewed` | A period was paid. |
 | `subscription.payment_failed` | A period could not be paid. |
 
-`payment.succeeded` and `payment.failed` also carry an `invoiceId` when the payment was for an invoice.
+`payment.succeeded` and `payment.failed` also carry an `invoiceId` when the payment was for an invoice. `subscription.renewed` carries `paidAmount`, the net the wallet paid for the period.
 
 ## Settings
 

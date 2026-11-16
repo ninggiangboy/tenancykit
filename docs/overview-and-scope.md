@@ -98,6 +98,9 @@ the delivery state and the event catalog stay in the app.
 | Conversion | A goal reached, with a value and a currency, reported by a postback or the site snippet |
 | Attribution model | `FIRST`, `LAST` or `LINEAR`: how a conversion's value is divided among the clicks in its chain |
 | Credit | The share of a conversion's value one click receives under the owning campaign's model |
+| Coupon | The discount a Tenant defines: one benefit (percent off, fixed amount off or a one-time wallet credit), one duration and one scope, with immutable terms |
+| Promotion code | A code that redeems one coupon, with its own limits and validity |
+| Redemption | One coupon redeemed onto one wallet, with the duration it still has left |
 
 ## Functions
 
