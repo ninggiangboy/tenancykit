@@ -1,7 +1,7 @@
 ---
 title: "Survey app — versioned dynamic surveys a Tenant runs for its own customers"
 description: "A sixth deployable, survey/, that issues survey links, collects responses against immutable versions with a shared JSON-AST expression language, and measures what happens after a link opens; Billing's webhook mechanics move into core/ so both apps share them."
-status: pending
+status: done
 priority: P1
 effort: "10 phases, 6 × M, 4 × L"
 branch: dev
