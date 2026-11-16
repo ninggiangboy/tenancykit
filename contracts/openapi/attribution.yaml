@@ -189,7 +189,17 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/Problem"
-  /campaigns:
+  /attribution/api/v1/ping:
+    get:
+      tags: [link-controller]
+      operationId: ping
+      x-required-permission: attribution:link:read
+      description: The authenticated surface's first endpoint, which proves the skeleton wires a token, a scope and a permission.
+      responses:
+        "200":
+          description: OK
+
+  /attribution/api/v1/campaigns:
     get:
       tags: [campaign-controller]
       operationId: listCampaigns
@@ -220,7 +230,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CampaignView"
-  /campaigns/{id}:
+  /attribution/api/v1/campaigns/{id}:
     parameters:
     - $ref: "#/components/parameters/Id"
     get:
@@ -255,7 +265,7 @@ paths:
                 $ref: "#/components/schemas/CampaignView"
         "412":
           description: The `If-Match` tag is stale.
-  /campaigns/{id}/archive:
+  /attribution/api/v1/campaigns/{id}/archive:
     parameters:
     - $ref: "#/components/parameters/Id"
     post:
@@ -265,7 +275,7 @@ paths:
       responses:
         "204":
           description: Archived.
-  /links:
+  /attribution/api/v1/links:
     get:
       tags: [link-controller]
       operationId: listLinks
@@ -314,7 +324,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LinkView"
-  /links/bulk:
+  /attribution/api/v1/links/bulk:
     post:
       tags: [link-controller]
       operationId: createLinksBulk
@@ -342,7 +352,7 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PersonalLinkView"
-  /links/{id}:
+  /attribution/api/v1/links/{id}:
     parameters:
     - $ref: "#/components/parameters/Id"
     get:
@@ -377,7 +387,7 @@ paths:
                 $ref: "#/components/schemas/LinkView"
         "412":
           description: The `If-Match` tag is stale.
-  /links/{id}/pause:
+  /attribution/api/v1/links/{id}/pause:
     parameters:
     - $ref: "#/components/parameters/Id"
     post:
@@ -387,7 +397,7 @@ paths:
       responses:
         "204":
           description: Paused.
-  /links/{id}/resume:
+  /attribution/api/v1/links/{id}/resume:
     parameters:
     - $ref: "#/components/parameters/Id"
     post:
@@ -397,7 +407,7 @@ paths:
       responses:
         "204":
           description: Resumed.
-  /links/{id}/archive:
+  /attribution/api/v1/links/{id}/archive:
     parameters:
     - $ref: "#/components/parameters/Id"
     post:
@@ -407,7 +417,7 @@ paths:
       responses:
         "204":
           description: Archived.
-  /links/{id}/qr:
+  /attribution/api/v1/links/{id}/qr:
     parameters:
     - $ref: "#/components/parameters/Id"
     get:
@@ -441,7 +451,7 @@ paths:
             image/svg+xml:
               schema:
                 type: string
-  /links/{id}/stats:
+  /attribution/api/v1/links/{id}/stats:
     parameters:
     - $ref: "#/components/parameters/Id"
     get:
@@ -455,7 +465,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LinkStatsView"
-  /goals:
+  /attribution/api/v1/goals:
     get:
       tags: [goal-controller]
       operationId: listGoals
@@ -486,7 +496,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GoalView"
-  /goals/{id}:
+  /attribution/api/v1/goals/{id}:
     parameters:
     - $ref: "#/components/parameters/Id"
     get:
@@ -521,7 +531,7 @@ paths:
                 $ref: "#/components/schemas/GoalView"
         "412":
           description: The `If-Match` tag is stale.
-  /conversions:
+  /attribution/api/v1/conversions:
     get:
       tags: [conversion-controller]
       operationId: listConversions
@@ -579,7 +589,7 @@ paths:
                 $ref: "#/components/schemas/ConversionView"
         "422":
           description: The key was already used with a different body.
-  /conversions/{id}:
+  /attribution/api/v1/conversions/{id}:
     parameters:
     - $ref: "#/components/parameters/Id"
     get:
@@ -593,7 +603,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ConversionView"
-  /reports/timeseries:
+  /attribution/api/v1/reports/timeseries:
     get:
       tags: [report-controller]
       operationId: reportTimeseries
@@ -627,7 +637,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportView"
-  /reports/breakdown:
+  /attribution/api/v1/reports/breakdown:
     get:
       tags: [report-controller]
       operationId: reportBreakdown
@@ -653,7 +663,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportView"
-  /reports/funnel:
+  /attribution/api/v1/reports/funnel:
     get:
       tags: [report-controller]
       operationId: reportFunnel
@@ -685,7 +695,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportView"
-  /reports/cohorts:
+  /attribution/api/v1/reports/cohorts:
     get:
       tags: [report-controller]
       operationId: reportCohorts
@@ -718,7 +728,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportView"
-  /reports/costs:
+  /attribution/api/v1/reports/costs:
     get:
       tags: [report-controller]
       operationId: reportCosts
@@ -746,7 +756,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReportView"
-  /campaigns/{id}/spend:
+  /attribution/api/v1/campaigns/{id}/spend:
     parameters:
     - $ref: "#/components/parameters/Id"
     get:
@@ -776,7 +786,7 @@ paths:
       responses:
         "200":
           description: Written.
-  /campaigns/{id}/spend/{day}:
+  /attribution/api/v1/campaigns/{id}/spend/{day}:
     parameters:
     - $ref: "#/components/parameters/Id"
     - name: day
@@ -812,7 +822,7 @@ paths:
       responses:
         "204":
           description: Deleted.
-  /connections/{platform}/authorize:
+  /attribution/api/v1/connections/{platform}/authorize:
     parameters:
     - name: platform
       in: path
@@ -842,7 +852,7 @@ paths:
                   authorization_url:
                     type: string
                     format: uri
-  /connections:
+  /attribution/api/v1/connections:
     get:
       tags: [connection-controller]
       operationId: listConnections
@@ -856,7 +866,7 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ConnectionView"
-  /connections/{id}:
+  /attribution/api/v1/connections/{id}:
     parameters:
     - $ref: "#/components/parameters/Id"
     get:
@@ -878,7 +888,7 @@ paths:
       responses:
         "204":
           description: Revoked.
-  /connections/{id}/external-campaigns:
+  /attribution/api/v1/connections/{id}/external-campaigns:
     parameters:
     - $ref: "#/components/parameters/Id"
     get:
@@ -894,7 +904,7 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ExternalCampaignView"
-  /connections/{id}/mappings:
+  /attribution/api/v1/connections/{id}/mappings:
     parameters:
     - $ref: "#/components/parameters/Id"
     put:
@@ -912,7 +922,7 @@ paths:
           description: Mapped.
         "409":
           description: The platform account's currency is not the campaign's.
-  /connections/{id}/sync:
+  /attribution/api/v1/connections/{id}/sync:
     parameters:
     - $ref: "#/components/parameters/Id"
     post:
@@ -922,7 +932,7 @@ paths:
       responses:
         "202":
           description: A sync run was queued.
-  /settings:
+  /attribution/api/v1/settings:
     get:
       tags: [settings-controller]
       operationId: getSettings
@@ -951,7 +961,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SettingsView"
-  /data-subjects/erasure:
+  /attribution/api/v1/data-subjects/erasure:
     post:
       tags: [data-subject-controller]
       operationId: eraseVisitor

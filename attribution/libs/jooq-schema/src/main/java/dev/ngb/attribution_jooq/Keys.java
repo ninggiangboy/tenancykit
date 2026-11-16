@@ -6,7 +6,12 @@ package dev.ngb.attribution_jooq;
 
 import dev.ngb.attribution_jooq.tables.AppEntitlements;
 import dev.ngb.attribution_jooq.tables.AttributionSettings;
+import dev.ngb.attribution_jooq.tables.BulkLinkRequests;
+import dev.ngb.attribution_jooq.tables.Campaigns;
 import dev.ngb.attribution_jooq.tables.EventInbox;
+import dev.ngb.attribution_jooq.tables.LinkCounters;
+import dev.ngb.attribution_jooq.tables.LinkDestinations;
+import dev.ngb.attribution_jooq.tables.Links;
 import dev.ngb.attribution_jooq.tables.Outbox;
 import dev.ngb.attribution_jooq.tables.ReplicaState;
 import dev.ngb.attribution_jooq.tables.TenantDomains;
@@ -15,7 +20,12 @@ import dev.ngb.attribution_jooq.tables.Tenants;
 import dev.ngb.attribution_jooq.tables.UserGrants;
 import dev.ngb.attribution_jooq.tables.records.AppEntitlementsRecord;
 import dev.ngb.attribution_jooq.tables.records.AttributionSettingsRecord;
+import dev.ngb.attribution_jooq.tables.records.BulkLinkRequestsRecord;
+import dev.ngb.attribution_jooq.tables.records.CampaignsRecord;
 import dev.ngb.attribution_jooq.tables.records.EventInboxRecord;
+import dev.ngb.attribution_jooq.tables.records.LinkCountersRecord;
+import dev.ngb.attribution_jooq.tables.records.LinkDestinationsRecord;
+import dev.ngb.attribution_jooq.tables.records.LinksRecord;
 import dev.ngb.attribution_jooq.tables.records.OutboxRecord;
 import dev.ngb.attribution_jooq.tables.records.ReplicaStateRecord;
 import dev.ngb.attribution_jooq.tables.records.TenantDomainsRecord;
@@ -44,7 +54,14 @@ public class Keys {
 
     public static final UniqueKey<AppEntitlementsRecord> APP_ENTITLEMENTS_PKEY = Internal.createUniqueKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_pkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID, AppEntitlements.APP_ENTITLEMENTS.APP_CODE }, true);
     public static final UniqueKey<AttributionSettingsRecord> ATTRIBUTION_SETTINGS_PKEY = Internal.createUniqueKey(AttributionSettings.ATTRIBUTION_SETTINGS, DSL.name("attribution_settings_pkey"), new TableField[] { AttributionSettings.ATTRIBUTION_SETTINGS.TENANT_ID }, true);
+    public static final UniqueKey<BulkLinkRequestsRecord> BULK_LINK_REQUESTS_PKEY = Internal.createUniqueKey(BulkLinkRequests.BULK_LINK_REQUESTS, DSL.name("bulk_link_requests_pkey"), new TableField[] { BulkLinkRequests.BULK_LINK_REQUESTS.TENANT_ID, BulkLinkRequests.BULK_LINK_REQUESTS.IDEMPOTENCY_KEY }, true);
+    public static final UniqueKey<CampaignsRecord> CAMPAIGNS_PKEY = Internal.createUniqueKey(Campaigns.CAMPAIGNS, DSL.name("campaigns_pkey"), new TableField[] { Campaigns.CAMPAIGNS.ID }, true);
+    public static final UniqueKey<CampaignsRecord> CAMPAIGNS_TENANT_ID_ID_KEY = Internal.createUniqueKey(Campaigns.CAMPAIGNS, DSL.name("campaigns_tenant_id_id_key"), new TableField[] { Campaigns.CAMPAIGNS.TENANT_ID, Campaigns.CAMPAIGNS.ID }, true);
     public static final UniqueKey<EventInboxRecord> EVENT_INBOX_PKEY = Internal.createUniqueKey(EventInbox.EVENT_INBOX, DSL.name("event_inbox_pkey"), new TableField[] { EventInbox.EVENT_INBOX.TENANT_ID, EventInbox.EVENT_INBOX.CONSUMER, EventInbox.EVENT_INBOX.EVENT_ID }, true);
+    public static final UniqueKey<LinkCountersRecord> LINK_COUNTERS_PKEY = Internal.createUniqueKey(LinkCounters.LINK_COUNTERS, DSL.name("link_counters_pkey"), new TableField[] { LinkCounters.LINK_COUNTERS.TENANT_ID, LinkCounters.LINK_COUNTERS.LINK_ID }, true);
+    public static final UniqueKey<LinkDestinationsRecord> LINK_DESTINATIONS_PKEY = Internal.createUniqueKey(LinkDestinations.LINK_DESTINATIONS, DSL.name("link_destinations_pkey"), new TableField[] { LinkDestinations.LINK_DESTINATIONS.ID }, true);
+    public static final UniqueKey<LinksRecord> LINKS_PKEY = Internal.createUniqueKey(Links.LINKS, DSL.name("links_pkey"), new TableField[] { Links.LINKS.ID }, true);
+    public static final UniqueKey<LinksRecord> LINKS_TENANT_ID_ID_KEY = Internal.createUniqueKey(Links.LINKS, DSL.name("links_tenant_id_id_key"), new TableField[] { Links.LINKS.TENANT_ID, Links.LINKS.ID }, true);
     public static final UniqueKey<OutboxRecord> OUTBOX_PKEY = Internal.createUniqueKey(Outbox.OUTBOX, DSL.name("outbox_pkey"), new TableField[] { Outbox.OUTBOX.ID }, true);
     public static final UniqueKey<ReplicaStateRecord> REPLICA_STATE_PKEY = Internal.createUniqueKey(ReplicaState.REPLICA_STATE, DSL.name("replica_state_pkey"), new TableField[] { ReplicaState.REPLICA_STATE.ID }, true);
     public static final UniqueKey<TenantDomainsRecord> TENANT_DOMAINS_HOSTNAME_KEY = Internal.createUniqueKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_hostname_key"), new TableField[] { TenantDomains.TENANT_DOMAINS.HOSTNAME }, true);
@@ -60,6 +77,9 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final ForeignKey<AppEntitlementsRecord, TenantsRecord> APP_ENTITLEMENTS__APP_ENTITLEMENTS_TENANT_ID_FKEY = Internal.createForeignKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_tenant_id_fkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<LinkCountersRecord, LinksRecord> LINK_COUNTERS__LINK_COUNTERS_TENANT_ID_LINK_ID_FKEY = Internal.createForeignKey(LinkCounters.LINK_COUNTERS, DSL.name("link_counters_tenant_id_link_id_fkey"), new TableField[] { LinkCounters.LINK_COUNTERS.TENANT_ID, LinkCounters.LINK_COUNTERS.LINK_ID }, Keys.LINKS_TENANT_ID_ID_KEY, new TableField[] { Links.LINKS.TENANT_ID, Links.LINKS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<LinkDestinationsRecord, LinksRecord> LINK_DESTINATIONS__LINK_DESTINATIONS_TENANT_ID_LINK_ID_FKEY = Internal.createForeignKey(LinkDestinations.LINK_DESTINATIONS, DSL.name("link_destinations_tenant_id_link_id_fkey"), new TableField[] { LinkDestinations.LINK_DESTINATIONS.TENANT_ID, LinkDestinations.LINK_DESTINATIONS.LINK_ID }, Keys.LINKS_TENANT_ID_ID_KEY, new TableField[] { Links.LINKS.TENANT_ID, Links.LINKS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<LinksRecord, CampaignsRecord> LINKS__LINKS_TENANT_ID_CAMPAIGN_ID_FKEY = Internal.createForeignKey(Links.LINKS, DSL.name("links_tenant_id_campaign_id_fkey"), new TableField[] { Links.LINKS.TENANT_ID, Links.LINKS.CAMPAIGN_ID }, Keys.CAMPAIGNS_TENANT_ID_ID_KEY, new TableField[] { Campaigns.CAMPAIGNS.TENANT_ID, Campaigns.CAMPAIGNS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<TenantDomainsRecord, TenantsRecord> TENANT_DOMAINS__TENANT_DOMAINS_TENANT_ID_FKEY = Internal.createForeignKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_tenant_id_fkey"), new TableField[] { TenantDomains.TENANT_DOMAINS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<TenantSystemsRecord, TenantsRecord> TENANT_SYSTEMS__TENANT_SYSTEMS_TENANT_ID_FKEY = Internal.createForeignKey(TenantSystems.TENANT_SYSTEMS, DSL.name("tenant_systems_tenant_id_fkey"), new TableField[] { TenantSystems.TENANT_SYSTEMS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<UserGrantsRecord, TenantsRecord> USER_GRANTS__USER_GRANTS_TENANT_ID_FKEY = Internal.createForeignKey(UserGrants.USER_GRANTS, DSL.name("user_grants_tenant_id_fkey"), new TableField[] { UserGrants.USER_GRANTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);

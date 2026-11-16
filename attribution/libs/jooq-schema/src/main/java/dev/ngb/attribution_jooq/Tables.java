@@ -6,7 +6,12 @@ package dev.ngb.attribution_jooq;
 
 import dev.ngb.attribution_jooq.tables.AppEntitlements;
 import dev.ngb.attribution_jooq.tables.AttributionSettings;
+import dev.ngb.attribution_jooq.tables.BulkLinkRequests;
+import dev.ngb.attribution_jooq.tables.Campaigns;
 import dev.ngb.attribution_jooq.tables.EventInbox;
+import dev.ngb.attribution_jooq.tables.LinkCounters;
+import dev.ngb.attribution_jooq.tables.LinkDestinations;
+import dev.ngb.attribution_jooq.tables.Links;
 import dev.ngb.attribution_jooq.tables.Outbox;
 import dev.ngb.attribution_jooq.tables.ReplicaState;
 import dev.ngb.attribution_jooq.tables.TenantDomains;
@@ -32,9 +37,34 @@ public class Tables {
     public static final AttributionSettings ATTRIBUTION_SETTINGS = AttributionSettings.ATTRIBUTION_SETTINGS;
 
     /**
+     * The table <code>public.bulk_link_requests</code>.
+     */
+    public static final BulkLinkRequests BULK_LINK_REQUESTS = BulkLinkRequests.BULK_LINK_REQUESTS;
+
+    /**
+     * The table <code>public.campaigns</code>.
+     */
+    public static final Campaigns CAMPAIGNS = Campaigns.CAMPAIGNS;
+
+    /**
      * The table <code>public.event_inbox</code>.
      */
     public static final EventInbox EVENT_INBOX = EventInbox.EVENT_INBOX;
+
+    /**
+     * The table <code>public.link_counters</code>.
+     */
+    public static final LinkCounters LINK_COUNTERS = LinkCounters.LINK_COUNTERS;
+
+    /**
+     * The table <code>public.link_destinations</code>.
+     */
+    public static final LinkDestinations LINK_DESTINATIONS = LinkDestinations.LINK_DESTINATIONS;
+
+    /**
+     * The table <code>public.links</code>.
+     */
+    public static final Links LINKS = Links.LINKS;
 
     /**
      * The table <code>public.outbox</code>.

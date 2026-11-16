@@ -36,9 +36,15 @@ final class ArchitectureRules {
         for (String table : List.of("Tenants", "TenantDomains", "TenantSystems", "UserGrants", "AppEntitlements")) {
             TABLE_OWNER.put(table, "platform");
         }
-        // The inbox, the replica's state, the outbox and the tenant settings belong to the wiring package.
-        for (String table : List.of("EventInbox", "ReplicaState", "Outbox", "AttributionSettings")) {
+        // The inbox, the replica's state and the outbox belong to the wiring package.
+        for (String table : List.of("EventInbox", "ReplicaState", "Outbox")) {
             TABLE_OWNER.put(table, "boot");
+        }
+        // Campaigns and tracked links are the links context: the campaigns, the links, the destination rules, the
+        // per-link click counter and the bulk-request ledger.
+        for (String table : List.of(
+                "Campaigns", "Links", "LinkDestinations", "LinkCounters", "BulkLinkRequests", "AttributionSettings")) {
+            TABLE_OWNER.put(table, "links");
         }
     }
 

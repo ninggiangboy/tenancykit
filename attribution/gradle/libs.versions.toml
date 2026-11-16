@@ -21,6 +21,7 @@ json-schema-validator = { module = "com.networknt:json-schema-validator", versio
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 springdoc-webmvc = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdoc" }
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
+zxing-javase = { module = "com.google.zxing:javase", version.ref = "zxing" }
 maxmind-db = { module = "com.maxmind.db:maxmind-db", version.ref = "maxmind-db" }
 
 [plugins]

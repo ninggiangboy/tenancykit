@@ -100,6 +100,43 @@ class RowLevelSecurityTest {
                 row("outbox", """
                         insert into outbox (id, tenant_id, aggregate, type, payload, created_at, next_attempt_at)
                         values (gen_random_uuid(), '%1$s', 'campaign/1', 'campaign.changed', '{}', now(), now())
+                        """),
+                row("campaigns", """
+                        insert into campaigns (id, tenant_id, name, slug, status, attribution_model, window_days, currency,
+                                               created_at, updated_at)
+                        values (gen_random_uuid(), '%1$s', 'Spring', 'spring-sale', 'ACTIVE', 'LAST', 30, 'USD', now(), now())
+                        """),
+                row("links", """
+                        with c as (
+                            insert into campaigns (id, tenant_id, name, slug, status, attribution_model, window_days, currency,
+                                                   created_at, updated_at)
+                            values (gen_random_uuid(), '%1$s', 'Spring', 'spring-sale', 'ACTIVE', 'LAST', 30, 'USD', now(), now())
+                            returning id
+                        )
+                        insert into links (id, tenant_id, campaign_id, slug, kind, status, utm, created_at, updated_at)
+                        select gen_random_uuid(), '%1$s', c.id, 'spring-link', 'STANDARD', 'ACTIVE', '{}', now(), now() from c
+                        """),
+                row("link_destinations", """
+                        with l as (
+                            insert into links (id, tenant_id, slug, kind, status, utm, created_at, updated_at)
+                            values (gen_random_uuid(), '%1$s', 'spring-link', 'STANDARD', 'ACTIVE', '{}', now(), now())
+                            returning id
+                        )
+                        insert into link_destinations (id, tenant_id, link_id, position, url, weight, match, is_fallback)
+                        select gen_random_uuid(), '%1$s', l.id, 0, 'https://example.com/x', 1, '{}', true from l
+                        """),
+                row("link_counters", """
+                        with l as (
+                            insert into links (id, tenant_id, slug, kind, status, utm, max_clicks, created_at, updated_at)
+                            values (gen_random_uuid(), '%1$s', 'spring-link', 'STANDARD', 'ACTIVE', '{}', 100, now(), now())
+                            returning id
+                        )
+                        insert into link_counters (tenant_id, link_id, clicks_counted)
+                        select '%1$s', l.id, 0 from l
+                        """),
+                row("bulk_link_requests", """
+                        insert into bulk_link_requests (tenant_id, idempotency_key, request_hash, result, created_at)
+                        values ('%1$s', 'key-1', 'hash', '{}', now())
                         """));
     }
 
