@@ -5,10 +5,12 @@ import dev.ngb.billing.coupon.domain.coupon.CouponId;
 import dev.ngb.billing.coupon.domain.event.CouponEvents;
 import dev.ngb.billing.coupon.domain.redemption.EndReason;
 import dev.ngb.billing.coupon.domain.redemption.Redemption;
+import dev.ngb.billing.coupon.domain.redemption.RedemptionStatus;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.IdGenerator;
 import java.time.Instant;
 import java.util.List;
+import dev.ngb.billing.sharedkernel.id.WalletId;
 
 /**
  * Ends redemptions and announces each one in the caller's transaction. Both the revoke command and the coupon's
@@ -29,7 +31,7 @@ public class EndingRedemptions {
 
     /** Ends one redemption with {@code reason} and returns it; a finished redemption is left untouched. */
     public Redemption end(Redemption redemption, EndReason reason, Instant now) {
-        if (redemption.status() != dev.ngb.billing.coupon.domain.redemption.RedemptionStatus.ACTIVE) {
+        if (redemption.status() != RedemptionStatus.ACTIVE) {
             return redemption;
         }
         redemption.end(reason, now);
@@ -46,7 +48,7 @@ public class EndingRedemptions {
     }
 
     /** Ends every ACTIVE redemption of the coupon on one wallet. */
-    public List<Redemption> endAllOnWallet(CouponId couponId, dev.ngb.billing.sharedkernel.id.WalletId walletId, EndReason reason, Instant now) {
+    public List<Redemption> endAllOnWallet(CouponId couponId, WalletId walletId, EndReason reason, Instant now) {
         List<Redemption> active = redemptions.lockActiveByWalletAndCoupon(walletId, couponId);
         active.forEach(redemption -> end(redemption, reason, now));
         return active;

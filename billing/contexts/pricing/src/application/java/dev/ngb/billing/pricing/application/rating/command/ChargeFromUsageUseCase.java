@@ -9,6 +9,8 @@ import dev.ngb.billing.money.api.charge.ChargeCommand;
 import dev.ngb.billing.money.api.charge.ChargeResult;
 import dev.ngb.billing.money.api.charge.ChargeStatus;
 import dev.ngb.billing.money.api.charge.ChargeWallet;
+import dev.ngb.billing.money.api.charge.ChargeContext;
+import dev.ngb.billing.money.api.charge.ChargeKind;
 import dev.ngb.billing.money.api.wallet.WalletLookup;
 import dev.ngb.billing.money.api.wallet.WalletSummary;
 import dev.ngb.core.error.ConflictException;
@@ -165,7 +167,7 @@ public class ChargeFromUsageUseCase {
         if (amount.isPositive()) {
             ChargeResult charge = money.charge(new ChargeCommand(
                     c.walletId(), null, amount, "usage-set:" + setKey, "plan:" + plan.code() + "@v" + version.number(), "rating:" + setKey + ":" + attempt,
-                    c.caller(), new dev.ngb.billing.money.api.charge.ChargeContext(dev.ngb.billing.money.api.charge.ChargeKind.USAGE, plan.id().value(),
+                    c.caller(), new ChargeContext(ChargeKind.USAGE, plan.id().value(),
                             quote.metricAmounts())));
             chargeId = charge.id().value();
             status = charge.status() == ChargeStatus.FAILED ? RatingStatus.FAILED : RatingStatus.CHARGED;

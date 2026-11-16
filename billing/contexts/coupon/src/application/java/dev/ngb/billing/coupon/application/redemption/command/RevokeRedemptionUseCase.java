@@ -5,6 +5,7 @@ import dev.ngb.billing.coupon.application.redemption.service.EndingRedemptions;
 import dev.ngb.billing.coupon.domain.redemption.EndReason;
 import dev.ngb.billing.coupon.domain.redemption.Redemption;
 import dev.ngb.billing.coupon.domain.redemption.RedemptionId;
+import dev.ngb.billing.coupon.domain.redemption.RedemptionStatus;
 import dev.ngb.billing.customer.api.lookup.CustomerVisibility;
 import dev.ngb.billing.customer.api.lookup.CustomerLookup;
 import dev.ngb.billing.money.api.wallet.LockWallet;
@@ -56,7 +57,7 @@ public class RevokeRedemptionUseCase {
             Redemption redemption = redemptions.lockById(command.redemptionId()).orElseThrow(Messages::couponRedemptionNotFound);
             visibility.requireVisible(redemption.customerId(), command.caller(), Messages::couponRedemptionNotFound);
             Instant now = clock.now();
-            if (redemption.status() == dev.ngb.billing.coupon.domain.redemption.RedemptionStatus.ACTIVE) {
+            if (redemption.status() == RedemptionStatus.ACTIVE) {
                 endingRedemptions.end(redemption, EndReason.REVOKED, now);
                 auditLog.record(AuditEntry.tenant(redemption.tenantId(), command.audit().actor(), "coupon-redemption.revoked",
                         "coupon-redemption/" + redemption.id(), command.audit().requestId(), now));

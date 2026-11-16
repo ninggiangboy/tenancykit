@@ -13,6 +13,7 @@ import dev.ngb.billing.money.api.charge.ChargeResult;
 import dev.ngb.billing.money.api.charge.ChargeWallet;
 import dev.ngb.billing.money.api.charge.DiscountQuote;
 import dev.ngb.billing.money.api.charge.DiscountRequest;
+import dev.ngb.billing.money.api.charge.ChargeStatus;
 import dev.ngb.billing.money.api.ledger.LedgerEntryId;
 import dev.ngb.billing.money.application.charge.port.ChargeRepository;
 import dev.ngb.billing.money.application.ledger.port.LedgerRepository;
@@ -109,7 +110,7 @@ public class ChargeUseCase implements ChargeWallet {
             }
 
             charges.add(outcome.charge());
-            if (outcome.charge().status() == dev.ngb.billing.money.api.charge.ChargeStatus.SUCCEEDED) {
+            if (outcome.charge().status() == ChargeStatus.SUCCEEDED) {
                 if (outcome.entry() != null) {
                     ledger.append(outcome.entry());
                 }

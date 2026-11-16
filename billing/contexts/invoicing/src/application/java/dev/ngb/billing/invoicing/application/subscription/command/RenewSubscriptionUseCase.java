@@ -16,12 +16,15 @@ import dev.ngb.billing.money.api.charge.ChargeCommand;
 import dev.ngb.billing.money.api.charge.ChargeResult;
 import dev.ngb.billing.money.api.charge.ChargeStatus;
 import dev.ngb.billing.money.api.charge.ChargeWallet;
+import dev.ngb.billing.money.api.charge.ChargeContext;
+import dev.ngb.billing.money.api.charge.ChargeKind;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.billing.pricing.api.plan.PeriodPrice;
 import dev.ngb.billing.pricing.api.plan.PlanPricing;
 import dev.ngb.billing.sharedkernel.money.Money;
 import java.time.Instant;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -167,8 +170,8 @@ public class RenewSubscriptionUseCase {
         if (amount.isPositive()) {
             ChargeResult charge = money.charge(new ChargeCommand(subscription.walletId(), null, amount, null, SubscriptionCharges.reference(subscription.id(), number),
                     SubscriptionCharges.idempotencyKey(subscription.id(), number, subscription.nextAttempt()), null,
-                    new dev.ngb.billing.money.api.charge.ChargeContext(dev.ngb.billing.money.api.charge.ChargeKind.SUBSCRIPTION_RENEWAL,
-                            subscription.planId(), java.util.Map.of())));
+                    new ChargeContext(ChargeKind.SUBSCRIPTION_RENEWAL,
+                            subscription.planId(), Map.of())));
             if (charge.status() == ChargeStatus.FAILED) {
                 return failed(subscription, number, amount, charge.failureReason(), now);
             }
