@@ -26,4 +26,12 @@ public interface PublishedVersionReader {
 
     /** One version by number, or empty when the survey has no such version. */
     Optional<PublishedVersion> byNumber(UUID surveyId, int versionNo);
+
+    /**
+     * Every question a survey's current version carries, as its stable id mapped to its type.
+     *
+     * <p>An aggregate needs it because a typed row says where a value is stored but not what it means: a decimal is a
+     * rating in one question and an NPS in another, and the two are bucketed differently.
+     */
+    Map<String, String> questionTypes(UUID surveyId);
 }

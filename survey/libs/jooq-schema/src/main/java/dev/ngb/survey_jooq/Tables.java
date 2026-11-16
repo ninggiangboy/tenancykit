@@ -7,6 +7,7 @@ package dev.ngb.survey_jooq;
 import dev.ngb.survey_jooq.tables.Answers;
 import dev.ngb.survey_jooq.tables.AppEntitlements;
 import dev.ngb.survey_jooq.tables.EventInbox;
+import dev.ngb.survey_jooq.tables.Exports;
 import dev.ngb.survey_jooq.tables.Outbox;
 import dev.ngb.survey_jooq.tables.QuestionLineage;
 import dev.ngb.survey_jooq.tables.ReplicaState;
@@ -46,6 +47,11 @@ public class Tables {
      * The table <code>public.event_inbox</code>.
      */
     public static final EventInbox EVENT_INBOX = EventInbox.EVENT_INBOX;
+
+    /**
+     * The table <code>public.exports</code>.
+     */
+    public static final Exports EXPORTS = Exports.EXPORTS;
 
     /**
      * The table <code>public.outbox</code>.

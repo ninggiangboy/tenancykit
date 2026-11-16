@@ -23,6 +23,7 @@ public class AnswerIndexerService implements AnswerIndexer {
     @Override
     public List<AnswerRow> index(Map<String, Object> document, Map<String, Object> answers) {
         Map<String, String> types = questionTypes(document);
+        Map<UUID, Map<String, UUID>> options = optionIds(document);
         List<AnswerRow> rows = new ArrayList<>();
         answers.forEach((questionId, raw) -> {
             UUID id = uuid(questionId);
@@ -30,7 +31,7 @@ public class AnswerIndexerService implements AnswerIndexer {
             if (id == null || type == null) {
                 return;
             }
-            rows.addAll(rowsOf(id, type, raw));
+            rows.addAll(rowsOf(id, type, raw, options));
         });
         return List.copyOf(rows);
     }
@@ -82,7 +83,8 @@ public class AnswerIndexerService implements AnswerIndexer {
         return raw instanceof Number number ? number.longValue() : fallback;
     }
 
-    private static List<AnswerRow> rowsOf(UUID questionId, String type, Object raw) {
+    private static List<AnswerRow> rowsOf(
+            UUID questionId, String type, Object raw, Map<UUID, Map<String, UUID>> allOptions) {
         List<AnswerRow> rows = new ArrayList<>();
         if ("matrix".equals(type)) {
             Map<String, Object> cells = Json.object(raw);
@@ -97,20 +99,57 @@ public class AnswerIndexerService implements AnswerIndexer {
             // A multi-choice answer stores one row per chosen value, which is what a count per option reads.
             for (Object member : members) {
                 Value value = Value.of(member);
-                rows.add(choiceOrValue(questionId, type, value));
+                rows.add(choiceOrValue(questionId, type, value, allOptions.getOrDefault(questionId, Map.of())));
             }
             return rows;
         }
-        rows.add(choiceOrValue(questionId, type, Value.of(raw)));
+        rows.add(choiceOrValue(questionId, type, Value.of(raw), allOptions.getOrDefault(questionId, Map.of())));
         return rows;
     }
 
-    /** A choice stores the option's value as text; a number its decimal; a date its date; anything else its text. */
-    private static AnswerRow choiceOrValue(UUID questionId, String type, Value value) {
+    /** The option id each stable value belongs to, per question, so a typed row stores the id. */
+    private static Map<UUID, Map<String, UUID>> optionIds(Map<String, Object> document) {
+        Map<UUID, Map<String, UUID>> all = new java.util.LinkedHashMap<>();
+        for (Map<String, Object> question : questions(document)) {
+            UUID questionId = uuid(Json.text(question.get("id")));
+            if (questionId == null || !(question.get("options") instanceof List<?> options)) {
+                continue;
+            }
+            Map<String, UUID> byValue = new java.util.LinkedHashMap<>();
+            for (Object rawOption : options) {
+                if (!(rawOption instanceof Map<?, ?> option)) {
+                    continue;
+                }
+                UUID optionId = uuid(Json.text(option.get("id")));
+                String value = Json.text(option.get("value"));
+                if (optionId != null && value != null) {
+                    byValue.put(value, optionId);
+                }
+            }
+            if (!byValue.isEmpty()) {
+                all.put(questionId, Map.copyOf(byValue));
+            }
+        }
+        return Map.copyOf(all);
+    }
+
+    /**
+     * A choice stores the option id its value names, because an aggregate counts by the stable id rather than a value
+     * that may be relabelled; a number stores its decimal, a date its date and anything else its text.
+     */
+    private static AnswerRow choiceOrValue(
+            UUID questionId, String type, Value value, Map<String, UUID> optionIds) {
         return switch (type) {
             case "number", "rating", "nps" -> new AnswerRow(
                     questionId, null, null, value instanceof Value.Num number ? number.value() : null, null, null);
             case "date" -> new AnswerRow(questionId, null, null, null, null, dateOf(value));
+            case "single_choice", "multi_choice" -> new AnswerRow(
+                    questionId,
+                    value instanceof Value.Text text ? optionIds.get(text.value()) : null,
+                    null,
+                    null,
+                    textOf(value),
+                    null);
             default -> new AnswerRow(questionId, null, null, null, textOf(value), null);
         };
     }

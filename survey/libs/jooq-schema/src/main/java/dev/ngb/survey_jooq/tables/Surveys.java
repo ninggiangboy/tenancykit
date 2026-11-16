@@ -7,6 +7,7 @@ package dev.ngb.survey_jooq.tables;
 import dev.ngb.survey_jooq.Keys;
 import dev.ngb.survey_jooq.Public;
 import dev.ngb.survey_jooq.tables.Answers.AnswersPath;
+import dev.ngb.survey_jooq.tables.Exports.ExportsPath;
 import dev.ngb.survey_jooq.tables.QuestionLineage.QuestionLineagePath;
 import dev.ngb.survey_jooq.tables.Responses.ResponsesPath;
 import dev.ngb.survey_jooq.tables.SurveyCounters.SurveyCountersPath;
@@ -191,6 +192,19 @@ public class Surveys extends TableImpl<SurveysRecord> {
             _answers = new AnswersPath(this, null, Keys.ANSWERS__ANSWERS_SURVEY_ID_FKEY.getInverseKey());
 
         return _answers;
+    }
+
+    private transient ExportsPath _exports;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.exports</code>
+     * table
+     */
+    public ExportsPath exports() {
+        if (_exports == null)
+            _exports = new ExportsPath(this, null, Keys.EXPORTS__EXPORTS_SURVEY_ID_FKEY.getInverseKey());
+
+        return _exports;
     }
 
     private transient QuestionLineagePath _questionLineage;
