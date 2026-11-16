@@ -107,6 +107,41 @@ x-mailroom-environment: &mailroom-environment
   MAILROOM_PUBLIC_BASE_URL: ${MAILROOM_PUBLIC_BASE_URL:-http://localhost:8090/mailroom}
   MAILROOM_PORT: "8080"
 
+x-survey-environment: &survey-environment
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50"
+  SURVEY_DB_URL: jdbc:postgresql://postgres:5432/survey
+  SURVEY_DB_USER: survey_app
+  SURVEY_DB_PASSWORD: ${SURVEY_DB_PASSWORD:?set it in .env}
+  SURVEY_MIGRATION_DB_USER: survey_owner
+  SURVEY_MIGRATION_DB_PASSWORD: ${SURVEY_MIGRATION_DB_PASSWORD:?set it in .env}
+  SURVEY_RABBITMQ_HOST: rabbitmq
+  SURVEY_RABBITMQ_USER: survey
+  SURVEY_RABBITMQ_PASSWORD: ${SURVEY_RABBITMQ_PASSWORD:?set it in .env}
+  # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
+  SURVEY_OIDC_ISSUER_URI: ${SURVEY_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
+  SURVEY_OIDC_JWK_SET_URI: ${SURVEY_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  SURVEY_PLATFORM_BASE_URL: http://platform.localhost:8080
+  SURVEY_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
+  SURVEY_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
+  # The replica's own service client, never shared with another app.
+  PLATFORM_SURVEY_SERVICE_CLIENT_ID: survey
+  PLATFORM_SURVEY_SERVICE_CLIENT_SECRET: ${SURVEY_REPLICA_CLIENT_SECRET:?set it in .env}
+  SURVEY_LINK_KEY_ID: ${SURVEY_LINK_KEY_ID:-k1}
+  SURVEY_LINK_SECRET: ${SURVEY_LINK_SECRET:?set it in .env}
+  # The webhook signing secrets are envelope-encrypted with this key; 32 base64 bytes.
+  SURVEY_SECRETS_MASTER_KEY: ${SURVEY_SECRETS_MASTER_KEY:?set it in .env}
+  # The public host a respondent reaches /survey/p/... from; it must be a hostname Caddy serves.
+  SURVEY_PUBLIC_BASE_URL: ${SURVEY_PUBLIC_BASE_URL:-http://localhost:8090/survey}
+  # MinIO: the server reaches it at minio:9000, a browser at localhost:9000 for a presigned PUT.
+  SURVEY_S3_ENDPOINT: http://minio:9000
+  SURVEY_S3_PUBLIC_ENDPOINT: ${SURVEY_S3_PUBLIC_ENDPOINT:-http://localhost:9000}
+  SURVEY_S3_BUCKET: ${SURVEY_S3_BUCKET:-survey-uploads}
+  SURVEY_S3_ACCESS_KEY: ${SURVEY_S3_ACCESS_KEY:-minio}
+  SURVEY_S3_SECRET_KEY: ${SURVEY_S3_SECRET_KEY:?set it in .env}
+  # The DB-IP Lite country database; a missing file leaves every country null rather than failing startup.
+  SURVEY_GEOIP_PATH: /ops/geoip/dbip-country-lite.mmdb
+  SURVEY_PORT: "8080"
+
 x-app: &app
   restart: unless-stopped
   mem_limit: 512m
@@ -130,6 +165,8 @@ services:
       NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD:?set it in .env}
       MAILROOM_MIGRATION_DB_PASSWORD: ${MAILROOM_MIGRATION_DB_PASSWORD:?set it in .env}
       MAILROOM_DB_PASSWORD: ${MAILROOM_DB_PASSWORD:?set it in .env}
+      SURVEY_MIGRATION_DB_PASSWORD: ${SURVEY_MIGRATION_DB_PASSWORD:?set it in .env}
+      SURVEY_DB_PASSWORD: ${SURVEY_DB_PASSWORD:?set it in .env}
     ports:
       - "5432:5432"
     volumes:
@@ -173,6 +210,7 @@ services:
       MAILER_BROKER_PASSWORD: ${MAILER_RABBITMQ_PASSWORD:?set it in .env}
       NOTIFICATION_BROKER_PASSWORD: ${NOTIFICATION_RABBITMQ_PASSWORD:?set it in .env}
       MAILROOM_BROKER_PASSWORD: ${MAILROOM_RABBITMQ_PASSWORD:?set it in .env}
+      SURVEY_BROKER_PASSWORD: ${SURVEY_RABBITMQ_PASSWORD:?set it in .env}
     entrypoint: ["/bin/sh", "-c"]
     command: ["sh /ops/rabbitmq/declare-users.sh"]
     volumes:
@@ -615,6 +653,114 @@ services:
       timeout: 5s
       retries: 5
 
+  # MinIO stands in for S3: a file question presigns a PUT, and the offline GeoIP file is mounted beside the apps.
+  minio:
+    image: minio/minio:RELEASE.2024-10-13T13-34-11Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${SURVEY_S3_ACCESS_KEY:-minio}
+      MINIO_ROOT_PASSWORD: ${SURVEY_S3_SECRET_KEY:?set it in .env}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Creates the upload bucket once MinIO is ready. The app role needs no bucket at startup, only at the first presign.
+  minio-setup:
+    image: minio/mc:RELEASE.2024-10-08T09-37-26Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_USER: ${SURVEY_S3_ACCESS_KEY:-minio}
+      MINIO_PASSWORD: ${SURVEY_S3_SECRET_KEY:?set it in .env}
+      MINIO_BUCKET: ${SURVEY_S3_BUCKET:-survey-uploads}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - mc alias set local http://minio:9000 "$$MINIO_USER" "$$MINIO_PASSWORD" && mc mb --ignore-existing "local/$$MINIO_BUCKET"
+    restart: "no"
+
+  survey-migrate:
+    <<: *app
+    restart: "no"
+    build:
+      context: .
+      dockerfile: survey/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+    environment:
+      <<: *survey-environment
+      SPRING_PROFILES_ACTIVE: migrate
+
+  survey-api:
+    <<: *app
+    build:
+      context: .
+      dockerfile: survey/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+      survey-migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *survey-environment
+      SPRING_PROFILES_ACTIVE: api
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\r\n\r\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  survey-worker:
+    <<: *app
+    build:
+      context: .
+      dockerfile: survey/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+      survey-migrate:
+        condition: service_completed_successfully
+      minio-setup:
+        condition: service_completed_successfully
+    environment:
+      <<: *survey-environment
+      SPRING_PROFILES_ACTIVE: worker
+    volumes:
+      # The offline GeoIP file is fetched by ops/geoip/fetch.sh and git-ignored; a missing directory is not an error.
+      - ./ops/geoip:/ops/geoip:ro
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\r\n\r\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
 volumes:
   postgres-data:
   rabbitmq-data:
+  minio-data:

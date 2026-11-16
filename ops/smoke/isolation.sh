@@ -90,6 +90,10 @@ require_refused "mailroom_app connecting to mailer" psql_as mailroom_app "${MAIL
 require_refused "mailroom_app connecting to notification" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" notification
 require_refused "notification_app connecting to mailroom" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" mailroom
 require_refused "mailer_app connecting to mailroom" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" mailroom
+require_refused "survey_app connecting to billing" psql_as survey_app "${SURVEY_DB_PASSWORD:?}" billing
+require_refused "survey_app connecting to platform" psql_as survey_app "${SURVEY_DB_PASSWORD:?}" platform
+require_refused "survey_app connecting to mailroom" psql_as survey_app "${SURVEY_DB_PASSWORD:?}" mailroom
+require_refused "billing_app connecting to survey" psql_as billing_app "${BILLING_DB_PASSWORD:?}" survey
 
 # ------------------------------ broker ------------------------------
 step "cross-exchange publishing must be refused"
@@ -228,6 +232,40 @@ require_refused "the billing user reading mailroom.platform-events" billing_read
 if ! mailroom_publish_email_command; then
   fail "the mailroom user cannot publish email.send to mailer.commands; its only publish grant is missing"
 fi
+
+# Survey publishes its three facts to survey.events and to nothing else. Its write grant covers only its own exchange
+# and its own queue, so publishing to platform.events or billing.events must be refused.
+survey_publish_to_platform() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username survey --password "${SURVEY_RABBITMQ_PASSWORD:?}" \
+    publish exchange=platform.events routing_key=tenant.changed payload='{}' > /dev/null 2>&1
+}
+
+survey_publish_to_billing() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username survey --password "${SURVEY_RABBITMQ_PASSWORD:?}" \
+    publish exchange=billing.events routing_key=customer.created payload='{}' > /dev/null 2>&1
+}
+
+survey_read_billing_queue() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username survey --password "${SURVEY_RABBITMQ_PASSWORD:?}" \
+    get queue=billing.platform-events count=1 ackmode=reject_requeue_true > /dev/null 2>&1
+}
+
+survey_publish_own_event() {
+  docker compose exec -T rabbitmq \
+    rabbitmqadmin --host rabbitmq --username survey --password "${SURVEY_RABBITMQ_PASSWORD:?}" \
+    publish exchange=survey.events routing_key=survey-response.submitted payload='{}' > /dev/null 2>&1
+}
+
+require_refused "the survey user publishing to platform.events" survey_publish_to_platform
+require_refused "the survey user publishing to billing.events" survey_publish_to_billing
+require_refused "the survey user reading billing.platform-events" survey_read_billing_queue
+if ! survey_publish_own_event; then
+  fail "the survey user cannot publish survey-response.submitted to survey.events; its own grant is missing"
+fi
+echo "allowed: the survey user publishing survey-response.submitted to survey.events"
 echo "allowed: the mailroom user publishing email.send to mailer.commands"
 
 # ------------------------------ row-level security ------------------------------

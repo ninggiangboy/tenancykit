@@ -101,3 +101,13 @@ declare_user mailroom \
   '^(mailroom\\.platform-events|mailroom\\.platform-events\\.dlq|mailroom\\.mailer-events|mailroom\\.mailer-events\\.dlq|suite\\.dlx|mailer\\.commands)$' \
   '^(mailroom\\.platform-events|mailroom\\.platform-events\\.dlq|mailroom\\.mailer-events|mailroom\\.mailer-events\\.dlq|suite\\.dlx|mailer\\.commands)$' \
   '^(platform\\.events|mailer\\.events|mailroom\\.platform-events|mailroom\\.platform-events\\.dlq|mailroom\\.mailer-events|mailroom\\.mailer-events\\.dlq|suite\\.dlx)$'
+
+# Survey consumes platform.events on its own queue and publishes its three facts to survey.events. `write` covers its
+# queue, its DLQ, suite.dlx and survey.events (publishing checks write on the exchange); `read` covers platform.events
+# (a queue.bind checks read on the source) and its own queues (consuming checks read on the queue). It has no write
+# grant on platform.events, which is what the isolation smoke proves.
+declare_user survey \
+  "${SURVEY_BROKER_PASSWORD:?set the survey broker password}" \
+  '^(survey\.platform-events|survey\.platform-events\.dlq|suite\.dlx|survey\.events)$' \
+  '^(survey\.platform-events|survey\.platform-events\.dlq|suite\.dlx|survey\.events)$' \
+  '^(platform\.events|survey\.platform-events|survey\.platform-events\.dlq|suite\.dlx)$'

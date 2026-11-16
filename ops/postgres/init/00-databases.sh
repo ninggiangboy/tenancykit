@@ -24,6 +24,8 @@ psql -v ON_ERROR_STOP=1 \
   -v notification_app_password="${NOTIFICATION_DB_PASSWORD:?set it}" \
   -v mailroom_owner_password="${MAILROOM_MIGRATION_DB_PASSWORD:?set it}" \
   -v mailroom_app_password="${MAILROOM_DB_PASSWORD:?set it}" \
+  -v survey_owner_password="${SURVEY_MIGRATION_DB_PASSWORD:?set it}" \
+  -v survey_app_password="${SURVEY_DB_PASSWORD:?set it}" \
   --dbname postgres <<'SQL'
 create role platform_owner login password :'platform_owner_password' nocreatedb nocreaterole;
 create role platform_app login password :'platform_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
@@ -43,12 +45,16 @@ create role notification_app login password :'notification_app_password' nosuper
 create role mailroom_owner login password :'mailroom_owner_password' nocreatedb nocreaterole;
 create role mailroom_app login password :'mailroom_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
+create role survey_owner login password :'survey_owner_password' nocreatedb nocreaterole;
+create role survey_app login password :'survey_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+
 create database platform owner platform_owner;
 create database billing owner billing_owner;
 create database tenant owner tenant_owner;
 create database mailer owner mailer_owner;
 create database notification owner notification_owner;
 create database mailroom owner mailroom_owner;
+create database survey owner survey_owner;
 
 revoke connect, temporary on database platform from public;
 revoke connect, temporary on database billing from public;
@@ -56,6 +62,7 @@ revoke connect, temporary on database tenant from public;
 revoke connect, temporary on database mailer from public;
 revoke connect, temporary on database notification from public;
 revoke connect, temporary on database mailroom from public;
+revoke connect, temporary on database survey from public;
 
 grant connect, temporary on database platform to platform_owner, platform_app;
 grant connect, temporary on database billing to billing_owner, billing_app;
@@ -63,6 +70,7 @@ grant connect, temporary on database tenant to tenant_owner, tenant_app;
 grant connect, temporary on database mailer to mailer_owner, mailer_app;
 grant connect, temporary on database notification to notification_owner, notification_app;
 grant connect, temporary on database mailroom to mailroom_owner, mailroom_app;
+grant connect, temporary on database survey to survey_owner, survey_app;
 
 -- The app role creates nothing; Flyway, as the owner, grants the tables it creates. These defaults cover every
 -- table a later migration adds without a per-table grant.
@@ -101,4 +109,11 @@ alter default privileges for role mailroom_owner in schema public
     grant select, insert, update, delete on tables to mailroom_app;
 alter default privileges for role mailroom_owner in schema public
     grant usage, select on sequences to mailroom_app;
+
+\connect survey
+alter default privileges for role survey_owner in schema public
+    grant select, insert, update, delete on tables to survey_app;
+alter default privileges for role survey_owner in schema public
+    grant usage, select on sequences to survey_app;
+
 SQL

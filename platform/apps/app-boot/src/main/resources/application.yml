@@ -73,6 +73,14 @@ platform:
     - id: ${PLATFORM_NOTIFICATION_SERVICE_CLIENT_ID:notification}
       secret-hash: ${PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH:}
       scopes: [platform:replica:read]
+    # The two later replica consumers, each with its own secret and the same narrow scope. These are the whole
+    # Platform-side change survey or mailroom needs: one list entry and a secret hash, no Java code moves.
+    - id: ${PLATFORM_MAILROOM_SERVICE_CLIENT_ID:mailroom}
+      secret-hash: ${PLATFORM_MAILROOM_SERVICE_CLIENT_SECRET_HASH:}
+      scopes: [platform:replica:read]
+    - id: ${PLATFORM_SURVEY_SERVICE_CLIENT_ID:survey}
+      secret-hash: ${PLATFORM_SURVEY_SERVICE_CLIENT_SECRET_HASH:}
+      scopes: [platform:replica:read]
   outbox:
     poll-delay: PT1S
 
