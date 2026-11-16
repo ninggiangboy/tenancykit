@@ -95,21 +95,7 @@ public class EstimateCostUseCase {
             return DiscountQuote.undiscounted(quote.amount());
         }
         return discounts.preview(new DiscountRequest(wallet.id(), quote.amount(),
-                new ChargeContext(ChargeKind.USAGE, plan.id().value(), metricAmounts(quote, plan.currency())), clock.now()));
-    }
-
-    /** What each metric contributed, so a metric-scoped coupon previews on its own share; mirrors the real charge. */
-    private static Map<String, dev.ngb.billing.sharedkernel.money.Money> metricAmounts(Quote quote, dev.ngb.billing.sharedkernel.money.Currency currency) {
-        Map<String, java.math.BigDecimal> exact = new HashMap<>();
-        for (var line : quote.lines()) {
-            if (line.metric() != null && !line.metric().isBlank()) {
-                exact.merge(line.metric(), line.amount(), java.math.BigDecimal::add);
-            }
-        }
-        Map<String, dev.ngb.billing.sharedkernel.money.Money> amounts = new HashMap<>();
-        exact.forEach((metric, amount) -> amounts.put(metric, dev.ngb.billing.sharedkernel.money.Money.of(
-                amount.setScale(0, java.math.RoundingMode.HALF_UP).longValueExact(), currency)));
-        return amounts;
+                new ChargeContext(ChargeKind.USAGE, plan.id().value(), quote.metricAmounts()), clock.now()));
     }
 
     /** Rejects a metric the version does not price, because silently ignoring it would understate the estimate. */

@@ -166,7 +166,7 @@ public class ChargeFromUsageUseCase {
             ChargeResult charge = money.charge(new ChargeCommand(
                     c.walletId(), null, amount, "usage-set:" + setKey, "plan:" + plan.code() + "@v" + version.number(), "rating:" + setKey + ":" + attempt,
                     c.caller(), new dev.ngb.billing.money.api.charge.ChargeContext(dev.ngb.billing.money.api.charge.ChargeKind.USAGE, plan.id().value(),
-                            metricAmounts(quote, plan.currency()))));
+                            quote.metricAmounts())));
             chargeId = charge.id().value();
             status = charge.status() == ChargeStatus.FAILED ? RatingStatus.FAILED : RatingStatus.CHARGED;
             failure = charge.status() == ChargeStatus.FAILED ? charge.failureReason() : null;
@@ -183,23 +183,6 @@ public class ChargeFromUsageUseCase {
             events.publish(new RatingEvents.UsageRated(ids.newId(), rating, now));
         }
         return new Result(outcome(rating), rating, false);
-    }
-
-    /**
-     * What each metric contributed to the quote, rounded once to minor units, so a metric-scoped coupon discounts only
-     * its own metrics' share. A line with no metric (a base or a start fee) belongs to no metric and is left out.
-     */
-    static Map<String, Money> metricAmounts(Quote quote, dev.ngb.billing.sharedkernel.money.Currency currency) {
-        Map<String, BigDecimal> exact = new HashMap<>();
-        for (var line : quote.lines()) {
-            if (line.metric() != null && !line.metric().isBlank()) {
-                exact.merge(line.metric(), line.amount(), BigDecimal::add);
-            }
-        }
-        Map<String, Money> amounts = new HashMap<>();
-        exact.forEach((metric, amount) ->
-                amounts.put(metric, Money.of(amount.setScale(0, java.math.RoundingMode.HALF_UP).longValueExact(), currency)));
-        return amounts;
     }
 
     private static Outcome outcome(UsageRating rating) {
