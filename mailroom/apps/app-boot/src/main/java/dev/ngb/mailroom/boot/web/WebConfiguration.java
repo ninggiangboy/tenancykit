@@ -1,6 +1,10 @@
 package dev.ngb.mailroom.boot.web;
 
+import dev.ngb.core.openapi.ListingOpenApiCustomizer;
 import dev.ngb.core.security.Authorizer;
+import dev.ngb.core.security.PublicEndpoint;
+import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.ListQueryResolver;
 import dev.ngb.core.spring.security.PermissionInterceptor;
 import dev.ngb.core.tenancy.TenantContext;
 import io.swagger.v3.oas.models.Components;
@@ -9,9 +13,11 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.List;
+import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -40,11 +46,40 @@ class WebConfiguration implements WebMvcConfigurer {
         registry.addInterceptor(new PermissionInterceptor(authorizer)).addPathPatterns("/api/v1/**");
     }
 
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(new ListQueryResolver());
+    }
+
+    /** Documents every {@code @Listing} operation from the schema it names. */
+    @Bean
+    OperationCustomizer listingParameters() {
+        return new ListingOpenApiCustomizer();
+    }
+
+    /** Documents the permission an operation requires, and marks the public paths that need no token. */
+    @Bean
+    OperationCustomizer documentedAccess() {
+        return (operation, handlerMethod) -> {
+            RequiresPermission required = handlerMethod.getMethodAnnotation(RequiresPermission.class);
+            if (required != null) {
+                operation.addExtension("x-required-permission", required.value());
+            }
+            if (handlerMethod.hasMethodAnnotation(PublicEndpoint.class)) {
+                operation.addExtension("x-public", true);
+            }
+            return operation;
+        };
+    }
+
     @Bean
     OpenAPI emailOpenApi() {
         return new OpenAPI()
-                .info(new Info().title("Email API").version("v1"))
-                .servers(List.of(new Server().url("/").description("Any email hostname: <tenant-code>.<base-domain>/email")))
+                .info(new Info().title("Mailroom API").version("v1")
+                        .description("The API a Tenant System uses to email a Tenant's own customers, plus the public "
+                                + "tracking endpoints a recipient's mail client calls without credentials."))
+                .servers(List.of(new Server().url("/mailroom")
+                        .description("Any tenant hostname: <tenant-code>.<base-domain>/mailroom")))
                 .components(new Components()
                         .addSecuritySchemes("oidc", new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)

@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":contexts:audience"))
     implementation(project(":contexts:sending"))
     implementation("dev.ngb:core-spring")
+    implementation("dev.ngb:core-openapi")
     implementation("dev.ngb:core-messaging")
     implementation("dev.ngb:core-replica")
     implementation("dev.ngb:core-platform-sync")

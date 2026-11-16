@@ -1,13 +1,14 @@
 package dev.ngb.mailroom.audience.application.segment.query;
 
-import java.util.List;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.Optional;
 import java.util.UUID;
 
 /** The read side of a tenant's segments. */
 public interface SegmentReadRepository {
 
-    List<SegmentView> list(UUID afterId, int limit);
+    Page<SegmentView> list(ListQuery query);
 
     Optional<SegmentView> find(UUID segmentId);
 }

@@ -4,7 +4,11 @@ import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.mailroom.audience.application.audience.query.AudienceQueries;
+import dev.ngb.mailroom.audience.application.audience.query.ReceiverListing;
 import dev.ngb.mailroom.audience.application.audience.query.ReceiverView;
 import dev.ngb.mailroom.audience.application.receiver.command.BulkUpsertReceiversUseCase;
 import dev.ngb.mailroom.audience.application.receiver.command.DeleteReceiverUseCase;
@@ -55,14 +59,12 @@ class ReceiverController {
         this.queries = queries;
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link ReceiverListing}. */
     @GetMapping
+    @Listing(ReceiverListing.class)
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
-    List<ReceiverResponse> list(
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String q,
-            @RequestParam(required = false) UUID after,
-            @RequestParam(required = false) Integer limit) {
-        return queries.receivers(status, q, after, limit).stream().map(ReceiverResponse::of).toList();
+    Page<ReceiverResponse> list(ListQuery query) {
+        return queries.receivers(query).map(ReceiverResponse::of);
     }
 
     @PutMapping

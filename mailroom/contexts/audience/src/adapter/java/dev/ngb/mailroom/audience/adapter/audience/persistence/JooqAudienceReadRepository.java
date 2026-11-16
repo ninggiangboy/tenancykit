@@ -4,10 +4,19 @@ import static dev.ngb.mailroom_jooq.Tables.GROUP_MEMBERS;
 import static dev.ngb.mailroom_jooq.Tables.RECEIVERS;
 import static dev.ngb.mailroom_jooq.Tables.RECEIVER_GROUPS;
 import static dev.ngb.mailroom_jooq.Tables.SUPPRESSIONS;
+import static org.jooq.impl.DSL.noCondition;
+import static org.jooq.impl.DSL.select;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.JooqLists;
+import dev.ngb.core.spring.query.ListBinding;
 import dev.ngb.mailroom.audience.application.audience.query.AudienceReadRepository;
+import dev.ngb.mailroom.audience.application.audience.query.GroupListing;
 import dev.ngb.mailroom.audience.application.audience.query.GroupView;
+import dev.ngb.mailroom.audience.application.audience.query.ReceiverListing;
 import dev.ngb.mailroom.audience.application.audience.query.ReceiverView;
+import dev.ngb.mailroom.audience.application.audience.query.SuppressionListing;
 import dev.ngb.mailroom.audience.application.audience.query.SuppressionView;
 import dev.ngb.mailroom.audience.domain.receiver.ReceiverStatus;
 import dev.ngb.mailroom.audience.domain.suppression.SuppressionReason;
@@ -16,21 +25,51 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import org.jooq.Condition;
 import org.jooq.DSLContext;
-import org.jooq.Record;
-import org.jooq.SortField;
-import org.jooq.impl.DSL;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
-/** The audience read side: receivers, groups, memberships and suppressions, newest first. */
+/** The audience read side: receivers, groups, memberships and suppressions. */
 public class JooqAudienceReadRepository implements AudienceReadRepository {
 
     private static final TypeReference<Map<String, Object>> ATTRIBUTES = new TypeReference<>() {};
 
+    /** The receiver fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding RECEIVER_BINDING = ListBinding.of(ReceiverListing.SCHEMA)
+            .column("id", RECEIVERS.ID)
+            .column("email", RECEIVERS.EMAIL)
+            .column("first_name", RECEIVERS.FIRST_NAME)
+            .column("last_name", RECEIVERS.LAST_NAME)
+            .column("status", RECEIVERS.STATUS)
+            .column("version", RECEIVERS.VERSION)
+            .column("created_at", RECEIVERS.CREATED_AT)
+            .column("updated_at", RECEIVERS.UPDATED_AT)
+            .build();
+
+    /** The group fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding GROUP_BINDING = ListBinding.of(GroupListing.SCHEMA)
+            .column("id", RECEIVER_GROUPS.ID)
+            .column("name", RECEIVER_GROUPS.NAME)
+            .column("version", RECEIVER_GROUPS.VERSION)
+            .column("created_at", RECEIVER_GROUPS.CREATED_AT)
+            .column("updated_at", RECEIVER_GROUPS.UPDATED_AT)
+            .build();
+
+    /** The suppression fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding SUPPRESSION_BINDING = ListBinding.of(SuppressionListing.SCHEMA)
+            .column("email_normalized", SUPPRESSIONS.EMAIL_NORMALIZED)
+            .column("scope", SUPPRESSIONS.SCOPE)
+            .column("reason", SUPPRESSIONS.REASON)
+            .column("created_at", SUPPRESSIONS.CREATED_AT)
+            .build();
+
     private final DSLContext dsl;
     private final JsonMapper json;
+
+    /** @return the bindings of the audience listings, for the test that checks every sortable field has an index */
+    public static List<ListBinding> listBindings() {
+        return List.of(RECEIVER_BINDING, GROUP_BINDING, SUPPRESSION_BINDING);
+    }
 
     public JooqAudienceReadRepository(DSLContext dsl, JsonMapper json) {
         this.dsl = dsl;
@@ -38,64 +77,49 @@ public class JooqAudienceReadRepository implements AudienceReadRepository {
     }
 
     @Override
-    public List<ReceiverView> listReceivers(ReceiverStatus status, String contains, UUID afterId, int limit) {
-        Condition where = DSL.noCondition();
-        if (status != null) {
-            where = where.and(RECEIVERS.STATUS.eq(status.name()));
-        }
-        if (contains != null && !contains.isBlank()) {
-            where = where.and(RECEIVERS.EMAIL.likeIgnoreCase("%" + contains + "%"));
-        }
-        if (afterId != null) {
-            where = where.and(RECEIVERS.ID.lt(afterId));
-        }
-        return receiverQuery(where, RECEIVERS.ID.desc(), limit);
+    public Page<ReceiverView> listReceivers(ListQuery query) {
+        return JooqLists.fetch(dsl, RECEIVERS, noCondition(), RECEIVER_BINDING, query, this::toView);
     }
 
     @Override
     public Optional<ReceiverView> findReceiver(UUID receiverId) {
-        return dsl.select(
-                        RECEIVERS.ID, RECEIVERS.EMAIL, RECEIVERS.FIRST_NAME, RECEIVERS.LAST_NAME,
-                        RECEIVERS.ATTRIBUTES, RECEIVERS.STATUS, RECEIVERS.VERSION,
-                        RECEIVERS.CREATED_AT, RECEIVERS.UPDATED_AT)
-                .from(RECEIVERS)
+        return dsl.selectFrom(RECEIVERS)
                 .where(RECEIVERS.ID.eq(receiverId))
                 .fetchOptional(this::toView);
     }
 
     @Override
-    public List<GroupView> listGroups(UUID afterId, int limit) {
-        Condition where = afterId == null ? DSL.noCondition() : RECEIVER_GROUPS.ID.lt(afterId);
-        return dsl.select(
-                        RECEIVER_GROUPS.ID, RECEIVER_GROUPS.NAME, RECEIVER_GROUPS.VERSION,
-                        RECEIVER_GROUPS.CREATED_AT, RECEIVER_GROUPS.UPDATED_AT)
-                .from(RECEIVER_GROUPS)
-                .where(where)
-                .orderBy(RECEIVER_GROUPS.ID.desc())
-                .limit(limit)
-                .fetch(row -> new GroupView(
-                        row.value1(), row.value2(), row.value3(), row.value4(), row.value5()));
+    public Page<GroupView> listGroups(ListQuery query) {
+        return JooqLists.fetch(dsl, RECEIVER_GROUPS, noCondition(), GROUP_BINDING, query, JooqAudienceReadRepository::toView);
     }
 
     @Override
     public Optional<GroupView> findGroup(UUID groupId) {
-        return dsl.select(
-                        RECEIVER_GROUPS.ID, RECEIVER_GROUPS.NAME, RECEIVER_GROUPS.VERSION,
-                        RECEIVER_GROUPS.CREATED_AT, RECEIVER_GROUPS.UPDATED_AT)
-                .from(RECEIVER_GROUPS)
+        return dsl.selectFrom(RECEIVER_GROUPS)
                 .where(RECEIVER_GROUPS.ID.eq(groupId))
                 .fetchOptional(row -> new GroupView(
-                        row.value1(), row.value2(), row.value3(), row.value4(), row.value5()));
+                        row.getId(), row.getName(), row.getVersion(), row.getCreatedAt(), row.getUpdatedAt()));
+    }
+
+    @Override
+    public Page<ReceiverView> listGroupReceivers(UUID groupId, ListQuery query) {
+        return JooqLists.fetch(dsl, RECEIVERS,
+                RECEIVERS.ID.in(select(GROUP_MEMBERS.RECEIVER_ID).from(GROUP_MEMBERS).where(GROUP_MEMBERS.GROUP_ID.eq(groupId))),
+                RECEIVER_BINDING, query, this::toView);
     }
 
     @Override
     public List<ReceiverView> pageGroupReceivers(UUID groupId, UUID afterReceiverId, int limit) {
-        Condition where = RECEIVERS.ID.in(
-                DSL.select(GROUP_MEMBERS.RECEIVER_ID).from(GROUP_MEMBERS).where(GROUP_MEMBERS.GROUP_ID.eq(groupId)));
+        var where = RECEIVERS.ID.in(
+                select(GROUP_MEMBERS.RECEIVER_ID).from(GROUP_MEMBERS).where(GROUP_MEMBERS.GROUP_ID.eq(groupId)));
         if (afterReceiverId != null) {
             where = where.and(RECEIVERS.ID.gt(afterReceiverId));
         }
-        return receiverQuery(where, RECEIVERS.ID.asc(), limit);
+        return dsl.selectFrom(RECEIVERS)
+                .where(where)
+                .orderBy(RECEIVERS.ID.asc())
+                .limit(limit)
+                .fetch(this::toView);
     }
 
     @Override
@@ -103,51 +127,41 @@ public class JooqAudienceReadRepository implements AudienceReadRepository {
         if (receiverIds == null || receiverIds.isEmpty()) {
             return List.of();
         }
-        return receiverQuery(RECEIVERS.ID.in(receiverIds), RECEIVERS.ID.asc(), receiverIds.size());
-    }
-
-    @Override
-    public List<SuppressionView> listSuppressions(String afterNormalizedAddress, int limit) {
-        Condition where = DSL.noCondition();
-        if (afterNormalizedAddress != null && !afterNormalizedAddress.isBlank()) {
-            where = where.and(SUPPRESSIONS.EMAIL_NORMALIZED.gt(afterNormalizedAddress));
-        }
-        return dsl.select(
-                        SUPPRESSIONS.EMAIL_NORMALIZED, SUPPRESSIONS.SCOPE, SUPPRESSIONS.REASON,
-                        SUPPRESSIONS.CREATED_AT)
-                .from(SUPPRESSIONS)
-                .where(where)
-                .orderBy(SUPPRESSIONS.EMAIL_NORMALIZED.asc())
-                .limit(limit)
-                .fetch(row -> new SuppressionView(
-                        row.value1(),
-                        SuppressionScope.valueOf(row.value2()),
-                        SuppressionReason.valueOf(row.value3()),
-                        row.value4()));
-    }
-
-    private List<ReceiverView> receiverQuery(Condition where, SortField<?> order, int limit) {
-        return dsl.select(
-                        RECEIVERS.ID, RECEIVERS.EMAIL, RECEIVERS.FIRST_NAME, RECEIVERS.LAST_NAME,
-                        RECEIVERS.ATTRIBUTES, RECEIVERS.STATUS, RECEIVERS.VERSION,
-                        RECEIVERS.CREATED_AT, RECEIVERS.UPDATED_AT)
-                .from(RECEIVERS)
-                .where(where)
-                .orderBy(order)
-                .limit(limit)
+        return dsl.selectFrom(RECEIVERS)
+                .where(RECEIVERS.ID.in(receiverIds))
+                .orderBy(RECEIVERS.ID.asc())
+                .limit(receiverIds.size())
                 .fetch(this::toView);
     }
 
-    private ReceiverView toView(Record row) {
+    @Override
+    public Page<SuppressionView> listSuppressions(ListQuery query) {
+        return JooqLists.fetch(dsl, SUPPRESSIONS, noCondition(), SUPPRESSION_BINDING, query,
+                JooqAudienceReadRepository::toView);
+    }
+
+    private ReceiverView toView(dev.ngb.mailroom_jooq.tables.records.ReceiversRecord row) {
         return new ReceiverView(
-                row.get(RECEIVERS.ID),
-                row.get(RECEIVERS.EMAIL),
-                row.get(RECEIVERS.FIRST_NAME),
-                row.get(RECEIVERS.LAST_NAME),
-                json.readValue(row.get(RECEIVERS.ATTRIBUTES).data(), ATTRIBUTES),
-                ReceiverStatus.valueOf(row.get(RECEIVERS.STATUS)),
-                row.get(RECEIVERS.VERSION),
-                row.get(RECEIVERS.CREATED_AT),
-                row.get(RECEIVERS.UPDATED_AT));
+                row.getId(),
+                row.getEmail(),
+                row.getFirstName(),
+                row.getLastName(),
+                json.readValue(row.getAttributes().data(), ATTRIBUTES),
+                ReceiverStatus.valueOf(row.getStatus()),
+                row.getVersion(),
+                row.getCreatedAt(),
+                row.getUpdatedAt());
+    }
+
+    private static GroupView toView(dev.ngb.mailroom_jooq.tables.records.ReceiverGroupsRecord row) {
+        return new GroupView(row.getId(), row.getName(), row.getVersion(), row.getCreatedAt(), row.getUpdatedAt());
+    }
+
+    private static SuppressionView toView(dev.ngb.mailroom_jooq.tables.records.SuppressionsRecord row) {
+        return new SuppressionView(
+                row.getEmailNormalized(),
+                SuppressionScope.valueOf(row.getScope()),
+                SuppressionReason.valueOf(row.getReason()),
+                row.getCreatedAt());
     }
 }

@@ -2,50 +2,58 @@ package dev.ngb.mailroom.sending.adapter.email.persistence;
 
 import static dev.ngb.mailroom_jooq.Tables.EMAILS;
 import static dev.ngb.mailroom_jooq.Tables.EMAIL_EVENTS;
+import static org.jooq.impl.DSL.noCondition;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.JooqLists;
+import dev.ngb.core.spring.query.ListBinding;
 import dev.ngb.mailroom.sending.application.email.query.EmailEventView;
+import dev.ngb.mailroom.sending.application.email.query.EmailListing;
 import dev.ngb.mailroom.sending.application.email.query.EmailReadRepository;
 import dev.ngb.mailroom.sending.application.email.query.EmailView;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.jooq.Condition;
 import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
 
 /** The email listing and detail; the detail carries the append-only event history. */
 public class JooqEmailReadRepository implements EmailReadRepository {
 
+    /** The email fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding BINDING = ListBinding.of(EmailListing.SCHEMA)
+            .column("id", EMAILS.ID)
+            .column("kind", EMAILS.KIND)
+            .column("status", EMAILS.STATUS)
+            .column("status_reason", EMAILS.STATUS_REASON)
+            .column("to_address", EMAILS.TO_ADDRESS)
+            .column("campaign_id", EMAILS.CAMPAIGN_ID)
+            .column("receiver_id", EMAILS.RECEIVER_ID)
+            .column("template_id", EMAILS.TEMPLATE_ID)
+            .column("template_revision", EMAILS.TEMPLATE_REVISION)
+            .column("from_key", EMAILS.FROM_KEY)
+            .column("subject", EMAILS.SUBJECT)
+            .column("body_purged_at", EMAILS.BODY_PURGED_AT)
+            .column("delivery_updated_at", EMAILS.DELIVERY_UPDATED_AT)
+            .column("created_at", EMAILS.CREATED_AT)
+            .column("updated_at", EMAILS.UPDATED_AT)
+            .build();
+
     private final DSLContext dsl;
+
+    /** @return the binding of the email listing, for the test that checks every sortable field has an index */
+    public static ListBinding listBinding() {
+        return BINDING;
+    }
 
     public JooqEmailReadRepository(DSLContext dsl) {
         this.dsl = dsl;
     }
 
     @Override
-    public List<EmailView> list(
-            String status, String kind, UUID campaignId, String recipient, UUID afterId, int limit) {
-        Condition where = DSL.noCondition();
-        if (status != null && !status.isBlank()) {
-            where = where.and(EMAILS.STATUS.eq(status));
-        }
-        if (kind != null && !kind.isBlank()) {
-            where = where.and(EMAILS.KIND.eq(kind));
-        }
-        if (campaignId != null) {
-            where = where.and(EMAILS.CAMPAIGN_ID.eq(campaignId));
-        }
-        if (recipient != null && !recipient.isBlank()) {
-            where = where.and(EMAILS.TO_ADDRESS.likeIgnoreCase("%" + recipient + "%"));
-        }
-        if (afterId != null) {
-            where = where.and(EMAILS.ID.lt(afterId));
-        }
-        return dsl.selectFrom(EMAILS)
-                .where(where)
-                .orderBy(EMAILS.ID.desc())
-                .limit(limit)
-                .fetch(row -> toView(row, List.of()));
+    public Page<EmailView> list(ListQuery query) {
+        return JooqLists.fetch(dsl, EMAILS, noCondition(), BINDING, query,
+                row -> toView(row, List.of()));
     }
 
     @Override

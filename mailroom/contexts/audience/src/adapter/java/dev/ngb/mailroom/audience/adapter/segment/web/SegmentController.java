@@ -4,10 +4,14 @@ import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.mailroom.audience.application.segment.command.CreateSegmentUseCase;
 import dev.ngb.mailroom.audience.application.segment.command.DeleteSegmentUseCase;
 import dev.ngb.mailroom.audience.application.segment.command.PreviewSegmentUseCase;
 import dev.ngb.mailroom.audience.application.segment.command.UpdateSegmentUseCase;
+import dev.ngb.mailroom.audience.application.segment.query.SegmentListing;
 import dev.ngb.mailroom.audience.application.segment.query.SegmentQueries;
 import dev.ngb.mailroom.audience.application.segment.query.SegmentView;
 import dev.ngb.mailroom.audience.domain.segment.Segment;
@@ -54,11 +58,12 @@ class SegmentController {
         this.queries = queries;
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link SegmentListing}. */
     @GetMapping
+    @Listing(SegmentListing.class)
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
-    List<SegmentResponse> list(
-            @RequestParam(required = false) UUID after, @RequestParam(required = false) Integer limit) {
-        return queries.list(after, limit).stream().map(SegmentResponse::of).toList();
+    Page<SegmentResponse> list(ListQuery query) {
+        return queries.list(query).map(SegmentResponse::of);
     }
 
     @PostMapping

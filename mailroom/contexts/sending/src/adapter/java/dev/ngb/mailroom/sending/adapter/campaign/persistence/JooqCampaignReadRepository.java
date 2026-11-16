@@ -1,78 +1,82 @@
 package dev.ngb.mailroom.sending.adapter.campaign.persistence;
 
 import static dev.ngb.mailroom_jooq.Tables.CAMPAIGNS;
+import static org.jooq.impl.DSL.noCondition;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.JooqLists;
+import dev.ngb.core.spring.query.ListBinding;
+import dev.ngb.mailroom.sending.application.campaign.query.CampaignListing;
 import dev.ngb.mailroom.sending.application.campaign.query.CampaignReadRepository;
 import dev.ngb.mailroom.sending.application.campaign.query.CampaignView;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.jooq.Condition;
 import org.jooq.DSLContext;
-import org.jooq.Record;
-import org.jooq.impl.DSL;
 
 /** The campaign listing and detail. */
 public class JooqCampaignReadRepository implements CampaignReadRepository {
 
+    /** The campaign fields a caller may filter and sort on, bound to their columns. */
+    private static final ListBinding BINDING = ListBinding.of(CampaignListing.SCHEMA)
+            .column("id", CAMPAIGNS.ID)
+            .column("name", CAMPAIGNS.NAME)
+            .column("status", CAMPAIGNS.STATUS)
+            .column("template_id", CAMPAIGNS.TEMPLATE_ID)
+            .column("template_revision", CAMPAIGNS.TEMPLATE_REVISION)
+            .column("target_type", CAMPAIGNS.TARGET_TYPE)
+            .column("target_id", CAMPAIGNS.TARGET_ID)
+            .column("from_key", CAMPAIGNS.FROM_KEY)
+            .column("from_name", CAMPAIGNS.FROM_NAME)
+            .column("reply_to", CAMPAIGNS.REPLY_TO)
+            .column("scheduled_at", CAMPAIGNS.SCHEDULED_AT)
+            .column("started_at", CAMPAIGNS.STARTED_AT)
+            .column("completed_at", CAMPAIGNS.COMPLETED_AT)
+            .column("version", CAMPAIGNS.VERSION)
+            .column("created_at", CAMPAIGNS.CREATED_AT)
+            .column("updated_at", CAMPAIGNS.UPDATED_AT)
+            .build();
+
     private final DSLContext dsl;
+
+    /** @return the binding of the campaign listing, for the test that checks every sortable field has an index */
+    public static ListBinding listBinding() {
+        return BINDING;
+    }
 
     public JooqCampaignReadRepository(DSLContext dsl) {
         this.dsl = dsl;
     }
 
     @Override
-    public List<CampaignView> list(String status, UUID afterId, int limit) {
-        Condition where = DSL.noCondition();
-        if (status != null && !status.isBlank()) {
-            where = where.and(CAMPAIGNS.STATUS.eq(status));
-        }
-        if (afterId != null) {
-            where = where.and(CAMPAIGNS.ID.lt(afterId));
-        }
-        return dsl.select(
-                        CAMPAIGNS.ID, CAMPAIGNS.NAME, CAMPAIGNS.STATUS, CAMPAIGNS.TEMPLATE_ID,
-                        CAMPAIGNS.TEMPLATE_REVISION, CAMPAIGNS.TARGET_TYPE, CAMPAIGNS.TARGET_ID,
-                        CAMPAIGNS.FROM_KEY, CAMPAIGNS.FROM_NAME, CAMPAIGNS.REPLY_TO, CAMPAIGNS.SCHEDULED_AT,
-                        CAMPAIGNS.STARTED_AT, CAMPAIGNS.COMPLETED_AT, CAMPAIGNS.VERSION,
-                        CAMPAIGNS.CREATED_AT, CAMPAIGNS.UPDATED_AT)
-                .from(CAMPAIGNS)
-                .where(where)
-                .orderBy(CAMPAIGNS.ID.desc())
-                .limit(limit)
-                .fetch(this::toView);
+    public Page<CampaignView> list(ListQuery query) {
+        return JooqLists.fetch(dsl, CAMPAIGNS, noCondition(), BINDING, query, JooqCampaignReadRepository::toView);
     }
 
     @Override
     public Optional<CampaignView> find(UUID campaignId) {
-        return dsl.select(
-                        CAMPAIGNS.ID, CAMPAIGNS.NAME, CAMPAIGNS.STATUS, CAMPAIGNS.TEMPLATE_ID,
-                        CAMPAIGNS.TEMPLATE_REVISION, CAMPAIGNS.TARGET_TYPE, CAMPAIGNS.TARGET_ID,
-                        CAMPAIGNS.FROM_KEY, CAMPAIGNS.FROM_NAME, CAMPAIGNS.REPLY_TO, CAMPAIGNS.SCHEDULED_AT,
-                        CAMPAIGNS.STARTED_AT, CAMPAIGNS.COMPLETED_AT, CAMPAIGNS.VERSION,
-                        CAMPAIGNS.CREATED_AT, CAMPAIGNS.UPDATED_AT)
-                .from(CAMPAIGNS)
+        return dsl.selectFrom(CAMPAIGNS)
                 .where(CAMPAIGNS.ID.eq(campaignId))
-                .fetchOptional(this::toView);
+                .fetchOptional(JooqCampaignReadRepository::toView);
     }
 
-    private CampaignView toView(Record row) {
+    private static CampaignView toView(dev.ngb.mailroom_jooq.tables.records.CampaignsRecord row) {
         return new CampaignView(
-                row.get(CAMPAIGNS.ID),
-                row.get(CAMPAIGNS.NAME),
-                row.get(CAMPAIGNS.STATUS),
-                row.get(CAMPAIGNS.TEMPLATE_ID),
-                row.get(CAMPAIGNS.TEMPLATE_REVISION),
-                row.get(CAMPAIGNS.TARGET_TYPE),
-                row.get(CAMPAIGNS.TARGET_ID),
-                row.get(CAMPAIGNS.FROM_KEY),
-                row.get(CAMPAIGNS.FROM_NAME),
-                row.get(CAMPAIGNS.REPLY_TO),
-                row.get(CAMPAIGNS.SCHEDULED_AT),
-                row.get(CAMPAIGNS.STARTED_AT),
-                row.get(CAMPAIGNS.COMPLETED_AT),
-                row.get(CAMPAIGNS.VERSION),
-                row.get(CAMPAIGNS.CREATED_AT),
-                row.get(CAMPAIGNS.UPDATED_AT));
+                row.getId(),
+                row.getName(),
+                row.getStatus(),
+                row.getTemplateId(),
+                row.getTemplateRevision(),
+                row.getTargetType(),
+                row.getTargetId(),
+                row.getFromKey(),
+                row.getFromName(),
+                row.getReplyTo(),
+                row.getScheduledAt(),
+                row.getStartedAt(),
+                row.getCompletedAt(),
+                row.getVersion(),
+                row.getCreatedAt(),
+                row.getUpdatedAt());
     }
 }

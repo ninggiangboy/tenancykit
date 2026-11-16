@@ -1,13 +1,14 @@
 package dev.ngb.mailroom.sending.application.campaign.query;
 
-import java.util.List;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.Optional;
 import java.util.UUID;
 
 /** The campaign read side. */
 public interface CampaignReadRepository {
 
-    List<CampaignView> list(String status, UUID afterId, int limit);
+    Page<CampaignView> list(ListQuery query);
 
     Optional<CampaignView> find(UUID campaignId);
 }

@@ -4,12 +4,16 @@ import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.mailroom.sending.application.campaign.command.ChangeCampaignStateUseCase;
 import dev.ngb.mailroom.sending.application.campaign.command.CreateCampaignUseCase;
 import dev.ngb.mailroom.sending.application.campaign.command.ScheduleCampaignUseCase;
 import dev.ngb.mailroom.sending.application.campaign.command.StartCampaignUseCase;
 import dev.ngb.mailroom.sending.application.campaign.command.TestCampaignUseCase;
 import dev.ngb.mailroom.sending.application.campaign.command.UpdateCampaignUseCase;
+import dev.ngb.mailroom.sending.application.campaign.query.CampaignListing;
 import dev.ngb.mailroom.sending.application.campaign.query.CampaignQueries;
 import dev.ngb.mailroom.sending.application.campaign.query.CampaignStatsQueries;
 import dev.ngb.mailroom.sending.application.campaign.query.CampaignStatsView;
@@ -66,13 +70,12 @@ class CampaignController {
         this.stats = stats;
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link CampaignListing}. */
     @GetMapping
+    @Listing(CampaignListing.class)
     @RequiresPermission(MailroomPermissions.CAMPAIGN_READ)
-    List<CampaignResponse> list(
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) UUID after,
-            @RequestParam(required = false) Integer limit) {
-        return queries.list(status, after, limit).stream().map(CampaignResponse::of).toList();
+    Page<CampaignResponse> list(ListQuery query) {
+        return queries.list(query).map(CampaignResponse::of);
     }
 
     @PostMapping

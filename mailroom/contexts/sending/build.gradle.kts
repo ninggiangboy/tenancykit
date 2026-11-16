@@ -9,6 +9,7 @@ dependencies {
     "adapterImplementation"(project(":contexts:content"))
     "adapterImplementation"(project(":contexts:audience"))
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-jooq")
+    "adapterImplementation"("dev.ngb:core-spring")
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-webmvc")
     "adapterImplementation"(project(":libs:jooq-schema"))
     // The result consumer implements the suite's inbound handler contract.

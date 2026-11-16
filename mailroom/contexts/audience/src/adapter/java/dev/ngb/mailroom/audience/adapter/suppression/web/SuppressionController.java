@@ -1,7 +1,11 @@
 package dev.ngb.mailroom.audience.adapter.suppression.web;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.mailroom.audience.application.audience.query.AudienceQueries;
+import dev.ngb.mailroom.audience.application.audience.query.SuppressionListing;
 import dev.ngb.mailroom.audience.application.audience.query.SuppressionView;
 import dev.ngb.mailroom.audience.application.suppression.command.AddSuppressionUseCase;
 import dev.ngb.mailroom.audience.application.suppression.command.DeleteSuppressionUseCase;
@@ -38,11 +42,12 @@ class SuppressionController {
         this.queries = queries;
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link SuppressionListing}. */
     @GetMapping
+    @Listing(SuppressionListing.class)
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
-    List<SuppressionResponse> list(
-            @RequestParam(required = false) String after, @RequestParam(required = false) Integer limit) {
-        return queries.suppressions(after, limit).stream().map(SuppressionResponse::of).toList();
+    Page<SuppressionResponse> list(ListQuery query) {
+        return queries.suppressions(query).map(SuppressionResponse::of);
     }
 
     @PostMapping

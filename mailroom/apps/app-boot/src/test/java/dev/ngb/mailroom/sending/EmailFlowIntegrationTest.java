@@ -21,6 +21,7 @@ import dev.ngb.mailroom.sending.application.campaign.command.StartCampaignUseCas
 import dev.ngb.mailroom.sending.application.campaign.query.CampaignStatsQueries;
 import dev.ngb.mailroom.sending.application.campaign.query.CampaignStatsView;
 import dev.ngb.mailroom.sending.application.email.command.ApplyDeliveryResultUseCase;
+import dev.ngb.mailroom.sending.application.email.query.EmailListing;
 import dev.ngb.mailroom.sending.application.email.query.EmailQueries;
 import dev.ngb.mailroom.sending.application.email.query.EmailView;
 import dev.ngb.mailroom.sending.application.tracking.command.RecordClickUseCase;
@@ -32,6 +33,7 @@ import dev.ngb.mailroom.sending.domain.campaign.CampaignTargetType;
 import dev.ngb.mailroom.sending.domain.email.DeliveryOutcome;
 import dev.ngb.mailroom.sending.domain.tracking.TrackingAction;
 import dev.ngb.mailroom.shared.EmailKind;
+import dev.ngb.mailroom.support.ListQueries;
 import dev.ngb.mailroom.support.PostgresContainerConfig;
 import dev.ngb.mailroom.support.RabbitContainerConfig;
 import java.time.Instant;
@@ -142,7 +144,8 @@ class EmailFlowIntegrationTest {
             PublishCampaignBatchUseCase.Published published = publish.execute();
             assertThat(published.published()).isEqualTo(1);
 
-            EmailView queued = emails.list(null, null, campaign.id(), null, null, null).getFirst();
+            EmailView queued = emails.list(ListQueries.of(EmailListing.SCHEMA,
+                    "filter[campaign_id][eq]", campaign.id().toString(), "limit", "50")).data().getFirst();
             assertThat(queued.status()).isEqualTo("QUEUED");
             assertThat(queued.bodyHtml()).contains("/t/c/").contains("/t/o/");
             assertThat(queued.bodyHtml()).doesNotContain("href=\"https://example.com/landing\"");

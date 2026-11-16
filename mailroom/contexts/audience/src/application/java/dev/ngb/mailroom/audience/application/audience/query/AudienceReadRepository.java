@@ -1,6 +1,7 @@
 package dev.ngb.mailroom.audience.application.audience.query;
 
-import dev.ngb.mailroom.audience.domain.receiver.ReceiverStatus;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -8,17 +9,20 @@ import java.util.UUID;
 /** The read side of a tenant's audience; row-level security restricts every query to the bound tenant. */
 public interface AudienceReadRepository {
 
-    List<ReceiverView> listReceivers(ReceiverStatus status, String contains, UUID afterId, int limit);
+    Page<ReceiverView> listReceivers(ListQuery query);
 
     Optional<ReceiverView> findReceiver(UUID receiverId);
 
-    List<GroupView> listGroups(UUID afterId, int limit);
+    Page<GroupView> listGroups(ListQuery query);
 
     Optional<GroupView> findGroup(UUID groupId);
 
+    Page<ReceiverView> listGroupReceivers(UUID groupId, ListQuery query);
+
+    /** Keyset page of a group's receivers, oldest id first, for the sender's own iteration. */
     List<ReceiverView> pageGroupReceivers(UUID groupId, UUID afterReceiverId, int limit);
 
     List<ReceiverView> findReceivers(List<UUID> receiverIds);
 
-    List<SuppressionView> listSuppressions(String afterNormalizedAddress, int limit);
+    Page<SuppressionView> listSuppressions(ListQuery query);
 }

@@ -1,8 +1,12 @@
 package dev.ngb.mailroom.sending.adapter.email.web;
 
 import dev.ngb.core.error.BadRequestException;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.mailroom.sending.application.email.command.SendEmailUseCase;
+import dev.ngb.mailroom.sending.application.email.query.EmailListing;
 import dev.ngb.mailroom.sending.application.email.query.EmailQueries;
 import dev.ngb.mailroom.sending.application.email.query.EmailView;
 import dev.ngb.mailroom.sending.application.email.service.BatchSender;
@@ -73,18 +77,12 @@ class EmailController {
                 .toList();
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link EmailListing}. */
     @GetMapping
+    @Listing(EmailListing.class)
     @RequiresPermission(MailroomPermissions.EMAIL_READ)
-    List<EmailResponse> list(
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String kind,
-            @RequestParam(required = false) UUID campaign,
-            @RequestParam(required = false) String recipient,
-            @RequestParam(required = false) UUID after,
-            @RequestParam(required = false) Integer limit) {
-        return queries.list(status, kind, campaign, recipient, after, limit).stream()
-                .map(EmailResponse::of)
-                .toList();
+    Page<EmailResponse> list(ListQuery query) {
+        return queries.list(query).map(EmailResponse::of);
     }
 
     @GetMapping("/{id}")

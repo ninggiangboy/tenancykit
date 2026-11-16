@@ -4,12 +4,17 @@ import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.mailroom.content.application.render.port.RenderedParts;
 import dev.ngb.mailroom.content.application.template.command.CreateTemplateUseCase;
 import dev.ngb.mailroom.content.application.template.command.DeleteTemplateUseCase;
 import dev.ngb.mailroom.content.application.template.command.PreviewTemplateUseCase;
 import dev.ngb.mailroom.content.application.template.command.UpdateTemplateUseCase;
+import dev.ngb.mailroom.content.application.template.query.TemplateListing;
 import dev.ngb.mailroom.content.application.template.query.TemplateQueries;
+import dev.ngb.mailroom.content.application.template.query.TemplateRevisionListing;
 import dev.ngb.mailroom.content.application.template.query.TemplateRevisionView;
 import dev.ngb.mailroom.content.application.template.query.TemplateView;
 import dev.ngb.mailroom.content.domain.template.Template;
@@ -58,11 +63,12 @@ class TemplateController {
         this.queries = queries;
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link TemplateListing}. */
     @GetMapping
+    @Listing(TemplateListing.class)
     @RequiresPermission(MailroomPermissions.TEMPLATE_READ)
-    List<TemplateResponse> list(
-            @RequestParam(required = false) Integer limit, @RequestParam(required = false) UUID after) {
-        return queries.list(limit, after).stream().map(TemplateResponse::ofView).toList();
+    Page<TemplateResponse> list(ListQuery query) {
+        return queries.list(query).map(TemplateResponse::ofView);
     }
 
     @GetMapping("/{id}")
@@ -107,13 +113,12 @@ class TemplateController {
         delete.execute(id, ExpectedVersion.fromIfMatch(ifMatch));
     }
 
+    /** The template is fixed by the path; filter, sort and paging follow the list-query contract. */
     @GetMapping("/{id}/revisions")
+    @Listing(TemplateRevisionListing.class)
     @RequiresPermission(MailroomPermissions.TEMPLATE_READ)
-    List<TemplateRevisionView> revisions(
-            @PathVariable UUID id,
-            @RequestParam(defaultValue = "0") int after,
-            @RequestParam(required = false) Integer limit) {
-        return queries.revisions(id, after, limit);
+    Page<TemplateRevisionView> revisions(@PathVariable UUID id, ListQuery query) {
+        return queries.revisions(id, query);
     }
 
     @PostMapping("/{id}/preview")
