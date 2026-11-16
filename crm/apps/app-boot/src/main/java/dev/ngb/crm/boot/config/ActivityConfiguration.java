@@ -5,6 +5,7 @@ import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.crm.activity.adapter.activity.json.ActivityPayloadJson;
+import dev.ngb.crm.activity.adapter.activity.persistence.JooqActivityErasure;
 import dev.ngb.crm.activity.adapter.activity.persistence.JooqActivityReadRepository;
 import dev.ngb.crm.activity.adapter.activity.persistence.JooqActivityRepository;
 import dev.ngb.crm.activity.adapter.activity.persistence.JooqActivityTimeline;
@@ -16,6 +17,7 @@ import dev.ngb.crm.activity.application.activity.port.ActivityRepository;
 import dev.ngb.crm.activity.application.activity.query.ActivityQueries;
 import dev.ngb.crm.activity.application.activity.query.ActivityReadRepository;
 import dev.ngb.crm.customers.api.customer.CustomerDirectory;
+import dev.ngb.crm.customers.api.customer.CustomerErasureParticipant;
 import org.jooq.DSLContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,8 +29,9 @@ import org.springframework.context.annotation.Configuration;
  * <p>The payload bound and the future skew are deployment settings rather than per-Tenant ones, because they bound one
  * request and one row; they are read here and passed in, so the application layer never reads a property itself.
  *
- * <p>The customer seam is the customers context's api: an activity names a customer that must already exist, and the
- * resolution goes through the same lookup every other context uses.
+ * <p>The customer seam is the customers context's api: an activity names a customer that must already exist, the
+ * resolution goes through the same lookup every other context uses, and the rows this context owns are cleared here
+ * when that customer is erased.
  */
 @Configuration(proxyBeanMethods = false)
 class ActivityConfiguration {
@@ -47,6 +50,12 @@ class ActivityConfiguration {
     @Bean
     ActivityReadRepository activityReadRepository(DSLContext dsl, ActivityPayloads payloads) {
         return new JooqActivityReadRepository(dsl, payloads);
+    }
+
+    /** What this context clears when a customer's personal data is erased: the payloads, the sources and the refs. */
+    @Bean
+    CustomerErasureParticipant activityErasure(DSLContext dsl) {
+        return new JooqActivityErasure(dsl);
     }
 
     @Bean

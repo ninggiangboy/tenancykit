@@ -10,6 +10,7 @@ import dev.ngb.crm_jooq.tables.ConsentEvents;
 import dev.ngb.crm_jooq.tables.ConsentTopics;
 import dev.ngb.crm_jooq.tables.CustomerTags;
 import dev.ngb.crm_jooq.tables.Customers;
+import dev.ngb.crm_jooq.tables.ErasureRequests;
 import dev.ngb.crm_jooq.tables.EventInbox;
 import dev.ngb.crm_jooq.tables.FieldDefinitions;
 import dev.ngb.crm_jooq.tables.JobLeases;
@@ -64,6 +65,11 @@ public class Tables {
      * The table <code>public.customers</code>.
      */
     public static final Customers CUSTOMERS = Customers.CUSTOMERS;
+
+    /**
+     * The table <code>public.erasure_requests</code>.
+     */
+    public static final ErasureRequests ERASURE_REQUESTS = ErasureRequests.ERASURE_REQUESTS;
 
     /**
      * The table <code>public.event_inbox</code>.

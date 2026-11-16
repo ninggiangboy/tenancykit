@@ -42,7 +42,7 @@ class PermissionCatalogTest {
      * activities and the erasure. Each change that adds one of these endpoints removes its code here, so the set
      * shrinking is what records the progress, and a code that no endpoint enforces cannot silently stay behind.
      */
-    private static final Set<String> NOT_YET_SERVED = Set.of(CrmPermissions.CUSTOMER_ERASE);
+    private static final Set<String> NOT_YET_SERVED = Set.of();
 
     @Test
     void theConstantsAndTheCatalogAreOneSet() throws IOException {

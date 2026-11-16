@@ -12,27 +12,35 @@ import dev.ngb.crm.customers.adapter.customer.persistence.JooqCustomerExportRead
 import dev.ngb.crm.customers.adapter.customer.persistence.JooqCustomerProfileReader;
 import dev.ngb.crm.customers.adapter.customer.persistence.JooqCustomerReadRepository;
 import dev.ngb.crm.customers.adapter.customer.persistence.JooqCustomerRepository;
+import dev.ngb.crm.customers.adapter.customer.persistence.JooqErasureRequestRepository;
 import dev.ngb.crm.customers.adapter.field.json.JacksonFieldValues;
 import dev.ngb.crm.customers.api.customer.CustomerDirectory;
+import dev.ngb.crm.customers.api.customer.CustomerErasureParticipant;
 import dev.ngb.crm.customers.api.customer.CustomerProfileReader;
+import dev.ngb.crm.customers.application.consent.port.ConsentEventRepository;
+import dev.ngb.crm.customers.application.customer.command.EraseCustomerUseCase;
 import dev.ngb.crm.customers.application.customer.command.PatchCustomerUseCase;
 import dev.ngb.crm.customers.application.customer.command.UpsertCustomerUseCase;
 import dev.ngb.crm.customers.application.customer.command.UpsertCustomersBatchUseCase;
 import dev.ngb.crm.customers.application.customer.port.CustomerRepository;
-import dev.ngb.crm.customers.application.customer.query.ExportLease;
+import dev.ngb.crm.customers.application.customer.port.ErasureRequestRepository;
 import dev.ngb.crm.customers.application.customer.query.CustomerExportReadRepository;
 import dev.ngb.crm.customers.application.customer.query.CustomerExporter;
 import dev.ngb.crm.customers.application.customer.query.CustomerQueries;
 import dev.ngb.crm.customers.application.customer.query.CustomerReadRepository;
+import dev.ngb.crm.customers.application.customer.query.ExportLease;
+import dev.ngb.crm.customers.application.customer.service.CustomerEventPublisher;
 import dev.ngb.crm.customers.application.customer.service.CustomerFields;
 import dev.ngb.crm.customers.application.field.port.FieldDefinitionRepository;
 import dev.ngb.crm.customers.application.field.port.FieldValues;
+import java.util.List;
 import org.jooq.DSLContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Wires the customers context: its two repositories, the read queries, the single upsert, the patch and the batch.
+ * Wires the customers context: its repositories, the read queries, the single upsert, the patch, the batch and the
+ * erasure.
  *
  * <p>The batch cap is a deployment setting rather than a per-Tenant one, because it bounds one request's work; it is
  * read here and passed to the use case, so the application layer never reads a property itself. The tag cap and the
@@ -46,6 +54,20 @@ class CustomerConfiguration {
     @Bean
     CustomerRepository customerRepository(DSLContext dsl, JacksonFieldValues fieldValues) {
         return new JooqCustomerRepository(dsl, fieldValues);
+    }
+
+    @Bean
+    ErasureRequestRepository erasureRequestRepository(DSLContext dsl) {
+        return new JooqErasureRequestRepository(dsl);
+    }
+
+    /**
+     * The one place the customer feature announces a fact. It writes to the shared outbox inside the calling
+     * transaction, so a creation and an erasure are announced exactly when they commit.
+     */
+    @Bean
+    CustomerEventPublisher customerEventPublisher(EventPublisher events, IdGenerator ids) {
+        return new CustomerEventPublisher(events, ids);
     }
 
     /**
@@ -117,7 +139,7 @@ class CustomerConfiguration {
             UnitOfWork unitOfWork,
             CustomerRepository customers,
             CustomerFields customerFields,
-            EventPublisher events,
+            CustomerEventPublisher events,
             TenantContext tenantContext,
             IdGenerator ids,
             Clock clock,
@@ -131,6 +153,24 @@ class CustomerConfiguration {
                 ids,
                 clock,
                 settings.tags().maxPerCustomer());
+    }
+
+    /**
+     * The erasure takes the participants the wiring layer hands it: the contexts that store something about a customer
+     * clear their own rows in the erasure's transaction, so an erased customer leaves no payload behind.
+     */
+    @Bean
+    EraseCustomerUseCase eraseCustomerUseCase(
+            UnitOfWork unitOfWork,
+            CustomerRepository customers,
+            ErasureRequestRepository requests,
+            ConsentEventRepository consents,
+            List<CustomerErasureParticipant> participants,
+            CustomerEventPublisher events,
+            TenantContext tenantContext,
+            Clock clock) {
+        return new EraseCustomerUseCase(
+                unitOfWork, customers, requests, consents, participants, events, tenantContext, clock);
     }
 
     @Bean

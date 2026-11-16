@@ -12,8 +12,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * Purges the inbox, the dead outbox and the finished webhook deliveries, per tenant and in bounded batches. It ships
- * with the schema: without it the personal-data claim on delivery bodies and the table growth are both false.
+ * Purges the inbox, the outbox rows whose life is over and the finished webhook deliveries, per tenant and in bounded
+ * batches. It ships with the schema: without it the personal-data claim on delivery bodies and outbox payloads, and
+ * the table growth, are both false.
  */
 @Profile("worker")
 @Component
@@ -55,10 +56,14 @@ public class HousekeepingJob {
             sweep.forEachActiveTenant(tenantId -> {
                 int purged = deliveries.runOnce(clock.now());
                 MessagingHousekeeping.Purged messagingPurged = messaging.runOnce(tenantId);
-                if (purged > 0 || messagingPurged.inbox() > 0 || messagingPurged.outbox() > 0) {
+                if (purged > 0
+                        || messagingPurged.inbox() > 0
+                        || messagingPurged.relayed() > 0
+                        || messagingPurged.dead() > 0) {
                     LOG.info(
-                            "tenant {}: purged {} delivery(ies), {} inbox row(s), {} dead outbox row(s)",
-                            tenantId, purged, messagingPurged.inbox(), messagingPurged.outbox());
+                            "tenant {}: purged {} delivery(ies), {} inbox row(s), {} relayed outbox row(s), {} dead outbox row(s)",
+                            tenantId, purged, messagingPurged.inbox(), messagingPurged.relayed(),
+                            messagingPurged.dead());
                 }
             });
         } finally {

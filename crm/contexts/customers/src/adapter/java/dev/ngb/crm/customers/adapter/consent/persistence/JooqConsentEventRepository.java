@@ -12,8 +12,9 @@ import java.util.Optional;
 import org.jooq.DSLContext;
 
 /**
- * Appends consent records. There is no update: the table refuses one to the application role, because the history of an
- * agreement is evidence rather than a current value.
+ * Appends consent records. A record is never rewritten: the table refuses an update to the application role, except
+ * on the two free-text columns an erasure clears, because the history of an agreement is evidence rather than a
+ * current value.
  *
  * <p>The caller's own reference is a partial unique key, so a retry that slipped past the replay check cannot append a
  * second record of the same agreement.
@@ -59,6 +60,16 @@ public class JooqConsentEventRepository implements ConsentEventRepository {
                 .where(CONSENT_EVENTS.CUSTOMER_ID.eq(customerId.value()))
                 .and(CONSENT_EVENTS.CONSENT_REF.eq(consentRef))
                 .fetchOptional(JooqConsentEventRepository::toDomain);
+    }
+
+    @Override
+    public int clearPersonalData(CustomerId customerId) {
+        return dsl.update(CONSENT_EVENTS)
+                .set(CONSENT_EVENTS.SOURCE, (String) null)
+                .set(CONSENT_EVENTS.EVIDENCE_REF, (String) null)
+                .where(CONSENT_EVENTS.CUSTOMER_ID.eq(customerId.value()))
+                .and(CONSENT_EVENTS.SOURCE.isNotNull().or(CONSENT_EVENTS.EVIDENCE_REF.isNotNull()))
+                .execute();
     }
 
     private static ConsentEvent toDomain(ConsentEventsRecord row) {

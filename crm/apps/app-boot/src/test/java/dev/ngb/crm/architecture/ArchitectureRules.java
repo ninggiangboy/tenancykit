@@ -50,7 +50,8 @@ final class ArchitectureRules {
         for (String table : List.of("WebhookEndpoints", "WebhookDeliveries", "WebhookDeliveryAttempts")) {
             TABLE_OWNER.put(table, "webhook");
         }
-        for (String table : List.of("Customers", "FieldDefinitions", "CustomerTags", "ConsentTopics", "ConsentEvents")) {
+        for (String table : List.of(
+                "Customers", "FieldDefinitions", "CustomerTags", "ConsentTopics", "ConsentEvents", "ErasureRequests")) {
             TABLE_OWNER.put(table, "customers");
         }
         for (String table : List.of("Orders", "OrderLines", "OrderReturns", "OrderReturnLines")) {

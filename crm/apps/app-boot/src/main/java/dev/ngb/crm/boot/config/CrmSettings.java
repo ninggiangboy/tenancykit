@@ -58,14 +58,19 @@ public record CrmSettings(
     }
 
     /**
-     * Bounded retention for the tables a job owns: without a purge the inbox, the dead outbox and the finished
-     * deliveries grow without bound.
+     * Bounded retention for the tables a job owns: without a purge the inbox, the outbox and the finished deliveries
+     * grow without bound, and every one of them can hold a person's data in a payload, a body or an event id.
      *
+     * @param inboxRetention how long a consumed event id is kept for deduplication
+     * @param relayedOutboxRetention how long an outbox row that reached its consumers keeps its payload, 7 days by
+     *     default: the delivery already carries the body, so the row is only evidence after the relay
+     * @param deadOutboxRetention how long a row the relay gave up on is kept for inspection
      * @param webhookDeliveryRetention how long a finished delivery and its attempt log are kept
      */
     public record Housekeeping(
             boolean enabled,
             Duration inboxRetention,
+            Duration relayedOutboxRetention,
             Duration deadOutboxRetention,
             Duration webhookDeliveryRetention,
             int batchSize,

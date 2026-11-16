@@ -9,6 +9,7 @@ import dev.ngb.crm_jooq.Public;
 import dev.ngb.crm_jooq.tables.Activities.ActivitiesPath;
 import dev.ngb.crm_jooq.tables.ConsentEvents.ConsentEventsPath;
 import dev.ngb.crm_jooq.tables.CustomerTags.CustomerTagsPath;
+import dev.ngb.crm_jooq.tables.ErasureRequests.ErasureRequestsPath;
 import dev.ngb.crm_jooq.tables.Orders.OrdersPath;
 import dev.ngb.crm_jooq.tables.records.CustomersRecord;
 
@@ -238,6 +239,19 @@ public class Customers extends TableImpl<CustomersRecord> {
             _customerTags = new CustomerTagsPath(this, null, Keys.CUSTOMER_TAGS__CUSTOMER_TAGS_CUSTOMER_ID_FKEY.getInverseKey());
 
         return _customerTags;
+    }
+
+    private transient ErasureRequestsPath _erasureRequests;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.erasure_requests</code> table
+     */
+    public ErasureRequestsPath erasureRequests() {
+        if (_erasureRequests == null)
+            _erasureRequests = new ErasureRequestsPath(this, null, Keys.ERASURE_REQUESTS__ERASURE_REQUESTS_CUSTOMER_ID_FKEY.getInverseKey());
+
+        return _erasureRequests;
     }
 
     private transient OrdersPath _orders;

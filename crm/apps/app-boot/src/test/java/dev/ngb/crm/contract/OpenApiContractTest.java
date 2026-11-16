@@ -132,6 +132,7 @@ class OpenApiContractTest {
                 "/api/v1/customers/{externalRef}",
                 "/api/v1/customers/{externalRef}/activities",
                 "/api/v1/customers/{externalRef}/consents",
+                "/api/v1/customers/{externalRef}/erasure",
                 "/api/v1/customers/{externalRef}/orders",
                 "/api/v1/customers/{externalRef}/profile",
                 "/api/v1/orders/batch",

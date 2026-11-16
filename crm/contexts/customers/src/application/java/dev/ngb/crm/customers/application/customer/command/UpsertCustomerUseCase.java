@@ -1,12 +1,12 @@
 package dev.ngb.crm.customers.application.customer.command;
 
-import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.crm.customers.application.customer.exception.CustomerErasedException;
 import dev.ngb.crm.customers.application.customer.port.CustomerRepository;
+import dev.ngb.crm.customers.application.customer.service.CustomerEventPublisher;
 import dev.ngb.crm.customers.application.customer.service.CustomerFields;
 import dev.ngb.crm.customers.application.customer.service.CustomerRules;
 import dev.ngb.crm.customers.application.tag.service.TagRules;
@@ -57,7 +57,7 @@ public class UpsertCustomerUseCase {
     private final UnitOfWork unitOfWork;
     private final CustomerRepository customers;
     private final CustomerFields fieldValues;
-    private final EventPublisher events;
+    private final CustomerEventPublisher events;
     private final TenantContext tenantContext;
     private final IdGenerator ids;
     private final Clock clock;
@@ -67,7 +67,7 @@ public class UpsertCustomerUseCase {
             UnitOfWork unitOfWork,
             CustomerRepository customers,
             CustomerFields fieldValues,
-            EventPublisher events,
+            CustomerEventPublisher events,
             TenantContext tenantContext,
             IdGenerator ids,
             Clock clock,
@@ -125,7 +125,7 @@ public class UpsertCustomerUseCase {
                 tags,
                 now);
         if (customers.insertIfAbsent(created)) {
-            events.publish(created.created(ids.newId()));
+            events.created(created);
             return new Result(created, Outcome.CREATED);
         }
         Customer winner = customers

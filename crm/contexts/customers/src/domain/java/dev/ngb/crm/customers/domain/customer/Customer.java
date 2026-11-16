@@ -15,15 +15,24 @@ import java.util.UUID;
  * The identity of the person behind it is the Tenant's business — crm never matches one customer to another by phone
  * or email, so nothing here merges, resolves or looks up by an attribute.
  *
- * <p>The reference is immutable and the version is the ETag: a change replaces the attributes, moves the instant and
- * bumps the version, and a body that matches what is stored changes nothing at all. The version covers the customer's
- * field values and tags as well, because a caller that pinned it asks about the customer as a whole.
+ * <p>The reference is immutable while the customer is a person's record, and the version is the ETag: a change replaces
+ * the attributes, moves the instant and bumps the version, and a body that matches what is stored changes nothing at
+ * all. The version covers the customer's field values and tags as well, because a caller that pinned it asks about the
+ * customer as a whole.
+ *
+ * <p>An erasure is the one transition that leaves nothing behind: every attribute, the field values and the tags are
+ * cleared, the status becomes {@code ERASED} and the reference becomes the anonymous marker {@code erased:<id>}. The
+ * row stays because the orders and the consent history point at it, and the marker is what releases the Tenant's own
+ * reference for a new customer.
  */
 public final class Customer {
 
+    /** The prefix of the anonymous reference an erased customer is left with, in front of crm's own id. */
+    private static final String ERASED_REF_PREFIX = "erased:";
+
     private final CustomerId id;
     private final TenantId tenantId;
-    private final String externalRef;
+    private String externalRef;
     private String displayName;
     private String phone;
     private String phoneDigits;
@@ -136,9 +145,41 @@ public final class Customer {
         return true;
     }
 
+    /**
+     * Erases the person this row described: every attribute, the field values and the tags are cleared, the status
+     * becomes {@code ERASED}, the reference becomes the anonymous marker and the version rises, because a caller that
+     * pinned the customer is looking at a different customer now.
+     *
+     * <p>Only the transition to {@code ERASED} is idempotent: erasing an erased customer changes nothing and returns
+     * false, so a retried call answers with what the first one left behind.
+     *
+     * @return whether the customer was erased by this call
+     */
+    public boolean erase(Instant now) {
+        if (isErased()) {
+            return false;
+        }
+        this.externalRef = ERASED_REF_PREFIX + id;
+        this.displayName = null;
+        this.phone = null;
+        this.phoneDigits = null;
+        this.email = null;
+        this.fields = Map.of();
+        this.tags = Set.of();
+        this.status = CustomerStatus.ERASED;
+        this.updatedAt = now;
+        this.version++;
+        return true;
+    }
+
     /** The announcement of this customer's creation, ready for the outbox. */
     public CustomerEvents.Created created(UUID eventId) {
         return new CustomerEvents.Created(eventId, tenantId, id, externalRef, createdAt);
+    }
+
+    /** The announcement that this customer's personal data was erased, ready for the outbox. */
+    public CustomerEvents.Erased erased(UUID eventId) {
+        return new CustomerEvents.Erased(eventId, tenantId, id, updatedAt);
     }
 
     public boolean isErased() {

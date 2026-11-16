@@ -129,6 +129,9 @@ crm:
   housekeeping:
     enabled: ${CRM_HOUSEKEEPING_ENABLED:true}
     inbox-retention: P30D
+    # A relayed outbox row keeps its payload after the relay has turned it into deliveries, so it is only evidence; seven
+    # days is long enough to explain a delivery and short enough that an erased customer's reference does not linger.
+    relayed-outbox-retention: P7D
     dead-outbox-retention: P7D
     # A delivery body carries the customer's and the order's data, so a finished delivery is not kept forever.
     webhook-delivery-retention: P30D

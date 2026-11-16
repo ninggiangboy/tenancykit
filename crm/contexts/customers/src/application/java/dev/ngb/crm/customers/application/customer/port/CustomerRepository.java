@@ -18,6 +18,12 @@ public interface CustomerRepository {
     /** Stores the current state of a customer the caller holds a lock on, guarded by its version. */
     void update(Customer customer);
 
+    /**
+     * Stores a customer the caller erased: every attribute, the field values and the tags are cleared, the status and
+     * the reference become the anonymous marker, and the version the caller holds rose with it.
+     */
+    void erase(Customer customer);
+
     Optional<Customer> findByExternalRef(String externalRef);
 
     /** The customer with crm's own id, for the contexts that store the id and report the reference. */

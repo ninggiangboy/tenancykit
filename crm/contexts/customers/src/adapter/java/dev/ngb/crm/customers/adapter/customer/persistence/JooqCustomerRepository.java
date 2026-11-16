@@ -30,6 +30,8 @@ import org.jooq.JSONB;
  */
 public class JooqCustomerRepository implements CustomerRepository {
 
+    private static final String EMPTY_FIELDS = "{}";
+
     private final DSLContext dsl;
     private final JacksonFieldValues fieldValues;
 
@@ -80,6 +82,28 @@ public class JooqCustomerRepository implements CustomerRepository {
         if (updated != 1) {
             throw new IllegalStateException(
                     "customer " + c.id() + " was not updated: version " + c.version() + " is not newer");
+        }
+        storeTags(c);
+    }
+
+    @Override
+    public void erase(Customer c) {
+        int erased = dsl.update(CUSTOMERS)
+                .set(CUSTOMERS.DISPLAY_NAME, (String) null)
+                .set(CUSTOMERS.PHONE, (String) null)
+                .set(CUSTOMERS.PHONE_DIGITS, (String) null)
+                .set(CUSTOMERS.EMAIL, (String) null)
+                .set(CUSTOMERS.FIELDS, JSONB.valueOf(EMPTY_FIELDS))
+                .set(CUSTOMERS.STATUS, c.status().name())
+                .set(CUSTOMERS.EXTERNAL_REF, c.externalRef())
+                .set(CUSTOMERS.UPDATED_AT, c.updatedAt())
+                .set(CUSTOMERS.VERSION, c.version())
+                .where(CUSTOMERS.ID.eq(c.id().value()))
+                .and(CUSTOMERS.VERSION.lt(c.version()))
+                .execute();
+        if (erased != 1) {
+            throw new IllegalStateException(
+                    "customer " + c.id() + " was not erased: version " + c.version() + " is not newer");
         }
         storeTags(c);
     }
