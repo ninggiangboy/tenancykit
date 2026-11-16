@@ -14,4 +14,7 @@ public interface VersionRepository {
 
     /** The version with the highest number, which is the one a retype is compared against. */
     Optional<SurveyVersion> latest(UUID surveyId);
+
+    /** One version by the number it was published under, which is what a visit pinned at its opening asks for. */
+    Optional<SurveyVersion> byNumber(UUID surveyId, int versionNo);
 }

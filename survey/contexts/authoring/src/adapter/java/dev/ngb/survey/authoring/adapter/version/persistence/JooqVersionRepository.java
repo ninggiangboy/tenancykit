@@ -61,6 +61,14 @@ public class JooqVersionRepository implements VersionRepository {
                 .fetchOptional(row -> toVersion(row));
     }
 
+    @Override
+    public Optional<SurveyVersion> byNumber(UUID surveyId, int versionNo) {
+        return dsl.selectFrom(SURVEY_VERSIONS)
+                .where(SURVEY_VERSIONS.SURVEY_ID.eq(surveyId))
+                .and(SURVEY_VERSIONS.VERSION_NO.eq(versionNo))
+                .fetchOptional(row -> toVersion(row));
+    }
+
     private SurveyVersion toVersion(Record row) {
         return new SurveyVersion(
                 row.get(SURVEY_VERSIONS.ID),
