@@ -73,11 +73,15 @@ public interface ResponseReader {
      */
     Page<RespondentRow> respondents(UUID surveyId, ListQuery query);
 
-    /** One respondent, as the listing returns it: the arrival and the identity of the response it produced, if any. */
+    /**
+     * One respondent, as the listing returns it: the arrival and the identity of the response it produced, if any.
+     * {@code externalRef} is the Tenant's own key for that person, which a resend joins a mailroom group on.
+     */
     record RespondentRow(
             UUID id,
             UUID responseId,
             String respondentIdentity,
+            String externalRef,
             String source,
             String state,
             Instant lastActivityAt) {}

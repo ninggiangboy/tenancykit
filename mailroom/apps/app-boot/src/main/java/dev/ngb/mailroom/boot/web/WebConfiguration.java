@@ -53,7 +53,7 @@ class WebConfiguration implements WebMvcConfigurer {
 
     /** Documents every {@code @Listing} operation from the schema it names. */
     @Bean
-    OperationCustomizer listingParameters() {
+    ListingOpenApiCustomizer listingParameters() {
         return new ListingOpenApiCustomizer();
     }
 

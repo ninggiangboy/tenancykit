@@ -98,22 +98,31 @@ public class JooqResponseReader implements ResponseReader {
                 .map(VisitsRecord::getResponseId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
-        Map<UUID, String> identities = responseIds.isEmpty()
+        Map<UUID, ResponseIdentity> identities = responseIds.isEmpty()
                 ? Map.of()
-                : dsl.select(RESPONSES.ID, RESPONSES.RESPONDENT_IDENTITY)
+                : dsl.select(RESPONSES.ID, RESPONSES.RESPONDENT_IDENTITY, RESPONSES.EXTERNAL_REF)
                         .from(RESPONSES)
                         .where(RESPONSES.ID.in(responseIds))
-                        .fetchMap(RESPONSES.ID, RESPONSES.RESPONDENT_IDENTITY);
+                        .fetch()
+                        .stream()
+                        .collect(Collectors.toMap(row -> row.value1(), row -> new ResponseIdentity(row.value2(), row.value3())));
         return rows.stream()
-                .map(row -> new RespondentRow(
-                        row.getId(),
-                        row.getResponseId(),
-                        identities.get(row.getResponseId()),
-                        row.getSource(),
-                        row.getState(),
-                        row.getLastActivityAt()))
+                .map(row -> {
+                    ResponseIdentity identity = identities.get(row.getResponseId());
+                    return new RespondentRow(
+                            row.getId(),
+                            row.getResponseId(),
+                            identity == null ? null : identity.respondentIdentity(),
+                            identity == null ? null : identity.externalRef(),
+                            row.getSource(),
+                            row.getState(),
+                            row.getLastActivityAt());
+                })
                 .toList();
     }
+
+    /** The pair a respondent row takes from the response it produced. */
+    private record ResponseIdentity(String respondentIdentity, String externalRef) {}
 
     @Override
     public List<ResponseRow> responses(UUID surveyId, ResponseFilter filter, int offset, int limit) {

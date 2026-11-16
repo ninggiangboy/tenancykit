@@ -31,6 +31,6 @@ public class RespondentQueries {
 
     private static RespondentView toView(ResponseReader.RespondentRow row) {
         return new RespondentView(
-                row.respondentIdentity(), null, row.source(), row.state(), row.lastActivityAt(), row.responseId());
+                row.respondentIdentity(), row.externalRef(), row.source(), row.state(), row.lastActivityAt(), row.responseId());
     }
 }

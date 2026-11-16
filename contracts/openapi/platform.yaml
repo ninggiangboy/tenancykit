@@ -2593,13 +2593,17 @@ components:
           type: integer
           format: int32
         offset:
-          type: integer
+          type:
+          - integer
+          - "null"
           format: int32
         total:
           type: integer
           format: int64
         next_cursor:
-          type: string
+          type:
+          - string
+          - "null"
     PageUserResponse:
       type: object
       properties:
@@ -2608,7 +2612,9 @@ components:
           items:
             $ref: "#/components/schemas/UserResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageTenantResponse:
       type: object
       properties:
@@ -2617,7 +2623,9 @@ components:
           items:
             $ref: "#/components/schemas/TenantResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageSystemResponse:
       type: object
       properties:
@@ -2626,7 +2634,9 @@ components:
           items:
             $ref: "#/components/schemas/SystemResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageCredentialResponse:
       type: object
       properties:
@@ -2635,7 +2645,9 @@ components:
           items:
             $ref: "#/components/schemas/CredentialResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageRoleResponse:
       type: object
       properties:
@@ -2644,7 +2656,9 @@ components:
           items:
             $ref: "#/components/schemas/RoleResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     MeResponse:
       type: object
       properties:

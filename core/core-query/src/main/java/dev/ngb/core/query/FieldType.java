@@ -43,9 +43,21 @@ public enum FieldType {
 
     /** @return the typed value for {@code raw}; a value that does not fit the type is a 400 that names the field */
     Object parse(FieldSpec field, String raw) {
+        return parse(field, raw, true);
+    }
+
+    /**
+     * @return the typed value for a value a cursor carries, which came from the row rather than from the request, so
+     *     the request's text limit does not apply to it: a column may hold a longer string than a caller may send
+     */
+    Object parseStored(FieldSpec field, String raw) {
+        return parse(field, raw, false);
+    }
+
+    private Object parse(FieldSpec field, String raw, boolean fromRequest) {
         try {
             return switch (this) {
-                case STRING -> text(raw);
+                case STRING -> fromRequest ? text(raw) : raw;
                 case UUID -> java.util.UUID.fromString(raw);
                 case ENUM -> {
                     if (!field.values().contains(raw)) {
@@ -60,9 +72,6 @@ public enum FieldType {
                 case INSTANT -> Instant.parse(raw);
             };
         } catch (IllegalArgumentException | DateTimeParseException e) {
-            if (e instanceof BadRequestException bad) {
-                throw bad;
-            }
             throw new BadRequestException("the field " + field.name() + " takes " + describe() + ", not " + shorten(raw));
         }
     }

@@ -11084,13 +11084,17 @@ components:
           type: "integer"
           format: "int32"
         offset:
-          type: "integer"
+          type:
+          - "integer"
+          - "null"
           format: "int32"
         total:
           type: "integer"
           format: "int64"
         next_cursor:
-          type: "string"
+          type:
+          - "string"
+          - "null"
     PageWalletResponse:
       type: "object"
       properties:
@@ -11099,7 +11103,9 @@ components:
           items:
             $ref: "#/components/schemas/WalletResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageLedgerEntryResponse:
       type: "object"
       properties:
@@ -11108,7 +11114,9 @@ components:
           items:
             $ref: "#/components/schemas/LedgerEntryResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     UsageTotalResponse:
       type: "object"
       properties:
@@ -11129,7 +11137,9 @@ components:
           items:
             $ref: "#/components/schemas/UsageEventResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageSubscriptionResponse:
       type: "object"
       properties:
@@ -11138,7 +11148,9 @@ components:
           items:
             $ref: "#/components/schemas/SubscriptionResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageRefundResponse:
       type: "object"
       properties:
@@ -11147,7 +11159,9 @@ components:
           items:
             $ref: "#/components/schemas/RefundResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PagePaymentResponse:
       type: "object"
       properties:
@@ -11156,7 +11170,9 @@ components:
           items:
             $ref: "#/components/schemas/PaymentResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     AttemptResponse:
       type: "object"
       properties:
@@ -11188,7 +11204,9 @@ components:
           items:
             $ref: "#/components/schemas/InvoiceResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageChargeResponse:
       type: "object"
       properties:
@@ -11197,7 +11215,9 @@ components:
           items:
             $ref: "#/components/schemas/ChargeResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageEndpointResponse:
       type: "object"
       properties:
@@ -11206,7 +11226,9 @@ components:
           items:
             $ref: "#/components/schemas/EndpointResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageDeliveryResponse:
       type: "object"
       properties:
@@ -11215,7 +11237,9 @@ components:
           items:
             $ref: "#/components/schemas/DeliveryResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     DeliveryDetailResponse:
       type: "object"
       properties:
@@ -11235,7 +11259,9 @@ components:
           items:
             $ref: "#/components/schemas/RedemptionResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     TotalResponse:
       type: "object"
       properties:
@@ -11279,7 +11305,9 @@ components:
           items:
             $ref: "#/components/schemas/IncidentResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageEventResponse:
       type: "object"
       properties:
@@ -11288,7 +11316,9 @@ components:
           items:
             $ref: "#/components/schemas/EventResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageReservationResponse:
       type: "object"
       properties:
@@ -11297,7 +11327,9 @@ components:
           items:
             $ref: "#/components/schemas/ReservationResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PagePlanResponse:
       type: "object"
       properties:
@@ -11306,7 +11338,9 @@ components:
           items:
             $ref: "#/components/schemas/PlanResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageCustomerResponse:
       type: "object"
       properties:
@@ -11315,7 +11349,9 @@ components:
           items:
             $ref: "#/components/schemas/CustomerResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageCouponResponse:
       type: "object"
       properties:
@@ -11324,7 +11360,9 @@ components:
           items:
             $ref: "#/components/schemas/CouponResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PagePromotionCodeResponse:
       type: "object"
       properties:
@@ -11333,7 +11371,9 @@ components:
           items:
             $ref: "#/components/schemas/PromotionCodeResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
   securitySchemes:
     suiteToken:
       type: "http"

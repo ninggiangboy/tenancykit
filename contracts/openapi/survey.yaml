@@ -4737,7 +4737,9 @@ components:
           items:
             $ref: "#/components/schemas/EndpointResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageInfo:
       type: object
       properties:
@@ -4745,13 +4747,17 @@ components:
           type: integer
           format: int32
         offset:
-          type: integer
+          type:
+          - integer
+          - "null"
           format: int32
         total:
           type: integer
           format: int64
         next_cursor:
-          type: string
+          type:
+          - string
+          - "null"
     PageDeliveryResponse:
       type: object
       properties:
@@ -4760,7 +4766,9 @@ components:
           items:
             $ref: "#/components/schemas/DeliveryResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     AttemptResponse:
       type: object
       properties:
@@ -4799,7 +4807,9 @@ components:
           items:
             $ref: "#/components/schemas/SurveyResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageVersionSummary:
       type: object
       properties:
@@ -4808,7 +4818,9 @@ components:
           items:
             $ref: "#/components/schemas/VersionSummary"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     VersionSummary:
       type: object
       properties:
@@ -4829,7 +4841,9 @@ components:
           items:
             $ref: "#/components/schemas/ResponseRow"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     ResponseRow:
       type: object
       properties:
@@ -4871,7 +4885,9 @@ components:
           items:
             $ref: "#/components/schemas/RespondentView"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     RespondentView:
       type: object
       properties:
@@ -4897,7 +4913,9 @@ components:
           items:
             $ref: "#/components/schemas/LinkResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageExportView:
       type: object
       properties:
@@ -4906,7 +4924,9 @@ components:
           items:
             $ref: "#/components/schemas/ExportView"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     FunnelView:
       type: object
       properties:

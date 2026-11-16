@@ -232,6 +232,21 @@ class QueryParserTest {
     }
 
     @Test
+    void aCursorRoundTripsAStringLongerThanARequestValueMayBe() {
+        FilterSchema schema = FilterSchema.of("id", "id",
+                FieldSpec.of("id", FieldType.UUID).asSortable(),
+                FieldSpec.of("email", FieldType.STRING).asSortable());
+        ListQuery query = QueryParser.parse(schema, Map.of("sort", List.of("email")));
+        String email = "a".repeat(300) + "@example.com";
+        UUID id = UUID.randomUUID();
+        String cursor = query.nextCursor(List.of(email, id));
+        ListQuery next = QueryParser.parse(schema, Map.of("sort", List.of("email"), "cursor", List.of(cursor)));
+        assertThat(next.cursorValues()).containsExactly(email, id);
+        // A request value is still capped: only a value the row supplied may be longer.
+        rejects("at most 255", "filter[reference][eq]", "x".repeat(256));
+    }
+
+    @Test
     void aCursorIsRefusedWithAnotherFilterOrSort() {
         String cursor = parse("filter[status][eq]", "OPEN").nextCursor(List.of(Instant.parse("2026-11-16T10:15:30Z"), UUID.randomUUID()));
         rejects("different filter or sort", "filter[status][eq]", "PAID", "cursor", cursor);

@@ -8,6 +8,7 @@ import dev.ngb.core.query.QueryParser;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.spring.query.ListingSchemas;
 import dev.ngb.core.util.PageSize;
+import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.media.BooleanSchema;
 import io.swagger.v3.oas.models.media.DateTimeSchema;
@@ -19,8 +20,11 @@ import io.swagger.v3.oas.models.media.UUIDSchema;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import org.springdoc.core.customizers.OperationCustomizer;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.web.method.HandlerMethod;
 
@@ -28,8 +32,20 @@ import org.springframework.web.method.HandlerMethod;
  * Documents a {@link Listing} operation from the schema it names: one query parameter per filterable field and
  * operator, the sortable fields, and the paging parameters. The document therefore always describes what the endpoint
  * accepts. The {@link ListQuery} parameter itself is not part of the request and is hidden.
+ *
+ * <p>It also marks the paging facts the contract leaves absent: {@code page} is null unless the caller sent
+ * {@code page_info=true}, and inside it {@code offset} is null when a cursor positioned the page and
+ * {@code next_cursor} is null on the last page.
  */
-public class ListingOpenApiCustomizer implements OperationCustomizer {
+public class ListingOpenApiCustomizer implements OperationCustomizer, OpenApiCustomizer {
+
+    /** The paging-facts model every listing answers with, and the prefix of the wrappers that carry it. */
+    private static final String PAGE_INFO = "PageInfo";
+
+    private static final String PAGE_WRAPPER_PREFIX = "Page";
+
+    /** The type a value that may be absent also carries, in OpenAPI 3.1. */
+    private static final String NULL_TYPE = "null";
 
     private static final String CONTRACT_NOTE = """
 
@@ -69,6 +85,66 @@ public class ListingOpenApiCustomizer implements OperationCustomizer {
                     "A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type."));
         }
         return operation;
+    }
+
+    @Override
+    public void customise(OpenAPI api) {
+        if (api.getComponents() == null || api.getComponents().getSchemas() == null) {
+            return;
+        }
+        boolean openApi30 = api.getOpenapi() != null && api.getOpenapi().startsWith("3.0");
+        api.getComponents().getSchemas().forEach((name, schema) -> {
+            if (PAGE_INFO.equals(name)) {
+                absentable(schema, "offset", openApi30);
+                absentable(schema, "next_cursor", openApi30);
+            } else if (name.startsWith(PAGE_WRAPPER_PREFIX)) {
+                absentable(schema, "page", openApi30);
+            }
+        });
+    }
+
+    /**
+     * Marks a property's value as one that may be absent, in the form the document's version allows: {@code null} among
+     * the types in OpenAPI 3.1, and the {@code nullable} keyword in 3.0, where a reference is wrapped in {@code allOf} so
+     * the two do not conflict.
+     */
+    private static void absentable(Schema<?> owner, String property, boolean openApi30) {
+        if (owner.getProperties() == null || !(owner.getProperties().get(property) instanceof Schema<?> given)) {
+            return;
+        }
+        if (given.get$ref() != null) {
+            Schema<Object> reference = new Schema<>();
+            reference.set$ref(given.get$ref());
+            Schema<Object> wrapper = new Schema<>();
+            if (openApi30) {
+                wrapper.setNullable(true);
+                wrapper.setAllOf(List.of(reference));
+            } else {
+                wrapper.setOneOf(List.of(reference, nullType()));
+            }
+            owner.getProperties().put(property, wrapper);
+            return;
+        }
+        if (openApi30) {
+            given.setNullable(true);
+            return;
+        }
+        Set<String> types = new LinkedHashSet<>();
+        if (given.getTypes() != null) {
+            types.addAll(given.getTypes());
+        } else if (given.getType() != null) {
+            types.add(given.getType());
+        }
+        if (!types.isEmpty()) {
+            types.add(NULL_TYPE);
+            given.setTypes(types);
+        }
+    }
+
+    private static Schema<Object> nullType() {
+        Schema<Object> nullType = new Schema<>();
+        nullType.addType(NULL_TYPE);
+        return nullType;
     }
 
     private static IntegerSchema bounded(int min, int max, int fallback) {

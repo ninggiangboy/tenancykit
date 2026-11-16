@@ -4999,13 +4999,17 @@ components:
           type: "integer"
           format: "int32"
         offset:
-          type: "integer"
+          type:
+          - "integer"
+          - "null"
           format: "int32"
         total:
           type: "integer"
           format: "int64"
         next_cursor:
-          type: "string"
+          type:
+          - "string"
+          - "null"
     PageTemplateResponse:
       type: "object"
       properties:
@@ -5014,7 +5018,9 @@ components:
           items:
             $ref: "#/components/schemas/TemplateResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageTemplateRevisionView:
       type: "object"
       properties:
@@ -5023,7 +5029,9 @@ components:
           items:
             $ref: "#/components/schemas/TemplateRevisionView"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     TemplateRevisionView:
       type: "object"
       properties:
@@ -5050,7 +5058,9 @@ components:
           items:
             $ref: "#/components/schemas/SuppressionResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageSegmentResponse:
       type: "object"
       properties:
@@ -5059,7 +5069,9 @@ components:
           items:
             $ref: "#/components/schemas/SegmentResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageReceiverResponse:
       type: "object"
       properties:
@@ -5068,7 +5080,9 @@ components:
           items:
             $ref: "#/components/schemas/ReceiverResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageGroupResponse:
       type: "object"
       properties:
@@ -5077,7 +5091,9 @@ components:
           items:
             $ref: "#/components/schemas/GroupResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     MemberResponse:
       type: "object"
       properties:
@@ -5098,7 +5114,9 @@ components:
           items:
             $ref: "#/components/schemas/MemberResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageEmailResponse:
       type: "object"
       properties:
@@ -5107,7 +5125,9 @@ components:
           items:
             $ref: "#/components/schemas/EmailResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageCampaignResponse:
       type: "object"
       properties:
@@ -5116,7 +5136,9 @@ components:
           items:
             $ref: "#/components/schemas/CampaignResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     CampaignStatsView:
       type: "object"
       properties:

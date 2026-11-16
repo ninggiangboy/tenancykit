@@ -54,7 +54,7 @@ final class Cursor {
                 throw new BadRequestException("the cursor is not valid");
             }
             try {
-                values.add(field.type().parse(field, raw));
+                values.add(field.type().parseStored(field, raw));
             } catch (BadRequestException e) {
                 throw new BadRequestException("the cursor is not valid");
             }

@@ -8,7 +8,14 @@ import dev.ngb.core.query.FilterSchema;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Op;
 import dev.ngb.core.spring.query.Listing;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.media.ArraySchema;
+import io.swagger.v3.oas.models.media.IntegerSchema;
+import io.swagger.v3.oas.models.media.ObjectSchema;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import java.lang.reflect.Method;
@@ -100,5 +107,71 @@ class ListingOpenApiCustomizerTest {
     void theOutputIsDeterministic() throws Exception {
         assertThat(customized("list").getParameters().stream().map(Parameter::getName).toList())
                 .isEqualTo(customized("list").getParameters().stream().map(Parameter::getName).toList());
+    }
+
+    @Test
+    void thePagingFactsThatMayBeAbsentAreMarkedNullable() {
+        Schema<?> pageInfo = new ObjectSchema()
+                .addProperty("limit", new IntegerSchema())
+                .addProperty("offset", new IntegerSchema())
+                .addProperty("total", new IntegerSchema().format("int64"))
+                .addProperty("next_cursor", new StringSchema());
+        Schema<?> pageResponse = new ObjectSchema()
+                .addProperty("data", new ArraySchema().items(new StringSchema()))
+                .addProperty("page", new Schema<>().$ref("#/components/schemas/PageInfo"));
+        Schema<?> customer = new ObjectSchema()
+                .addProperty("id", new StringSchema())
+                .addProperty("page", new StringSchema());
+        OpenAPI api = new OpenAPI().openapi("3.1.0").components(new Components()
+                .addSchemas("PageInfo", pageInfo)
+                .addSchemas("PageCustomerResponse", pageResponse)
+                .addSchemas("CustomerResponse", customer));
+
+        customizer.customise(api);
+
+        assertThat(property(pageInfo, "offset").getTypes()).containsExactlyInAnyOrder("integer", "null");
+        assertThat(property(pageInfo, "next_cursor").getTypes()).containsExactlyInAnyOrder("string", "null");
+        assertThat(property(pageInfo, "limit").getTypes()).doesNotContain("null");
+        // A reference cannot carry the null type, so it becomes a choice between the reference and null.
+        List<Schema<?>> options = variants(property(pageResponse, "page").getOneOf());
+        assertThat(options).hasSize(2);
+        assertThat(options.get(0).get$ref()).isEqualTo("#/components/schemas/PageInfo");
+        assertThat(options.get(1).getTypes()).containsExactly("null");
+        // A schema that is not a page wrapper is left alone, even when it happens to name a property "page".
+        assertThat(property(customer, "page").getTypes()).doesNotContain("null");
+    }
+
+    @Test
+    void anOpenApi30DocumentUsesTheNullableKeyword() {
+        Schema<?> pageInfo = new ObjectSchema().addProperty("offset", new IntegerSchema());
+        Schema<?> pageResponse = new ObjectSchema()
+                .addProperty("page", new Schema<>().$ref("#/components/schemas/PageInfo"));
+        OpenAPI api = new OpenAPI().openapi("3.0.3").components(new Components()
+                .addSchemas("PageInfo", pageInfo)
+                .addSchemas("PageCustomerResponse", pageResponse));
+
+        customizer.customise(api);
+
+        assertThat(property(pageInfo, "offset").getNullable()).isTrue();
+        Schema<?> page = property(pageResponse, "page");
+        assertThat(page.getNullable()).isTrue();
+        List<Schema<?>> refs = variants(page.getAllOf());
+        assertThat(refs).hasSize(1);
+        assertThat(refs.get(0).get$ref()).isEqualTo("#/components/schemas/PageInfo");
+    }
+
+    @Test
+    void aDocumentWithoutComponentsIsLeftAlone() {
+        OpenAPI api = new OpenAPI();
+        customizer.customise(api);
+        assertThat(api.getComponents()).isNull();
+    }
+
+    private static Schema<?> property(Schema<?> schema, String name) {
+        return (Schema<?>) schema.getProperties().get(name);
+    }
+
+    private static List<Schema<?>> variants(List<?> schemas) {
+        return schemas.stream().<Schema<?>>map(given -> (Schema<?>) given).toList();
     }
 }

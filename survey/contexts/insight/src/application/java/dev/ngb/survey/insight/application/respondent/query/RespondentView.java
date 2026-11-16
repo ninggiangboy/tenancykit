@@ -10,6 +10,8 @@ import java.util.UUID;
  * app reconciles with a mailroom receiver. A row carries only what the Tenant supplied or the response computed, never
  * an address or a token.
  *
+ * @param respondentIdentity the identity the response was submitted with, or null when the visit never finished
+ * @param externalRef the Tenant's own key for that person, which a resend joins a mailroom group on
  * @param state the visit's state: OPENED, STARTED, COMPLETED or ABANDONED
  */
 public record RespondentView(
