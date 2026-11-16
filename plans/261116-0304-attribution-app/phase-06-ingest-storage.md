@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Ingest storage, partitions and retention"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [5]

@@ -119,6 +119,30 @@ Every public limit is a per-process token bucket, so with N instances the effect
 address, user agent, token, destination query or password is logged; the click carries a device class, a browser
 family, a country, a referrer domain and the daily visitor hash, and nothing else about the person.
 
+## Ingest storage
+
+Clicks live in `click_events`, partitioned by day on `occurred_at` so retention drops a partition rather than deleting
+rows. The worker consumes the ingest queue in batches, groups each batch by tenant and inserts each group in its own
+tenant-scoped transaction — row-level security binds a transaction to one tenant, so that grouping is the only correct
+shape, not an optimisation. The insert is `on conflict (event_id, occurred_at) do nothing`, so a redelivered batch
+writes nothing twice.
+
+A tenant group that fails is retried, then bisected until the one row that cannot be stored is isolated; that row is
+dead-lettered to `suite.dlx` and counted, and the healthy rows around it still commit. An unparseable payload is
+discarded and counted, never redelivered.
+
+The app role owns no table and cannot create a partition, so partition DDL goes through two `SECURITY DEFINER`
+functions owned by the migration owner, `attribution_ensure_partitions` and `attribution_drop_partitions`, with a fixed
+`search_path` and a table-name allow list. `PartitionJob` keeps a week of partitions ahead; a default partition catches
+a stray row and its row count is a gauge, because any row there means a partition was missing at insert time. Retention
+(`ATTRIBUTION_RAW_RETENTION_DAYS`, default 90) is a deployment setting, not a Tenant setting, because partitions are
+shared across Tenants; `RetentionJob` drops a day only once the rollup cursor has passed it, and drops nothing while no
+rollup exists.
+
+The stored facts are the classified ones. A schema test reads `information_schema` from the real migrations and fails
+the build if any column is named or typed like an address (`ip`, `inet`, `cidr`, `remote_addr`, …) or holds a user-agent
+string.
+
 ## Cross-plan coordination
 
 This plan creates `core/core-visitor` (device class, browser family, traffic class, referrer domain, GeoIP country and

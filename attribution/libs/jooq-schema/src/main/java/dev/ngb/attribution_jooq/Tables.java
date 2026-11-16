@@ -8,11 +8,13 @@ import dev.ngb.attribution_jooq.tables.AppEntitlements;
 import dev.ngb.attribution_jooq.tables.AttributionSettings;
 import dev.ngb.attribution_jooq.tables.BulkLinkRequests;
 import dev.ngb.attribution_jooq.tables.Campaigns;
+import dev.ngb.attribution_jooq.tables.ClickEvents;
 import dev.ngb.attribution_jooq.tables.EventInbox;
 import dev.ngb.attribution_jooq.tables.LinkCounters;
 import dev.ngb.attribution_jooq.tables.LinkDestinations;
 import dev.ngb.attribution_jooq.tables.Links;
 import dev.ngb.attribution_jooq.tables.Outbox;
+import dev.ngb.attribution_jooq.tables.PartitionManagedTables;
 import dev.ngb.attribution_jooq.tables.ReplicaState;
 import dev.ngb.attribution_jooq.tables.TenantDomains;
 import dev.ngb.attribution_jooq.tables.TenantSystems;
@@ -47,6 +49,11 @@ public class Tables {
     public static final Campaigns CAMPAIGNS = Campaigns.CAMPAIGNS;
 
     /**
+     * The table <code>public.click_events</code>.
+     */
+    public static final ClickEvents CLICK_EVENTS = ClickEvents.CLICK_EVENTS;
+
+    /**
      * The table <code>public.event_inbox</code>.
      */
     public static final EventInbox EVENT_INBOX = EventInbox.EVENT_INBOX;
@@ -70,6 +77,11 @@ public class Tables {
      * The table <code>public.outbox</code>.
      */
     public static final Outbox OUTBOX = Outbox.OUTBOX;
+
+    /**
+     * The table <code>public.partition_managed_tables</code>.
+     */
+    public static final PartitionManagedTables PARTITION_MANAGED_TABLES = PartitionManagedTables.PARTITION_MANAGED_TABLES;
 
     /**
      * The table <code>public.replica_state</code>.

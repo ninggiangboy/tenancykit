@@ -86,7 +86,9 @@ class JooqSchemaTest {
                         .withDatabase(new Database()
                                 .withName("org.jooq.meta.postgres.PostgresDatabase")
                                 .withInputSchema("public")
-                                .withExcludes("flyway_schema_history")
+                                // The day partitions and the default partition are runtime state, not schema: the
+                                // generator addresses the parent and the migrations exclude the children.
+                                .withExcludes("flyway_schema_history|click_events_p.*|click_events_default")
                                 // The domain speaks Instant, not OffsetDateTime.
                                 .withForcedTypes(new ForcedType()
                                         .withName("INSTANT")

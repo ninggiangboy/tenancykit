@@ -46,6 +46,10 @@ final class ArchitectureRules {
                 "Campaigns", "Links", "LinkDestinations", "LinkCounters", "BulkLinkRequests", "AttributionSettings")) {
             TABLE_OWNER.put(table, "links");
         }
+        // The click events are the tracking context: the stored, classified clicks the redirect produced. The
+        // partition-managed allow list is the migration's own bookkeeping and belongs to no context.
+        TABLE_OWNER.put("ClickEvents", "tracking");
+        TABLE_OWNER.put("PartitionManagedTables", "boot");
     }
 
     /** Every use case opens a unit of work; attribution has no exception and should never grow one. */

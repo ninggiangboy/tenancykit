@@ -81,11 +81,22 @@ attribution:
   messaging:
     exchange: ${ATTRIBUTION_MESSAGING_EXCHANGE:platform.events}
     queue: ${ATTRIBUTION_MESSAGING_QUEUE:attribution.platform-events}
-  # This app's own ingest exchange: the redirect publishes clicks here and the worker consumes them. It is not the
-  # outbox, because an ingest batch is not a domain event.
+  # The ingest consumer and the actor that pages it. The batch size and receive timeout match the publisher's flush
+  # batch, so a producer's batch becomes one consumer batch in the steady state.
   ingest:
     exchange: ${ATTRIBUTION_INGEST_EXCHANGE:attribution.ingest}
     queue: ${ATTRIBUTION_INGEST_QUEUE:attribution.ingest}
+    batch-size: ${ATTRIBUTION_INGEST_BATCH_SIZE:500}
+    receive-timeout: ${ATTRIBUTION_INGEST_RECEIVE_TIMEOUT:PT0.2S}
+    # How many times a failing tenant group is retried before it is bisected to isolate the one row that cannot store.
+    attempts: ${ATTRIBUTION_INGEST_ATTEMPTS:3}
+  # Day partitions are created ahead and dropped past retention by the worker. Retention stays a deployment setting:
+  # partitions are shared across Tenants, so a Tenant's earlier deletion is the erasure endpoint, not a setting.
+  partitions:
+    days-ahead: ${ATTRIBUTION_PARTITION_DAYS_AHEAD:8}
+    interval: ${ATTRIBUTION_PARTITION_INTERVAL:PT1H}
+  retention:
+    interval: ${ATTRIBUTION_RETENTION_INTERVAL:PT24H}
   relay:
     poll-delay: PT2S
     batch-size: 50

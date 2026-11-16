@@ -8,11 +8,13 @@ import dev.ngb.attribution_jooq.tables.AppEntitlements;
 import dev.ngb.attribution_jooq.tables.AttributionSettings;
 import dev.ngb.attribution_jooq.tables.BulkLinkRequests;
 import dev.ngb.attribution_jooq.tables.Campaigns;
+import dev.ngb.attribution_jooq.tables.ClickEvents;
 import dev.ngb.attribution_jooq.tables.EventInbox;
 import dev.ngb.attribution_jooq.tables.LinkCounters;
 import dev.ngb.attribution_jooq.tables.LinkDestinations;
 import dev.ngb.attribution_jooq.tables.Links;
 import dev.ngb.attribution_jooq.tables.Outbox;
+import dev.ngb.attribution_jooq.tables.PartitionManagedTables;
 import dev.ngb.attribution_jooq.tables.ReplicaState;
 import dev.ngb.attribution_jooq.tables.TenantDomains;
 import dev.ngb.attribution_jooq.tables.TenantSystems;
@@ -62,6 +64,11 @@ public class Public extends SchemaImpl {
     public final Campaigns CAMPAIGNS = Campaigns.CAMPAIGNS;
 
     /**
+     * The table <code>public.click_events</code>.
+     */
+    public final ClickEvents CLICK_EVENTS = ClickEvents.CLICK_EVENTS;
+
+    /**
      * The table <code>public.event_inbox</code>.
      */
     public final EventInbox EVENT_INBOX = EventInbox.EVENT_INBOX;
@@ -85,6 +92,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.outbox</code>.
      */
     public final Outbox OUTBOX = Outbox.OUTBOX;
+
+    /**
+     * The table <code>public.partition_managed_tables</code>.
+     */
+    public final PartitionManagedTables PARTITION_MANAGED_TABLES = PartitionManagedTables.PARTITION_MANAGED_TABLES;
 
     /**
      * The table <code>public.replica_state</code>.
@@ -131,11 +143,13 @@ public class Public extends SchemaImpl {
             AttributionSettings.ATTRIBUTION_SETTINGS,
             BulkLinkRequests.BULK_LINK_REQUESTS,
             Campaigns.CAMPAIGNS,
+            ClickEvents.CLICK_EVENTS,
             EventInbox.EVENT_INBOX,
             LinkCounters.LINK_COUNTERS,
             LinkDestinations.LINK_DESTINATIONS,
             Links.LINKS,
             Outbox.OUTBOX,
+            PartitionManagedTables.PARTITION_MANAGED_TABLES,
             ReplicaState.REPLICA_STATE,
             TenantDomains.TENANT_DOMAINS,
             TenantSystems.TENANT_SYSTEMS,
