@@ -2,6 +2,7 @@ package dev.ngb.loyalty.boot.web;
 
 import dev.ngb.core.spring.web.CoreExceptionHandlers;
 import dev.ngb.core.spring.web.ProblemDetails;
+import dev.ngb.loyalty.points.api.redemption.PointSpendRefusal;
 import dev.ngb.loyalty.points.application.earn.exception.PointsRefusal;
 import dev.ngb.loyalty.program.application.program.exception.ProgramRefusal;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,7 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
     @ExceptionHandler(PointsRefusal.class)
     ResponseEntity<ProblemDetail> pointsRefusal(PointsRefusal e) {
         HttpStatus status = switch (e.kind()) {
+            case BAD_REQUEST -> HttpStatus.BAD_REQUEST;
             case INVALID -> HttpStatus.UNPROCESSABLE_CONTENT;
             case CONFLICT -> HttpStatus.CONFLICT;
             case NOT_FOUND -> HttpStatus.NOT_FOUND;
@@ -47,6 +49,19 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
             case CONFLICT -> HttpStatus.CONFLICT;
             case NOT_FOUND -> HttpStatus.NOT_FOUND;
             case PRECONDITION_REQUIRED -> HttpStatus.PRECONDITION_REQUIRED;
+        };
+        ProblemDetail detail = ProblemDetails.of(status, e.getMessage());
+        detail.setProperty("code", e.code());
+        return ResponseEntity.status(status).body(detail);
+    }
+
+    /** A spend the points context refused, shaped exactly like its own refusals so a caller branches on the code alone. */
+    @ExceptionHandler(PointSpendRefusal.class)
+    ResponseEntity<ProblemDetail> pointSpendRefusal(PointSpendRefusal e) {
+        HttpStatus status = switch (e.kind()) {
+            case INVALID -> HttpStatus.UNPROCESSABLE_CONTENT;
+            case CONFLICT -> HttpStatus.CONFLICT;
+            case NOT_FOUND -> HttpStatus.NOT_FOUND;
         };
         ProblemDetail detail = ProblemDetails.of(status, e.getMessage());
         detail.setProperty("code", e.code());

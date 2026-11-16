@@ -20,6 +20,8 @@ public class PointsEvents {
     public static final String MEMBER_ENROLLED = "member.enrolled";
     public static final String POINTS_EARNED = "points.earned";
     public static final String POINTS_CLAWED_BACK = "points.clawed-back";
+    public static final String POINTS_REDEEMED = "points.redeemed";
+    public static final String POINTS_REDEMPTION_REVERSED = "points.redemption-reversed";
 
     private final EventPublisher publisher;
     private final IdGenerator ids;
@@ -84,6 +86,50 @@ public class PointsEvents {
         payload.put("available", available);
         payload.put("debt", debt);
         publish(tenantId, POINTS_CLAWED_BACK, memberId, at, payload);
+    }
+
+    /** A member spent points. The redemption names itself so the caller can reverse it later. */
+    public void pointsRedeemed(
+            TenantId tenantId,
+            Instant at,
+            UUID memberId,
+            String externalRef,
+            UUID redemptionId,
+            long points,
+            String reference,
+            long available,
+            long debt) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("memberId", memberId.toString());
+        payload.put("externalRef", externalRef);
+        payload.put("redemptionId", redemptionId.toString());
+        payload.put("points", points);
+        payload.put("reference", reference == null ? "" : reference);
+        payload.put("available", available);
+        payload.put("debt", debt);
+        publish(tenantId, POINTS_REDEEMED, memberId, at, payload);
+    }
+
+    /** A redemption was reversed and its points went back to the lots it consumed. */
+    public void pointsRedemptionReversed(
+            TenantId tenantId,
+            Instant at,
+            UUID memberId,
+            String externalRef,
+            UUID redemptionId,
+            long points,
+            String reference,
+            long available,
+            long debt) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("memberId", memberId.toString());
+        payload.put("externalRef", externalRef);
+        payload.put("redemptionId", redemptionId.toString());
+        payload.put("points", points);
+        payload.put("reference", reference == null ? "" : reference);
+        payload.put("available", available);
+        payload.put("debt", debt);
+        publish(tenantId, POINTS_REDEMPTION_REVERSED, memberId, at, payload);
     }
 
     private void publish(

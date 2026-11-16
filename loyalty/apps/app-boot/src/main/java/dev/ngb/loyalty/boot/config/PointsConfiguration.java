@@ -12,6 +12,9 @@ import dev.ngb.loyalty.points.adapter.member.persistence.JooqMemberRepository;
 import dev.ngb.loyalty.points.adapter.order.persistence.EarnSnapshotJson;
 import dev.ngb.loyalty.points.adapter.order.persistence.JooqOrderReadRepository;
 import dev.ngb.loyalty.points.adapter.order.persistence.JooqOrderRepository;
+import dev.ngb.loyalty.points.adapter.redemption.persistence.JooqRedemptionReadRepository;
+import dev.ngb.loyalty.points.adapter.redemption.persistence.JooqRedemptionRepository;
+import dev.ngb.loyalty.points.api.redemption.PointSpender;
 import dev.ngb.loyalty.points.application.earn.port.TierEvaluator;
 import dev.ngb.loyalty.points.application.earn.service.PointsApplier;
 import dev.ngb.loyalty.points.application.earn.service.PointsEvents;
@@ -27,6 +30,13 @@ import dev.ngb.loyalty.points.application.order.command.RecordReturnUseCase;
 import dev.ngb.loyalty.points.application.order.port.OrderRepository;
 import dev.ngb.loyalty.points.application.order.query.OrderQueries;
 import dev.ngb.loyalty.points.application.order.query.OrderReadRepository;
+import dev.ngb.loyalty.points.application.redemption.command.RedeemPointsUseCase;
+import dev.ngb.loyalty.points.application.redemption.command.ReverseRedemptionUseCase;
+import dev.ngb.loyalty.points.application.redemption.port.RedemptionReversalHook;
+import dev.ngb.loyalty.points.application.redemption.port.RedemptionRepository;
+import dev.ngb.loyalty.points.application.redemption.query.RedemptionQueries;
+import dev.ngb.loyalty.points.application.redemption.query.RedemptionReadRepository;
+import dev.ngb.loyalty.points.application.redemption.service.PointSpenderService;
 import dev.ngb.loyalty.points.domain.earn.EarnCalculator;
 import dev.ngb.loyalty.program.api.program.ProgramReader;
 import org.jooq.DSLContext;
@@ -77,6 +87,37 @@ class PointsConfiguration {
     @Bean
     LedgerReadRepository ledgerReadRepository(DSLContext dsl) {
         return new JooqLedgerReadRepository(dsl);
+    }
+
+    @Bean
+    RedemptionRepository redemptionRepository(DSLContext dsl, TenantContext tenantContext) {
+        return new JooqRedemptionRepository(dsl, tenantContext);
+    }
+
+    @Bean
+    RedemptionReadRepository redemptionReadRepository(DSLContext dsl) {
+        return new JooqRedemptionReadRepository(dsl);
+    }
+
+    /**
+     * The reversal's hook is a no-op until a feature issues something the spend must undo with it; the reversal's own
+     * rules do not wait for that feature.
+     */
+    @Bean
+    RedemptionReversalHook redemptionReversalHook() {
+        return (memberId, redemptionId) -> {};
+    }
+
+    @Bean
+    PointSpender pointSpender(
+            MemberRepository members,
+            LedgerRepository ledger,
+            RedemptionRepository redemptions,
+            PointsEvents events,
+            TenantContext tenantContext,
+            IdGenerator ids,
+            Clock clock) {
+        return new PointSpenderService(members, ledger, redemptions, events, tenantContext, ids, clock);
     }
 
     @Bean
@@ -159,5 +200,31 @@ class PointsConfiguration {
     LedgerQueries ledgerQueries(
             UnitOfWork unitOfWork, MemberReadRepository members, LedgerReadRepository ledger, Clock clock) {
         return new LedgerQueries(unitOfWork, members, ledger, clock);
+    }
+
+    @Bean
+    RedeemPointsUseCase redeemPointsUseCase(UnitOfWork unitOfWork, PointSpender spender) {
+        return new RedeemPointsUseCase(unitOfWork, spender);
+    }
+
+    @Bean
+    ReverseRedemptionUseCase reverseRedemptionUseCase(
+            UnitOfWork unitOfWork,
+            MemberRepository members,
+            RedemptionRepository redemptions,
+            LedgerRepository ledger,
+            RedemptionReversalHook hook,
+            PointsEvents events,
+            TenantContext tenantContext,
+            IdGenerator ids,
+            Clock clock) {
+        return new ReverseRedemptionUseCase(unitOfWork, members, redemptions, ledger, hook, events, tenantContext, ids,
+                clock);
+    }
+
+    @Bean
+    RedemptionQueries redemptionQueries(
+            UnitOfWork unitOfWork, MemberReadRepository members, RedemptionReadRepository redemptions, Clock clock) {
+        return new RedemptionQueries(unitOfWork, members, redemptions, clock);
     }
 }

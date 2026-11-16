@@ -2,6 +2,7 @@ package dev.ngb.loyalty.points.application.ledger.port;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -25,6 +26,18 @@ public interface LedgerRepository {
 
     /** Lowers a lot's remaining points; the caller never asks for more than the lot holds. */
     void consume(UUID lotId, long points);
+
+    /**
+     * Adds points back to a lot. A lot that expired in the meantime takes them back but stays expired: the balance counts
+     * only lots that expire in the future, so a restored point into a past lot is never spendable again.
+     */
+    void restore(UUID lotId, long points);
+
+    /** The entry a redemption wrote, which is what a reversal restores its lots from. */
+    Optional<UUID> entryOfRedemption(UUID redemptionId);
+
+    /** What one entry took from each lot, in the order the lots were consumed. */
+    List<LotAllocation> allocations(UUID entryId);
 
     /** The sum of the unexpired lots' remaining points, before debt. */
     long liveBalance(UUID memberId, Instant now);

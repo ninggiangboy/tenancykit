@@ -20,6 +20,7 @@ import dev.ngb.loyalty_jooq.tables.Orders;
 import dev.ngb.loyalty_jooq.tables.Outbox;
 import dev.ngb.loyalty_jooq.tables.PointLots;
 import dev.ngb.loyalty_jooq.tables.Promotions;
+import dev.ngb.loyalty_jooq.tables.Redemptions;
 import dev.ngb.loyalty_jooq.tables.ReplicaState;
 import dev.ngb.loyalty_jooq.tables.TenantDomains;
 import dev.ngb.loyalty_jooq.tables.TenantSystems;
@@ -116,6 +117,11 @@ public class Tables {
      * The table <code>public.promotions</code>.
      */
     public static final Promotions PROMOTIONS = Promotions.PROMOTIONS;
+
+    /**
+     * The table <code>public.redemptions</code>.
+     */
+    public static final Redemptions REDEMPTIONS = Redemptions.REDEMPTIONS;
 
     /**
      * The table <code>public.replica_state</code>.

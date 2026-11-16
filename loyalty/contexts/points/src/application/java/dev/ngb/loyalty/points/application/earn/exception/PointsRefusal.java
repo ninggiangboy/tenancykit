@@ -15,6 +15,8 @@ public final class PointsRefusal extends RuntimeException {
 
     /** How the refusal maps to a status. */
     public enum Kind {
+        /** The request is malformed, such as a missing required header: 400. */
+        BAD_REQUEST,
         /** The request was understood and cannot be applied as sent: 422. */
         INVALID,
         /** The request clashes with the state the tenant is in: 409. */
@@ -30,6 +32,10 @@ public final class PointsRefusal extends RuntimeException {
         super(detail);
         this.kind = Objects.requireNonNull(kind, "kind");
         this.code = Objects.requireNonNull(code, "code");
+    }
+
+    public static PointsRefusal badRequest(String code, String detail) {
+        return new PointsRefusal(Kind.BAD_REQUEST, code, detail);
     }
 
     public static PointsRefusal invalid(String detail) {

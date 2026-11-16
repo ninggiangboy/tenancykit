@@ -62,7 +62,7 @@ final class ArchitectureRules {
             TABLE_OWNER.put(table, "program");
         }
         for (String table : List.of("Members", "Orders", "OrderLines", "OrderReturns", "OrderReturnLines",
-                "LedgerEntries", "PointLots", "LotAllocations", "OrderEarns")) {
+                "LedgerEntries", "PointLots", "LotAllocations", "OrderEarns", "Redemptions")) {
             TABLE_OWNER.put(table, "points");
         }
     }

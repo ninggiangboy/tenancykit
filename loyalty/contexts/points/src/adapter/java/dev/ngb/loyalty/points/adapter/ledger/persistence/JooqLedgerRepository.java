@@ -9,10 +9,13 @@ import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.loyalty.points.application.ledger.port.LedgerEntryRow;
 import dev.ngb.loyalty.points.application.ledger.port.LedgerRepository;
 import dev.ngb.loyalty.points.application.ledger.port.LiveLot;
+import dev.ngb.loyalty.points.application.ledger.port.LotAllocation;
 import dev.ngb.loyalty.points.application.ledger.port.PointLotRow;
+import dev.ngb.loyalty.points.domain.ledger.LedgerKind;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
@@ -44,6 +47,7 @@ public class JooqLedgerRepository implements LedgerRepository {
                 .set(LEDGER_ENTRIES.POINTS, entry.points())
                 .set(LEDGER_ENTRIES.ORDER_ID, entry.orderId())
                 .set(LEDGER_ENTRIES.RETURN_ID, entry.returnId())
+                .set(LEDGER_ENTRIES.REDEMPTION_ID, entry.redemptionId())
                 .set(LEDGER_ENTRIES.CREATED_AT, entry.createdAt())
                 .execute();
     }
@@ -95,6 +99,36 @@ public class JooqLedgerRepository implements LedgerRepository {
         if (updated != 1) {
             throw new IllegalStateException("lot " + lotId + " was not consumed");
         }
+    }
+
+    @Override
+    public void restore(UUID lotId, long points) {
+        int updated = dsl.update(POINT_LOTS)
+                .set(POINT_LOTS.REMAINING, POINT_LOTS.REMAINING.plus(DSL.val(points)))
+                .where(POINT_LOTS.ID.eq(lotId))
+                .and(POINT_LOTS.TENANT_ID.eq(tenantId().value()))
+                .execute();
+        if (updated != 1) {
+            throw new IllegalStateException("lot " + lotId + " was not restored");
+        }
+    }
+
+    @Override
+    public Optional<UUID> entryOfRedemption(UUID redemptionId) {
+        return dsl.select(LEDGER_ENTRIES.ID)
+                .from(LEDGER_ENTRIES)
+                .where(LEDGER_ENTRIES.REDEMPTION_ID.eq(redemptionId))
+                .and(LEDGER_ENTRIES.KIND.eq(LedgerKind.REDEEM.name()))
+                .fetchOptional(LEDGER_ENTRIES.ID);
+    }
+
+    @Override
+    public List<LotAllocation> allocations(UUID entryId) {
+        return dsl.select(LOT_ALLOCATIONS.LOT_ID, LOT_ALLOCATIONS.POINTS)
+                .from(LOT_ALLOCATIONS)
+                .where(LOT_ALLOCATIONS.ENTRY_ID.eq(entryId))
+                .orderBy(LOT_ALLOCATIONS.LOT_ID)
+                .fetch(row -> new LotAllocation(row.value1(), row.value2()));
     }
 
     @Override

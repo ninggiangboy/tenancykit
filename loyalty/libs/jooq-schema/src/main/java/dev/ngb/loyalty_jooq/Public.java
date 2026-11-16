@@ -20,6 +20,7 @@ import dev.ngb.loyalty_jooq.tables.Orders;
 import dev.ngb.loyalty_jooq.tables.Outbox;
 import dev.ngb.loyalty_jooq.tables.PointLots;
 import dev.ngb.loyalty_jooq.tables.Promotions;
+import dev.ngb.loyalty_jooq.tables.Redemptions;
 import dev.ngb.loyalty_jooq.tables.ReplicaState;
 import dev.ngb.loyalty_jooq.tables.TenantDomains;
 import dev.ngb.loyalty_jooq.tables.TenantSystems;
@@ -133,6 +134,11 @@ public class Public extends SchemaImpl {
     public final Promotions PROMOTIONS = Promotions.PROMOTIONS;
 
     /**
+     * The table <code>public.redemptions</code>.
+     */
+    public final Redemptions REDEMPTIONS = Redemptions.REDEMPTIONS;
+
+    /**
      * The table <code>public.replica_state</code>.
      */
     public final ReplicaState REPLICA_STATE = ReplicaState.REPLICA_STATE;
@@ -209,6 +215,7 @@ public class Public extends SchemaImpl {
             Outbox.OUTBOX,
             PointLots.POINT_LOTS,
             Promotions.PROMOTIONS,
+            Redemptions.REDEMPTIONS,
             ReplicaState.REPLICA_STATE,
             TenantDomains.TENANT_DOMAINS,
             TenantSystems.TENANT_SYSTEMS,

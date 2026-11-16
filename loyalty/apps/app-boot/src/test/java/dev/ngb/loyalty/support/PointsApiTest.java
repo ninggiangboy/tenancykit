@@ -16,6 +16,7 @@ import java.util.UUID;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -158,6 +159,39 @@ public abstract class PointsApiTest extends LoyaltyApiTest {
                 tenant,
                 get("/api/v1/members/" + externalRef + "/ledger").param("limit", Integer.toString(limit)),
                 LoyaltyPermissions.MEMBER_READ);
+    }
+
+    // ------------------------------------------------------------------ redemptions
+
+    /** One spend as the POS sends it, with the key the caller chose for it. */
+    protected ApiResponse postRedemption(
+            TenantId tenant, String externalRef, String idempotencyKey, long points, String reference) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("points", points);
+        if (reference != null) {
+            body.put("reference", reference);
+        }
+        MockHttpServletRequestBuilder request = post("/api/v1/members/" + externalRef + "/redemptions")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(JSON.writeValueAsString(body));
+        if (idempotencyKey != null) {
+            request = request.header("Idempotency-Key", idempotencyKey);
+        }
+        return call(tenant, request, LoyaltyPermissions.POINTS_REDEEM);
+    }
+
+    protected ApiResponse getRedemption(TenantId tenant, String externalRef, UUID redemptionId) {
+        return call(
+                tenant,
+                get("/api/v1/members/" + externalRef + "/redemptions/" + redemptionId),
+                LoyaltyPermissions.MEMBER_READ);
+    }
+
+    protected ApiResponse reverseRedemption(TenantId tenant, String externalRef, UUID redemptionId) {
+        return call(
+                tenant,
+                post("/api/v1/members/" + externalRef + "/redemptions/" + redemptionId + "/reversal"),
+                LoyaltyPermissions.POINTS_REDEEM);
     }
 
     /** The member's balance as the member endpoint computes it, or 0 for a member loyalty does not have. */

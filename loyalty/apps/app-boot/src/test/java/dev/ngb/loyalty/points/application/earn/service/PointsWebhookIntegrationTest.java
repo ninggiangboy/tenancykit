@@ -242,6 +242,102 @@ class PointsWebhookIntegrationTest extends PointsApiTest {
                 .containsExactlyInAnyOrder(PointsEvents.MEMBER_ENROLLED, PointsEvents.POINTS_EARNED);
     }
 
+    @Test
+    void aSpendAnnouncesTheRedemptionToEachSubscribedEndpointOnce() {
+        TenantId tenant = tenant();
+        seedRules(tenant, RULES);
+        subscribe(tenant, "/hook", PointsEvents.POINTS_REDEEMED);
+        subscribe(tenant, "/second", PointsEvents.POINTS_REDEEMED);
+        String memberId = putMember(tenant, "M-7", "Ada").json().get("memberId").asString();
+        putOrder(tenant, "O-1", orderBody("M-7", "USD", OCCURRED_AT, "ST-01", 5000));
+
+        ApiResponse spent = postRedemption(tenant, "M-7", "K-1", 10, "RECEIPT-1");
+        assertThat(spent.status()).as("the spend answered " + spent.body()).isEqualTo(201);
+        deliverAll(tenant);
+
+        assertThat(received).as("one delivery per subscribed endpoint").hasSize(2);
+        for (Received delivery : received) {
+            assertThat(delivery.eventType()).isEqualTo(PointsEvents.POINTS_REDEEMED);
+            assertThat(delivery.eventId()).isEqualTo(received.getFirst().eventId());
+            JsonNode data = delivery.data();
+            assertThat(data.get("memberId").asString()).isEqualTo(memberId);
+            assertThat(data.get("externalRef").asString()).isEqualTo("M-7");
+            assertThat(data.get("redemptionId").asString()).isEqualTo(spent.json().get("redemptionId").asString());
+            assertThat(data.get("points").asLong()).isEqualTo(10);
+            assertThat(data.get("reference").asString()).isEqualTo("RECEIPT-1");
+            assertThat(data.get("available").asLong()).isEqualTo(40);
+            assertThat(data.get("debt").asLong()).isZero();
+            assertConformsToContract(delivery.eventType(), data);
+            assertSignedByItsEndpoint(delivery);
+        }
+        assertThat(outboxRows(tenant)).as("the enrolment, the earn and the spend").isEqualTo(3);
+    }
+
+    @Test
+    void aReversalAnnouncesTheRedemptionItRestored() {
+        TenantId tenant = tenant();
+        seedRules(tenant, RULES);
+        subscribe(tenant, "/hook", PointsEvents.POINTS_REDEMPTION_REVERSED);
+        putMember(tenant, "M-8", null);
+        putOrder(tenant, "O-1", orderBody("M-8", "USD", OCCURRED_AT, "ST-01", 5000));
+        String redemptionId = postRedemption(tenant, "M-8", "K-1", 10, "RECEIPT-1")
+                .json()
+                .get("redemptionId")
+                .asString();
+
+        assertThat(reverseRedemption(tenant, "M-8", java.util.UUID.fromString(redemptionId)).status())
+                .isEqualTo(200);
+        deliverAll(tenant);
+
+        Received reversed = only(PointsEvents.POINTS_REDEMPTION_REVERSED);
+        assertThat(reversed.data().get("redemptionId").asString()).isEqualTo(redemptionId);
+        assertThat(reversed.data().get("points").asLong()).isEqualTo(10);
+        assertThat(reversed.data().get("reference").asString()).isEqualTo("RECEIPT-1");
+        assertThat(reversed.data().get("available").asLong()).as("the points came back to the member").isEqualTo(50);
+        assertThat(reversed.data().get("debt").asLong()).isZero();
+        assertConformsToContract(reversed.eventType(), reversed.data());
+        assertSignedByItsEndpoint(reversed);
+        assertThat(outboxRows(tenant)).as("the enrolment, the earn, the spend and the reversal").isEqualTo(4);
+    }
+
+    @Test
+    void aReplayedOrRolledBackSpendAndReversalAnnounceNothing() {
+        TenantId tenant = tenant();
+        seedRules(tenant, RULES);
+        subscribe(tenant, "/hook", PointsEvents.POINTS_REDEEMED, PointsEvents.POINTS_REDEMPTION_REVERSED);
+        putMember(tenant, "M-9", null);
+        putOrder(tenant, "O-1", orderBody("M-9", "USD", OCCURRED_AT, "ST-01", 5000));
+        String redemptionId = postRedemption(tenant, "M-9", "K-1", 10, "RECEIPT-1")
+                .json()
+                .get("redemptionId")
+                .asString();
+
+        assertThat(postRedemption(tenant, "M-9", "K-1", 10, "RECEIPT-1").status()).as("the replay").isEqualTo(200);
+        assertThat(reverseRedemption(tenant, "M-9", java.util.UUID.fromString(redemptionId)).status()).isEqualTo(200);
+        assertThat(reverseRedemption(tenant, "M-9", java.util.UUID.fromString(redemptionId)).status())
+                .as("the reversed reversal")
+                .isEqualTo(200);
+        deliverAll(tenant);
+
+        assertThat(received).as("one spend and one reversal happened").hasSize(2);
+        assertThat(received).extracting(Received::eventType)
+                .containsExactlyInAnyOrder(PointsEvents.POINTS_REDEEMED, PointsEvents.POINTS_REDEMPTION_REVERSED);
+        assertThat(outboxRows(tenant)).isEqualTo(4);
+
+        // A request whose transaction fails leaves no redemption and no announcement behind.
+        Runnable spendInAFailingTransaction = () -> {
+            assertThat(postRedemption(tenant, "M-9", "K-2", 5, "RECEIPT-2").status()).isEqualTo(201);
+            throw new IllegalStateException("the request could not be committed");
+        };
+        assertThatThrownBy(() -> inTenant(tenant, () -> unitOfWork.transactional(spendInAFailingTransaction)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(outboxRows(tenant)).as("the event went back with the transaction").isEqualTo(4);
+        assertThat(scalar(tenant, "select count(*) from redemptions")).as("the spend rolled back with it").isEqualTo(1);
+        deliverAll(tenant);
+        assertThat(received).hasSize(2);
+    }
+
     // ------------------------------------------------------------------ receiver
 
     /** One delivery as the receiver saw it: where it arrived, what the headers said and the envelope it carried. */

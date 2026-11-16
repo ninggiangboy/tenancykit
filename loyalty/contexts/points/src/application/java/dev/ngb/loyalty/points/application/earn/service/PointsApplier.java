@@ -46,7 +46,8 @@ public class PointsApplier {
         long debtAfter = member.debt() - debtRepaid;
         long toLot = points - debtRepaid;
         UUID entryId = ids.newId();
-        ledger.addEntry(new LedgerEntryRow(entryId, member.id(), LedgerKind.EARN, points, orderId, null, now));
+        ledger.addEntry(
+                new LedgerEntryRow(entryId, member.id(), LedgerKind.EARN, points, orderId, null, null, now));
         if (toLot > 0) {
             ledger.addLot(new PointLotRow(
                     ids.newId(), member.id(), entryId, orderId, toLot, now, expiry(now, expiryMonths)));
@@ -62,7 +63,8 @@ public class PointsApplier {
     /** Takes points back for a return: the order's own lot first, then the lots that expire soonest, then debt. */
     public Applied takeBack(MemberRow member, long points, UUID orderId, UUID returnId, Instant now) {
         UUID entryId = ids.newId();
-        ledger.addEntry(new LedgerEntryRow(entryId, member.id(), LedgerKind.CLAWBACK, points, orderId, returnId, now));
+        ledger.addEntry(new LedgerEntryRow(
+                entryId, member.id(), LedgerKind.CLAWBACK, points, orderId, returnId, null, now));
         long outstanding = points;
         for (LiveLot lot : consumable(ledger.liveLots(member.id(), now), orderId)) {
             if (outstanding == 0) {
