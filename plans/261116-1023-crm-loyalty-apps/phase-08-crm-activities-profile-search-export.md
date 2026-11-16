@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "crm activities, 360 profile, search and export"
-status: pending
+status: done
 priority: P2
 effort: "M"
 dependencies: [6, 7]

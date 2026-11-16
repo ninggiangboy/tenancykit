@@ -1,7 +1,7 @@
 ---
 phase: 12
 title: "loyalty balance, redemption, reversal and debt"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [11]
