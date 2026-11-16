@@ -25,6 +25,7 @@ import dev.ngb.loyalty.points.application.member.command.EnrolMemberUseCase;
 import dev.ngb.loyalty.points.application.member.port.MemberRepository;
 import dev.ngb.loyalty.points.application.member.query.MemberQueries;
 import dev.ngb.loyalty.points.application.member.query.MemberReadRepository;
+import dev.ngb.loyalty.points.application.member.query.TierProgressReadRepository;
 import dev.ngb.loyalty.points.application.order.command.RecordOrderUseCase;
 import dev.ngb.loyalty.points.application.order.command.RecordReturnUseCase;
 import dev.ngb.loyalty.points.application.order.port.OrderRepository;
@@ -45,11 +46,10 @@ import org.springframework.context.annotation.Configuration;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Wires the points context: its four features, the calculator they share, and the one question it asks of the tiers.
+ * Wires the points context: its four features, the calculator they share, and the two questions it asks of the tiers.
  *
- * <p>The tier evaluation is a no-op here. It is wired permissively — a member never moves up — because the evaluation over
- * a member's spend belongs to the context that owns the tier list, which supplies the answer through the same port without
- * this context importing it.
+ * <p>Both answers come from the context that owns the tier list, through the seams this context declares: the rise check
+ * that runs after an order and the distance to the next tier a member read shows. Neither side imports the other.
  */
 @Configuration(proxyBeanMethods = false)
 class PointsConfiguration {
@@ -136,11 +136,6 @@ class PointsConfiguration {
     }
 
     @Bean
-    TierEvaluator tierEvaluator() {
-        return memberId -> {};
-    }
-
-    @Bean
     EnrolMemberUseCase enrolMemberUseCase(
             UnitOfWork unitOfWork,
             MemberRepository members,
@@ -178,17 +173,22 @@ class PointsConfiguration {
             PointsApplier applier,
             EarnCalculator calculator,
             PointsEvents events,
+            TierEvaluator tierEvaluator,
             TenantContext tenantContext,
             IdGenerator ids,
             Clock clock) {
-        return new RecordReturnUseCase(unitOfWork, orders, members, ledger, applier, calculator, events, tenantContext,
-                ids, clock);
+        return new RecordReturnUseCase(unitOfWork, orders, members, ledger, applier, calculator, events,
+                tierEvaluator, tenantContext, ids, clock);
     }
 
     @Bean
     MemberQueries memberQueries(
-            UnitOfWork unitOfWork, MemberReadRepository members, ProgramReader programReader, Clock clock) {
-        return new MemberQueries(unitOfWork, members, programReader, clock);
+            UnitOfWork unitOfWork,
+            MemberReadRepository members,
+            ProgramReader programReader,
+            TierProgressReadRepository tierProgress,
+            Clock clock) {
+        return new MemberQueries(unitOfWork, members, programReader, tierProgress, clock);
     }
 
     @Bean

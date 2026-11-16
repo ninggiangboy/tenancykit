@@ -7,6 +7,7 @@ import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.loyalty.points.application.earn.exception.PointsRefusal;
+import dev.ngb.loyalty.points.application.earn.port.TierEvaluator;
 import dev.ngb.loyalty.points.application.earn.service.PointsApplier;
 import dev.ngb.loyalty.points.application.earn.service.PointsEvents;
 import dev.ngb.loyalty.points.application.ledger.port.LedgerRepository;
@@ -57,6 +58,7 @@ public class RecordReturnUseCase {
     private final PointsApplier applier;
     private final EarnCalculator calculator;
     private final PointsEvents events;
+    private final TierEvaluator tierEvaluator;
     private final TenantContext tenantContext;
     private final IdGenerator ids;
     private final Clock clock;
@@ -69,6 +71,7 @@ public class RecordReturnUseCase {
             PointsApplier applier,
             EarnCalculator calculator,
             PointsEvents events,
+            TierEvaluator tierEvaluator,
             TenantContext tenantContext,
             IdGenerator ids,
             Clock clock) {
@@ -79,6 +82,7 @@ public class RecordReturnUseCase {
         this.applier = applier;
         this.calculator = calculator;
         this.events = events;
+        this.tierEvaluator = tierEvaluator;
         this.tenantContext = tenantContext;
         this.ids = ids;
         this.clock = clock;
@@ -134,6 +138,7 @@ public class RecordReturnUseCase {
             events.pointsClawedBack(tenantId, now, member.id(), member.externalRef(), orderRef, returnRef, -delta,
                     applied.debtAdded(), applied.available(), applied.debtAfter());
         }
+        tierEvaluator.afterReturn(member.id());
         return result(order.worth(worth.points(), worth.spendAmount()), member, now, false);
     }
 

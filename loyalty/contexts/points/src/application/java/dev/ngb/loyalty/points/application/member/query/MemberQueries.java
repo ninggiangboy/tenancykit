@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Reads one member with what the balance cannot store: the points that expire in the next window and the tier the
- * program's list gives it today.
+ * Reads one member with what the balance cannot store: the points that expire in the next window, the tier the program's
+ * list gives it today and the spend still missing for the tier above.
  *
  * <p>The default window is 30 days and the longest is a year, which is what the API document declares; the balance itself
  * is always computed from the lots, so the window only decides which of them are listed.
@@ -27,13 +27,19 @@ public class MemberQueries {
     private final UnitOfWork unitOfWork;
     private final MemberReadRepository members;
     private final ProgramReader programReader;
+    private final TierProgressReadRepository tierProgress;
     private final Clock clock;
 
     public MemberQueries(
-            UnitOfWork unitOfWork, MemberReadRepository members, ProgramReader programReader, Clock clock) {
+            UnitOfWork unitOfWork,
+            MemberReadRepository members,
+            ProgramReader programReader,
+            TierProgressReadRepository tierProgress,
+            Clock clock) {
         this.unitOfWork = unitOfWork;
         this.members = members;
         this.programReader = programReader;
+        this.tierProgress = tierProgress;
         this.clock = clock;
     }
 
@@ -63,12 +69,22 @@ public class MemberQueries {
             return new MemberDetail(
                     member,
                     tier.map(MemberQueries::summary).orElse(null),
-                    next == null ? null : summary(next));
+                    next == null ? null : next(next, member.memberId()));
         });
     }
 
     private static MemberDetail.TierSummary summary(TierView tier) {
-        return new MemberDetail.TierSummary(tier.code(), tier.name(), tier.minSpend(), tier.earnMultiplier());
+        return new MemberDetail.TierSummary(tier.code(), tier.name(), tier.minSpend(), tier.earnMultiplier(), null);
+    }
+
+    /** The tier above, with the spend still missing for it: the number comes from the evaluation that owns the window. */
+    private MemberDetail.TierSummary next(TierView tier, java.util.UUID memberId) {
+        return new MemberDetail.TierSummary(
+                tier.code(),
+                tier.name(),
+                tier.minSpend(),
+                tier.earnMultiplier(),
+                tierProgress.remainingSpend(memberId, tier.minSpend()));
     }
 
     private static int window(Integer expiringWithinDays) {

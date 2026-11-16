@@ -11,6 +11,8 @@ import dev.ngb.core.webhook.WebhookSigner;
 import dev.ngb.loyalty.support.EarnVectors;
 import dev.ngb.loyalty.support.PointsApiTest;
 import dev.ngb.loyalty.support.RepositoryPaths;
+import dev.ngb.loyalty.tiers.application.evaluation.service.TierEvaluationService;
+import dev.ngb.loyalty.tiers.application.evaluation.service.TierEvents;
 import dev.ngb.loyalty.webhook.application.delivery.command.DeliverWebhooksUseCase;
 import dev.ngb.loyalty.webhook.application.endpoint.command.CreateEndpointUseCase;
 import java.io.IOException;
@@ -60,6 +62,7 @@ class PointsWebhookIntegrationTest extends PointsApiTest {
     @Autowired CreateEndpointUseCase createEndpoint;
     @Autowired DeliverWebhooksUseCase deliver;
     @Autowired OutboxRelay relay;
+    @Autowired TierEvaluationService tierEvaluation;
 
     private final List<Received> received = Collections.synchronizedList(new ArrayList<>());
     private final Map<String, String> secrets = new HashMap<>();
@@ -336,6 +339,73 @@ class PointsWebhookIntegrationTest extends PointsApiTest {
         assertThat(scalar(tenant, "select count(*) from redemptions")).as("the spend rolled back with it").isEqualTo(1);
         deliverAll(tenant);
         assertThat(received).hasSize(2);
+    }
+
+    @Test
+    void anOrderThatCrossesAThresholdAnnouncesTheRise() {
+        TenantId tenant = tenant();
+        seedRules(tenant, RULES);
+        subscribe(tenant, "/hook", TierEvents.TIER_CHANGED);
+
+        ApiResponse order = putOrder(tenant, "O-1", orderBody("M-10", "USD", OCCURRED_AT, "ST-01", 100_000));
+        assertThat(order.status()).isEqualTo(201);
+        deliverAll(tenant);
+
+        Received changed = only(TierEvents.TIER_CHANGED);
+        JsonNode data = changed.data();
+        assertThat(data.get("memberId").asString())
+                .isEqualTo(getMember(tenant, "M-10").json().get("memberId").asString());
+        assertThat(data.get("externalRef").asString()).isEqualTo("M-10");
+        assertThat(data.get("fromTier").asString()).isEqualTo("BRONZE");
+        assertThat(data.get("toTier").asString()).isEqualTo("SILVER");
+        assertThat(data.get("direction").asString()).isEqualTo("UP");
+        assertThat(data.get("qualifyingSpend").asLong()).isEqualTo(100_000);
+        assertConformsToContract(changed.eventType(), data);
+        assertSignedByItsEndpoint(changed);
+    }
+
+    @Test
+    void theEvaluationAnnouncesTheFallItDecides() {
+        TenantId tenant = tenant();
+        seedRules(tenant, RULES);
+        subscribe(tenant, "/hook", TierEvents.TIER_CHANGED);
+        putOrder(tenant, "O-1", orderBody("M-11", "USD", OCCURRED_AT, "ST-01", 100_000));
+        assertThat(putReturn(tenant, "O-1", "R-1", returnBody(RETURNED_AT, BigDecimal.ONE, 100_000)).status())
+                .isEqualTo(201);
+        deliverAll(tenant);
+        assertThat(only(TierEvents.TIER_CHANGED).data().get("direction").asString())
+                .as("a return does not announce a fall")
+                .isEqualTo("UP");
+
+        inTenant(tenant, () -> tierEvaluation.reviewDue());
+        deliverAll(tenant);
+
+        List<Received> falls = received.stream()
+                .filter(delivery -> TierEvents.TIER_CHANGED.equals(delivery.eventType()))
+                .filter(delivery -> "DOWN".equals(delivery.data().get("direction").asString()))
+                .toList();
+        assertThat(falls).as("the pass announces the fall").hasSize(1);
+        JsonNode data = falls.getFirst().data();
+        assertThat(data.get("fromTier").asString()).isEqualTo("SILVER");
+        assertThat(data.get("toTier").asString()).isEqualTo("BRONZE");
+        assertThat(data.get("qualifyingSpend").asLong()).as("the return took the whole spend back").isZero();
+        assertConformsToContract(TierEvents.TIER_CHANGED, data);
+        assertSignedByItsEndpoint(falls.getFirst());
+    }
+
+    @Test
+    void aTierThatDoesNotChangeAnnouncesNothing() {
+        TenantId tenant = tenant();
+        seedRules(tenant, RULES);
+        subscribe(tenant, "/hook", TierEvents.TIER_CHANGED);
+
+        putOrder(tenant, "O-1", orderBody("M-12", "USD", OCCURRED_AT, "ST-01", 2500));
+        putReturn(tenant, "O-1", "R-1", returnBody(RETURNED_AT, BigDecimal.ONE, 1000));
+        inTenant(tenant, () -> tierEvaluation.reviewDue());
+        deliverAll(tenant);
+
+        assertThat(received).as("the member stayed in the tier it held").isEmpty();
+        assertThat(scalar(tenant, "select count(*) from outbox where type = 'tier.changed'")).isZero();
     }
 
     // ------------------------------------------------------------------ receiver

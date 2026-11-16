@@ -108,6 +108,13 @@ public final class Program {
         this.version++;
     }
 
+    /** Records that every member has been computed again against the tier list, so the list owes no further pass. */
+    public void markTiersClean(Instant now) {
+        this.tiersDirty = false;
+        this.updatedAt = now;
+        this.version++;
+    }
+
     public TenantId tenantId() {
         return tenantId;
     }

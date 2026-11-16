@@ -4,8 +4,11 @@ import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.event.EventEnvelope;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.IdGenerator;
+import dev.ngb.loyalty.points.application.expiry.port.DueLot;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -22,6 +25,8 @@ public class PointsEvents {
     public static final String POINTS_CLAWED_BACK = "points.clawed-back";
     public static final String POINTS_REDEEMED = "points.redeemed";
     public static final String POINTS_REDEMPTION_REVERSED = "points.redemption-reversed";
+    public static final String POINTS_EXPIRING = "points.expiring";
+    public static final String POINTS_EXPIRED = "points.expired";
 
     private final EventPublisher publisher;
     private final IdGenerator ids;
@@ -130,6 +135,68 @@ public class PointsEvents {
         payload.put("available", available);
         payload.put("debt", debt);
         publish(tenantId, POINTS_REDEMPTION_REVERSED, memberId, at, payload);
+    }
+
+    /**
+     * Lots entered the program's notice window since the last run: what they hold at notice time and the soonest expiry
+     * among them. It announces points that will be taken away, so the member's balance is the one it still has.
+     */
+    public void pointsExpiring(
+            TenantId tenantId,
+            Instant at,
+            UUID memberId,
+            String externalRef,
+            List<DueLot> lots,
+            int noticeDays,
+            long available) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("memberId", memberId.toString());
+        payload.put("externalRef", externalRef);
+        payload.put("points", total(lots));
+        payload.put("lots", lotPayloads(lots));
+        payload.put("earliestExpiresAt", lots.stream().map(DueLot::expiresAt).min(Comparator.naturalOrder())
+                .orElseThrow()
+                .toString());
+        payload.put("noticeDays", noticeDays);
+        payload.put("available", available);
+        publish(tenantId, POINTS_EXPIRING, memberId, at, payload);
+    }
+
+    /** One expiry transaction wrote off the member's due lots, which is the whole of what it took. */
+    public void pointsExpired(
+            TenantId tenantId,
+            Instant at,
+            UUID memberId,
+            String externalRef,
+            List<DueLot> lots,
+            long available,
+            long debt) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("memberId", memberId.toString());
+        payload.put("externalRef", externalRef);
+        payload.put("points", total(lots));
+        payload.put("lots", lotPayloads(lots));
+        payload.put("available", available);
+        payload.put("debt", debt);
+        publish(tenantId, POINTS_EXPIRED, memberId, at, payload);
+    }
+
+    private static long total(List<DueLot> lots) {
+        return lots.stream().mapToLong(DueLot::remaining).sum();
+    }
+
+    /** The lots in expiry order, each with what it still held when the run reached it. */
+    private static List<Map<String, Object>> lotPayloads(List<DueLot> lots) {
+        return lots.stream()
+                .sorted(Comparator.comparing(DueLot::expiresAt).thenComparing(DueLot::lotId))
+                .map(lot -> {
+                    Map<String, Object> entry = new LinkedHashMap<>();
+                    entry.put("lotId", lot.lotId().toString());
+                    entry.put("points", lot.remaining());
+                    entry.put("expiresAt", lot.expiresAt().toString());
+                    return entry;
+                })
+                .toList();
     }
 
     private void publish(

@@ -118,10 +118,12 @@ loyalty:
     enabled: ${LOYALTY_JOBS_ENABLED:true}
     # At most this many tenants run at once across all jobs; keep it below the connection pool.
     tenant-parallelism: ${LOYALTY_WORKER_TENANT_PARALLELISM:4}
-  # The expiry run: hourly by default, one member at a time, member lock first.
+  # The expiry run: hourly by default, one member at a time, member lock first. The notice run shares its batch and is
+  # daily by default; a Tenant's own notice window decides whether it announces anything at all.
   expiry:
     batch-size: ${LOYALTY_EXPIRY_BATCH_SIZE:500}
     interval: ${LOYALTY_EXPIRY_INTERVAL:PT1H}
+    notice-interval: ${LOYALTY_EXPIRY_NOTICE_INTERVAL:P1D}
   # The daily tier evaluation: a member falls a tier here and never inside an earn.
   tier-evaluation:
     batch-size: ${LOYALTY_TIER_EVALUATION_BATCH_SIZE:500}

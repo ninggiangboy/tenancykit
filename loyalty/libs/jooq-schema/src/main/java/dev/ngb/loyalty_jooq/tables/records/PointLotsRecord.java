@@ -156,6 +156,21 @@ public class PointLotsRecord extends UpdatableRecordImpl<PointLotsRecord> {
         return (Instant) get(8);
     }
 
+    /**
+     * Setter for <code>public.point_lots.expiry_noticed_at</code>.
+     */
+    public PointLotsRecord setExpiryNoticedAt(Instant value) {
+        set(9, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.point_lots.expiry_noticed_at</code>.
+     */
+    public Instant getExpiryNoticedAt() {
+        return (Instant) get(9);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -179,7 +194,7 @@ public class PointLotsRecord extends UpdatableRecordImpl<PointLotsRecord> {
     /**
      * Create a detached, initialised PointLotsRecord
      */
-    public PointLotsRecord(UUID tenantId, UUID id, UUID memberId, UUID entryId, UUID orderId, Long earned, Long remaining, Instant earnedAt, Instant expiresAt) {
+    public PointLotsRecord(UUID tenantId, UUID id, UUID memberId, UUID entryId, UUID orderId, Long earned, Long remaining, Instant earnedAt, Instant expiresAt, Instant expiryNoticedAt) {
         super(PointLots.POINT_LOTS);
 
         setTenantId(tenantId);
@@ -191,6 +206,7 @@ public class PointLotsRecord extends UpdatableRecordImpl<PointLotsRecord> {
         setRemaining(remaining);
         setEarnedAt(earnedAt);
         setExpiresAt(expiresAt);
+        setExpiryNoticedAt(expiryNoticedAt);
         resetTouchedOnNotNull();
     }
 }

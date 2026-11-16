@@ -4,6 +4,7 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
+import dev.ngb.loyalty.points.api.tier.MemberTiers;
 import dev.ngb.loyalty.program.adapter.program.persistence.JooqProgramReadRepository;
 import dev.ngb.loyalty.program.adapter.program.persistence.JooqProgramRepository;
 import dev.ngb.loyalty.program.adapter.promotion.persistence.JooqPromotionReadRepository;
@@ -12,6 +13,7 @@ import dev.ngb.loyalty.program.adapter.promotion.persistence.PromotionConditions
 import dev.ngb.loyalty.program.adapter.tier.persistence.JooqTierReadRepository;
 import dev.ngb.loyalty.program.adapter.tier.persistence.JooqTierRepository;
 import dev.ngb.loyalty.program.api.program.ProgramReader;
+import dev.ngb.loyalty.program.api.tier.TierListRevisions;
 import dev.ngb.loyalty.program.application.program.command.SaveProgramUseCase;
 import dev.ngb.loyalty.program.application.program.port.LedgerEntryPort;
 import dev.ngb.loyalty.program.application.program.port.ProgramRepository;
@@ -28,6 +30,7 @@ import dev.ngb.loyalty.program.application.tier.port.MemberTierPort;
 import dev.ngb.loyalty.program.application.tier.port.TierRepository;
 import dev.ngb.loyalty.program.application.tier.query.TierQueries;
 import dev.ngb.loyalty.program.application.tier.query.TierReadRepository;
+import dev.ngb.loyalty.program.application.tier.service.TierListRevisionsService;
 import org.jooq.DSLContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,9 +40,9 @@ import tools.jackson.databind.json.JsonMapper;
  * Wires the program context: its three features, their repositories and the two questions it asks of the contexts that
  * own the points ledger and the members' tiers.
  *
- * <p>The two questions are answered permissively here because the data they ask about does not exist yet: no ledger entry
- * means the currency is still free to change, and no member holds a tier before the evaluation exists. Each answer is
- * replaced by the context that owns the rows when that context arrives.
+ * <p>The ledger question is still answered permissively because its rows arrive with the erasure rules: no ledger entry
+ * means the currency is still free to change. The tier question is answered by the members themselves, so a tier a member
+ * still holds cannot leave the list.
  */
 @Configuration(proxyBeanMethods = false)
 class ProgramConfiguration {
@@ -85,8 +88,14 @@ class ProgramConfiguration {
     }
 
     @Bean
-    MemberTierPort memberTierPort() {
-        return tierCode -> false;
+    MemberTierPort memberTierPort(MemberTiers memberTiers) {
+        return memberTiers::holds;
+    }
+
+    @Bean
+    TierListRevisions tierListRevisions(
+            UnitOfWork unitOfWork, ProgramRepository programs, TenantContext tenantContext, Clock clock) {
+        return new TierListRevisionsService(unitOfWork, programs, tenantContext, clock);
     }
 
     @Bean

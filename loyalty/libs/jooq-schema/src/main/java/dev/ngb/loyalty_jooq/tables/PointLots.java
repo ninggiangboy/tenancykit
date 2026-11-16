@@ -106,6 +106,11 @@ public class PointLots extends TableImpl<PointLotsRecord> {
      */
     public final TableField<PointLotsRecord, Instant> EXPIRES_AT = createField(DSL.name("expires_at"), SQLDataType.INSTANT.nullable(false), this, "");
 
+    /**
+     * The column <code>public.point_lots.expiry_noticed_at</code>.
+     */
+    public final TableField<PointLotsRecord, Instant> EXPIRY_NOTICED_AT = createField(DSL.name("expiry_noticed_at"), SQLDataType.INSTANT, this, "");
+
     private PointLots(Name alias, Table<PointLotsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

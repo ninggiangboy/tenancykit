@@ -42,10 +42,14 @@ public class MemberController {
     /** The optional profile of an enrolment; nothing else about a member is a caller's to set. */
     public record MemberUpsert(String displayName) {}
 
-    public record TierResponse(String code, String name, long minSpend, BigDecimal earnMultiplier) {
+    /** A tier as a member read shows it; {@code remainingSpend} is the spend still missing for it, null on the one held. */
+    public record TierResponse(String code, String name, long minSpend, BigDecimal earnMultiplier, Long remainingSpend) {
 
         static TierResponse of(MemberDetail.TierSummary tier) {
-            return tier == null ? null : new TierResponse(tier.code(), tier.name(), tier.minSpend(), tier.earnMultiplier());
+            return tier == null
+                    ? null
+                    : new TierResponse(
+                            tier.code(), tier.name(), tier.minSpend(), tier.earnMultiplier(), tier.remainingSpend());
         }
     }
 

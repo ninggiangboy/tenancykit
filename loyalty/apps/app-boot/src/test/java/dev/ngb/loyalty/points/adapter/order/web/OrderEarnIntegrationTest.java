@@ -27,6 +27,16 @@ class OrderEarnIntegrationTest extends PointsApiTest {
             new EarnVectors.Tier("SILVER", 100000L, new BigDecimal("1.50")));
     private static final EarnVectors.Rules RULES = new EarnVectors.Rules(PROGRAM, TIERS, List.of());
 
+    /**
+     * A list whose second tier the burst below cannot reach: a member that crossed a threshold would earn at the higher
+     * multiplier for the orders that came after it, and which of the fifty orders those are would depend on the order the
+     * calls happened to run in.
+     */
+    private static final EarnVectors.Rules OUT_OF_REACH =
+            new EarnVectors.Rules(PROGRAM, List.of(
+                    new EarnVectors.Tier("BRONZE", 0L, new BigDecimal("1.00")),
+                    new EarnVectors.Tier("SILVER", 200000L, new BigDecimal("1.50"))), List.of());
+
     /** Four database connections are what the harness holds, so this is as wide as a burst can be without queueing. */
     private static final int WIDTH = 4;
 
@@ -87,7 +97,7 @@ class OrderEarnIntegrationTest extends PointsApiTest {
     @Test
     void fiftyConcurrentOrdersLeaveTheLedgerEqualToTheSumOfWhatWasGranted() {
         TenantId tenant = tenant();
-        seedRules(tenant, RULES);
+        seedRules(tenant, OUT_OF_REACH);
 
         List<ApiResponse> answers = ParallelCalls.run(50, WIDTH, index -> putOrder(
                 tenant, "O-" + index, orderBody("M-1", "USD", OCCURRED_AT, "ST-0" + (index % 5), 100L * (index + 1))));
