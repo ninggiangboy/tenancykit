@@ -1,0 +1,104 @@
+spring:
+  application:
+    name: booking
+  profiles:
+    # With no active profile (dev, bootRun and every default-mode test) both runtime profiles are active, which
+    # keeps the all-in-one behaviour. The two profile files stay out of that run: each guards itself with an
+    # on-profile expression so only a runtime that runs alone applies its settings.
+    default: api,worker
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${BOOKING_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}
+          jwk-set-uri: ${BOOKING_OIDC_JWK_SET_URI:${BOOKING_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}/protocol/openid-connect/certs}
+          audiences: booking
+  datasource:
+    url: ${BOOKING_DB_URL:jdbc:postgresql://localhost:5432/booking}
+    username: ${BOOKING_DB_USER:booking_app}
+    password: ${BOOKING_DB_PASSWORD:booking_app}
+  rabbitmq:
+    host: ${BOOKING_RABBITMQ_HOST:localhost}
+    port: ${BOOKING_RABBITMQ_PORT:5672}
+    username: ${BOOKING_RABBITMQ_USER:booking}
+    password: ${BOOKING_RABBITMQ_PASSWORD:booking}
+  flyway:
+    locations: classpath:db/migration
+    # Migrations run as the table owner; the application connects as booking_app, which owns nothing.
+    url: ${BOOKING_MIGRATION_DB_URL:${BOOKING_DB_URL:jdbc:postgresql://localhost:5432/booking}}
+    user: ${BOOKING_MIGRATION_DB_USER:booking_owner}
+    password: ${BOOKING_MIGRATION_DB_PASSWORD:booking_owner}
+    placeholders:
+      # The baseline creates booking_app with this password. Without the placeholder Flyway aborts the whole set.
+      appDbPassword: ${BOOKING_DB_PASSWORD:booking_app}
+  task:
+    scheduling:
+      pool:
+        size: ${BOOKING_SCHEDULER_POOL_SIZE:4}
+      shutdown:
+        await-termination: true
+        await-termination-period: 30s
+
+server:
+  port: ${BOOKING_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          # The replica is part of readiness: the api runtime serves nothing useful until one rebuild has finished.
+          include: readinessState,db,replicaState
+
+suite:
+  app-code: booking
+  replica:
+    platform-base-url: ${BOOKING_PLATFORM_BASE_URL:http://localhost:8082}
+    client-id: ${PLATFORM_BOOKING_SERVICE_CLIENT_ID:booking}
+    client-secret: ${PLATFORM_BOOKING_SERVICE_CLIENT_SECRET:booking}
+    rebuild-on-start: ${BOOKING_REPLICA_REBUILD_ON_START:true}
+    page-limit: 200
+    request-timeout: PT10S
+    platform-issuer: ${BOOKING_PLATFORM_ISSUER:http://localhost:8082}
+    platform-jwk-set-uri: ${BOOKING_PLATFORM_JWK_SET_URI:http://localhost:8082/.well-known/jwks.json}
+    # The worker's queue; the api runtime serves HTTP and consumes nothing.
+    queue: booking.platform-events
+    exchange: platform.events
+    max-attempts: 3
+    retry-backoff: PT0.5S
+    refresh-skew: PT30S
+
+booking:
+  messaging:
+    exchange: ${BOOKING_MESSAGING_EXCHANGE:platform.events}
+    queue: ${BOOKING_MESSAGING_QUEUE:booking.platform-events}
+  jobs:
+    enabled: ${BOOKING_JOBS_ENABLED:true}
+    # At most this many tenants run at once across all jobs; keep it below the connection pool.
+    tenant-parallelism: ${BOOKING_WORKER_TENANT_PARALLELISM:4}
+  housekeeping:
+    enabled: ${BOOKING_HOUSEKEEPING_ENABLED:true}
+    inbox-retention: P30D
+    dead-outbox-retention: P7D
+    batch-size: 500
+    interval: PT1H
+  timings:
+    hold-ttl-seconds: ${BOOKING_HOLD_TTL_SECONDS:600}
+    max-extension-seconds: ${BOOKING_MAX_EXTENSION_SECONDS:1800}
+    grace-seconds: ${BOOKING_GRACE_SECONDS:60}
+    offer-window-seconds: ${BOOKING_OFFER_WINDOW_SECONDS:600}
+    horizon-days: ${BOOKING_HORIZON_DAYS:120}
+    token-ttl-cap-seconds: ${BOOKING_TOKEN_TTL_CAP_SECONDS:3600}
+    rate-limit-per-minute: ${BOOKING_RATE_LIMIT_PER_MINUTE:120}
+    admission-cap: ${BOOKING_ADMISSION_CAP:8}
+    waitlist-cap-per-target: ${BOOKING_WAITLIST_CAP_PER_TARGET:1000}
+    admit-per-second: ${BOOKING_ADMIT_PER_SECOND:50}
+    admit-window-seconds: ${BOOKING_ADMIT_WINDOW_SECONDS:120}

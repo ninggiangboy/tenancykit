@@ -1,0 +1,28 @@
+# Versions resolved from Maven Central and mutually compatible: Spring Boot 4.1 manages Flyway, the
+# PostgreSQL driver and Testcontainers.
+[versions]
+# AWS SDK v2, the same major the mailer uses for SES: the S3 presigner comes from the same BOM.
+spring-boot = "4.1.2"
+spring-modulith = "2.1.2"
+archunit = "1.5.1"
+json-schema-validator = "3.0.7"
+jmustache = "1.16"
+springdoc = "3.2.0"
+aws-sdk = "2.57.11"
+jdk = "25"
+
+[libraries]
+spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
+spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "spring-boot" }
+spring-modulith-bom = { module = "org.springframework.modulith:spring-modulith-bom", version.ref = "spring-modulith" }
+spring-modulith-api = { module = "org.springframework.modulith:spring-modulith-api" }
+spring-modulith-core = { module = "org.springframework.modulith:spring-modulith-core" }
+spring-modulith-docs = { module = "org.springframework.modulith:spring-modulith-docs" }
+json-schema-validator = { module = "com.networknt:json-schema-validator", version.ref = "json-schema-validator" }
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+jmustache = { module = "com.samskivert:jmustache", version.ref = "jmustache" }
+springdoc-webmvc = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdoc" }
+aws-sdk-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws-sdk" }
+aws-s3 = { module = "software.amazon.awssdk:s3" }
+
+[plugins]
