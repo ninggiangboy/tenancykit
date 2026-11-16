@@ -11,6 +11,9 @@ public interface LinkRepository {
 
     Optional<Link> findById(UUID linkId);
 
+    /** The link a public slug names, within the current tenant, for the redirect's cache to load. */
+    Optional<Link> findBySlug(String slug);
+
     boolean update(Link link, long expectedVersion);
 
     /** Whether the tenant already uses a slug, so a generated one is retried instead of failing the insert. */

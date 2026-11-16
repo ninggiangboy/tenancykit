@@ -17,6 +17,10 @@ dependencies {
     implementation("dev.ngb:core-platform-sync")
     implementation("dev.ngb:core-suite")
     implementation("dev.ngb:core-feign")
+    // The redirect and the collect endpoints classify a request through the shared visitor library, and the public
+    // limits and caches are Caffeine. Both are the app's own dependencies, not a context's.
+    implementation("dev.ngb:core-visitor")
+    implementation(libs.caffeine)
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-jackson")
     implementation("org.springframework.boot:spring-boot-starter-jooq")

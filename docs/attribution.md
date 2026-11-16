@@ -94,6 +94,31 @@ Two rules follow from the privacy decisions:
   URL and nothing else. After consent it sets the visitor and session cookies. The server enforces the flag: when the
   client says no consent, `visitor_id` and `session_id` are dropped before the event is published.
 
+## The redirect
+
+`GET /go/{slug}` is the one endpoint a visitor waits for. The tenant comes from the host; the slug resolves from an
+in-process cache (30 s TTL, single-flight load, negative entries cached, so a flood of random slugs reaches the database
+once per slug per TTL). A link that exists but is paused or archived answers the same constant `404` as an unknown slug,
+so a probe learns nothing; an expired link or one at its click cap answers `410`; a password-protected link answers
+`401` and takes its password by `POST /go/{slug}`, with failed attempts limited before BCrypt runs.
+
+A redirect answers `302` with the destination, the link's UTM values merged over the ones already in its query, and the
+signed click id appended under the Tenant's click parameter (`aid` by default). The token is
+`base64url(click_id ‖ key_id ‖ HMAC-SHA256(secret, click_id ‖ key_id))`; the key id travels inside it, so rotating the
+key keeps links already in the wild valid. `HEAD` answers where a `GET` would send a visitor without appending a token
+and without spending a capped link's click.
+
+The redirect writes nothing to the database. It puts a click on a bounded in-memory buffer (10,000 events, dropped
+oldest and counted under `attribution.ingest.dropped` when full) and a single flusher publishes batches of 500 or every
+200 ms to `attribution.ingest`, waiting for publisher confirms. A capped link is the one exception: it does a single
+conditional `update … where clicks_counted < cap` so its cap is exact under concurrency, and that is the documented
+throughput cost of a cap. When the buffer overflows or the broker is down, the visitor still receives the `302`; only a
+capped link can answer `410` because its counter could not be spent.
+
+Every public limit is a per-process token bucket, so with N instances the effective limit is N times the setting. No
+address, user agent, token, destination query or password is logged; the click carries a device class, a browser
+family, a country, a referrer domain and the daily visitor hash, and nothing else about the person.
+
 ## Cross-plan coordination
 
 This plan creates `core/core-visitor` (device class, browser family, traffic class, referrer domain, GeoIP country and

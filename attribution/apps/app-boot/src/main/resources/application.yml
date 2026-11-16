@@ -104,6 +104,18 @@ attribution:
     default-window-days: ${ATTRIBUTION_DEFAULT_WINDOW_DAYS:30}
     # A deployment setting, not a tenant one: raw partitions are shared across tenants.
     raw-retention-days: ${ATTRIBUTION_RAW_RETENTION_DAYS:90}
+  # The redirect path's bounds. Every value is a latency or a memory limit on the one endpoint a visitor waits for, so
+  # the defaults are small and a deployment tunes them against its own load test.
+  redirect:
+    cache-ttl: ${ATTRIBUTION_LINK_CACHE_TTL:PT30S}
+    cache-max-size: ${ATTRIBUTION_LINK_CACHE_MAX_SIZE:10000}
+    buffer-size: ${ATTRIBUTION_INGEST_BUFFER_SIZE:10000}
+    flush-batch-size: ${ATTRIBUTION_INGEST_FLUSH_BATCH_SIZE:500}
+    flush-interval: ${ATTRIBUTION_INGEST_FLUSH_INTERVAL:PT0.2S}
+    visitor-per-minute: ${ATTRIBUTION_PUBLIC_VISITOR_PER_MINUTE:600}
+    link-per-minute: ${ATTRIBUTION_PUBLIC_LINK_PER_MINUTE:6000}
+    unlock-attempts: ${ATTRIBUTION_UNLOCK_ATTEMPTS:5}
+    unlock-window: ${ATTRIBUTION_UNLOCK_WINDOW:PT10M}
   housekeeping:
     enabled: ${ATTRIBUTION_HOUSEKEEPING_ENABLED:true}
     inbox-retention: P30D

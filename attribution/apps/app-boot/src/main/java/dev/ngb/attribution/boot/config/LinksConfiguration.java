@@ -87,8 +87,10 @@ class LinksConfiguration {
     }
 
     @Bean
-    LinkRepository linkRepository(DSLContext dsl, JsonMapper json) {
-        return new JooqLinkRepository(dsl, json);
+    LinkRepository linkRepository(DSLContext dsl, JsonMapper json, UnitOfWork unitOfWork) {
+        // The redirect's capped-link counter runs in its own transaction, because row-level security binds through the
+        // tenant setting the unit of work installs; a use case that already opened one joins it.
+        return new JooqLinkRepository(dsl, json, unitOfWork);
     }
 
     @Bean

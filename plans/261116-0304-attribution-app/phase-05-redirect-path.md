@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Redirect path, rules and click publishing"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [2, 4]

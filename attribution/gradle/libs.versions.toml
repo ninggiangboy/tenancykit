@@ -23,5 +23,6 @@ springdoc-webmvc = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ap
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 zxing-javase = { module = "com.google.zxing:javase", version.ref = "zxing" }
 maxmind-db = { module = "com.maxmind.db:maxmind-db", version.ref = "maxmind-db" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine" }
 
 [plugins]

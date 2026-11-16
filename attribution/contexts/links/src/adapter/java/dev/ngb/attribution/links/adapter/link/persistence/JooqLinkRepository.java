@@ -13,6 +13,7 @@ import dev.ngb.attribution.links.domain.link.LinkKind;
 import dev.ngb.attribution.links.domain.link.LinkStatus;
 import dev.ngb.attribution.links.domain.link.Slug;
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.visitor.DeviceClass;
 import java.util.List;
 import java.util.Map;
@@ -32,10 +33,21 @@ public class JooqLinkRepository implements LinkRepository {
 
     private final DSLContext dsl;
     private final JsonMapper json;
+    private final UnitOfWork unitOfWork;
 
     public JooqLinkRepository(DSLContext dsl, JsonMapper json) {
+        this(dsl, json, null);
+    }
+
+    /**
+     * @param unitOfWork the transaction boundary the redirect's two counter operations run in; row-level security only
+     *     binds inside a transaction, so a counter update outside one is refused. It may be null for a caller that
+     *     already holds a transaction, as a use case does.
+     */
+    public JooqLinkRepository(DSLContext dsl, JsonMapper json, UnitOfWork unitOfWork) {
         this.dsl = dsl;
         this.json = json;
+        this.unitOfWork = unitOfWork;
     }
 
     @Override
@@ -72,6 +84,11 @@ public class JooqLinkRepository implements LinkRepository {
     }
 
     @Override
+    public Optional<Link> findBySlug(String slug) {
+        return dsl.selectFrom(LINKS).where(LINKS.SLUG.eq(slug)).fetchOptional(this::toLink);
+    }
+
+    @Override
     public boolean update(Link link, long expectedVersion) {
         boolean updated = dsl.update(LINKS)
                         .set(LINKS.CAMPAIGN_ID, link.campaignId())
@@ -103,21 +120,30 @@ public class JooqLinkRepository implements LinkRepository {
 
     @Override
     public boolean incrementIfBelow(UUID linkId, long cap) {
-        return dsl.update(LINK_COUNTERS)
+        return inTransaction(() -> dsl.update(LINK_COUNTERS)
                         .set(LINK_COUNTERS.CLICKS_COUNTED, LINK_COUNTERS.CLICKS_COUNTED.plus(1))
                         .where(LINK_COUNTERS.LINK_ID.eq(linkId))
                         .and(LINK_COUNTERS.CLICKS_COUNTED.lt(cap))
                         .execute()
-                == 1;
+                == 1);
     }
 
     @Override
     public long clicksCounted(UUID linkId) {
-        Long counted = dsl.select(LINK_COUNTERS.CLICKS_COUNTED)
+        Long counted = inTransaction(() -> dsl.select(LINK_COUNTERS.CLICKS_COUNTED)
                 .from(LINK_COUNTERS)
                 .where(LINK_COUNTERS.LINK_ID.eq(linkId))
-                .fetchOne(LINK_COUNTERS.CLICKS_COUNTED);
+                .fetchOne(LINK_COUNTERS.CLICKS_COUNTED));
         return counted == null ? 0 : counted;
+    }
+
+    /**
+     * The redirect's counter operations run on their own short transaction, because row-level security binds through the
+     * transaction's tenant setting: outside one, the app role reads nothing and a conditional update is refused. A use
+     * case that already opened a unit of work joins it rather than nesting a second.
+     */
+    private <T> T inTransaction(java.util.function.Supplier<T> work) {
+        return unitOfWork == null ? work.get() : unitOfWork.transactional(work);
     }
 
     /** Destinations indexed by position, so one read gives the fallback and the survivors together. */

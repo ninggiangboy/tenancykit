@@ -20,6 +20,10 @@ dependencies {
     "adapterImplementation"(libs.zxing.javase)
     // BCrypt is the suite's existing password encoder; a link's password is stored only as its hash.
     "adapterImplementation"("org.springframework.security:spring-security-crypto")
+    // The redirect resolves a link from an in-process cache, so a click never waits on a database round trip.
+    "adapterImplementation"(libs.caffeine)
+    // The redirect builds the click it offers to the ingest buffer; it reaches tracking only through its api package.
+    "adapterImplementation"(project(":contexts:tracking"))
     testImplementation(libs.zxing.javase)
     testImplementation("dev.ngb:core-webhook")
     testImplementation("dev.ngb:core-visitor")
