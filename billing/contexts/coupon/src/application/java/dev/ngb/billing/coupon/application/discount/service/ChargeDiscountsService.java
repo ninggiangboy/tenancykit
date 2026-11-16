@@ -58,8 +58,12 @@ public class ChargeDiscountsService implements ChargeDiscounts {
 
     @Override
     public dev.ngb.billing.money.api.charge.DiscountQuote claim(DiscountRequest request) {
+        // The coupon rows with a budget are locked before the redemptions, the same order a coupon's own flows take
+        // (deactivation locks the coupon and then its redemptions), so no wait cycle can form. An unlocked read names
+        // the coupons to lock; the wallet is already locked, so no redemption of it can appear afterwards.
+        Map<CouponId, Money> budgets = budgetsOf(redemptions.findActiveByWallet(request.walletId()), true);
         List<Redemption> active = redemptions.lockActiveByWallet(request.walletId());
-        return quoteFor(request, active, budgetsOf(active, true));
+        return quoteFor(request, active, budgets);
     }
 
     @Override

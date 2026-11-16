@@ -64,6 +64,7 @@ class CouponConcurrencyIntegrationTest {
     @Autowired dev.ngb.billing.coupon.application.redemption.command.RedeemCouponUseCase redeem;
     @Autowired dev.ngb.billing.customer.application.customer.command.CreateCustomerUseCase createCustomer;
     @Autowired dev.ngb.billing.coupon.application.redemption.command.RevokeRedemptionUseCase revoke;
+    @Autowired dev.ngb.billing.coupon.application.coupon.command.DeactivateCouponUseCase deactivate;
     @Autowired OpenWalletUseCase openWallet;
     @Autowired WalletLookup wallets;
     @Autowired ScopeTestSupport scopes;
@@ -166,6 +167,47 @@ class CouponConcurrencyIntegrationTest {
             assertThat(owner.count("select applications_used from coupon_redemptions where id = ?", redemptionId.value()))
                     .as("the counter equals the discounts that were given, however the revoke interleaved").isEqualTo(lines);
             assertThat(owner.count("select discount_total from coupon_redemptions where id = ?", redemptionId.value())).isEqualTo(taken);
+        }
+    }
+
+    @Test
+    void deactivatingWithRevocationNeverDeadlocksWithChargesOnABudgetedCoupon() throws Exception {
+        for (int round = 0; round < 5; round++) {
+            World world = worlds.postpaid(10_000_000);
+            Coupon coupon = budgetedCoupon(world, 1_000_000);
+            List<WalletId> wallets = new ArrayList<>();
+            for (int i = 0; i < 8; i++) {
+                CustomerId customer = scopes.inTenant(world.tenant().id(), () -> createCustomer.execute(
+                        new dev.ngb.billing.customer.application.customer.command.CreateCustomerUseCase.Command(
+                                null, null, null, "Dead " + UUID.randomUUID(), null, UUID.randomUUID().toString(), AUDIT))).customer().id();
+                var opened = scopes.inTenant(world.tenant().id(), () -> openWallet.execute(new OpenWalletUseCase.Command(
+                        customer, USD, dev.ngb.billing.money.api.wallet.WalletMode.POSTPAID, Money.of(1_000_000, USD), AUDIT))).wallet();
+                wallets.add(opened.id());
+                inTenant(world, () -> {
+                    redemptions.add(Redemption.activate(new RedemptionId(UUID.randomUUID()), world.tenant().id(), coupon.id(), null, opened.id(),
+                            customer, null, null, null, "admin", new ReplayIdentity("dead-" + UUID.randomUUID(), "h"), USD, Instant.now()));
+                    return opened;
+                });
+            }
+
+            ExecutorService pool = Executors.newFixedThreadPool(9);
+            try {
+                List<CompletableFuture<Void>> futures = new ArrayList<>();
+                for (WalletId wallet : wallets) {
+                    for (int i = 0; i < 3; i++) {
+                        futures.add(CompletableFuture.runAsync(() -> scopes.inTenant(world.tenant().id(), () -> chargeWallet.charge(
+                                new ChargeCommand(wallet, null, Money.of(1_000, USD), null, "dead", "dead-" + UUID.randomUUID()))), pool));
+                    }
+                }
+                futures.add(CompletableFuture.runAsync(() -> scopes.inTenant(world.tenant().id(),
+                        () -> deactivate.execute(new dev.ngb.billing.coupon.application.coupon.command.DeactivateCouponUseCase.Command(
+                                coupon.id(), true, AUDIT))), pool));
+                for (CompletableFuture<Void> future : futures) {
+                    future.get(180, TimeUnit.SECONDS);
+                }
+            } finally {
+                pool.shutdownNow();
+            }
         }
     }
 
