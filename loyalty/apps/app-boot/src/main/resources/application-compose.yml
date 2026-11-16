@@ -1,0 +1,10 @@
+# The compose profile, and the only place the destination policy is relaxed: the stack's own receiver is a loopback
+# address, so the smoke run has somewhere to deliver to. A deployment never activates this profile, and the base
+# configuration defaults the setting to false, so an operator cannot inherit it by accident.
+spring:
+  config:
+    activate:
+      on-profile: "compose"
+loyalty:
+  webhooks:
+    allow-non-public-targets: true

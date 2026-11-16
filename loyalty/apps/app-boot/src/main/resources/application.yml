@@ -1,0 +1,137 @@
+spring:
+  application:
+    name: loyalty
+  profiles:
+    # With no active profile (dev, bootRun and every default-mode test) both runtime profiles are active, which
+    # keeps the all-in-one behaviour. The two profile files stay out of that run: each guards itself with an
+    # on-profile expression so only a runtime that runs alone applies its settings.
+    default: api,worker
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${LOYALTY_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}
+          jwk-set-uri: ${LOYALTY_OIDC_JWK_SET_URI:${LOYALTY_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}/protocol/openid-connect/certs}
+          # A token minted for another app is refused here, before any replica lookup.
+          audiences: loyalty
+  datasource:
+    url: ${LOYALTY_DB_URL:jdbc:postgresql://localhost:5432/loyalty}
+    username: ${LOYALTY_DB_USER:loyalty_app}
+    password: ${LOYALTY_DB_PASSWORD:loyalty_app}
+  rabbitmq:
+    host: ${LOYALTY_RABBITMQ_HOST:localhost}
+    port: ${LOYALTY_RABBITMQ_PORT:5672}
+    username: ${LOYALTY_RABBITMQ_USER:loyalty}
+    password: ${LOYALTY_RABBITMQ_PASSWORD:loyalty}
+  flyway:
+    locations: classpath:db/migration
+    # Migrations run as the table owner; the application connects as loyalty_app, which owns nothing.
+    url: ${LOYALTY_MIGRATION_DB_URL:${LOYALTY_DB_URL:jdbc:postgresql://localhost:5432/loyalty}}
+    user: ${LOYALTY_MIGRATION_DB_USER:loyalty_owner}
+    password: ${LOYALTY_MIGRATION_DB_PASSWORD:loyalty_owner}
+    placeholders:
+      # The baseline creates loyalty_app with this password. Without the placeholder Flyway aborts the whole set.
+      appDbPassword: ${LOYALTY_DB_PASSWORD:loyalty_app}
+  task:
+    scheduling:
+      pool:
+        size: ${LOYALTY_SCHEDULER_POOL_SIZE:4}
+      shutdown:
+        await-termination: true
+        await-termination-period: 30s
+
+server:
+  port: ${LOYALTY_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db,replicaState
+
+suite:
+  app-code: loyalty
+  replica:
+    platform-base-url: ${LOYALTY_PLATFORM_BASE_URL:http://localhost:8082}
+    client-id: ${PLATFORM_LOYALTY_SERVICE_CLIENT_ID:loyalty}
+    client-secret: ${PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET:loyalty}
+    rebuild-on-start: ${LOYALTY_REPLICA_REBUILD_ON_START:true}
+    page-limit: 200
+    request-timeout: PT10S
+    platform-issuer: ${LOYALTY_PLATFORM_ISSUER:http://localhost:8082}
+    platform-jwk-set-uri: ${LOYALTY_PLATFORM_JWK_SET_URI:http://localhost:8082/.well-known/jwks.json}
+    # The worker's queue; the api runtime serves HTTP and consumes nothing.
+    queue: loyalty.platform-events
+    exchange: platform.events
+    max-attempts: 3
+    retry-backoff: PT0.5S
+    refresh-skew: PT30S
+
+loyalty:
+  # Consume only: the five Platform state-transfer keys on loyalty.platform-events. loyalty declares no exchange of its
+  # own, so there is nothing here to export and no broker relay to wire.
+  messaging:
+    exchange: ${LOYALTY_MESSAGING_EXCHANGE:platform.events}
+    queue: ${LOYALTY_MESSAGING_QUEUE:loyalty.platform-events}
+  # The in-process outbox relay: the worker reads the outbox and the webhook module records a delivery in the same
+  # transaction.
+  relay:
+    poll-delay: ${LOYALTY_RELAY_POLL_DELAY:PT2S}
+    batch-size: 50
+    max-attempts: 10
+    backoff-base: PT10S
+    backoff-cap: PT1H
+    jitter: 0.2
+  webhooks:
+    # False everywhere except the compose profile, where the stack's own smoke receiver is a loopback address. In a
+    # deployment it must stay false: an endpoint that may name a private address can reach the suite's own services.
+    allow-non-public-targets: ${LOYALTY_WEBHOOKS_ALLOW_NON_PUBLIC_TARGETS:false}
+    poll-delay: ${LOYALTY_WEBHOOKS_POLL_DELAY:PT2S}
+    batch-size: 50
+    max-attempts: 10
+    backoff-base: PT30S
+    backoff-cap: PT6H
+    lease: PT60S
+    max-connections: 50
+    max-connections-per-route: 10
+    connection-request-timeout: PT5S
+    connect-timeout: PT5S
+    read-timeout: PT30S
+    deadline: PT60S
+    # The master key wraps each endpoint's signing secret. The default is deliberately empty rather than a well-known
+    # string: the cipher refuses to start without a 32-byte key, so a deployment that forgets
+    # LOYALTY_SECRETS_MASTER_KEY fails at boot instead of storing secrets nobody can read back.
+    master-key: ${LOYALTY_SECRETS_MASTER_KEY:}
+    master-key-id: ${LOYALTY_SECRETS_MASTER_KEY_ID:k1}
+    # How long a finished delivery and its attempt log are kept before housekeeping purges them.
+    retention: ${LOYALTY_WEBHOOKS_RETENTION:P30D}
+  jobs:
+    enabled: ${LOYALTY_JOBS_ENABLED:true}
+    # At most this many tenants run at once across all jobs; keep it below the connection pool.
+    tenant-parallelism: ${LOYALTY_WORKER_TENANT_PARALLELISM:4}
+  # The expiry run: hourly by default, one member at a time, member lock first.
+  expiry:
+    batch-size: ${LOYALTY_EXPIRY_BATCH_SIZE:500}
+    interval: ${LOYALTY_EXPIRY_INTERVAL:PT1H}
+  # The daily tier evaluation: a member falls a tier here and never inside an earn.
+  tier-evaluation:
+    batch-size: ${LOYALTY_TIER_EVALUATION_BATCH_SIZE:500}
+    interval: ${LOYALTY_TIER_EVALUATION_INTERVAL:P1D}
+  orders:
+    # The same cap the sibling app uses, so a Tenant sending one order to both gets the same answer from each.
+    max-lines-per-order: ${LOYALTY_MAX_LINES_PER_ORDER:500}
+  housekeeping:
+    enabled: ${LOYALTY_HOUSEKEEPING_ENABLED:true}
+    inbox-retention: P30D
+    dead-outbox-retention: P7D
+    batch-size: 500
+    interval: PT1H
