@@ -192,7 +192,7 @@ class CouponConcurrencyIntegrationTest {
     }
 
     @Test
-    void aDeactivatedCouponStopsDiscountingNewCharges() {
+    void aDeactivatedCouponKeepsDiscountingItsRunningRedemption() {
         World world = worlds.prepaid(100_000);
         Coupon coupon = Coupon.create(new CouponId(UUID.randomUUID()), world.tenant().id(), "Pulled", new Benefit.PercentOff(5_000),
                 Duration.forever(), Scope.everything(), Limits.boundedBy(Instant.parse("2027-01-01T00:00:00Z")), USD, true, "admin", Instant.now());
@@ -219,7 +219,7 @@ class CouponConcurrencyIntegrationTest {
 
         var second = scopes.inTenant(world.tenant().id(),
                 () -> chargeWallet.charge(new ChargeCommand(world.wallet().id(), null, Money.of(1_000, USD), null, "x", "deact-2")));
-        assertThat(second.amount().minorUnits()).as("a deactivated coupon discounts nothing more").isEqualTo(1_000);
+        assertThat(second.amount().minorUnits()).as("deactivating stops new redemptions, not the one already running").isEqualTo(500);
     }
 
     @Test

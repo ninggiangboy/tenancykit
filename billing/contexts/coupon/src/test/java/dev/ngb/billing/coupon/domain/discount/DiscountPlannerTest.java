@@ -195,12 +195,12 @@ class DiscountPlannerTest {
     }
 
     @Test
-    void aDeactivatedCouponTakesPartInNothing() {
+    void aDeactivatedCouponStillServesItsRunningRedemption() {
         Coupon coupon = coupon(new Benefit.PercentOff(2_000), Scope.everything(), OPEN, true);
         Redemption redemption = active(coupon, null);
         coupon.deactivate(NOW);
 
-        assertThat(plan(List.of(new DiscountCandidate(coupon, redemption, null))).isDiscounted()).isFalse();
+        assertThat(plan(List.of(new DiscountCandidate(coupon, redemption, null))).isDiscounted()).isTrue();
     }
 
     @Test

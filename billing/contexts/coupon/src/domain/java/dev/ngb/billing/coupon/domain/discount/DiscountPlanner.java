@@ -15,7 +15,8 @@ import java.util.Objects;
  *
  * <p>The rules, in the order they matter:
  * <ol>
- *   <li>Eligibility: a redemption may take part only if it is consumable, its coupon is active and covers the charge,
+ *   <li>Eligibility: a redemption may take part only if it is consumable, its coupon covers the charge (a deactivated coupon still
+ *       serves redemptions that are already running),
  *       and there is something left of its budget.</li>
  *   <li>Stacking: the stackable coupons run together, and each coupon that is not stackable runs alone. The
  *       combination that leaves the lowest net wins; a tie goes to the earliest redemption, then the lowest id.</li>

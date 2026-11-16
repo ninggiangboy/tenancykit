@@ -154,6 +154,20 @@ class CouponChargeIntegrationTest {
     }
 
     @Test
+    void aDeactivatedCouponKeepsDiscountingTheWalletThatAlreadyHoldsIt() {
+        String coupon = createPercentCoupon(2_000, null).get("coupon").get("id").asString();
+        String target = walletWith(100_000);
+        attach(target, coupon, "keep-attach");
+
+        world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/api/v1/coupons/" + coupon + "/deactivate",
+                HttpWorld.Map2.of("revokeRedemptions", false)));
+        JsonNode charged = world.body(charge(target, 10_000, "keep-charge"));
+
+        assertThat(charged.get("amount").get("amount").asLong()).isEqualTo(8_000);
+        assertThat(lineAmounts(charged)).containsExactly(2_000L);
+    }
+
+    @Test
     void aReplayedChargeIsNotDiscountedTwice() {
         String saving = createPercentCoupon(2_000, "REPLAY20").get("coupon").get("id").asString();
         String target = walletWith(100_000);

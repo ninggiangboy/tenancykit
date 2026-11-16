@@ -18,9 +18,8 @@ final class Eligibility {
         if (!redemption.isConsumable(now)) {
             return false;
         }
-        if (!coupon.isActive()) {
-            return false;
-        }
+        // The coupon's own status is not tested: deactivating a coupon stops new redemptions, and a redemption that is
+        // already running keeps its discount until it ends or is revoked.
         if (!coupon.currency().equals(facts.gross().currency())) {
             return false;
         }
