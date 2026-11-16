@@ -230,6 +230,35 @@ class CouponHttpIntegrationTest {
     }
 
     @Test
+    void maxPerCustomerStopsAWalletCreditCouponFromBeingRedeemedAgain() {
+        String wallet = openWallet(acme, couponSystem.token(), newCustomer(acme, couponSystem.token()), "USD");
+        world.body(world.call(HttpMethod.POST, acme.host(), couponSystem.token(), "/api/v1/coupons", HttpWorld.Map2.of(
+                "name", "Credit once",
+                "currency", "USD",
+                "benefit", HttpWorld.Map2.of("type", "WALLET_CREDIT", "amount", 25_000),
+                "limits", HttpWorld.Map2.of("redeemBy", "2027-01-01T00:00:00Z", "maxPerCustomer", 1),
+                "code", "CREDITONCE")));
+
+        MvcResult first = redeemByCode(couponSystem.token(), wallet, "CREDITONCE", "once-key-1");
+        MvcResult again = redeemByCode(couponSystem.token(), wallet, "CREDITONCE", "once-key-2");
+
+        assertThat(first.getResponse().getStatus()).isEqualTo(201);
+        assertThat(again.getResponse().getStatus()).as("an ended credit redemption still counts toward the customer's limit").isEqualTo(409);
+        JsonNode balance = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(), "/api/v1/wallets/" + wallet, null));
+        assertThat(balance.get("balance").get("amount").asLong()).as("credited once").isEqualTo(25_000);
+    }
+
+    @Test
+    void aCreditCouponWithoutMaxPerCustomerCanBeRedeemedAgainWithANewKey() {
+        String wallet = openWallet(acme, couponSystem.token(), newCustomer(acme, couponSystem.token()), "USD");
+        createCreditCoupon(couponSystem.token(), 10_000, "REPEATS");
+
+        assertThat(redeemByCode(couponSystem.token(), wallet, "REPEATS", "rep-key-1").getResponse().getStatus()).isEqualTo(201);
+        assertThat(redeemByCode(couponSystem.token(), wallet, "REPEATS", "rep-key-2").getResponse().getStatus())
+                .as("documented: a one-time credit needs maxPerCustomer").isEqualTo(201);
+    }
+
+    @Test
     void revokingEndsTheRedemptionAndRepeatingItPublishesNothingNew() {
         String wallet = openWallet(acme, couponSystem.token(), newCustomer(acme, couponSystem.token()), "USD");
         createPercentCoupon(couponSystem.token(), 2_000, 100, "REVOKE1");

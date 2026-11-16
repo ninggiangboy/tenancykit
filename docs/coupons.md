@@ -53,6 +53,13 @@ coupon is money given away with no stop, every coupon must declare at least one 
 `budget` — the coupon's own expiry or total bound, separate from any single redemption's duration. A coupon that
 declares none is refused at creation.
 
+`maxPerCustomer` limits how many times one customer may redeem the coupon, counted across all of the customer's
+wallets and including redemptions that have already ended; only a revoked redemption stops counting. It is optional.
+The rule that a wallet holds one running redemption of a coupon at a time never stops a wallet-credit coupon from being
+redeemed again, because a credit redemption ends at once, so a one-time credit needs `maxPerCustomer: 1`. Without it,
+the same wallet can redeem a credit coupon again with a new `Idempotency-Key` until the coupon's own total bound is
+reached.
+
 ## Scope
 
 A coupon filters the charges it may discount by:
