@@ -1,0 +1,15 @@
+# The compose-only overlay. It changes exactly one setting: whether a Tenant may point a webhook endpoint at a
+# non-public address.
+#
+# The suite's smoke stack runs crm on a container network next to a smoke forwarder that plays the Tenant System's
+# receiver, so a delivery has to reach a container host and a plain http port. Everywhere else — dev, CI, staging,
+# production — the flag stays false and a Tenant's endpoint must be a public https address, re-checked by the DNS guard
+# on every send.
+#
+# Activate it beside a runtime profile, never alone: `--spring.profiles.active=api,compose` or
+# `--spring.profiles.active=worker,compose`. Alone it would leave both `api` and `worker` off, and crm would serve
+# nothing. The compose service definition that passes this profile is wired in the ops phase; this file is the app side
+# of that seam.
+crm:
+  webhooks:
+    allow-non-public-targets: true
