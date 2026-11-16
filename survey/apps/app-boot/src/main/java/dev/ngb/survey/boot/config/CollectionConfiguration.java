@@ -9,6 +9,10 @@ import dev.ngb.survey.authoring.api.version.PublishedVersionReader;
 import dev.ngb.survey.collection.adapter.guard.web.PublicGuardFilter;
 import dev.ngb.survey.collection.adapter.link.persistence.JooqLinkReadRepository;
 import dev.ngb.survey.collection.adapter.link.persistence.JooqLinkRepository;
+import dev.ngb.survey.collection.adapter.response.persistence.JooqResponseReadRepository;
+import dev.ngb.survey.collection.adapter.response.persistence.JooqResponseRepository;
+import dev.ngb.survey.collection.adapter.upload.persistence.JooqUploadRepository;
+import dev.ngb.survey.collection.adapter.upload.s3.S3UploadStore;
 import dev.ngb.survey.collection.adapter.visit.persistence.JooqVisitReadRepository;
 import dev.ngb.survey.collection.adapter.visit.persistence.JooqVisitRepository;
 import dev.ngb.survey.collection.application.guard.service.ClientFingerprint;
@@ -28,6 +32,20 @@ import dev.ngb.survey.collection.application.visit.port.VisitRepository;
 import dev.ngb.survey.collection.application.visit.query.VisitQueries;
 import dev.ngb.survey.collection.application.visit.query.VisitReadRepository;
 import dev.ngb.survey.collection.application.visit.service.ArrivalFacts;
+import dev.ngb.survey.collection.application.visit.service.VisitLookup;
+import dev.ngb.survey.collection.application.response.command.DeleteResponseUseCase;
+import dev.ngb.survey.collection.application.response.command.SaveDraftUseCase;
+import dev.ngb.survey.collection.application.response.command.SubmitResponseUseCase;
+import dev.ngb.survey.collection.application.response.port.ResponseRepository;
+import dev.ngb.survey.authoring.api.flow.AnswerIndexer;
+import dev.ngb.survey.collection.application.response.query.ResponseQueries;
+import dev.ngb.survey.collection.application.response.query.ResponseReadRepository;
+import dev.ngb.survey.collection.application.upload.command.PresignUploadUseCase;
+import dev.ngb.survey.collection.application.upload.command.PurgePendingUploadsUseCase;
+import dev.ngb.survey.collection.application.upload.port.UploadRepository;
+import dev.ngb.survey.collection.application.upload.port.UploadStore;
+import dev.ngb.survey.collection.application.upload.service.UploadVerifier;
+import dev.ngb.survey.authoring.api.flow.SurveyFlow;
 import dev.ngb.survey.collection.domain.link.LinkTokens;
 import org.jooq.DSLContext;
 import org.springframework.context.annotation.Bean;
@@ -142,8 +160,14 @@ class CollectionConfiguration {
 
     @Bean
     VisitQueries visitQueries(
-            UnitOfWork unitOfWork, VisitReadRepository visits, PublishedVersionReader versions) {
-        return new VisitQueries(unitOfWork, visits, versions);
+            UnitOfWork unitOfWork, VisitReadRepository reads, PublishedVersionReader versions) {
+        return new VisitQueries(unitOfWork, reads, versions);
+    }
+
+    @Bean
+    VisitLookup visitLookup(
+            UnitOfWork unitOfWork, VisitRepository visits, PublishedVersionReader versions) {
+        return new VisitLookup(unitOfWork, visits, versions);
     }
 
     @Bean
@@ -156,6 +180,96 @@ class CollectionConfiguration {
     @Bean
     PublicRateLimiter publicRateLimiter(SurveySettings settings) {
         return new PublicRateLimiter(settings.publicApi().ratePerMinute(), System::currentTimeMillis);
+    }
+
+    @Bean
+    UploadRepository uploadRepository(DSLContext dsl) {
+        return new JooqUploadRepository(dsl);
+    }
+
+    @Bean
+    UploadStore uploadStore(SurveySettings settings) {
+        var uploads = settings.uploads();
+        return new S3UploadStore(
+                uploads.endpoint(),
+                uploads.publicEndpoint(),
+                uploads.bucket(),
+                uploads.region(),
+                uploads.accessKey(),
+                uploads.secretKey());
+    }
+
+    @Bean
+    ResponseRepository responseRepository(DSLContext dsl, JsonMapper json) {
+        return new JooqResponseRepository(dsl, json);
+    }
+
+    @Bean
+    ResponseReadRepository responseReadRepository(DSLContext dsl, JsonMapper json) {
+        return new JooqResponseReadRepository(dsl, json);
+    }
+
+    @Bean
+    UploadVerifier uploadVerifier(UploadRepository uploads, UploadStore store, AnswerIndexer indexer) {
+        return new UploadVerifier(uploads, store, indexer);
+    }
+
+    @Bean
+    ResponseQueries responseQueries(UnitOfWork unitOfWork, ResponseReadRepository responses) {
+        return new ResponseQueries(unitOfWork, responses);
+    }
+
+    @Bean
+    SaveDraftUseCase saveResponseDraftUseCase(
+            UnitOfWork unitOfWork,
+            VisitRepository visits,
+            ResponseRepository responses,
+            IdGenerator ids,
+            Clock clock) {
+        return new SaveDraftUseCase(unitOfWork, visits, responses, ids, clock);
+    }
+
+    @Bean
+    SubmitResponseUseCase submitResponseUseCase(
+            UnitOfWork unitOfWork,
+            VisitRepository visits,
+            ResponseRepository responses,
+            PublishedVersionReader versions,
+            SurveyFlow flow,
+            AnswerIndexer answers,
+            UploadRepository uploads,
+            UploadVerifier verifier,
+            IdGenerator ids,
+            Clock clock) {
+        return new SubmitResponseUseCase(
+                unitOfWork, visits, responses, versions, flow, answers, uploads, verifier, ids, clock);
+    }
+
+    @Bean
+    PresignUploadUseCase presignUploadUseCase(
+            UnitOfWork unitOfWork,
+            UploadRepository uploads,
+            UploadStore store,
+            AnswerIndexer limits,
+            IdGenerator ids,
+            Clock clock) {
+        return new PresignUploadUseCase(unitOfWork, uploads, store, limits, ids, clock);
+    }
+
+    @Bean
+    PurgePendingUploadsUseCase purgePendingUploadsUseCase(
+            UnitOfWork unitOfWork, UploadRepository uploads, UploadStore store, Clock clock) {
+        return new PurgePendingUploadsUseCase(unitOfWork, uploads, store, clock);
+    }
+
+    @Bean
+    DeleteResponseUseCase deleteResponseUseCase(
+            UnitOfWork unitOfWork,
+            ResponseRepository responses,
+            UploadRepository uploads,
+            UploadStore store,
+            VisitRepository visits) {
+        return new DeleteResponseUseCase(unitOfWork, responses, uploads, store, visits);
     }
 
     @Bean

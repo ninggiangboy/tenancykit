@@ -132,6 +132,12 @@ Answers to a question that is not on the path are rejected at submit with `answe
 on the path must be answered; one behind a false `visible_if` or on a skipped page is not required. A client-sent
 `vars` or `score` is ignored: the server recomputes both and trusts neither.
 
+A file answer names upload ids this visit created, and nothing else. At submit each referenced object is checked: its
+stored length must equal what was declared (and stay inside the question's `max_bytes`), and its first 512 bytes must
+match the magic bytes of one of the question's `allowed_mime` types — a renamed executable declared `image/png` is
+refused with `invalid_upload`. A presigned PUT fixes the length and type into the signature, but the bytes are what the
+server trusts.
+
 ## Limits under concurrency
 
 Three facts are enforced by the database rather than by a check-then-write:

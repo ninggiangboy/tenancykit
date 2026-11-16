@@ -12,6 +12,7 @@ import dev.ngb.survey.authoring.adapter.survey.persistence.JooqSurveyReadReposit
 import dev.ngb.survey.authoring.adapter.survey.persistence.JooqSurveyRepository;
 import dev.ngb.survey.authoring.adapter.version.persistence.JooqVersionReadRepository;
 import dev.ngb.survey.authoring.adapter.version.persistence.JooqVersionRepository;
+import dev.ngb.survey.authoring.api.flow.AnswerIndexer;
 import dev.ngb.survey.authoring.api.flow.SurveyFlow;
 import dev.ngb.survey.authoring.api.link.SurveyStateReader;
 import dev.ngb.survey.authoring.api.version.PublishedVersionReader;
@@ -26,6 +27,7 @@ import dev.ngb.survey.authoring.application.flow.query.FlowDocumentReadRepositor
 import dev.ngb.survey.authoring.application.flow.query.PreviewQueries;
 import dev.ngb.survey.authoring.application.flow.query.SimulateQueries;
 import dev.ngb.survey.authoring.application.flow.service.PreviewService;
+import dev.ngb.survey.authoring.application.flow.service.AnswerIndexerService;
 import dev.ngb.survey.authoring.application.flow.service.SurveyFlowService;
 import dev.ngb.survey.authoring.application.link.service.SurveyStateReaderService;
 import dev.ngb.survey.authoring.application.survey.command.CloseSurveyUseCase;
@@ -159,6 +161,11 @@ class AuthoringConfiguration {
     @Bean
     SurveyFlow surveyFlow() {
         return new SurveyFlowService();
+    }
+
+    @Bean
+    AnswerIndexer answerIndexer() {
+        return new AnswerIndexerService();
     }
 
     @Bean

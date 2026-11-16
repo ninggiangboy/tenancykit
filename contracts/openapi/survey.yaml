@@ -812,7 +812,7 @@ paths:
       responses:
         "202":
           description: Accepted
-        "409":
+        "429":
           description: The visit already recorded 200 page events
   /survey/p/v/{visitToken}/uploads:
     parameters:
@@ -857,8 +857,8 @@ paths:
             schema:
               $ref: "#/components/schemas/AnswersRequest"
       responses:
-        "201":
-          description: The completed response
+        "200":
+          description: The completed response; a repeated Idempotency-Key returns the first result
           content:
             application/json:
               schema:
@@ -866,7 +866,9 @@ paths:
         "202":
           description: Accepted and discarded; the honeypot was filled
         "409":
-          description: cap_reached, already_completed or answer_not_on_path
+          description: cap_reached, already_completed or window_closed
+        "428":
+          description: Idempotency-Key is required
         "422":
           description: A required answer is missing or a constraint failed
 components:

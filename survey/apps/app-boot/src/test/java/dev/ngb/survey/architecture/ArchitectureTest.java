@@ -81,9 +81,9 @@ class ArchitectureTest {
 
     @Test
     void theJobRuleHasSubjects() {
-        // Phase 3 wires no job yet: the replica rebuild and the listener are not @Scheduled. The count is asserted once a
-        // job exists, so the rule is not silently vacuous then.
-        assertThat(scheduledClasses()).as("no scheduled class exists in the skeleton").isZero();
+        assertThat(scheduledClasses())
+                .as("a rule that matches no class passes vacuously; the orphaned-upload sweep is scheduled")
+                .isGreaterThanOrEqualTo(1);
     }
 
     /**
