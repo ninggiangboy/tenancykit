@@ -1,6 +1,8 @@
 package dev.ngb.platform.integration.api.tenantsystem;
 
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
 import java.util.List;
 import java.util.UUID;
@@ -16,8 +18,9 @@ public class TenantSystemQueries {
         this.systems = systems;
     }
 
-    public List<TenantSystemView> list() {
-        return unitOfWork.transactional(systems::list);
+    /** One page of the Tenant Systems the caller may see, filtered, sorted and paged by the list-query contract. */
+    public Page<TenantSystemView> list(ListQuery query) {
+        return unitOfWork.transactional(() -> systems.list(query));
     }
 
     public TenantSystemView get(UUID id) {

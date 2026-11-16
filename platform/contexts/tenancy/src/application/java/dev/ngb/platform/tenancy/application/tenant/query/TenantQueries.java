@@ -1,5 +1,7 @@
 package dev.ngb.platform.tenancy.application.tenant.query;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
 import java.util.List;
 import java.util.UUID;
@@ -15,8 +17,9 @@ public class TenantQueries {
         this.tenants = tenants;
     }
 
-    public List<TenantView> list() {
-        return unitOfWork.transactional(tenants::list);
+    /** One page of the tenants, filtered, sorted and paged by the list-query contract. */
+    public Page<TenantView> list(ListQuery query) {
+        return unitOfWork.transactional(() -> tenants.list(query));
     }
 
     public List<TenantView> all() {

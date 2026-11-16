@@ -1,18 +1,23 @@
 package dev.ngb.platform.access.adapter.user.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.CurrentActor;
+import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.user.command.CreateUserUseCase;
 import dev.ngb.platform.access.application.user.command.ManageUserPermissionsUseCase;
 import dev.ngb.platform.access.application.user.command.ManageUserUseCase;
+import dev.ngb.platform.access.application.user.query.UserListing;
 import dev.ngb.platform.access.api.user.UserQueries;
+import dev.ngb.platform.access.api.user.UserView;
 import dev.ngb.platform.access.domain.user.User;
 import dev.ngb.platform.access.domain.user.UserId;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +49,11 @@ class UserController {
                     user.id().value(), user.tenantId().value(), user.scope().name(), user.email(), user.displayName(),
                     user.status().name(), user.version());
         }
+
+        static UserResponse ofView(UserView view) {
+            return new UserResponse(
+                    view.id(), view.tenantId(), view.scope(), view.email(), view.displayName(), view.status(), view.version());
+        }
     }
 
     private final CreateUserUseCase createUser;
@@ -74,11 +84,25 @@ class UserController {
                 request.email(), request.displayName(), request.temporaryPassword())));
     }
 
+    /**
+     * Filter, sort and paging follow the list-query contract; the documented parameters come from {@link UserListing}.
+     * {@code tenant_id} is a filter rather than a parameter, and a Tenant-scope caller never sees another Tenant.
+     */
     @GetMapping
+    @Listing(UserListing.class)
     @RequiresPermission(PlatformPermissions.USER_READ)
-    List<UserResponse> list(@RequestParam UUID tenantId) {
-        return queries.list(tenantId).stream().map(view -> new UserResponse(
-                view.id(), view.tenantId(), view.scope(), view.email(), view.displayName(), view.status(), view.version())).toList();
+    Page<UserResponse> list(ListQuery query) {
+        return queries.list(query, tenantScope()).map(UserResponse::ofView);
+    }
+
+    /**
+     * The Tenant a Tenant-scope caller may list, or null for a Platform administrator, who administers every Tenant
+     * and names one with {@code filter[tenant_id][eq]}. The read applies it as a condition, so a filter on another
+     * Tenant narrows the page to no row instead of widening it.
+     */
+    private UUID tenantScope() {
+        Actor actor = currentActor.get();
+        return actor.scope() == PermissionScope.TENANT ? actor.tenantId().value() : null;
     }
 
     @PatchMapping("/{id}")

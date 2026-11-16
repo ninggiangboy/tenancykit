@@ -1,6 +1,9 @@
 package dev.ngb.platform.tenancy.adapter.tenant.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.security.CurrentActor;
@@ -9,9 +12,10 @@ import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.tenancy.application.tenant.command.AddTenantDomainUseCase;
 import dev.ngb.platform.tenancy.application.tenant.command.DeactivateTenantUseCase;
 import dev.ngb.platform.tenancy.application.tenant.command.RenameTenantUseCase;
+import dev.ngb.platform.tenancy.application.tenant.query.TenantListing;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantQueries;
+import dev.ngb.platform.tenancy.application.tenant.query.TenantView;
 import dev.ngb.platform.tenancy.domain.tenant.Tenant;
-import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +45,11 @@ class TenantController {
                     tenant.id().value(), tenant.code().value(), tenant.name(), tenant.status().name(),
                     tenant.createdAt().toString(), tenant.version());
         }
+
+        static TenantResponse ofView(TenantView view) {
+            return new TenantResponse(
+                    view.id(), view.code(), view.name(), view.status(), view.createdAt().toString(), view.version());
+        }
     }
 
     private final RenameTenantUseCase renameTenant;
@@ -59,11 +68,12 @@ class TenantController {
         this.currentActor = currentActor;
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link TenantListing}. */
     @GetMapping
+    @Listing(TenantListing.class)
     @RequiresPermission(PlatformPermissions.TENANT_READ)
-    List<TenantResponse> list() {
-        return queries.list().stream().map(view -> new TenantResponse(
-                view.id(), view.code(), view.name(), view.status(), view.createdAt().toString(), view.version())).toList();
+    Page<TenantResponse> list(ListQuery query) {
+        return queries.list(query).map(TenantResponse::ofView);
     }
 
     @PutMapping("/{id}")

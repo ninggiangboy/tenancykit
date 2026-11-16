@@ -1,6 +1,9 @@
 package dev.ngb.platform.integration.adapter.tenantsystem.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.core.id.TenantSystemId;
@@ -8,9 +11,11 @@ import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.integration.application.credential.command.ManageCredentialUseCase;
+import dev.ngb.platform.integration.application.credential.query.CredentialListing;
 import dev.ngb.platform.integration.application.credential.query.CredentialQueries;
 import dev.ngb.platform.integration.application.credential.query.CredentialView;
 import dev.ngb.platform.integration.application.tenantsystem.command.ManageTenantSystemUseCase;
+import dev.ngb.platform.integration.application.tenantsystem.query.TenantSystemListing;
 import dev.ngb.platform.integration.api.tenantsystem.TenantSystemQueries;
 import dev.ngb.platform.integration.api.tenantsystem.TenantSystemView;
 import dev.ngb.platform.integration.domain.credential.ApiCredential;
@@ -114,10 +119,12 @@ class TenantSystemController {
         return SystemResponse.of(systems.create(caller(requestId), request.name()));
     }
 
+    /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link TenantSystemListing}. */
     @GetMapping
+    @Listing(TenantSystemListing.class)
     @RequiresPermission(PlatformPermissions.TENANT_SYSTEM_READ)
-    List<SystemResponse> list() {
-        return systemQueries.list().stream().map(SystemResponse::ofView).toList();
+    Page<SystemResponse> list(ListQuery query) {
+        return systemQueries.list(query).map(SystemResponse::ofView);
     }
 
     @GetMapping("/{id}")
@@ -152,10 +159,15 @@ class TenantSystemController {
         return issued(credentials.create(caller(requestId), TenantSystemId.of(id), request.label(), scopes));
     }
 
+    /**
+     * Filter, sort and paging follow the list-query contract; the documented parameters come from
+     * {@link CredentialListing}. The path fixes the system, so its credentials are the only rows the page can hold.
+     */
     @GetMapping("/{id}/credentials")
+    @Listing(CredentialListing.class)
     @RequiresPermission(PlatformPermissions.CREDENTIAL_MANAGE)
-    List<CredentialResponse> listCredentials(@PathVariable String id) {
-        return credentialQueries.list(TenantSystemId.of(id)).stream().map(CredentialResponse::ofView).toList();
+    Page<CredentialResponse> listCredentials(ListQuery query, @PathVariable String id) {
+        return credentialQueries.list(query, TenantSystemId.of(id)).map(CredentialResponse::ofView);
     }
 
     @PostMapping("/{id}/credentials/rotate")

@@ -1,5 +1,7 @@
 package dev.ngb.platform.access.api.user;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
 import java.util.List;
 import java.util.UUID;
@@ -15,8 +17,13 @@ public class UserQueries {
         this.users = users;
     }
 
-    public List<UserView> list(UUID tenantId) {
-        return unitOfWork.transactional(() -> users.list(tenantId));
+    /**
+     * One page of users, filtered, sorted and paged by the list-query contract.
+     *
+     * @param tenantScope the only Tenant the page may contain, or null for a Platform administrator who reads them all
+     */
+    public Page<UserView> list(ListQuery query, UUID tenantScope) {
+        return unitOfWork.transactional(() -> users.list(query, tenantScope));
     }
 
     public List<UserAccessView> pageAccess(UUID after, int limit) {

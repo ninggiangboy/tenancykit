@@ -1,7 +1,8 @@
 package dev.ngb.platform.access.application.role.query;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
-import java.util.List;
 import java.util.UUID;
 
 public class RoleQueries {
@@ -14,7 +15,12 @@ public class RoleQueries {
         this.roles = roles;
     }
 
-    public List<RoleView> list(UUID tenantId) {
-        return unitOfWork.transactional(() -> roles.list(tenantId));
+    /**
+     * One page of roles, filtered, sorted and paged by the list-query contract.
+     *
+     * @param tenantScope the only Tenant the page may contain, or null for a Platform administrator who reads them all
+     */
+    public Page<RoleView> list(ListQuery query, UUID tenantScope) {
+        return unitOfWork.transactional(() -> roles.list(query, tenantScope));
     }
 }

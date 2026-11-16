@@ -3,7 +3,12 @@ package dev.ngb.platform.tenancy.adapter.tenant.persistence;
 import static dev.ngb.platform_jooq.Tables.TENANT_DOMAINS;
 import static dev.ngb.platform_jooq.Tables.TENANTS;
 
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.JooqLists;
+import dev.ngb.core.spring.query.ListBinding;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantDomainView;
+import dev.ngb.platform.tenancy.application.tenant.query.TenantListing;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantReadRepository;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantView;
 import dev.ngb.platform_jooq.tables.records.TenantDomainsRecord;
@@ -14,23 +19,36 @@ import java.util.UUID;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
-/** The read side of tenancy. A cursor page is ordered by id, which UUID v7 makes time-ordered. */
+/** The read side of tenancy. A snapshot page is ordered by id, which UUID v7 makes time-ordered. */
 public class JooqTenantReadRepository implements TenantReadRepository {
 
     private static final String PLATFORM_CODE = "platform";
 
+    /** The fields a caller may filter and sort on, bound to their columns; every value is a bind variable. */
+    private static final ListBinding BINDING = ListBinding.of(TenantListing.SCHEMA)
+            .column("id", TENANTS.ID)
+            .column("code", TENANTS.CODE)
+            .column("name", TENANTS.NAME)
+            .column("status", TENANTS.STATUS)
+            .column("created_at", TENANTS.CREATED_AT)
+            .column("version", TENANTS.VERSION)
+            .build();
+
     private final DSLContext dsl;
+
+    /** @return the binding of the tenant listing, for the test that checks every sortable field has an index */
+    public static ListBinding listBinding() {
+        return BINDING;
+    }
 
     public JooqTenantReadRepository(DSLContext dsl) {
         this.dsl = dsl;
     }
 
+    /** The reserved platform tenant is the caller's own scope, so it is never one of the listed tenants. */
     @Override
-    public List<TenantView> list() {
-        return dsl.selectFrom(TENANTS)
-                .where(TENANTS.CODE.ne(PLATFORM_CODE))
-                .orderBy(TENANTS.ID)
-                .fetch(JooqTenantReadRepository::toView);
+    public Page<TenantView> list(ListQuery query) {
+        return JooqLists.fetch(dsl, TENANTS, TENANTS.CODE.ne(PLATFORM_CODE), BINDING, query, JooqTenantReadRepository::toView);
     }
 
     @Override

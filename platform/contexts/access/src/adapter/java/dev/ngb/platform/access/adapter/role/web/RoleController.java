@@ -1,18 +1,23 @@
 package dev.ngb.platform.access.adapter.role.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
+import dev.ngb.core.spring.query.Listing;
 import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.CurrentActor;
+import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.access.application.role.command.CreateRoleUseCase;
 import dev.ngb.platform.access.application.role.command.ManageRoleUseCase;
+import dev.ngb.platform.access.application.role.query.RoleListing;
 import dev.ngb.platform.access.application.role.query.RoleQueries;
+import dev.ngb.platform.access.application.role.query.RoleView;
 import dev.ngb.platform.access.domain.role.Role;
 import dev.ngb.platform.access.domain.role.RoleId;
 import dev.ngb.platform.access.domain.user.UserId;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -47,6 +52,11 @@ class RoleController {
                     role.id().value(), role.tenantId().value(), role.scope().name(), role.name(), role.isSystem(),
                     role.permissions(), role.version());
         }
+
+        static RoleResponse ofView(RoleView view) {
+            return new RoleResponse(
+                    view.id(), view.tenantId(), view.scope(), view.name(), view.system(), view.permissions(), view.version());
+        }
     }
 
     private final CreateRoleUseCase createRole;
@@ -72,11 +82,25 @@ class RoleController {
                 actor.tenantId(), actor.scope(), request.name(), request.permissions())));
     }
 
+    /**
+     * Filter, sort and paging follow the list-query contract; the documented parameters come from {@link RoleListing}.
+     * {@code tenant_id} is a filter rather than a parameter, and a Tenant-scope caller never sees another Tenant.
+     */
     @GetMapping
+    @Listing(RoleListing.class)
     @RequiresPermission(PlatformPermissions.ROLE_READ)
-    List<RoleResponse> list(@RequestParam UUID tenantId) {
-        return queries.list(tenantId).stream().map(view -> new RoleResponse(
-                view.id(), view.tenantId(), view.scope(), view.name(), view.system(), view.permissions(), view.version())).toList();
+    Page<RoleResponse> list(ListQuery query) {
+        return queries.list(query, tenantScope()).map(RoleResponse::ofView);
+    }
+
+    /**
+     * The Tenant a Tenant-scope caller may list, or null for a Platform administrator, who administers every Tenant
+     * and names one with {@code filter[tenant_id][eq]}. The read applies it as a condition, so a filter on another
+     * Tenant narrows the page to no row instead of widening it.
+     */
+    private UUID tenantScope() {
+        Actor actor = currentActor.get();
+        return actor.scope() == PermissionScope.TENANT ? actor.tenantId().value() : null;
     }
 
     @PutMapping("/{id}/permissions")

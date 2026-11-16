@@ -6,6 +6,8 @@ dependencies {
     implementation(platform(libs.spring.modulith.bom))
     implementation(project(":libs:shared-kernel"))
     implementation("dev.ngb:core-spring")
+    // Documents every @Listing operation from the schema it names.
+    implementation("dev.ngb:core-openapi")
     implementation("dev.ngb:core-messaging")
     // The snapshot API serves the replica's streams, so the producer names the one enum that lists them; the replica
     // writer the tests use to prove the published events converge proves it through the same dependency.

@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.query.ListQuery;
+import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.ActorType;
@@ -106,7 +108,7 @@ class JwtActorConverterTest {
     private JwtActorConverter converter(String status, UUID userTenant) {
         UserView user = new UserView(UUID.randomUUID(), userTenant, "TENANT", SUBJECT, "a@b.c", "Ann", status, 1);
         UserReadRepository repository = new UserReadRepository() {
-            @Override public List<UserView> list(UUID tenantId) { return List.of(); }
+            @Override public Page<UserView> list(ListQuery query, UUID tenantScope) { return new Page<>(List.of(), null); }
             @Override public Optional<UserView> findById(UUID id) { return Optional.of(user); }
             @Override public Optional<UserView> findByKeycloakSubject(String subject) {
                 return SUBJECT.equals(subject) ? Optional.of(user) : Optional.empty();

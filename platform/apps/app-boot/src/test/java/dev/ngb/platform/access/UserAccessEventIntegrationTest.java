@@ -19,9 +19,12 @@ import dev.ngb.platform.access.application.role.command.ManageRoleUseCase;
 import dev.ngb.platform.access.application.tenant.command.ProvisionTenantUseCase;
 import dev.ngb.platform.access.application.user.command.CreateUserUseCase;
 import dev.ngb.platform.access.application.user.command.ManageUserPermissionsUseCase;
+import dev.ngb.platform.access.application.user.query.UserListing;
 import dev.ngb.platform.access.api.user.UserQueries;
+import dev.ngb.platform.access.api.user.UserView;
 import dev.ngb.platform.access.domain.role.Role;
 import dev.ngb.platform.access.domain.user.User;
+import dev.ngb.platform.support.ListQueries;
 import dev.ngb.platform.support.OwnerDatabase;
 import dev.ngb.platform.support.PlatformContainerConfig;
 import dev.ngb.platform.tenancy.application.tenant.command.CreateTenantUseCase;
@@ -99,7 +102,11 @@ class UserAccessEventIntegrationTest {
 
         assertThat(events(user.id().value())).last().satisfies(payload ->
                 assertThat(permissions(payload)).containsExactly("billing:wallet:read"));
-        assertThat(onPlatform(() -> queries.list(tenant.id().value()))).hasSize(1);
+        assertThat(onPlatform(() -> queries.list(
+                ListQueries.of(UserListing.SCHEMA, "limit", "50"), tenant.id().value()).data()))
+                .as("a Tenant's page holds that Tenant's users only")
+                .extracting(UserView::id)
+                .containsExactly(user.id().value());
     }
 
     @Test

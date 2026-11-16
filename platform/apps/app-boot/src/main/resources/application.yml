@@ -1,3 +1,8 @@
+server:
+  tomcat:
+    # The list-query contract sends filter[field][op] with its brackets unencoded; without this Tomcat answers 400.
+    relaxed-query-chars: "[,]"
+
 spring:
   application:
     name: platform
