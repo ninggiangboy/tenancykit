@@ -35,7 +35,11 @@ public final class FlowPlan {
     /** One matrix column, with the points a cell in it adds. */
     public record Column(String id, String value, BigDecimal score) {}
 
-    /** One question: its stable id, its type and the logic attached to it. */
+    /**
+     * One question: its stable id, its type and the logic attached to it.
+     *
+     * @param constraints the type-specific limits the type decides, as the document carries them
+     */
     public record Question(
             String id,
             String type,
@@ -44,7 +48,8 @@ public final class FlowPlan {
             Expr visibleIf,
             List<Option> options,
             List<Column> columns,
-            Set<String> rowIds) {}
+            Set<String> rowIds,
+            Map<String, Object> constraints) {}
 
     /** One jump: a condition and the page it redirects to, or {@code end}. */
     public record Jump(Expr when, String toPage) {}
@@ -211,7 +216,8 @@ public final class FlowPlan {
                         expression(rawQuestion.get("visible_if"), questionPointer + "/visible_if", expressions, errors),
                         options(rawQuestion.get("options")),
                         columns(rawQuestion.get("columns")),
-                        rowIds(rawQuestion.get("rows"))));
+                        rowIds(rawQuestion.get("rows")),
+                        constraints(rawQuestion.get("constraints"))));
             }
             pages.add(new Page(Json.text(rawPage.get("id")), skipIf, List.copyOf(jumps), List.copyOf(questions)));
         }
@@ -378,6 +384,11 @@ public final class FlowPlan {
             }
         }
         return Set.copyOf(ids);
+    }
+
+    private static Map<String, Object> constraints(Object raw) {
+        Map<String, Object> constraints = Json.object(raw);
+        return constraints == null ? Map.of() : constraints;
     }
 
     private static BigDecimal decimal(Object value) {

@@ -4,11 +4,14 @@
 package dev.ngb.survey_jooq;
 
 
+import dev.ngb.survey_jooq.tables.Answers;
 import dev.ngb.survey_jooq.tables.AppEntitlements;
 import dev.ngb.survey_jooq.tables.EventInbox;
 import dev.ngb.survey_jooq.tables.Outbox;
 import dev.ngb.survey_jooq.tables.QuestionLineage;
 import dev.ngb.survey_jooq.tables.ReplicaState;
+import dev.ngb.survey_jooq.tables.Responses;
+import dev.ngb.survey_jooq.tables.SurveyCounters;
 import dev.ngb.survey_jooq.tables.SurveyDrafts;
 import dev.ngb.survey_jooq.tables.SurveyLinks;
 import dev.ngb.survey_jooq.tables.SurveySettings;
@@ -17,14 +20,18 @@ import dev.ngb.survey_jooq.tables.Surveys;
 import dev.ngb.survey_jooq.tables.TenantDomains;
 import dev.ngb.survey_jooq.tables.TenantSystems;
 import dev.ngb.survey_jooq.tables.Tenants;
+import dev.ngb.survey_jooq.tables.Uploads;
 import dev.ngb.survey_jooq.tables.UserGrants;
 import dev.ngb.survey_jooq.tables.VisitPageEvents;
 import dev.ngb.survey_jooq.tables.Visits;
+import dev.ngb.survey_jooq.tables.records.AnswersRecord;
 import dev.ngb.survey_jooq.tables.records.AppEntitlementsRecord;
 import dev.ngb.survey_jooq.tables.records.EventInboxRecord;
 import dev.ngb.survey_jooq.tables.records.OutboxRecord;
 import dev.ngb.survey_jooq.tables.records.QuestionLineageRecord;
 import dev.ngb.survey_jooq.tables.records.ReplicaStateRecord;
+import dev.ngb.survey_jooq.tables.records.ResponsesRecord;
+import dev.ngb.survey_jooq.tables.records.SurveyCountersRecord;
 import dev.ngb.survey_jooq.tables.records.SurveyDraftsRecord;
 import dev.ngb.survey_jooq.tables.records.SurveyLinksRecord;
 import dev.ngb.survey_jooq.tables.records.SurveySettingsRecord;
@@ -33,6 +40,7 @@ import dev.ngb.survey_jooq.tables.records.SurveysRecord;
 import dev.ngb.survey_jooq.tables.records.TenantDomainsRecord;
 import dev.ngb.survey_jooq.tables.records.TenantSystemsRecord;
 import dev.ngb.survey_jooq.tables.records.TenantsRecord;
+import dev.ngb.survey_jooq.tables.records.UploadsRecord;
 import dev.ngb.survey_jooq.tables.records.UserGrantsRecord;
 import dev.ngb.survey_jooq.tables.records.VisitPageEventsRecord;
 import dev.ngb.survey_jooq.tables.records.VisitsRecord;
@@ -56,12 +64,15 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final UniqueKey<AnswersRecord> ANSWERS_PKEY = Internal.createUniqueKey(Answers.ANSWERS, DSL.name("answers_pkey"), new TableField[] { Answers.ANSWERS.ID }, true);
     public static final UniqueKey<AppEntitlementsRecord> APP_ENTITLEMENTS_PKEY = Internal.createUniqueKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_pkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID, AppEntitlements.APP_ENTITLEMENTS.APP_CODE }, true);
     public static final UniqueKey<EventInboxRecord> EVENT_INBOX_PKEY = Internal.createUniqueKey(EventInbox.EVENT_INBOX, DSL.name("event_inbox_pkey"), new TableField[] { EventInbox.EVENT_INBOX.TENANT_ID, EventInbox.EVENT_INBOX.CONSUMER, EventInbox.EVENT_INBOX.EVENT_ID }, true);
     public static final UniqueKey<OutboxRecord> OUTBOX_PKEY = Internal.createUniqueKey(Outbox.OUTBOX, DSL.name("outbox_pkey"), new TableField[] { Outbox.OUTBOX.ID }, true);
     public static final UniqueKey<QuestionLineageRecord> QUESTION_LINEAGE_PKEY = Internal.createUniqueKey(QuestionLineage.QUESTION_LINEAGE, DSL.name("question_lineage_pkey"), new TableField[] { QuestionLineage.QUESTION_LINEAGE.SURVEY_ID, QuestionLineage.QUESTION_LINEAGE.QUESTION_ID }, true);
     public static final UniqueKey<QuestionLineageRecord> QUESTION_LINEAGE_SURVEY_ID_REPLACES_KEY = Internal.createUniqueKey(QuestionLineage.QUESTION_LINEAGE, DSL.name("question_lineage_survey_id_replaces_key"), new TableField[] { QuestionLineage.QUESTION_LINEAGE.SURVEY_ID, QuestionLineage.QUESTION_LINEAGE.REPLACES }, true);
     public static final UniqueKey<ReplicaStateRecord> REPLICA_STATE_PKEY = Internal.createUniqueKey(ReplicaState.REPLICA_STATE, DSL.name("replica_state_pkey"), new TableField[] { ReplicaState.REPLICA_STATE.ID }, true);
+    public static final UniqueKey<ResponsesRecord> RESPONSES_PKEY = Internal.createUniqueKey(Responses.RESPONSES, DSL.name("responses_pkey"), new TableField[] { Responses.RESPONSES.ID }, true);
+    public static final UniqueKey<SurveyCountersRecord> SURVEY_COUNTERS_PKEY = Internal.createUniqueKey(SurveyCounters.SURVEY_COUNTERS, DSL.name("survey_counters_pkey"), new TableField[] { SurveyCounters.SURVEY_COUNTERS.SURVEY_ID }, true);
     public static final UniqueKey<SurveyDraftsRecord> SURVEY_DRAFTS_PKEY = Internal.createUniqueKey(SurveyDrafts.SURVEY_DRAFTS, DSL.name("survey_drafts_pkey"), new TableField[] { SurveyDrafts.SURVEY_DRAFTS.SURVEY_ID }, true);
     public static final UniqueKey<SurveyLinksRecord> SURVEY_LINKS_PKEY = Internal.createUniqueKey(SurveyLinks.SURVEY_LINKS, DSL.name("survey_links_pkey"), new TableField[] { SurveyLinks.SURVEY_LINKS.ID }, true);
     public static final UniqueKey<SurveySettingsRecord> SURVEY_SETTINGS_PKEY = Internal.createUniqueKey(SurveySettings.SURVEY_SETTINGS, DSL.name("survey_settings_pkey"), new TableField[] { SurveySettings.SURVEY_SETTINGS.TENANT_ID }, true);
@@ -73,6 +84,7 @@ public class Keys {
     public static final UniqueKey<TenantSystemsRecord> TENANT_SYSTEMS_PKEY = Internal.createUniqueKey(TenantSystems.TENANT_SYSTEMS, DSL.name("tenant_systems_pkey"), new TableField[] { TenantSystems.TENANT_SYSTEMS.ID }, true);
     public static final UniqueKey<TenantsRecord> TENANTS_CODE_KEY = Internal.createUniqueKey(Tenants.TENANTS, DSL.name("tenants_code_key"), new TableField[] { Tenants.TENANTS.CODE }, true);
     public static final UniqueKey<TenantsRecord> TENANTS_PKEY = Internal.createUniqueKey(Tenants.TENANTS, DSL.name("tenants_pkey"), new TableField[] { Tenants.TENANTS.ID }, true);
+    public static final UniqueKey<UploadsRecord> UPLOADS_PKEY = Internal.createUniqueKey(Uploads.UPLOADS, DSL.name("uploads_pkey"), new TableField[] { Uploads.UPLOADS.ID }, true);
     public static final UniqueKey<UserGrantsRecord> USER_GRANTS_KEYCLOAK_SUBJECT_KEY = Internal.createUniqueKey(UserGrants.USER_GRANTS, DSL.name("user_grants_keycloak_subject_key"), new TableField[] { UserGrants.USER_GRANTS.KEYCLOAK_SUBJECT }, true);
     public static final UniqueKey<UserGrantsRecord> USER_GRANTS_PKEY = Internal.createUniqueKey(UserGrants.USER_GRANTS, DSL.name("user_grants_pkey"), new TableField[] { UserGrants.USER_GRANTS.USER_ID }, true);
     public static final UniqueKey<VisitPageEventsRecord> VISIT_PAGE_EVENTS_PKEY = Internal.createUniqueKey(VisitPageEvents.VISIT_PAGE_EVENTS, DSL.name("visit_page_events_pkey"), new TableField[] { VisitPageEvents.VISIT_PAGE_EVENTS.ID }, true);
@@ -82,13 +94,22 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final ForeignKey<AnswersRecord, ResponsesRecord> ANSWERS__ANSWERS_RESPONSE_ID_FKEY = Internal.createForeignKey(Answers.ANSWERS, DSL.name("answers_response_id_fkey"), new TableField[] { Answers.ANSWERS.RESPONSE_ID }, Keys.RESPONSES_PKEY, new TableField[] { Responses.RESPONSES.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<AnswersRecord, SurveysRecord> ANSWERS__ANSWERS_SURVEY_ID_FKEY = Internal.createForeignKey(Answers.ANSWERS, DSL.name("answers_survey_id_fkey"), new TableField[] { Answers.ANSWERS.SURVEY_ID }, Keys.SURVEYS_PKEY, new TableField[] { Surveys.SURVEYS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<AppEntitlementsRecord, TenantsRecord> APP_ENTITLEMENTS__APP_ENTITLEMENTS_TENANT_ID_FKEY = Internal.createForeignKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_tenant_id_fkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<QuestionLineageRecord, SurveysRecord> QUESTION_LINEAGE__QUESTION_LINEAGE_SURVEY_ID_FKEY = Internal.createForeignKey(QuestionLineage.QUESTION_LINEAGE, DSL.name("question_lineage_survey_id_fkey"), new TableField[] { QuestionLineage.QUESTION_LINEAGE.SURVEY_ID }, Keys.SURVEYS_PKEY, new TableField[] { Surveys.SURVEYS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<ResponsesRecord, SurveyLinksRecord> RESPONSES__RESPONSES_LINK_ID_FKEY = Internal.createForeignKey(Responses.RESPONSES, DSL.name("responses_link_id_fkey"), new TableField[] { Responses.RESPONSES.LINK_ID }, Keys.SURVEY_LINKS_PKEY, new TableField[] { SurveyLinks.SURVEY_LINKS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<ResponsesRecord, SurveyLinksRecord> RESPONSES__RESPONSES_PERSONAL_LINK_ID_FKEY = Internal.createForeignKey(Responses.RESPONSES, DSL.name("responses_personal_link_id_fkey"), new TableField[] { Responses.RESPONSES.PERSONAL_LINK_ID }, Keys.SURVEY_LINKS_PKEY, new TableField[] { SurveyLinks.SURVEY_LINKS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<ResponsesRecord, SurveysRecord> RESPONSES__RESPONSES_SURVEY_ID_FKEY = Internal.createForeignKey(Responses.RESPONSES, DSL.name("responses_survey_id_fkey"), new TableField[] { Responses.RESPONSES.SURVEY_ID }, Keys.SURVEYS_PKEY, new TableField[] { Surveys.SURVEYS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<ResponsesRecord, VisitsRecord> RESPONSES__RESPONSES_VISIT_ID_FKEY = Internal.createForeignKey(Responses.RESPONSES, DSL.name("responses_visit_id_fkey"), new TableField[] { Responses.RESPONSES.VISIT_ID }, Keys.VISITS_PKEY, new TableField[] { Visits.VISITS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<SurveyCountersRecord, SurveysRecord> SURVEY_COUNTERS__SURVEY_COUNTERS_SURVEY_ID_FKEY = Internal.createForeignKey(SurveyCounters.SURVEY_COUNTERS, DSL.name("survey_counters_survey_id_fkey"), new TableField[] { SurveyCounters.SURVEY_COUNTERS.SURVEY_ID }, Keys.SURVEYS_PKEY, new TableField[] { Surveys.SURVEYS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<SurveyDraftsRecord, SurveysRecord> SURVEY_DRAFTS__SURVEY_DRAFTS_SURVEY_ID_FKEY = Internal.createForeignKey(SurveyDrafts.SURVEY_DRAFTS, DSL.name("survey_drafts_survey_id_fkey"), new TableField[] { SurveyDrafts.SURVEY_DRAFTS.SURVEY_ID }, Keys.SURVEYS_PKEY, new TableField[] { Surveys.SURVEYS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<SurveyLinksRecord, SurveysRecord> SURVEY_LINKS__SURVEY_LINKS_SURVEY_ID_FKEY = Internal.createForeignKey(SurveyLinks.SURVEY_LINKS, DSL.name("survey_links_survey_id_fkey"), new TableField[] { SurveyLinks.SURVEY_LINKS.SURVEY_ID }, Keys.SURVEYS_PKEY, new TableField[] { Surveys.SURVEYS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<SurveyVersionsRecord, SurveysRecord> SURVEY_VERSIONS__SURVEY_VERSIONS_SURVEY_ID_FKEY = Internal.createForeignKey(SurveyVersions.SURVEY_VERSIONS, DSL.name("survey_versions_survey_id_fkey"), new TableField[] { SurveyVersions.SURVEY_VERSIONS.SURVEY_ID }, Keys.SURVEYS_PKEY, new TableField[] { Surveys.SURVEYS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<TenantDomainsRecord, TenantsRecord> TENANT_DOMAINS__TENANT_DOMAINS_TENANT_ID_FKEY = Internal.createForeignKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_tenant_id_fkey"), new TableField[] { TenantDomains.TENANT_DOMAINS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<TenantSystemsRecord, TenantsRecord> TENANT_SYSTEMS__TENANT_SYSTEMS_TENANT_ID_FKEY = Internal.createForeignKey(TenantSystems.TENANT_SYSTEMS, DSL.name("tenant_systems_tenant_id_fkey"), new TableField[] { TenantSystems.TENANT_SYSTEMS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<UploadsRecord, SurveysRecord> UPLOADS__UPLOADS_SURVEY_ID_FKEY = Internal.createForeignKey(Uploads.UPLOADS, DSL.name("uploads_survey_id_fkey"), new TableField[] { Uploads.UPLOADS.SURVEY_ID }, Keys.SURVEYS_PKEY, new TableField[] { Surveys.SURVEYS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<UploadsRecord, VisitsRecord> UPLOADS__UPLOADS_VISIT_ID_FKEY = Internal.createForeignKey(Uploads.UPLOADS, DSL.name("uploads_visit_id_fkey"), new TableField[] { Uploads.UPLOADS.VISIT_ID }, Keys.VISITS_PKEY, new TableField[] { Visits.VISITS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<UserGrantsRecord, TenantsRecord> USER_GRANTS__USER_GRANTS_TENANT_ID_FKEY = Internal.createForeignKey(UserGrants.USER_GRANTS, DSL.name("user_grants_tenant_id_fkey"), new TableField[] { UserGrants.USER_GRANTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<VisitPageEventsRecord, VisitsRecord> VISIT_PAGE_EVENTS__VISIT_PAGE_EVENTS_VISIT_ID_FKEY = Internal.createForeignKey(VisitPageEvents.VISIT_PAGE_EVENTS, DSL.name("visit_page_events_visit_id_fkey"), new TableField[] { VisitPageEvents.VISIT_PAGE_EVENTS.VISIT_ID }, Keys.VISITS_PKEY, new TableField[] { Visits.VISITS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<VisitsRecord, SurveyLinksRecord> VISITS__VISITS_LINK_ID_FKEY = Internal.createForeignKey(Visits.VISITS, DSL.name("visits_link_id_fkey"), new TableField[] { Visits.VISITS.LINK_ID }, Keys.SURVEY_LINKS_PKEY, new TableField[] { SurveyLinks.SURVEY_LINKS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);

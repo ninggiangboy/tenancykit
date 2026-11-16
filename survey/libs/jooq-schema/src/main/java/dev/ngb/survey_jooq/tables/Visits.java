@@ -6,8 +6,10 @@ package dev.ngb.survey_jooq.tables;
 
 import dev.ngb.survey_jooq.Keys;
 import dev.ngb.survey_jooq.Public;
+import dev.ngb.survey_jooq.tables.Responses.ResponsesPath;
 import dev.ngb.survey_jooq.tables.SurveyLinks.SurveyLinksPath;
 import dev.ngb.survey_jooq.tables.Surveys.SurveysPath;
+import dev.ngb.survey_jooq.tables.Uploads.UploadsPath;
 import dev.ngb.survey_jooq.tables.VisitPageEvents.VisitPageEventsPath;
 import dev.ngb.survey_jooq.tables.records.VisitsRecord;
 
@@ -262,6 +264,32 @@ public class Visits extends TableImpl<VisitsRecord> {
             _surveys = new SurveysPath(this, Keys.VISITS__VISITS_SURVEY_ID_FKEY, null);
 
         return _surveys;
+    }
+
+    private transient ResponsesPath _responses;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.responses</code>
+     * table
+     */
+    public ResponsesPath responses() {
+        if (_responses == null)
+            _responses = new ResponsesPath(this, null, Keys.RESPONSES__RESPONSES_VISIT_ID_FKEY.getInverseKey());
+
+        return _responses;
+    }
+
+    private transient UploadsPath _uploads;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.uploads</code>
+     * table
+     */
+    public UploadsPath uploads() {
+        if (_uploads == null)
+            _uploads = new UploadsPath(this, null, Keys.UPLOADS__UPLOADS_VISIT_ID_FKEY.getInverseKey());
+
+        return _uploads;
     }
 
     private transient VisitPageEventsPath _visitPageEvents;

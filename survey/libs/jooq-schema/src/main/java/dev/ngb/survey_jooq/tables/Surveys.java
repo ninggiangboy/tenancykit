@@ -6,10 +6,14 @@ package dev.ngb.survey_jooq.tables;
 
 import dev.ngb.survey_jooq.Keys;
 import dev.ngb.survey_jooq.Public;
+import dev.ngb.survey_jooq.tables.Answers.AnswersPath;
 import dev.ngb.survey_jooq.tables.QuestionLineage.QuestionLineagePath;
+import dev.ngb.survey_jooq.tables.Responses.ResponsesPath;
+import dev.ngb.survey_jooq.tables.SurveyCounters.SurveyCountersPath;
 import dev.ngb.survey_jooq.tables.SurveyDrafts.SurveyDraftsPath;
 import dev.ngb.survey_jooq.tables.SurveyLinks.SurveyLinksPath;
 import dev.ngb.survey_jooq.tables.SurveyVersions.SurveyVersionsPath;
+import dev.ngb.survey_jooq.tables.Uploads.UploadsPath;
 import dev.ngb.survey_jooq.tables.Visits.VisitsPath;
 import dev.ngb.survey_jooq.tables.records.SurveysRecord;
 
@@ -176,6 +180,19 @@ public class Surveys extends TableImpl<SurveysRecord> {
         return Keys.SURVEYS_PKEY;
     }
 
+    private transient AnswersPath _answers;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.answers</code>
+     * table
+     */
+    public AnswersPath answers() {
+        if (_answers == null)
+            _answers = new AnswersPath(this, null, Keys.ANSWERS__ANSWERS_SURVEY_ID_FKEY.getInverseKey());
+
+        return _answers;
+    }
+
     private transient QuestionLineagePath _questionLineage;
 
     /**
@@ -187,6 +204,32 @@ public class Surveys extends TableImpl<SurveysRecord> {
             _questionLineage = new QuestionLineagePath(this, null, Keys.QUESTION_LINEAGE__QUESTION_LINEAGE_SURVEY_ID_FKEY.getInverseKey());
 
         return _questionLineage;
+    }
+
+    private transient ResponsesPath _responses;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.responses</code>
+     * table
+     */
+    public ResponsesPath responses() {
+        if (_responses == null)
+            _responses = new ResponsesPath(this, null, Keys.RESPONSES__RESPONSES_SURVEY_ID_FKEY.getInverseKey());
+
+        return _responses;
+    }
+
+    private transient SurveyCountersPath _surveyCounters;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.survey_counters</code> table
+     */
+    public SurveyCountersPath surveyCounters() {
+        if (_surveyCounters == null)
+            _surveyCounters = new SurveyCountersPath(this, null, Keys.SURVEY_COUNTERS__SURVEY_COUNTERS_SURVEY_ID_FKEY.getInverseKey());
+
+        return _surveyCounters;
     }
 
     private transient SurveyDraftsPath _surveyDrafts;
@@ -226,6 +269,19 @@ public class Surveys extends TableImpl<SurveysRecord> {
             _surveyVersions = new SurveyVersionsPath(this, null, Keys.SURVEY_VERSIONS__SURVEY_VERSIONS_SURVEY_ID_FKEY.getInverseKey());
 
         return _surveyVersions;
+    }
+
+    private transient UploadsPath _uploads;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.uploads</code>
+     * table
+     */
+    public UploadsPath uploads() {
+        if (_uploads == null)
+            _uploads = new UploadsPath(this, null, Keys.UPLOADS__UPLOADS_SURVEY_ID_FKEY.getInverseKey());
+
+        return _uploads;
     }
 
     private transient VisitsPath _visits;

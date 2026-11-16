@@ -4,11 +4,14 @@
 package dev.ngb.survey_jooq;
 
 
+import dev.ngb.survey_jooq.tables.Answers;
 import dev.ngb.survey_jooq.tables.AppEntitlements;
 import dev.ngb.survey_jooq.tables.EventInbox;
 import dev.ngb.survey_jooq.tables.Outbox;
 import dev.ngb.survey_jooq.tables.QuestionLineage;
 import dev.ngb.survey_jooq.tables.ReplicaState;
+import dev.ngb.survey_jooq.tables.Responses;
+import dev.ngb.survey_jooq.tables.SurveyCounters;
 import dev.ngb.survey_jooq.tables.SurveyDrafts;
 import dev.ngb.survey_jooq.tables.SurveyLinks;
 import dev.ngb.survey_jooq.tables.SurveySettings;
@@ -17,6 +20,7 @@ import dev.ngb.survey_jooq.tables.Surveys;
 import dev.ngb.survey_jooq.tables.TenantDomains;
 import dev.ngb.survey_jooq.tables.TenantSystems;
 import dev.ngb.survey_jooq.tables.Tenants;
+import dev.ngb.survey_jooq.tables.Uploads;
 import dev.ngb.survey_jooq.tables.UserGrants;
 import dev.ngb.survey_jooq.tables.VisitPageEvents;
 import dev.ngb.survey_jooq.tables.Visits;
@@ -44,6 +48,11 @@ public class Public extends SchemaImpl {
     public static final Public PUBLIC = new Public();
 
     /**
+     * The table <code>public.answers</code>.
+     */
+    public final Answers ANSWERS = Answers.ANSWERS;
+
+    /**
      * The table <code>public.app_entitlements</code>.
      */
     public final AppEntitlements APP_ENTITLEMENTS = AppEntitlements.APP_ENTITLEMENTS;
@@ -67,6 +76,16 @@ public class Public extends SchemaImpl {
      * The table <code>public.replica_state</code>.
      */
     public final ReplicaState REPLICA_STATE = ReplicaState.REPLICA_STATE;
+
+    /**
+     * The table <code>public.responses</code>.
+     */
+    public final Responses RESPONSES = Responses.RESPONSES;
+
+    /**
+     * The table <code>public.survey_counters</code>.
+     */
+    public final SurveyCounters SURVEY_COUNTERS = SurveyCounters.SURVEY_COUNTERS;
 
     /**
      * The table <code>public.survey_drafts</code>.
@@ -109,6 +128,11 @@ public class Public extends SchemaImpl {
     public final Tenants TENANTS = Tenants.TENANTS;
 
     /**
+     * The table <code>public.uploads</code>.
+     */
+    public final Uploads UPLOADS = Uploads.UPLOADS;
+
+    /**
      * The table <code>public.user_grants</code>.
      */
     public final UserGrants USER_GRANTS = UserGrants.USER_GRANTS;
@@ -139,11 +163,14 @@ public class Public extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
+            Answers.ANSWERS,
             AppEntitlements.APP_ENTITLEMENTS,
             EventInbox.EVENT_INBOX,
             Outbox.OUTBOX,
             QuestionLineage.QUESTION_LINEAGE,
             ReplicaState.REPLICA_STATE,
+            Responses.RESPONSES,
+            SurveyCounters.SURVEY_COUNTERS,
             SurveyDrafts.SURVEY_DRAFTS,
             SurveyLinks.SURVEY_LINKS,
             SurveySettings.SURVEY_SETTINGS,
@@ -152,6 +179,7 @@ public class Public extends SchemaImpl {
             TenantDomains.TENANT_DOMAINS,
             TenantSystems.TENANT_SYSTEMS,
             Tenants.TENANTS,
+            Uploads.UPLOADS,
             UserGrants.USER_GRANTS,
             VisitPageEvents.VISIT_PAGE_EVENTS,
             Visits.VISITS

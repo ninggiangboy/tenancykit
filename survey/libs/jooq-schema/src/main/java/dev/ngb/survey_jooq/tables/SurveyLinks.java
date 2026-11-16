@@ -6,6 +6,7 @@ package dev.ngb.survey_jooq.tables;
 
 import dev.ngb.survey_jooq.Keys;
 import dev.ngb.survey_jooq.Public;
+import dev.ngb.survey_jooq.tables.Responses.ResponsesPath;
 import dev.ngb.survey_jooq.tables.Surveys.SurveysPath;
 import dev.ngb.survey_jooq.tables.Visits.VisitsPath;
 import dev.ngb.survey_jooq.tables.records.SurveyLinksRecord;
@@ -193,6 +194,32 @@ public class SurveyLinks extends TableImpl<SurveyLinksRecord> {
             _surveys = new SurveysPath(this, Keys.SURVEY_LINKS__SURVEY_LINKS_SURVEY_ID_FKEY, null);
 
         return _surveys;
+    }
+
+    private transient ResponsesPath _responsesLinkIdFkey;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.responses</code>
+     * table, via the <code>responses_link_id_fkey</code> key
+     */
+    public ResponsesPath responsesLinkIdFkey() {
+        if (_responsesLinkIdFkey == null)
+            _responsesLinkIdFkey = new ResponsesPath(this, null, Keys.RESPONSES__RESPONSES_LINK_ID_FKEY.getInverseKey());
+
+        return _responsesLinkIdFkey;
+    }
+
+    private transient ResponsesPath _responsesPersonalLinkIdFkey;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.responses</code>
+     * table, via the <code>responses_personal_link_id_fkey</code> key
+     */
+    public ResponsesPath responsesPersonalLinkIdFkey() {
+        if (_responsesPersonalLinkIdFkey == null)
+            _responsesPersonalLinkIdFkey = new ResponsesPath(this, null, Keys.RESPONSES__RESPONSES_PERSONAL_LINK_ID_FKEY.getInverseKey());
+
+        return _responsesPersonalLinkIdFkey;
     }
 
     private transient VisitsPath _visits;

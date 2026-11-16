@@ -1,5 +1,6 @@
 package dev.ngb.survey.authoring.api.flow;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,8 +21,20 @@ public interface SurveyFlow {
      */
     FlowResult run(Map<String, Object> document, Map<String, Object> answers);
 
+    /**
+     * Decides whether a submission may complete: every answer on the path the respondent took, every required
+     * question answered, and every answer satisfying its question's type and constraints.
+     *
+     * @param document the version the visit pinned
+     * @param answers what the respondent submitted
+     * @param knownUploads the upload ids that belong to this visit, which a file answer may reference
+     * @return every reason the submission is refused, in question order; empty means it may complete
+     */
+    List<SubmitProblem> submitProblems(
+            Map<String, Object> document, Map<String, Object> answers, java.util.Set<String> knownUploads);
+
     /** Every structural reason a document could not be evaluated, by pointer; empty for a usable version. */
-    java.util.List<dev.ngb.survey.authoring.api.document.ValidationError> problems(Map<String, Object> document);
+    List<dev.ngb.survey.authoring.api.document.ValidationError> problems(Map<String, Object> document);
 
     /**
      * Renders every translation key of one locale whose value pipes a value into the sentence.

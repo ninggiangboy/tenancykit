@@ -68,6 +68,13 @@ public class JooqVisitRepository implements VisitRepository {
     }
 
     @Override
+    public Optional<Visit> findByTokenHash(byte[] tokenHash) {
+        return dsl.selectFrom(VISITS)
+                .where(VISITS.TOKEN_HASH.eq(tokenHash))
+                .fetchOptional(this::toVisit);
+    }
+
+    @Override
     public boolean save(Visit visit, String expectedState) {
         return dsl.update(VISITS)
                 .set(VISITS.STATE, visit.state().name())
@@ -115,6 +122,14 @@ public class JooqVisitRepository implements VisitRepository {
                 .orderBy(VISITS.LAST_ACTIVITY_AT.desc())
                 .limit(1)
                 .fetchOptional(this::toVisit);
+    }
+
+    @Override
+    public void detachResponse(UUID visitId) {
+        dsl.update(VISITS)
+                .setNull(VISITS.RESPONSE_ID)
+                .where(VISITS.ID.eq(visitId))
+                .execute();
     }
 
     @Override

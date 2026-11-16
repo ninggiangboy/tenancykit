@@ -13,6 +13,9 @@ public interface VisitRepository {
 
     Optional<Visit> findById(UUID visitId);
 
+    /** The visit a presented token names, which is the only way a browser identifies itself to a write endpoint. */
+    Optional<Visit> findByTokenHash(byte[] tokenHash);
+
     /** Replaces the row only when it still holds this state, so two calls cannot both move it. */
     boolean save(Visit visit, String expectedState);
 
@@ -29,4 +32,7 @@ public interface VisitRepository {
 
     /** Whether this link already has a completed response, which a personal link may never have twice. */
     boolean completedForLink(UUID linkId);
+
+    /** Clears a visit's response reference, which a deletion leaves behind so the arrival record survives. */
+    void detachResponse(UUID visitId);
 }
