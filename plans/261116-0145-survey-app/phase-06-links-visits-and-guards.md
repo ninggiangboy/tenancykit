@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Links, visits and public guards"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [4]
