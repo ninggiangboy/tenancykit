@@ -44,13 +44,11 @@ class PermissionCatalogTest {
      * the feature phases add their controllers, so they are asserted from the phase that completes the surface.
      */
     @Test
-    @org.junit.jupiter.api.Disabled("filled by phase 10, when every operation exists")
     void everyCatalogCodeIsEnforced() {
         assertThat(declaredCodes()).containsExactlyInAnyOrderElementsOf(SurveyPermissions.CODES);
     }
 
     @Test
-    @org.junit.jupiter.api.Disabled("filled by phase 10, when every operation exists")
     void everyEndpointDeclaresAnAccessRule() {
         JavaClasses classes = new ClassFileImporter()
                 .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)

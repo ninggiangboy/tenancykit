@@ -8,6 +8,7 @@ import dev.ngb.survey.authoring.adapter.document.schema.JsonSchemaDocumentVerifi
 import dev.ngb.survey.authoring.adapter.draft.persistence.JooqDraftReadRepository;
 import dev.ngb.survey.authoring.adapter.draft.persistence.JooqDraftRepository;
 import dev.ngb.survey.authoring.adapter.flow.persistence.JooqFlowDocumentReadRepository;
+import dev.ngb.survey.authoring.adapter.settings.persistence.JooqSurveySettingsRepository;
 import dev.ngb.survey.authoring.adapter.survey.persistence.JooqSurveyReadRepository;
 import dev.ngb.survey.authoring.adapter.survey.persistence.JooqSurveyRepository;
 import dev.ngb.survey.authoring.adapter.version.persistence.JooqVersionReadRepository;
@@ -30,6 +31,9 @@ import dev.ngb.survey.authoring.application.flow.service.PreviewService;
 import dev.ngb.survey.authoring.application.flow.service.AnswerIndexerService;
 import dev.ngb.survey.authoring.application.flow.service.SurveyFlowService;
 import dev.ngb.survey.authoring.application.link.service.SurveyStateReaderService;
+import dev.ngb.survey.authoring.application.settings.command.UpdateSurveySettingsUseCase;
+import dev.ngb.survey.authoring.application.settings.port.SurveySettingsRepository;
+import dev.ngb.survey.authoring.application.settings.query.SurveySettingsQueries;
 import dev.ngb.survey.authoring.application.survey.command.CloseSurveyUseCase;
 import dev.ngb.survey.authoring.application.survey.command.CreateSurveyUseCase;
 import dev.ngb.survey.authoring.application.survey.command.ReopenSurveyUseCase;
@@ -194,6 +198,31 @@ class AuthoringConfiguration {
     SimulateQueries simulateQueries(
             UnitOfWork unitOfWork, FlowDocumentReadRepository documents, SurveyFlow flow) {
         return new SimulateQueries(unitOfWork, documents, flow);
+    }
+
+    @Bean
+    SurveySettingsRepository surveySettingsRepository(DSLContext dsl) {
+        return new JooqSurveySettingsRepository(dsl);
+    }
+
+    @Bean
+    dev.ngb.survey.authoring.application.settings.query.SurveySettingsReadRepository surveySettingsReadRepository(
+            DSLContext dsl) {
+        return new dev.ngb.survey.authoring.adapter.settings.persistence.JooqSurveySettingsReadRepository(dsl);
+    }
+
+    @Bean
+    SurveySettingsQueries surveySettingsQueries(
+            UnitOfWork unitOfWork,
+            TenantContext tenantContext,
+            dev.ngb.survey.authoring.application.settings.query.SurveySettingsReadRepository settings) {
+        return new SurveySettingsQueries(unitOfWork, tenantContext, settings);
+    }
+
+    @Bean
+    UpdateSurveySettingsUseCase updateSurveySettingsUseCase(
+            UnitOfWork unitOfWork, TenantContext tenantContext, SurveySettingsRepository settings) {
+        return new UpdateSurveySettingsUseCase(unitOfWork, tenantContext, settings);
     }
 
     @Bean

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import dev.ngb.core.security.PublicEndpoint;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -67,6 +68,7 @@ class AnswerController {
         this.links = links;
     }
 
+    @PublicEndpoint
     @PutMapping("/draft")
     ResponseEntity<DraftResponse> saveDraft(
             @PathVariable String visitToken, @RequestBody AnswersRequest request) {
@@ -75,6 +77,7 @@ class AnswerController {
         return ResponseEntity.ok(new DraftResponse(draft.status(), draft.answers()));
     }
 
+    @PublicEndpoint
     @GetMapping("/draft")
     ResponseEntity<DraftResponse> readDraft(@PathVariable String visitToken) {
         Resolved resolved = resolve(visitToken);
@@ -89,6 +92,7 @@ class AnswerController {
         return ResponseEntity.ok(new DraftResponse(view.status(), view.answers()));
     }
 
+    @PublicEndpoint
     @PostMapping("/uploads")
     ResponseEntity<PresignUploadUseCase.Signed> upload(
             @PathVariable String visitToken, @RequestBody UploadRequest request) {
@@ -101,6 +105,7 @@ class AnswerController {
                 .body(new PresignUploadUseCase.Signed(signed.uploadId(), signed.url(), signed.headers()));
     }
 
+    @PublicEndpoint
     @PostMapping("/submit")
     ResponseEntity<SubmitResult> submit(
             @PathVariable String visitToken,

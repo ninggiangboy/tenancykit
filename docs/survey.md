@@ -246,7 +246,8 @@ committed contract is [contracts/openapi/survey.yaml](../contracts/openapi/surve
 | Responses | `GET /surveys/{id}/responses`, `GET /responses/{id}`, `DELETE /responses/{id}`, `GET /responses/{id}/files/{uploadId}` |
 | Analytics | `POST /surveys/{id}/analytics/aggregate`, `POST /surveys/{id}/analytics/crosstab`, `POST /surveys/{id}/analytics/trend`, `GET /surveys/{id}/analytics/funnel` |
 | Respondents | `GET /surveys/{id}/respondents` |
-| Exports | `POST /surveys/{id}/exports`, `GET /exports/{id}` |
+| Exports | `POST /surveys/{id}/exports`, `GET /surveys/{id}/exports`, `GET /exports/{id}` |
+| Settings | `GET /settings`, `PATCH /settings` |
 | Webhooks | `GET/POST /webhook-endpoints`, `GET/PUT/DELETE /webhook-endpoints/{id}`, `POST /webhook-endpoints/{id}/rotate-secret`, `GET /webhook-deliveries`, `POST /webhook-deliveries/{id}/retry` |
 | Public | `POST /p/l/{token}/open`, `GET /p/v/{visitToken}/schema`, `PUT /p/v/{visitToken}/draft`, `GET /p/v/{visitToken}/draft`, `POST /p/v/{visitToken}/pages/{pageId}/view`, `POST /p/v/{visitToken}/uploads`, `POST /p/v/{visitToken}/submit` |
 

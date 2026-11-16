@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import dev.ngb.core.security.PublicEndpoint;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -58,6 +59,7 @@ class PublicController {
         this.linkKeys = linkKeys;
     }
 
+    @PublicEndpoint
     @PostMapping("/l/{token}/open")
     OpenedResponse open(
             @PathVariable String token,
@@ -87,6 +89,7 @@ class PublicController {
         }
     }
 
+    @PublicEndpoint
     @GetMapping("/v/{visitToken}/schema")
     SchemaResponse schema(@PathVariable String visitToken, @RequestParam(required = false) String locale) {
         VisitView visit = visit(visitToken);
@@ -95,6 +98,7 @@ class PublicController {
                 version.versionNo(), locale, version.document(), Honeypot.nameFor(visit.id()));
     }
 
+    @PublicEndpoint
     @PostMapping("/v/{visitToken}/pages/{pageId}/view")
     void pageViewed(@PathVariable String visitToken, @PathVariable UUID pageId) {
         VisitView visit = visit(visitToken);
