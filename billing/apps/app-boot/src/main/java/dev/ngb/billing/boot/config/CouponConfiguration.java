@@ -4,10 +4,8 @@ import dev.ngb.billing.coupon.adapter.coupon.persistence.JooqCouponReadRepositor
 import dev.ngb.billing.coupon.adapter.coupon.persistence.JooqCouponRepository;
 import dev.ngb.billing.coupon.adapter.coupon.persistence.JooqPromotionCodeReadRepository;
 import dev.ngb.billing.coupon.adapter.coupon.persistence.JooqPromotionCodeRepository;
-import dev.ngb.billing.coupon.adapter.coupon.web.CouponController;
 import dev.ngb.billing.coupon.adapter.redemption.persistence.JooqRedemptionReadRepository;
 import dev.ngb.billing.coupon.adapter.redemption.persistence.JooqRedemptionRepository;
-import dev.ngb.billing.coupon.adapter.redemption.web.RedemptionController;
 import dev.ngb.billing.coupon.application.coupon.command.CreateCouponUseCase;
 import dev.ngb.billing.coupon.application.coupon.command.DeactivateCouponUseCase;
 import dev.ngb.billing.coupon.application.coupon.command.ManagePromotionCodeUseCase;
@@ -30,7 +28,6 @@ import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
-import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.tenancy.TenantContext;
 import org.jooq.DSLContext;
 import org.springframework.context.annotation.Bean;
@@ -122,18 +119,5 @@ class CouponConfiguration {
             UnitOfWork unitOfWork, RedemptionRepository redemptions, EndingRedemptions endingRedemptions, CustomerLookup customers,
             AuditLog auditLog, Clock clock) {
         return new RevokeRedemptionUseCase(unitOfWork, redemptions, endingRedemptions, customers, auditLog, clock);
-    }
-
-    @Bean
-    CouponController couponController(
-            CreateCouponUseCase createCoupon, DeactivateCouponUseCase deactivateCoupon, ManagePromotionCodeUseCase manageCodes,
-            CouponQueries queries, CurrentActor currentActor) {
-        return new CouponController(createCoupon, deactivateCoupon, manageCodes, queries, currentActor);
-    }
-
-    @Bean
-    RedemptionController redemptionController(
-            RedeemCouponUseCase redeemCoupon, RevokeRedemptionUseCase revokeRedemption, CouponQueries queries, CurrentActor currentActor) {
-        return new RedemptionController(redeemCoupon, revokeRedemption, queries, currentActor);
     }
 }

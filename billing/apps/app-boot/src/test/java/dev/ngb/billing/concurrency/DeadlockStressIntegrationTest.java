@@ -69,6 +69,9 @@ class DeadlockStressIntegrationTest {
     @Autowired CreateTopUpUseCase topUp;
     @Autowired ReceiveStripeWebhookUseCase stripeWebhooks;
     @Autowired OutboxRelay relay;
+    @Autowired dev.ngb.billing.coupon.application.coupon.port.CouponRepository coupons;
+    @Autowired dev.ngb.billing.coupon.application.redemption.command.RedeemCouponUseCase redeem;
+    @Autowired dev.ngb.core.runtime.UnitOfWork unitOfWork;
 
     @Test
     void chargeRenewalExpiryCycleCloseAndSettlementOnOneWalletNeverDeadlock() throws Exception {
@@ -94,6 +97,24 @@ class DeadlockStressIntegrationTest {
                 "update invoice_items set cycle_start = cycle_start - interval '1 month', cycle_end = cycle_end - interval '1 month'"
                         + " where tenant_id = ? and invoice_id is null",
                 world.tenant().id().value());
+
+        // Ten distinct coupons, so each redeem takes its own rows and none is refused as already held.
+        List<UUID> couponIds = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            var coupon = dev.ngb.billing.coupon.domain.coupon.Coupon.create(
+                    new dev.ngb.billing.coupon.domain.coupon.CouponId(UUID.randomUUID()), world.tenant().id(), "Stress " + i,
+                    new dev.ngb.billing.coupon.domain.coupon.Benefit.PercentOff(100),
+                    dev.ngb.billing.coupon.domain.coupon.Duration.forever(),
+                    dev.ngb.billing.coupon.domain.coupon.Scope.everything(),
+                    new dev.ngb.billing.coupon.domain.coupon.Limits(java.time.Instant.parse("2027-01-01T00:00:00Z"), null, null, null, null, null),
+                    USD, true, "admin", java.time.Instant.now());
+            scopes.runInTenant(world.tenant().id(), () -> unitOfWork.transactional(() -> {
+                coupons.add(coupon);
+                return coupon;
+            }));
+            couponIds.add(coupon.id().value());
+        }
+        java.util.concurrent.atomic.AtomicInteger nextCoupon = new java.util.concurrent.atomic.AtomicInteger();
 
         owner.jdbc().execute("select pg_stat_reset()");
 
@@ -123,6 +144,16 @@ class DeadlockStressIntegrationTest {
             tasks.add(() -> {
                 for (int i = 0; i < 10; i++) {
                     scopes.inTenant(world.tenant().id(), renew::runDue);
+                }
+                return null;
+            });
+            tasks.add(() -> {
+                // Redeeming while charges run is the pair the lock order exists for: wallet, then coupon, then redemption.
+                for (int i = 0; i < 10; i++) {
+                    UUID couponId = couponIds.get(nextCoupon.getAndIncrement() % couponIds.size());
+                    scopes.inTenant(world.tenant().id(), () -> redeem.execute(new dev.ngb.billing.coupon.application.redemption.command
+                            .RedeemCouponUseCase.Command(wallet, null, couponId.toString(), "attach-" + UUID.randomUUID(), AUDIT, null)));
+                    java.util.concurrent.locks.LockSupport.parkNanos(1_000_000L);
                 }
                 return null;
             });

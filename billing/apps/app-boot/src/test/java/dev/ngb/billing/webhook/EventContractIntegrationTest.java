@@ -78,6 +78,9 @@ class EventContractIntegrationTest {
     @Autowired dev.ngb.billing.payment.application.refund.port.RefundRepository refundRepository;
     @Autowired dev.ngb.core.runtime.UnitOfWork unitOfWork;
     @Autowired dev.ngb.core.messaging.outbox.OutboxRelay relay;
+    @Autowired dev.ngb.billing.coupon.application.coupon.port.CouponRepository couponRepository;
+    @Autowired dev.ngb.billing.coupon.application.redemption.command.RedeemCouponUseCase redeemCoupon;
+    @Autowired dev.ngb.billing.coupon.application.redemption.command.RevokeRedemptionUseCase revokeRedemption;
     @Autowired dev.ngb.billing.invoicing.application.cycle.command.CloseBillingCycleUseCase closeCycle;
     @Autowired dev.ngb.billing.invoicing.application.subscription.command.CreateSubscriptionUseCase subscribe;
 
@@ -202,6 +205,39 @@ class EventContractIntegrationTest {
         return payloads;
     }
 
+    /**
+     * Redeems a coupon and then revokes it, which is the whole life of a redemption: {@code coupon.redeemed} on the
+     * way in and {@code coupon.redemption-ended} on the way out.
+     */
+    private List<Payload> produceCouponEvents() {
+        World w = worlds.prepaid(100_000);
+        var tenant = w.tenant().id();
+        var coupon = dev.ngb.billing.coupon.domain.coupon.Coupon.create(
+                new dev.ngb.billing.coupon.domain.coupon.CouponId(UUID.randomUUID()), w.tenant().id(), "Contract coupon",
+                new dev.ngb.billing.coupon.domain.coupon.Benefit.PercentOff(2_000),
+                dev.ngb.billing.coupon.domain.coupon.Duration.forever(),
+                dev.ngb.billing.coupon.domain.coupon.Scope.everything(),
+                new dev.ngb.billing.coupon.domain.coupon.Limits(Instant.parse("2027-01-01T00:00:00Z"), null, 1, null, null, null),
+                MoneyTestWorld.USD, true, "user/test", Instant.now());
+        scopes.runInTenant(tenant, () -> unitOfWork.transactional(() -> {
+            couponRepository.add(coupon);
+            return coupon;
+        }));
+
+        var result = scopes.inTenant(tenant, () -> redeemCoupon.execute(
+                new dev.ngb.billing.coupon.application.redemption.command.RedeemCouponUseCase.Command(
+                        w.wallet().id(), null, coupon.id().toString(), "contract-" + UUID.randomUUID(), PricingTestWorld.AUDIT, null)));
+        scopes.inTenant(tenant, () -> revokeRedemption.execute(
+                new dev.ngb.billing.coupon.application.redemption.command.RevokeRedemptionUseCase.Command(
+                        result.redemption().id(), PricingTestWorld.AUDIT, null)));
+
+        List<Payload> payloads = new ArrayList<>();
+        owner.jdbc().query("select type, payload::text as payload from outbox where tenant_id = ? and type like 'coupon%'", rs -> {
+            payloads.add(new Payload(rs.getString("type"), rs.getString("payload")));
+        }, tenant.value());
+        return payloads;
+    }
+
     private void deliver(dev.ngb.billing.payment.PaymentTestWorld.PayWorld w, String body) {
         receive.receiveDirect(w.configuration().id(), body, dev.ngb.billing.support.StripeEvents.sign(w.webhookSecret(), body));
     }
@@ -212,6 +248,7 @@ class EventContractIntegrationTest {
         produced.addAll(producePricingEvents());
         produced.addAll(producePaymentEvents());
         produced.addAll(produceInvoicingEvents());
+        produced.addAll(produceCouponEvents());
 
         Set<String> producedTypes = new TreeSet<>();
         produced.forEach(p -> producedTypes.add(p.type()));
