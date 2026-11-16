@@ -26,7 +26,7 @@ class LockHierarchyTest {
 
     /** Every bounded context, so a scan that reaches none of them fails instead of passing empty. */
     private static final Set<String> CONTEXTS = Set.of(
-            "customer", "money", "pricing", "usage", "invoicing", "payment", "webhook", "session");
+            "customer", "money", "coupon", "pricing", "usage", "invoicing", "payment", "webhook", "session");
 
     @Test
     void noBlockingAdvisoryLockAppearsInSourcesOrMigrations() {

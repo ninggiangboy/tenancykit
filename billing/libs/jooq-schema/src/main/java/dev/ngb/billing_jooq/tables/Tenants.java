@@ -10,6 +10,8 @@ import dev.ngb.billing_jooq.tables.AppEntitlements.AppEntitlementsPath;
 import dev.ngb.billing_jooq.tables.AuditLog.AuditLogPath;
 import dev.ngb.billing_jooq.tables.BillingSessions.BillingSessionsPath;
 import dev.ngb.billing_jooq.tables.Charges.ChargesPath;
+import dev.ngb.billing_jooq.tables.CouponRedemptions.CouponRedemptionsPath;
+import dev.ngb.billing_jooq.tables.Coupons.CouponsPath;
 import dev.ngb.billing_jooq.tables.Customers.CustomersPath;
 import dev.ngb.billing_jooq.tables.InvoiceCounters.InvoiceCountersPath;
 import dev.ngb.billing_jooq.tables.InvoiceItems.InvoiceItemsPath;
@@ -23,6 +25,7 @@ import dev.ngb.billing_jooq.tables.PortalReturnUrls.PortalReturnUrlsPath;
 import dev.ngb.billing_jooq.tables.PricingMetrics.PricingMetricsPath;
 import dev.ngb.billing_jooq.tables.PricingPlanVersions.PricingPlanVersionsPath;
 import dev.ngb.billing_jooq.tables.PricingPlans.PricingPlansPath;
+import dev.ngb.billing_jooq.tables.PromotionCodes.PromotionCodesPath;
 import dev.ngb.billing_jooq.tables.Refunds.RefundsPath;
 import dev.ngb.billing_jooq.tables.Reservations.ReservationsPath;
 import dev.ngb.billing_jooq.tables.StripeConfigurations.StripeConfigurationsPath;
@@ -255,6 +258,32 @@ public class Tenants extends TableImpl<TenantsRecord> {
         return _charges;
     }
 
+    private transient CouponRedemptionsPath _couponRedemptions;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.coupon_redemptions</code> table
+     */
+    public CouponRedemptionsPath couponRedemptions() {
+        if (_couponRedemptions == null)
+            _couponRedemptions = new CouponRedemptionsPath(this, null, Keys.COUPON_REDEMPTIONS__COUPON_REDEMPTIONS_TENANT_ID_FKEY.getInverseKey());
+
+        return _couponRedemptions;
+    }
+
+    private transient CouponsPath _coupons;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.coupons</code>
+     * table
+     */
+    public CouponsPath coupons() {
+        if (_coupons == null)
+            _coupons = new CouponsPath(this, null, Keys.COUPONS__COUPONS_TENANT_ID_FKEY.getInverseKey());
+
+        return _coupons;
+    }
+
     private transient CustomersPath _customers;
 
     /**
@@ -422,6 +451,19 @@ public class Tenants extends TableImpl<TenantsRecord> {
             _pricingPlans = new PricingPlansPath(this, null, Keys.PRICING_PLANS__PRICING_PLANS_TENANT_ID_FKEY.getInverseKey());
 
         return _pricingPlans;
+    }
+
+    private transient PromotionCodesPath _promotionCodes;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.promotion_codes</code> table
+     */
+    public PromotionCodesPath promotionCodes() {
+        if (_promotionCodes == null)
+            _promotionCodes = new PromotionCodesPath(this, null, Keys.PROMOTION_CODES__PROMOTION_CODES_TENANT_ID_FKEY.getInverseKey());
+
+        return _promotionCodes;
     }
 
     private transient RefundsPath _refunds;

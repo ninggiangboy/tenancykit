@@ -8,6 +8,8 @@ import dev.ngb.billing_jooq.tables.AppEntitlements;
 import dev.ngb.billing_jooq.tables.AuditLog;
 import dev.ngb.billing_jooq.tables.BillingSessions;
 import dev.ngb.billing_jooq.tables.Charges;
+import dev.ngb.billing_jooq.tables.CouponRedemptions;
+import dev.ngb.billing_jooq.tables.Coupons;
 import dev.ngb.billing_jooq.tables.CustomerMappings;
 import dev.ngb.billing_jooq.tables.Customers;
 import dev.ngb.billing_jooq.tables.EventInbox;
@@ -25,6 +27,7 @@ import dev.ngb.billing_jooq.tables.PortalReturnUrls;
 import dev.ngb.billing_jooq.tables.PricingMetrics;
 import dev.ngb.billing_jooq.tables.PricingPlanVersions;
 import dev.ngb.billing_jooq.tables.PricingPlans;
+import dev.ngb.billing_jooq.tables.PromotionCodes;
 import dev.ngb.billing_jooq.tables.Refunds;
 import dev.ngb.billing_jooq.tables.ReplicaState;
 import dev.ngb.billing_jooq.tables.Reservations;
@@ -74,6 +77,16 @@ public class Tables {
      * The table <code>public.charges</code>.
      */
     public static final Charges CHARGES = Charges.CHARGES;
+
+    /**
+     * The table <code>public.coupon_redemptions</code>.
+     */
+    public static final CouponRedemptions COUPON_REDEMPTIONS = CouponRedemptions.COUPON_REDEMPTIONS;
+
+    /**
+     * The table <code>public.coupons</code>.
+     */
+    public static final Coupons COUPONS = Coupons.COUPONS;
 
     /**
      * The table <code>public.customer_mappings</code>.
@@ -159,6 +172,11 @@ public class Tables {
      * The table <code>public.pricing_plans</code>.
      */
     public static final PricingPlans PRICING_PLANS = PricingPlans.PRICING_PLANS;
+
+    /**
+     * The table <code>public.promotion_codes</code>.
+     */
+    public static final PromotionCodes PROMOTION_CODES = PromotionCodes.PROMOTION_CODES;
 
     /**
      * The table <code>public.refunds</code>.

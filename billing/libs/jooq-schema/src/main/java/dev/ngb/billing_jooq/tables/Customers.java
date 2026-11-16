@@ -7,6 +7,7 @@ package dev.ngb.billing_jooq.tables;
 import dev.ngb.billing_jooq.Keys;
 import dev.ngb.billing_jooq.Public;
 import dev.ngb.billing_jooq.tables.BillingSessions.BillingSessionsPath;
+import dev.ngb.billing_jooq.tables.CouponRedemptions.CouponRedemptionsPath;
 import dev.ngb.billing_jooq.tables.CustomerMappings.CustomerMappingsPath;
 import dev.ngb.billing_jooq.tables.Invoices.InvoicesPath;
 import dev.ngb.billing_jooq.tables.StripeCustomers.StripeCustomersPath;
@@ -218,6 +219,19 @@ public class Customers extends TableImpl<CustomersRecord> {
             _billingSessions = new BillingSessionsPath(this, null, Keys.BILLING_SESSIONS__BILLING_SESSIONS_TENANT_ID_CUSTOMER_ID_FKEY.getInverseKey());
 
         return _billingSessions;
+    }
+
+    private transient CouponRedemptionsPath _couponRedemptions;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.coupon_redemptions</code> table
+     */
+    public CouponRedemptionsPath couponRedemptions() {
+        if (_couponRedemptions == null)
+            _couponRedemptions = new CouponRedemptionsPath(this, null, Keys.COUPON_REDEMPTIONS__COUPON_REDEMPTIONS_TENANT_ID_CUSTOMER_ID_FKEY.getInverseKey());
+
+        return _couponRedemptions;
     }
 
     private transient CustomerMappingsPath _customerMappings;

@@ -15,6 +15,7 @@ dependencies {
     implementation("dev.ngb:core-webhook")
     implementation(project(":contexts:customer"))
     implementation(project(":contexts:money"))
+    implementation(project(":contexts:coupon"))
     implementation(project(":contexts:webhook"))
     implementation(project(":contexts:usage"))
     implementation(project(":contexts:pricing"))

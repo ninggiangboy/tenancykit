@@ -8,6 +8,8 @@ import dev.ngb.billing_jooq.tables.AppEntitlements;
 import dev.ngb.billing_jooq.tables.AuditLog;
 import dev.ngb.billing_jooq.tables.BillingSessions;
 import dev.ngb.billing_jooq.tables.Charges;
+import dev.ngb.billing_jooq.tables.CouponRedemptions;
+import dev.ngb.billing_jooq.tables.Coupons;
 import dev.ngb.billing_jooq.tables.CustomerMappings;
 import dev.ngb.billing_jooq.tables.Customers;
 import dev.ngb.billing_jooq.tables.EventInbox;
@@ -25,6 +27,7 @@ import dev.ngb.billing_jooq.tables.PortalReturnUrls;
 import dev.ngb.billing_jooq.tables.PricingMetrics;
 import dev.ngb.billing_jooq.tables.PricingPlanVersions;
 import dev.ngb.billing_jooq.tables.PricingPlans;
+import dev.ngb.billing_jooq.tables.PromotionCodes;
 import dev.ngb.billing_jooq.tables.Refunds;
 import dev.ngb.billing_jooq.tables.ReplicaState;
 import dev.ngb.billing_jooq.tables.Reservations;
@@ -89,6 +92,16 @@ public class Public extends SchemaImpl {
      * The table <code>public.charges</code>.
      */
     public final Charges CHARGES = Charges.CHARGES;
+
+    /**
+     * The table <code>public.coupon_redemptions</code>.
+     */
+    public final CouponRedemptions COUPON_REDEMPTIONS = CouponRedemptions.COUPON_REDEMPTIONS;
+
+    /**
+     * The table <code>public.coupons</code>.
+     */
+    public final Coupons COUPONS = Coupons.COUPONS;
 
     /**
      * The table <code>public.customer_mappings</code>.
@@ -174,6 +187,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.pricing_plans</code>.
      */
     public final PricingPlans PRICING_PLANS = PricingPlans.PRICING_PLANS;
+
+    /**
+     * The table <code>public.promotion_codes</code>.
+     */
+    public final PromotionCodes PROMOTION_CODES = PromotionCodes.PROMOTION_CODES;
 
     /**
      * The table <code>public.refunds</code>.
@@ -305,6 +323,8 @@ public class Public extends SchemaImpl {
             AuditLog.AUDIT_LOG,
             BillingSessions.BILLING_SESSIONS,
             Charges.CHARGES,
+            CouponRedemptions.COUPON_REDEMPTIONS,
+            Coupons.COUPONS,
             CustomerMappings.CUSTOMER_MAPPINGS,
             Customers.CUSTOMERS,
             EventInbox.EVENT_INBOX,
@@ -322,6 +342,7 @@ public class Public extends SchemaImpl {
             PricingMetrics.PRICING_METRICS,
             PricingPlanVersions.PRICING_PLAN_VERSIONS,
             PricingPlans.PRICING_PLANS,
+            PromotionCodes.PROMOTION_CODES,
             Refunds.REFUNDS,
             ReplicaState.REPLICA_STATE,
             Reservations.RESERVATIONS,

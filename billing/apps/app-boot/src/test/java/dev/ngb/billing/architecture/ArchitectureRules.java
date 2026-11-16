@@ -61,6 +61,9 @@ final class ArchitectureRules {
         for (String table : List.of("Wallets", "LedgerEntries", "Reservations", "Charges")) {
             TABLE_OWNER.put(table, "money");
         }
+        for (String table : List.of("Coupons", "PromotionCodes", "CouponRedemptions")) {
+            TABLE_OWNER.put(table, "coupon");
+        }
         for (String table : List.of("BillingSessions", "PortalReturnUrls")) {
             TABLE_OWNER.put(table, "session");
         }
