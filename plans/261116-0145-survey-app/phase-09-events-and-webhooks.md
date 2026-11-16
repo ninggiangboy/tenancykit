@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "Events and webhooks"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [2, 7]
