@@ -1,0 +1,61 @@
+{
+  "name": "tier multiplier: the member's tier earnMultiplier multiplies every line before the single end rounding",
+  "note": "The member starts in GOLD, whose earnMultiplier is 2. No promotion matches, so the line multiplier is the default 1 times the tier multiplier 2 = 2. The line amount is 2000; 2000 x 2 = 4000; 4000 / 100 = 40 points exactly. expectedPoints 40 and expectedLedgerDelta +40.",
+  "program": {
+    "currency": "USD",
+    "currencyUnit": 100,
+    "timeZone": "America/New_York",
+    "expiryMonths": 12,
+    "expiryNoticeDays": 30,
+    "tierWindowMonths": 12
+  },
+  "tiers": [
+    {
+      "code": "BRONZE",
+      "minSpend": 0,
+      "earnMultiplier": 1
+    },
+    {
+      "code": "SILVER",
+      "minSpend": 100000,
+      "earnMultiplier": 1.5
+    },
+    {
+      "code": "GOLD",
+      "minSpend": 500000,
+      "earnMultiplier": 2
+    }
+  ],
+  "promotions": [],
+  "member": {
+    "externalRef": "M-8001",
+    "tier": "GOLD",
+    "debt": 0
+  },
+  "steps": [
+    {
+      "call": "order",
+      "orderRef": "O-8001",
+      "body": {
+        "externalRef": "M-8001",
+        "currency": "USD",
+        "occurredAt": "2026-03-08T16:00:00Z",
+        "storeCode": "ST-08",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-8001",
+            "category": "GROCERY",
+            "quantity": 2,
+            "amount": 2000,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 40,
+      "expectedLedgerDelta": 40
+    }
+  ]
+}

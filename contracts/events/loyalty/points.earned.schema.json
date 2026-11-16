@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/loyalty/points.earned.schema.json",
+  "title": "Points earned",
+  "description": "An order earned points for a member. `points` is what this event granted, `debtRepaid` is the part of it that repaid an existing debt instead of creating a new lot, and `available` and `debt` are the member's balances after the change. The event's `aggregate` is `member/<memberId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "memberId",
+    "externalRef",
+    "orderRef",
+    "points",
+    "debtRepaid",
+    "available",
+    "debt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "memberId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the member."
+    },
+    "externalRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the member."
+    },
+    "orderRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the order that earned, so the event matches the order the Tenant sent."
+    },
+    "points": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The points this event granted for the order."
+    },
+    "debtRepaid": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How much of `points` repaid an existing debt before any new lot was created."
+    },
+    "available": {
+      "type": "integer",
+      "description": "The member's available balance after the change, computed from lots minus debt. A point-in-time value; a later event or a read of the member is newer. It is negative while a debt exceeds the unexpired lots."
+    },
+    "debt": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The member's debt after the change, to be repaid by the next earn."
+    }
+  }
+}

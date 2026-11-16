@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/loyalty/member.enrolled.schema.json",
+  "title": "Member enrolled",
+  "description": "A member was enrolled in the Tenant's loyalty program, either ahead of the first order by an explicit call or by the first order itself. The event's `aggregate` is `member/<memberId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "memberId",
+    "externalRef",
+    "enrolledAt",
+    "via"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "memberId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the member, so a receiver can match the member across every event without the released reference."
+    },
+    "externalRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the member, unique per Tenant and immutable."
+    },
+    "enrolledAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the member was enrolled, in UTC."
+    },
+    "via": {
+      "type": "string",
+      "enum": [
+        "ORDER",
+        "API"
+      ],
+      "description": "ORDER when the first order enrolled the member; API when an explicit enrolment call did."
+    }
+  }
+}

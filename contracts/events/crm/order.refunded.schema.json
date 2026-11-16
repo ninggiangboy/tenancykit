@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/crm/order.refunded.schema.json",
+  "title": "Order refunded",
+  "description": "A Tenant's system recorded a return against an order in crm; the event carries the order's complete current state after the return plus the return that caused it. `orderVersion` is monotonic per order and rose with this return, so a receiver that keeps the order's state drops a delivery whose `orderVersion` is not newer. `return` lets a forwarder call loyalty's return endpoint without reading crm. The event's `aggregate` is `order/<orderRef>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "customerId",
+    "externalRef",
+    "orderRef",
+    "orderVersion",
+    "currency",
+    "total",
+    "occurredAt",
+    "storeCode",
+    "channel",
+    "lines",
+    "return"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "customerId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "crm's own opaque id for the customer the order belongs to."
+    },
+    "externalRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the customer, so a receiver can match the order without reading crm."
+    },
+    "orderRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the order, unique per Tenant. The idempotency key of the order."
+    },
+    "orderVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The order's version, monotonic per order and rising with every return. A receiver that keeps the order's state drops a delivery whose `orderVersion` is not newer than the one it holds."
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "description": "The ISO 4217 code every amount in this payload is denominated in."
+    },
+    "total": {
+      "type": "integer",
+      "description": "The order total in minor units of `currency`."
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the order was placed, in UTC."
+    },
+    "storeCode": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "The Tenant's code for the store the order was placed in."
+    },
+    "channel": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "The Tenant's name for the channel the order came through, for example `pos` or `web`."
+    },
+    "lines": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "description": "Every line of the order, each with its cumulative returned quantity and amount, after this return.",
+      "items": {
+        "type": "object",
+        "required": [
+          "lineNo",
+          "sku",
+          "category",
+          "quantity",
+          "amount",
+          "earnEligible",
+          "returnedQuantity",
+          "returnedAmount"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "lineNo": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The line's number within the order, starting at 1."
+          },
+          "sku": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 100,
+            "description": "The Tenant's category for the line."
+          },
+          "quantity": {
+            "type": "number",
+            "minimum": 0,
+            "description": "The quantity sold, with up to three fraction digits."
+          },
+          "amount": {
+            "type": "integer",
+            "description": "The line's net amount in minor units of the order currency, net of discount."
+          },
+          "earnEligible": {
+            "type": "boolean",
+            "description": "Whether the line earns points; false for lines a promotion or the Tenant excludes."
+          },
+          "returnedQuantity": {
+            "type": "number",
+            "minimum": 0,
+            "description": "The cumulative quantity returned across every return of this order, with up to three fraction digits. Never exceeds `quantity`."
+          },
+          "returnedAmount": {
+            "type": "integer",
+            "description": "The cumulative amount returned across every return of this order, in minor units of the order currency. Never exceeds `amount`."
+          }
+        }
+      }
+    },
+    "return": {
+      "type": "object",
+      "description": "The return that caused this event, so a forwarder can call loyalty's return endpoint without reading crm.",
+      "required": [
+        "returnRef",
+        "occurredAt",
+        "lines"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "returnRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "The Tenant's reference for the return, unique per Tenant. The idempotency key of the return."
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the return was made, in UTC."
+        },
+        "lines": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 500,
+          "description": "The returned lines of this return, not the cumulative state.",
+          "items": {
+            "type": "object",
+            "required": [
+              "lineNo",
+              "quantity",
+              "amount"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "lineNo": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "The number of the order line this return names."
+              },
+              "quantity": {
+                "type": "number",
+                "minimum": 0,
+                "description": "The quantity returned in this return, with up to three fraction digits."
+              },
+              "amount": {
+                "type": "integer",
+                "description": "The amount returned in this return, in minor units of the order currency."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -123,6 +123,6 @@ suite rather than a tenant.
   a subscriber and a webhook see the same fact.
 - The envelope, the version guard, the dead-letter handling and the rebuild procedure are the suite's, not Billing's:
   see [suite-messaging.md](suite-messaging.md).
-- `billing.events` has no consumer today. It exists so a future app (for example CRM) can react to a charge without
-  Billing changing; the routing keys and payloads are already the published event schemas, so the exchange has no
-  separate contract to keep.
+- `billing.events` is consumed by Billing itself, which reads its own facts in its invoicing cycle; no other app binds
+  to it. A fact a Tenant's own system reacts to leaves Billing as a signed webhook to that Tenant System, and the
+  Tenant System is the only party that connects two apps.

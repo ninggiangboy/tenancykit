@@ -1,0 +1,74 @@
+{
+  "name": "full return: returning every line takes the whole granted lot back to zero",
+  "note": "Member in BRONZE, earnMultiplier 1, no promotion. Order O-10001 has one line of amount 4000: 4000 x 1 = 4000; 4000 / 100 = 40 points, so expectedPoints 40 and expectedLedgerDelta +40; the earn snapshots currencyUnit 100 and the line multiplier 1. Return R-10001 returns the full 4000, so the order's new worth is recomputed from the snapshot as (4000 - 4000) x 1 = 0; 0 / 100 = 0 points. The clawback is 40 - 0 = 40, so expectedPoints 40, and the ledger takes it back: expectedLedgerDelta -40, leaving the order's own lot at 0.",
+  "program": {
+    "currency": "USD",
+    "currencyUnit": 100,
+    "timeZone": "America/New_York",
+    "expiryMonths": 12,
+    "expiryNoticeDays": 30,
+    "tierWindowMonths": 12
+  },
+  "tiers": [
+    {
+      "code": "BRONZE",
+      "minSpend": 0,
+      "earnMultiplier": 1
+    },
+    {
+      "code": "SILVER",
+      "minSpend": 100000,
+      "earnMultiplier": 1.5
+    },
+    {
+      "code": "GOLD",
+      "minSpend": 500000,
+      "earnMultiplier": 2
+    }
+  ],
+  "promotions": [],
+  "steps": [
+    {
+      "call": "order",
+      "orderRef": "O-10001",
+      "body": {
+        "externalRef": "M-10001",
+        "currency": "USD",
+        "occurredAt": "2026-03-10T12:00:00Z",
+        "storeCode": "ST-10",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-10001",
+            "category": "GROCERY",
+            "quantity": 4,
+            "amount": 4000,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 40,
+      "expectedLedgerDelta": 40
+    },
+    {
+      "call": "return",
+      "orderRef": "O-10001",
+      "returnRef": "R-10001",
+      "body": {
+        "occurredAt": "2026-03-21T12:00:00Z",
+        "lines": [
+          {
+            "lineNo": 1,
+            "quantity": 4,
+            "amount": 4000
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 40,
+      "expectedLedgerDelta": -40
+    }
+  ]
+}

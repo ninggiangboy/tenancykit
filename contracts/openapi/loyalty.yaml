@@ -1,0 +1,2514 @@
+openapi: 3.1.0
+info:
+  title: Loyalty API
+  description: "The API a Tenant System uses to run its points program: configure the program, its ordered tiers and its promotions; enrol members and read their points, debt, tier, next tier and expiring lots; record orders and returns so points are earned and clawed back by the same rules; spend points and reverse a spend; redeem rewards for single-use vouchers and use a voucher once; and manage the signed webhooks loyalty sends to the Tenant's own endpoints. Every change to a member's points, tier or vouchers is reported to the Tenant as a signed HTTP webhook, never through a broker exchange. The tenant is taken from the request's host and suite token, never from a body: every call acts on one Tenant's data only, and no request body carries a tenant."
+  version: v1
+servers:
+- url: /loyalty
+  description: "Any tenant hostname: <tenant-code>.<base-domain>/loyalty"
+paths:
+  /api/v1/program:
+    get:
+      tags:
+      - program-controller
+      summary: "Read the points program"
+      operationId: getProgram
+      responses:
+        "200":
+          description: "The tenant's one points program."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Program"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No program is configured yet for this tenant. Code `PROGRAM_NOT_CONFIGURED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:program:read
+    put:
+      tags:
+      - program-controller
+      summary: "Create or replace the points program"
+      description: "A full replace of the tenant's one program. The response carries the resource's `ETag`; pass it as `If-Match` on the next write. The `currency` is immutable once a ledger entry exists."
+      operationId: putProgram
+      parameters:
+      - name: If-Match
+        in: header
+        required: false
+        description: "Required by this update; the endpoint answers `428` without it and `412` when it does not match the current `ETag`."
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Program"
+        required: true
+      responses:
+        "200":
+          description: "The program, created or replaced."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Program"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "The program's `currency` cannot change once a ledger entry exists. Code `CURRENCY_IMMUTABLE`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: "A field is out of range or malformed: `currency` is not an ISO 4217 code, `currencyUnit` is below 1, `expiryMonths` is outside 1-120, `expiryNoticeDays` is outside 0-365, `tierWindowMonths` is outside 1-60, or `timeZone` is not an IANA id. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: loyalty:program:manage
+  /api/v1/tiers:
+    get:
+      tags:
+      - tier-controller
+      summary: "Read the ordered tier list"
+      operationId: getTiers
+      responses:
+        "200":
+          description: "The whole tier list in order."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TierList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No program is configured yet for this tenant. Code `PROGRAM_NOT_CONFIGURED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:program:read
+    put:
+      tags:
+      - tier-controller
+      summary: "Replace the ordered tier list"
+      description: "Replaces the whole tier list by `code`: an existing code keeps its identity, a new code is added, and a removed code is allowed only while no member holds it. A change re-evaluates every member's tier in the daily job. The response carries the list's `ETag`."
+      operationId: putTiers
+      parameters:
+      - name: If-Match
+        in: header
+        required: false
+        description: "Required by this update; the endpoint answers `428` without it and `412` when it does not match the current `ETag`."
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TierList"
+        required: true
+      responses:
+        "200":
+          description: "The tier list as stored."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TierList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "A tier was removed while a member still holds it. Code `TIER_IN_USE`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: "The list is empty, its first tier's `minSpend` is not 0, its `minSpend` thresholds do not strictly increase, it has duplicate `code`s, a negative `minSpend`, or an `earnMultiplier` below 1.00 or above 10.00. Code `TIER_LIST_INVALID`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: loyalty:program:manage
+  /api/v1/promotions:
+    get:
+      tags:
+      - promotion-controller
+      summary: "List promotions"
+      operationId: listPromotions
+      parameters:
+      - name: active
+        in: query
+        required: false
+        description: "When set, return only active (`true`) or only inactive (`false`) promotions."
+        schema:
+          type: boolean
+      - name: limit
+        in: query
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: cursor
+        in: query
+        required: false
+        description: "The `next_cursor` of the previous page. Valid only with the same filter."
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "A page of promotions."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PromotionPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: loyalty:program:read
+    post:
+      tags:
+      - promotion-controller
+      summary: "Create a promotion"
+      operationId: createPromotion
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromotionRequest"
+        required: true
+      responses:
+        "201":
+          description: "The promotion was created."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Promotion"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          description: "The window ends before it starts, `multiplier` is below 1.01 or above 10.00, a `daysOfWeek` value is outside 1-7, or the tenant already holds 200 non-archived promotions. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:program:manage
+  /api/v1/promotions/{id}:
+    get:
+      tags:
+      - promotion-controller
+      summary: "Read a promotion"
+      operationId: getPromotion
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: "The promotion."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Promotion"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No promotion with that id in this tenant. Code `PROMOTION_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:program:read
+    patch:
+      tags:
+      - promotion-controller
+      summary: "Update a promotion"
+      description: "Changes only the given fields. The response carries the promotion's `ETag`."
+      operationId: updatePromotion
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        description: "Required by this update; the endpoint answers `428` without it and `412` when it does not match the current `ETag`."
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromotionPatch"
+        required: true
+      responses:
+        "200":
+          description: "The promotion as stored."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Promotion"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No promotion with that id in this tenant. Code `PROMOTION_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: "A changed field is out of range: the window ends before it starts, `multiplier` is below 1.01 or above 10.00, or a `daysOfWeek` value is outside 1-7. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: loyalty:program:manage
+  /api/v1/members/{externalRef}:
+    put:
+      tags:
+      - member-controller
+      summary: "Enrol or update a member"
+      description: "Enrols a member ahead of its first order. Idempotent by `externalRef`: `201` when the member is created and `200` when it already exists. An order for an unknown ref enrols the member the same way and emits the same webhook."
+      operationId: putMember
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        description: "The Tenant's reference for the member, unique per tenant and immutable."
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberUpsert"
+        required: true
+      responses:
+        "200":
+          description: "The member already existed."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Member"
+        "201":
+          description: "The member was created."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Member"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          description: "`externalRef` is empty or over 200 characters, or `displayName` is over 255 characters. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:member:manage
+    get:
+      tags:
+      - member-controller
+      summary: "Read a member's points, tier and expiring points"
+      operationId: getMember
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: expiringWithinDays
+        in: query
+        required: false
+        description: "Return the lots that expire within this many days. Defaults to 30 and is capped at 365."
+        schema:
+          type: integer
+          format: int32
+          default: 30
+          minimum: 0
+          maximum: 365
+      responses:
+        "200":
+          description: "The member with its computed balance, debt, tier, next tier and the points expiring in the requested window."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Member"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member with that `externalRef` in this tenant, or the member was erased. Code `MEMBER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:member:read
+  /api/v1/members/{externalRef}/ledger:
+    get:
+      tags:
+      - member-controller
+      summary: "List a member's ledger entries"
+      description: "The member's append-only ledger, newest first, keyset-paginated by `cursor`."
+      operationId: getMemberLedger
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: kind
+        in: query
+        required: false
+        description: "Return only entries of this kind."
+        schema:
+          type: string
+          enum:
+          - EARN
+          - REDEEM
+          - REVERSE
+          - EXPIRE
+          - CLAWBACK
+          - DEBT_REPAY
+      - name: limit
+        in: query
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: cursor
+        in: query
+        required: false
+        description: "The `next_cursor` of the previous page. Valid only with the same filter."
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "A page of the member's ledger entries."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LedgerPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member with that `externalRef` in this tenant, or the member was erased. Code `MEMBER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:member:read
+  /api/v1/members/{externalRef}/erasure:
+    post:
+      tags:
+      - member-controller
+      summary: "Erase a member"
+      description: "Anonymizes the member, voids its unused vouchers and keeps its ledger as anonymous totals keyed by the opaque member id. Idempotent: erasing an already erased member replays `200`. Emits `member.erased`."
+      operationId: eraseMember
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      responses:
+        "200":
+          description: "The member was erased (or had been erased already)."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErasureResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member with that `externalRef` in this tenant. Code `MEMBER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:member:erase
+  /api/v1/orders/{orderRef}:
+    put:
+      tags:
+      - order-controller
+      summary: "Record an order"
+      description: "Records an order once and grants the points it earns. Idempotent by `orderRef`: the same body replays the stored result with `200`, a different body is `409`. The first order for an unknown `externalRef` enrols the member. The order lines use the shared order shape."
+      operationId: putOrder
+      parameters:
+      - name: orderRef
+        in: path
+        required: true
+        description: "The Tenant's reference for the order, unique per tenant."
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderUpsert"
+        required: true
+      responses:
+        "200":
+          description: "The order was recorded before with the same body; the stored result is replayed."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderView"
+        "201":
+          description: "The order was recorded and its points were granted."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "No program is configured yet (`PROGRAM_NOT_CONFIGURED`), or the same `orderRef` was sent before with a different body (`IDEMPOTENCY_CONFLICT`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The order's `currency` differs from the program's (`CURRENCY_MISMATCH`); the order has no lines or more than 500 (`LINE_LIMIT_EXCEEDED`); or an amount is negative, a quantity is not positive, or `occurredAt` is more than 5 minutes in the future (`VALIDATION_FAILED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:order:record
+    get:
+      tags:
+      - order-controller
+      summary: "Read what an order earned and what its returns took back"
+      operationId: getOrder
+      parameters:
+      - name: orderRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      responses:
+        "200":
+          description: "The order, its points, its stored earn snapshot and its returns."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "loyalty has not recorded that order. Code `ORDER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:member:read
+  /api/v1/orders/{orderRef}/returns/{returnRef}:
+    put:
+      tags:
+      - order-controller
+      summary: "Record a return against an order"
+      description: "Records one return once and recomputes the order's points with the snapshot stored when the order was recorded, never with today's rules. Idempotent by `returnRef`: the same body replays the stored result with `200`, a different body is `409`."
+      operationId: putOrderReturn
+      parameters:
+      - name: orderRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: returnRef
+        in: path
+        required: true
+        description: "The Tenant's reference for the return, unique per tenant."
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderReturn"
+        required: true
+      responses:
+        "200":
+          description: "The return was recorded before with the same body; the stored result is replayed."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderView"
+        "201":
+          description: "The return was recorded and the points were clawed back."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "The same `returnRef` was sent before with a different body. Code `IDEMPOTENCY_CONFLICT`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "loyalty has not seen the order (`ORDER_UNKNOWN`, the caller retries); the cumulative returned quantity or amount would exceed what the order line holds (`RETURN_EXCEEDS_SALE`); or a line is not in the order or an amount is negative (`VALIDATION_FAILED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:order:record
+  /api/v1/members/{externalRef}/redemptions:
+    post:
+      tags:
+      - redemption-controller
+      summary: "Spend a member's points"
+      description: "Spends points at once and consumes lots by earliest expiry. Requires an `Idempotency-Key`: the same key and body replays the stored result with `200`, a different body is `409`."
+      operationId: createRedemption
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: "The caller's idempotency key for this spend."
+        schema:
+          type: string
+          maxLength: 200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RedemptionRequest"
+        required: true
+      responses:
+        "200":
+          description: "The same key and body were seen before; the stored redemption is replayed."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+        "201":
+          description: "The points were spent."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member with that `externalRef` in this tenant. Code `MEMBER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "The member's `debt` is positive (`MEMBER_IN_DEBT`); `points` exceeds the available balance (`INSUFFICIENT_POINTS`); or the same `Idempotency-Key` was sent before with a different body (`IDEMPOTENCY_CONFLICT`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:points:redeem
+  /api/v1/members/{externalRef}/redemptions/{id}:
+    get:
+      tags:
+      - redemption-controller
+      summary: "Read a redemption"
+      operationId: getRedemption
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: "The redemption."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member (`MEMBER_NOT_FOUND`) or no redemption (`REDEMPTION_NOT_FOUND`) with that id in this tenant."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:member:read
+  /api/v1/members/{externalRef}/redemptions/{id}/reversal:
+    post:
+      tags:
+      - redemption-controller
+      summary: "Reverse a redemption"
+      description: "Restores the lots the redemption consumed and voids an unused voucher it issued. Idempotent: an already reversed redemption replays `200`. Points restored into a lot that has since expired stay expired."
+      operationId: reverseRedemption
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: "The redemption is reversed (or had been reversed already)."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member (`MEMBER_NOT_FOUND`) or no redemption (`REDEMPTION_NOT_FOUND`) with that id in this tenant."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "The redemption issued a voucher that has already been used, so it cannot be reversed. Code `VOUCHER_ALREADY_USED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:points:redeem
+  /api/v1/rewards:
+    get:
+      tags:
+      - reward-controller
+      summary: "List rewards"
+      operationId: listRewards
+      parameters:
+      - name: active
+        in: query
+        required: false
+        description: "When set, return only active (`true`) or only inactive (`false`) rewards."
+        schema:
+          type: boolean
+      - name: limit
+        in: query
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: cursor
+        in: query
+        required: false
+        description: "The `next_cursor` of the previous page. Valid only with the same filter."
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "A page of rewards."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RewardPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: loyalty:reward:read
+    post:
+      tags:
+      - reward-controller
+      summary: "Create a reward"
+      operationId: createReward
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardRequest"
+        required: true
+      responses:
+        "201":
+          description: "The reward was created."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Reward"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          description: "A field is out of range: `pointsCost` is negative, the validity window ends before it starts, or `voucherValidDays` is below 1. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:reward:manage
+  /api/v1/rewards/{id}:
+    get:
+      tags:
+      - reward-controller
+      summary: "Read a reward"
+      operationId: getReward
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: "The reward."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Reward"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No reward with that id in this tenant. Code `REWARD_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:reward:read
+    patch:
+      tags:
+      - reward-controller
+      summary: "Update a reward"
+      description: "Changes only the given fields. A cost or stock change never affects vouchers already issued. The response carries the reward's `ETag`."
+      operationId: updateReward
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        description: "Required by this update; the endpoint answers `428` without it and `412` when it does not match the current `ETag`."
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardPatch"
+        required: true
+      responses:
+        "200":
+          description: "The reward as stored."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Reward"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No reward with that id in this tenant. Code `REWARD_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: "A changed field is out of range: `pointsCost` is negative, the validity window ends before it starts, or `voucherValidDays` is below 1. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: loyalty:reward:manage
+  /api/v1/members/{externalRef}/reward-redemptions:
+    post:
+      tags:
+      - reward-controller
+      summary: "Redeem a reward for a member and issue a voucher"
+      description: "Spends the reward's points and issues one single-use voucher in one transaction. Requires an `Idempotency-Key`: a replay returns the same voucher with `200`. loyalty only issues and consumes vouchers; delivering the reward is the Tenant's job."
+      operationId: createRewardRedemption
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: "The caller's idempotency key for this reward redemption."
+        schema:
+          type: string
+          maxLength: 200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardRedemptionRequest"
+        required: true
+      responses:
+        "200":
+          description: "The same key and body were seen before; the stored voucher is replayed."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RewardRedemptionResponse"
+        "201":
+          description: "The points were spent and the voucher was issued."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RewardRedemptionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member with that `externalRef` (`MEMBER_NOT_FOUND`) or no reward with that id (`REWARD_NOT_FOUND`) in this tenant."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "The member's `debt` is positive (`MEMBER_IN_DEBT`); `points` exceeds the available balance (`INSUFFICIENT_POINTS`); the reward's stock is exhausted (`OUT_OF_STOCK`); or the same `Idempotency-Key` was sent before with a different body (`IDEMPOTENCY_CONFLICT`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The reward is not active or is outside its validity window. Code `REWARD_NOT_AVAILABLE`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:reward:redeem
+  /api/v1/members/{externalRef}/vouchers:
+    get:
+      tags:
+      - voucher-controller
+      summary: "List a member's vouchers"
+      operationId: listMemberVouchers
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: status
+        in: query
+        required: false
+        description: "Return only vouchers in this state."
+        schema:
+          type: string
+          enum:
+          - ISSUED
+          - USED
+          - VOIDED
+      - name: limit
+        in: query
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: cursor
+        in: query
+        required: false
+        description: "The `next_cursor` of the previous page. Valid only with the same filter."
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "A page of the member's vouchers."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VoucherPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member with that `externalRef` in this tenant. Code `MEMBER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:voucher:read
+  /api/v1/vouchers/{code}:
+    get:
+      tags:
+      - voucher-controller
+      summary: "Read a voucher by code"
+      operationId: getVoucher
+      parameters:
+      - name: code
+        in: path
+        required: true
+        description: "The single-use voucher code."
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+      responses:
+        "200":
+          description: "The voucher, including its `rewardId`, `state` and `expiresAt`."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Voucher"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No voucher with that code in this tenant; an unknown or another tenant's code is the same constant answer. Code `VOUCHER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:voucher:read
+  /api/v1/vouchers/{code}/use:
+    post:
+      tags:
+      - voucher-controller
+      summary: "Use a voucher once"
+      description: "Consumes the voucher atomically. Replays by `useRef`: the same `useRef` on a used voucher returns the same result with `200`."
+      operationId: useVoucher
+      parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoucherUseRequest"
+        required: true
+      responses:
+        "200":
+          description: "The voucher is used (this call or the `useRef`'s original call)."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Voucher"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No voucher with that code in this tenant. Code `VOUCHER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "The voucher was already used with another `useRef` (`VOUCHER_USED`) or has expired (`VOUCHER_EXPIRED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "`useRef` is missing or empty. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:voucher:use
+  /api/v1/webhook-endpoints:
+    get:
+      tags:
+      - endpoint-controller
+      summary: "List webhook endpoints"
+      operationId: listWebhookEndpoints
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: cursor
+        in: query
+        required: false
+        description: "The `next_cursor` of the previous page."
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "A page of the tenant's webhook endpoints."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpointPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: loyalty:webhook:manage
+    post:
+      tags:
+      - endpoint-controller
+      summary: "Create a webhook endpoint"
+      description: "Registers an endpoint that subscribes to a subset of loyalty's event types. The signing secret is returned once, in this response."
+      operationId: createWebhookEndpoint
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEndpointRequest"
+        required: true
+      responses:
+        "201":
+          description: "The endpoint with its signing secret."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpointWithSecret"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          description: "The `url` is not an https URL that resolves to a public address, `eventTypes` is empty, or it contains a type that is not one of loyalty's twelve. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:webhook:manage
+  /api/v1/webhook-endpoints/{id}:
+    get:
+      tags:
+      - endpoint-controller
+      summary: "Read a webhook endpoint"
+      operationId: getWebhookEndpoint
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: "The endpoint."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpoint"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No endpoint with that id in this tenant. Code `WEBHOOK_ENDPOINT_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:webhook:manage
+    put:
+      tags:
+      - endpoint-controller
+      summary: "Update a webhook endpoint"
+      description: "Changes the endpoint's url, description, subscribed event types or status. The response carries the endpoint's `ETag`."
+      operationId: updateWebhookEndpoint
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        description: "Required by this update; the endpoint answers `428` without it and `412` when it does not match the current `ETag`."
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEndpointRequest"
+        required: true
+      responses:
+        "200":
+          description: "The endpoint as stored."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpoint"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No endpoint with that id in this tenant. Code `WEBHOOK_ENDPOINT_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: "The `url` is not an https URL that resolves to a public address, `eventTypes` is empty, or it contains a type that is not one of loyalty's twelve. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: loyalty:webhook:manage
+    delete:
+      tags:
+      - endpoint-controller
+      summary: "Delete a webhook endpoint"
+      operationId: deleteWebhookEndpoint
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        description: "Required by this delete; the endpoint answers `428` without it and `412` when it does not match the current `ETag`."
+        schema:
+          type: string
+      responses:
+        "204":
+          description: "The endpoint was deleted."
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No endpoint with that id in this tenant. Code `WEBHOOK_ENDPOINT_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: loyalty:webhook:manage
+  /api/v1/webhook-endpoints/{id}/rotate-secret:
+    post:
+      tags:
+      - endpoint-controller
+      summary: "Rotate a webhook endpoint's signing secret"
+      description: "Replaces the endpoint's signing secret and returns the new one once. A receiver may keep the previous secret during a rotation."
+      operationId: rotateWebhookEndpointSecret
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: "The endpoint with its new signing secret."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpointWithSecret"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No endpoint with that id in this tenant. Code `WEBHOOK_ENDPOINT_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:webhook:manage
+  /api/v1/webhook-deliveries:
+    get:
+      tags:
+      - delivery-controller
+      summary: "List webhook deliveries"
+      operationId: listWebhookDeliveries
+      parameters:
+      - name: endpointId
+        in: query
+        required: false
+        description: "Return only deliveries of this endpoint."
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        required: false
+        description: "Return only deliveries in this state, such as `PENDING`, `DELIVERED` or `DEAD`."
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: cursor
+        in: query
+        required: false
+        description: "The `next_cursor` of the previous page. Valid only with the same filter."
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "A page of webhook deliveries."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookDeliveryPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: loyalty:webhook:manage
+  /api/v1/webhook-deliveries/{id}/retry:
+    post:
+      tags:
+      - delivery-controller
+      summary: "Retry a webhook delivery"
+      description: "Schedules another attempt of a finished or dead delivery and answers `202`."
+      operationId: retryWebhookDelivery
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "202":
+          description: "The delivery was queued for another attempt."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookDelivery"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No delivery with that id in this tenant. Code `WEBHOOK_DELIVERY_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:webhook:manage
+components:
+  responses:
+    BadRequest:
+      description: "The request is malformed: a body or query parameter is missing, unknown or not valid for its type, or a required `Idempotency-Key` header is absent. Code `INVALID_REQUEST`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthenticated:
+      description: "The caller presented no valid suite token for this tenant. Code `UNAUTHENTICATED`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: "The token does not carry this operation's `x-required-permission` code, or the tenant is not entitled to loyalty. Code `FORBIDDEN`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    PreconditionFailed:
+      description: "The `If-Match` tag does not match the resource's current version. The response carries the current `ETag`; fetch the resource again and retry. Code `PRECONDITION_FAILED`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    PreconditionRequired:
+      description: "This update requires an `If-Match` header. Send the `ETag` last read. Code `IF_MATCH_REQUIRED`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Program:
+      type: object
+      description: "The tenant's single points program: one currency and its point rate, the point expiry rules, the tier window and the IANA time zone promotion windows and day-of-week rules are evaluated in. Nothing earns until a program exists."
+      required:
+      - currency
+      - currencyUnit
+      - expiryMonths
+      - expiryNoticeDays
+      - tierWindowMonths
+      - timeZone
+      properties:
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+          description: "ISO 4217 code, for example `USD`. Immutable once any ledger entry exists."
+        currencyUnit:
+          type: integer
+          format: int64
+          minimum: 1
+          description: "Minor units of `currency` that earn one point, for example 1000."
+        expiryMonths:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 120
+          default: 12
+          description: "Months after it is earned that a lot expires."
+        expiryNoticeDays:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 365
+          default: 30
+          description: "Days before expiry the notice job announces a lot; 0 disables the notice."
+        tierWindowMonths:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 60
+          default: 12
+          description: "Months of qualifying spend the tier evaluation looks back over."
+        timeZone:
+          type: string
+          default: UTC
+          description: "IANA id the promotion windows and day-of-week rules are evaluated in."
+        version:
+          type: integer
+          format: int64
+          description: "Optimistic-lock version, also the resource's `ETag`."
+    Tier:
+      type: object
+      required:
+      - code
+      - name
+      - minSpend
+      - earnMultiplier
+      properties:
+        code:
+          type: string
+          maxLength: 100
+          description: "Stable tier code."
+        name:
+          type: string
+          maxLength: 255
+          description: "Display name."
+        minSpend:
+          type: integer
+          format: int64
+          minimum: 0
+          description: "Qualifying spend in minor units of the program currency at which the tier starts."
+        earnMultiplier:
+          type: number
+          minimum: 1.00
+          maximum: 10.00
+          multipleOf: 0.01
+          description: "Multiplier applied to a line's points when the member is in this tier."
+    TierList:
+      type: object
+      required:
+      - tiers
+      properties:
+        tiers:
+          type: array
+          minItems: 1
+          description: "The whole ordered list, lowest first. The first tier has `minSpend` 0 and thresholds strictly increase."
+          items:
+            $ref: "#/components/schemas/Tier"
+        version:
+          type: integer
+          format: int64
+          description: "Optimistic-lock version, also the resource's `ETag`."
+    Promotion:
+      type: object
+      description: "A rule that multiplies the points a line earns. Every condition kind that is set must match, and within one kind any listed value matches; an empty list is no restriction. Best-matching-wins resolution: among the active promotions whose window contains the order's `occurredAt` and whose conditions all match a line, the highest multiplier applies, and `priority` orders the catalog and breaks a tie between equal multipliers (higher first)."
+      required:
+      - promotionId
+      - name
+      - active
+      - multiplier
+      properties:
+        promotionId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        priority:
+          type: integer
+          format: int32
+          description: "Catalog order and the tie-break between equal multipliers; higher wins."
+        active:
+          type: boolean
+          description: "Only active promotions are considered by the earn engine."
+        startsAt:
+          type: string
+          format: date-time
+          description: "Start of the window, evaluated in the program's `timeZone`."
+        endsAt:
+          type: string
+          format: date-time
+          description: "End of the window, evaluated in the program's `timeZone`."
+        daysOfWeek:
+          type: array
+          description: "ISO weekdays the promotion applies on: 1 Monday to 7 Sunday."
+          items:
+            type: integer
+            minimum: 1
+            maximum: 7
+        storeCodes:
+          type: array
+          description: "Store codes the promotion applies in."
+          items:
+            type: string
+        categories:
+          type: array
+          description: "Product categories the promotion applies to."
+          items:
+            type: string
+        skus:
+          type: array
+          description: "SKUs the promotion applies to."
+          items:
+            type: string
+        multiplier:
+          type: number
+          minimum: 1.01
+          maximum: 10.00
+          multipleOf: 0.01
+        version:
+          type: integer
+          format: int64
+    PromotionRequest:
+      type: object
+      required:
+      - name
+      - multiplier
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        priority:
+          type: integer
+          format: int32
+        active:
+          type: boolean
+          default: true
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        daysOfWeek:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 7
+        storeCodes:
+          type: array
+          items:
+            type: string
+        categories:
+          type: array
+          items:
+            type: string
+        skus:
+          type: array
+          items:
+            type: string
+        multiplier:
+          type: number
+          minimum: 1.01
+          maximum: 10.00
+          multipleOf: 0.01
+    PromotionPatch:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        priority:
+          type: integer
+          format: int32
+        active:
+          type: boolean
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        daysOfWeek:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 7
+        storeCodes:
+          type: array
+          items:
+            type: string
+        categories:
+          type: array
+          items:
+            type: string
+        skus:
+          type: array
+          items:
+            type: string
+        multiplier:
+          type: number
+          minimum: 1.01
+          maximum: 10.00
+          multipleOf: 0.01
+    PromotionPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Promotion"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    MemberUpsert:
+      type: object
+      properties:
+        displayName:
+          type: [string, "null"]
+          maxLength: 255
+          description: "Optional display name."
+    Member:
+      type: object
+      description: "A member of the tenant's program, keyed by the tenant's own `externalRef`. `available` is computed on read as the sum of the remaining points of unexpired lots minus `debt`; it is negative while a debt exceeds the unexpired lots."
+      properties:
+        memberId:
+          type: string
+          format: uuid
+          description: "loyalty's own opaque id for the member."
+        externalRef:
+          type: string
+          maxLength: 200
+          description: "The Tenant's reference for the member, unique per tenant and immutable."
+        displayName:
+          type: [string, "null"]
+          maxLength: 255
+        available:
+          type: integer
+          format: int64
+          description: "The balance: the sum of unexpired lots' remaining points minus `debt`. Computed on read, never stored."
+        debt:
+          type: integer
+          format: int64
+          minimum: 0
+          description: "Points owed from a clawback whose shortfall became debt; the next earn repays it first."
+        tier:
+          $ref: "#/components/schemas/Tier"
+        nextTier:
+          description: "The next tier up and its `minSpend` threshold; null when the member is in the top tier."
+          allOf:
+          - $ref: "#/components/schemas/Tier"
+        pointsExpiring:
+          type: array
+          description: "The lots that expire within the requested window, grouped by expiry date."
+          items:
+            type: object
+            properties:
+              expiresAt:
+                type: string
+                format: date-time
+              points:
+                type: integer
+                format: int64
+        enrolledAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - ERASED
+    LedgerEntry:
+      type: object
+      description: "One append-only ledger entry. Entries are never changed; a correction is a new entry."
+      required:
+      - entryId
+      - kind
+      - points
+      - createdAt
+      properties:
+        entryId:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          description: "EARN grants a lot; DEBT_REPAY repays debt before a new lot; REDEEM spends; REVERSE restores a reversed redemption; CLAWBACK takes points back on a return; EXPIRE writes off a lot."
+          enum:
+          - EARN
+          - REDEEM
+          - REVERSE
+          - EXPIRE
+          - CLAWBACK
+          - DEBT_REPAY
+        points:
+          type: integer
+          format: int64
+          description: "The points this entry moved, with `kind` giving the direction."
+        orderRef:
+          type: [string, "null"]
+          maxLength: 200
+        returnRef:
+          type: [string, "null"]
+          maxLength: 200
+        redemptionId:
+          type: [string, "null"]
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+    LedgerPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/LedgerEntry"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    ErasureResponse:
+      type: object
+      properties:
+        memberId:
+          type: string
+          format: uuid
+        erasedAt:
+          type: string
+          format: date-time
+        vouchersVoided:
+          type: integer
+          format: int64
+          description: "The member's unused vouchers that were voided."
+    OrderLine:
+      type: object
+      description: "One order line in the shared order shape. `amount` is net of discount."
+      required:
+      - lineNo
+      - quantity
+      - amount
+      properties:
+        lineNo:
+          type: integer
+          format: int32
+          minimum: 1
+        sku:
+          type: string
+          maxLength: 100
+        category:
+          type: string
+          maxLength: 100
+        quantity:
+          type: number
+          multipleOf: 0.001
+          exclusiveMinimum: 0
+          description: "Quantity, up to 3 fraction digits."
+        amount:
+          type: integer
+          format: int64
+          description: "Net line amount in minor units of the order currency."
+        earnEligible:
+          type: boolean
+          default: true
+          description: "Whether the line's amount counts toward points and qualifying spend."
+    OrderUpsert:
+      type: object
+      description: "The order shape shared with the order contract, carrying only the fields loyalty reads. The first order for an unknown `externalRef` enrols the member."
+      required:
+      - externalRef
+      - occurredAt
+      - lines
+      properties:
+        externalRef:
+          type: string
+          minLength: 1
+          maxLength: 200
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+          description: "ISO 4217 code; must match the program's currency."
+        occurredAt:
+          type: string
+          format: date-time
+          description: "At most 5 minutes in the future."
+        storeCode:
+          type: string
+          maxLength: 100
+        channel:
+          type: string
+          maxLength: 50
+        lines:
+          type: array
+          minItems: 1
+          maxItems: 500
+          items:
+            $ref: "#/components/schemas/OrderLine"
+    ReturnLine:
+      type: object
+      required:
+      - lineNo
+      - quantity
+      - amount
+      properties:
+        lineNo:
+          type: integer
+          format: int32
+        quantity:
+          type: number
+          multipleOf: 0.001
+          exclusiveMinimum: 0
+          description: "Quantity returned, up to 3 fraction digits."
+        amount:
+          type: integer
+          format: int64
+          description: "Returned amount in minor units of the order currency."
+    OrderReturn:
+      type: object
+      required:
+      - lines
+      properties:
+        occurredAt:
+          type: string
+          format: date-time
+        lines:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ReturnLine"
+    EarnSnapshot:
+      type: object
+      description: "The rules an order's earn used, stored when the order was recorded. A return recomputes with this snapshot, never with today's rules."
+      properties:
+        unitAmount:
+          type: integer
+          format: int64
+        currency:
+          type: string
+        tierCode:
+          type: string
+        tierMultiplier:
+          type: number
+        lines:
+          type: array
+          items:
+            type: object
+            properties:
+              lineNo:
+                type: integer
+                format: int32
+              multiplier:
+                type: number
+              promotionIds:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+    OrderLineView:
+      type: object
+      properties:
+        lineNo:
+          type: integer
+          format: int32
+        sku:
+          type: string
+        category:
+          type: string
+        quantity:
+          type: number
+        amount:
+          type: integer
+          format: int64
+        earnEligible:
+          type: boolean
+        returnedQuantity:
+          type: number
+        returnedAmount:
+          type: integer
+          format: int64
+    OrderView:
+      type: object
+      description: "What an order earned, the snapshot its earn used, and what its returns took back. `pointsGranted` is the order's points net of returns."
+      properties:
+        orderRef:
+          type: string
+          maxLength: 200
+        externalRef:
+          type: string
+          maxLength: 200
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+        occurredAt:
+          type: string
+          format: date-time
+        storeCode:
+          type: string
+        channel:
+          type: string
+        pointsGranted:
+          type: integer
+          format: int64
+        spendAmount:
+          type: integer
+          format: int64
+          description: "Eligible net amount in minor units the points were computed from."
+        available:
+          type: integer
+          format: int64
+        debt:
+          type: integer
+          format: int64
+        earnSnapshot:
+          $ref: "#/components/schemas/EarnSnapshot"
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderLineView"
+        returns:
+          type: array
+          items:
+            type: object
+            properties:
+              returnRef:
+                type: string
+                maxLength: 200
+              occurredAt:
+                type: string
+                format: date-time
+              pointsClawedBack:
+                type: integer
+                format: int64
+              debtAdded:
+                type: integer
+                format: int64
+    RedemptionRequest:
+      type: object
+      required:
+      - points
+      properties:
+        points:
+          type: integer
+          format: int64
+          minimum: 1
+        reference:
+          type: string
+          maxLength: 200
+          description: "The Tenant's own reference for the redemption, for example a POS receipt."
+    RedemptionResponse:
+      type: object
+      properties:
+        redemptionId:
+          type: string
+          format: uuid
+        externalRef:
+          type: string
+          maxLength: 200
+        points:
+          type: integer
+          format: int64
+        reference:
+          type: string
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - REVERSED
+        available:
+          type: integer
+          format: int64
+        debt:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+        reversedAt:
+          type: string
+          format: date-time
+    Reward:
+      type: object
+      description: "A catalog entry a member exchanges points for. Redeeming it issues one single-use voucher; loyalty never fulfils the reward itself."
+      required:
+      - rewardId
+      - name
+      - pointsCost
+      - active
+      properties:
+        rewardId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 1000
+        pointsCost:
+          type: integer
+          format: int64
+          minimum: 0
+        stock:
+          type: [integer, "null"]
+          format: int64
+          minimum: 0
+          description: "Remaining units; null means unlimited."
+        active:
+          type: boolean
+        validFrom:
+          type: string
+          format: date-time
+        validTo:
+          type: string
+          format: date-time
+        voucherValidDays:
+          type: integer
+          format: int32
+          minimum: 1
+          description: "Days a voucher issued for this reward stays usable."
+        version:
+          type: integer
+          format: int64
+    RewardRequest:
+      type: object
+      required:
+      - name
+      - pointsCost
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 1000
+        pointsCost:
+          type: integer
+          format: int64
+          minimum: 0
+        stock:
+          type: [integer, "null"]
+          format: int64
+          minimum: 0
+        active:
+          type: boolean
+          default: true
+        validFrom:
+          type: string
+          format: date-time
+        validTo:
+          type: string
+          format: date-time
+        voucherValidDays:
+          type: integer
+          format: int32
+          minimum: 1
+    RewardPatch:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 1000
+        pointsCost:
+          type: integer
+          format: int64
+          minimum: 0
+        stock:
+          type: [integer, "null"]
+          format: int64
+          minimum: 0
+        active:
+          type: boolean
+        validFrom:
+          type: string
+          format: date-time
+        validTo:
+          type: string
+          format: date-time
+        voucherValidDays:
+          type: integer
+          format: int32
+          minimum: 1
+    RewardPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reward"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    RewardRedemptionRequest:
+      type: object
+      required:
+      - rewardId
+      properties:
+        rewardId:
+          type: string
+          format: uuid
+    RewardRedemptionResponse:
+      type: object
+      properties:
+        redemptionId:
+          type: string
+          format: uuid
+        rewardId:
+          type: string
+          format: uuid
+        voucher:
+          $ref: "#/components/schemas/Voucher"
+        available:
+          type: integer
+          format: int64
+        debt:
+          type: integer
+          format: int64
+        createdAt:
+          type: string
+          format: date-time
+    Voucher:
+      type: object
+      description: "A single-use voucher. loyalty issues and consumes it; the Tenant maps its `rewardId` to what it grants."
+      required:
+      - voucherId
+      - code
+      - rewardId
+      - state
+      - expiresAt
+      properties:
+        voucherId:
+          type: string
+          format: uuid
+        code:
+          type: string
+          maxLength: 100
+        rewardId:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        externalRef:
+          type: [string, "null"]
+          maxLength: 200
+          description: "Null after the member is erased."
+        state:
+          type: string
+          enum:
+          - ISSUED
+          - USED
+          - VOIDED
+        issuedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        usedAt:
+          type: string
+          format: date-time
+        useRef:
+          type: [string, "null"]
+          maxLength: 200
+        voidReason:
+          type: [string, "null"]
+          enum:
+          - REVERSAL
+          - ERASURE
+    VoucherUseRequest:
+      type: object
+      required:
+      - useRef
+      properties:
+        useRef:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: "The caller's idempotency reference for the use; the same reference replays the same result."
+    VoucherPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Voucher"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    WebhookEndpoint:
+      type: object
+      description: "A destination loyalty sends signed HTTP webhooks to. It subscribes to a subset of loyalty's event types."
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          description: "An https URL that resolves to a public address."
+        description:
+          type: string
+          maxLength: 255
+        eventTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventType"
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - DISABLED
+        keyId:
+          type: string
+          description: "Identifies which signing secret signed a delivery."
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        secretRotatedAt:
+          type: string
+          format: date-time
+    WebhookEndpointRequest:
+      type: object
+      required:
+      - url
+      - eventTypes
+      properties:
+        url:
+          type: string
+          description: "An https URL that resolves to a public address."
+        description:
+          type: string
+          maxLength: 255
+        eventTypes:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/EventType"
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - DISABLED
+    WebhookEndpointWithSecret:
+      type: object
+      properties:
+        endpoint:
+          $ref: "#/components/schemas/WebhookEndpoint"
+        signingSecret:
+          type: string
+          description: "Returned only when the endpoint is created or its secret is rotated."
+    WebhookDelivery:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        endpointId:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+          description: "The event's deduplication key."
+        eventType:
+          $ref: "#/components/schemas/EventType"
+        status:
+          type: string
+          description: "For example `PENDING`, `DELIVERED` or `DEAD`."
+        attempts:
+          type: integer
+          format: int32
+        nextAttemptAt:
+          type: string
+          format: date-time
+        lastStatusCode:
+          type: integer
+          format: int32
+        lastError:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+    WebhookEndpointPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookEndpoint"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    WebhookDeliveryPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookDelivery"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    EventType:
+      type: string
+      description: "One loyalty event type an endpoint may subscribe to. Every event is a fact loyalty reports as a signed HTTP webhook to the Tenant's subscribed endpoints."
+      enum:
+      - member.enrolled
+      - points.earned
+      - points.clawed-back
+      - points.redeemed
+      - points.redemption-reversed
+      - points.expiring
+      - points.expired
+      - tier.changed
+      - voucher.issued
+      - voucher.used
+      - voucher.voided
+      - member.erased
+    PageInfo:
+      type: object
+      properties:
+        limit:
+          type: integer
+          format: int32
+        offset:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
+        next_cursor:
+          type: string
+    Error:
+      type: object
+      description: "The RFC 9457 problem detail every operation returns on failure. `title` repeats the status reason, `status` repeats the HTTP status and `detail` is a human-readable message. `code` names the concrete loyalty failure where the operation documents one."
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+          format: int32
+        detail:
+          type: string
+        code:
+          type: string
+          description: "The concrete failure code named in the operation's error description, for example `PROGRAM_NOT_CONFIGURED` or `INSUFFICIENT_POINTS`."
+  securitySchemes:
+    oidc:
+      type: http
+      description: "A suite token issued by Platform for this tenant"
+      scheme: bearer
+      bearerFormat: JWT

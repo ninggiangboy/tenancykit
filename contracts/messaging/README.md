@@ -75,8 +75,8 @@ version guard drops any the snapshot already covered. Platform never hard-delete
 | Exchange (topic, durable) | Producer | Routing key | Queues (one per consuming app) |
 |---|---|---|---|
 | `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events`, `notification.platform-events`, `mailroom.platform-events`, `survey.platform-events` |
-| `billing.events` | Billing | event type | none yet; an app that wants Billing's public events declares its own queue |
-| `survey.events` | Survey | event type | none yet; an app that wants a survey fact declares its own queue |
+| `billing.events` | Billing | event type | consumed by its own app only |
+| `survey.events` | Survey | event type | no consumer; no other app may bind to it |
 | `mailer.commands` | any producer | command type, today `email.send` | `mailer.commands` (and its `mailer.commands.dlq`) |
 | `mailer.events` | Mailer | event type, today `email-delivery.changed` | `mailroom.mailer-events` (and its `mailroom.mailer-events.dlq`) |
 
@@ -85,12 +85,21 @@ the five state-transfer routing keys, declare `x-dead-letter-exchange: suite.dlx
 Notification declares no exchange: it produces `email.send` into `mailer.commands` and exports no event of its own.
 Mailroom declares no exchange either: it produces `email.send` and consumes `email-delivery.changed` from mailer's
 `mailer.events`, which is the suite's first exchange owned by a service that is otherwise a pure consumer. Survey
-declares `survey.events` for its own three facts, which have no consumer today.
+declares `survey.events` for its own three facts, which have no consumer, and no other app may bind to it.
 
 Each queue is durable, bound to its exchange by the event types the consumer accepts, and declares
 `x-dead-letter-exchange: suite.dlx`. The matching `<queue>.dlq` is bound to `suite.dlx` by the queue name. Consumers
 declare their queues and bindings, producers declare their exchange; every declaration is idempotent, so startup
 order does not matter.
+
+## The suite rule
+
+Suite apps never bind to another app's business exchange. The broker carries Platform's replicated data, the suite's
+infrastructure commands and outcomes (`mailer.commands`, `mailer.events`) and an app's traffic with itself — Billing
+consumes its own `billing.events` in its invoicing cycle, and `survey.events` has no consumer at all. A fact a Tenant's
+own system reacts to leaves the producing app as a signed **webhook** to that Tenant System, and the Tenant System is
+the only party that connects two apps. A new consumer inside the suite is a change of this rule, not a new binding, so
+neither `billing.events` nor `survey.events` is ever bound by another app.
 
 ## Delivery guarantees
 

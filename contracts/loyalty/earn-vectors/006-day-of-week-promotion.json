@@ -1,0 +1,89 @@
+{
+  "name": "day of week: the promotion matches the local weekday of occurredAt in the program time zone",
+  "note": "Member in BRONZE, earnMultiplier 1. Order O-6001 occurredAt 2026-06-07T01:00:00Z is 2026-06-06T21:00:00 local (EDT, UTC-4), a Saturday, so the weekend promotion applies: 1000 x 2 = 2000; 2000 / 100 = 20 points. In UTC that instant is already Sunday, which shows the local-day test. Order O-6002 occurredAt 2026-06-08T14:00:00Z is 2026-06-08T10:00:00 local, a Monday, so nothing matches: 1000 x 1 = 1000; 1000 / 100 = 10 points. Ledgers are +20 then +10.",
+  "program": {
+    "currency": "USD",
+    "currencyUnit": 100,
+    "timeZone": "America/New_York",
+    "expiryMonths": 12,
+    "expiryNoticeDays": 30,
+    "tierWindowMonths": 12
+  },
+  "tiers": [
+    {
+      "code": "BRONZE",
+      "minSpend": 0,
+      "earnMultiplier": 1
+    },
+    {
+      "code": "SILVER",
+      "minSpend": 100000,
+      "earnMultiplier": 1.5
+    },
+    {
+      "code": "GOLD",
+      "minSpend": 500000,
+      "earnMultiplier": 2
+    }
+  ],
+  "promotions": [
+    {
+      "id": "promo-weekend",
+      "multiplier": 2,
+      "daysOfWeek": [
+        "SAT",
+        "SUN"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "call": "order",
+      "orderRef": "O-6001",
+      "body": {
+        "externalRef": "M-6001",
+        "currency": "USD",
+        "occurredAt": "2026-06-07T01:00:00Z",
+        "storeCode": "ST-06",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-6001",
+            "category": "GROCERY",
+            "quantity": 1,
+            "amount": 1000,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 20,
+      "expectedLedgerDelta": 20
+    },
+    {
+      "call": "order",
+      "orderRef": "O-6002",
+      "body": {
+        "externalRef": "M-6001",
+        "currency": "USD",
+        "occurredAt": "2026-06-08T14:00:00Z",
+        "storeCode": "ST-06",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-6002",
+            "category": "GROCERY",
+            "quantity": 1,
+            "amount": 1000,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 10,
+      "expectedLedgerDelta": 10
+    }
+  ]
+}

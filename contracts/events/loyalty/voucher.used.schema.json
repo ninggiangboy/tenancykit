@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/loyalty/voucher.used.schema.json",
+  "title": "Voucher used",
+  "description": "A voucher was used. Loyalty consumes a voucher at most once; `useRef` is the caller's idempotency reference for the use and `usedAt` is when it happened. The event's `aggregate` is `member/<memberId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "voucherId",
+    "code",
+    "rewardId",
+    "redemptionId",
+    "memberId",
+    "externalRef",
+    "expiresAt",
+    "useRef",
+    "usedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "voucherId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the voucher."
+    },
+    "code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "The single-use voucher code that was used."
+    },
+    "rewardId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The reward the voucher was issued for."
+    },
+    "redemptionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the reward redemption that issued the voucher."
+    },
+    "memberId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the member."
+    },
+    "externalRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the member."
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the voucher stops being usable, in UTC."
+    },
+    "useRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The caller's idempotency reference for the use, so the same use replays instead of consuming the voucher twice."
+    },
+    "usedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the voucher was used, in UTC."
+    }
+  }
+}

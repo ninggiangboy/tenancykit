@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/loyalty/points.clawed-back.schema.json",
+  "title": "Points clawed back",
+  "description": "A return took points back from a member. `points` is what the return removed, `debtAdded` is the part it could not take from existing lots and recorded as debt, and `available` and `debt` are the member's balances after the change. The event's `aggregate` is `member/<memberId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "memberId",
+    "externalRef",
+    "orderRef",
+    "returnRef",
+    "points",
+    "debtAdded",
+    "available",
+    "debt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "memberId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the member."
+    },
+    "externalRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the member."
+    },
+    "orderRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the order the return belongs to."
+    },
+    "returnRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the return that took the points back."
+    },
+    "points": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The points this return removed."
+    },
+    "debtAdded": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The part of `points` that could not be taken from existing lots and became debt."
+    },
+    "available": {
+      "type": "integer",
+      "description": "The member's available balance after the change, computed from lots minus debt. It is negative while a debt exceeds the unexpired lots."
+    },
+    "debt": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The member's debt after the change, to be repaid by the next earn."
+    }
+  }
+}

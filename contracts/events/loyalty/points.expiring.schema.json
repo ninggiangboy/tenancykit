@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/loyalty/points.expiring.schema.json",
+  "title": "Points expiring",
+  "description": "Advance notice: lots the member holds entered the program's expiry window since the last notice run. Loyalty announces each lot once; `points` is the remaining points of the newly announced lots at notice time, `lots` is those lots, and `earliestExpiresAt` is the soonest of their expiry dates. `noticeDays` is the program's notice window. The event does not change the member's points. The event's `aggregate` is `member/<memberId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "memberId",
+    "externalRef",
+    "points",
+    "lots",
+    "earliestExpiresAt",
+    "noticeDays",
+    "available"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "memberId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the member."
+    },
+    "externalRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the member, so the Tenant can decide whether and how to tell the member."
+    },
+    "points": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The remaining points of the newly announced lots at notice time."
+    },
+    "lots": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The lots that entered the notice window since the last run, in expiry order.",
+      "items": {
+        "type": "object",
+        "required": [
+          "lotId",
+          "points",
+          "expiresAt"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "lotId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "loyalty's own opaque id for the lot."
+          },
+          "points": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The lot's remaining points."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the lot expires, in UTC."
+          }
+        }
+      }
+    },
+    "earliestExpiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "The soonest expiry among the announced lots, in UTC."
+    },
+    "noticeDays": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The program's notice window in days; a lot is announced when it comes within this many days of expiring."
+    },
+    "available": {
+      "type": "integer",
+      "description": "The member's available balance at notice time, computed from lots minus debt. The notice itself does not change it."
+    }
+  }
+}

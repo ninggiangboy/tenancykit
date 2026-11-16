@@ -1,0 +1,499 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/loyalty/earn-vectors/vector.schema.json",
+  "title": "Loyalty earn vector",
+  "description": "One file in contracts/loyalty/earn-vectors/ is one vector: a program, its tiers, its promotions, an optional starting member, and an ordered list of steps. A step is a call to loyalty's own order or return request (the request body carries the field names a forwarder sends), with the status and the points the endpoint must answer and the signed change to the member's ledger. The earn rule this file pins down: for each line whose earnEligible is not false, the line multiplier is the best matching promotion's multiplier times the member's tier earnMultiplier, and it is 1 when no promotion matches. A promotion matches a line when every condition it declares holds: its sku, category, storeCode, channel and tier equal the line's or order's, the order's occurredAt falls on one of daysOfWeek and between from and to when those are declared. from and to are local wall-clock date-times (YYYY-MM-DDTHH:MM:SS) in the program timeZone, inclusive, and occurredAt - an instant - is converted to that zone for the window test and for daysOfWeek. The best matching promotion is the one with the highest multiplier, then the higher priority, then the smaller id. points is round-half-even( sum(line amount times line multiplier) over eligible lines / currencyUnit ), where every product and the sum are decimals of at most two fraction digits and the single HALF_EVEN rounding to a whole number of points happens at the very end, so points is an integer. A return recomputes the order's new worth from the snapshot stored when the order was earned - the earn's currencyUnit, its matched promotions and its tier multiplier - never from the rules in effect at return time, and the ledger receives the signed delta between the order's new worth and what was recorded for it; a clawback consumes the returned order's own lot first, then lots by earliest expiry, and a shortfall becomes debt. An earn repays debt before it creates a lot. expectedPoints is the whole number the call's earn computation produces, always non-negative - the points an order earned, or the points a return clawed back - and null when the call fails; expectedLedgerDelta is the signed change written to the member's available balance (lots minus debt) by the call, equal to +expectedPoints for an earn and to -expectedPoints for a return, and null when the call fails. A step's optional rules replaces the program, tiers and promotions in effect for that step and every later one, so a vector can change the rules between an order and its return.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "note",
+    "program",
+    "tiers",
+    "promotions",
+    "steps"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What the vector proves, phrased as an assertion."
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The hand computation of every expected number: the eligible amounts, each line's multiplier, the sum, the division and the HALF_EVEN rounding, and for a return the snapshot used and the resulting ledger delta."
+    },
+    "program": {
+      "$ref": "#/$defs/program"
+    },
+    "tiers": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The program's tiers, ordered by minSpend ascending; the lowest has minSpend 0. A member sits in the highest tier whose minSpend is at or below its qualifying spend, unless member.tier seeds one.",
+      "items": {
+        "$ref": "#/$defs/tier"
+      }
+    },
+    "promotions": {
+      "type": "array",
+      "description": "The program's promotions. Each multiplies the points of the lines and orders it matches; the best match per line wins.",
+      "items": {
+        "$ref": "#/$defs/promotion"
+      }
+    },
+    "member": {
+      "$ref": "#/$defs/member"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The calls, in order, against the same member. A step's orderRef and returnRef are the path references of loyalty's order and return endpoints.",
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    }
+  },
+  "$defs": {
+    "program": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "currency",
+        "currencyUnit",
+        "timeZone"
+      ],
+      "properties": {
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "The ISO 4217 currency of the program. Every order of the member must carry it."
+        },
+        "currencyUnit": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The number of minor units of currency that make one point base, so points = sum of eligible line amount times multiplier / currencyUnit."
+        },
+        "timeZone": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The IANA zone that decides the local day of occurredAt for a promotion's daysOfWeek and its from and to window."
+        },
+        "expiryMonths": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 12,
+          "description": "A lot expires this many months after it was earned."
+        },
+        "expiryNoticeDays": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 30,
+          "description": "How many days before expiry the notice job announces a lot; 0 turns the notice off."
+        },
+        "tierWindowMonths": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 12,
+          "description": "The window of qualifying spend that decides the member's tier."
+        }
+      }
+    },
+    "tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "minSpend",
+        "earnMultiplier"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minSpend": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The qualifying spend, in minor units, at or above which a member holds this tier."
+        },
+        "earnMultiplier": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The multiplier this tier applies to every line's points; a decimal of at most two fraction digits."
+        }
+      }
+    },
+    "promotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "multiplier"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The promotion's stable id, also the last tie-break when two matches have the same multiplier and priority."
+        },
+        "multiplier": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The points multiplier this promotion applies to a matched line; a decimal of at most two fraction digits."
+        },
+        "priority": {
+          "type": "integer",
+          "default": 0,
+          "description": "Breaks a tie between two promotions of the same multiplier; the higher priority wins."
+        },
+        "sku": {
+          "type": "string",
+          "description": "Matches the line's sku exactly."
+        },
+        "category": {
+          "type": "string",
+          "description": "Matches the line's category exactly."
+        },
+        "storeCode": {
+          "type": "string",
+          "description": "Matches the order's storeCode exactly."
+        },
+        "channel": {
+          "type": "string",
+          "description": "Matches the order's channel exactly."
+        },
+        "tier": {
+          "type": "string",
+          "description": "Matches the member's tier code exactly."
+        },
+        "daysOfWeek": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Matches when occurredAt, read in the program timeZone, falls on one of these local weekdays.",
+          "items": {
+            "type": "string",
+            "enum": [
+              "MON",
+              "TUE",
+              "WED",
+              "THU",
+              "FRI",
+              "SAT",
+              "SUN"
+            ]
+          }
+        },
+        "from": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$",
+          "description": "The inclusive lower bound of the window, local wall-clock in the program timeZone."
+        },
+        "to": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$",
+          "description": "The inclusive upper bound of the window, local wall-clock in the program timeZone."
+        }
+      }
+    },
+    "member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "externalRef"
+      ],
+      "description": "The member's state at the start of the vector. Omit it for a member that the first order enrolls. debt models points already spent before the vector, so a later return can exceed what remains and leave debt.",
+      "properties": {
+        "externalRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The Tenant's reference for the member; the order body carries the same ref."
+        },
+        "tier": {
+          "type": "string",
+          "description": "The tier code the member holds at the start, and the tier whose earnMultiplier applies until an earn moves it."
+        },
+        "debt": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "The points the member owes before the first step."
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "call",
+        "body",
+        "expectedStatus",
+        "expectedPoints",
+        "expectedLedgerDelta"
+      ],
+      "properties": {
+        "call": {
+          "type": "string",
+          "enum": [
+            "order",
+            "return"
+          ],
+          "description": "loyalty's own order request or return request."
+        },
+        "orderRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The order's path reference. Required on an order call and on a return call, where it names the order being returned."
+        },
+        "returnRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The return's path reference, required on a return call."
+        },
+        "rules": {
+          "$ref": "#/$defs/rules",
+          "description": "Replaces the program, tiers and promotions from this step on, so a vector can change the rules between an order and its return."
+        },
+        "body": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/orderBody"
+            },
+            {
+              "$ref": "#/$defs/returnBody"
+            }
+          ]
+        },
+        "expectedStatus": {
+          "type": "integer",
+          "description": "The HTTP status the endpoint must answer."
+        },
+        "expectedPoints": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "The whole number the call's earn computation produces, non-negative, or null when the call fails."
+        },
+        "expectedLedgerDelta": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "The signed change written to the member's available balance, +expectedPoints for an earn and -expectedPoints for a return, or null when the call fails."
+        },
+        "expectedError": {
+          "type": "string",
+          "description": "The error code answered when expectedStatus is an error, such as ORDER_UNKNOWN."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "call": {
+                "const": "order"
+              }
+            },
+            "required": [
+              "call"
+            ]
+          },
+          "then": {
+            "required": [
+              "orderRef"
+            ],
+            "properties": {
+              "body": {
+                "$ref": "#/$defs/orderBody"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "call": {
+                "const": "return"
+              }
+            },
+            "required": [
+              "call"
+            ]
+          },
+          "then": {
+            "required": [
+              "orderRef",
+              "returnRef"
+            ],
+            "properties": {
+              "body": {
+                "$ref": "#/$defs/returnBody"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "program",
+        "tiers",
+        "promotions"
+      ],
+      "properties": {
+        "program": {
+          "$ref": "#/$defs/program"
+        },
+        "tiers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/tier"
+          }
+        },
+        "promotions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/promotion"
+          }
+        }
+      }
+    },
+    "orderBody": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "externalRef",
+        "currency",
+        "occurredAt",
+        "storeCode",
+        "channel",
+        "lines"
+      ],
+      "properties": {
+        "externalRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The Tenant's reference for the member the order belongs to."
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "The order's ISO 4217 currency; must equal the program's."
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the order happened, as an instant."
+        },
+        "storeCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "channel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lines": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/orderLine"
+          }
+        }
+      }
+    },
+    "orderLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lineNo",
+        "sku",
+        "category",
+        "quantity",
+        "amount"
+      ],
+      "properties": {
+        "lineNo": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sku": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quantity": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "The sold quantity, up to three fraction digits."
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The line's amount net of discount, in minor units."
+        },
+        "earnEligible": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the line earns points; default true."
+        }
+      }
+    },
+    "returnBody": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "occurredAt",
+        "lines"
+      ],
+      "properties": {
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the return happened, as an instant."
+        },
+        "lines": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/returnLine"
+          }
+        }
+      }
+    },
+    "returnLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lineNo",
+        "quantity",
+        "amount"
+      ],
+      "properties": {
+        "lineNo": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The order line this return line returns, by the order line's lineNo."
+        },
+        "quantity": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "The returned quantity of the order line, up to three fraction digits; the cumulative returned quantity never exceeds what was sold."
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The returned amount of the order line, in minor units; the cumulative returned amount never exceeds the sold amount."
+        }
+      }
+    }
+  }
+}

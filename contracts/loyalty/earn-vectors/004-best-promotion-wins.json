@@ -1,0 +1,75 @@
+{
+  "name": "best promotion: a line matched by two promotions takes only the higher multiplier",
+  "note": "Member in BRONZE, earnMultiplier 1. Line 1 has sku SKU-APPLE and category PRODUCE, so it matches both promotions; the SKU promotion's multiplier 3 beats the category promotion's multiplier 2, so line 1's multiplier is 3. Line 2 has sku SKU-BANANA and category PRODUCE, so it matches only the category promotion and its multiplier is 2. Sum of amount x multiplier = 1000 x 3 + 1000 x 2 = 3000 + 2000 = 5000; 5000 / 100 = 50 points exactly. expectedPoints 50 and expectedLedgerDelta +50.",
+  "program": {
+    "currency": "USD",
+    "currencyUnit": 100,
+    "timeZone": "America/New_York",
+    "expiryMonths": 12,
+    "expiryNoticeDays": 30,
+    "tierWindowMonths": 12
+  },
+  "tiers": [
+    {
+      "code": "BRONZE",
+      "minSpend": 0,
+      "earnMultiplier": 1
+    },
+    {
+      "code": "SILVER",
+      "minSpend": 100000,
+      "earnMultiplier": 1.5
+    },
+    {
+      "code": "GOLD",
+      "minSpend": 500000,
+      "earnMultiplier": 2
+    }
+  ],
+  "promotions": [
+    {
+      "id": "promo-produce",
+      "multiplier": 2,
+      "category": "PRODUCE"
+    },
+    {
+      "id": "promo-apple",
+      "multiplier": 3,
+      "sku": "SKU-APPLE"
+    }
+  ],
+  "steps": [
+    {
+      "call": "order",
+      "orderRef": "O-4001",
+      "body": {
+        "externalRef": "M-4001",
+        "currency": "USD",
+        "occurredAt": "2026-03-06T09:00:00Z",
+        "storeCode": "ST-03",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-APPLE",
+            "category": "PRODUCE",
+            "quantity": 1,
+            "amount": 1000,
+            "earnEligible": true
+          },
+          {
+            "lineNo": 2,
+            "sku": "SKU-BANANA",
+            "category": "PRODUCE",
+            "quantity": 1,
+            "amount": 1000,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 50,
+      "expectedLedgerDelta": 50
+    }
+  ]
+}

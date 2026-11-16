@@ -1,0 +1,78 @@
+# Loyalty's permission catalog.
+#
+# codes are namespaced by the app that enforces them: <app>:<resource>:<action>. A role may hold only a code whose
+# `scopes` include the role's scope.
+#
+# scopes: platform and/or tenant. grantable_to_tenant_system: whether an API credential may carry the code.
+#
+# Every code is tenant scope: a program, its tiers and promotions, a member, its points and ledger, its rewards,
+# its vouchers and its redemptions all belong to one tenant's own customers, and no platform-scope caller has a
+# legitimate use for them. Loyalty is the app a Tenant's **own** system is expected to drive, so every code except
+# `loyalty:program:manage` is grantable to a Tenant System credential. `loyalty:program:manage` is deliberately not
+# grantable: it changes what points are worth, through the currency, the expiry rules, the tier list and the
+# promotions, which is an administrative decision a person makes, not a machine.
+
+- code: loyalty:program:read
+  description: Read the program, its tiers and its promotions.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: loyalty:program:manage
+  description: Change the program's currency, expiry rules and time zone, replace the whole tier list and manage promotions.
+  scopes: [tenant]
+  grantable_to_tenant_system: false
+
+- code: loyalty:member:read
+  description: Read a member, its points, debt, tier, next tier and ledger.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: loyalty:member:manage
+  description: Enrol a member ahead of its first order and update its profile.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: loyalty:member:erase
+  description: Erase one member together with its ledger, vouchers and redemptions.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: loyalty:order:record
+  description: Record an order and its returns, earning or clawing back the points they carry.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: loyalty:points:redeem
+  description: Spend a member's points and reverse the redemption.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: loyalty:reward:read
+  description: Read rewards and their availability.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: loyalty:reward:manage
+  description: Create, update and retire rewards.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: loyalty:reward:redeem
+  description: Redeem a reward for a member and issue its voucher.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: loyalty:voucher:read
+  description: Read a voucher and a member's vouchers.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: loyalty:voucher:use
+  description: Mark a voucher as used with the caller's use reference.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: loyalty:webhook:manage
+  description: Create, update, disable and rotate the secret of a webhook endpoint; read and retry a delivery.
+  scopes: [tenant]
+  grantable_to_tenant_system: true

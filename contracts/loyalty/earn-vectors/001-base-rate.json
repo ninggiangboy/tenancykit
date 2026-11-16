@@ -1,0 +1,64 @@
+{
+  "name": "base rate: an order with no promotion earns one point per currencyUnit at the member's tier multiplier",
+  "note": "No promotion matches, so every line's multiplier is 1, the default. The member is in BRONZE, whose earnMultiplier is 1. Eligible amounts are 4500 + 1500 = 6000 minor units; 6000 x 1 = 6000; 6000 / 100 = 60 points exactly, so the single final HALF_EVEN rounding changes nothing. The ledger gains one lot of 60, so expectedPoints 60 and expectedLedgerDelta +60.",
+  "program": {
+    "currency": "USD",
+    "currencyUnit": 100,
+    "timeZone": "America/New_York",
+    "expiryMonths": 12,
+    "expiryNoticeDays": 30,
+    "tierWindowMonths": 12
+  },
+  "tiers": [
+    {
+      "code": "BRONZE",
+      "minSpend": 0,
+      "earnMultiplier": 1
+    },
+    {
+      "code": "SILVER",
+      "minSpend": 100000,
+      "earnMultiplier": 1.5
+    },
+    {
+      "code": "GOLD",
+      "minSpend": 500000,
+      "earnMultiplier": 2
+    }
+  ],
+  "promotions": [],
+  "steps": [
+    {
+      "call": "order",
+      "orderRef": "O-1001",
+      "body": {
+        "externalRef": "M-1001",
+        "currency": "USD",
+        "occurredAt": "2026-03-02T15:30:00Z",
+        "storeCode": "ST-01",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-1001",
+            "category": "GROCERY",
+            "quantity": 2,
+            "amount": 4500,
+            "earnEligible": true
+          },
+          {
+            "lineNo": 2,
+            "sku": "SKU-1002",
+            "category": "GROCERY",
+            "quantity": 1,
+            "amount": 1500,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 60,
+      "expectedLedgerDelta": 60
+    }
+  ]
+}

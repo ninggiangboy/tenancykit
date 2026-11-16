@@ -1,0 +1,87 @@
+{
+  "name": "promotion window: the window is read in the program time zone, so a July instant can still be inside a June window",
+  "note": "Member in BRONZE, earnMultiplier 1. The window is local wall-clock, inclusive, in America/New_York. Order O-5001 occurredAt 2026-07-01T02:30:00Z is 2026-06-30T22:30:00 local (EDT, UTC-4), inside the window, so its multiplier is 2: 1000 x 2 = 2000; 2000 / 100 = 20 points. Order O-5002 occurredAt 2026-07-01T05:00:00Z is 2026-07-01T01:00:00 local, after the window closes, so its multiplier falls back to 1: 1000 x 1 = 1000; 1000 / 100 = 10 points. Comparing the bounds in UTC would wrongly place O-5001 outside the window. Ledgers are +20 then +10.",
+  "program": {
+    "currency": "USD",
+    "currencyUnit": 100,
+    "timeZone": "America/New_York",
+    "expiryMonths": 12,
+    "expiryNoticeDays": 30,
+    "tierWindowMonths": 12
+  },
+  "tiers": [
+    {
+      "code": "BRONZE",
+      "minSpend": 0,
+      "earnMultiplier": 1
+    },
+    {
+      "code": "SILVER",
+      "minSpend": 100000,
+      "earnMultiplier": 1.5
+    },
+    {
+      "code": "GOLD",
+      "minSpend": 500000,
+      "earnMultiplier": 2
+    }
+  ],
+  "promotions": [
+    {
+      "id": "promo-june-closeout",
+      "multiplier": 2,
+      "from": "2026-06-30T00:00:00",
+      "to": "2026-06-30T23:59:59"
+    }
+  ],
+  "steps": [
+    {
+      "call": "order",
+      "orderRef": "O-5001",
+      "body": {
+        "externalRef": "M-5001",
+        "currency": "USD",
+        "occurredAt": "2026-07-01T02:30:00Z",
+        "storeCode": "ST-05",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-5001",
+            "category": "GROCERY",
+            "quantity": 1,
+            "amount": 1000,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 20,
+      "expectedLedgerDelta": 20
+    },
+    {
+      "call": "order",
+      "orderRef": "O-5002",
+      "body": {
+        "externalRef": "M-5001",
+        "currency": "USD",
+        "occurredAt": "2026-07-01T05:00:00Z",
+        "storeCode": "ST-05",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-5002",
+            "category": "GROCERY",
+            "quantity": 1,
+            "amount": 1000,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 10,
+      "expectedLedgerDelta": 10
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/loyalty/member.erased.schema.json",
+  "title": "Member erased",
+  "description": "A member's personal data was erased in loyalty. The ledger is kept as anonymous totals keyed by the opaque member id, and unused vouchers are voided. The event carries the opaque `memberId` only, so a Tenant can react without loyalty keeping or sending the person's data. The event's `aggregate` is `member/<memberId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "memberId"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "memberId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the member that was erased."
+    }
+  }
+}

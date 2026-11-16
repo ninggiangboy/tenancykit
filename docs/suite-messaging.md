@@ -12,8 +12,8 @@ One topic exchange per producer, one durable queue per consuming app, one dead-l
 | Exchange (topic, durable) | Producer | Routing key | Queues |
 |---|---|---|---|
 | `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events`, `notification.platform-events`, `mailroom.platform-events`, `survey.platform-events` |
-| `billing.events` | Billing | event type | none yet |
-| `survey.events` | Survey | event type | none yet |
+| `billing.events` | Billing | event type | consumed by its own app only |
+| `survey.events` | Survey | event type | no consumer; no other app may bind to it |
 | `mailer.commands` | any producer | command type, today `email.send` | `mailer.commands`, `mailer.commands.dlq` |
 | `mailer.events` | Mailer | event type, today `email-delivery.changed` | `mailroom.mailer-events`, `mailroom.mailer-events.dlq` |
 | `suite.dlx` | — | queue name | `<queue>.dlq` per consumer |
@@ -36,8 +36,10 @@ the difference is who owns the type and that a command's `tenantId` is asserted 
 authenticated, which [contracts/commands/README.md](../contracts/commands/README.md) states in full.
 
 A consumer declares its own queue, its bindings and the queue's dead-letter pair; a producer declares its exchange.
-Every declaration is idempotent, so startup order does not matter. Billing's `billing.events` has no consumer today;
-it exists so a future app can react to a Billing fact without Billing changing. Every service has its own broker user,
+Every declaration is idempotent, so startup order does not matter. No app binds a queue to another app's business
+exchange: `billing.events` is consumed by Billing itself, which reads its own facts in its invoicing cycle, and
+`survey.events` by nobody. A fact a Tenant's own system reacts to leaves the producing app as a signed webhook to that
+Tenant System, and the Tenant System is the only party that connects two apps. Every service has its own broker user,
 limited to its own exchanges and queues; a service can publish only to its own exchange and read only its own queues,
 and `ops/smoke/isolation.sh` proves a cross-exchange publish is refused.
 

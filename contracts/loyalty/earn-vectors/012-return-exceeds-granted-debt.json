@@ -1,0 +1,103 @@
+{
+  "name": "debt: a return whose clawback exceeds the member's remaining points leaves debt, and the next earn repays it first",
+  "note": "The member starts owing 100 points, so available = lots 0 - debt 100 = -100. Order O-12001: amount 3000 / 100 = 30 points; the earn repays 30 of the debt before it creates any lot, so debt goes 100 -> 70 and no lot is created; available goes -100 -> -70, so expectedPoints 30 and expectedLedgerDelta +30. Return R-12001 returns the full 3000, so the order's new worth is 0 and the clawback is 30; the order's own lot is empty because its 30 points repaid debt, so the clawback exceeds what remains of what was granted and 30 becomes debt; available goes -70 -> -100, so expectedPoints 30 and expectedLedgerDelta -30. The next earn O-12002: amount 12000 / 100 = 120 points; it repays the remaining 100 debt first and creates one lot of 120 - 100 = 20; debt goes 100 -> 0 and available goes -100 -> +20, so expectedPoints 120 and expectedLedgerDelta +120, split as 100 repaid debt and 20 to a new lot.",
+  "program": {
+    "currency": "USD",
+    "currencyUnit": 100,
+    "timeZone": "America/New_York",
+    "expiryMonths": 12,
+    "expiryNoticeDays": 30,
+    "tierWindowMonths": 12
+  },
+  "tiers": [
+    {
+      "code": "BRONZE",
+      "minSpend": 0,
+      "earnMultiplier": 1
+    },
+    {
+      "code": "SILVER",
+      "minSpend": 100000,
+      "earnMultiplier": 1.5
+    },
+    {
+      "code": "GOLD",
+      "minSpend": 500000,
+      "earnMultiplier": 2
+    }
+  ],
+  "promotions": [],
+  "member": {
+    "externalRef": "M-12001",
+    "tier": "BRONZE",
+    "debt": 100
+  },
+  "steps": [
+    {
+      "call": "order",
+      "orderRef": "O-12001",
+      "body": {
+        "externalRef": "M-12001",
+        "currency": "USD",
+        "occurredAt": "2026-03-12T12:00:00Z",
+        "storeCode": "ST-12",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-12001",
+            "category": "GROCERY",
+            "quantity": 1,
+            "amount": 3000,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 30,
+      "expectedLedgerDelta": 30
+    },
+    {
+      "call": "return",
+      "orderRef": "O-12001",
+      "returnRef": "R-12001",
+      "body": {
+        "occurredAt": "2026-03-22T12:00:00Z",
+        "lines": [
+          {
+            "lineNo": 1,
+            "quantity": 1,
+            "amount": 3000
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 30,
+      "expectedLedgerDelta": -30
+    },
+    {
+      "call": "order",
+      "orderRef": "O-12002",
+      "body": {
+        "externalRef": "M-12001",
+        "currency": "USD",
+        "occurredAt": "2026-03-23T12:00:00Z",
+        "storeCode": "ST-12",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-12002",
+            "category": "GROCERY",
+            "quantity": 1,
+            "amount": 12000,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 120,
+      "expectedLedgerDelta": 120
+    }
+  ]
+}

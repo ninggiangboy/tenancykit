@@ -1,0 +1,74 @@
+{
+  "name": "partial return: a return claws back the drop between the order's granted points and its new worth",
+  "note": "Member in BRONZE, earnMultiplier 1, no promotion. Order O-9001 has one line of amount 4000: 4000 x 1 = 4000; 4000 / 100 = 40 points, so expectedPoints 40 and expectedLedgerDelta +40; the earn snapshots currencyUnit 100 and the line multiplier 1. Return R-9001 returns 1500 of that line, so the order's new worth is recomputed from the snapshot as (4000 - 1500) x 1 = 2500; 2500 / 100 = 25 points. The clawback is the delta 40 - 25 = 15, so expectedPoints 15, and the ledger takes it back: expectedLedgerDelta -15, consuming the order's own lot from 40 down to 25.",
+  "program": {
+    "currency": "USD",
+    "currencyUnit": 100,
+    "timeZone": "America/New_York",
+    "expiryMonths": 12,
+    "expiryNoticeDays": 30,
+    "tierWindowMonths": 12
+  },
+  "tiers": [
+    {
+      "code": "BRONZE",
+      "minSpend": 0,
+      "earnMultiplier": 1
+    },
+    {
+      "code": "SILVER",
+      "minSpend": 100000,
+      "earnMultiplier": 1.5
+    },
+    {
+      "code": "GOLD",
+      "minSpend": 500000,
+      "earnMultiplier": 2
+    }
+  ],
+  "promotions": [],
+  "steps": [
+    {
+      "call": "order",
+      "orderRef": "O-9001",
+      "body": {
+        "externalRef": "M-9001",
+        "currency": "USD",
+        "occurredAt": "2026-03-09T12:00:00Z",
+        "storeCode": "ST-09",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-9001",
+            "category": "GROCERY",
+            "quantity": 4,
+            "amount": 4000,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 40,
+      "expectedLedgerDelta": 40
+    },
+    {
+      "call": "return",
+      "orderRef": "O-9001",
+      "returnRef": "R-9001",
+      "body": {
+        "occurredAt": "2026-03-20T12:00:00Z",
+        "lines": [
+          {
+            "lineNo": 1,
+            "quantity": 2,
+            "amount": 1500
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 15,
+      "expectedLedgerDelta": -15
+    }
+  ]
+}

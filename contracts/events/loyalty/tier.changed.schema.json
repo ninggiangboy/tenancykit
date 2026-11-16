@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/loyalty/tier.changed.schema.json",
+  "title": "Tier changed",
+  "description": "A member's tier changed. `direction` is `UP` when the tier rose in the same transaction as the earn that crossed its threshold, and `DOWN` when the daily evaluation lowered it. `qualifyingSpend` is the spend over the program's tier window that decided the tier. The event's `aggregate` is `member/<memberId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "memberId",
+    "externalRef",
+    "fromTier",
+    "toTier",
+    "direction",
+    "qualifyingSpend"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "memberId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the member."
+    },
+    "externalRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the member."
+    },
+    "fromTier": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "The tier the member held before the change."
+    },
+    "toTier": {
+      "type": "string",
+      "maxLength": 100,
+      "description": "The tier the member holds after the change."
+    },
+    "direction": {
+      "type": "string",
+      "enum": [
+        "UP",
+        "DOWN"
+      ],
+      "description": "UP for a rise on an earn, DOWN for a fall in the daily evaluation."
+    },
+    "qualifyingSpend": {
+      "type": "integer",
+      "description": "The eligible net spend over the program's tier window that decided the tier, in minor units of the program's currency."
+    }
+  }
+}

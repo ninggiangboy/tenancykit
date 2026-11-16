@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/loyalty/points.expired.schema.json",
+  "title": "Points expired",
+  "description": "Points expired: the expiry job wrote off the member's due lots and took them in expiry order. One event reports the whole transaction, `points` is the total expired and `lots` is the lots it took; `available` and `debt` are the member's balances after the change. The event's `aggregate` is `member/<memberId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "memberId",
+    "externalRef",
+    "points",
+    "lots",
+    "available",
+    "debt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "memberId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the member."
+    },
+    "externalRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the member."
+    },
+    "points": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The total points this expiry transaction wrote off."
+    },
+    "lots": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The lots this expiry transaction took, in expiry order.",
+      "items": {
+        "type": "object",
+        "required": [
+          "lotId",
+          "points",
+          "expiresAt"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "lotId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "loyalty's own opaque id for the lot."
+          },
+          "points": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The points this lot still held when it expired."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the lot expired, in UTC."
+          }
+        }
+      }
+    },
+    "available": {
+      "type": "integer",
+      "description": "The member's available balance after the change, computed from lots minus debt."
+    },
+    "debt": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The member's debt after the change."
+    }
+  }
+}

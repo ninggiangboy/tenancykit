@@ -53,11 +53,11 @@ delivers it again). A member row is the first lock of every flow (as the wallet 
    order for an unknown `externalRef` creates the member in the same transaction. An `ERASED` member's ref is null, so the
    same ref later starts a new member.
 3. **`EarnCalculator`** (pure, in the domain layer). Input: the order's lines with their returned figures and a rules
-   snapshot. Output: total points and per-line contributions. `points = floor(sum over eligible lines of (amount − returned
-   amount) × lineMultiplier ÷ unitAmount)`; `lineMultiplier` is the best (largest) multiplier among the promotions that match
-   the line, default 1, times the tier multiplier; decimals with at most two fraction digits, `HALF_EVEN`, the floor taken once
-   at the end. Promotion windows, days of week and time range are evaluated against the order's `occurredAt` in the program
-   time zone.
+   snapshot. Output: total points and per-line contributions. `points = roundHALF_EVEN(sum over eligible lines of (amount −
+   returned amount) × lineMultiplier ÷ unitAmount)`; `lineMultiplier` is the best (largest) multiplier among the promotions
+   that match the line, default 1, times the tier multiplier; decimals with at most two fraction digits, `HALF_EVEN`, the
+   rounding taken once at the end. Promotion windows, days of week and time range are evaluated against the order's
+   `occurredAt` in the program time zone.
 4. **Record an order.** `PUT /orders/{orderRef}` (`loyalty:order:record`). Validate: 1 to the line cap of lines,
    non-negative amounts, positive quantities, `earnEligible` defaulting to `true`, `occurredAt` at most 5 minutes in the
    future. No program yet is `409 PROGRAM_NOT_CONFIGURED`; a currency other than the program's is `422 CURRENCY_MISMATCH`;

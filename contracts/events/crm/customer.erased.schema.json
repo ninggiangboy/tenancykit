@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/crm/customer.erased.schema.json",
+  "title": "Customer erased",
+  "description": "A customer's personal data was erased in crm, and its `externalRef` was released so the same reference can later start a new customer. The event carries the opaque `customerId` only, so a Tenant can react without crm keeping or sending the person's data. The event's `aggregate` is `customer/<customerId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "customerId"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "customerId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "crm's own opaque id for the customer that was erased."
+    }
+  }
+}

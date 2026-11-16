@@ -1,0 +1,127 @@
+{
+  "name": "snapshot: a return recomputes with the rules stored on the earn record, not the rules of the day",
+  "note": "Member in BRONZE, earnMultiplier 1. Order O-11001: line 1 is category PRODUCE amount 2000 and matches the 3x promotion, so it contributes 2000 x 3 = 6000; line 2 is category OTHER amount 1000 and matches nothing, so it contributes 1000 x 1 = 1000; the sum is 7000; 7000 / 100 = 70 points, so expectedPoints 70 and expectedLedgerDelta +70. The earn snapshots currencyUnit 100, line 1 multiplier 3 and line 2 multiplier 1. The rules are then changed to currencyUnit 50 and a 5x produce promotion. Return R-11001 returns 1000 of line 1 and all 1000 of line 2. From the stored snapshot the order's new worth is (2000 - 1000) x 3 + (1000 - 1000) x 1 = 3000 + 0 = 3000; 3000 / 100 = 30 points; the clawback is 70 - 30 = 40, so expectedPoints 40 and expectedLedgerDelta -40. Using the changed rules instead would recompute the new worth as (1000 x 5) / 50 = 100, which is why the snapshot is the only input a return may read.",
+  "program": {
+    "currency": "USD",
+    "currencyUnit": 100,
+    "timeZone": "America/New_York",
+    "expiryMonths": 12,
+    "expiryNoticeDays": 30,
+    "tierWindowMonths": 12
+  },
+  "tiers": [
+    {
+      "code": "BRONZE",
+      "minSpend": 0,
+      "earnMultiplier": 1
+    },
+    {
+      "code": "SILVER",
+      "minSpend": 100000,
+      "earnMultiplier": 1.5
+    },
+    {
+      "code": "GOLD",
+      "minSpend": 500000,
+      "earnMultiplier": 2
+    }
+  ],
+  "promotions": [
+    {
+      "id": "promo-produce-3x",
+      "multiplier": 3,
+      "category": "PRODUCE"
+    }
+  ],
+  "steps": [
+    {
+      "call": "order",
+      "orderRef": "O-11001",
+      "body": {
+        "externalRef": "M-11001",
+        "currency": "USD",
+        "occurredAt": "2026-03-11T12:00:00Z",
+        "storeCode": "ST-11",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-11001",
+            "category": "PRODUCE",
+            "quantity": 1,
+            "amount": 2000,
+            "earnEligible": true
+          },
+          {
+            "lineNo": 2,
+            "sku": "SKU-11002",
+            "category": "OTHER",
+            "quantity": 1,
+            "amount": 1000,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 70,
+      "expectedLedgerDelta": 70
+    },
+    {
+      "call": "return",
+      "orderRef": "O-11001",
+      "returnRef": "R-11001",
+      "rules": {
+        "program": {
+          "currency": "USD",
+          "currencyUnit": 50,
+          "timeZone": "America/New_York",
+          "expiryMonths": 12,
+          "expiryNoticeDays": 30,
+          "tierWindowMonths": 12
+        },
+        "tiers": [
+          {
+            "code": "BRONZE",
+            "minSpend": 0,
+            "earnMultiplier": 1
+          },
+          {
+            "code": "SILVER",
+            "minSpend": 100000,
+            "earnMultiplier": 1.5
+          },
+          {
+            "code": "GOLD",
+            "minSpend": 500000,
+            "earnMultiplier": 2
+          }
+        ],
+        "promotions": [
+          {
+            "id": "promo-produce-5x",
+            "multiplier": 5,
+            "category": "PRODUCE"
+          }
+        ]
+      },
+      "body": {
+        "occurredAt": "2026-03-25T12:00:00Z",
+        "lines": [
+          {
+            "lineNo": 1,
+            "quantity": 1,
+            "amount": 1000
+          },
+          {
+            "lineNo": 2,
+            "quantity": 1,
+            "amount": 1000
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 40,
+      "expectedLedgerDelta": -40
+    }
+  ]
+}

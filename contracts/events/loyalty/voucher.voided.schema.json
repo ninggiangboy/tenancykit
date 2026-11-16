@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/loyalty/voucher.voided.schema.json",
+  "title": "Voucher voided",
+  "description": "A voucher was voided. `reason` is `REVERSAL` when the redemption that issued it was reversed, or `ERASURE` when the member was erased and its unused vouchers were voided. An `ERASURE` void cut the tie to the member, so `externalRef` is null on it. The event's `aggregate` is `member/<memberId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "voucherId",
+    "code",
+    "rewardId",
+    "redemptionId",
+    "memberId",
+    "externalRef",
+    "expiresAt",
+    "reason"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "voucherId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the voucher."
+    },
+    "code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "The single-use voucher code that was voided."
+    },
+    "rewardId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The reward the voucher was issued for."
+    },
+    "redemptionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the reward redemption that issued the voucher."
+    },
+    "memberId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the member."
+    },
+    "externalRef": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The Tenant's reference for the member. Null on an `ERASURE` void, because erasure released the reference; set on a `REVERSAL` void."
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the voucher would have stopped being usable, in UTC."
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "REVERSAL",
+        "ERASURE"
+      ],
+      "description": "REVERSAL when the issuing redemption was reversed; ERASURE when the member was erased and its unused vouchers were voided."
+    }
+  }
+}

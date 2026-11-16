@@ -1,0 +1,86 @@
+{
+  "name": "store filter: a promotion limited to one store applies only to that store's orders",
+  "note": "Member in BRONZE, earnMultiplier 1. Order O-7001 has storeCode ST-12, so the flagship promotion matches and its multiplier is 2: 1000 x 2 = 2000; 2000 / 100 = 20 points. Order O-7002 has storeCode ST-99, matches nothing, so its multiplier is 1: 1000 x 1 = 1000; 1000 / 100 = 10 points. Ledgers are +20 then +10.",
+  "program": {
+    "currency": "USD",
+    "currencyUnit": 100,
+    "timeZone": "America/New_York",
+    "expiryMonths": 12,
+    "expiryNoticeDays": 30,
+    "tierWindowMonths": 12
+  },
+  "tiers": [
+    {
+      "code": "BRONZE",
+      "minSpend": 0,
+      "earnMultiplier": 1
+    },
+    {
+      "code": "SILVER",
+      "minSpend": 100000,
+      "earnMultiplier": 1.5
+    },
+    {
+      "code": "GOLD",
+      "minSpend": 500000,
+      "earnMultiplier": 2
+    }
+  ],
+  "promotions": [
+    {
+      "id": "promo-flagship",
+      "multiplier": 2,
+      "storeCode": "ST-12"
+    }
+  ],
+  "steps": [
+    {
+      "call": "order",
+      "orderRef": "O-7001",
+      "body": {
+        "externalRef": "M-7001",
+        "currency": "USD",
+        "occurredAt": "2026-03-07T13:00:00Z",
+        "storeCode": "ST-12",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-7001",
+            "category": "GROCERY",
+            "quantity": 1,
+            "amount": 1000,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 20,
+      "expectedLedgerDelta": 20
+    },
+    {
+      "call": "order",
+      "orderRef": "O-7002",
+      "body": {
+        "externalRef": "M-7001",
+        "currency": "USD",
+        "occurredAt": "2026-03-07T13:05:00Z",
+        "storeCode": "ST-99",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-7002",
+            "category": "GROCERY",
+            "quantity": 1,
+            "amount": 1000,
+            "earnEligible": true
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 10,
+      "expectedLedgerDelta": 10
+    }
+  ]
+}

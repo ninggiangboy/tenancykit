@@ -1,0 +1,79 @@
+{
+  "name": "eligibility: an earnEligible false line is excluded and a missing flag defaults to true",
+  "note": "No promotion, multiplier 1, member in BRONZE. Line 2 carries earnEligible false, so it earns nothing and its 3000 is dropped. Line 4 omits earnEligible, so it defaults to true and its 1000 counts. Eligible amounts are 5000 + 2000 + 1000 = 8000; 8000 x 1 = 8000; 8000 / 100 = 80 points exactly. expectedPoints 80 and expectedLedgerDelta +80.",
+  "program": {
+    "currency": "USD",
+    "currencyUnit": 100,
+    "timeZone": "America/New_York",
+    "expiryMonths": 12,
+    "expiryNoticeDays": 30,
+    "tierWindowMonths": 12
+  },
+  "tiers": [
+    {
+      "code": "BRONZE",
+      "minSpend": 0,
+      "earnMultiplier": 1
+    },
+    {
+      "code": "SILVER",
+      "minSpend": 100000,
+      "earnMultiplier": 1.5
+    },
+    {
+      "code": "GOLD",
+      "minSpend": 500000,
+      "earnMultiplier": 2
+    }
+  ],
+  "promotions": [],
+  "steps": [
+    {
+      "call": "order",
+      "orderRef": "O-3001",
+      "body": {
+        "externalRef": "M-3001",
+        "currency": "USD",
+        "occurredAt": "2026-03-05T11:15:00Z",
+        "storeCode": "ST-02",
+        "channel": "POS",
+        "lines": [
+          {
+            "lineNo": 1,
+            "sku": "SKU-3001",
+            "category": "GROCERY",
+            "quantity": 1,
+            "amount": 5000,
+            "earnEligible": true
+          },
+          {
+            "lineNo": 2,
+            "sku": "SKU-3002",
+            "category": "GIFT_CARD",
+            "quantity": 1,
+            "amount": 3000,
+            "earnEligible": false
+          },
+          {
+            "lineNo": 3,
+            "sku": "SKU-3003",
+            "category": "GROCERY",
+            "quantity": 1,
+            "amount": 2000,
+            "earnEligible": true
+          },
+          {
+            "lineNo": 4,
+            "sku": "SKU-3004",
+            "category": "BAKERY",
+            "quantity": 1,
+            "amount": 1000
+          }
+        ]
+      },
+      "expectedStatus": 201,
+      "expectedPoints": 80,
+      "expectedLedgerDelta": 80
+    }
+  ]
+}

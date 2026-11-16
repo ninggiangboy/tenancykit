@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/loyalty/points.redemption-reversed.schema.json",
+  "title": "Points redemption reversed",
+  "description": "A redemption was reversed and the points it spent were restored to the member's lots. `redemptionId` and `reference` identify the redemption that was reversed, and `available` and `debt` are the member's balances after the change. The event's `aggregate` is `member/<memberId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "memberId",
+    "externalRef",
+    "redemptionId",
+    "points",
+    "reference",
+    "available",
+    "debt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "memberId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the member."
+    },
+    "externalRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the member."
+    },
+    "redemptionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "loyalty's own opaque id for the redemption that was reversed."
+    },
+    "points": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The points this reversal restored."
+    },
+    "reference": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "The Tenant's own reference for the reversed redemption."
+    },
+    "available": {
+      "type": "integer",
+      "description": "The member's available balance after the change, computed from lots minus debt."
+    },
+    "debt": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "The member's debt after the change."
+    }
+  }
+}

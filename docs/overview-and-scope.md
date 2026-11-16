@@ -78,6 +78,12 @@ Billing's signed deliveries, and Survey does the same with its own `Survey-*` de
 policy, guarded DNS resolution, HTTP send and retry schedule are the shared `core-webhook` mechanics; the endpoints,
 the delivery state and the event catalog stay in the app.
 
+Apps stand alone. An app never consumes another app's business events: the broker carries Platform's replicated data,
+the suite's infrastructure commands and outcomes, and an app's traffic with itself, but no app binds to another app's
+business exchange. A fact a Tenant's own system reacts to leaves the producing app as a signed webhook to that Tenant
+System. A Tenant System is the only party that connects two apps: it decides whether to call both, or to forward one
+app's webhooks to the other, and no app ever calls or listens to another.
+
 ## Vocabulary
 
 | Term | Meaning |

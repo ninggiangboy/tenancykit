@@ -192,7 +192,7 @@ in code, migration or test names.
   program's notice window since the last run, each lot announced once. `tier.changed` carries the old and new tier and
   `UP` or `DOWN`. The voucher events carry `voucherId`, `code`,
   `rewardId` and `redemptionId`; `voucher.voided` carries `REVERSAL` or `ERASURE`. There is no loyalty exchange.
-- **Earn is a pure function of a snapshot.** loyalty computes `points = floor(sum(line amount × line multiplier) ÷
+- **Earn is a pure function of a snapshot.** loyalty computes `points = roundHALF_EVEN(sum(line amount × line multiplier) ÷
   currencyUnit)` over eligible lines net of returns, where the line multiplier is the best matching promotion (default 1)
   times the tier multiplier, all decimals with at most 2 fraction digits, rounded HALF_EVEN at the end only. It stores the
   rules it used (program rate, matched promotions, tier multiplier) on the order's earn record. A return recomputes with that
@@ -300,8 +300,9 @@ needs both.
 
 ## Open questions
 
-- Phase 2 finding: whether mailroom's replica client authenticates today. If it does not, the executor reports it and stops
-  to ask whether to fix mailroom's wiring (a change outside this plan's scope).
+- Phase 2 finding: whether mailroom's replica client authenticates today. The planning evidence is stale: Platform's
+  `application.yml` now lists `mailroom` and `survey` service clients beside `billing` and `notification`, so no missing
+  wiring is expected; the live token request in phase 2 confirms it.
 - The 500-line and 1,000-item caps and the 8 KiB payload cap are defaults chosen at planning time, not measured; phase 7
   measures the order cap against the outbox, relay and webhook delivery.
 
@@ -331,6 +332,15 @@ Removed by this session: the consumer entitlement gate, `loyalty.crm-events`, `h
 `orderVersion` handling and the reordering test in loyalty, `customer.created` creating members,
 `EventConsumerExtensionTest`, the constraint "line items live in crm only", and the open questions about loyalty without crm
 and about backfill.
+
+### Session 3 (2026-11-16, `/ak-cook`: execution decisions)
+
+| Question | Decision | Propagated to |
+|---|---|---|
+| `floor` in the earn formula against `HALF_EVEN` in the Key decisions and the rounding vector | HALF_EVEN, applied once to the final integer; 2.5 becomes 2 and 3.5 becomes 4 | plan (Key decisions), phases 1, 11 |
+| Does mailroom's replica client exist in Platform? | Yes: the list entry is present beside `survey`'s; the planning evidence predates that change | plan (Open questions), phase 2 |
+
+
 
 ### Decisions taken by the planner (not asked; reversible, flagged for the user)
 

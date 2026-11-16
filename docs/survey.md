@@ -56,7 +56,7 @@ through its `api` package, and ArchUnit fails the build when a context names ano
 | Consumes | `platform.events` on `survey.platform-events` (the five state-transfer keys) |
 | Dead-letters | to `suite.dlx`, drained by `survey.platform-events.dlq` |
 | Publishes | `survey-version.published`, `survey.closed` and `survey-response.submitted` to `survey.events` through the transactional outbox |
-| Declares | `survey.events`; it has no consumer today, and exists so a future app can react to a response without Survey changing |
+| Declares | `survey.events`; no consumer, and no other app may bind to it |
 
 Every message uses envelope `schemaVersion` 2. The payload schemas are in
 [contracts/events/survey](../contracts/events/survey/).
@@ -315,8 +315,8 @@ Survey does not send, by design. A Tenant that invited people through mailroom a
 not answered does it with mailroom's groups and segments, with no change in either app:
 
 1. Read the list of people who already answered:
-   `GET /survey/api/v1/surveys/{id}/respondents?state=COMPLETED`. Each row carries `respondentIdentity` and
-   `externalRef`, which are the Tenant's own customer keys.
+   `GET /survey/api/v1/surveys/{id}/respondents?filter[state][eq]=COMPLETED`. Each row carries `respondentIdentity`
+   and `externalRef`, which are the Tenant's own customer keys.
 2. Create a mailroom group for this survey, for example `responded-<survey-id>`, and add those keys as members with
    `POST /mailroom/api/v1/groups/{groupId}/members`. A personal link's `externalRef` is the value to use.
 3. Send the reminder campaign to a segment that excludes them:
@@ -324,6 +324,11 @@ not answered does it with mailroom's groups and segments, with no change in eith
    `SURVEY_PUBLIC_BASE_URL` link or a per-recipient personal link.
 4. Re-run steps 1 and 2 before each reminder. The respondents list is the live answer set, so a reminder only ever
    reaches someone who has not completed the survey.
+
+The `state` a caller filters on is the visit's state, not the response's: `OPENED` is a link opened without an answer
+begun, `STARTED` an answer begun, `COMPLETED` a submitted response and `ABANDONED` a visit that lapsed. To read everyone
+who began and everyone who finished, send two OR branches:
+`filter[or][0][state][eq]=STARTED&filter[or][1][state][eq]=COMPLETED`.
 
 The funnel gives the same picture at a glance: `opened`, `started` and `completed` per source.
 
