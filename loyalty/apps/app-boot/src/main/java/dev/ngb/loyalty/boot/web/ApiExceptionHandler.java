@@ -2,6 +2,7 @@ package dev.ngb.loyalty.boot.web;
 
 import dev.ngb.core.spring.web.CoreExceptionHandlers;
 import dev.ngb.core.spring.web.ProblemDetails;
+import dev.ngb.loyalty.points.application.earn.exception.PointsRefusal;
 import dev.ngb.loyalty.program.application.program.exception.ProgramRefusal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -23,6 +24,19 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ProblemDetail unreadableBody(HttpMessageNotReadableException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "The request body is not valid.");
+    }
+
+    /** A member, order or return refusal: the code travels in the body so a caller can branch on it. */
+    @ExceptionHandler(PointsRefusal.class)
+    ResponseEntity<ProblemDetail> pointsRefusal(PointsRefusal e) {
+        HttpStatus status = switch (e.kind()) {
+            case INVALID -> HttpStatus.UNPROCESSABLE_CONTENT;
+            case CONFLICT -> HttpStatus.CONFLICT;
+            case NOT_FOUND -> HttpStatus.NOT_FOUND;
+        };
+        ProblemDetail detail = ProblemDetails.of(status, e.getMessage());
+        detail.setProperty("code", e.code());
+        return ResponseEntity.status(status).body(detail);
     }
 
     /** A program, tier or promotion refusal: the code travels in the body so a caller can branch on it. */

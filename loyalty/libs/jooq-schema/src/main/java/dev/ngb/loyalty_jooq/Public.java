@@ -8,8 +8,17 @@ import dev.ngb.loyalty_jooq.tables.AppEntitlements;
 import dev.ngb.loyalty_jooq.tables.EventInbox;
 import dev.ngb.loyalty_jooq.tables.JobLeases;
 import dev.ngb.loyalty_jooq.tables.JobRuns;
+import dev.ngb.loyalty_jooq.tables.LedgerEntries;
+import dev.ngb.loyalty_jooq.tables.LotAllocations;
 import dev.ngb.loyalty_jooq.tables.LoyaltyPrograms;
+import dev.ngb.loyalty_jooq.tables.Members;
+import dev.ngb.loyalty_jooq.tables.OrderEarns;
+import dev.ngb.loyalty_jooq.tables.OrderLines;
+import dev.ngb.loyalty_jooq.tables.OrderReturnLines;
+import dev.ngb.loyalty_jooq.tables.OrderReturns;
+import dev.ngb.loyalty_jooq.tables.Orders;
 import dev.ngb.loyalty_jooq.tables.Outbox;
+import dev.ngb.loyalty_jooq.tables.PointLots;
 import dev.ngb.loyalty_jooq.tables.Promotions;
 import dev.ngb.loyalty_jooq.tables.ReplicaState;
 import dev.ngb.loyalty_jooq.tables.TenantDomains;
@@ -64,14 +73,59 @@ public class Public extends SchemaImpl {
     public final JobRuns JOB_RUNS = JobRuns.JOB_RUNS;
 
     /**
+     * The table <code>public.ledger_entries</code>.
+     */
+    public final LedgerEntries LEDGER_ENTRIES = LedgerEntries.LEDGER_ENTRIES;
+
+    /**
+     * The table <code>public.lot_allocations</code>.
+     */
+    public final LotAllocations LOT_ALLOCATIONS = LotAllocations.LOT_ALLOCATIONS;
+
+    /**
      * The table <code>public.loyalty_programs</code>.
      */
     public final LoyaltyPrograms LOYALTY_PROGRAMS = LoyaltyPrograms.LOYALTY_PROGRAMS;
 
     /**
+     * The table <code>public.members</code>.
+     */
+    public final Members MEMBERS = Members.MEMBERS;
+
+    /**
+     * The table <code>public.order_earns</code>.
+     */
+    public final OrderEarns ORDER_EARNS = OrderEarns.ORDER_EARNS;
+
+    /**
+     * The table <code>public.order_lines</code>.
+     */
+    public final OrderLines ORDER_LINES = OrderLines.ORDER_LINES;
+
+    /**
+     * The table <code>public.order_return_lines</code>.
+     */
+    public final OrderReturnLines ORDER_RETURN_LINES = OrderReturnLines.ORDER_RETURN_LINES;
+
+    /**
+     * The table <code>public.order_returns</code>.
+     */
+    public final OrderReturns ORDER_RETURNS = OrderReturns.ORDER_RETURNS;
+
+    /**
+     * The table <code>public.orders</code>.
+     */
+    public final Orders ORDERS = Orders.ORDERS;
+
+    /**
      * The table <code>public.outbox</code>.
      */
     public final Outbox OUTBOX = Outbox.OUTBOX;
+
+    /**
+     * The table <code>public.point_lots</code>.
+     */
+    public final PointLots POINT_LOTS = PointLots.POINT_LOTS;
 
     /**
      * The table <code>public.promotions</code>.
@@ -143,8 +197,17 @@ public class Public extends SchemaImpl {
             EventInbox.EVENT_INBOX,
             JobLeases.JOB_LEASES,
             JobRuns.JOB_RUNS,
+            LedgerEntries.LEDGER_ENTRIES,
+            LotAllocations.LOT_ALLOCATIONS,
             LoyaltyPrograms.LOYALTY_PROGRAMS,
+            Members.MEMBERS,
+            OrderEarns.ORDER_EARNS,
+            OrderLines.ORDER_LINES,
+            OrderReturnLines.ORDER_RETURN_LINES,
+            OrderReturns.ORDER_RETURNS,
+            Orders.ORDERS,
             Outbox.OUTBOX,
+            PointLots.POINT_LOTS,
             Promotions.PROMOTIONS,
             ReplicaState.REPLICA_STATE,
             TenantDomains.TENANT_DOMAINS,

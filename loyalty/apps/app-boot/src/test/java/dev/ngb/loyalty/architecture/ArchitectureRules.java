@@ -61,6 +61,10 @@ final class ArchitectureRules {
         for (String table : List.of("LoyaltyPrograms", "Tiers", "Promotions")) {
             TABLE_OWNER.put(table, "program");
         }
+        for (String table : List.of("Members", "Orders", "OrderLines", "OrderReturns", "OrderReturnLines",
+                "LedgerEntries", "PointLots", "LotAllocations", "OrderEarns")) {
+            TABLE_OWNER.put(table, "points");
+        }
     }
 
     /** Every use case opens a unit of work; loyalty has no exception and should never grow one. */
