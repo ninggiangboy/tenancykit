@@ -1,27 +1,21 @@
-# The migration step: Flyway as the table owner, then exit. It serves nothing and runs no job, so a deployment cannot
-# start emailing before the schema it needs exists.
+# The schema step: Flyway applies the migrations and the process exits. No HTTP edge, no job, no broker listener, and
+# the replica is not rebuilt here. `workflow.migrate.exit-on-finish=false` keeps the context alive, for a test that
+# only wants to prove the profile wires.
 spring:
+  config:
+    activate:
+      on-profile: "migrate"
   main:
     web-application-type: none
   flyway:
     enabled: true
-    # A queued ALTER TABLE gives up instead of blocking every query behind it.
-    init-sql: "SET lock_timeout = '3s'"
-  datasource:
-    hikari:
-      maximum-pool-size: 2
-      minimum-idle: 0
-  task:
-    scheduling:
-      pool:
-        size: 1
 workflow:
   jobs:
     enabled: false
   housekeeping:
     enabled: false
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health
+  migrate:
+    exit-on-finish: ${WORKFLOW_MIGRATE_EXIT_ON_FINISH:true}
+suite:
+  replica:
+    rebuild-on-start: false

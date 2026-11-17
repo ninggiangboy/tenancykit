@@ -22,7 +22,8 @@ public record WorkflowSettings(
         @DefaultValue Secrets secrets,
         @DefaultValue Connections connections,
         @DefaultValue Webhooks webhooks,
-        @DefaultValue Relay relay) {
+        @DefaultValue Relay relay,
+        @DefaultValue Quota quota) {
 
     /**
      * @param enabled whether the worker's scheduled jobs run at all
@@ -44,6 +45,7 @@ public record WorkflowSettings(
             @DefaultValue("P30D") Duration inboxRetention,
             @DefaultValue("P7D") Duration deadOutboxRetention,
             @DefaultValue("P30D") Duration webhookDeliveryRetention,
+            @DefaultValue("P90D") Duration instanceRetention,
             @DefaultValue("500") int batchSize,
             @DefaultValue("PT1H") Duration interval) {}
 
@@ -94,6 +96,14 @@ public record WorkflowSettings(
             @DefaultValue("PT3S") Duration connectTimeout,
             @DefaultValue("PT10S") Duration readTimeout,
             @DefaultValue("PT15S") Duration deadline) {}
+
+    /**
+     * @param concurrentInstances how many instances one Tenant may have RUNNING, WAITING or COMPENSATING
+     * @param activeDefinitions how many definitions one Tenant may hold that are not retired
+     */
+    public record Quota(
+            @DefaultValue("1000") int concurrentInstances,
+            @DefaultValue("200") int activeDefinitions) {}
 
     /**
      * @param batchSize how many outbox rows one relay round handles per tenant

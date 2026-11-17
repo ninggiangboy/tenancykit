@@ -1,5 +1,6 @@
 package dev.ngb.workflow.runtime.application.runtime.port;
 
+import dev.ngb.core.id.TenantId;
 import dev.ngb.workflow.runtime.domain.instance.Instance;
 import dev.ngb.workflow.runtime.domain.instance.InstanceStatus;
 import java.time.Instant;
@@ -31,6 +32,9 @@ public interface InstanceRepository {
 
     /** Moves the instance to a terminal status once. A second caller finds it already finished and does nothing. */
     void finish(UUID id, InstanceStatus status, Instant finishedAt);
+
+    /** How many instances of the Tenant are RUNNING, WAITING or COMPENSATING, which is what a start cap counts. */
+    long liveCount(TenantId tenantId);
 
     /**
      * Records why an instance stopped without finishing: a dead letter or a failed compensation. The row keeps no finish

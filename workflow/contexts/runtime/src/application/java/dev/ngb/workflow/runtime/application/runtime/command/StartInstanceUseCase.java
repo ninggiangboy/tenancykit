@@ -11,6 +11,7 @@ import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.workflow.definitions.api.version.PublishedGraph;
 import dev.ngb.workflow.definitions.api.version.VersionReader;
 import dev.ngb.workflow.runtime.application.runtime.port.InstanceRepository;
+import dev.ngb.workflow.runtime.application.runtime.service.QuotaGuard;
 import dev.ngb.workflow.runtime.application.runtime.port.TokenRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.WakeUpPublisher;
 import dev.ngb.workflow.runtime.domain.event.RuntimeEvents;
@@ -46,6 +47,7 @@ public class StartInstanceUseCase {
     private final IdGenerator ids;
     private final Clock clock;
     private final EventPublisher events;
+    private final QuotaGuard quotas;
 
     public StartInstanceUseCase(
             UnitOfWork unitOfWork,
@@ -56,7 +58,8 @@ public class StartInstanceUseCase {
             TenantContext tenantContext,
             IdGenerator ids,
             Clock clock,
-            EventPublisher events) {
+            EventPublisher events,
+            QuotaGuard quotas) {
         this.unitOfWork = unitOfWork;
         this.versions = versions;
         this.instances = instances;
@@ -66,6 +69,7 @@ public class StartInstanceUseCase {
         this.ids = ids;
         this.clock = clock;
         this.events = events;
+        this.quotas = quotas;
     }
 
     public Instance execute(Command command) {
@@ -80,6 +84,7 @@ public class StartInstanceUseCase {
                 return existing.get();
             }
         }
+        quotas.requireStart(tenant);
         Instance instance = unitOfWork.transactional(() -> {
             PublishedGraph version = versions
                     .graph(command.versionId())

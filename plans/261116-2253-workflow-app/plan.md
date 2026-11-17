@@ -138,7 +138,7 @@ or test names.
 | 11 | [Human tasks](phase-11-human-tasks.md) | L | done |
 | 12 | [Failure handling, compensation and replay](phase-12-failure-compensation-and-replay.md) | L | done |
 | 13 | [Workflow webhooks and event contract](phase-13-workflow-webhooks-and-events.md) | M | done |
-| 14 | [History, quotas, retention and runtimes](phase-14-history-quotas-retention-and-runtimes.md) | M | pending |
+| 14 | [History, quotas, retention and runtimes](phase-14-history-quotas-retention-and-runtimes.md) | M | done |
 | 15 | [Sample workflows, chaos, isolation, ops and docs](phase-15-samples-chaos-isolation-ops-and-docs.md) | L | pending |
 
 Order: 1 → 2 → 3 → 4 → 5 → 6 → {7, 8, 9} → 10 → 11 → 12 → 13 → 14 → 15. Phases 7, 8 and 9 touch different contexts and may

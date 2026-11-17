@@ -40,7 +40,8 @@ final class ArchitectureRules {
         }
         for (String table : List.of(
                 "WorkflowInstance", "WorkflowToken", "WorkflowStepRun", "WorkflowCompensationRun",
-                "WorkflowJoinState", "WorkflowLoopState", "WorkflowTimer", "WorkflowWaitSubscription")) {
+                "WorkflowJoinState", "WorkflowLoopState", "WorkflowTimer", "WorkflowWaitSubscription",
+                "WorkflowTenantQuota")) {
             TABLE_OWNER.put(table, "runtime");
         }
         for (String table : List.of("WorkflowConnection", "WorkflowPlatformCredential")) {

@@ -31,6 +31,7 @@ import dev.ngb.workflow_jooq.tables.WorkflowTask;
 import dev.ngb.workflow_jooq.tables.WorkflowTaskAssignee;
 import dev.ngb.workflow_jooq.tables.WorkflowTaskGroup;
 import dev.ngb.workflow_jooq.tables.WorkflowTaskGroupMember;
+import dev.ngb.workflow_jooq.tables.WorkflowTenantQuota;
 import dev.ngb.workflow_jooq.tables.WorkflowTimer;
 import dev.ngb.workflow_jooq.tables.WorkflowToken;
 import dev.ngb.workflow_jooq.tables.WorkflowTrigger;
@@ -195,6 +196,11 @@ public class Public extends SchemaImpl {
     public final WorkflowTaskGroupMember WORKFLOW_TASK_GROUP_MEMBER = WorkflowTaskGroupMember.WORKFLOW_TASK_GROUP_MEMBER;
 
     /**
+     * The table <code>public.workflow_tenant_quota</code>.
+     */
+    public final WorkflowTenantQuota WORKFLOW_TENANT_QUOTA = WorkflowTenantQuota.WORKFLOW_TENANT_QUOTA;
+
+    /**
      * The table <code>public.workflow_timer</code>.
      */
     public final WorkflowTimer WORKFLOW_TIMER = WorkflowTimer.WORKFLOW_TIMER;
@@ -262,6 +268,7 @@ public class Public extends SchemaImpl {
             WorkflowTaskAssignee.WORKFLOW_TASK_ASSIGNEE,
             WorkflowTaskGroup.WORKFLOW_TASK_GROUP,
             WorkflowTaskGroupMember.WORKFLOW_TASK_GROUP_MEMBER,
+            WorkflowTenantQuota.WORKFLOW_TENANT_QUOTA,
             WorkflowTimer.WORKFLOW_TIMER,
             WorkflowToken.WORKFLOW_TOKEN,
             WorkflowTrigger.WORKFLOW_TRIGGER,

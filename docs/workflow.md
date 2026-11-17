@@ -68,6 +68,18 @@ link-local, private and metadata addresses and a redirect to one, and the call h
   marked `compensate: true` runs the `compensate` node of every completed step in reverse completion order, each
   compensation on its own stable idempotency key; a rollback that cannot finish leaves the instance `COMPENSATION_FAILED`.
 
+## Limits, history and retention
+
+A Tenant's limits are a `workflow_tenant_quota` row over the deployment defaults: 1,000 concurrent instances and 200
+active definitions by default, 50 branches, 1,000 for-each items, 1,000 steps and a sub-workflow depth of 5. A start past
+the instance cap answers `429`; the others fail the instance with `limit_exceeded:<name>`.
+
+`GET /api/v1/instances` lists a Tenant's runs with status, definition and correlation-key filters; `GET /instances/{id}`
+adds the pinned version, the live token count, the step count and the failure reason; `GET /instances/{id}/steps` is the
+redacted timeline. Finished instances and their rows expire after 90 days, in bounded per-tenant batches; an open instance
+never expires. The `api`, `worker` and `migrate` runtimes split cleanly: only the worker schedules jobs, and the migrate
+runtime applies Flyway and exits.
+
 ## Sample workflows
 
 The four flows the app is proven against, as JSON fixtures under the app's test resources:

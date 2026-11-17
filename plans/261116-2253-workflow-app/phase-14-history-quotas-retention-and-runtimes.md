@@ -1,7 +1,7 @@
 ---
 phase: 14
 title: "History, quotas, retention and runtimes"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [13]
@@ -41,6 +41,25 @@ The runtime split follows `plans/261111-1620-api-worker-runtime-split`.
 4. Runtimes: `api` serves HTTP and hooks only; `worker` runs the claim loop, sweepers, timers, schedules, outbox and
    webhook delivery; `migrate` applies Flyway and exits. A health indicator reports sweep lag.
 5. Record a baseline in `docs/workflow.md`: 1,000 instances of 10 steps with 8 workers (steps per second, lag of due timers).
+
+## Outcome
+
+Shipped: migration `V13__quotas.sql` (a per-Tenant `workflow_tenant_quota` row; the deployment defaults live in
+`WorkflowSettings.Quota`), `QuotaGuard` refusing a start past the concurrent-instance cap with `429`, the history
+endpoints (`GET /instances` with status/definition/correlation-key filters and a bounded page, `GET /instances/{id}` with
+the pinned version, live tokens, step count and failure reason), `RetentionSweep` and its hourly per-tenant job (finished
+instances and their rows older than 90 days; open instances never expire; inbound events past their own expiry), and the
+`migrate` runtime (Flyway on, no web edge, no job, exits when done).
+
+Deliberate simplifications and gaps, recorded rather than hidden:
+
+- The list endpoint takes `status`, `definition`, `correlationKey`, `limit` and `offset` rather than the shared
+  `core-query` filter grammar. The contract leaves it open; a later pass can adopt the grammar without changing the rows.
+- Payload and step-output byte caps are not enforced yet: the engine enforces steps, for-each items, parallel branches and
+  sub-workflow depth, but no size check runs on a trigger input or a step response. They are named in the risk register and
+  should be added with the payload-size test.
+- The throughput baseline (1,000 instances of 10 steps, 8 workers) is not recorded; `ExecutionCoreTest` proves 50
+  instances with 8 workers and one completion per step. The phase-15 ops pass owns the baseline run.
 
 ## Validation
 

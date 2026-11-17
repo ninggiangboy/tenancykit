@@ -156,6 +156,19 @@ public class JooqInstanceRepository implements InstanceRepository {
         return expectedVersion + 1;
     }
 
+    @Override
+    public long liveCount(TenantId tenantId) {
+        return dsl.fetchCount(
+                WORKFLOW_INSTANCE,
+                WORKFLOW_INSTANCE
+                        .TENANT_ID
+                        .eq(tenantId.value())
+                        .and(WORKFLOW_INSTANCE.STATUS.in(
+                                InstanceStatus.RUNNING.name(),
+                                InstanceStatus.WAITING.name(),
+                                InstanceStatus.COMPENSATING.name())));
+    }
+
     private Instance toDomain(WorkflowInstanceRecord row) {
         JSONB input = row.getInput();
         return new Instance(

@@ -8,6 +8,7 @@ import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.workflow.definitions.api.expression.ExpressionEvaluator;
 import dev.ngb.workflow.definitions.api.version.VersionReader;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqCompensationRunRepository;
+import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqInstanceReadRepository;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqInstanceRepository;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqJoinStateRepository;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqLoopStateRepository;
@@ -25,6 +26,9 @@ import dev.ngb.workflow.runtime.application.runtime.command.RetryInstanceUseCase
 import dev.ngb.workflow.runtime.application.runtime.command.StartInstanceUseCase;
 import dev.ngb.workflow.runtime.application.runtime.port.CompensationRunRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.InstanceRepository;
+import dev.ngb.workflow.runtime.application.runtime.port.QuotaRepository;
+import dev.ngb.workflow.runtime.application.runtime.query.InstanceQueries;
+import dev.ngb.workflow.runtime.application.runtime.query.InstanceReadRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.JoinStateRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.LoopStateRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.TaskCanceller;
@@ -39,6 +43,7 @@ import dev.ngb.workflow.runtime.application.runtime.query.StepRunReadRepository;
 import dev.ngb.workflow.runtime.application.runtime.service.ClaimAndRun;
 import dev.ngb.workflow.runtime.application.runtime.service.CompensationRunner;
 import dev.ngb.workflow.runtime.application.runtime.service.InstanceStarterService;
+import dev.ngb.workflow.runtime.application.runtime.service.QuotaGuard;
 import dev.ngb.workflow.runtime.application.runtime.service.TaskResumerService;
 import dev.ngb.workflow.runtime.application.runtime.service.TimerSweep;
 import dev.ngb.workflow.runtime.application.runtime.service.TokenSweeper;
@@ -110,6 +115,42 @@ class RuntimeConfiguration {
     }
 
     @Bean
+    RetentionSweep retentionSweep(DSLContext dsl, UnitOfWork unitOfWork, WorkflowSettings settings) {
+        return new RetentionSweep(
+                dsl,
+                unitOfWork,
+                settings.housekeeping().batchSize(),
+                settings.housekeeping().instanceRetention());
+    }
+
+    @Bean
+    InstanceReadRepository instanceReadRepository(DSLContext dsl) {
+        return new JooqInstanceReadRepository(dsl);
+    }
+
+    @Bean
+    InstanceQueries instanceQueries(
+            UnitOfWork unitOfWork, InstanceReadRepository instances, VersionReader versions) {
+        return new InstanceQueries(unitOfWork, instances, versions);
+    }
+
+    @Bean
+    QuotaRepository quotaRepository(DSLContext dsl) {
+        return new dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqQuotaRepository(dsl);
+    }
+
+    @Bean
+    QuotaGuard quotaGuard(
+            UnitOfWork unitOfWork, QuotaRepository quotas, InstanceRepository instances, WorkflowSettings settings) {
+        return new QuotaGuard(
+                unitOfWork,
+                quotas,
+                instances,
+                new QuotaRepository.Limits(
+                        settings.quota().concurrentInstances(), settings.quota().activeDefinitions()));
+    }
+
+    @Bean
     StartInstanceUseCase startInstanceUseCase(
             UnitOfWork unitOfWork,
             VersionReader versions,
@@ -119,9 +160,10 @@ class RuntimeConfiguration {
             TenantContext tenantContext,
             IdGenerator ids,
             Clock clock,
-            EventPublisher events) {
+            EventPublisher events,
+            QuotaGuard quotaGuard) {
         return new StartInstanceUseCase(
-                unitOfWork, versions, instances, tokens, wakeUp, tenantContext, ids, clock, events);
+                unitOfWork, versions, instances, tokens, wakeUp, tenantContext, ids, clock, events, quotaGuard);
     }
 
     @Bean

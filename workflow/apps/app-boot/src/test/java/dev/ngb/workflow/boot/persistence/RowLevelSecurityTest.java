@@ -347,6 +347,10 @@ class RowLevelSecurityTest {
                     insert into workflow_task_assignee (task_id, tenant_id, user_id)
                     select t.id, '%1$s', gen_random_uuid() from t
                     """),
+                row("workflow_tenant_quota", """
+                    insert into workflow_tenant_quota (tenant_id, concurrent_instances, active_definitions, updated_at)
+                    values ('%1$s', 10, 10, now())
+                    """),
                 row("event_inbox", """
                         insert into event_inbox (tenant_id, consumer, event_id)
                         values ('%1$s', 'workflow', gen_random_uuid())

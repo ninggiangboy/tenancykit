@@ -58,6 +58,12 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
         return ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(428), e.getMessage());
     }
 
+    /** A Tenant past its cap; the reason names which one. */
+    @ExceptionHandler(dev.ngb.workflow.runtime.application.runtime.exception.QuotaExceededException.class)
+    ProblemDetail quotaExceeded(dev.ngb.workflow.runtime.application.runtime.exception.QuotaExceededException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(429), e.getMessage());
+    }
+
     /** A decision or an output a task cannot accept. */
     @ExceptionHandler(dev.ngb.workflow.tasks.application.task.exception.TaskUnprocessableException.class)
     ProblemDetail taskUnprocessable(dev.ngb.workflow.tasks.application.task.exception.TaskUnprocessableException e) {

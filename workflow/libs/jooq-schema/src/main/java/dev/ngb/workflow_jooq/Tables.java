@@ -31,6 +31,7 @@ import dev.ngb.workflow_jooq.tables.WorkflowTask;
 import dev.ngb.workflow_jooq.tables.WorkflowTaskAssignee;
 import dev.ngb.workflow_jooq.tables.WorkflowTaskGroup;
 import dev.ngb.workflow_jooq.tables.WorkflowTaskGroupMember;
+import dev.ngb.workflow_jooq.tables.WorkflowTenantQuota;
 import dev.ngb.workflow_jooq.tables.WorkflowTimer;
 import dev.ngb.workflow_jooq.tables.WorkflowToken;
 import dev.ngb.workflow_jooq.tables.WorkflowTrigger;
@@ -178,6 +179,11 @@ public class Tables {
      * The table <code>public.workflow_task_group_member</code>.
      */
     public static final WorkflowTaskGroupMember WORKFLOW_TASK_GROUP_MEMBER = WorkflowTaskGroupMember.WORKFLOW_TASK_GROUP_MEMBER;
+
+    /**
+     * The table <code>public.workflow_tenant_quota</code>.
+     */
+    public static final WorkflowTenantQuota WORKFLOW_TENANT_QUOTA = WorkflowTenantQuota.WORKFLOW_TENANT_QUOTA;
 
     /**
      * The table <code>public.workflow_timer</code>.
