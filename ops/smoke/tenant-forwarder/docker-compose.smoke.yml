@@ -1,0 +1,26 @@
+# The Tenant's forwarder, started only for the smoke run:
+#
+#   docker compose -f docker-compose.yml -f ops/smoke/tenant-forwarder/docker-compose.smoke.yml --profile smoke up -d
+#
+# It is test scaffolding standing in for a Tenant's own code, not a suite service, so it lives here rather than in the
+# root compose file. crm reaches it on the compose network because its `compose` profile relaxes the webhook destination
+# policy; a deployment never loads that profile and never sets that setting.
+services:
+  tenant-forwarder:
+    build:
+      context: ./ops/smoke/tenant-forwarder
+      dockerfile: Dockerfile
+    profiles: ["smoke"]
+    # The smoke reads what the receiver recorded from the host, which is the only reason the port is published.
+    ports:
+      - "8099:8080"
+    environment:
+      FORWARDER_CRM_SECRET: ${FORWARDER_CRM_SECRET:?set it in the environment of the smoke run}
+      FORWARDER_LOYALTY_URL: http://loyalty-api:8080
+      FORWARDER_LOYALTY_HOST: ${FORWARDER_LOYALTY_HOST:?set it in the environment of the smoke run}
+      FORWARDER_LOYALTY_TOKEN: ${FORWARDER_LOYALTY_TOKEN:?set it in the environment of the smoke run}
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c 'import socket,sys; s=socket.socket(); sys.exit(s.connect_ex((\"127.0.0.1\",8080)))'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
