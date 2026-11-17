@@ -44,6 +44,7 @@ class WorkerRuntimeStartupTest {
         registry.add("booking.jobs.enabled", () -> "false");
         // The webhook secret cipher refuses to start without a 32-byte key.
         registry.add("booking.webhooks.master-key", () -> "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=");
+        registry.add("booking.gate.keys.k1", () -> "test-customer-token-secret");
         // A link key has no shipped default: a blank key fails startup, so the test supplies its own.
         // The webhook secret cipher refuses to start without a 32-byte key.
     }

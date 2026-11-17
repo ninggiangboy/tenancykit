@@ -51,6 +51,8 @@ public abstract class BookingIntegrationTest {
         registry.add(
                 "booking.webhooks.master-key",
                 () -> "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=");
+        // Customer tokens have no shipped secret either.
+        registry.add("booking.gate.keys.k1", () -> "test-customer-token-secret");
     }
 
     /** Runs work with the tenant bound, which is what row-level security reads. */

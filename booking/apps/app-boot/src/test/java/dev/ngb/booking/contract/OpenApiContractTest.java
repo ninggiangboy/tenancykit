@@ -63,6 +63,7 @@ class OpenApiContractTest {
         registry.add("booking.jobs.enabled", () -> "false");
         // The webhook secret cipher refuses to start without a 32-byte key.
         registry.add("booking.webhooks.master-key", () -> "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=");
+        registry.add("booking.gate.keys.k1", () -> "test-customer-token-secret");
         registry.add("booking.housekeeping.enabled", () -> "false");
     }
 
@@ -85,6 +86,10 @@ class OpenApiContractTest {
             for (String method : servedPath.propertyNames()) {
                 JsonNode operation = servedPath.get(method);
                 if (!operation.isObject()) {
+                    continue;
+                }
+                if (path.startsWith("/p/")) {
+                    // The public gate authenticates with a customer token, not a suite permission.
                     continue;
                 }
                 operations++;

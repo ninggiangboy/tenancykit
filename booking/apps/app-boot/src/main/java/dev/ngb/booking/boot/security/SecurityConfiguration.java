@@ -16,6 +16,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -51,6 +52,13 @@ class SecurityConfiguration {
                         .anyRequest()
                         .authenticated())
                 .oauth2ResourceServer(resource -> resource
+                        // The customer token is not a JWT: leave it to the public gate filter, never to this decoder.
+                        .bearerTokenResolver(request -> {
+                            String uri = request.getRequestURI();
+                            return uri.startsWith("/p/") || uri.startsWith("/booking/p/")
+                                    ? null
+                                    : new DefaultBearerTokenResolver().resolve(request);
+                        })
                         .jwt(jwt -> jwt.decoder(decoders)
                                 .jwtAuthenticationConverter(new SuiteActorConverter(actorResolver))))
                 .headers(Customizer.withDefaults());

@@ -298,6 +298,10 @@ class RowLevelSecurityTest {
                                now(), now()
                         from e
                         """),
+                Arguments.of("gate_settings", """
+                        insert into gate_settings (tenant_id, allowed_origins, max_token_ttl_seconds, updated_at)
+                        values ('%1$s', array['https://example.com'], 600, now())
+                        """),
                 Arguments.of("waitlist_entries", """
                         insert into waitlist_entries (tenant_id, id, offering_id, customer_ref, qty, status,
                                                       created_at, updated_at)

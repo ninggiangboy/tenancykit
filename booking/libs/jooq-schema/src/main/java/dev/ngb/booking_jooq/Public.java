@@ -14,6 +14,7 @@ import dev.ngb.booking_jooq.tables.CalendarExceptions;
 import dev.ngb.booking_jooq.tables.CancellationWindows;
 import dev.ngb.booking_jooq.tables.CapacityUnits;
 import dev.ngb.booking_jooq.tables.EventInbox;
+import dev.ngb.booking_jooq.tables.GateSettings;
 import dev.ngb.booking_jooq.tables.GroupMembers;
 import dev.ngb.booking_jooq.tables.IntervalClaims;
 import dev.ngb.booking_jooq.tables.OfferingRequirements;
@@ -107,6 +108,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.event_inbox</code>.
      */
     public final EventInbox EVENT_INBOX = EventInbox.EVENT_INBOX;
+
+    /**
+     * The table <code>public.gate_settings</code>.
+     */
+    public final GateSettings GATE_SETTINGS = GateSettings.GATE_SETTINGS;
 
     /**
      * The table <code>public.group_members</code>.
@@ -239,6 +245,7 @@ public class Public extends SchemaImpl {
             CancellationWindows.CANCELLATION_WINDOWS,
             CapacityUnits.CAPACITY_UNITS,
             EventInbox.EVENT_INBOX,
+            GateSettings.GATE_SETTINGS,
             GroupMembers.GROUP_MEMBERS,
             IntervalClaims.INTERVAL_CLAIMS,
             OfferingRequirements.OFFERING_REQUIREMENTS,

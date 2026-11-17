@@ -1,7 +1,7 @@
 ---
 phase: 13
 title: "Public customer gate"
-status: pending
+status: completed
 priority: P1
 effort: "L"
 dependencies: [8, 12]

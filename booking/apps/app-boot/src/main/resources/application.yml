@@ -80,6 +80,12 @@ booking:
   messaging:
     exchange: ${BOOKING_MESSAGING_EXCHANGE:platform.events}
     queue: ${BOOKING_MESSAGING_QUEUE:booking.platform-events}
+  gate:
+    # New tokens carry this key id; verification accepts every key still listed, so a rotation keeps tokens working.
+    active-key-id: ${BOOKING_TOKEN_KEY_ID:k1}
+    keys:
+      k1: ${BOOKING_TOKEN_SECRET:}
+    max-body-bytes: ${BOOKING_GATE_MAX_BODY_BYTES:65536}
   jobs:
     enabled: ${BOOKING_JOBS_ENABLED:true}
     # At most this many tenants run at once across all jobs; keep it below the connection pool.

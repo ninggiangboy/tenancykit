@@ -14,6 +14,7 @@ import dev.ngb.booking_jooq.tables.CalendarExceptions;
 import dev.ngb.booking_jooq.tables.CancellationWindows;
 import dev.ngb.booking_jooq.tables.CapacityUnits;
 import dev.ngb.booking_jooq.tables.EventInbox;
+import dev.ngb.booking_jooq.tables.GateSettings;
 import dev.ngb.booking_jooq.tables.GroupMembers;
 import dev.ngb.booking_jooq.tables.IntervalClaims;
 import dev.ngb.booking_jooq.tables.OfferingRequirements;
@@ -92,6 +93,11 @@ public class Tables {
      * The table <code>public.event_inbox</code>.
      */
     public static final EventInbox EVENT_INBOX = EventInbox.EVENT_INBOX;
+
+    /**
+     * The table <code>public.gate_settings</code>.
+     */
+    public static final GateSettings GATE_SETTINGS = GateSettings.GATE_SETTINGS;
 
     /**
      * The table <code>public.group_members</code>.

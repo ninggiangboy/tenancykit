@@ -68,6 +68,8 @@ final class ArchitectureRules {
         TABLE_OWNER.put("BookingSeries", "booking");
         TABLE_OWNER.put("WaitlistEntries", "booking");
         TABLE_OWNER.put("WaitlistWakeups", "booking");
+        // The gate owns the tenant's public-edge policy.
+        TABLE_OWNER.put("GateSettings", "gate");
         // The webhook context owns its endpoints, deliveries and the append-only attempt log.
         TABLE_OWNER.put("WebhookEndpoints", "webhook");
         TABLE_OWNER.put("WebhookDeliveries", "webhook");

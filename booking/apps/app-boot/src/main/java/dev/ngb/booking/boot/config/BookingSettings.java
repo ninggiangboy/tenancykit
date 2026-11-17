@@ -13,10 +13,23 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "booking")
 public record BookingSettings(
-        Messaging messaging, Relay relay, Webhooks webhooks, Jobs jobs, Housekeeping housekeeping, Timings timings) {
+        Messaging messaging,
+        Relay relay,
+        Webhooks webhooks,
+        Gate gate,
+        Jobs jobs,
+        Housekeeping housekeeping,
+        Timings timings) {
 
     /** The Platform state-transfer events this service consumes on its own queue. */
     public record Messaging(String exchange, String queue) {}
+
+    /**
+     * The customer-token keys and the public edge's body limit.
+     *
+     * @param keys every key still accepted, keyed by id; a rotation adds one and moves {@code active-key-id}
+     */
+    public record Gate(String activeKeyId, java.util.Map<String, String> keys, int maxBodyBytes) {}
 
     /**
      * The in-process outbox relay: booking declares no exchange, so every due outbox row is handed to the webhook
