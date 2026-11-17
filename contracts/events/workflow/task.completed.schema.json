@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/workflow/task.completed.schema.json",
+  "title": "Task completed",
+  "description": "A person, or a Tenant System naming one, completed a task with a decision.",
+  "type": "object",
+  "required": [
+    "taskId",
+    "instanceId",
+    "nodeId",
+    "title",
+    "decision",
+    "completedBy",
+    "via",
+    "completedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The task."
+    },
+    "instanceId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The instance waiting on it."
+    },
+    "title": {
+      "type": "string"
+    },
+    "nodeId": {
+      "type": "string",
+      "description": "The node that asked for the task."
+    },
+    "decision": {
+      "type": "string"
+    },
+    "completedBy": {
+      "type": "string",
+      "description": "The audit name of the person, as stated."
+    },
+    "via": {
+      "type": "string",
+      "enum": [
+        "USER",
+        "SYSTEM"
+      ]
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dueAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -1,7 +1,7 @@
 ---
 phase: 13
 title: "Workflow webhooks and event contract"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [11, 12]
@@ -37,6 +37,20 @@ same, otherwise keep it in the app (see how crm and loyalty did it, phase 7 read
 3. Endpoint management and delivery listing/resend reuse the copied webhook context (`workflow:webhook:manage`); the OpenAPI
    adds them.
 4. A contract test loads every schema and validates a real emitted event for each type.
+
+## Outcome
+
+The webhook context phase 3 was said to have copied was absent from the tree, so this phase copied it now from the
+committed customer app and adapted it: endpoints, deliveries, the signer, the guarded sender, the event-type catalog, the
+`Workflow-*` header set and the `workflow:webhook:manage` endpoints. The ten schemas are in
+`contracts/events/workflow/`, packaged on the classpath and used as the subscription catalog, so a misspelled type is
+refused and a new schema needs no code change.
+
+`RuntimeEvents` and `TaskEvents` are the emitters; they publish inside the state-change transaction through the outbox,
+and `OutboxConfiguration` wires the in-process relay plus its consumer assertion. `WorkflowEventContractTest` validates
+every emitted payload against its schema. Deliberate gap, recorded rather than hidden: the copied delivery mechanics carry
+the tests they came with in their own app, but this phase added only the schema-conformance test; an end-to-end signed
+delivery and DEAD-retry test belongs with phase 15's smoke, where a receiver and a failing endpoint exist.
 
 ## Validation
 

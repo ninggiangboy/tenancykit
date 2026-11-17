@@ -22,4 +22,7 @@ public interface VersionReader {
      * @param version the exact version number, or null for the newest published one
      */
     Optional<PublishedGraph> graphOf(String definitionCode, Integer version);
+
+    /** The code of a definition by id, which an event payload names instead of an internal id. */
+    Optional<String> definitionCode(UUID definitionId);
 }

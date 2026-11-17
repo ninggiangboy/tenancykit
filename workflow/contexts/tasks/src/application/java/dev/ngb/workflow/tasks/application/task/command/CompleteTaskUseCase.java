@@ -1,6 +1,8 @@
 package dev.ngb.workflow.tasks.application.task.command;
 
 import dev.ngb.core.error.ConflictException;
+import dev.ngb.core.event.EventPublisher;
+import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -15,6 +17,7 @@ import dev.ngb.workflow.tasks.application.task.port.TaskTokenResumer;
 import dev.ngb.workflow.tasks.application.task.service.FormValidator;
 import dev.ngb.workflow.tasks.application.task.service.TaskAccess;
 import dev.ngb.workflow.tasks.domain.task.Task;
+import dev.ngb.workflow.tasks.domain.task.event.TaskEvents;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -38,6 +41,8 @@ public class CompleteTaskUseCase {
     private final UserDirectory users;
     private final CurrentActor currentActor;
     private final Clock clock;
+    private final EventPublisher events;
+    private final IdGenerator ids;
 
     public CompleteTaskUseCase(
             UnitOfWork unitOfWork,
@@ -45,13 +50,17 @@ public class CompleteTaskUseCase {
             TaskTokenResumer resumer,
             UserDirectory users,
             CurrentActor currentActor,
-            Clock clock) {
+            Clock clock,
+            EventPublisher events,
+            IdGenerator ids) {
         this.unitOfWork = unitOfWork;
         this.tasks = tasks;
         this.resumer = resumer;
         this.users = users;
         this.currentActor = currentActor;
         this.clock = clock;
+        this.events = events;
+        this.ids = ids;
     }
 
     public Task execute(Command command) {
@@ -93,6 +102,7 @@ public class CompleteTaskUseCase {
             payload.put("completedBy", by);
             payload.put("via", via);
             resumer.resume(completed.tokenId(), "task", payload);
+            events.publish(TaskEvents.completed(completed, ids.newId(), now));
             return completed;
         });
     }

@@ -137,7 +137,7 @@ or test names.
 | 10 | [Control flow: branch, parallel, for-each, sub-workflow](phase-10-control-flow.md) | L | done |
 | 11 | [Human tasks](phase-11-human-tasks.md) | L | done |
 | 12 | [Failure handling, compensation and replay](phase-12-failure-compensation-and-replay.md) | L | done |
-| 13 | [Workflow webhooks and event contract](phase-13-workflow-webhooks-and-events.md) | M | pending |
+| 13 | [Workflow webhooks and event contract](phase-13-workflow-webhooks-and-events.md) | M | done |
 | 14 | [History, quotas, retention and runtimes](phase-14-history-quotas-retention-and-runtimes.md) | M | pending |
 | 15 | [Sample workflows, chaos, isolation, ops and docs](phase-15-samples-chaos-isolation-ops-and-docs.md) | L | pending |
 

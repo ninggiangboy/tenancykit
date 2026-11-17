@@ -9,6 +9,83 @@ servers:
 - url: "/workflow"
   description: "Any tenant hostname: <tenant-code>.<base-domain>/workflow"
 paths:
+  /api/v1/webhook-endpoints/{id}:
+    get:
+      tags:
+      - "endpoint-controller"
+      operationId: "getEndpoint"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointResponse"
+      x-required-permission: "workflow:webhook:manage"
+    put:
+      tags:
+      - "endpoint-controller"
+      operationId: "updateEndpoint"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEndpointRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointResponse"
+      x-required-permission: "workflow:webhook:manage"
+    delete:
+      tags:
+      - "endpoint-controller"
+      operationId: "deleteEndpoint"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+      x-required-permission: "workflow:webhook:manage"
   /api/v1/triggers/{id}:
     get:
       tags:
@@ -245,6 +322,484 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReceiptResponse"
       x-public: true
+  /api/v1/webhook-endpoints:
+    get:
+      tags:
+      - "endpoint-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone."
+      operationId: "listEndpoints"
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[description][eq]"
+        in: "query"
+        description: "`description` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[description][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `description`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[description][is_null]"
+        in: "query"
+        description: "`true` for rows where `description` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[description][neq]"
+        in: "query"
+        description: "`description` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[description][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `description`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[description][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `description`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[key_id][eq]"
+        in: "query"
+        description: "`key_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[key_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `key_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[key_id][neq]"
+        in: "query"
+        description: "`key_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[key_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `key_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[key_id][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `key_id`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[secret_rotated_at][eq]"
+        in: "query"
+        description: "`secret_rotated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][gt]"
+        in: "query"
+        description: "`secret_rotated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][gte]"
+        in: "query"
+        description: "`secret_rotated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `secret_rotated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[secret_rotated_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `secret_rotated_at` is null, `false` for\
+          \ rows where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[secret_rotated_at][lt]"
+        in: "query"
+        description: "`secret_rotated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][lte]"
+        in: "query"
+        description: "`secret_rotated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][neq]"
+        in: "query"
+        description: "`secret_rotated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `secret_rotated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "DELETED"
+          - "DISABLED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "DELETED"
+          - "DISABLED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[url][eq]"
+        in: "query"
+        description: "`url` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[url][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `url`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[url][neq]"
+        in: "query"
+        description: "`url` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[url][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `url`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[url][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `url`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `created_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageEndpointResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "workflow:webhook:manage"
+    post:
+      tags:
+      - "endpoint-controller"
+      operationId: "createEndpoint"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEndpointRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointWithSecretResponse"
+      x-required-permission: "workflow:webhook:manage"
+  /api/v1/webhook-endpoints/{id}/rotate-secret:
+    post:
+      tags:
+      - "endpoint-controller"
+      operationId: "rotateSecret"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointWithSecretResponse"
+      x-required-permission: "workflow:webhook:manage"
+  /api/v1/webhook-deliveries/{id}/retry:
+    post:
+      tags:
+      - "delivery-controller"
+      operationId: "retry"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "202":
+          description: "Accepted"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DeliveryResponse"
+      x-required-permission: "workflow:webhook:manage"
   /api/v1/triggers:
     get:
       tags:
@@ -778,7 +1333,7 @@ paths:
     post:
       tags:
       - "instance-operations-controller"
-      operationId: "retry"
+      operationId: "retry_1"
       parameters:
       - name: "id"
         in: "path"
@@ -1340,6 +1895,548 @@ paths:
               schema:
                 $ref: "#/components/schemas/ConnectionResponse"
       x-required-permission: "workflow:connection:manage"
+  /api/v1/webhook-deliveries:
+    get:
+      tags:
+      - "delivery-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone."
+      operationId: "listDeliveries"
+      parameters:
+      - name: "filter[attempts][eq]"
+        in: "query"
+        description: "`attempts` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][gt]"
+        in: "query"
+        description: "`attempts` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][gte]"
+        in: "query"
+        description: "`attempts` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `attempts`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[attempts][lt]"
+        in: "query"
+        description: "`attempts` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][lte]"
+        in: "query"
+        description: "`attempts` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][neq]"
+        in: "query"
+        description: "`attempts` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `attempts`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[completed_at][eq]"
+        in: "query"
+        description: "`completed_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][gt]"
+        in: "query"
+        description: "`completed_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][gte]"
+        in: "query"
+        description: "`completed_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `completed_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[completed_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `completed_at` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[completed_at][lt]"
+        in: "query"
+        description: "`completed_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][lte]"
+        in: "query"
+        description: "`completed_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][neq]"
+        in: "query"
+        description: "`completed_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `completed_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[endpoint_id][eq]"
+        in: "query"
+        description: "`endpoint_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[endpoint_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `endpoint_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[endpoint_id][neq]"
+        in: "query"
+        description: "`endpoint_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[endpoint_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `endpoint_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_id][eq]"
+        in: "query"
+        description: "`event_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[event_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `event_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_id][neq]"
+        in: "query"
+        description: "`event_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[event_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `event_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_type][eq]"
+        in: "query"
+        description: "`event_type` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[event_type][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `event_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_type][neq]"
+        in: "query"
+        description: "`event_type` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[event_type][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `event_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_type][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `event_type`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_error][eq]"
+        in: "query"
+        description: "`last_error` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[last_error][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `last_error`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_error][is_null]"
+        in: "query"
+        description: "`true` for rows where `last_error` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[last_error][neq]"
+        in: "query"
+        description: "`last_error` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[last_error][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `last_error`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_error][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `last_error`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[last_status_code][eq]"
+        in: "query"
+        description: "`last_status_code` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][gt]"
+        in: "query"
+        description: "`last_status_code` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][gte]"
+        in: "query"
+        description: "`last_status_code` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `last_status_code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_status_code][is_null]"
+        in: "query"
+        description: "`true` for rows where `last_status_code` is null, `false` for\
+          \ rows where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[last_status_code][lt]"
+        in: "query"
+        description: "`last_status_code` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][lte]"
+        in: "query"
+        description: "`last_status_code` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][neq]"
+        in: "query"
+        description: "`last_status_code` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `last_status_code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[next_attempt_at][eq]"
+        in: "query"
+        description: "`next_attempt_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][gt]"
+        in: "query"
+        description: "`next_attempt_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][gte]"
+        in: "query"
+        description: "`next_attempt_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `next_attempt_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[next_attempt_at][lt]"
+        in: "query"
+        description: "`next_attempt_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][lte]"
+        in: "query"
+        description: "`next_attempt_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][neq]"
+        in: "query"
+        description: "`next_attempt_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `next_attempt_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "DEAD"
+          - "IN_PROGRESS"
+          - "PENDING"
+          - "SUCCEEDED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "DEAD"
+          - "IN_PROGRESS"
+          - "PENDING"
+          - "SUCCEEDED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageDeliveryResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "workflow:webhook:manage"
   /api/v1/tasks:
     get:
       tags:
@@ -1468,6 +2565,45 @@ paths:
       x-required-permission: "workflow:definition:read"
 components:
   schemas:
+    UpdateEndpointRequest:
+      type: "object"
+      properties:
+        url:
+          type: "string"
+        description:
+          type: "string"
+        eventTypes:
+          type: "array"
+          items:
+            type: "string"
+        status:
+          type: "string"
+    EndpointResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        url:
+          type: "string"
+        description:
+          type: "string"
+        eventTypes:
+          type: "array"
+          items:
+            type: "string"
+        status:
+          type: "string"
+        keyId:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+        secretRotatedAt:
+          type: "string"
+          format: "date-time"
     UpdateTriggerRequest:
       type: "object"
       properties:
@@ -1645,6 +2781,54 @@ components:
           format: "int32"
         duplicate:
           type: "boolean"
+    CreateEndpointRequest:
+      type: "object"
+      properties:
+        url:
+          type: "string"
+        description:
+          type: "string"
+        eventTypes:
+          type: "array"
+          items:
+            type: "string"
+    EndpointWithSecretResponse:
+      type: "object"
+      properties:
+        endpoint:
+          $ref: "#/components/schemas/EndpointResponse"
+        signingSecret:
+          type: "string"
+    DeliveryResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        endpointId:
+          type: "string"
+        eventId:
+          type: "string"
+        eventType:
+          type: "string"
+        status:
+          type: "string"
+        attempts:
+          type: "integer"
+          format: "int32"
+        nextAttemptAt:
+          type: "string"
+          format: "date-time"
+        lastStatusCode:
+          type: "integer"
+          format: "int32"
+        lastError:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        completedAt:
+          type: "string"
+          format: "date-time"
     CreateTriggerRequest:
       type: "object"
       properties:
@@ -1835,6 +3019,17 @@ components:
           format: "date-time"
         publishedBy:
           type: "string"
+    PageEndpointResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/EndpointResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageInfo:
       type: "object"
       properties:
@@ -1855,6 +3050,17 @@ components:
           type:
           - "string"
           - "null"
+    PageDeliveryResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DeliveryResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageTriggerResponse:
       type: "object"
       properties:

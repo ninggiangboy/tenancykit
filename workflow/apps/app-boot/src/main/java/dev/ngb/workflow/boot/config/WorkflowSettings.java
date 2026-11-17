@@ -20,7 +20,9 @@ public record WorkflowSettings(
         @DefaultValue Runtime runtime,
         @DefaultValue Schedules schedules,
         @DefaultValue Secrets secrets,
-        @DefaultValue Connections connections) {
+        @DefaultValue Connections connections,
+        @DefaultValue Webhooks webhooks,
+        @DefaultValue Relay relay) {
 
     /**
      * @param enabled whether the worker's scheduled jobs run at all
@@ -41,6 +43,7 @@ public record WorkflowSettings(
             @DefaultValue("true") boolean enabled,
             @DefaultValue("P30D") Duration inboxRetention,
             @DefaultValue("P7D") Duration deadOutboxRetention,
+            @DefaultValue("P30D") Duration webhookDeliveryRetention,
             @DefaultValue("500") int batchSize,
             @DefaultValue("PT1H") Duration interval) {}
 
@@ -71,6 +74,38 @@ public record WorkflowSettings(
      */
     public record Secrets(
             String masterKey, @DefaultValue("v1") String keyId, @DefaultValue Map<String, String> previousKeys) {}
+
+    /**
+     * @param allowNonPublicTargets development only: a compose endpoint may resolve to a container address
+     * @param batchSize how many deliveries one round claims per tenant
+     * @param maxAttempts deliveries before a row is dead
+     * @param lease how long a claimed delivery stays owned before another worker may take it
+     */
+    public record Webhooks(
+            @DefaultValue("false") boolean allowNonPublicTargets,
+            @DefaultValue("25") int batchSize,
+            @DefaultValue("10") int maxAttempts,
+            @DefaultValue("PT30S") Duration backoffBase,
+            @DefaultValue("PT6H") Duration backoffCap,
+            @DefaultValue("PT2M") Duration lease,
+            @DefaultValue("100") int maxConnections,
+            @DefaultValue("25") int maxConnectionsPerRoute,
+            @DefaultValue("PT2S") Duration connectionRequestTimeout,
+            @DefaultValue("PT3S") Duration connectTimeout,
+            @DefaultValue("PT10S") Duration readTimeout,
+            @DefaultValue("PT15S") Duration deadline) {}
+
+    /**
+     * @param batchSize how many outbox rows one relay round handles per tenant
+     * @param maxAttempts relay attempts before a row is dead
+     */
+    public record Relay(
+            @DefaultValue("50") int batchSize,
+            @DefaultValue("10") int maxAttempts,
+            @DefaultValue("PT10S") Duration backoffBase,
+            @DefaultValue("PT1H") Duration backoffCap,
+            @DefaultValue("0.2") double jitter,
+            @DefaultValue("PT30S") Duration claimDeadline) {}
 
     /**
      * @param tokenUrl the Platform token endpoint the engine mints audience tokens from

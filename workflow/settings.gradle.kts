@@ -20,6 +20,7 @@ include(
     "contexts:runtime",
     "contexts:triggers",
     "contexts:connections",
+    "contexts:webhook",
     "contexts:tasks",
     "apps:app-boot",
     "testing:arch-fixtures",

@@ -1,6 +1,7 @@
 package dev.ngb.workflow.tasks.application.task.command;
 
 import dev.ngb.core.error.BadRequestException;
+import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -9,6 +10,7 @@ import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.workflow.tasks.application.task.port.TaskGroupRepository;
 import dev.ngb.workflow.tasks.application.task.port.TaskRepository;
 import dev.ngb.workflow.tasks.domain.task.Task;
+import dev.ngb.workflow.tasks.domain.task.event.TaskEvents;
 import dev.ngb.workflow.tasks.domain.task.TaskGroup;
 import dev.ngb.workflow.tasks.domain.task.TaskStatus;
 import java.time.Instant;
@@ -45,6 +47,7 @@ public class CreateTaskUseCase {
     private final TenantContext tenantContext;
     private final IdGenerator ids;
     private final Clock clock;
+    private final EventPublisher events;
 
     public CreateTaskUseCase(
             UnitOfWork unitOfWork,
@@ -52,13 +55,15 @@ public class CreateTaskUseCase {
             TaskGroupRepository groups,
             TenantContext tenantContext,
             IdGenerator ids,
-            Clock clock) {
+            Clock clock,
+            EventPublisher events) {
         this.unitOfWork = unitOfWork;
         this.tasks = tasks;
         this.groups = groups;
         this.tenantContext = tenantContext;
         this.ids = ids;
         this.clock = clock;
+        this.events = events;
     }
 
     public UUID execute(Command command) {
@@ -121,6 +126,7 @@ public class CreateTaskUseCase {
                     now,
                     1);
             tasks.add(task, members);
+            events.publish(TaskEvents.created(task, ids.newId(), now));
             return task.id();
         });
     }

@@ -1,5 +1,6 @@
 package dev.ngb.workflow.runtime.application.runtime.service;
 
+import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -16,6 +17,7 @@ import dev.ngb.workflow.runtime.application.runtime.port.TimerRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.TokenRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.WaitSubscriptionRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.WakeUpPublisher;
+import dev.ngb.workflow.runtime.domain.event.RuntimeEvents;
 import dev.ngb.workflow.runtime.domain.instance.Instance;
 import dev.ngb.workflow.runtime.domain.instance.InstanceStatus;
 import dev.ngb.workflow.runtime.domain.step.ExecutionContext;
@@ -87,6 +89,7 @@ public class ClaimAndRun {
     private final WakeUpPublisher wakeUp;
     private final IdGenerator ids;
     private final Clock clock;
+    private final EventPublisher events;
     private final String workerId;
     private final Duration lease;
 
@@ -106,6 +109,7 @@ public class ClaimAndRun {
             WakeUpPublisher wakeUp,
             IdGenerator ids,
             Clock clock,
+            EventPublisher events,
             String workerId,
             Duration lease) {
         this.unitOfWork = unitOfWork;
@@ -123,6 +127,7 @@ public class ClaimAndRun {
         this.wakeUp = wakeUp;
         this.ids = ids;
         this.clock = clock;
+        this.events = events;
         this.workerId = workerId;
         this.lease = lease;
     }
@@ -374,6 +379,17 @@ public class ClaimAndRun {
         }
         tokens.cancelLive(token.instanceId(), token.id(), finishedAt);
         instances.markFailure(instance.id(), InstanceStatus.FAILED_STUCK, outcome.failure());
+        String code = versions.definitionCode(instance.definitionId()).orElse("");
+        events.publish(RuntimeEvents.stuck(instance, code, outcome.failure(), ids.newId(), finishedAt));
+        ErrorClass classified = ErrorClassifier.classify(outcome);
+        events.publish(RuntimeEvents.stepDeadLettered(
+                instance,
+                code,
+                token.nodeId(),
+                (classified == null ? ErrorClass.FATAL : classified).name(),
+                outcome.failure() == null ? "the step failed" : outcome.failure(),
+                ids.newId(),
+                finishedAt));
         return InstanceStatus.FAILED_STUCK;
     }
 
@@ -597,6 +613,19 @@ public class ClaimAndRun {
     /** Ends an instance and, when it is a sub-workflow's child, resumes the token that started it. */
     private void finishInstance(Instance instance, InstanceStatus status, Instant finishedAt, StepOutcome outcome) {
         instances.finish(instance.id(), status, finishedAt);
+        String code = versions.definitionCode(instance.definitionId()).orElse("");
+        if (status == InstanceStatus.FAILED) {
+            ErrorClass errorClass = ErrorClassifier.classify(outcome);
+            events.publish(RuntimeEvents.failed(
+                    instance,
+                    code,
+                    (errorClass == null ? ErrorClass.FATAL : errorClass).name(),
+                    outcome.failure() == null ? "the instance failed" : outcome.failure(),
+                    ids.newId(),
+                    finishedAt));
+        } else {
+            events.publish(RuntimeEvents.finished(instance, code, status, ids.newId(), finishedAt));
+        }
         if (instance.parentTokenId() == null) {
             return;
         }

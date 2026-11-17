@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/workflow/instance.cancelled.schema.json",
+  "title": "Instance cancelled",
+  "description": "An operator cancelled an instance; its tokens, timers and open tasks were stopped.",
+  "type": "object",
+  "required": [
+    "instanceId",
+    "definitionCode",
+    "version",
+    "status",
+    "finishedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "instanceId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The instance the fact is about."
+    },
+    "definitionCode": {
+      "type": "string",
+      "description": "The definition's code, stable across versions."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The published version the instance pins."
+    },
+    "status": {
+      "type": "string",
+      "description": "The instance's status after the fact."
+    },
+    "finishedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

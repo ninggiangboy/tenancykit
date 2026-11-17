@@ -39,16 +39,25 @@ final class ArchitectureRules {
             TABLE_OWNER.put(table, "definitions");
         }
         for (String table : List.of(
-                "WorkflowInstance", "WorkflowToken", "WorkflowStepRun", "WorkflowCompensationRun")) {
+                "WorkflowInstance", "WorkflowToken", "WorkflowStepRun", "WorkflowCompensationRun",
+                "WorkflowJoinState", "WorkflowLoopState", "WorkflowTimer", "WorkflowWaitSubscription")) {
             TABLE_OWNER.put(table, "runtime");
+        }
+        for (String table : List.of("WorkflowConnection", "WorkflowPlatformCredential")) {
+            TABLE_OWNER.put(table, "connections");
+        }
+        for (String table : List.of(
+                "WorkflowTask", "WorkflowTaskGroup", "WorkflowTaskGroupMember", "WorkflowTaskAssignee")) {
+            TABLE_OWNER.put(table, "tasks");
         }
         for (String table : List.of("WorkflowTrigger", "WorkflowInboundEvent", "WorkflowSchedule")) {
             TABLE_OWNER.put(table, "triggers");
         }
-        for (String table : List.of(
-                "EventInbox", "ReplicaState", "Outbox", "JobLeases", "JobRuns",
-                "WebhookEndpoints", "WebhookDeliveries", "WebhookDeliveryAttempts")) {
+        for (String table : List.of("EventInbox", "ReplicaState", "Outbox", "JobLeases", "JobRuns")) {
             TABLE_OWNER.put(table, "boot");
+        }
+        for (String table : List.of("WebhookEndpoints", "WebhookDeliveries", "WebhookDeliveryAttempts")) {
+            TABLE_OWNER.put(table, "webhook");
         }
     }
 

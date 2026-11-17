@@ -1,6 +1,7 @@
 package dev.ngb.workflow.runtime.application.runtime.command;
 
 import dev.ngb.core.error.IdempotencyConflictException;
+import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
@@ -12,6 +13,7 @@ import dev.ngb.workflow.definitions.api.version.VersionReader;
 import dev.ngb.workflow.runtime.application.runtime.port.InstanceRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.TokenRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.WakeUpPublisher;
+import dev.ngb.workflow.runtime.domain.event.RuntimeEvents;
 import dev.ngb.workflow.runtime.domain.instance.Instance;
 import dev.ngb.workflow.runtime.domain.token.Token;
 import java.time.Instant;
@@ -43,6 +45,7 @@ public class StartInstanceUseCase {
     private final TenantContext tenantContext;
     private final IdGenerator ids;
     private final Clock clock;
+    private final EventPublisher events;
 
     public StartInstanceUseCase(
             UnitOfWork unitOfWork,
@@ -52,7 +55,8 @@ public class StartInstanceUseCase {
             WakeUpPublisher wakeUp,
             TenantContext tenantContext,
             IdGenerator ids,
-            Clock clock) {
+            Clock clock,
+            EventPublisher events) {
         this.unitOfWork = unitOfWork;
         this.versions = versions;
         this.instances = instances;
@@ -61,6 +65,7 @@ public class StartInstanceUseCase {
         this.tenantContext = tenantContext;
         this.ids = ids;
         this.clock = clock;
+        this.events = events;
     }
 
     public Instance execute(Command command) {
@@ -95,6 +100,8 @@ public class StartInstanceUseCase {
             instances.add(started);
             tokens.add(Token.ready(
                     ids.newId(), tenant, started.id(), version.graph().start(), null, 0, now));
+            String code = versions.definitionCode(version.definitionId()).orElse("");
+            events.publish(RuntimeEvents.started(started, code, ids.newId(), now));
             return started;
         });
         // After the commit: a worker may claim it now, and a lost message leaves it to the sweeper.

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/workflow/instance.stuck.schema.json",
+  "title": "Instance dead-lettered",
+  "description": "An instance has no on_error edge and stopped in a dead-letter state; an operator can retry, replay or cancel it.",
+  "type": "object",
+  "required": [
+    "instanceId",
+    "definitionCode",
+    "version",
+    "status",
+    "failureReason",
+    "stuckAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "instanceId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The instance the fact is about."
+    },
+    "definitionCode": {
+      "type": "string",
+      "description": "The definition's code, stable across versions."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The published version the instance pins."
+    },
+    "status": {
+      "type": "string",
+      "description": "The instance's status after the fact."
+    },
+    "failureReason": {
+      "type": "string"
+    },
+    "stuckAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

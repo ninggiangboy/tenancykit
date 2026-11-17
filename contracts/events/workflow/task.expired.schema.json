@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/workflow/task.expired.schema.json",
+  "title": "Task expired",
+  "description": "A task's last deadline passed without a decision; its workflow took the expiry branch.",
+  "type": "object",
+  "required": [
+    "taskId",
+    "instanceId",
+    "nodeId",
+    "title",
+    "expiredAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The task."
+    },
+    "instanceId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The instance waiting on it."
+    },
+    "title": {
+      "type": "string"
+    },
+    "nodeId": {
+      "type": "string",
+      "description": "The node that asked for the task."
+    },
+    "expiredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dueAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

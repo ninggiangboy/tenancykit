@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/workflow/task.escalated.schema.json",
+  "title": "Task escalated",
+  "description": "A task's first deadline passed and the escalation group took over.",
+  "type": "object",
+  "required": [
+    "taskId",
+    "instanceId",
+    "nodeId",
+    "title",
+    "escalationGroup",
+    "escalatedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The task."
+    },
+    "instanceId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The instance waiting on it."
+    },
+    "title": {
+      "type": "string"
+    },
+    "nodeId": {
+      "type": "string",
+      "description": "The node that asked for the task."
+    },
+    "escalationGroup": {
+      "type": "string"
+    },
+    "escalatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dueAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

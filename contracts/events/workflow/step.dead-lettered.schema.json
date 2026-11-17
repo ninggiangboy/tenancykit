@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/workflow/step.dead-lettered.schema.json",
+  "title": "Step dead-lettered",
+  "description": "A step failed without an on_error edge; the instance is dead-lettered with it.",
+  "type": "object",
+  "required": [
+    "instanceId",
+    "definitionCode",
+    "version",
+    "nodeId",
+    "errorClass",
+    "message",
+    "failedAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "instanceId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "definitionCode": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "nodeId": {
+      "type": "string"
+    },
+    "errorClass": {
+      "type": "string",
+      "enum": [
+        "RETRYABLE",
+        "FATAL"
+      ]
+    },
+    "message": {
+      "type": "string"
+    },
+    "failedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

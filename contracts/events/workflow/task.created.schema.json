@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/workflow/task.created.schema.json",
+  "title": "Task created",
+  "description": "A workflow stopped at a human task. The event's aggregate is `task/<taskId>`.",
+  "type": "object",
+  "required": [
+    "taskId",
+    "instanceId",
+    "nodeId",
+    "title",
+    "assigneeKind",
+    "assignee",
+    "outcomes",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "taskId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The task."
+    },
+    "instanceId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The instance waiting on it."
+    },
+    "title": {
+      "type": "string"
+    },
+    "nodeId": {
+      "type": "string",
+      "description": "The node that asked for the task."
+    },
+    "assigneeKind": {
+      "type": "string",
+      "enum": [
+        "user",
+        "group"
+      ]
+    },
+    "assignee": {
+      "type": "string",
+      "description": "A user id or a group code."
+    },
+    "dueAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "outcomes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

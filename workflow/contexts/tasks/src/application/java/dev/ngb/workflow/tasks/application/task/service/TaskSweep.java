@@ -1,11 +1,14 @@
 package dev.ngb.workflow.tasks.application.task.service;
 
+import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
+import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.workflow.tasks.application.task.port.TaskGroupRepository;
 import dev.ngb.workflow.tasks.application.task.port.TaskRepository;
 import dev.ngb.workflow.tasks.application.task.port.TaskTokenResumer;
 import dev.ngb.workflow.tasks.domain.task.Task;
+import dev.ngb.workflow.tasks.domain.task.event.TaskEvents;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -24,18 +27,24 @@ public class TaskSweep {
     private final TaskGroupRepository groups;
     private final TaskTokenResumer resumer;
     private final Clock clock;
+    private final EventPublisher events;
+    private final IdGenerator ids;
 
     public TaskSweep(
             UnitOfWork unitOfWork,
             TaskRepository tasks,
             TaskGroupRepository groups,
             TaskTokenResumer resumer,
-            Clock clock) {
+            Clock clock,
+            EventPublisher events,
+            IdGenerator ids) {
         this.unitOfWork = unitOfWork;
         this.tasks = tasks;
         this.groups = groups;
         this.resumer = resumer;
         this.clock = clock;
+        this.events = events;
+        this.ids = ids;
     }
 
     /** Applies what is due, and answers how many tasks moved. */
@@ -68,6 +77,7 @@ public class TaskSweep {
         Task escalated = current.escalated(null, now);
         tasks.update(escalated);
         tasks.replaceAssignees(escalated.id(), groups.members(escalated.escalationGroupId()));
+        events.publish(TaskEvents.escalated(escalated, ids.newId(), now));
         return true;
     }
 
@@ -81,6 +91,7 @@ public class TaskSweep {
         }
         Task expired = current.expired(now);
         tasks.update(expired);
+        events.publish(TaskEvents.expired(expired, ids.newId(), now));
         resumer.resume(expired.tokenId(), "expired", Map.of("expired", true, "taskId", expired.id().toString()));
         return true;
     }

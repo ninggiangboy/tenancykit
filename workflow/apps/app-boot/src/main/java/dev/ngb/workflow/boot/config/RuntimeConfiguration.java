@@ -1,5 +1,6 @@
 package dev.ngb.workflow.boot.config;
 
+import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -117,9 +118,10 @@ class RuntimeConfiguration {
             WakeUpPublisher wakeUp,
             TenantContext tenantContext,
             IdGenerator ids,
-            Clock clock) {
+            Clock clock,
+            EventPublisher events) {
         return new StartInstanceUseCase(
-                unitOfWork, versions, instances, tokens, wakeUp, tenantContext, ids, clock);
+                unitOfWork, versions, instances, tokens, wakeUp, tenantContext, ids, clock, events);
     }
 
     @Bean
@@ -160,9 +162,12 @@ class RuntimeConfiguration {
             VersionReader versions,
             TaskCanceller tasks,
             WakeUpPublisher wakeUp,
-            Clock clock) {
+            Clock clock,
+            EventPublisher events,
+            IdGenerator ids) {
         return new CancelInstanceUseCase(
-                unitOfWork, instances, tokens, timers, subscriptions, compensation, versions, tasks, wakeUp, clock);
+                unitOfWork, instances, tokens, timers, subscriptions, compensation, versions, tasks, wakeUp, clock,
+                events, ids);
     }
 
     @Bean
@@ -219,6 +224,7 @@ class RuntimeConfiguration {
             WakeUpPublisher wakeUp,
             IdGenerator ids,
             Clock clock,
+            EventPublisher events,
             WorkflowSettings settings) {
         return new ClaimAndRun(
                 unitOfWork,
@@ -236,6 +242,7 @@ class RuntimeConfiguration {
                 wakeUp,
                 ids,
                 clock,
+                events,
                 "workflow-" + UUID.randomUUID(),
                 settings.runtime().lease());
     }

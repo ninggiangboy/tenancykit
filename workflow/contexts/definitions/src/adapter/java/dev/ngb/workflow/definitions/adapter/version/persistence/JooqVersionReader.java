@@ -70,6 +70,14 @@ public class JooqVersionReader implements VersionGraphRows {
         return graphOf(definitionCode, null);
     }
 
+    @Override
+    public Optional<String> definitionCode(UUID definitionId) {
+        return Optional.ofNullable(dsl.select(WORKFLOW_DEFINITION.CODE)
+                .from(WORKFLOW_DEFINITION)
+                .where(WORKFLOW_DEFINITION.ID.eq(definitionId))
+                .fetchOne(WORKFLOW_DEFINITION.CODE));
+    }
+
     private Optional<PublishedGraph> view(WorkflowVersionRecord row) {
         JSONB document = row.getGraph();
         GraphParser.Result parsed = GraphParser.parse(json.readValue(document.data(), GRAPH));

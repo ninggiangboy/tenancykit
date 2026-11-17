@@ -1,6 +1,8 @@
 package dev.ngb.workflow.runtime.application.runtime.command;
 
 import dev.ngb.core.error.ConflictException;
+import dev.ngb.core.event.EventPublisher;
+import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -13,6 +15,7 @@ import dev.ngb.workflow.runtime.application.runtime.port.TokenRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.WaitSubscriptionRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.WakeUpPublisher;
 import dev.ngb.workflow.runtime.application.runtime.service.CompensationRunner;
+import dev.ngb.workflow.runtime.domain.event.RuntimeEvents;
 import dev.ngb.workflow.runtime.domain.instance.Instance;
 import dev.ngb.workflow.runtime.domain.instance.InstanceStatus;
 import java.time.Instant;
@@ -41,6 +44,8 @@ public class CancelInstanceUseCase {
     private final TaskCanceller tasks;
     private final WakeUpPublisher wakeUp;
     private final Clock clock;
+    private final EventPublisher events;
+    private final IdGenerator ids;
 
     public CancelInstanceUseCase(
             UnitOfWork unitOfWork,
@@ -52,7 +57,9 @@ public class CancelInstanceUseCase {
             VersionReader versions,
             TaskCanceller tasks,
             WakeUpPublisher wakeUp,
-            Clock clock) {
+            Clock clock,
+            EventPublisher events,
+            IdGenerator ids) {
         this.unitOfWork = unitOfWork;
         this.instances = instances;
         this.tokens = tokens;
@@ -63,6 +70,8 @@ public class CancelInstanceUseCase {
         this.tasks = tasks;
         this.wakeUp = wakeUp;
         this.clock = clock;
+        this.events = events;
+        this.ids = ids;
     }
 
     public Instance execute(Command command) {
@@ -88,7 +97,11 @@ public class CancelInstanceUseCase {
             }
             tasks.cancelOpen(instance.id());
             instances.finish(instance.id(), InstanceStatus.CANCELLED, now);
-            return instances.findById(instance.id()).orElseThrow();
+            Instance finished = instances.findById(instance.id()).orElseThrow();
+            String code = versions.definitionCode(finished.definitionId()).orElse("");
+            events.publish(RuntimeEvents.finished(
+                    finished, code, InstanceStatus.CANCELLED, ids.newId(), now));
+            return finished;
         });
         wakeUp.wake(instance.tenantId());
         return cancelled;

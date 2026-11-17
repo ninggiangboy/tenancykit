@@ -1,5 +1,6 @@
 package dev.ngb.workflow.boot.config;
 
+import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -47,8 +48,9 @@ class TasksConfiguration {
             TaskGroupRepository groups,
             TenantContext tenantContext,
             IdGenerator ids,
-            Clock clock) {
-        return new CreateTaskUseCase(unitOfWork, tasks, groups, tenantContext, ids, clock);
+            Clock clock,
+            EventPublisher events) {
+        return new CreateTaskUseCase(unitOfWork, tasks, groups, tenantContext, ids, clock, events);
     }
 
     @Bean
@@ -68,8 +70,10 @@ class TasksConfiguration {
             TaskTokenResumer resumer,
             UserDirectory users,
             CurrentActor currentActor,
-            Clock clock) {
-        return new CompleteTaskUseCase(unitOfWork, tasks, resumer, users, currentActor, clock);
+            Clock clock,
+            EventPublisher events,
+            IdGenerator ids) {
+        return new CompleteTaskUseCase(unitOfWork, tasks, resumer, users, currentActor, clock, events, ids);
     }
 
     @Bean
@@ -112,8 +116,10 @@ class TasksConfiguration {
             TaskRepository tasks,
             TaskGroupRepository groups,
             TaskTokenResumer resumer,
-            Clock clock) {
-        return new TaskSweep(unitOfWork, tasks, groups, resumer, clock);
+            Clock clock,
+            EventPublisher events,
+            IdGenerator ids) {
+        return new TaskSweep(unitOfWork, tasks, groups, resumer, clock, events, ids);
     }
 
     /** The tasks context tells the runtime to resume a parked token; the call joins the task's own transaction. */

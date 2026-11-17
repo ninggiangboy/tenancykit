@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/workflow/instance.started.schema.json",
+  "title": "Instance started",
+  "description": "An instance started at its trigger. The payload never carries the input. The event's aggregate is `instance/<instanceId>`.",
+  "type": "object",
+  "required": [
+    "instanceId",
+    "definitionCode",
+    "version",
+    "status",
+    "startedAt",
+    "startedBy"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "instanceId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "The instance the fact is about."
+    },
+    "definitionCode": {
+      "type": "string",
+      "description": "The definition's code, stable across versions."
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "The published version the instance pins."
+    },
+    "status": {
+      "type": "string",
+      "description": "The instance's status after the fact."
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "startedBy": {
+      "type": "string",
+      "description": "The audit name of who or what started it."
+    }
+  }
+}

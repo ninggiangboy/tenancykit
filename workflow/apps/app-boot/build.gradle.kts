@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":contexts:runtime"))
     implementation(project(":contexts:triggers"))
     implementation(project(":contexts:connections"))
+    implementation(project(":contexts:webhook"))
     implementation(project(":contexts:tasks"))
     implementation("dev.ngb:core-spring")
     implementation("dev.ngb:core-openapi")
@@ -74,6 +75,11 @@ tasks.processResources {
     from(layout.projectDirectory.dir("../../../contracts/workflow/graph-vectors")) {
         include("*.json")
         into("workflow/graph-vectors")
+    }
+    // The event schemas are the catalog the webhook endpoints subscribe against, and the contract test's input.
+    from(layout.projectDirectory.dir("../../../contracts/events/workflow")) {
+        include("*.schema.json")
+        into("events")
     }
 }
 
