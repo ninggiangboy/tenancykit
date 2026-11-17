@@ -158,11 +158,17 @@ the same DNS guard; a second hop is returned as the 3xx result.
 The compose round trip (CRM list customers, mailroom send one email) is deferred to phase 15, which owns the live
 stack.
 
-## Next: phase 10 (control flow)
+## Phase 10 started: `branch` (`9ff` commit)
 
-Read `phase-10-control-flow.md`. The seams to reuse: `StepOutcome.nextNodeIds` already takes several ids, tokens
-already carry `branch_key` and `iteration`, and `ClaimAndRun` completes an instance when `liveCount` is zero, so a
-parallel node is "several ready tokens" and a join is "one waiting token plus a completion rule".
+`branch` is done: ordered `{when, next}` cases, the first true wins, a mandatory `else`, and the decision is the step
+output (`{branch: <index|"else">, next: <id>}`). A true case with no `next`, or no `else`, fails with a stable reason
+instead of stalling. Truthiness is explicit: JSON `true`, a non-zero number, a non-blank string that is not
+`"false"`.
+
+Still open in phase 10: `parallel`/`join` (needs `join_state`, child tokens with `branch_key`, and a `Successor`
+shape on `StepOutcome` so one outcome can name several nodes with branch names), `foreach`, `subflow` and the
+run-time limits. The token already carries `parent_token`, `branch_key` and `iteration`, and instance completion is
+"no live tokens", so a parallel is several ready tokens and a join is one waiting token plus a conditional arrival.
 
 ## Cautions
 

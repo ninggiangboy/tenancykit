@@ -38,6 +38,7 @@ public class DefaultNodeExecutor implements NodeExecutor {
             case "fail" -> fail(context);
             case "delay" -> delay(context);
             case "wait" -> wait(context);
+            case "branch" -> branch(context);
             case "http" -> call(context);
             default -> StepOutcome.failed(
                     "node_not_supported:" + context.node().type(), null, context.variables());
@@ -134,6 +135,49 @@ public class DefaultNodeExecutor implements NodeExecutor {
                         eventType,
                         expiresAt),
                 context.variables());
+    }
+
+    /**
+     * Takes the first case whose condition is true, or the mandatory else. The decision is the step's output, so the
+     * history says which way an instance went and why.
+     */
+    private StepOutcome branch(ExecutionContext context) {
+        Object cases = context.node().document("cases");
+        int index = 0;
+        if (cases instanceof java.util.List<?> ordered) {
+            for (Object entry : ordered) {
+                if (!(entry instanceof Map<?, ?> fallback)) {
+                    index++;
+                    continue;
+                }
+                Map<String, Object> test = object(fallback);
+                Object condition = evaluate(context, test.get("when"), context.variables());
+                if (truthy(condition)) {
+                    String next = test.get("next") instanceof String id ? id : null;
+                    return next == null
+                            ? StepOutcome.failed("branch_case_without_a_next", Map.of("branch", index), context.variables())
+                            : StepOutcome.succeeded(Map.of("branch", index, "next", next), next, context.variables());
+                }
+                index++;
+            }
+        }
+        String otherwise = context.node().text("else");
+        if (otherwise == null) {
+            return StepOutcome.failed("branch_without_else", null, context.variables());
+        }
+        return StepOutcome.succeeded(Map.of("branch", "else", "next", otherwise), otherwise, context.variables());
+    }
+
+    private Object evaluate(ExecutionContext context, Object expression, Map<String, Object> variables) {
+        return expressions.evaluate(
+                expression, input(context.instance().input()), Map.of(), variables, null, null);
+    }
+
+    /** A condition is true only when it plainly says so: JSON true, a non-zero number or a non-empty string. */
+    private static boolean truthy(Object value) {
+        return Boolean.TRUE.equals(value)
+                || value instanceof Number number && number.doubleValue() != 0
+                || value instanceof String text && !text.isBlank() && !"false".equalsIgnoreCase(text);
     }
 
     /**
