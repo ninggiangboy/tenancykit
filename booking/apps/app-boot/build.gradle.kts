@@ -73,6 +73,16 @@ tasks.processResources {
     }
 }
 
+// A plain HTTP runner for the flash-sale hold path; it has no framework or database access of its own.
+val loadTest = sourceSets.create("loadTest")
+tasks.register<JavaExec>("loadTest") {
+    group = "verification"
+    description = "Runs the booking hold load scenario against BOOKING_LOAD_BASE_URL"
+    classpath = loadTest.runtimeClasspath
+    mainClass.set("dev.ngb.booking.load.BookingLoadTest")
+    environment(System.getenv())
+}
+
 tasks.test {
     // `./gradlew :apps:app-boot:test --tests '*JooqSchemaTest' -Djooq.update=true` regenerates the committed jOOQ schema.
     systemProperty("jooq.update", System.getProperty("jooq.update", "false"))

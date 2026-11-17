@@ -1,7 +1,7 @@
 ---
 phase: 15
 title: "Flash-sale load and invariant checks"
-status: pending
+status: completed
 priority: P1
 effort: "L"
 dependencies: [14]
