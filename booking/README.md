@@ -45,3 +45,16 @@ A tenant can use booking only after its entitlement exists; Platform packages
 
 The design — engines, state machine, lock order, timing defaults and the Tenant's hold-charge-confirm recipe — is in
 [docs/booking.md](../docs/booking.md).
+
+## Verify
+
+```bash
+# the invariant check, as the schema owner, against the compose stack
+ops/smoke/booking-invariants.sh
+
+# the Tenant's end-to-end paths: catalog, gate hold, waiting room, waitlist, reschedule, series
+ops/smoke/booking.sh
+
+# the hold path under load; mint a customer token and name the seeded offering first
+BOOKING_LOAD_TOKEN=... BOOKING_LOAD_OFFERING=... BOOKING_LOAD_ATTEMPTS=1000 ops/loadtest/booking.sh
+```

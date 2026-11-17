@@ -1,7 +1,7 @@
 ---
 phase: 16
 title: "Ops, end-to-end smoke and docs"
-status: pending
+status: completed
 priority: P1
 effort: "M"
 dependencies: [10, 15]

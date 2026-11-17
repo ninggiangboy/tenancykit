@@ -215,6 +215,18 @@ The gate is a thin layer over the same use cases, in booking's own build:
   and leave the waitlist and read its position. It has no route that confirms, extends, reschedules or reads another
   customer's data.
 
+The guard reads the token but never lets Spring Security's JWT decoder see it: the resource-server bearer resolver
+returns nothing on `/p/**`, so a customer token cannot be mistaken for a malformed suite JWT. Keys come from
+`booking.gate.keys` with `booking.gate.active-key-id`; a blank key fails startup. The rate bucket is keyed by the daily
+HMAC of tenant, address and user agent, so no address is stored or logged.
+
+A rush offering sets `queueMode = REQUIRED`. `POST /p/queue` inserts a ticket numbered from one shared sequence, returns
+a signed ticket token, and the admission job advances the target's watermark in ticket order at `admitPerSecond`.
+`GET /p/queue/status` answers from the instance's cached watermark (refreshed at most once a second), never from a
+ticket row. A hold on a queue-required offering must carry `X-Queue-Ticket`: the ticket must be admitted and inside
+`admitWindowSeconds`, and one ticket funds exactly one hold. A failed hold puts the ticket back so the customer may
+retry until the window ends.
+
 ## Webhooks
 
 Every fact a Tenant may act on leaves as a signed `Booking-*` webhook to the Tenant's registered endpoints, once per
@@ -254,15 +266,22 @@ Per tenant, reversible, in settings rather than code:
 | `admitPerSecond` | 50 | Queue admission rate for an offering that requires the queue |
 | `admitWindowSeconds` | 120 | How long an admitted ticket may be used |
 
-The load targets (p95 ≤ 150 ms, p99 ≤ 400 ms at 500 requests per second against a 5,000-place session on the compose
-Postgres) are calibrated by the load test and recorded here when measured.
+The load targets are p95 ≤ 150 ms and p99 ≤ 400 ms at 500 requests per second against a 5,000-place session on the
+compose Postgres. They are thresholds for the load runner, not a promise about another machine: run
+`ops/loadtest/booking.sh` with a minted token and the seeded offering, and record the machine beside the numbers. The
+runner prints the status histogram and p50/p95/p99 for `/p/bookings`; `ops/smoke/booking-invariants.sh` must pass
+after the run.
 
 ## Operations
 
-- **Jobs.** Hold expiry, session materialization, waitlist offers, queue admission, queue retention and webhook
-  delivery run in the worker only. Each is lease-guarded and bounded, and each is idempotent on a rerun.
+- **Jobs.** Hold expiry, session materialization, waitlist offers, queue admission, queue retention, outbox relay and
+  webhook delivery run in the worker only. Each is bounded and idempotent on a rerun: a claim uses `skip locked`, a
+  watermark advance uses the highest admitted ticket number, and retention deletes only what is old enough.
 - **Keys.** Customer tokens and webhook signing secrets rotate; the active key id is in settings and previous keys
-  stay valid for verification.
+  stay valid for verification. `BOOKING_TOKEN_KEY_ID` and `BOOKING_TOKEN_SECRET` set the customer/queue key;
+  `BOOKING_SECRETS_MASTER_KEY` envelops webhook signing secrets.
+- **Smoke.** `ops/smoke/booking.sh` plays the Tenant: catalog, gate hold, confirm, waiting room, waitlist offer,
+  reschedule, series, invariants. It needs a running compose stack and the usual smoke helpers.
 - **Invariant check.** `ops/smoke/booking-invariants.sh` proves no pool is oversold, no unit is owned by a booking that
   is not `HELD` or `CONFIRMED`, no live booking lacks its claims, no interval claim overlaps another on one resource,
   and no held booking is long past `holdExpiresAt + grace`.

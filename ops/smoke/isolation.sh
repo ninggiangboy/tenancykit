@@ -181,6 +181,9 @@ require_only customer read '^(platform\.events|customer\.platform-events|custome
 require_only loyalty configure '^(loyalty\.platform-events|loyalty\.platform-events\.dlq|suite\.dlx)$'
 require_only loyalty write '^(loyalty\.platform-events|loyalty\.platform-events\.dlq|suite\.dlx)$'
 require_only loyalty read '^(platform\.events|loyalty\.platform-events|loyalty\.platform-events\.dlq|suite\.dlx)$'
+require_only booking configure '^(booking\.platform-events|booking\.platform-events\.dlq|suite\.dlx)$'
+require_only booking write '^(booking\.platform-events|booking\.platform-events\.dlq|suite\.dlx)$'
+require_only booking read '^(platform\.events|booking\.platform-events|booking\.platform-events\.dlq|suite\.dlx)$'
 
 # A positive control, so a script that proved only denials cannot pass while the declaration silently did nothing: each
 # new app's queue must exist once its worker has started, and its own user must be able to read it. The queue is declared
