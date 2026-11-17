@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Execution core"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [5]

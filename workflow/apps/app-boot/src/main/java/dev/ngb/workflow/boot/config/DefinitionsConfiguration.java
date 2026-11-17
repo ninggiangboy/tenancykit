@@ -18,6 +18,7 @@ import dev.ngb.workflow.definitions.application.definition.query.DefinitionQueri
 import dev.ngb.workflow.definitions.application.definition.query.DefinitionReadRepository;
 import dev.ngb.workflow.definitions.application.definition.service.DefinitionRules;
 import dev.ngb.workflow.definitions.application.definition.service.GraphSimulation;
+import dev.ngb.workflow.definitions.application.version.port.VersionGraphRows;
 import org.jooq.DSLContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,6 +46,21 @@ class DefinitionsConfiguration {
     @Bean
     DefinitionRules definitionRules() {
         return new DefinitionRules();
+    }
+
+    @Bean
+    VersionGraphRows versionGraphRows(DSLContext dsl, JsonMapper json) {
+        return new dev.ngb.workflow.definitions.adapter.version.persistence.JooqVersionReader(dsl, json);
+    }
+
+    @Bean
+    dev.ngb.workflow.definitions.api.version.VersionReader versionReader(VersionGraphRows rows) {
+        return new dev.ngb.workflow.definitions.application.version.service.VersionReaderService(rows);
+    }
+
+    @Bean
+    dev.ngb.workflow.definitions.api.expression.ExpressionEvaluator expressionEvaluator() {
+        return new dev.ngb.workflow.definitions.application.definition.service.ExpressionEvaluatorService();
     }
 
     @Bean

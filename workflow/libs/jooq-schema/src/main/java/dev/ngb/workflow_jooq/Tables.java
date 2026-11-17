@@ -18,6 +18,9 @@ import dev.ngb.workflow_jooq.tables.WebhookDeliveries;
 import dev.ngb.workflow_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.workflow_jooq.tables.WebhookEndpoints;
 import dev.ngb.workflow_jooq.tables.WorkflowDefinition;
+import dev.ngb.workflow_jooq.tables.WorkflowInstance;
+import dev.ngb.workflow_jooq.tables.WorkflowStepRun;
+import dev.ngb.workflow_jooq.tables.WorkflowToken;
 import dev.ngb.workflow_jooq.tables.WorkflowVersion;
 
 
@@ -96,6 +99,21 @@ public class Tables {
      * The table <code>public.workflow_definition</code>.
      */
     public static final WorkflowDefinition WORKFLOW_DEFINITION = WorkflowDefinition.WORKFLOW_DEFINITION;
+
+    /**
+     * The table <code>public.workflow_instance</code>.
+     */
+    public static final WorkflowInstance WORKFLOW_INSTANCE = WorkflowInstance.WORKFLOW_INSTANCE;
+
+    /**
+     * The table <code>public.workflow_step_run</code>.
+     */
+    public static final WorkflowStepRun WORKFLOW_STEP_RUN = WorkflowStepRun.WORKFLOW_STEP_RUN;
+
+    /**
+     * The table <code>public.workflow_token</code>.
+     */
+    public static final WorkflowToken WORKFLOW_TOKEN = WorkflowToken.WORKFLOW_TOKEN;
 
     /**
      * The table <code>public.workflow_version</code>.

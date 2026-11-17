@@ -1,0 +1,43 @@
+package dev.ngb.workflow.runtime.adapter.runtime.persistence;
+
+import static dev.ngb.workflow_jooq.Tables.WORKFLOW_STEP_RUN;
+
+import dev.ngb.workflow.runtime.application.runtime.port.StepRunRepository;
+import dev.ngb.workflow.runtime.domain.step.StepRun;
+import org.jooq.DSLContext;
+import org.jooq.JSONB;
+import tools.jackson.databind.json.JsonMapper;
+
+/** Appends one step row; the table refuses updates, so the history is the only story of a step. */
+public class JooqStepRunRepository implements StepRunRepository {
+
+    private final DSLContext dsl;
+    private final JsonMapper json;
+
+    public JooqStepRunRepository(DSLContext dsl, JsonMapper json) {
+        this.dsl = dsl;
+        this.json = json;
+    }
+
+    @Override
+    public void add(StepRun run) {
+        dsl.insertInto(WORKFLOW_STEP_RUN)
+                .set(WORKFLOW_STEP_RUN.ID, run.id())
+                .set(WORKFLOW_STEP_RUN.TENANT_ID, run.tenantId().value())
+                .set(WORKFLOW_STEP_RUN.INSTANCE_ID, run.instanceId())
+                .set(WORKFLOW_STEP_RUN.TOKEN_ID, run.tokenId())
+                .set(WORKFLOW_STEP_RUN.NODE_ID, run.nodeId())
+                .set(WORKFLOW_STEP_RUN.ATTEMPT, run.attempt())
+                .set(WORKFLOW_STEP_RUN.STARTED_AT, run.startedAt())
+                .set(WORKFLOW_STEP_RUN.FINISHED_AT, run.finishedAt())
+                .set(WORKFLOW_STEP_RUN.OUTCOME, run.outcome())
+                .set(WORKFLOW_STEP_RUN.REQUEST, jsonb(run.request()))
+                .set(WORKFLOW_STEP_RUN.RESPONSE, jsonb(run.response()))
+                .set(WORKFLOW_STEP_RUN.IDEMPOTENCY_KEY, run.idempotencyKey())
+                .execute();
+    }
+
+    private JSONB jsonb(Object document) {
+        return document == null ? null : JSONB.valueOf(json.writeValueAsString(document));
+    }
+}

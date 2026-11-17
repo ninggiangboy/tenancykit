@@ -7,6 +7,7 @@ package dev.ngb.workflow_jooq.tables;
 import dev.ngb.workflow_jooq.Keys;
 import dev.ngb.workflow_jooq.Public;
 import dev.ngb.workflow_jooq.tables.WorkflowDefinition.WorkflowDefinitionPath;
+import dev.ngb.workflow_jooq.tables.WorkflowInstance.WorkflowInstancePath;
 import dev.ngb.workflow_jooq.tables.records.WorkflowVersionRecord;
 
 import java.time.Instant;
@@ -189,6 +190,19 @@ public class WorkflowVersion extends TableImpl<WorkflowVersionRecord> {
             _workflowDefinition = new WorkflowDefinitionPath(this, Keys.WORKFLOW_VERSION__WORKFLOW_VERSION_DEFINITION_ID_FKEY, null);
 
         return _workflowDefinition;
+    }
+
+    private transient WorkflowInstancePath _workflowInstance;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.workflow_instance</code> table
+     */
+    public WorkflowInstancePath workflowInstance() {
+        if (_workflowInstance == null)
+            _workflowInstance = new WorkflowInstancePath(this, null, Keys.WORKFLOW_INSTANCE__WORKFLOW_INSTANCE_VERSION_ID_FKEY.getInverseKey());
+
+        return _workflowInstance;
     }
 
     @Override

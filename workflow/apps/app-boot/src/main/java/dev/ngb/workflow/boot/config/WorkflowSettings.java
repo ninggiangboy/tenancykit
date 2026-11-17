@@ -5,13 +5,16 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * The worker's own knobs: how many tenants a job may touch at once, and how much housekeeping may delete per round.
+ * The worker's own knobs: how many tenants a job may touch at once, how much housekeeping may delete per round, and how
+ * the runtime claims and paces tokens.
  *
  * @param jobs the scheduled-work settings
  * @param housekeeping the retention settings
+ * @param runtime the execution settings
  */
 @ConfigurationProperties(prefix = "workflow")
-public record WorkflowSettings(Jobs jobs, Housekeeping housekeeping) {
+public record WorkflowSettings(
+        @DefaultValue Jobs jobs, @DefaultValue Housekeeping housekeeping, @DefaultValue Runtime runtime) {
 
     /**
      * @param enabled whether the worker's scheduled jobs run at all
@@ -34,4 +37,14 @@ public record WorkflowSettings(Jobs jobs, Housekeeping housekeeping) {
             @DefaultValue("P7D") Duration deadOutboxRetention,
             @DefaultValue("500") int batchSize,
             @DefaultValue("PT1H") Duration interval) {}
+
+    /**
+     * @param lease how long a claimed token is owned before the sweeper may take it back
+     * @param batch how many steps one sweep runs per tenant before it moves on
+     * @param sweepInterval how often the runnable sweep looks for due tokens
+     */
+    public record Runtime(
+            @DefaultValue("PT1M") Duration lease,
+            @DefaultValue("50") int batch,
+            @DefaultValue("PT2S") Duration sweepInterval) {}
 }
