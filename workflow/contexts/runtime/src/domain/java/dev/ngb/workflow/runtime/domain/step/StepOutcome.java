@@ -23,7 +23,8 @@ public record StepOutcome(
         Map<String, Object> variables,
         Reservation reservation,
         List<Successor> successors,
-        Join join) {
+        Join join,
+        Foreach foreach) {
 
     /** One following token: the node it starts at and, for a parallel branch, the name it is collected under. */
     public record Successor(String nodeId, String branchKey) {}
@@ -35,6 +36,34 @@ public record StepOutcome(
      * @param cancelOthers true for an {@code any} or {@code n_of} join, whose firing abandons the branches still moving
      */
     public record Join(String nextNodeId, int expected, String branchKey, Object contribution, boolean cancelOthers) {}
+
+    /**
+     * A for-each node's decision. On the first arrival it carries the evaluated list and the limits; when a body token
+     * comes back to the node it only says so, and the engine advances the loop it already owns.
+     *
+     * @param bodyReturn true when this is a body token arriving back at the node
+     * @param each the node one iteration starts at, null on a return
+     * @param next the node after the loop, null on a return
+     * @param items the evaluated list, empty on a return
+     * @param concurrency how many iterations may walk the body at once
+     * @param itemError {@code stop} (the default) or {@code continue}
+     * @param output the expression an iteration records as its output, or null
+     */
+    public record Foreach(
+            boolean bodyReturn,
+            String each,
+            String next,
+            List<Object> items,
+            int concurrency,
+            String itemError,
+            Object output) {
+
+        public Foreach {
+            items = items == null
+                    ? List.of()
+                    : Collections.unmodifiableList(new java.util.ArrayList<>(items));
+        }
+    }
 
     /**
      * What the engine must write when it parks a token.
@@ -63,28 +92,34 @@ public record StepOutcome(
 
     public static StepOutcome succeeded(Object response, String next, Map<String, Object> variables) {
         return new StepOutcome(
-                false, null, response, next == null ? List.of() : List.of(next), variables, null, List.of(), null);
+                false, null, response, next == null ? List.of() : List.of(next), variables, null, List.of(), null, null);
     }
 
     public static StepOutcome failed(String failure, Object response, Map<String, Object> variables) {
-        return new StepOutcome(true, failure, response, List.of(), variables, null, List.of(), null);
+        return new StepOutcome(true, failure, response, List.of(), variables, null, List.of(), null, null);
     }
 
     public static StepOutcome parked(
             Object response, Reservation reservation, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, List.of(), variables, reservation, List.of(), null);
+        return new StepOutcome(false, null, response, List.of(), variables, reservation, List.of(), null, null);
     }
 
     /** Several following tokens, each carrying the branch it belongs to. */
     public static StepOutcome fannedOut(
             Object response, List<Successor> successors, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, List.of(), variables, null, successors, null);
+        return new StepOutcome(false, null, response, List.of(), variables, null, successors, null, null);
     }
 
     /** Waiting for the rest of its branches: the engine counts this arrival and decides whether the join fires. */
     public static StepOutcome joining(
             Object response, Join join, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), join);
+        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), join, null);
+    }
+
+    /** The engine owns the loop's progress: it starts iterations, counts arrivals and continues after the last one. */
+    public static StepOutcome foreaching(
+            Object response, Foreach foreach, Map<String, Object> variables) {
+        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), null, foreach);
     }
 
     public boolean parked() {
@@ -93,5 +128,9 @@ public record StepOutcome(
 
     public boolean joining() {
         return join != null;
+    }
+
+    public boolean iterating() {
+        return foreach != null;
     }
 }

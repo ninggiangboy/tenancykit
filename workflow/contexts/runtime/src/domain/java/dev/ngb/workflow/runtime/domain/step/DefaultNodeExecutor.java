@@ -6,6 +6,7 @@ import dev.ngb.workflow.runtime.domain.timer.TimerKind;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,8 @@ import java.util.Optional;
 public class DefaultNodeExecutor implements NodeExecutor {
 
     private static final int MAX_PARALLEL_BRANCHES = 50;
+    private static final int MAX_FOREACH_ITEMS = 1_000;
+    private static final int MAX_FOREACH_CONCURRENCY = 50;
 
     private final ExpressionEvaluator expressions;
     private final BufferedEventLookup events;
@@ -46,6 +49,7 @@ public class DefaultNodeExecutor implements NodeExecutor {
             case "parallel" -> parallel(context);
             case "join" -> join(context);
             case "http" -> call(context);
+            case "foreach" -> foreach(context);
             default -> StepOutcome.failed(
                     "node_not_supported:" + context.node().type(), null, context.variables());
         };
@@ -54,15 +58,7 @@ public class DefaultNodeExecutor implements NodeExecutor {
     private StepOutcome set(ExecutionContext context) {
         Map<String, Object> variables = new LinkedHashMap<>(context.variables());
         Map<String, Object> values = object(context.node().document("values"));
-        values.forEach((name, expression) -> variables.put(
-                name,
-                expressions.evaluate(
-                        expression,
-                        input(context.instance().input()),
-                        Map.of(),
-                        variables,
-                        null,
-                        null)));
+        values.forEach((name, expression) -> variables.put(name, evaluate(context, expression, variables)));
         return StepOutcome.succeeded(variables, context.node().next(), variables);
     }
 
@@ -70,7 +66,7 @@ public class DefaultNodeExecutor implements NodeExecutor {
         Object reason = context.node().document("reason");
         Object evaluated = reason == null
                 ? null
-                : expressions.evaluate(reason, input(context.instance().input()), Map.of(), context.variables(), null, null);
+                : evaluate(context, reason, context.variables());
         return StepOutcome.failed(
                 evaluated instanceof String text ? text : "the workflow failed at this node",
                 evaluated,
@@ -239,9 +235,73 @@ public class DefaultNodeExecutor implements NodeExecutor {
                 context.variables());
     }
 
+    /**
+     * Walks a list once per item. The first arrival evaluates the list and lets the engine start iterations; a body
+     * token that comes back to this node records its own output and lets the engine start the next iteration or leave
+     * the loop.
+     */
+    private StepOutcome foreach(ExecutionContext context) {
+        String nodeId = context.node().id();
+        if (nodeId.equals(context.token().loopNodeId())) {
+            Object output = context.node().document("output");
+            Object contribution = output == null ? null : document(context, output, context.variables());
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("iteration", context.token().iteration());
+            response.put("output", contribution);
+            return StepOutcome.foreaching(
+                    response,
+                    new StepOutcome.Foreach(true, null, null, List.of(), 0, itemError(context), null),
+                    context.variables());
+        }
+        Object evaluated = document(context, context.node().document("items"), context.variables());
+        List<Object> items = new ArrayList<>();
+        if (evaluated instanceof List<?> list) {
+            list.forEach(items::add);
+        }
+        if (items.size() > MAX_FOREACH_ITEMS) {
+            return StepOutcome.failed(
+                    "limit_exceeded:foreach_items", Map.of("items", items.size()), context.variables());
+        }
+        String each = context.node().text("each");
+        String next = context.node().text("next");
+        if (each == null || next == null) {
+            return StepOutcome.failed("foreach_without_an_each_or_next", null, context.variables());
+        }
+        int concurrency = context.node().document("concurrency") instanceof Number number
+                ? Math.clamp(number.intValue(), 1, MAX_FOREACH_CONCURRENCY)
+                : 1;
+        return StepOutcome.foreaching(
+                Map.of("iterations", items.size(), "each", each),
+                new StepOutcome.Foreach(
+                        false, each, next, items, concurrency, itemError(context), context.node().document("output")),
+                context.variables());
+    }
+
+    private static String itemError(ExecutionContext context) {
+        return "continue".equals(context.node().text("on_item_error")) ? "continue" : "stop";
+    }
+
+    /** A reference resolved to the document it names, for a node that needs a list or an object rather than a scalar. */
+    private Object document(ExecutionContext context, Object expression, Map<String, Object> variables) {
+        boolean inIteration = context.token().loopNodeId() != null;
+        return expressions.document(
+                expression,
+                input(context.instance().input()),
+                context.steps(),
+                variables,
+                inIteration ? context.token().payload() : null,
+                inIteration ? context.token().iteration() : null);
+    }
+
     private Object evaluate(ExecutionContext context, Object expression, Map<String, Object> variables) {
+        boolean inIteration = context.token().loopNodeId() != null;
         return expressions.evaluate(
-                expression, input(context.instance().input()), Map.of(), variables, null, null);
+                expression,
+                input(context.instance().input()),
+                context.steps(),
+                variables,
+                inIteration ? context.token().payload() : null,
+                inIteration ? context.token().iteration() : null);
     }
 
     /** A condition is true only when it plainly says so: JSON true, a non-zero number or a non-empty string. */
@@ -264,8 +324,7 @@ public class DefaultNodeExecutor implements NodeExecutor {
 
         Map<String, String> headers = new LinkedHashMap<>();
         object(context.node().document("headers")).forEach((name, expression) -> {
-            Object value = expressions.evaluate(
-                    expression, input(context.instance().input()), Map.of(), context.variables(), null, null);
+            Object value = evaluate(context, expression, context.variables());
             if (value != null) {
                 headers.put(name, String.valueOf(value));
             }
@@ -277,17 +336,14 @@ public class DefaultNodeExecutor implements NodeExecutor {
                 connection,
                 path == null
                         ? null
-                        : String.valueOf(expressions.evaluate(
-                                path, input(context.instance().input()), Map.of(), context.variables(), null, null)),
+                        : String.valueOf(evaluate(context, path, context.variables())),
                 url == null
                         ? null
-                        : String.valueOf(expressions.evaluate(
-                                url, input(context.instance().input()), Map.of(), context.variables(), null, null)),
+                        : String.valueOf(evaluate(context, url, context.variables())),
                 headers,
                 body == null
                         ? null
-                        : expressions.evaluate(
-                                body, input(context.instance().input()), Map.of(), context.variables(), null, null),
+                        : evaluate(context, body, context.variables()),
                 IdempotencyKeys.of(
                         context.instance().id(), context.token().id(), context.node().id(), context.token().iteration()),
                 duration(context, context.node().document("timeout"))));
@@ -310,7 +366,7 @@ public class DefaultNodeExecutor implements NodeExecutor {
             Map<String, Object> scope = new LinkedHashMap<>(context.variables());
             scope.put("response", response);
             return StepOutcome.succeeded(
-                    expressions.evaluate(shaped, input(context.instance().input()), Map.of(), scope, null, null),
+                    evaluate(context, shaped, scope),
                     context.node().next(),
                     context.variables());
         }
@@ -333,13 +389,7 @@ public class DefaultNodeExecutor implements NodeExecutor {
     private Duration duration(ExecutionContext context, Object document) {
         Object value = document;
         if (value instanceof Map<?, ?>) {
-            value = expressions.evaluate(
-                    value,
-                    input(context.instance().input()),
-                    Map.of(),
-                    context.variables(),
-                    null,
-                    null);
+            value = evaluate(context, value, context.variables());
         }
         if (value instanceof Number seconds) {
             return Duration.ofSeconds(seconds.longValue());

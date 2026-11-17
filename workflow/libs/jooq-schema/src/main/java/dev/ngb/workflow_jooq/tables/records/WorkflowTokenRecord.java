@@ -262,6 +262,36 @@ public class WorkflowTokenRecord extends UpdatableRecordImpl<WorkflowTokenRecord
         return (JSONB) get(15);
     }
 
+    /**
+     * Setter for <code>public.workflow_token.payload</code>.
+     */
+    public WorkflowTokenRecord setPayload(JSONB value) {
+        set(16, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.workflow_token.payload</code>.
+     */
+    public JSONB getPayload() {
+        return (JSONB) get(16);
+    }
+
+    /**
+     * Setter for <code>public.workflow_token.loop_node_id</code>.
+     */
+    public WorkflowTokenRecord setLoopNodeId(String value) {
+        set(17, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.workflow_token.loop_node_id</code>.
+     */
+    public String getLoopNodeId() {
+        return (String) get(17);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -285,7 +315,7 @@ public class WorkflowTokenRecord extends UpdatableRecordImpl<WorkflowTokenRecord
     /**
      * Create a detached, initialised WorkflowTokenRecord
      */
-    public WorkflowTokenRecord(UUID id, UUID tenantId, UUID instanceId, String nodeId, String status, UUID parentTokenId, String branchKey, Integer iteration, Integer attempt, Instant availableAt, String leaseOwner, Instant leaseUntil, Instant createdAt, Instant updatedAt, String resumeBranch, JSONB resumePayload) {
+    public WorkflowTokenRecord(UUID id, UUID tenantId, UUID instanceId, String nodeId, String status, UUID parentTokenId, String branchKey, Integer iteration, Integer attempt, Instant availableAt, String leaseOwner, Instant leaseUntil, Instant createdAt, Instant updatedAt, String resumeBranch, JSONB resumePayload, JSONB payload, String loopNodeId) {
         super(WorkflowToken.WORKFLOW_TOKEN);
 
         setId(id);
@@ -304,6 +334,8 @@ public class WorkflowTokenRecord extends UpdatableRecordImpl<WorkflowTokenRecord
         setUpdatedAt(updatedAt);
         setResumeBranch(resumeBranch);
         setResumePayload(resumePayload);
+        setPayload(payload);
+        setLoopNodeId(loopNodeId);
         resetTouchedOnNotNull();
     }
 }

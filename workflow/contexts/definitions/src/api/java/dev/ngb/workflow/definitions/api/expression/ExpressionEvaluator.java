@@ -27,4 +27,21 @@ public interface ExpressionEvaluator {
             Map<String, Object> variables,
             Object item,
             Integer index);
+
+    /**
+     * A reference resolved to the document it names, so a node that needs a list or an object gets the data itself
+     * rather than the scalar view {@link #evaluate} produces. An expression that is not a plain reference (an operator,
+     * an array or a literal) is evaluated normally.
+     *
+     * <p>The default is {@link #evaluate}, which is right for a caller that only ever passes literal documents.
+     */
+    default Object document(
+            Object expression,
+            Map<String, Object> input,
+            Map<String, Object> steps,
+            Map<String, Object> variables,
+            Object item,
+            Integer index) {
+        return evaluate(expression, input, steps, variables, item, index);
+    }
 }

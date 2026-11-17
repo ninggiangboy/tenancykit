@@ -4,8 +4,12 @@ import static dev.ngb.workflow_jooq.Tables.WORKFLOW_STEP_RUN;
 
 import dev.ngb.workflow.runtime.application.runtime.port.StepRunRepository;
 import dev.ngb.workflow.runtime.domain.step.StepRun;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
 import org.jooq.DSLContext;
 import org.jooq.JSONB;
+import org.jooq.Record2;
 import tools.jackson.databind.json.JsonMapper;
 
 /** Appends one step row; the table refuses updates, so the history is the only story of a step. */
@@ -35,6 +39,26 @@ public class JooqStepRunRepository implements StepRunRepository {
                 .set(WORKFLOW_STEP_RUN.RESPONSE, jsonb(run.response()))
                 .set(WORKFLOW_STEP_RUN.IDEMPOTENCY_KEY, run.idempotencyKey())
                 .execute();
+    }
+
+    @Override
+    public long count(UUID instanceId) {
+        return dsl.fetchCount(WORKFLOW_STEP_RUN, WORKFLOW_STEP_RUN.INSTANCE_ID.eq(instanceId));
+    }
+
+    @Override
+    public Map<String, Object> outputs(UUID instanceId) {
+        Map<String, Object> outputs = new LinkedHashMap<>();
+        for (Record2<String, JSONB> row : dsl.select(WORKFLOW_STEP_RUN.NODE_ID, WORKFLOW_STEP_RUN.RESPONSE)
+                .from(WORKFLOW_STEP_RUN)
+                .where(WORKFLOW_STEP_RUN.INSTANCE_ID.eq(instanceId))
+                .and(WORKFLOW_STEP_RUN.OUTCOME.eq("SUCCEEDED"))
+                .and(WORKFLOW_STEP_RUN.RESPONSE.isNotNull())
+                .orderBy(WORKFLOW_STEP_RUN.NODE_ID, WORKFLOW_STEP_RUN.FINISHED_AT.desc())
+                .fetch()) {
+            outputs.putIfAbsent(row.value1(), json.readValue(row.value2().data(), Object.class));
+        }
+        return outputs;
     }
 
     private JSONB jsonb(Object document) {

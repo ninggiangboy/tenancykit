@@ -212,6 +212,11 @@ class RowLevelSecurityTest {
                         (instance_id, node_id, tenant_id, expected, arrived, updated_at)
                     values (gen_random_uuid(), 'join', '%1$s', 2, 1, now())
                     """),
+                row("workflow_loop_state", """
+                    insert into workflow_loop_state
+                        (instance_id, node_id, tenant_id, total, started, arrived, items, updated_at)
+                    values (gen_random_uuid(), 'loop', '%1$s', 0, 0, 0, '[]'::jsonb, now())
+                    """),
                 row("workflow_timer", """
   with d as (
       insert into workflow_definition (id, tenant_id, code, name, status, latest_version, created_at, updated_at)

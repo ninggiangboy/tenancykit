@@ -188,7 +188,23 @@
           "description": "How many arrivals fire an n_of join."
         },
         "items": {
-          "$ref": "#/$defs/expression"
+          "$ref": "#/$defs/expression",
+          "description": "A for-each node's list, as an expression."
+        },
+        "concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "description": "How many for-each iterations may walk the body at once. Defaults to 1."
+        },
+        "on_item_error": {
+          "type": "string",
+          "enum": ["stop", "continue"],
+          "description": "Whether a failed iteration stops the instance or is collected and the loop goes on."
+        },
+        "output": {
+          "$ref": "#/$defs/expression",
+          "description": "What an iteration, a branch or a completion records as its output."
         },
         "each": {
           "$ref": "#/$defs/next",
@@ -210,7 +226,7 @@
       "allOf": [
         {
           "if": {
-            "properties": { "type": { "enum": ["trigger", "set", "http", "delay", "wait", "task", "join", "subflow"] } }
+            "properties": { "type": { "enum": ["trigger", "set", "http", "delay", "wait", "task", "join", "subflow", "foreach"] } }
           },
           "then": { "required": ["next"] }
         },

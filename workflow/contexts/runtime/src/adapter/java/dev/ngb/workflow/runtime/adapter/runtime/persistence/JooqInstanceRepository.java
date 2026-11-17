@@ -68,16 +68,21 @@ public class JooqInstanceRepository implements InstanceRepository {
 
     @Override
     public long updateVariables(UUID id, Map<String, Object> variables, long expectedVersion) {
-        int updated = dsl.update(WORKFLOW_INSTANCE)
-                .set(WORKFLOW_INSTANCE.VARIABLES, JSONB.valueOf(json.writeValueAsString(variables)))
-                .set(WORKFLOW_INSTANCE.VERSION, expectedVersion + 1)
-                .where(WORKFLOW_INSTANCE.ID.eq(id))
-                .and(WORKFLOW_INSTANCE.VERSION.eq(expectedVersion))
-                .execute();
-        if (updated != 1) {
+        if (!updateVariablesIfVersion(id, variables, expectedVersion)) {
             throw new IllegalStateException("instance " + id + " changed its variables under this step");
         }
         return expectedVersion + 1;
+    }
+
+    @Override
+    public boolean updateVariablesIfVersion(UUID id, Map<String, Object> variables, long expectedVersion) {
+        return dsl.update(WORKFLOW_INSTANCE)
+                        .set(WORKFLOW_INSTANCE.VARIABLES, JSONB.valueOf(json.writeValueAsString(variables)))
+                        .set(WORKFLOW_INSTANCE.VERSION, expectedVersion + 1)
+                        .where(WORKFLOW_INSTANCE.ID.eq(id))
+                        .and(WORKFLOW_INSTANCE.VERSION.eq(expectedVersion))
+                        .execute()
+                == 1;
     }
 
     @Override
@@ -96,13 +101,12 @@ public class JooqInstanceRepository implements InstanceRepository {
     }
 
     @Override
-    public void finish(UUID id, InstanceStatus status, Instant finishedAt, long expectedVersion) {
+    public void finish(UUID id, InstanceStatus status, Instant finishedAt) {
         int updated = dsl.update(WORKFLOW_INSTANCE)
                 .set(WORKFLOW_INSTANCE.STATUS, status.name())
                 .set(WORKFLOW_INSTANCE.FINISHED_AT, finishedAt)
-                .set(WORKFLOW_INSTANCE.VERSION, expectedVersion + 1)
+                .set(WORKFLOW_INSTANCE.VERSION, WORKFLOW_INSTANCE.VERSION.plus(1))
                 .where(WORKFLOW_INSTANCE.ID.eq(id))
-                .and(WORKFLOW_INSTANCE.VERSION.eq(expectedVersion))
                 .and(WORKFLOW_INSTANCE.FINISHED_AT.isNull())
                 .execute();
         if (updated != 1) {

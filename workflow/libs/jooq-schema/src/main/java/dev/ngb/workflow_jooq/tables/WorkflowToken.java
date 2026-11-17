@@ -143,6 +143,16 @@ public class WorkflowToken extends TableImpl<WorkflowTokenRecord> {
      */
     public final TableField<WorkflowTokenRecord, JSONB> RESUME_PAYLOAD = createField(DSL.name("resume_payload"), SQLDataType.JSONB, this, "");
 
+    /**
+     * The column <code>public.workflow_token.payload</code>.
+     */
+    public final TableField<WorkflowTokenRecord, JSONB> PAYLOAD = createField(DSL.name("payload"), SQLDataType.JSONB, this, "");
+
+    /**
+     * The column <code>public.workflow_token.loop_node_id</code>.
+     */
+    public final TableField<WorkflowTokenRecord, String> LOOP_NODE_ID = createField(DSL.name("loop_node_id"), SQLDataType.CLOB, this, "");
+
     private WorkflowToken(Name alias, Table<WorkflowTokenRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -266,6 +276,7 @@ public class WorkflowToken extends TableImpl<WorkflowTokenRecord> {
             Internal.createCheck(this, DSL.name("workflow_token_check"), "(((status = 'RUNNING'::text) = (lease_owner IS NOT NULL)))", true),
             Internal.createCheck(this, DSL.name("workflow_token_check1"), "(((status = 'RUNNING'::text) = (lease_until IS NOT NULL)))", true),
             Internal.createCheck(this, DSL.name("workflow_token_iteration_check"), "((iteration >= 0))", true),
+            Internal.createCheck(this, DSL.name("workflow_token_loop_node_id_check"), "(((loop_node_id IS NULL) OR ((length(loop_node_id) >= 1) AND (length(loop_node_id) <= 64))))", true),
             Internal.createCheck(this, DSL.name("workflow_token_node_id_check"), "(((length(node_id) >= 1) AND (length(node_id) <= 64)))", true),
             Internal.createCheck(this, DSL.name("workflow_token_status_check"), "((status = ANY (ARRAY['READY'::text, 'RUNNING'::text, 'WAITING'::text, 'DONE'::text, 'FAILED'::text, 'CANCELLED'::text])))", true)
         );

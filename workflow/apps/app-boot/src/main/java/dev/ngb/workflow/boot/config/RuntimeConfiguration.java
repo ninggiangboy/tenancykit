@@ -8,6 +8,7 @@ import dev.ngb.workflow.definitions.api.expression.ExpressionEvaluator;
 import dev.ngb.workflow.definitions.api.version.VersionReader;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqInstanceRepository;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqJoinStateRepository;
+import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqLoopStateRepository;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqStepRunRepository;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqTimerRepository;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqTokenRepository;
@@ -17,6 +18,7 @@ import dev.ngb.workflow.runtime.api.wait.WaitResolver;
 import dev.ngb.workflow.runtime.application.runtime.command.StartInstanceUseCase;
 import dev.ngb.workflow.runtime.application.runtime.port.InstanceRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.JoinStateRepository;
+import dev.ngb.workflow.runtime.application.runtime.port.LoopStateRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.StepRunRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.TimerRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.TokenRepository;
@@ -131,6 +133,7 @@ class RuntimeConfiguration {
             TimerRepository timers,
             WaitSubscriptionRepository subscriptions,
             JoinStateRepository joinStates,
+            LoopStateRepository loops,
             VersionReader versions,
             NodeExecutor executor,
             WakeUpPublisher wakeUp,
@@ -145,6 +148,7 @@ class RuntimeConfiguration {
                 timers,
                 subscriptions,
                 joinStates,
+                loops,
                 versions,
                 executor,
                 wakeUp,
@@ -157,6 +161,11 @@ class RuntimeConfiguration {
     @Bean
     JoinStateRepository joinStateRepository(DSLContext dsl, JsonMapper json) {
         return new JooqJoinStateRepository(dsl, json);
+    }
+
+    @Bean
+    LoopStateRepository loopStateRepository(DSLContext dsl, JsonMapper json) {
+        return new JooqLoopStateRepository(dsl, json);
     }
 
     @Bean

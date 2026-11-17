@@ -46,6 +46,8 @@ public class JooqTokenRepository implements TokenRepository {
                 .set(WORKFLOW_TOKEN.LEASE_UNTIL, token.leaseUntil())
                 .set(WORKFLOW_TOKEN.RESUME_BRANCH, token.resumeBranch())
                 .set(WORKFLOW_TOKEN.RESUME_PAYLOAD, payload(token.resumePayload()))
+                .set(WORKFLOW_TOKEN.PAYLOAD, payload(token.payload()))
+                .set(WORKFLOW_TOKEN.LOOP_NODE_ID, token.loopNodeId())
                 .set(WORKFLOW_TOKEN.CREATED_AT, token.createdAt())
                 .set(WORKFLOW_TOKEN.UPDATED_AT, token.updatedAt())
                 .execute();
@@ -195,6 +197,8 @@ public class JooqTokenRepository implements TokenRepository {
                 row.getLeaseUntil(),
                 row.getResumeBranch(),
                 payload(row.getResumePayload()),
+                payload(row.getPayload()),
+                row.getLoopNodeId(),
                 row.getCreatedAt(),
                 row.getUpdatedAt());
     }

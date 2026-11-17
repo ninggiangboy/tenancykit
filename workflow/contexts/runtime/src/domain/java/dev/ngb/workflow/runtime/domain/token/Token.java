@@ -16,6 +16,8 @@ import java.util.UUID;
  * @param attempt the number of times this token has been claimed; the step history uses it as its key
  * @param resumeBranch which way a parked token was resumed: {@code delay}, {@code event} or {@code timeout}
  * @param resumePayload the event data a wait resumed with, or null
+ * @param payload the item of a for-each iteration, or null outside one
+ * @param loopNodeId the for-each node this token walks for, or null outside one
  */
 public record Token(
         UUID id,
@@ -32,6 +34,8 @@ public record Token(
         Instant leaseUntil,
         String resumeBranch,
         Object resumePayload,
+        Object payload,
+        String loopNodeId,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -61,8 +65,23 @@ public record Token(
             String branchKey,
             int iteration,
             Instant now) {
+        return ready(id, tenantId, instanceId, nodeId, parentTokenId, branchKey, iteration, null, null, now);
+    }
+
+    /** A ready token that carries the branch, the for-each iteration, the item and the loop that started it. */
+    public static Token ready(
+            UUID id,
+            TenantId tenantId,
+            UUID instanceId,
+            String nodeId,
+            UUID parentTokenId,
+            String branchKey,
+            int iteration,
+            Object payload,
+            String loopNodeId,
+            Instant now) {
         return new Token(
                 id, tenantId, instanceId, nodeId, TokenStatus.READY, parentTokenId, branchKey, iteration, 0, now, null,
-                null, null, null, now, now);
+                null, null, null, payload, loopNodeId, now, now);
     }
 }

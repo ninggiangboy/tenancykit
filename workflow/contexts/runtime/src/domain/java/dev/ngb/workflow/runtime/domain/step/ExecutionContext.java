@@ -9,18 +9,29 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Everything one node execution may read: the instance, the graph, the node, the token and the variables so far. */
+/**
+ * Everything one node execution may read: the instance, the graph, the node, the token, the variables so far and the
+ * outputs of the steps that already finished.
+ */
 public record ExecutionContext(
         Token token,
         Instance instance,
         GraphView graph,
         GraphNode node,
         Map<String, Object> variables,
+        Map<String, Object> steps,
         Instant now) {
 
     public ExecutionContext {
         variables = variables == null
                 ? Map.of()
                 : Collections.unmodifiableMap(new LinkedHashMap<>(variables));
+        steps = steps == null ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(steps));
+    }
+
+    /** A step that reads no earlier output, for a node whose expressions need none. */
+    public ExecutionContext(
+            Token token, Instance instance, GraphView graph, GraphNode node, Map<String, Object> variables, Instant now) {
+        this(token, instance, graph, node, variables, Map.of(), now);
     }
 }

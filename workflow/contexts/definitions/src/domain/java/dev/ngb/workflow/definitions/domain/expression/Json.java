@@ -54,6 +54,19 @@ public final class Json {
         if (path == null || path.isEmpty()) {
             return Value.of(root);
         }
+        Object current = raw(root, path);
+        return current instanceof Missing ? Value.NIL : Value.of(current);
+    }
+
+    /**
+     * The same path resolved to the document as it stands, so a node that needs a list or an object (a for-each's
+     * items, a sub-workflow's input, a call body) gets the data rather than a scalar view of it. An absent member is
+     * {@link Missing}, which callers read as {@code null}.
+     */
+    public static Object raw(Object root, String path) {
+        if (path == null || path.isEmpty()) {
+            return root;
+        }
         Object current = root;
         for (String segment : path.split("\\.")) {
             if (current instanceof Map<?, ?> members) {
@@ -62,13 +75,23 @@ public final class Json {
                 int index = Integer.parseInt(segment);
                 current = index < members.size() ? members.get(index) : null;
             } else {
-                return Value.NIL;
+                return Missing.INSTANCE;
             }
             if (current == null) {
-                return Value.NIL;
+                return Missing.INSTANCE;
             }
         }
-        return Value.of(current);
+        return current;
+    }
+
+    /** A path that named nothing, distinct from a member that is present and null. */
+    public record Missing() {
+        public static final Missing INSTANCE = new Missing();
+    }
+
+    /** Whether a raw resolution named nothing, which a caller reads as null. */
+    public static boolean missing(Object value) {
+        return value instanceof Missing;
     }
 
     /**

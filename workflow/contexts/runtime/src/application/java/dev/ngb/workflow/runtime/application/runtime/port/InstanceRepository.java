@@ -20,9 +20,15 @@ public interface InstanceRepository {
     /** Replaces the variables under the optimistic version and returns the version the row now holds. */
     long updateVariables(UUID id, Map<String, Object> variables, long expectedVersion);
 
+    /**
+     * Replaces the variables only when the row still holds the expected version, and answers whether it did. Parallel
+     * branches may write at the same instant; the engine uses this to retry rather than fail a step over a lost race.
+     */
+    boolean updateVariablesIfVersion(UUID id, Map<String, Object> variables, long expectedVersion);
+
     /** Moves a running instance to a non-terminal status such as WAITING, under the optimistic version. */
     long setStatus(UUID id, InstanceStatus status, long expectedVersion);
 
-    /** Moves the instance to a terminal status under the optimistic version. */
-    void finish(UUID id, InstanceStatus status, Instant finishedAt, long expectedVersion);
+    /** Moves the instance to a terminal status once. A second caller finds it already finished and does nothing. */
+    void finish(UUID id, InstanceStatus status, Instant finishedAt);
 }
