@@ -1,5 +1,6 @@
 package dev.ngb.booking.catalog.application.session.service;
 
+import dev.ngb.booking.catalog.api.session.SessionPlaces;
 import dev.ngb.booking.catalog.application.offering.query.OfferingReadRepository;
 import dev.ngb.booking.catalog.application.offering.query.OfferingView;
 import dev.ngb.booking.catalog.application.recurrence.service.RecurrenceValidator;
@@ -23,12 +24,14 @@ import java.util.UUID;
  * <p>One pass expands the series' rule from now to the offering's horizon and inserts every occurrence that is not
  * already there: the pair of the series and the start instant is unique, so a second run of the same horizon inserts
  * nothing and a cancelled occurrence, which the series excludes, is never recreated. Every session of one series
- * carries the same pools, which is what a booking will later claim a place from.
+ * carries the same pools, which is what a booking will later claim a place from, and each pool's places are created
+ * with the session it belongs to, so a session that exists always has places to sell.
  */
 public class SessionMaterializer {
 
     private final RecurrenceValidator recurrence;
     private final SessionRepository sessions;
+    private final SessionPlaces places;
     private final OfferingReadRepository offerings;
     private final TenantContext tenantContext;
     private final IdGenerator ids;
@@ -37,12 +40,14 @@ public class SessionMaterializer {
     public SessionMaterializer(
             RecurrenceValidator recurrence,
             SessionRepository sessions,
+            SessionPlaces places,
             OfferingReadRepository offerings,
             TenantContext tenantContext,
             IdGenerator ids,
             int fallbackHorizonDays) {
         this.recurrence = recurrence;
         this.sessions = sessions;
+        this.places = places;
         this.offerings = offerings;
         this.tenantContext = tenantContext;
         this.ids = ids;
@@ -72,6 +77,9 @@ public class SessionMaterializer {
                     now);
             if (sessions.insertSession(session)) {
                 sessions.insertPools(session.id().value(), stored);
+                for (Pool pool : stored) {
+                    places.createPlaces(session.id().value(), pool.code().value(), pool.capacity());
+                }
                 inserted.add(session);
             }
         }

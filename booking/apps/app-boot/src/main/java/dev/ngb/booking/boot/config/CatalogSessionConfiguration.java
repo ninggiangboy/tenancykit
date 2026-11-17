@@ -5,6 +5,7 @@ import dev.ngb.booking.catalog.adapter.block.persistence.JooqBlockRepository;
 import dev.ngb.booking.catalog.adapter.recurrence.rfc5545.Rfc5545RecurrenceExpander;
 import dev.ngb.booking.catalog.adapter.session.persistence.JooqSessionReadRepository;
 import dev.ngb.booking.catalog.adapter.session.persistence.JooqSessionRepository;
+import dev.ngb.booking.catalog.api.session.SessionPlaces;
 import dev.ngb.booking.catalog.application.block.command.CreateBlockUseCase;
 import dev.ngb.booking.catalog.application.block.command.DeleteBlockUseCase;
 import dev.ngb.booking.catalog.application.block.port.BlockRepository;
@@ -107,8 +108,8 @@ class CatalogSessionConfiguration {
     }
 
     @Bean
-    SessionQueries sessionQueries(UnitOfWork unitOfWork, SessionReadRepository sessions) {
-        return new SessionQueries(unitOfWork, sessions);
+    SessionQueries sessionQueries(UnitOfWork unitOfWork, SessionReadRepository sessions, SessionPlaces places) {
+        return new SessionQueries(unitOfWork, sessions, places);
     }
 
     @Bean
@@ -120,12 +121,13 @@ class CatalogSessionConfiguration {
     SessionMaterializer sessionMaterializer(
             RecurrenceValidator recurrence,
             SessionRepository sessions,
+            SessionPlaces places,
             OfferingReadRepository offerings,
             TenantContext tenantContext,
             IdGenerator ids,
             BookingSettings settings) {
         return new SessionMaterializer(
-                recurrence, sessions, offerings, tenantContext, ids, (int) settings.timings().horizonDays());
+                recurrence, sessions, places, offerings, tenantContext, ids, (int) settings.timings().horizonDays());
     }
 
     @Bean
@@ -153,8 +155,8 @@ class CatalogSessionConfiguration {
     }
 
     @Bean
-    ResizePoolsUseCase resizePoolsUseCase(UnitOfWork unitOfWork, SessionRepository sessions) {
-        return new ResizePoolsUseCase(unitOfWork, sessions);
+    ResizePoolsUseCase resizePoolsUseCase(UnitOfWork unitOfWork, SessionRepository sessions, SessionPlaces places) {
+        return new ResizePoolsUseCase(unitOfWork, sessions, places);
     }
 
     @Bean
