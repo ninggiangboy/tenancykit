@@ -121,7 +121,8 @@ public class JooqBookingRepository implements BookingRepository {
                     .onConflict(
                             BOOKING_RESOURCES.TENANT_ID,
                             BOOKING_RESOURCES.BOOKING_ID,
-                            BOOKING_RESOURCES.SLOT_CODE)
+                            BOOKING_RESOURCES.SLOT_CODE,
+                            BOOKING_RESOURCES.RESOURCE_ID)
                     .doNothing()
                     .execute();
         }

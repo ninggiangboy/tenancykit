@@ -1,4 +1,4 @@
-package dev.ngb.booking.inventory.application.availability.port;
+package dev.ngb.booking.inventory.api.availability;
 
 import java.time.Instant;
 import java.util.List;

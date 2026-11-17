@@ -6,6 +6,8 @@ import dev.ngb.booking.catalog.api.calendar.OfferingCalendar;
 import dev.ngb.booking.catalog.api.calendar.OfferingRequirement;
 import dev.ngb.booking.catalog.api.calendar.ResourceCalendar;
 import dev.ngb.booking.catalog.api.calendar.WorkingHourWindow;
+import dev.ngb.booking.catalog.api.group.GroupCursorReader;
+import dev.ngb.booking.inventory.application.assignment.service.ResourceAssignmentPlannerService;
 import dev.ngb.booking.inventory.application.availability.query.AvailabilitySlot;
 import java.time.Duration;
 import java.time.Instant;
@@ -25,8 +27,19 @@ class AvailabilityDstTest {
 
     private static final Instant NOW = Instant.parse("2026-03-08T00:00:00Z");
 
-    private final AvailabilityCalculator calculator =
-            new AvailabilityCalculator((resourceId, from, to) -> List.of());
+    private final AvailabilityCalculator calculator = new AvailabilityCalculator(
+            (resourceId, from, to) -> List.of(),
+            new ResourceAssignmentPlannerService(
+                    (resourceId, from, to) -> List.of(),
+                    new GroupCursorReader() {
+                        @Override
+                        public Optional<UUID> current(UUID groupId) {
+                            return Optional.empty();
+                        }
+
+                        @Override
+                        public void advance(UUID groupId, UUID resourceId) {}
+                    }));
 
     @Test
     void aSpringForwardDayOffersNoStartInTheGapAndKeepsTheHours() {
@@ -46,7 +59,7 @@ class AvailabilityDstTest {
                 1,
                 List.of(new OfferingRequirement("staff", resource, null)));
         ResourceCalendar calendar = new ResourceCalendar(
-                resource, NEW_YORK.getId(), List.of(new WorkingHourWindow(7, 60, 300)), List.of());
+                resource, NEW_YORK.getId(), List.of(new WorkingHourWindow(7, 60, 300)), List.of(), null);
 
         List<Instant> starts = calculator
                 .freeStarts(new AvailabilityCalculator.Request(

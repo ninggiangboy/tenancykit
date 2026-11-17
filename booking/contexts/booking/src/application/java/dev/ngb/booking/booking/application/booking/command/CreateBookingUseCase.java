@@ -13,6 +13,10 @@ import dev.ngb.booking.booking.domain.booking.BookingId;
 import dev.ngb.booking.booking.domain.booking.BookingSource;
 import dev.ngb.booking.catalog.api.calendar.CalendarReader;
 import dev.ngb.booking.catalog.api.calendar.OfferingCalendar;
+import dev.ngb.booking.catalog.api.group.GroupCursorReader;
+import dev.ngb.booking.inventory.api.assignment.ResourceAssignmentPlanner;
+import dev.ngb.booking.inventory.api.assignment.ResourceAssignmentPlanner.Assignment;
+import dev.ngb.booking.inventory.api.assignment.ResourceAssignmentPlanner.Slot;
 import dev.ngb.booking.inventory.api.engine.CapacityClaim;
 import dev.ngb.booking.inventory.api.engine.ClaimOutcome;
 import dev.ngb.booking.inventory.api.engine.Conflict;
@@ -25,6 +29,8 @@ import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -66,6 +72,8 @@ public class CreateBookingUseCase {
     private final InventoryEngines engines;
     private final CalendarReader calendars;
     private final BookingEventPublisher events;
+    private final ResourceAssignmentPlanner planner;
+    private final GroupCursorReader cursors;
     private final TenantContext tenantContext;
     private final IdGenerator ids;
     private final Clock clock;
@@ -79,6 +87,8 @@ public class CreateBookingUseCase {
             InventoryEngines engines,
             CalendarReader calendars,
             BookingEventPublisher events,
+            ResourceAssignmentPlanner planner,
+            GroupCursorReader cursors,
             TenantContext tenantContext,
             IdGenerator ids,
             Clock clock,
@@ -90,6 +100,8 @@ public class CreateBookingUseCase {
         this.engines = engines;
         this.calendars = calendars;
         this.events = events;
+        this.planner = planner;
+        this.cursors = cursors;
         this.tenantContext = tenantContext;
         this.ids = ids;
         this.clock = clock;
@@ -158,26 +170,11 @@ public class CreateBookingUseCase {
                 throw conflict(conflict);
             }
         } else {
-            BookingRules.IntervalPlan plan =
-                    rules.interval(offering, command.start(), command.durationMinutes(), command.resourceId());
-            startsAt = plan.start();
-            endsAt = plan.end();
-            resources = plan.resources();
-            for (AssignedResource resource : resources) {
-                ClaimOutcome outcome = engine.claim(new IntervalClaim(
-                        bookingId.value(),
-                        resource.resourceId(),
-                        plan.start(),
-                        plan.end(),
-                        offering.bufferBefore() * SECONDS_PER_MINUTE,
-                        offering.bufferAfter() * SECONDS_PER_MINUTE,
-                        expiresAt,
-                        now,
-                        graceSeconds));
-                if (outcome instanceof Conflict conflict) {
-                    throw conflict(conflict);
-                }
-            }
+            BookingRules.Window window = rules.intervalWindow(offering, command.start(), command.durationMinutes());
+            startsAt = window.start();
+            endsAt = window.end();
+            Assignment assignment = assignment(offering, window, command);
+            resources = claim(engine, bookingId, offering, assignment, window, expiresAt, now);
         }
 
         Booking booking = Booking.create(
@@ -209,6 +206,73 @@ public class CreateBookingUseCase {
         bookings.insertResources(booking.id().value(), resources);
         events.held(booking, now);
         return new Result(booking, false);
+    }
+
+    private Assignment assignment(OfferingCalendar offering, BookingRules.Window window, Command command) {
+        long bufferBefore = offering.bufferBefore() * SECONDS_PER_MINUTE;
+        long bufferAfter = offering.bufferAfter() * SECONDS_PER_MINUTE;
+        Instant bufferedStart = window.start().minusSeconds(bufferBefore);
+        Instant bufferedEnd = window.end().plusSeconds(bufferAfter);
+        List<Assignment> assignments = planner.assignments(new ResourceAssignmentPlanner.Request(
+                offering,
+                window.start(),
+                window.end(),
+                bufferBefore,
+                bufferAfter,
+                command.resourceId(),
+                command.partySize(),
+                calendars::resource,
+                calendars::group,
+                resourceId -> calendars.blocks(resourceId, bufferedStart, bufferedEnd)));
+        if (assignments.isEmpty()) {
+            if (command.resourceId() != null) {
+                throw new NotFoundException("No resource exists here with that id.");
+            }
+            throw new SlotTakenException("No resource can fill every requirement of this offering.");
+        }
+        return assignments.get(0);
+    }
+
+    /**
+     * Claims every resource of the assignment in ascending id order, which is the one order that keeps two bookings of
+     * crossing requirement sets from deadlocking, and records the rotation of a round-robin group it used.
+     */
+    private List<AssignedResource> claim(
+            InventoryEngine engine,
+            BookingId bookingId,
+            OfferingCalendar offering,
+            Assignment assignment,
+            BookingRules.Window window,
+            Instant expiresAt,
+            Instant now) {
+        List<AssignedResource> resources = new ArrayList<>();
+        for (Slot slot : assignment.slots()) {
+            for (UUID resourceId : slot.resourceIds()) {
+                resources.add(new AssignedResource(slot.slotCode(), resourceId));
+            }
+        }
+        resources.sort(Comparator.comparing(AssignedResource::resourceId));
+        for (AssignedResource resource : resources) {
+            ClaimOutcome outcome = engine.claim(new IntervalClaim(
+                    bookingId.value(),
+                    resource.resourceId(),
+                    window.start(),
+                    window.end(),
+                    offering.bufferBefore() * SECONDS_PER_MINUTE,
+                    offering.bufferAfter() * SECONDS_PER_MINUTE,
+                    expiresAt,
+                    now,
+                    graceSeconds));
+            if (outcome instanceof Conflict conflict) {
+                throw conflict(conflict);
+            }
+        }
+        for (Slot slot : assignment.slots()) {
+            if ("ROUND_ROBIN".equals(slot.strategy()) && slot.groupId() != null && !slot.resourceIds().isEmpty()) {
+                cursors.advance(slot.groupId(), slot.resourceIds().get(0));
+            }
+        }
+        return List.copyOf(resources);
     }
 
     private static BookingProblem conflict(Conflict conflict) {

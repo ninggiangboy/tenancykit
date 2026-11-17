@@ -14,6 +14,8 @@ import dev.ngb.booking.booking.application.booking.service.BookingEventPublisher
 import dev.ngb.booking.booking.application.booking.service.BookingRules;
 import dev.ngb.booking.booking.application.booking.service.InventoryEngines;
 import dev.ngb.booking.catalog.api.calendar.CalendarReader;
+import dev.ngb.booking.catalog.api.group.GroupCursorReader;
+import dev.ngb.booking.inventory.api.assignment.ResourceAssignmentPlanner;
 import dev.ngb.booking.inventory.api.engine.InventoryEngine;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
@@ -77,6 +79,8 @@ class BookingLifecycleConfiguration {
             InventoryEngines engines,
             CalendarReader calendars,
             BookingEventPublisher events,
+            ResourceAssignmentPlanner planner,
+            GroupCursorReader cursors,
             TenantContext tenantContext,
             IdGenerator ids,
             Clock clock,
@@ -88,6 +92,8 @@ class BookingLifecycleConfiguration {
                 engines,
                 calendars,
                 events,
+                planner,
+                cursors,
                 tenantContext,
                 ids,
                 clock,

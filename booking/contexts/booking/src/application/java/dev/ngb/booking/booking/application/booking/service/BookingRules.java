@@ -1,35 +1,20 @@
 package dev.ngb.booking.booking.application.booking.service;
 
 import dev.ngb.booking.booking.application.booking.exception.InvalidBookingException;
-import dev.ngb.booking.booking.application.booking.exception.OutsideOpenHoursException;
-import dev.ngb.booking.booking.domain.booking.AssignedResource;
 import dev.ngb.booking.booking.domain.booking.BookingSource;
-import dev.ngb.booking.catalog.api.calendar.CalendarExceptionRange;
 import dev.ngb.booking.catalog.api.calendar.CalendarReader;
-import dev.ngb.booking.catalog.api.calendar.GroupCalendar;
-import dev.ngb.booking.catalog.api.calendar.GroupMemberRef;
 import dev.ngb.booking.catalog.api.calendar.OfferingCalendar;
-import dev.ngb.booking.catalog.api.calendar.OfferingRequirement;
-import dev.ngb.booking.catalog.api.calendar.ResourceCalendar;
 import dev.ngb.booking.catalog.api.calendar.SessionCalendar;
-import dev.ngb.booking.catalog.api.calendar.WorkingHourWindow;
-import dev.ngb.core.error.NotFoundException;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 /**
  * What a booking body has to satisfy before anything is claimed: the customer reference the Tenant sent, the places of
- * a capacity session, or the range and the resources of an interval offering.
+ * a capacity session, or the range and duration of an interval offering.
  *
  * <p>The rules answer with the values a use case then decides with, so a use case never re-reads a raw request field,
- * and every refusal carries its own stable code. The open-hours rule resolves the resource's own zone rather than
- * adding offsets, so a day with 23 or 25 local hours is judged correctly.
+ * and every refusal carries its own stable code. Which resource fills a requirement is the assignment planner's
+ * question, because it depends on the group's strategy and on what is already claimed.
  */
 public class BookingRules {
 
@@ -41,11 +26,7 @@ public class BookingRules {
 
     private static final int MAX_POOL_CODE = 60;
 
-    private static final int SECONDS_PER_MINUTE = 60;
-
-    private static final int MINUTES_PER_DAY = 1440;
-
-    private static final String CLOSED = "CLOSED";
+    private static final long SECONDS_PER_MINUTE = 60L;
 
     private static final String SCHEDULED = "SCHEDULED";
 
@@ -108,29 +89,20 @@ public class BookingRules {
     }
 
     /**
-     * The range and the resource each of the offering's requirements takes.
+     * The range an interval booking asks for.
      *
-     * <p>A requirement that names its own resource takes it; one that names a group takes the group's highest-priority
-     * member. A caller that pinned a resource keeps only the requirements that resource fills, which is what makes a
-     * pinned create a request for that resource rather than a hint.
-     *
-     * @throws NotFoundException when the caller pinned a resource no requirement of this offering can fill
+     * @throws InvalidBookingException when the start is missing or the duration is outside the offering's range or step
      */
-    public IntervalPlan interval(OfferingCalendar offering, Instant start, Integer durationMinutes, UUID resourceId) {
+    public Window intervalWindow(OfferingCalendar offering, Instant start, Integer durationMinutes) {
         if (start == null) {
             throw new InvalidBookingException("start is required for an offering that sells a range");
         }
         int duration = duration(offering, durationMinutes);
-        Instant end = start.plusSeconds((long) duration * SECONDS_PER_MINUTE);
-        List<AssignedResource> resources = assign(offering, resourceId);
-        for (AssignedResource resource : resources) {
-            requireOpen(resource.resourceId(), start, end);
-        }
-        return new IntervalPlan(start, end, resources);
+        return new Window(start, start.plusSeconds(duration * SECONDS_PER_MINUTE));
     }
 
-    /** A range to claim and the resource of every requirement it fills, in requirement order. */
-    public record IntervalPlan(Instant start, Instant end, List<AssignedResource> resources) {}
+    /** A range to claim, before the resources that fill it are chosen. */
+    public record Window(Instant start, Instant end) {}
 
     /** @return the pool code the Tenant sent, trimmed, which is between 1 and 60 characters */
     public String poolCode(String raw) {
@@ -153,106 +125,5 @@ public class BookingRules {
             throw new InvalidBookingException("The duration is not on the offering's duration step");
         }
         return duration;
-    }
-
-    private List<AssignedResource> assign(OfferingCalendar offering, UUID pinned) {
-        if (offering.requirements().isEmpty()) {
-            throw new InvalidBookingException("The offering has no requirement a booking can fill");
-        }
-        List<AssignedResource> assigned = new ArrayList<>(offering.requirements().size());
-        boolean pinnedResolved = false;
-        for (OfferingRequirement requirement : offering.requirements()) {
-            UUID candidate = candidate(requirement);
-            if (pinned != null && !pinned.equals(candidate)) {
-                continue;
-            }
-            if (candidate == null) {
-                throw new InvalidBookingException(
-                        "The requirement " + requirement.slotCode() + " names no resource");
-            }
-            if (pinned != null) {
-                pinnedResolved = true;
-            }
-            assigned.add(new AssignedResource(requirement.slotCode(), candidate));
-        }
-        if (pinned != null && !pinnedResolved) {
-            throw new NotFoundException("No resource exists here with that id.");
-        }
-        if (assigned.isEmpty()) {
-            throw new InvalidBookingException("The offering has no requirement a booking can fill");
-        }
-        return List.copyOf(assigned);
-    }
-
-    /** The requirement's own resource, or the member of its group that sits first for the priority strategy. */
-    private UUID candidate(OfferingRequirement requirement) {
-        if (requirement.resourceId() != null) {
-            return requirement.resourceId();
-        }
-        if (requirement.groupId() == null) {
-            return null;
-        }
-        GroupCalendar group = calendars.group(requirement.groupId()).orElse(null);
-        if (group == null) {
-            return null;
-        }
-        UUID best = null;
-        int bestPriority = Integer.MAX_VALUE;
-        for (GroupMemberRef member : group.members()) {
-            if (member.priority() < bestPriority) {
-                bestPriority = member.priority();
-                best = member.resourceId();
-            }
-        }
-        return best;
-    }
-
-    private void requireOpen(UUID resourceId, Instant start, Instant end) {
-        ResourceCalendar calendar = calendars
-                .resource(resourceId)
-                .orElseThrow(() -> new NotFoundException("No resource exists here with that id."));
-        if (!open(calendar, start, end)) {
-            throw new OutsideOpenHoursException("The range is outside the resource's open hours");
-        }
-    }
-
-    /** Whether a service range sits inside one of the resource's open windows, resolved in the resource's own zone. */
-    private static boolean open(ResourceCalendar calendar, Instant start, Instant end) {
-        ZoneId zone = ZoneId.of(calendar.zone());
-        LocalDate first = start.atZone(zone).toLocalDate().minusDays(1);
-        LocalDate last = end.atZone(zone).toLocalDate().plusDays(1);
-        for (LocalDate date = first; !date.isAfter(last); date = date.plusDays(1)) {
-            for (WorkingHourWindow window : windows(calendar, date)) {
-                Instant opens = instantAt(date, window.opensMinute(), zone);
-                Instant closes = instantAt(date, window.closesMinute(), zone);
-                if (!start.isBefore(opens) && !end.isAfter(closes)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private static List<WorkingHourWindow> windows(ResourceCalendar calendar, LocalDate date) {
-        for (CalendarExceptionRange exception : calendar.exceptions()) {
-            if (date.isBefore(exception.fromDate()) || date.isAfter(exception.toDate())) {
-                continue;
-            }
-            return CLOSED.equals(exception.kind()) ? List.of() : exception.hours();
-        }
-        int weekday = date.getDayOfWeek().getValue();
-        List<WorkingHourWindow> weekly = new ArrayList<>();
-        for (WorkingHourWindow window : calendar.hours()) {
-            if (window.weekday() == weekday) {
-                weekly.add(window);
-            }
-        }
-        return weekly;
-    }
-
-    private static Instant instantAt(LocalDate date, int minute, ZoneId zone) {
-        LocalDate day = minute >= MINUTES_PER_DAY ? date.plusDays(1) : date;
-        int fromMidnight = minute % MINUTES_PER_DAY;
-        return ZonedDateTime.of(day, LocalTime.of(fromMidnight / 60, fromMidnight % 60), zone).toInstant();
     }
 }

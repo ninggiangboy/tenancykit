@@ -11,6 +11,8 @@ import dev.ngb.booking.catalog.api.calendar.OfferingCalendar;
 import dev.ngb.booking.catalog.api.calendar.OfferingRequirement;
 import dev.ngb.booking.catalog.api.calendar.ResourceCalendar;
 import dev.ngb.booking.catalog.api.calendar.WorkingHourWindow;
+import dev.ngb.booking.catalog.api.group.GroupCursorReader;
+import dev.ngb.booking.inventory.application.assignment.service.ResourceAssignmentPlannerService;
 import dev.ngb.booking.inventory.application.availability.exception.InvalidAvailabilityException;
 import dev.ngb.booking.inventory.application.availability.exception.InvalidDurationException;
 import dev.ngb.booking.inventory.application.availability.query.AvailabilitySlot;
@@ -32,8 +34,19 @@ class AvailabilityTest {
     private static final Instant NOW = MONDAY.atStartOfDay(ZoneOffset.UTC).toInstant();
     private static final Instant TO = NOW.plus(Duration.ofDays(1));
 
-    private final AvailabilityCalculator calculator =
-            new AvailabilityCalculator((resourceId, from, to) -> List.of());
+    private final AvailabilityCalculator calculator = new AvailabilityCalculator(
+            (resourceId, from, to) -> List.of(),
+            new ResourceAssignmentPlannerService(
+                    (resourceId, from, to) -> List.of(),
+                    new GroupCursorReader() {
+                        @Override
+                        public Optional<UUID> current(UUID groupId) {
+                            return Optional.empty();
+                        }
+
+                        @Override
+                        public void advance(UUID groupId, UUID resourceId) {}
+                    }));
 
     @Test
     void weeklyHoursAreRespected() {
@@ -277,7 +290,7 @@ class AvailabilityTest {
 
     private static ResourceCalendar calendar(
             UUID resource, List<WorkingHourWindow> hours, List<CalendarExceptionRange> exceptions) {
-        return new ResourceCalendar(resource, "UTC", hours, exceptions);
+        return new ResourceCalendar(resource, "UTC", hours, exceptions, null);
     }
 
     private static Instant at(String time) {

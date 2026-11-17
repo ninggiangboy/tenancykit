@@ -2,8 +2,8 @@ package dev.ngb.booking.inventory.adapter.availability.persistence;
 
 import static dev.ngb.booking_jooq.Tables.INTERVAL_CLAIMS;
 
-import dev.ngb.booking.inventory.application.availability.port.BusyRange;
-import dev.ngb.booking.inventory.application.availability.port.BusyRangeReader;
+import dev.ngb.booking.inventory.api.availability.BusyRange;
+import dev.ngb.booking.inventory.api.availability.BusyRangeReader;
 import dev.ngb.core.runtime.Clock;
 import java.time.Instant;
 import java.time.OffsetDateTime;

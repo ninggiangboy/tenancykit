@@ -1,10 +1,13 @@
 package dev.ngb.booking.boot.config;
 
 import dev.ngb.booking.catalog.api.calendar.CalendarReader;
+import dev.ngb.booking.catalog.api.group.GroupCursorReader;
 import dev.ngb.booking.inventory.adapter.availability.persistence.JooqBusyRangeReader;
 import dev.ngb.booking.inventory.adapter.interval.persistence.JooqIntervalEngine;
+import dev.ngb.booking.inventory.api.assignment.ResourceAssignmentPlanner;
+import dev.ngb.booking.inventory.api.availability.BusyRangeReader;
 import dev.ngb.booking.inventory.api.engine.InventoryEngine;
-import dev.ngb.booking.inventory.application.availability.port.BusyRangeReader;
+import dev.ngb.booking.inventory.application.assignment.service.ResourceAssignmentPlannerService;
 import dev.ngb.booking.inventory.application.availability.query.AvailabilityQueries;
 import dev.ngb.booking.inventory.application.availability.service.AvailabilityCalculator;
 import dev.ngb.booking.inventory.application.interval.service.IntervalClaimRules;
@@ -42,8 +45,14 @@ class InventoryIntervalConfiguration {
     }
 
     @Bean
-    AvailabilityCalculator availabilityCalculator(BusyRangeReader busyRanges) {
-        return new AvailabilityCalculator(busyRanges);
+    ResourceAssignmentPlanner resourceAssignmentPlanner(BusyRangeReader busy, GroupCursorReader cursors) {
+        return new ResourceAssignmentPlannerService(busy, cursors);
+    }
+
+    @Bean
+    AvailabilityCalculator availabilityCalculator(
+            BusyRangeReader busyRanges, ResourceAssignmentPlanner assignmentPlanner) {
+        return new AvailabilityCalculator(busyRanges, assignmentPlanner);
     }
 
     @Bean

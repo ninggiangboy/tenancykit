@@ -3,15 +3,15 @@ package dev.ngb.booking.inventory.application.availability.service;
 import dev.ngb.booking.catalog.api.calendar.BlockRange;
 import dev.ngb.booking.catalog.api.calendar.CalendarExceptionRange;
 import dev.ngb.booking.catalog.api.calendar.GroupCalendar;
-import dev.ngb.booking.catalog.api.calendar.GroupMemberRef;
 import dev.ngb.booking.catalog.api.calendar.OfferingCalendar;
-import dev.ngb.booking.catalog.api.calendar.OfferingRequirement;
 import dev.ngb.booking.catalog.api.calendar.ResourceCalendar;
 import dev.ngb.booking.catalog.api.calendar.WorkingHourWindow;
+import dev.ngb.booking.inventory.api.assignment.ResourceAssignmentPlanner;
+import dev.ngb.booking.inventory.api.assignment.ResourceAssignmentPlanner.RequirementOptions;
+import dev.ngb.booking.inventory.api.availability.BusyRange;
+import dev.ngb.booking.inventory.api.availability.BusyRangeReader;
 import dev.ngb.booking.inventory.application.availability.exception.InvalidAvailabilityException;
 import dev.ngb.booking.inventory.application.availability.exception.InvalidDurationException;
-import dev.ngb.booking.inventory.application.availability.port.BusyRange;
-import dev.ngb.booking.inventory.application.availability.port.BusyRangeReader;
 import dev.ngb.booking.inventory.application.availability.query.AvailabilitySlot;
 import dev.ngb.core.error.NotFoundException;
 import java.time.Duration;
@@ -21,13 +21,13 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -48,9 +48,11 @@ public class AvailabilityCalculator {
     private static final int SECONDS_PER_MINUTE = 60;
 
     private final BusyRangeReader busyRanges;
+    private final ResourceAssignmentPlanner planner;
 
-    public AvailabilityCalculator(BusyRangeReader busyRanges) {
+    public AvailabilityCalculator(BusyRangeReader busyRanges, ResourceAssignmentPlanner planner) {
         this.busyRanges = busyRanges;
+        this.planner = planner;
     }
 
     /** Everything a computation reads: the offering, the calendars and blocks of its resources, the busy ranges. */
@@ -74,14 +76,19 @@ public class AvailabilityCalculator {
                     "VALIDATION_FAILED", "Availability is computed for an INTERVAL offering.");
         }
         int duration = duration(offering, request.durationMinutes());
-        List<OfferingRequirement> requirements = offering.requirements();
-        if (requirements.isEmpty()) {
+        if (offering.requirements().isEmpty()) {
             return List.of();
         }
-        List<List<UUID>> candidates = requirementCandidates(requirements, request);
         Instant first = later(request.from(), request.now().plusSeconds(offering.leadTimeSeconds()));
         Instant last = earlier(request.to(), request.now().plus(Duration.ofDays(offering.horizonDays())));
         if (last.isBefore(first)) {
+            return List.of();
+        }
+        List<RequirementOptions> candidates = planner.options(plannerRequest(request, first, duration));
+        if (candidates.isEmpty()) {
+            if (request.resource() != null) {
+                throw new NotFoundException("No resource exists here with that id.");
+            }
             return List.of();
         }
         long step = offering.slotStep() * (long) SECONDS_PER_MINUTE;
@@ -106,67 +113,80 @@ public class AvailabilityCalculator {
     private List<UUID> assign(
             Instant start,
             Instant end,
-            List<List<UUID>> candidates,
+            List<RequirementOptions> candidates,
             Map<UUID, ResourceAvailability> resources,
             Request request,
             long bufferBefore,
             long bufferAfter) {
         Instant bufferedStart = start.minusSeconds(bufferBefore);
         Instant bufferedEnd = end.plusSeconds(bufferAfter);
-        Map<UUID, Integer> indexOf = new LinkedHashMap<>();
-        for (List<UUID> list : candidates) {
-            for (UUID id : list) {
-                if (!indexOf.containsKey(id)) {
-                    indexOf.put(id, indexOf.size());
-                }
-            }
+        List<UUID> chosen = new ArrayList<>();
+        if (!choose(
+                0,
+                candidates,
+                new HashSet<>(),
+                chosen,
+                start,
+                end,
+                bufferedStart,
+                bufferedEnd,
+                resources,
+                request)) {
+            return null;
         }
-        List<UUID> resourceIds = new ArrayList<>(indexOf.keySet());
-        int requirements = candidates.size();
-        List<List<Integer>> graph = new ArrayList<>(requirements);
-        for (List<UUID> list : candidates) {
-            List<Integer> free = new ArrayList<>();
-            for (UUID id : list) {
-                if (free(id, start, end, bufferedStart, bufferedEnd, resources, request)) {
-                    free.add(indexOf.get(id));
-                }
-            }
-            graph.add(free);
-        }
-        int[] resourceMatch = new int[resourceIds.size()];
-        int[] requirementMatch = new int[requirements];
-        Arrays.fill(resourceMatch, -1);
-        Arrays.fill(requirementMatch, -1);
-        for (int requirement = 0; requirement < requirements; requirement++) {
-            if (!augment(requirement, graph, new boolean[resourceIds.size()], resourceMatch, requirementMatch)) {
-                return null;
-            }
-        }
-        List<UUID> assignment = new ArrayList<>(requirements);
-        for (int requirement = 0; requirement < requirements; requirement++) {
-            assignment.add(resourceIds.get(requirementMatch[requirement]));
-        }
-        return assignment;
+        return List.copyOf(chosen);
     }
 
-    /** Kuhn's augmentation: a requirement takes a free resource, displacing the one that holds it if it can move. */
-    private static boolean augment(
-            int requirement,
-            List<List<Integer>> graph,
-            boolean[] visited,
-            int[] resourceMatch,
-            int[] requirementMatch) {
-        for (int resource : graph.get(requirement)) {
-            if (visited[resource]) {
+    /**
+     * Takes the first option of each requirement that is free and not already taken, backing out when a later
+     * requirement cannot be filled. The option order is the group's strategy order, so the answer is what a booking
+     * would choose, and an option may name several resources when seats are combined.
+     */
+    private boolean choose(
+            int index,
+            List<RequirementOptions> candidates,
+            Set<UUID> used,
+            List<UUID> chosen,
+            Instant start,
+            Instant end,
+            Instant bufferedStart,
+            Instant bufferedEnd,
+            Map<UUID, ResourceAvailability> resources,
+            Request request) {
+        if (index == candidates.size()) {
+            return true;
+        }
+        for (List<UUID> option : candidates.get(index).options()) {
+            boolean usable = true;
+            for (UUID resourceId : option) {
+                if (used.contains(resourceId)
+                        || !free(resourceId, start, end, bufferedStart, bufferedEnd, resources, request)) {
+                    usable = false;
+                    break;
+                }
+            }
+            if (!usable) {
                 continue;
             }
-            visited[resource] = true;
-            if (resourceMatch[resource] == -1
-                    || augment(resourceMatch[resource], graph, visited, resourceMatch, requirementMatch)) {
-                resourceMatch[resource] = requirement;
-                requirementMatch[requirement] = resource;
+            used.addAll(option);
+            chosen.addAll(option);
+            if (choose(
+                    index + 1,
+                    candidates,
+                    used,
+                    chosen,
+                    start,
+                    end,
+                    bufferedStart,
+                    bufferedEnd,
+                    resources,
+                    request)) {
                 return true;
             }
+            for (int removed = 0; removed < option.size(); removed++) {
+                chosen.remove(chosen.size() - 1);
+            }
+            used.removeAll(option);
         }
         return false;
     }
@@ -194,36 +214,18 @@ public class AvailabilityCalculator {
                 busyRanges.busy(resourceId, request.from(), request.to()));
     }
 
-    private static List<List<UUID>> requirementCandidates(List<OfferingRequirement> requirements, Request request) {
-        List<List<UUID>> candidates = new ArrayList<>(requirements.size());
-        UUID pinned = request.resource();
-        for (OfferingRequirement requirement : requirements) {
-            List<UUID> of = requirement.resourceId() != null
-                    ? List.of(requirement.resourceId())
-                    : groupMembers(requirement.groupId(), request);
-            if (pinned != null && !of.contains(pinned)) {
-                of = List.of();
-            } else if (pinned != null) {
-                of = List.of(pinned);
-            }
-            candidates.add(of);
-        }
-        if (pinned != null && candidates.stream().allMatch(List::isEmpty)) {
-            throw new NotFoundException("No resource exists here with that id.");
-        }
-        return candidates;
-    }
-
-    private static List<UUID> groupMembers(UUID groupId, Request request) {
-        Optional<GroupCalendar> group = request.groups().apply(groupId);
-        if (group.isEmpty()) {
-            return List.of();
-        }
-        List<UUID> members = new ArrayList<>();
-        for (GroupMemberRef member : group.get().members()) {
-            members.add(member.resourceId());
-        }
-        return members;
+    private static ResourceAssignmentPlanner.Request plannerRequest(Request request, Instant start, int duration) {
+        return new ResourceAssignmentPlanner.Request(
+                request.offering(),
+                start,
+                start.plusSeconds(duration * (long) SECONDS_PER_MINUTE),
+                request.offering().bufferBefore() * (long) SECONDS_PER_MINUTE,
+                request.offering().bufferAfter() * (long) SECONDS_PER_MINUTE,
+                request.resource(),
+                request.partySize(),
+                request.calendars(),
+                request.groups(),
+                request.blocks());
     }
 
     private static int duration(OfferingCalendar offering, Integer requested) {

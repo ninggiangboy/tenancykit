@@ -1,6 +1,8 @@
 package dev.ngb.booking.boot.config;
 
 import dev.ngb.booking.catalog.api.calendar.CalendarReader;
+import dev.ngb.booking.catalog.api.group.GroupCursorReader;
+import dev.ngb.booking.catalog.adapter.group.persistence.JooqGroupCursorReader;
 import dev.ngb.booking.catalog.application.block.query.BlockReadRepository;
 import dev.ngb.booking.catalog.application.calendar.query.CalendarReadRepository;
 import dev.ngb.booking.catalog.application.catalog.service.CalendarReaderService;
@@ -9,6 +11,7 @@ import dev.ngb.booking.catalog.application.offering.query.OfferingReadRepository
 import dev.ngb.booking.catalog.application.recurrence.service.RecurrenceValidator;
 import dev.ngb.booking.catalog.application.resource.query.ResourceReadRepository;
 import dev.ngb.booking.catalog.application.session.query.SessionReadRepository;
+import org.jooq.DSLContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,5 +29,10 @@ class CatalogAvailabilityConfiguration {
             SessionReadRepository sessions,
             RecurrenceValidator recurrence) {
         return new CalendarReaderService(resources, calendars, offerings, groups, blocks, sessions, recurrence);
+    }
+
+    @Bean
+    GroupCursorReader groupCursorReader(DSLContext dsl) {
+        return new JooqGroupCursorReader(dsl);
     }
 }

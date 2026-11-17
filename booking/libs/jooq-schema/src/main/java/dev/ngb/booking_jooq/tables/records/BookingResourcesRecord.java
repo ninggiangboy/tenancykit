@@ -8,7 +8,7 @@ import dev.ngb.booking_jooq.tables.BookingResources;
 
 import java.util.UUID;
 
-import org.jooq.Record3;
+import org.jooq.Record4;
 import org.jooq.impl.UpdatableRecordImpl;
 
 
@@ -85,8 +85,8 @@ public class BookingResourcesRecord extends UpdatableRecordImpl<BookingResources
     // -------------------------------------------------------------------------
 
     @Override
-    public Record3<UUID, UUID, String> key() {
-        return (Record3) super.key();
+    public Record4<UUID, UUID, String, UUID> key() {
+        return (Record4) super.key();
     }
 
     // -------------------------------------------------------------------------

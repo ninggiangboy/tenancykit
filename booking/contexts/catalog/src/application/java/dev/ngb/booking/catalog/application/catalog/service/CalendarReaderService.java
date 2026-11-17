@@ -132,7 +132,7 @@ public class CalendarReaderService implements CalendarReader {
             exceptions.add(new CalendarExceptionRange(
                     exception.fromDate(), exception.toDate(), exception.kind(), windows));
         }
-        return new ResourceCalendar(resource.id(), resource.zone(), hours, exceptions);
+        return new ResourceCalendar(resource.id(), resource.zone(), hours, exceptions, resource.seats());
     }
 
     private OfferingCalendar calendar(OfferingView offering) {

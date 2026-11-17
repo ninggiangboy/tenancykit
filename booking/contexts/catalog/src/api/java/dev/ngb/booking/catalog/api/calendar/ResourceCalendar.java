@@ -9,7 +9,8 @@ public record ResourceCalendar(
         UUID resourceId,
         String zone,
         List<WorkingHourWindow> hours,
-        List<CalendarExceptionRange> exceptions) {
+        List<CalendarExceptionRange> exceptions,
+        Integer seats) {
 
     public ResourceCalendar {
         Objects.requireNonNull(resourceId, "resourceId");
