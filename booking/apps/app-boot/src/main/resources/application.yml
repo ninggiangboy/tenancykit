@@ -84,6 +84,33 @@ booking:
     enabled: ${BOOKING_JOBS_ENABLED:true}
     # At most this many tenants run at once across all jobs; keep it below the connection pool.
     tenant-parallelism: ${BOOKING_WORKER_TENANT_PARALLELISM:4}
+  relay:
+    # The in-process relay that turns outbox rows into webhook deliveries. No broker, no export route.
+    poll-delay: PT2S
+    batch-size: 50
+    max-attempts: 10
+    backoff-base: PT10S
+    backoff-cap: PT1H
+    jitter: 0.2
+    claim-deadline: PT30S
+  webhooks:
+    # Endpoint signing secrets are envelope-encrypted with this key. A deployment supplies it; there is no shipped
+    # default, so a forgotten key fails startup rather than storing a secret in the clear.
+    master-key: ${BOOKING_SECRETS_MASTER_KEY:}
+    master-key-id: ${BOOKING_SECRETS_MASTER_KEY_ID:k1}
+    # False everywhere but the compose profile, where the smoke forwarder receives a delivery on a container network.
+    allow-insecure-targets: ${BOOKING_WEBHOOKS_ALLOW_INSECURE_TARGETS:false}
+    batch-size: 25
+    max-attempts: 10
+    backoff-base: PT30S
+    backoff-cap: PT6H
+    lease: PT2M
+    max-connections: 100
+    max-connections-per-route: 25
+    connection-request-timeout: PT2S
+    connect-timeout: PT3S
+    read-timeout: PT10S
+    deadline: PT15S
   housekeeping:
     enabled: ${BOOKING_HOUSEKEEPING_ENABLED:true}
     inbox-retention: P30D

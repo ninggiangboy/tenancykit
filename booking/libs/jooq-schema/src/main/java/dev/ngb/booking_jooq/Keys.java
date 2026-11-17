@@ -29,6 +29,9 @@ import dev.ngb.booking_jooq.tables.TenantDomains;
 import dev.ngb.booking_jooq.tables.TenantSystems;
 import dev.ngb.booking_jooq.tables.Tenants;
 import dev.ngb.booking_jooq.tables.UserGrants;
+import dev.ngb.booking_jooq.tables.WebhookDeliveries;
+import dev.ngb.booking_jooq.tables.WebhookDeliveryAttempts;
+import dev.ngb.booking_jooq.tables.WebhookEndpoints;
 import dev.ngb.booking_jooq.tables.WorkingHours;
 import dev.ngb.booking_jooq.tables.records.AppEntitlementsRecord;
 import dev.ngb.booking_jooq.tables.records.BlocksRecord;
@@ -55,6 +58,9 @@ import dev.ngb.booking_jooq.tables.records.TenantDomainsRecord;
 import dev.ngb.booking_jooq.tables.records.TenantSystemsRecord;
 import dev.ngb.booking_jooq.tables.records.TenantsRecord;
 import dev.ngb.booking_jooq.tables.records.UserGrantsRecord;
+import dev.ngb.booking_jooq.tables.records.WebhookDeliveriesRecord;
+import dev.ngb.booking_jooq.tables.records.WebhookDeliveryAttemptsRecord;
+import dev.ngb.booking_jooq.tables.records.WebhookEndpointsRecord;
 import dev.ngb.booking_jooq.tables.records.WorkingHoursRecord;
 
 import org.jooq.ForeignKey;
@@ -110,6 +116,10 @@ public class Keys {
     public static final UniqueKey<TenantsRecord> TENANTS_PKEY = Internal.createUniqueKey(Tenants.TENANTS, DSL.name("tenants_pkey"), new TableField[] { Tenants.TENANTS.ID }, true);
     public static final UniqueKey<UserGrantsRecord> USER_GRANTS_KEYCLOAK_SUBJECT_KEY = Internal.createUniqueKey(UserGrants.USER_GRANTS, DSL.name("user_grants_keycloak_subject_key"), new TableField[] { UserGrants.USER_GRANTS.KEYCLOAK_SUBJECT }, true);
     public static final UniqueKey<UserGrantsRecord> USER_GRANTS_PKEY = Internal.createUniqueKey(UserGrants.USER_GRANTS, DSL.name("user_grants_pkey"), new TableField[] { UserGrants.USER_GRANTS.USER_ID }, true);
+    public static final UniqueKey<WebhookDeliveriesRecord> WEBHOOK_DELIVERIES_PKEY = Internal.createUniqueKey(WebhookDeliveries.WEBHOOK_DELIVERIES, DSL.name("webhook_deliveries_pkey"), new TableField[] { WebhookDeliveries.WEBHOOK_DELIVERIES.ID }, true);
+    public static final UniqueKey<WebhookDeliveryAttemptsRecord> WEBHOOK_DELIVERY_ATTEMPTS_DELIVERY_ID_ATTEMPT_NO_KEY = Internal.createUniqueKey(WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS, DSL.name("webhook_delivery_attempts_delivery_id_attempt_no_key"), new TableField[] { WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS.DELIVERY_ID, WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS.ATTEMPT_NO }, true);
+    public static final UniqueKey<WebhookDeliveryAttemptsRecord> WEBHOOK_DELIVERY_ATTEMPTS_PKEY = Internal.createUniqueKey(WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS, DSL.name("webhook_delivery_attempts_pkey"), new TableField[] { WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS.ID }, true);
+    public static final UniqueKey<WebhookEndpointsRecord> WEBHOOK_ENDPOINTS_PKEY = Internal.createUniqueKey(WebhookEndpoints.WEBHOOK_ENDPOINTS, DSL.name("webhook_endpoints_pkey"), new TableField[] { WebhookEndpoints.WEBHOOK_ENDPOINTS.ID }, true);
     public static final UniqueKey<WorkingHoursRecord> WORKING_HOURS_PKEY = Internal.createUniqueKey(WorkingHours.WORKING_HOURS, DSL.name("working_hours_pkey"), new TableField[] { WorkingHours.WORKING_HOURS.ID }, true);
 
     // -------------------------------------------------------------------------
@@ -135,5 +145,7 @@ public class Keys {
     public static final ForeignKey<TenantDomainsRecord, TenantsRecord> TENANT_DOMAINS__TENANT_DOMAINS_TENANT_ID_FKEY = Internal.createForeignKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_tenant_id_fkey"), new TableField[] { TenantDomains.TENANT_DOMAINS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<TenantSystemsRecord, TenantsRecord> TENANT_SYSTEMS__TENANT_SYSTEMS_TENANT_ID_FKEY = Internal.createForeignKey(TenantSystems.TENANT_SYSTEMS, DSL.name("tenant_systems_tenant_id_fkey"), new TableField[] { TenantSystems.TENANT_SYSTEMS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<UserGrantsRecord, TenantsRecord> USER_GRANTS__USER_GRANTS_TENANT_ID_FKEY = Internal.createForeignKey(UserGrants.USER_GRANTS, DSL.name("user_grants_tenant_id_fkey"), new TableField[] { UserGrants.USER_GRANTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<WebhookDeliveriesRecord, WebhookEndpointsRecord> WEBHOOK_DELIVERIES__WEBHOOK_DELIVERIES_ENDPOINT_ID_FKEY = Internal.createForeignKey(WebhookDeliveries.WEBHOOK_DELIVERIES, DSL.name("webhook_deliveries_endpoint_id_fkey"), new TableField[] { WebhookDeliveries.WEBHOOK_DELIVERIES.ENDPOINT_ID }, Keys.WEBHOOK_ENDPOINTS_PKEY, new TableField[] { WebhookEndpoints.WEBHOOK_ENDPOINTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<WebhookDeliveryAttemptsRecord, WebhookDeliveriesRecord> WEBHOOK_DELIVERY_ATTEMPTS__WEBHOOK_DELIVERY_ATTEMPTS_DELIVERY_ID_FKEY = Internal.createForeignKey(WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS, DSL.name("webhook_delivery_attempts_delivery_id_fkey"), new TableField[] { WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS.DELIVERY_ID }, Keys.WEBHOOK_DELIVERIES_PKEY, new TableField[] { WebhookDeliveries.WEBHOOK_DELIVERIES.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<WorkingHoursRecord, ResourcesRecord> WORKING_HOURS__WORKING_HOURS_RESOURCE_ID_FKEY = Internal.createForeignKey(WorkingHours.WORKING_HOURS, DSL.name("working_hours_resource_id_fkey"), new TableField[] { WorkingHours.WORKING_HOURS.RESOURCE_ID }, Keys.RESOURCES_PKEY, new TableField[] { Resources.RESOURCES.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
 }

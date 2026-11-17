@@ -13,10 +13,45 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "booking")
 public record BookingSettings(
-        Messaging messaging, Jobs jobs, Housekeeping housekeeping, Timings timings) {
+        Messaging messaging, Relay relay, Webhooks webhooks, Jobs jobs, Housekeeping housekeeping, Timings timings) {
 
     /** The Platform state-transfer events this service consumes on its own queue. */
     public record Messaging(String exchange, String queue) {}
+
+    /**
+     * The in-process outbox relay: booking declares no exchange, so every due outbox row is handed to the webhook
+     * listener inside the relay's own transaction instead of being published to a broker.
+     */
+    public record Relay(
+            Duration pollDelay,
+            int batchSize,
+            int maxAttempts,
+            Duration backoffBase,
+            Duration backoffCap,
+            double jitter,
+            Duration claimDeadline) {}
+
+    /**
+     * The webhook sender: the signing key at rest, the destination policy, the retry schedule and the HTTP limits.
+     *
+     * @param allowInsecureTargets true only in the compose profile, where the stack's smoke forwarder listens on the
+     *     container network; every other deployment requires a public https address
+     */
+    public record Webhooks(
+            String masterKey,
+            String masterKeyId,
+            boolean allowInsecureTargets,
+            int batchSize,
+            int maxAttempts,
+            Duration backoffBase,
+            Duration backoffCap,
+            Duration lease,
+            int maxConnections,
+            int maxConnectionsPerRoute,
+            Duration connectionRequestTimeout,
+            Duration connectTimeout,
+            Duration readTimeout,
+            Duration deadline) {}
 
     /** @param tenantParallelism at most this many tenants run at once, kept below the connection pool */
     public record Jobs(boolean enabled, int tenantParallelism) {}

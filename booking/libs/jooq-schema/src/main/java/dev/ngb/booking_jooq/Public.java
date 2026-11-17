@@ -29,6 +29,9 @@ import dev.ngb.booking_jooq.tables.TenantDomains;
 import dev.ngb.booking_jooq.tables.TenantSystems;
 import dev.ngb.booking_jooq.tables.Tenants;
 import dev.ngb.booking_jooq.tables.UserGrants;
+import dev.ngb.booking_jooq.tables.WebhookDeliveries;
+import dev.ngb.booking_jooq.tables.WebhookDeliveryAttempts;
+import dev.ngb.booking_jooq.tables.WebhookEndpoints;
 import dev.ngb.booking_jooq.tables.WorkingHours;
 
 import java.util.Arrays;
@@ -179,6 +182,21 @@ public class Public extends SchemaImpl {
     public final UserGrants USER_GRANTS = UserGrants.USER_GRANTS;
 
     /**
+     * The table <code>public.webhook_deliveries</code>.
+     */
+    public final WebhookDeliveries WEBHOOK_DELIVERIES = WebhookDeliveries.WEBHOOK_DELIVERIES;
+
+    /**
+     * The table <code>public.webhook_delivery_attempts</code>.
+     */
+    public final WebhookDeliveryAttempts WEBHOOK_DELIVERY_ATTEMPTS = WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS;
+
+    /**
+     * The table <code>public.webhook_endpoints</code>.
+     */
+    public final WebhookEndpoints WEBHOOK_ENDPOINTS = WebhookEndpoints.WEBHOOK_ENDPOINTS;
+
+    /**
      * The table <code>public.working_hours</code>.
      */
     public final WorkingHours WORKING_HOURS = WorkingHours.WORKING_HOURS;
@@ -224,6 +242,9 @@ public class Public extends SchemaImpl {
             TenantSystems.TENANT_SYSTEMS,
             Tenants.TENANTS,
             UserGrants.USER_GRANTS,
+            WebhookDeliveries.WEBHOOK_DELIVERIES,
+            WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS,
+            WebhookEndpoints.WEBHOOK_ENDPOINTS,
             WorkingHours.WORKING_HOURS
         );
     }
