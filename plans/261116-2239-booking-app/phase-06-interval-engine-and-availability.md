@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Interval engine and availability"
-status: pending
+status: completed
 priority: P1
 effort: "L"
 dependencies: [5]

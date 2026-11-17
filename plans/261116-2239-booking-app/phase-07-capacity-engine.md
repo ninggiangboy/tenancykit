@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "Capacity engine"
-status: pending
+status: completed
 priority: P1
 effort: "L"
 dependencies: [5]
