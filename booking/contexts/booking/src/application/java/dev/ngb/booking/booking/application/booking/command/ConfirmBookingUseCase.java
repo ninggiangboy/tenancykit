@@ -5,6 +5,7 @@ import dev.ngb.booking.booking.application.booking.exception.HoldLapsedException
 import dev.ngb.booking.booking.application.booking.port.BookingRepository;
 import dev.ngb.booking.booking.application.booking.service.BookingEventPublisher;
 import dev.ngb.booking.booking.application.booking.service.InventoryEngines;
+import dev.ngb.booking.booking.application.waitlist.service.WaitlistFollowUp;
 import dev.ngb.booking.booking.domain.booking.Booking;
 import dev.ngb.booking.booking.domain.booking.BookingStatus;
 import dev.ngb.core.error.NotFoundException;
@@ -27,6 +28,7 @@ public class ConfirmBookingUseCase {
     private final BookingRepository bookings;
     private final InventoryEngines engines;
     private final BookingEventPublisher events;
+    private final WaitlistFollowUp waitlist;
     private final Clock clock;
     private final long graceSeconds;
 
@@ -35,12 +37,14 @@ public class ConfirmBookingUseCase {
             BookingRepository bookings,
             InventoryEngines engines,
             BookingEventPublisher events,
+            WaitlistFollowUp waitlist,
             Clock clock,
             long graceSeconds) {
         this.unitOfWork = unitOfWork;
         this.bookings = bookings;
         this.engines = engines;
         this.events = events;
+        this.waitlist = waitlist;
         this.clock = clock;
         this.graceSeconds = graceSeconds;
     }
@@ -65,6 +69,7 @@ public class ConfirmBookingUseCase {
             booking.confirm(now);
             bookings.update(booking);
             events.confirmed(booking, now);
+            waitlist.accept(booking.id().value());
             return booking;
         });
     }

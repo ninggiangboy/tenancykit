@@ -66,6 +66,8 @@ final class ArchitectureRules {
         TABLE_OWNER.put("Bookings", "booking");
         TABLE_OWNER.put("BookingResources", "booking");
         TABLE_OWNER.put("BookingSeries", "booking");
+        TABLE_OWNER.put("WaitlistEntries", "booking");
+        TABLE_OWNER.put("WaitlistWakeups", "booking");
         // The webhook context owns its endpoints, deliveries and the append-only attempt log.
         TABLE_OWNER.put("WebhookEndpoints", "webhook");
         TABLE_OWNER.put("WebhookDeliveries", "webhook");

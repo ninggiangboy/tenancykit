@@ -62,7 +62,8 @@ public class CreateBookingUseCase {
             Integer partySize,
             String idempotencyKey,
             BookingSource source,
-            UUID seriesId) {}
+            UUID seriesId,
+            Long ttlSeconds) {}
 
     /** The booking that now exists, and whether this call made it or replayed an earlier one. */
     public record Result(Booking booking, boolean replayed) {}
@@ -145,7 +146,9 @@ public class CreateBookingUseCase {
         }
 
         Instant now = clock.now();
-        long ttl = offering.holdTtlSeconds() != null ? offering.holdTtlSeconds() : holdTtlSeconds;
+        long ttl = command.ttlSeconds() != null
+                ? command.ttlSeconds()
+                : offering.holdTtlSeconds() != null ? offering.holdTtlSeconds() : holdTtlSeconds;
         Instant expiresAt = now.plusSeconds(ttl);
         String kind = offering.kind();
         BookingId bookingId = new BookingId(ids.newId());

@@ -6,6 +6,7 @@ import dev.ngb.booking.booking.application.booking.exception.InvalidBookingExcep
 import dev.ngb.booking.booking.application.booking.exception.OutsideOpenHoursException;
 import dev.ngb.booking.booking.application.series.exception.InvalidSeriesException;
 import dev.ngb.booking.booking.application.series.exception.SeriesConflictException;
+import dev.ngb.booking.booking.application.waitlist.exception.TargetAvailableException;
 import dev.ngb.booking.catalog.application.catalog.exception.CatalogProblem;
 import dev.ngb.booking.catalog.application.catalog.exception.DuplicateCodeException;
 import dev.ngb.booking.catalog.application.catalog.exception.ResourceInUseException;
@@ -101,6 +102,7 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
                         || e instanceof ExtensionCapException
                         || e instanceof InvalidBookingException
                         || e instanceof InvalidSeriesException
+                        || e instanceof TargetAvailableException
                 ? HttpStatus.UNPROCESSABLE_CONTENT
                 : HttpStatus.CONFLICT;
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(status, e.getMessage());

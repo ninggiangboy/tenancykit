@@ -4,6 +4,7 @@ import dev.ngb.booking.booking.application.booking.exception.BookingStateExcepti
 import dev.ngb.booking.booking.application.booking.port.BookingRepository;
 import dev.ngb.booking.booking.application.booking.service.BookingEventPublisher;
 import dev.ngb.booking.booking.application.booking.service.InventoryEngines;
+import dev.ngb.booking.booking.application.waitlist.service.WaitlistFollowUp;
 import dev.ngb.booking.booking.domain.booking.Booking;
 import dev.ngb.booking.booking.domain.booking.BookingEvents;
 import dev.ngb.booking.booking.domain.booking.BookingStatus;
@@ -37,6 +38,7 @@ public class CancelBookingUseCase {
     private final InventoryEngines engines;
     private final CalendarReader calendars;
     private final BookingEventPublisher events;
+    private final WaitlistFollowUp waitlist;
     private final Clock clock;
 
     public CancelBookingUseCase(
@@ -45,12 +47,14 @@ public class CancelBookingUseCase {
             InventoryEngines engines,
             CalendarReader calendars,
             BookingEventPublisher events,
+            WaitlistFollowUp waitlist,
             Clock clock) {
         this.unitOfWork = unitOfWork;
         this.bookings = bookings;
         this.engines = engines;
         this.calendars = calendars;
         this.events = events;
+        this.waitlist = waitlist;
         this.clock = clock;
     }
 
@@ -69,6 +73,9 @@ public class CancelBookingUseCase {
             booking.cancel(now, policyCode);
             bookings.update(booking);
             events.cancelled(booking, now);
+            if (!waitlist.lapse(booking.id().value(), WaitlistFollowUp.BOOKING_CANCELLED)) {
+                waitlist.wake(booking.offeringId(), booking.sessionId());
+            }
             return booking;
         });
     }

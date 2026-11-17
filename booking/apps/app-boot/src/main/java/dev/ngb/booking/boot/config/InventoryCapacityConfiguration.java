@@ -4,6 +4,8 @@ import dev.ngb.booking.catalog.api.session.SessionPlaces;
 import dev.ngb.booking.inventory.adapter.capacity.persistence.CapacitySessionPlaces;
 import dev.ngb.booking.inventory.adapter.capacity.persistence.JooqCapacityEngine;
 import dev.ngb.booking.inventory.adapter.capacity.persistence.JooqCapacityUnitReader;
+import dev.ngb.booking.inventory.adapter.capacity.persistence.JooqPoolAvailability;
+import dev.ngb.booking.inventory.api.capacity.PoolAvailability;
 import dev.ngb.booking.inventory.api.engine.InventoryEngine;
 import dev.ngb.booking.inventory.application.capacity.port.CapacityUnitReader;
 import dev.ngb.booking.inventory.application.capacity.service.CapacityPlanner;
@@ -43,5 +45,10 @@ class InventoryCapacityConfiguration {
     @Bean
     SessionPlaces sessionPlaces(DSLContext dsl, TenantContext tenantContext, CapacityPlanner planner) {
         return new CapacitySessionPlaces(dsl, tenantContext, planner);
+    }
+
+    @Bean
+    PoolAvailability poolAvailability(CapacityUnitReader units) {
+        return new JooqPoolAvailability(units);
     }
 }

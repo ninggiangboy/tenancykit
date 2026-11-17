@@ -29,6 +29,8 @@ import dev.ngb.booking_jooq.tables.TenantDomains;
 import dev.ngb.booking_jooq.tables.TenantSystems;
 import dev.ngb.booking_jooq.tables.Tenants;
 import dev.ngb.booking_jooq.tables.UserGrants;
+import dev.ngb.booking_jooq.tables.WaitlistEntries;
+import dev.ngb.booking_jooq.tables.WaitlistWakeups;
 import dev.ngb.booking_jooq.tables.WebhookDeliveries;
 import dev.ngb.booking_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.booking_jooq.tables.WebhookEndpoints;
@@ -165,6 +167,16 @@ public class Tables {
      * The table <code>public.user_grants</code>.
      */
     public static final UserGrants USER_GRANTS = UserGrants.USER_GRANTS;
+
+    /**
+     * The table <code>public.waitlist_entries</code>.
+     */
+    public static final WaitlistEntries WAITLIST_ENTRIES = WaitlistEntries.WAITLIST_ENTRIES;
+
+    /**
+     * The table <code>public.waitlist_wakeups</code>.
+     */
+    public static final WaitlistWakeups WAITLIST_WAKEUPS = WaitlistWakeups.WAITLIST_WAKEUPS;
 
     /**
      * The table <code>public.webhook_deliveries</code>.

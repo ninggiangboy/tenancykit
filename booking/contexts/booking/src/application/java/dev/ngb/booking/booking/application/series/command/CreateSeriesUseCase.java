@@ -202,7 +202,8 @@ public class CreateSeriesUseCase {
                         null,
                         null,
                         BookingSource.TENANT,
-                        plan.series().id()))
+                        plan.series().id(),
+                        null))
                 .booking();
     }
 

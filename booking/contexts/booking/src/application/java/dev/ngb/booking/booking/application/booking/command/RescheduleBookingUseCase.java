@@ -8,6 +8,7 @@ import dev.ngb.booking.booking.application.booking.port.BookingRepository;
 import dev.ngb.booking.booking.application.booking.service.BookingEventPublisher;
 import dev.ngb.booking.booking.application.booking.service.BookingRules;
 import dev.ngb.booking.booking.application.booking.service.InventoryEngines;
+import dev.ngb.booking.booking.application.waitlist.service.WaitlistFollowUp;
 import dev.ngb.booking.booking.domain.booking.AssignedResource;
 import dev.ngb.booking.booking.domain.booking.Booking;
 import dev.ngb.booking.booking.domain.booking.BookingEvents;
@@ -54,6 +55,7 @@ public class RescheduleBookingUseCase {
     private final CalendarReader calendars;
     private final ResourceAssignmentPlanner planner;
     private final BookingEventPublisher events;
+    private final WaitlistFollowUp waitlist;
     private final Clock clock;
     private final long graceSeconds;
 
@@ -65,6 +67,7 @@ public class RescheduleBookingUseCase {
             CalendarReader calendars,
             ResourceAssignmentPlanner planner,
             BookingEventPublisher events,
+            WaitlistFollowUp waitlist,
             Clock clock,
             long graceSeconds) {
         this.unitOfWork = unitOfWork;
@@ -74,6 +77,7 @@ public class RescheduleBookingUseCase {
         this.calendars = calendars;
         this.planner = planner;
         this.events = events;
+        this.waitlist = waitlist;
         this.clock = clock;
         this.graceSeconds = graceSeconds;
     }
@@ -92,6 +96,7 @@ public class RescheduleBookingUseCase {
             Instant now = clock.now();
             BookingEvents.Place previous = BookingEvents.placeOf(booking);
             InventoryEngine engine = engines.of(offering.kind());
+            waitlist.wake(booking.offeringId(), booking.sessionId());
             Instant expiresAt = booking.status() == BookingStatus.CONFIRMED ? null : booking.holdExpiresAt();
 
             if (CAPACITY.equals(offering.kind())) {

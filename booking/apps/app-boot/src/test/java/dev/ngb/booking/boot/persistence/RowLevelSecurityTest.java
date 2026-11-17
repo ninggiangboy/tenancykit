@@ -298,6 +298,16 @@ class RowLevelSecurityTest {
                                now(), now()
                         from e
                         """),
+                Arguments.of("waitlist_entries", """
+                        insert into waitlist_entries (tenant_id, id, offering_id, customer_ref, qty, status,
+                                                      created_at, updated_at)
+                        values ('%1$s', gen_random_uuid(), gen_random_uuid(), 'cust-1', 1, 'WAITING',
+                                now(), now())
+                        """),
+                Arguments.of("waitlist_wakeups", """
+                        insert into waitlist_wakeups (tenant_id, id, scope, created_at)
+                        values ('%1$s', gen_random_uuid(), 'offering/scope', now())
+                        """),
                 Arguments.of("webhook_delivery_attempts", """
                         with e as (
                             insert into webhook_endpoints (tenant_id, id, url, event_types, status, key_id,

@@ -3,6 +3,7 @@ package dev.ngb.booking.booking.application.booking.command;
 import dev.ngb.booking.booking.application.booking.port.BookingRepository;
 import dev.ngb.booking.booking.application.booking.service.BookingEventPublisher;
 import dev.ngb.booking.booking.application.booking.service.InventoryEngines;
+import dev.ngb.booking.booking.application.waitlist.service.WaitlistFollowUp;
 import dev.ngb.booking.booking.domain.booking.Booking;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
@@ -23,6 +24,7 @@ public class ExpireHoldsUseCase {
     private final BookingRepository bookings;
     private final InventoryEngines engines;
     private final BookingEventPublisher events;
+    private final WaitlistFollowUp waitlist;
     private final Clock clock;
     private final int batchSize;
     private final long graceSeconds;
@@ -32,6 +34,7 @@ public class ExpireHoldsUseCase {
             BookingRepository bookings,
             InventoryEngines engines,
             BookingEventPublisher events,
+            WaitlistFollowUp waitlist,
             Clock clock,
             int batchSize,
             long graceSeconds) {
@@ -39,6 +42,7 @@ public class ExpireHoldsUseCase {
         this.bookings = bookings;
         this.engines = engines;
         this.events = events;
+        this.waitlist = waitlist;
         this.clock = clock;
         this.batchSize = batchSize;
         this.graceSeconds = graceSeconds;
@@ -56,6 +60,9 @@ public class ExpireHoldsUseCase {
                 booking.expire(now);
                 bookings.update(booking);
                 events.expired(booking, now);
+                if (!waitlist.lapse(booking.id().value(), WaitlistFollowUp.BOOKING_EXPIRED)) {
+                    waitlist.wake(booking.offeringId(), booking.sessionId());
+                }
                 expired++;
             }
             return expired;

@@ -26,9 +26,8 @@ import tools.jackson.databind.json.JsonMapper;
  * accepts.
  *
  * <p>Each produced type is covered by a test that runs the use case emitting it and validates its outbox payload:
- * {@code BookingEventContractTest} for the booking facts, {@code BookingSeriesTest} for the series facts. The two
- * waitlist schemas are produced by phase 12 and are validated here as contracts until that context exists; the catalog
- * already refuses a subscription to anything without a schema.
+ * {@code BookingEventContractTest} for the booking facts, {@code BookingSeriesTest} for the series facts, and
+ * {@code WaitlistWebhookTest} for the two waitlist facts.
  */
 class WebhookSchemaContractTest extends BookingApiTest {
 

@@ -4,6 +4,8 @@ import dev.ngb.booking.booking.adapter.booking.persistence.JooqBookingReadReposi
 import dev.ngb.booking.booking.adapter.booking.persistence.JooqBookingRepository;
 import dev.ngb.booking.booking.adapter.series.persistence.JooqSeriesReadRepository;
 import dev.ngb.booking.booking.adapter.series.persistence.JooqSeriesRepository;
+import dev.ngb.booking.booking.adapter.waitlist.persistence.JooqWaitlistReadRepository;
+import dev.ngb.booking.booking.adapter.waitlist.persistence.JooqWaitlistRepository;
 import dev.ngb.booking.booking.application.booking.command.CancelBookingUseCase;
 import dev.ngb.booking.booking.application.booking.command.ConfirmBookingUseCase;
 import dev.ngb.booking.booking.application.booking.command.CreateBookingUseCase;
@@ -23,10 +25,18 @@ import dev.ngb.booking.booking.application.series.command.CreateSeriesUseCase;
 import dev.ngb.booking.booking.application.series.port.SeriesRepository;
 import dev.ngb.booking.booking.application.series.query.SeriesQueries;
 import dev.ngb.booking.booking.application.series.query.SeriesReadRepository;
+import dev.ngb.booking.booking.application.waitlist.command.JoinWaitlistUseCase;
+import dev.ngb.booking.booking.application.waitlist.command.LeaveWaitlistUseCase;
+import dev.ngb.booking.booking.application.waitlist.command.OfferWaitlistUseCase;
+import dev.ngb.booking.booking.application.waitlist.service.WaitlistFollowUp;
+import dev.ngb.booking.booking.application.waitlist.port.WaitlistRepository;
+import dev.ngb.booking.booking.application.waitlist.query.WaitlistQueries;
+import dev.ngb.booking.booking.application.waitlist.query.WaitlistReadRepository;
 import dev.ngb.booking.catalog.api.calendar.CalendarReader;
 import dev.ngb.booking.catalog.api.group.GroupCursorReader;
 import dev.ngb.booking.catalog.api.recurrence.RecurrenceReader;
 import dev.ngb.booking.inventory.api.assignment.ResourceAssignmentPlanner;
+import dev.ngb.booking.inventory.api.capacity.PoolAvailability;
 import dev.ngb.booking.inventory.api.engine.InventoryEngine;
 import dev.ngb.core.event.EventPublisher;
 import dev.ngb.core.runtime.Clock;
@@ -113,15 +123,99 @@ class BookingLifecycleConfiguration {
     }
 
     @Bean
+    WaitlistRepository waitlistRepository(DSLContext dsl, TenantContext tenantContext, Clock clock) {
+        return new JooqWaitlistRepository(dsl, tenantContext, clock);
+    }
+
+    @Bean
+    WaitlistReadRepository waitlistReadRepository(DSLContext dsl) {
+        return new JooqWaitlistReadRepository(dsl);
+    }
+
+    @Bean
+    WaitlistQueries waitlistQueries(UnitOfWork unitOfWork, WaitlistReadRepository entries) {
+        return new WaitlistQueries(unitOfWork, entries);
+    }
+
+    @Bean
+    WaitlistFollowUp waitlistFollowUp(
+            UnitOfWork unitOfWork,
+            WaitlistRepository entries,
+            EventPublisher events,
+            TenantContext tenantContext,
+            IdGenerator ids,
+            Clock clock) {
+        return new WaitlistFollowUp(unitOfWork, entries, events, tenantContext, ids, clock);
+    }
+
+    @Bean
+    JoinWaitlistUseCase joinWaitlistUseCase(
+            UnitOfWork unitOfWork,
+            WaitlistRepository entries,
+            BookingRules rules,
+            CalendarReader calendars,
+            ResourceAssignmentPlanner planner,
+            PoolAvailability pools,
+            TenantContext tenantContext,
+            IdGenerator ids,
+            Clock clock,
+            BookingSettings settings) {
+        return new JoinWaitlistUseCase(
+                unitOfWork,
+                entries,
+                rules,
+                calendars,
+                planner,
+                pools,
+                tenantContext,
+                ids,
+                clock,
+                settings.timings().waitlistCapPerTarget());
+    }
+
+    @Bean
+    LeaveWaitlistUseCase leaveWaitlistUseCase(UnitOfWork unitOfWork, WaitlistRepository entries, Clock clock) {
+        return new LeaveWaitlistUseCase(unitOfWork, entries, clock);
+    }
+
+    @Bean
+    OfferWaitlistUseCase offerWaitlistUseCase(
+            UnitOfWork unitOfWork,
+            WaitlistRepository entries,
+            CreateBookingUseCase creates,
+            CalendarReader calendars,
+            ResourceAssignmentPlanner planner,
+            PoolAvailability pools,
+            EventPublisher events,
+            TenantContext tenantContext,
+            IdGenerator ids,
+            Clock clock,
+            BookingSettings settings) {
+        return new OfferWaitlistUseCase(
+                unitOfWork,
+                entries,
+                creates,
+                calendars,
+                planner,
+                pools,
+                events,
+                tenantContext,
+                ids,
+                clock,
+                settings.timings().offerWindowSeconds());
+    }
+
+    @Bean
     ConfirmBookingUseCase confirmBookingUseCase(
             UnitOfWork unitOfWork,
             BookingRepository bookings,
             InventoryEngines engines,
             BookingEventPublisher events,
+            WaitlistFollowUp waitlist,
             Clock clock,
             BookingSettings settings) {
         return new ConfirmBookingUseCase(
-                unitOfWork, bookings, engines, events, clock, settings.timings().graceSeconds());
+                unitOfWork, bookings, engines, events, waitlist, clock, settings.timings().graceSeconds());
     }
 
     @Bean
@@ -142,8 +236,9 @@ class BookingLifecycleConfiguration {
             InventoryEngines engines,
             CalendarReader calendars,
             BookingEventPublisher events,
+            WaitlistFollowUp waitlist,
             Clock clock) {
-        return new CancelBookingUseCase(unitOfWork, bookings, engines, calendars, events, clock);
+        return new CancelBookingUseCase(unitOfWork, bookings, engines, calendars, events, waitlist, clock);
     }
 
     @Bean
@@ -155,6 +250,7 @@ class BookingLifecycleConfiguration {
             CalendarReader calendars,
             ResourceAssignmentPlanner planner,
             BookingEventPublisher events,
+            WaitlistFollowUp waitlist,
             Clock clock,
             BookingSettings settings) {
         return new RescheduleBookingUseCase(
@@ -165,6 +261,7 @@ class BookingLifecycleConfiguration {
                 calendars,
                 planner,
                 events,
+                waitlist,
                 clock,
                 settings.timings().graceSeconds());
     }
@@ -235,6 +332,7 @@ class BookingLifecycleConfiguration {
             BookingRepository bookings,
             InventoryEngines engines,
             BookingEventPublisher events,
+            WaitlistFollowUp waitlist,
             Clock clock,
             BookingSettings settings) {
         return new ExpireHoldsUseCase(
@@ -242,6 +340,7 @@ class BookingLifecycleConfiguration {
                 bookings,
                 engines,
                 events,
+                waitlist,
                 clock,
                 EXPIRE_BATCH_SIZE,
                 settings.timings().graceSeconds());

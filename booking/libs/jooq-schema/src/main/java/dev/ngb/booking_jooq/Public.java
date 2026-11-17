@@ -29,6 +29,8 @@ import dev.ngb.booking_jooq.tables.TenantDomains;
 import dev.ngb.booking_jooq.tables.TenantSystems;
 import dev.ngb.booking_jooq.tables.Tenants;
 import dev.ngb.booking_jooq.tables.UserGrants;
+import dev.ngb.booking_jooq.tables.WaitlistEntries;
+import dev.ngb.booking_jooq.tables.WaitlistWakeups;
 import dev.ngb.booking_jooq.tables.WebhookDeliveries;
 import dev.ngb.booking_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.booking_jooq.tables.WebhookEndpoints;
@@ -182,6 +184,16 @@ public class Public extends SchemaImpl {
     public final UserGrants USER_GRANTS = UserGrants.USER_GRANTS;
 
     /**
+     * The table <code>public.waitlist_entries</code>.
+     */
+    public final WaitlistEntries WAITLIST_ENTRIES = WaitlistEntries.WAITLIST_ENTRIES;
+
+    /**
+     * The table <code>public.waitlist_wakeups</code>.
+     */
+    public final WaitlistWakeups WAITLIST_WAKEUPS = WaitlistWakeups.WAITLIST_WAKEUPS;
+
+    /**
      * The table <code>public.webhook_deliveries</code>.
      */
     public final WebhookDeliveries WEBHOOK_DELIVERIES = WebhookDeliveries.WEBHOOK_DELIVERIES;
@@ -242,6 +254,8 @@ public class Public extends SchemaImpl {
             TenantSystems.TENANT_SYSTEMS,
             Tenants.TENANTS,
             UserGrants.USER_GRANTS,
+            WaitlistEntries.WAITLIST_ENTRIES,
+            WaitlistWakeups.WAITLIST_WAKEUPS,
             WebhookDeliveries.WEBHOOK_DELIVERIES,
             WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS,
             WebhookEndpoints.WEBHOOK_ENDPOINTS,

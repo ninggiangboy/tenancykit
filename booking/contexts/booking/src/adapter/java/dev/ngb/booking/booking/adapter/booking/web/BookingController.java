@@ -200,6 +200,7 @@ public class BookingController {
                 request.partySize(),
                 idempotencyKey,
                 null,
+                null,
                 null));
         HttpStatus status = result.replayed() ? HttpStatus.OK : HttpStatus.CREATED;
         return ResponseEntity.status(status)
