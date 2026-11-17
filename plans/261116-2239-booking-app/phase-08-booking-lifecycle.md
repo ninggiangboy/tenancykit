@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "Booking lifecycle: hold, confirm, extend, cancel, expire"
-status: pending
+status: completed
 priority: P1
 effort: "L"
 dependencies: [6, 7]
