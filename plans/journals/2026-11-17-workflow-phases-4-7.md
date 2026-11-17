@@ -13,7 +13,7 @@ Date: 2026-11-17. Plan: `plans/261116-2253-workflow-app/`.
 | 5 Definition authoring and publish | done | `964efa66` |
 | 6 Execution core | done | `b469fd11` |
 | 7 Triggers (hook, manual, schedule) | done | `b03cc634` |
-| 8 Durable time | not started | |
+| 8 Durable time | done | `119fb46a` |
 | 9 HTTP actions, connections, vault | not started | |
 | 10 Control flow | not started | |
 | 11 Human tasks | not started | |
@@ -96,27 +96,54 @@ OpenAPI contract, permission catalog and all integration tests).
   because `next_due` is computed after `now`.
 - App-boot wiring is manual `@Configuration` classes; every new context needs one.
 
-## Next: phase 8 (durable time) concrete plan
+## Phase 8 as landed
 
-1. `V5__timers.sql`: `workflow_timer` (kind DELAY/WAIT_TIMEOUT/TASK_DUE/RETRY, `due_at`, `fired_at`)
-   and `workflow_wait_subscription` (source, event type, correlation key, `expires_at`,
-   `resolved_at`), plus `workflow_token.resume_branch text` and `resume_payload jsonb` (or a
-   dedicated resume table) to hand the resumed wait its event.
-2. Extend `StepOutcome` with a parked variant: timer request and/or wait subscription; `ClaimAndRun`
-   records the step, moves the token to WAITING (conditional), inserts the timer/subscription, and
-   sets the instance WAITING when no token is READY/RUNNING.
-3. `delay`: park with a `DELAY` timer at `now + duration`; on fire, token becomes READY with
-   `resume_branch=delay`; the executor then takes `next`.
-4. `wait`: park with a subscription and a `WAIT_TIMEOUT` timer; the event matcher resolves
-   WAITING→READY (`resume_branch=event`, payload = event data) and removes the timer; the timer
-   resolves WAITING→READY (`resume_branch=timeout`) and marks the subscription resolved. Resolution
-   is one conditional UPDATE; whichever side updates the row wins and the loser does nothing.
-5. `EventMatcher` runs inside the phase-7 hook transaction after the event is stored, and also checks
-   the buffer on registration so an event that arrived earlier is matched.
-6. `TimerSweep` per tenant, `SKIP LOCKED`, batched; a second sweep changes nothing.
-7. Tests with a fake clock: delay resumes not before its due time; restart during a delay resumes;
-   event-vs-timeout race resolved 1,000 times yields one branch; a duplicated event is ignored;
-   a timer swept twice runs the next step once.
+- `V5__timers.sql`: `workflow_timer` (DELAY/WAIT_TIMEOUT/TASK_DUE/RETRY) and `workflow_wait_subscription`,
+  both tenant-scoped; `workflow_token.resume_branch`/`resume_payload` carry the branch a wait resumed on.
+- `StepOutcome.parked(...)` with a `Reservation`; `ClaimAndRun.park` writes the timer/subscription in the
+  same transaction as the step, moves the token to WAITING, and moves the instance to WAITING when no
+  token is READY or RUNNING.
+- `TokenRepository.park/resume` are conditional WAITING/RUNNING updates; the timer sweep and the event
+  resolver race on that one update and the winner cancels the other side.
+- `TimerSweep` + `TimerSweepJob` fire due timers per tenant; `WaitResolver` (runtime api) is called by the
+  signed hook inside its transaction; `TriggeredEventLookup` (boot) fills the early-event port from the
+  triggers buffer without a context cycle.
+- Executor: `delay` (`duration` ISO text or number, or `until`) and `wait` (`source`, `event`, `timeout`,
+  `on_timeout`, `next`); a buffered event satisfies a wait immediately.
+- Tests: delay parks/resumes; timeout wins and a late event is ignored; event wins and cancels the timer;
+  buffered event satisfies a wait; 25 concurrent event-vs-timer races resume exactly one branch.
+
+Caveat found while landing it: the old `UPDATE ... WHERE id IN (SELECT ... SKIP LOCKED LIMIT 1) RETURNING`
+claim could return more than one row under eight workers. `claimNext` now selects the id first (locking it)
+and updates that one row, guarded by `status = READY`.
+
+## Next: phase 9 (HTTP actions, connections, vault) concrete plan
+
+Read `phase-09-http-actions-connections-and-vault.md` for the full scope; these are the seams it lands in.
+
+1. `V6__connections.sql`: `workflow_connection` (tenant, name, kind BEARER/BASIC/API_KEY/HMAC/NONE,
+   allowed host pattern, encrypted secret, key id, last verified) and `workflow_platform_credential` (one
+   per tenant: client id, encrypted secret, key id, status), both with RLS. Reuse
+   `workflow.shared.secret.SecretBox`; it already produces `v1.<keyId>.<base64(nonce||ciphertext)>`.
+2. New context `connections` with its own `build.gradle.kts` (copy the triggers module's wiring):
+   domain + application (`RegisterCredential`, `ManageConnection`, `TokenProvider`, `HttpCall` ports) +
+   adapter (controllers under `/api/v1/connections` and `/api/v1/platform-credential`, jOOQ stores, the
+   Platform token client and the outbound sender).
+3. `TokenProvider` is a port in the connections application layer with an adapter cache keyed by
+   `(tenant, audience)`, refreshed about a minute before `exp`, one in-flight request per key, and
+   `Retry-After` on 429. A 401 from the token endpoint flips the credential to `INVALID`.
+4. Only `connections` may make an outbound call. Runtime's `HttpNodeExecutor` (domain) must go through a
+   runtime-owned port, implemented in boot by delegating to the connections api — the same trick as
+   `TriggeredEventLookup`, so neither context imports the other's internals.
+5. Reuse `core/core-webhook` `DestinationPolicy`, `GuardedDnsResolver`, `WebhookHttpSender` and
+   `RetrySchedule`; do not write new guards. App calls resolve the base URL from configuration and the
+   tenant host from the replica; an external call is limited to the connection's allowed host pattern.
+6. History keeps a redacted request/response (authorization, cookies, the connection's secret, configured
+   header names). `StepRun.response` is where the redaction shows up.
+7. Tests: key rotation still decrypts; no secret in any history row; one token reused until near expiry
+   and refreshed once under 50 concurrent calls; 401 flips the credential; the SSRF suite refuses
+   localhost, 127.0.0.1, 169.254.169.254, `[::1]`, a name resolving to 10.0.0.1, redirects to each, and an
+   allowed-host mismatch, with no connection made.
 
 ## Cautions
 
