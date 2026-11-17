@@ -159,7 +159,7 @@ public class WebhookEndpoints extends TableImpl<WebhookEndpointsRecord> {
         return Arrays.asList(
             Internal.createCheck(this, DSL.name("webhook_endpoints_description_check"), "((length(description) <= 255))", true),
             Internal.createCheck(this, DSL.name("webhook_endpoints_event_types_check"), "(((cardinality(event_types) >= 1) AND (cardinality(event_types) <= 100)))", true),
-            Internal.createCheck(this, DSL.name("webhook_endpoints_status_check"), "((status = ANY (ARRAY['ACTIVE'::text, 'DISABLED'::text])))", true),
+            Internal.createCheck(this, DSL.name("webhook_endpoints_status_check"), "((status = ANY (ARRAY['ACTIVE'::text, 'DISABLED'::text, 'DELETED'::text])))", true),
             Internal.createCheck(this, DSL.name("webhook_endpoints_url_check"), "(((length(url) >= 1) AND (length(url) <= 2048)))", true),
             Internal.createCheck(this, DSL.name("webhook_endpoints_version_check"), "((version >= 1))", true)
         );

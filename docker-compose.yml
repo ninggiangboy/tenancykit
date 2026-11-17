@@ -225,6 +225,11 @@ x-loyalty-environment: &loyalty-environment
   # The public host a Tenant's system reaches /loyalty/... from; it must be a hostname Caddy serves.
   LOYALTY_PUBLIC_BASE_URL: ${LOYALTY_PUBLIC_BASE_URL:-http://localhost:8090/loyalty}
   LOYALTY_PORT: "8080"
+  # A local stack runs the two point jobs quickly so the smoke can watch expiry and its notice happen instead of
+  # waiting an hour for the shipped schedule, which is what `application.yml` keeps as the default everywhere else.
+  LOYALTY_EXPIRY_INTERVAL: PT10S
+  LOYALTY_EXPIRY_NOTICE_INTERVAL: PT10S
+  LOYALTY_TIER_EVALUATION_INTERVAL: PT10S
 
 x-app: &app
   restart: unless-stopped

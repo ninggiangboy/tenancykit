@@ -108,9 +108,9 @@ declare_user mailroom \
 # grant on platform.events, which is what the isolation smoke proves.
 declare_user survey \
   "${SURVEY_BROKER_PASSWORD:?set the survey broker password}" \
-  '^(survey\.platform-events|survey\.platform-events\.dlq|suite\.dlx|survey\.events)$' \
-  '^(survey\.platform-events|survey\.platform-events\.dlq|suite\.dlx|survey\.events)$' \
-  '^(platform\.events|survey\.platform-events|survey\.platform-events\.dlq|suite\.dlx)$'
+  '^(survey\\.platform-events|survey\\.platform-events\\.dlq|suite\\.dlx|survey\\.events)$' \
+  '^(survey\\.platform-events|survey\\.platform-events\\.dlq|suite\\.dlx|survey\\.events)$' \
+  '^(platform\\.events|survey\\.platform-events|survey\\.platform-events\\.dlq|suite\\.dlx)$'
 
 # crm and loyalty are replica consumers only: each declares one queue and its dead-letter pair and owns no exchange, so
 # its facts leave as webhooks and there is no crm or loyalty exchange to grant. `write` stops at its own queue
