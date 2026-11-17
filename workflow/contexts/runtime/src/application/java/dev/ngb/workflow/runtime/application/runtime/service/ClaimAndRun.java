@@ -19,8 +19,11 @@ import dev.ngb.workflow.runtime.application.runtime.port.WakeUpPublisher;
 import dev.ngb.workflow.runtime.domain.instance.Instance;
 import dev.ngb.workflow.runtime.domain.instance.InstanceStatus;
 import dev.ngb.workflow.runtime.domain.step.ExecutionContext;
+import dev.ngb.workflow.runtime.domain.step.ErrorClass;
+import dev.ngb.workflow.runtime.domain.step.ErrorClassifier;
 import dev.ngb.workflow.runtime.domain.step.IdempotencyKeys;
 import dev.ngb.workflow.runtime.domain.step.NodeExecutor;
+import dev.ngb.workflow.runtime.domain.step.RetryPolicy;
 import dev.ngb.workflow.runtime.domain.step.StepOutcome;
 import dev.ngb.workflow.runtime.domain.step.StepRun;
 import dev.ngb.workflow.runtime.domain.timer.Timer;
@@ -58,6 +61,9 @@ public class ClaimAndRun {
      */
     public record Outcome(boolean claimed, UUID tokenId, InstanceStatus status, String failure) {}
 
+    /** What one pass decided: the instance's status, and whether the failure asks for a rollback. */
+    private record Decision(InstanceStatus status, boolean compensate) {}
+
     private static final Outcome NOTHING = new Outcome(false, null, null, null);
 
     /** How many sub-workflow steps may separate a child from a top-level instance. */
@@ -77,6 +83,7 @@ public class ClaimAndRun {
     private final TaskGateway tasks;
     private final VersionReader versions;
     private final NodeExecutor executor;
+    private final CompensationRunner compensation;
     private final WakeUpPublisher wakeUp;
     private final IdGenerator ids;
     private final Clock clock;
@@ -95,6 +102,7 @@ public class ClaimAndRun {
             TaskGateway tasks,
             VersionReader versions,
             NodeExecutor executor,
+            CompensationRunner compensation,
             WakeUpPublisher wakeUp,
             IdGenerator ids,
             Clock clock,
@@ -111,6 +119,7 @@ public class ClaimAndRun {
         this.tasks = tasks;
         this.versions = versions;
         this.executor = executor;
+        this.compensation = compensation;
         this.wakeUp = wakeUp;
         this.ids = ids;
         this.clock = clock;
@@ -149,13 +158,40 @@ public class ClaimAndRun {
                                 token, instance, version.graph(), node, instance.variables(), outputs, clock.now()));
 
         Instant finishedAt = clock.now();
-        InstanceStatus status =
+        Decision decision =
                 unitOfWork.transactional(() -> record(token, instance, outcome, finishedAt, version.graph()));
+        InstanceStatus status = decision.status();
+        if (decision.compensate()) {
+            status = rollBack(instance, version.graph(), outcome);
+        }
         if (!status.terminal()) {
             // A following token may already be due; the wake-up saves a sweep interval.
             wakeUp.wake(token.tenantId());
         }
         return new Outcome(true, token.id(), status, outcome.failure());
+    }
+
+    /**
+     * Runs the compensations after the failing step's transaction has committed, each in its own unit of work, so an
+     * HTTP call never holds the transaction that recorded the step. A compensation that fails after its retries leaves
+     * the instance dead-lettered; a clean rollback fails the instance.
+     */
+    private InstanceStatus rollBack(Instance instance, GraphView graph, StepOutcome outcome) {
+        Optional<String> failedStep = compensation.compensate(instance, graph);
+        if (failedStep.isPresent()) {
+            String reason = "compensation_failed:" + failedStep.get();
+            unitOfWork.transactional(() -> {
+                instances.markFailure(instance.id(), InstanceStatus.COMPENSATION_FAILED, reason);
+                return Boolean.TRUE;
+            });
+            return InstanceStatus.COMPENSATION_FAILED;
+        }
+        Instant now = clock.now();
+        unitOfWork.transactional(() -> {
+            finishInstance(instance, InstanceStatus.FAILED, now, outcome);
+            return Boolean.TRUE;
+        });
+        return InstanceStatus.FAILED;
     }
 
     /** Runs up to {@code limit} steps, stopping as soon as none is due. */
@@ -167,22 +203,25 @@ public class ClaimAndRun {
         return ran;
     }
 
-    private InstanceStatus record(
+    private Decision record(
             Token token, Instance instance, StepOutcome outcome, Instant finishedAt, GraphView graph) {
         if (outcome.iterating()) {
-            return iterate(token, instance, outcome, finishedAt, graph);
+            return new Decision(iterate(token, instance, outcome, finishedAt, graph), false);
         }
         if (outcome.subflowing()) {
-            return startChild(token, instance, outcome, finishedAt);
+            return new Decision(startChild(token, instance, outcome, finishedAt), false);
         }
         if (outcome.hasTask()) {
-            return createTask(token, instance, outcome, finishedAt);
+            return new Decision(createTask(token, instance, outcome, finishedAt), false);
         }
         if (outcome.failed() && token.loopNodeId() != null) {
             InstanceStatus afterItemFailure = itemFailed(token, instance, outcome, finishedAt, graph);
             if (afterItemFailure != null) {
-                return afterItemFailure;
+                return new Decision(afterItemFailure, false);
             }
+        }
+        if (outcome.failed()) {
+            return failed(token, instance, outcome, finishedAt, graph);
         }
         boolean joined = false;
         if (outcome.joining()) {
@@ -205,26 +244,26 @@ public class ClaimAndRun {
             } else {
                 boolean completed = tokens.finish(token.id(), workerId, TokenStatus.DONE, finishedAt);
                 if (!completed) {
-                    return instance.status();
+                    return new Decision(instance.status(), false);
                 }
                 recordStep(token, outcome, finishedAt);
                 updateVariables(instance, outcome);
                 if (tokens.liveCount(token.instanceId()) > 0) {
-                    return InstanceStatus.RUNNING;
+                    return new Decision(InstanceStatus.RUNNING, false);
                 }
                 // No branch can arrive any more, so this join will never reach its count.
                 finishInstance(instance, InstanceStatus.FAILED, finishedAt, outcome);
-                return InstanceStatus.FAILED;
+                return new Decision(InstanceStatus.FAILED, false);
             }
         }
         if (outcome.parked()) {
-            return park(token, instance, outcome, finishedAt);
+            return new Decision(park(token, instance, outcome, finishedAt), false);
         }
         boolean completed = tokens.finish(
                 token.id(), workerId, outcome.failed() ? TokenStatus.FAILED : TokenStatus.DONE, finishedAt);
         if (!completed) {
             // The lease ran out and another worker owns the token; it writes the only completion.
-            return instance.status();
+            return new Decision(instance.status(), false);
         }
         recordStep(token, outcome, finishedAt);
 
@@ -255,7 +294,87 @@ public class ClaimAndRun {
         if (next.terminal()) {
             finishInstance(instance, next, finishedAt, outcome);
         }
-        return next;
+        return new Decision(next, false);
+    }
+
+    /**
+     * What a failed step does: it backs off and is retried, it routes to the node its {@code on_error} edge names, it
+     * rolls the instance back, or the instance is left dead-lettered for an operator.
+     */
+    private Decision failed(
+            Token token, Instance instance, StepOutcome outcome, Instant finishedAt, GraphView graph) {
+        GraphNode node = graph.node(token.nodeId()).orElse(null);
+        ErrorClass errorClass = ErrorClassifier.classify(outcome);
+        RetryPolicy retry = RetryPolicy.of(node);
+        if (errorClass == ErrorClass.RETRYABLE && retry.hasAttemptsLeft(token.attempt())) {
+            // The token keeps its id and its attempt, so the retried step sends the same idempotency key.
+            if (tokens.retryLater(
+                    token.id(), workerId, retry.nextAvailableAt(finishedAt, token.attempt()), finishedAt)) {
+                recordStep(token, outcome, errorClass, finishedAt, outcome.response());
+            }
+            return new Decision(InstanceStatus.RUNNING, false);
+        }
+        if (node != null && node.text("on_error") != null) {
+            return new Decision(routeToOnError(token, instance, outcome, errorClass, node, finishedAt), false);
+        }
+        if (compensation.due(node)) {
+            if (!tokens.finish(token.id(), workerId, TokenStatus.FAILED, finishedAt)) {
+                return new Decision(instance.status(), false);
+            }
+            recordStep(token, outcome, errorClass, finishedAt, outcome.response());
+            instances.markFailure(instance.id(), InstanceStatus.COMPENSATING, outcome.failure());
+            return new Decision(InstanceStatus.COMPENSATING, true);
+        }
+        return new Decision(deadLettered(token, instance, outcome, errorClass, finishedAt), false);
+    }
+
+    /**
+     * The node's {@code on_error} edge: the failing step records the failure as its output and the flow goes on, so a
+     * graph that can handle an error keeps running instead of stopping the instance.
+     */
+    private InstanceStatus routeToOnError(
+            Token token,
+            Instance instance,
+            StepOutcome outcome,
+            ErrorClass errorClass,
+            GraphNode node,
+            Instant finishedAt) {
+        if (!tokens.finish(token.id(), workerId, TokenStatus.DONE, finishedAt)) {
+            return instance.status();
+        }
+        recordStep(
+                token,
+                outcome,
+                errorClass,
+                finishedAt,
+                ErrorClassifier.envelope(errorClass, outcome.failure(), outcome.response()));
+        String next = node.text("on_error");
+        tokens.add(Token.ready(
+                ids.newId(), token.tenantId(), token.instanceId(), next, token.id(), token.branchKey(),
+                token.iteration(), null, null, finishedAt));
+        updateVariables(instance, outcome);
+        return InstanceStatus.RUNNING;
+    }
+
+    /**
+     * No {@code on_error} edge and no rollback: the instance is dead-lettered, so an operator can retry the step,
+     * replay the input, or cancel it. The branches still moving are abandoned.
+     */
+    private InstanceStatus deadLettered(
+            Token token, Instance instance, StepOutcome outcome, ErrorClass errorClass, Instant finishedAt) {
+        if (!tokens.finish(token.id(), workerId, TokenStatus.FAILED, finishedAt)) {
+            return instance.status();
+        }
+        recordStep(token, outcome, errorClass, finishedAt, outcome.response());
+        if (instance.parentTokenId() != null) {
+            // A sub-workflow's child reports its failure to the parent instead of dead-lettering: nothing else would
+            // ever resume the token that waits for it.
+            finishInstance(instance, InstanceStatus.FAILED, finishedAt, outcome);
+            return InstanceStatus.FAILED;
+        }
+        tokens.cancelLive(token.instanceId(), token.id(), finishedAt);
+        instances.markFailure(instance.id(), InstanceStatus.FAILED_STUCK, outcome.failure());
+        return InstanceStatus.FAILED_STUCK;
     }
 
     /**
@@ -556,6 +675,11 @@ public class ClaimAndRun {
     }
 
     private void recordStep(Token token, StepOutcome outcome, Instant finishedAt) {
+        recordStep(token, outcome, ErrorClassifier.classify(outcome), finishedAt, outcome.response());
+    }
+
+    private void recordStep(
+            Token token, StepOutcome outcome, ErrorClass errorClass, Instant finishedAt, Object response) {
         steps.add(new StepRun(
                 ids.newId(),
                 token.tenantId(),
@@ -566,8 +690,10 @@ public class ClaimAndRun {
                 token.updatedAt(),
                 finishedAt,
                 outcome.failed() ? "FAILED" : "SUCCEEDED",
+                errorClass == null ? null : errorClass.name(),
+                outcome.failure(),
                 null,
-                outcome.response(),
+                response,
                 IdempotencyKeys.of(token.instanceId(), token.id(), token.nodeId(), token.iteration())));
     }
 

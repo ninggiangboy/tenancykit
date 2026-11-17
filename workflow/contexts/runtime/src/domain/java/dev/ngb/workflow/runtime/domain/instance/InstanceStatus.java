@@ -1,15 +1,17 @@
 package dev.ngb.workflow.runtime.domain.instance;
 
-/** Where an instance stands. A terminal status is the only one that carries a finish time. */
 public enum InstanceStatus {
     RUNNING,
     WAITING,
     COMPLETED,
     FAILED,
+    FAILED_STUCK,
     CANCELLED,
-    COMPENSATING;
+    COMPENSATING,
+    COMPENSATION_FAILED;
 
     public boolean terminal() {
-        return this == COMPLETED || this == FAILED || this == CANCELLED;
+        return this == COMPLETED || this == FAILED || this == FAILED_STUCK || this == CANCELLED
+                || this == COMPENSATION_FAILED;
     }
 }

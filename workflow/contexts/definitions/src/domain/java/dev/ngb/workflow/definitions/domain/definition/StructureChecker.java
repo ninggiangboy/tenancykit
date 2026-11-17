@@ -345,8 +345,7 @@ public final class StructureChecker {
         while (!queue.isEmpty()) {
             String id = queue.remove();
             for (Edge edge : edges) {
-                if (!edge.compensation() && edge.source().equals(id) && byId.containsKey(edge.target())
-                        && reached.add(edge.target())) {
+                if (edge.source().equals(id) && byId.containsKey(edge.target()) && reached.add(edge.target())) {
                     queue.add(edge.target());
                 }
             }

@@ -6,6 +6,7 @@ package dev.ngb.workflow_jooq.tables;
 
 import dev.ngb.workflow_jooq.Keys;
 import dev.ngb.workflow_jooq.Public;
+import dev.ngb.workflow_jooq.tables.WorkflowCompensationRun.WorkflowCompensationRunPath;
 import dev.ngb.workflow_jooq.tables.WorkflowStepRun.WorkflowStepRunPath;
 import dev.ngb.workflow_jooq.tables.WorkflowTask.WorkflowTaskPath;
 import dev.ngb.workflow_jooq.tables.WorkflowTimer.WorkflowTimerPath;
@@ -156,6 +157,16 @@ public class WorkflowInstance extends TableImpl<WorkflowInstanceRecord> {
      */
     public final TableField<WorkflowInstanceRecord, Integer> DEPTH = createField(DSL.name("depth"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.INTEGER)), this, "");
 
+    /**
+     * The column <code>public.workflow_instance.failure_reason</code>.
+     */
+    public final TableField<WorkflowInstanceRecord, String> FAILURE_REASON = createField(DSL.name("failure_reason"), SQLDataType.CLOB, this, "");
+
+    /**
+     * The column <code>public.workflow_instance.replayed_from</code>.
+     */
+    public final TableField<WorkflowInstanceRecord, UUID> REPLAYED_FROM = createField(DSL.name("replayed_from"), SQLDataType.UUID, this, "");
+
     private WorkflowInstance(Name alias, Table<WorkflowInstanceRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -259,6 +270,19 @@ public class WorkflowInstance extends TableImpl<WorkflowInstanceRecord> {
         return _workflowVersion;
     }
 
+    private transient WorkflowCompensationRunPath _workflowCompensationRun;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.workflow_compensation_run</code> table
+     */
+    public WorkflowCompensationRunPath workflowCompensationRun() {
+        if (_workflowCompensationRun == null)
+            _workflowCompensationRun = new WorkflowCompensationRunPath(this, null, Keys.WORKFLOW_COMPENSATION_RUN__WORKFLOW_COMPENSATION_RUN_INSTANCE_ID_FKEY.getInverseKey());
+
+        return _workflowCompensationRun;
+    }
+
     private transient WorkflowStepRunPath _workflowStepRun;
 
     /**
@@ -330,7 +354,7 @@ public class WorkflowInstance extends TableImpl<WorkflowInstanceRecord> {
             Internal.createCheck(this, DSL.name("workflow_instance_check"), "(((status = ANY (ARRAY['COMPLETED'::text, 'FAILED'::text, 'CANCELLED'::text])) = (finished_at IS NOT NULL)))", true),
             Internal.createCheck(this, DSL.name("workflow_instance_correlation_key_check"), "((length(correlation_key) <= 200))", true),
             Internal.createCheck(this, DSL.name("workflow_instance_depth_check"), "((depth >= 0))", true),
-            Internal.createCheck(this, DSL.name("workflow_instance_status_check"), "((status = ANY (ARRAY['RUNNING'::text, 'WAITING'::text, 'COMPLETED'::text, 'FAILED'::text, 'CANCELLED'::text, 'COMPENSATING'::text])))", true),
+            Internal.createCheck(this, DSL.name("workflow_instance_status_check"), "((status = ANY (ARRAY['RUNNING'::text, 'WAITING'::text, 'COMPLETED'::text, 'FAILED'::text, 'CANCELLED'::text, 'COMPENSATING'::text, 'FAILED_STUCK'::text, 'COMPENSATION_FAILED'::text])))", true),
             Internal.createCheck(this, DSL.name("workflow_instance_version_check"), "((version >= 1))", true)
         );
     }

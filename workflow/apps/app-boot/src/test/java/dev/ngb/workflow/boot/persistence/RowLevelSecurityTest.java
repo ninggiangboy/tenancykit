@@ -165,6 +165,27 @@ class RowLevelSecurityTest {
                         select gen_random_uuid(), '%1$s', i.id, gen_random_uuid(), 'start', 1, now(), now(), 'SUCCEEDED',
                                repeat('a', 64) from i
                         """),
+                row("workflow_compensation_run", """
+                        with d as (
+                            insert into workflow_definition (id, tenant_id, code, name, status, latest_version, created_at,
+                                                             updated_at)
+                            values (gen_random_uuid(), '%1$s', 'compensations', 'Compensations', 'PUBLISHED', 1, now(), now())
+                            returning id, tenant_id
+                        ), v as (
+                            insert into workflow_version (id, tenant_id, definition_id, version, graph, content_hash,
+                                                          published_at)
+                            select gen_random_uuid(), '%1$s', d.id, 1, '{}'::jsonb, 'hash', now() from d
+                            returning id, definition_id
+                        ), i as (
+                            insert into workflow_instance (id, tenant_id, definition_id, version_id, version_number, status,
+                                                           input, started_at)
+                            select gen_random_uuid(), '%1$s', v.definition_id, v.id, 1, 'COMPENSATING', '{}'::jsonb, now()
+                            from v returning id
+                        )
+                        insert into workflow_compensation_run (id, tenant_id, instance_id, step_run_id, node_id, status,
+                                                               attempts, started_at)
+                        select gen_random_uuid(), '%1$s', i.id, gen_random_uuid(), 'refund', 'RUNNING', 1, now() from i
+                        """),
                 row("workflow_trigger", """
                         with d as (
                             insert into workflow_definition (id, tenant_id, code, name, status, latest_version, created_at,

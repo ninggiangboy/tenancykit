@@ -38,7 +38,8 @@ final class ArchitectureRules {
         for (String table : List.of("WorkflowDefinition", "WorkflowVersion")) {
             TABLE_OWNER.put(table, "definitions");
         }
-        for (String table : List.of("WorkflowInstance", "WorkflowToken", "WorkflowStepRun")) {
+        for (String table : List.of(
+                "WorkflowInstance", "WorkflowToken", "WorkflowStepRun", "WorkflowCompensationRun")) {
             TABLE_OWNER.put(table, "runtime");
         }
         for (String table : List.of("WorkflowTrigger", "WorkflowInboundEvent", "WorkflowSchedule")) {

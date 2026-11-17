@@ -202,6 +202,36 @@ public class WorkflowStepRunRecord extends UpdatableRecordImpl<WorkflowStepRunRe
         return (String) get(11);
     }
 
+    /**
+     * Setter for <code>public.workflow_step_run.error_class</code>.
+     */
+    public WorkflowStepRunRecord setErrorClass(String value) {
+        set(12, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.workflow_step_run.error_class</code>.
+     */
+    public String getErrorClass() {
+        return (String) get(12);
+    }
+
+    /**
+     * Setter for <code>public.workflow_step_run.failure</code>.
+     */
+    public WorkflowStepRunRecord setFailure(String value) {
+        set(13, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.workflow_step_run.failure</code>.
+     */
+    public String getFailure() {
+        return (String) get(13);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -225,7 +255,7 @@ public class WorkflowStepRunRecord extends UpdatableRecordImpl<WorkflowStepRunRe
     /**
      * Create a detached, initialised WorkflowStepRunRecord
      */
-    public WorkflowStepRunRecord(UUID id, UUID tenantId, UUID instanceId, UUID tokenId, String nodeId, Integer attempt, Instant startedAt, Instant finishedAt, String outcome, JSONB request, JSONB response, String idempotencyKey) {
+    public WorkflowStepRunRecord(UUID id, UUID tenantId, UUID instanceId, UUID tokenId, String nodeId, Integer attempt, Instant startedAt, Instant finishedAt, String outcome, JSONB request, JSONB response, String idempotencyKey, String errorClass, String failure) {
         super(WorkflowStepRun.WORKFLOW_STEP_RUN);
 
         setId(id);
@@ -240,6 +270,8 @@ public class WorkflowStepRunRecord extends UpdatableRecordImpl<WorkflowStepRunRe
         setRequest(request);
         setResponse(response);
         setIdempotencyKey(idempotencyKey);
+        setErrorClass(errorClass);
+        setFailure(failure);
         resetTouchedOnNotNull();
     }
 }

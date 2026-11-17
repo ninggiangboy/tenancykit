@@ -774,6 +774,74 @@ paths:
               schema:
                 $ref: "#/components/schemas/StartedInstanceResponse"
       x-required-permission: "workflow:instance:manage"
+  /api/v1/instances/{id}/retry:
+    post:
+      tags:
+      - "instance-operations-controller"
+      operationId: "retry"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RetryRequest"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InstanceStateResponse"
+      x-required-permission: "workflow:instance:manage"
+  /api/v1/instances/{id}/replay:
+    post:
+      tags:
+      - "instance-operations-controller"
+      operationId: "replay"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InstanceStateResponse"
+      x-required-permission: "workflow:instance:manage"
+  /api/v1/instances/{id}/cancel:
+    post:
+      tags:
+      - "instance-operations-controller"
+      operationId: "cancel"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "compensate"
+        in: "query"
+        required: false
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InstanceStateResponse"
+      x-required-permission: "workflow:instance:manage"
   /api/v1/definitions:
     get:
       tags:
@@ -1312,6 +1380,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/TaskView"
       x-required-permission: "workflow:task:read"
+  /api/v1/instances/{id}/steps:
+    get:
+      tags:
+      - "instance-operations-controller"
+      operationId: "steps"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/StepRunView"
+      x-required-permission: "workflow:instance:read"
   /api/v1/definitions/{id}:
     get:
       tags:
@@ -1668,6 +1757,20 @@ components:
           type: "string"
         status:
           type: "string"
+    RetryRequest:
+      type: "object"
+      properties:
+        nodeId:
+          type: "string"
+    InstanceStateResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        status:
+          type: "string"
+        failureReason:
+          type: "string"
     CreateDefinitionRequest:
       type: "object"
       properties:
@@ -1763,6 +1866,32 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
+    StepRunView:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        nodeId:
+          type: "string"
+        attempt:
+          type: "integer"
+          format: "int32"
+        startedAt:
+          type: "string"
+          format: "date-time"
+        finishedAt:
+          type: "string"
+          format: "date-time"
+        outcome:
+          type: "string"
+        errorClass:
+          type: "string"
+        failure:
+          type: "string"
+        response: {}
+        idempotencyKey:
+          type: "string"
     PageDefinitionResponse:
       type: "object"
       properties:

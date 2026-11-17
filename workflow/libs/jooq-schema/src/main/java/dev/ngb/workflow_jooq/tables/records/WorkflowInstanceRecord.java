@@ -292,6 +292,36 @@ public class WorkflowInstanceRecord extends UpdatableRecordImpl<WorkflowInstance
         return (Integer) get(17);
     }
 
+    /**
+     * Setter for <code>public.workflow_instance.failure_reason</code>.
+     */
+    public WorkflowInstanceRecord setFailureReason(String value) {
+        set(18, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.workflow_instance.failure_reason</code>.
+     */
+    public String getFailureReason() {
+        return (String) get(18);
+    }
+
+    /**
+     * Setter for <code>public.workflow_instance.replayed_from</code>.
+     */
+    public WorkflowInstanceRecord setReplayedFrom(UUID value) {
+        set(19, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.workflow_instance.replayed_from</code>.
+     */
+    public UUID getReplayedFrom() {
+        return (UUID) get(19);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -315,7 +345,7 @@ public class WorkflowInstanceRecord extends UpdatableRecordImpl<WorkflowInstance
     /**
      * Create a detached, initialised WorkflowInstanceRecord
      */
-    public WorkflowInstanceRecord(UUID id, UUID tenantId, UUID definitionId, UUID versionId, Integer versionNumber, String status, JSONB input, JSONB variables, String correlationKey, String startedBy, Instant startedAt, Instant finishedAt, Long version, String idempotencyKey, String requestHash, UUID parentInstanceId, UUID parentTokenId, Integer depth) {
+    public WorkflowInstanceRecord(UUID id, UUID tenantId, UUID definitionId, UUID versionId, Integer versionNumber, String status, JSONB input, JSONB variables, String correlationKey, String startedBy, Instant startedAt, Instant finishedAt, Long version, String idempotencyKey, String requestHash, UUID parentInstanceId, UUID parentTokenId, Integer depth, String failureReason, UUID replayedFrom) {
         super(WorkflowInstance.WORKFLOW_INSTANCE);
 
         setId(id);
@@ -336,6 +366,8 @@ public class WorkflowInstanceRecord extends UpdatableRecordImpl<WorkflowInstance
         setParentInstanceId(parentInstanceId);
         setParentTokenId(parentTokenId);
         setDepth(depth);
+        setFailureReason(failureReason);
+        setReplayedFrom(replayedFrom);
         resetTouchedOnNotNull();
     }
 }

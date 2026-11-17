@@ -60,6 +60,13 @@ link-local, private and metadata addresses and a redirect to one, and the call h
   takeover or a replay produces one effect in a target that honours the key.
 - **History is redacted.** Authorization headers, cookies, connection secret values and configured header names never
   appear in a recorded request or response.
+- **A failure is classed, and it has a way out.** A failed step is `RETRYABLE` (a timeout, a connection error, a 408, 429
+  or a 5xx) and backs off by the node's `retry` policy as an `available_at` time, never as a sleep, or `FATAL` (another
+  4xx, `credential_invalid`, a limit, a shape error). After its retries a step takes its `on_error` edge with the failure
+  as its output; without one the instance is dead-lettered in `FAILED_STUCK` with a `failure_reason`, where an operator
+  retries the failed step, replays the original input as a new instance (`replayed_from`), or cancels it. A `fail` node
+  marked `compensate: true` runs the `compensate` node of every completed step in reverse completion order, each
+  compensation on its own stable idempotency key; a rollback that cannot finish leaves the instance `COMPENSATION_FAILED`.
 
 ## Sample workflows
 

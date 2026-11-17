@@ -121,6 +121,16 @@ public class WorkflowStepRun extends TableImpl<WorkflowStepRunRecord> {
      */
     public final TableField<WorkflowStepRunRecord, String> IDEMPOTENCY_KEY = createField(DSL.name("idempotency_key"), SQLDataType.CLOB.nullable(false), this, "");
 
+    /**
+     * The column <code>public.workflow_step_run.error_class</code>.
+     */
+    public final TableField<WorkflowStepRunRecord, String> ERROR_CLASS = createField(DSL.name("error_class"), SQLDataType.CLOB, this, "");
+
+    /**
+     * The column <code>public.workflow_step_run.failure</code>.
+     */
+    public final TableField<WorkflowStepRunRecord, String> FAILURE = createField(DSL.name("failure"), SQLDataType.CLOB, this, "");
+
     private WorkflowStepRun(Name alias, Table<WorkflowStepRunRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -220,6 +230,7 @@ public class WorkflowStepRun extends TableImpl<WorkflowStepRunRecord> {
     public List<Check<WorkflowStepRunRecord>> getChecks() {
         return Arrays.asList(
             Internal.createCheck(this, DSL.name("workflow_step_run_attempt_check"), "((attempt >= 1))", true),
+            Internal.createCheck(this, DSL.name("workflow_step_run_error_class_check"), "((error_class = ANY (ARRAY['RETRYABLE'::text, 'FATAL'::text])))", true),
             Internal.createCheck(this, DSL.name("workflow_step_run_idempotency_key_check"), "((length(idempotency_key) = 64))", true),
             Internal.createCheck(this, DSL.name("workflow_step_run_outcome_check"), "((outcome = ANY (ARRAY['SUCCEEDED'::text, 'FAILED'::text])))", true)
         );

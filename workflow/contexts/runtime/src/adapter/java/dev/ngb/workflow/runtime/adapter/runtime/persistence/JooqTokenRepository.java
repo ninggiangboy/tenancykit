@@ -8,8 +8,10 @@ import dev.ngb.workflow.runtime.domain.token.Token;
 import dev.ngb.workflow.runtime.domain.token.TokenStatus;
 import dev.ngb.workflow_jooq.tables.records.WorkflowTokenRecord;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.JSONB;
 import tools.jackson.databind.json.JsonMapper;
@@ -126,6 +128,21 @@ public class JooqTokenRepository implements TokenRepository {
     }
 
     @Override
+    public boolean retryLater(UUID tokenId, String owner, Instant availableAt, Instant now) {
+        return dsl.update(WORKFLOW_TOKEN)
+                        .set(WORKFLOW_TOKEN.STATUS, TokenStatus.READY.name())
+                        .set(WORKFLOW_TOKEN.LEASE_OWNER, (String) null)
+                        .set(WORKFLOW_TOKEN.LEASE_UNTIL, (Instant) null)
+                        .set(WORKFLOW_TOKEN.AVAILABLE_AT, availableAt)
+                        .set(WORKFLOW_TOKEN.UPDATED_AT, now)
+                        .where(WORKFLOW_TOKEN.ID.eq(tokenId))
+                        .and(WORKFLOW_TOKEN.STATUS.eq(TokenStatus.RUNNING.name()))
+                        .and(WORKFLOW_TOKEN.LEASE_OWNER.eq(owner))
+                        .execute()
+                == 1;
+    }
+
+    @Override
     public long liveCount(UUID instanceId) {
         return dsl.fetchCount(
                 WORKFLOW_TOKEN,
@@ -170,6 +187,46 @@ public class JooqTokenRepository implements TokenRepository {
                 .set(WORKFLOW_TOKEN.UPDATED_AT, now)
                 .where(WORKFLOW_TOKEN.STATUS.eq(TokenStatus.RUNNING.name()))
                 .and(WORKFLOW_TOKEN.LEASE_UNTIL.lt(now))
+                .execute();
+    }
+
+    @Override
+    public List<UUID> liveTokenIds(UUID instanceId) {
+        return dsl.select(WORKFLOW_TOKEN.ID)
+                .from(WORKFLOW_TOKEN)
+                .where(WORKFLOW_TOKEN.INSTANCE_ID.eq(instanceId))
+                .and(WORKFLOW_TOKEN.STATUS.in(
+                        TokenStatus.READY.name(), TokenStatus.RUNNING.name(), TokenStatus.WAITING.name()))
+                .orderBy(WORKFLOW_TOKEN.ID)
+                .fetch(WORKFLOW_TOKEN.ID);
+    }
+
+    @Override
+    public boolean cancel(UUID tokenId, Instant now) {
+        return dsl.update(WORKFLOW_TOKEN)
+                        .set(WORKFLOW_TOKEN.STATUS, TokenStatus.CANCELLED.name())
+                        .set(WORKFLOW_TOKEN.LEASE_OWNER, (String) null)
+                        .set(WORKFLOW_TOKEN.LEASE_UNTIL, (Instant) null)
+                        .set(WORKFLOW_TOKEN.UPDATED_AT, now)
+                        .where(WORKFLOW_TOKEN.ID.eq(tokenId))
+                        .and(WORKFLOW_TOKEN.STATUS.in(
+                                TokenStatus.READY.name(), TokenStatus.RUNNING.name(), TokenStatus.WAITING.name()))
+                        .execute()
+                == 1;
+    }
+
+    @Override
+    public int requeueFailed(UUID instanceId, String nodeId, Instant now) {
+        Condition failed = WORKFLOW_TOKEN.STATUS.eq(TokenStatus.FAILED.name());
+        if (nodeId != null) {
+            failed = failed.and(WORKFLOW_TOKEN.NODE_ID.eq(nodeId));
+        }
+        return dsl.update(WORKFLOW_TOKEN)
+                .set(WORKFLOW_TOKEN.STATUS, TokenStatus.READY.name())
+                .set(WORKFLOW_TOKEN.AVAILABLE_AT, now)
+                .set(WORKFLOW_TOKEN.UPDATED_AT, now)
+                .where(WORKFLOW_TOKEN.INSTANCE_ID.eq(instanceId))
+                .and(failed)
                 .execute();
     }
 

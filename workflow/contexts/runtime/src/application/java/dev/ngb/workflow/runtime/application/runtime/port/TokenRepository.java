@@ -3,6 +3,7 @@ package dev.ngb.workflow.runtime.application.runtime.port;
 import dev.ngb.workflow.runtime.domain.token.Token;
 import dev.ngb.workflow.runtime.domain.token.TokenStatus;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,6 +30,12 @@ public interface TokenRepository {
      */
     boolean resume(UUID tokenId, String branch, Object payload, Instant now);
 
+    /**
+     * Makes a claimed token READY again at a later time, keeping its id and attempt, so the next claim of the same step
+     * sends the same idempotency key. The update is conditional on this owner still holding the lease.
+     */
+    boolean retryLater(UUID tokenId, String owner, Instant availableAt, Instant now);
+
     /** How many tokens of the instance are still READY, RUNNING or WAITING. */
     long liveCount(UUID instanceId);
 
@@ -43,4 +50,13 @@ public interface TokenRepository {
 
     /** Makes every token whose lease ran out READY again, and returns how many were taken over. */
     int requeueExpired(Instant now);
+
+    /** The live tokens of one instance, which is what a cancel stops. */
+    List<UUID> liveTokenIds(UUID instanceId);
+
+    /** Cancels one live token whatever its status, which is what a cancel does with the ids it read. */
+    boolean cancel(UUID tokenId, Instant now);
+
+    /** Re-queues the failed tokens of a dead-lettered instance, optionally only the ones of one node. */
+    int requeueFailed(UUID instanceId, String nodeId, Instant now);
 }

@@ -99,7 +99,7 @@ class SubflowExecutionTest extends WorkflowIntegrationTest {
                 Instance root = inTenant(tenant, () -> start.execute(
                         new StartInstanceUseCase.Command(version, Map.of("seed", "x"), null, "test", null, null)));
                 runToTheEnd(tenant, root.id());
-                assertThat(status(tenant, root.id()).name()).isEqualTo("FAILED");
+                assertThat(status(tenant, root.id()).name()).isEqualTo("FAILED_STUCK");
                 UUID deepest = read(tenant, () -> dsl.select(WORKFLOW_INSTANCE.ID)
                         .from(WORKFLOW_INSTANCE)
                         .orderBy(WORKFLOW_INSTANCE.DEPTH.desc())

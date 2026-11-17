@@ -8,16 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-/**
- * One run of a published version: the input it started with, the variables set so far, and whether it is still moving.
- *
- * <p>An instance pins the version id it started with. Its {@code version} is the optimistic lock every write compares,
- * so a worker that read an older state can never overwrite a newer one.
- *
- * @param parentInstanceId the instance that started this one through a sub-workflow, or null at the top
- * @param parentTokenId the parked token a finished child resumes
- * @param depth how many sub-workflow steps separate this instance from a top-level one
- */
 public record Instance(
         UUID id,
         TenantId tenantId,
@@ -36,6 +26,8 @@ public record Instance(
         UUID parentInstanceId,
         UUID parentTokenId,
         int depth,
+        String failureReason,
+        UUID replayedFrom,
         long version) {
 
     public Instance {
@@ -86,7 +78,7 @@ public record Instance(
         return new Instance(
                 id, tenantId, definitionId, versionId, versionNumber, InstanceStatus.RUNNING, input, Map.of(),
                 correlationKey, startedBy, now, null, idempotencyKey, requestHash, parentInstanceId, parentTokenId,
-                depth, 1);
+                depth, null, null, 1);
     }
 
     public boolean terminal() {
@@ -98,7 +90,7 @@ public record Instance(
         return new Instance(
                 id, tenantId, definitionId, versionId, versionNumber, status, input, values, correlationKey,
                 startedBy, startedAt, finishedAt, idempotencyKey, requestHash, parentInstanceId, parentTokenId, depth,
-                version);
+                failureReason, replayedFrom, version);
     }
 
     /** The same instance at a terminal status. */
@@ -106,6 +98,14 @@ public record Instance(
         return new Instance(
                 id, tenantId, definitionId, versionId, versionNumber, terminal, input, variables, correlationKey,
                 startedBy, startedAt, now, idempotencyKey, requestHash, parentInstanceId, parentTokenId, depth,
-                version);
+                failureReason, replayedFrom, version);
+    }
+
+    /** The same instance, recording the instance it was replayed from. */
+    public Instance replayedFrom(UUID source) {
+        return new Instance(
+                id, tenantId, definitionId, versionId, versionNumber, status, input, variables, correlationKey,
+                startedBy, startedAt, finishedAt, idempotencyKey, requestHash, parentInstanceId, parentTokenId, depth,
+                failureReason, source, version);
     }
 }

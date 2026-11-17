@@ -51,6 +51,8 @@ public class JooqInstanceRepository implements InstanceRepository {
                 .set(WORKFLOW_INSTANCE.PARENT_INSTANCE_ID, instance.parentInstanceId())
                 .set(WORKFLOW_INSTANCE.PARENT_TOKEN_ID, instance.parentTokenId())
                 .set(WORKFLOW_INSTANCE.DEPTH, instance.depth())
+                .set(WORKFLOW_INSTANCE.FAILURE_REASON, instance.failureReason())
+                .set(WORKFLOW_INSTANCE.REPLAYED_FROM, instance.replayedFrom())
                 .set(WORKFLOW_INSTANCE.VERSION, instance.version())
                 .execute();
     }
@@ -121,6 +123,39 @@ public class JooqInstanceRepository implements InstanceRepository {
         }
     }
 
+    @Override
+    public void markFailure(UUID id, InstanceStatus status, String failureReason) {
+        int updated = dsl.update(WORKFLOW_INSTANCE)
+                .set(WORKFLOW_INSTANCE.STATUS, status.name())
+                .set(WORKFLOW_INSTANCE.FAILURE_REASON, failureReason)
+                .set(WORKFLOW_INSTANCE.VERSION, WORKFLOW_INSTANCE.VERSION.plus(1))
+                .where(WORKFLOW_INSTANCE.ID.eq(id))
+                .and(WORKFLOW_INSTANCE.FINISHED_AT.isNull())
+                .execute();
+        if (updated != 1) {
+            Instance current = findById(id).orElseThrow(() -> new IllegalStateException("instance " + id + " is gone"));
+            if (!current.status().terminal()) {
+                throw new IllegalStateException("instance " + id + " was finished by another writer");
+            }
+        }
+    }
+
+    @Override
+    public long resume(UUID id, long expectedVersion) {
+        int updated = dsl.update(WORKFLOW_INSTANCE)
+                .set(WORKFLOW_INSTANCE.STATUS, InstanceStatus.RUNNING.name())
+                .set(WORKFLOW_INSTANCE.FAILURE_REASON, (String) null)
+                .set(WORKFLOW_INSTANCE.VERSION, expectedVersion + 1)
+                .where(WORKFLOW_INSTANCE.ID.eq(id))
+                .and(WORKFLOW_INSTANCE.VERSION.eq(expectedVersion))
+                .and(WORKFLOW_INSTANCE.FINISHED_AT.isNull())
+                .execute();
+        if (updated != 1) {
+            throw new IllegalStateException("instance " + id + " changed under this retry");
+        }
+        return expectedVersion + 1;
+    }
+
     private Instance toDomain(WorkflowInstanceRecord row) {
         JSONB input = row.getInput();
         return new Instance(
@@ -141,6 +176,8 @@ public class JooqInstanceRepository implements InstanceRepository {
                 row.getParentInstanceId(),
                 row.getParentTokenId(),
                 row.getDepth(),
+                row.getFailureReason(),
+                row.getReplayedFrom(),
                 row.getVersion());
     }
 }

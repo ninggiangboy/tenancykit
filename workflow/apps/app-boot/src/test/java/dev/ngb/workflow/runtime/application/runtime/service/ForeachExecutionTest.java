@@ -119,7 +119,7 @@ class ForeachExecutionTest extends WorkflowIntegrationTest {
     }
 
     @Test
-    void aLoopThatPassesAThousandStepsFailsTheInstanceInsteadOfRunningOn() {
+    void aLoopThatPassesAThousandStepsIsDeadLetteredInsteadOfRunningOn() {
         TenantId tenant = replica.tenant().id();
         List<Map<String, Object>> items = new ArrayList<>();
         for (int index = 0; index < 1_000; index++) {
@@ -130,7 +130,7 @@ class ForeachExecutionTest extends WorkflowIntegrationTest {
 
         runToTheEnd(tenant, instance);
 
-        assertThat(instanceStatus(tenant, instance)).isEqualTo("FAILED");
+        assertThat(instanceStatus(tenant, instance)).isEqualTo("FAILED_STUCK");
         JSONB response = read(tenant, () -> dsl.select(WORKFLOW_STEP_RUN.RESPONSE)
                 .from(WORKFLOW_STEP_RUN)
                 .where(WORKFLOW_STEP_RUN.INSTANCE_ID.eq(instance))
@@ -164,7 +164,8 @@ class ForeachExecutionTest extends WorkflowIntegrationTest {
     private void runToTheEnd(TenantId tenant, UUID instanceId) {
         for (int step = 0; step < 2_200; step++) {
             boolean claimed = inTenant(tenant, () -> claimAndRun.runOnce()).claimed();
-            if (status(tenant, instanceId).terminal()) {
+            InstanceStatus status = status(tenant, instanceId);
+            if (status.terminal() || status == InstanceStatus.FAILED_STUCK) {
                 return;
             }
             assertThat(claimed).as("the instance is still running, so a token must be due").isTrue();

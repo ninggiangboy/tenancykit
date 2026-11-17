@@ -11,6 +11,7 @@ dependencies {
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-jooq")
     "adapterImplementation"(project(":libs:jooq-schema"))
     "adapterImplementation"("org.springframework.boot:spring-boot-starter-jackson")
+    "adapterImplementation"("org.springframework.boot:spring-boot-starter-webmvc")
     "adapterImplementation"("dev.ngb:core-replica")
     testImplementation("org.assertj:assertj-core")
 }

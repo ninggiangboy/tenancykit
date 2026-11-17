@@ -1,13 +1,18 @@
 package dev.ngb.workflow.boot.config;
 
+import dev.ngb.core.runtime.Clock;
+import dev.ngb.workflow.runtime.application.runtime.port.TaskCanceller;
 import dev.ngb.workflow.runtime.application.runtime.port.TaskGateway;
 import dev.ngb.workflow.tasks.application.task.command.CreateTaskUseCase;
+import dev.ngb.workflow.tasks.application.task.port.TaskRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * The one seam between the engine and the tasks context: the engine says what the node asked for, and this adapter
  * creates the task through the use case. A refusal becomes a failed step, never an exception that rolls back a claim.
+ *
+ * <p>Cancelling an instance's open tasks is the other direction of the same seam.
  */
 @Configuration(proxyBeanMethods = false)
 class TaskGatewayConfiguration {
@@ -34,5 +39,10 @@ class TaskGatewayConfiguration {
                 return TaskGateway.Result.failed(reason);
             }
         };
+    }
+
+    @Bean
+    TaskCanceller taskCanceller(TaskRepository tasks, Clock clock) {
+        return instanceId -> tasks.cancelOpen(instanceId, clock.now());
     }
 }

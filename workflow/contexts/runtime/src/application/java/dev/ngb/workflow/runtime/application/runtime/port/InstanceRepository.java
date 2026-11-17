@@ -31,4 +31,13 @@ public interface InstanceRepository {
 
     /** Moves the instance to a terminal status once. A second caller finds it already finished and does nothing. */
     void finish(UUID id, InstanceStatus status, Instant finishedAt);
+
+    /**
+     * Records why an instance stopped without finishing: a dead letter or a failed compensation. The row keeps no finish
+     * time, because an operator can still retry, replay or cancel it.
+     */
+    void markFailure(UUID id, InstanceStatus status, String failureReason);
+
+    /** Brings a dead-lettered instance back to RUNNING and clears its failure reason, under the optimistic version. */
+    long resume(UUID id, long expectedVersion);
 }
