@@ -15,6 +15,7 @@ dependencies {
     implementation("dev.ngb:core-openapi")
     implementation("dev.ngb:core-messaging")
     implementation("dev.ngb:core-replica")
+    implementation("dev.ngb:core-webhook")
     implementation("dev.ngb:core-platform-sync")
     implementation("dev.ngb:core-suite")
     implementation("dev.ngb:core-feign")

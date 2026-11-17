@@ -1,6 +1,7 @@
 package dev.ngb.workflow.boot.config;
 
 import java.time.Duration;
+import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
@@ -18,7 +19,8 @@ public record WorkflowSettings(
         @DefaultValue Housekeeping housekeeping,
         @DefaultValue Runtime runtime,
         @DefaultValue Schedules schedules,
-        @DefaultValue Secrets secrets) {
+        @DefaultValue Secrets secrets,
+        @DefaultValue Connections connections) {
 
     /**
      * @param enabled whether the worker's scheduled jobs run at all
@@ -67,5 +69,20 @@ public record WorkflowSettings(
      *     start without one
      * @param keyId the id stored with every envelope this deployment writes
      */
-    public record Secrets(String masterKey, @DefaultValue("v1") String keyId) {}
+    public record Secrets(
+            String masterKey, @DefaultValue("v1") String keyId, @DefaultValue Map<String, String> previousKeys) {}
+
+    /**
+     * @param tokenUrl the Platform token endpoint the engine mints audience tokens from
+     * @param allowNonPublicTargets development only: the compose network is private, so app addresses resolve there
+     * @param connectTimeout how long a connect may take
+     * @param readTimeout how long a response may take
+     * @param apps the base address of each app this deployment may call, by the name a node uses
+     */
+    public record Connections(
+            @DefaultValue("http://localhost:8080/oauth/token") String tokenUrl,
+            @DefaultValue("false") boolean allowNonPublicTargets,
+            @DefaultValue("PT5S") Duration connectTimeout,
+            @DefaultValue("PT30S") Duration readTimeout,
+            @DefaultValue Map<String, String> apps) {}
 }

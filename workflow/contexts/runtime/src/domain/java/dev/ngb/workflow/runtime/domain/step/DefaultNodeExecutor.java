@@ -20,10 +20,13 @@ public class DefaultNodeExecutor implements NodeExecutor {
 
     private final ExpressionEvaluator expressions;
     private final BufferedEventLookup events;
+    private final OutboundHttp http;
 
-    public DefaultNodeExecutor(ExpressionEvaluator expressions, BufferedEventLookup events) {
+    public DefaultNodeExecutor(
+            ExpressionEvaluator expressions, BufferedEventLookup events, OutboundHttp http) {
         this.expressions = expressions;
         this.events = events;
+        this.http = http;
     }
 
     @Override
@@ -35,6 +38,7 @@ public class DefaultNodeExecutor implements NodeExecutor {
             case "fail" -> fail(context);
             case "delay" -> delay(context);
             case "wait" -> wait(context);
+            case "http" -> call(context);
             default -> StepOutcome.failed(
                     "node_not_supported:" + context.node().type(), null, context.variables());
         };
@@ -130,6 +134,72 @@ public class DefaultNodeExecutor implements NodeExecutor {
                         eventType,
                         expiresAt),
                 context.variables());
+    }
+
+    /**
+     * Calls an app or a connection and records what came back: the whole answer, status, headers and body. A node may
+     * reshape it with a {@code response} expression over the same member names.
+     */
+    private StepOutcome call(ExecutionContext context) {
+        String app = context.node().text("app");
+        String connection = context.node().text("connection");
+        Object path = context.node().document("path");
+        Object url = context.node().document("url");
+        Object body = context.node().document("body");
+
+        Map<String, String> headers = new LinkedHashMap<>();
+        object(context.node().document("headers")).forEach((name, expression) -> {
+            Object value = expressions.evaluate(
+                    expression, input(context.instance().input()), Map.of(), context.variables(), null, null);
+            if (value != null) {
+                headers.put(name, String.valueOf(value));
+            }
+        });
+
+        OutboundHttp.Result result = http.send(new OutboundHttp.Call(
+                context.node().text("method") == null ? "GET" : context.node().text("method").toUpperCase(),
+                app,
+                connection,
+                path == null
+                        ? null
+                        : String.valueOf(expressions.evaluate(
+                                path, input(context.instance().input()), Map.of(), context.variables(), null, null)),
+                url == null
+                        ? null
+                        : String.valueOf(expressions.evaluate(
+                                url, input(context.instance().input()), Map.of(), context.variables(), null, null)),
+                headers,
+                body == null
+                        ? null
+                        : expressions.evaluate(
+                                body, input(context.instance().input()), Map.of(), context.variables(), null, null),
+                IdempotencyKeys.of(
+                        context.instance().id(), context.token().id(), context.node().id(), context.token().iteration()),
+                duration(context, context.node().document("timeout"))));
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("status", result.status());
+        response.put("headers", result.headers());
+        response.put("body", result.body());
+        if (result.error() != null) {
+            response.put("error", result.error());
+        }
+        if (!result.arrived() || result.status() >= 400) {
+            return StepOutcome.failed(
+                    "http_call_failed:" + (result.error() == null ? result.status() : result.error()),
+                    response,
+                    context.variables());
+        }
+        Object shaped = context.node().document("response");
+        if (shaped != null) {
+            Map<String, Object> scope = new LinkedHashMap<>(context.variables());
+            scope.put("response", response);
+            return StepOutcome.succeeded(
+                    expressions.evaluate(shaped, input(context.instance().input()), Map.of(), scope, null, null),
+                    context.node().next(),
+                    context.variables());
+        }
+        return StepOutcome.succeeded(response, context.node().next(), context.variables());
     }
 
     private Instant dueAt(ExecutionContext context) {

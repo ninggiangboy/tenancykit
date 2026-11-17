@@ -197,6 +197,16 @@ class RowLevelSecurityTest {
                         insert into workflow_schedule (id, tenant_id, trigger_id, cron, timezone, next_due)
                         select gen_random_uuid(), '%1$s', t.id, '0 2 * * *', 'UTC', now() from t
                         """),
+                row("workflow_connection", """
+                    insert into workflow_connection
+                        (id, tenant_id, name, kind, allowed_host, secret_ciphertext, secret_key_id, created_at, updated_at)
+                    values (gen_random_uuid(), '%1$s', 'crm', 'BEARER', 'crm.example.com', 'v1.v1.abc', 'v1', now(), now())
+                    """),
+                row("workflow_platform_credential", """
+                    insert into workflow_platform_credential
+                        (tenant_id, client_id, secret_ciphertext, secret_key_id, status, updated_at)
+                    values ('%1$s', 'client-%1$s', 'v1.v1.abc', 'v1', 'ACTIVE', now())
+                    """),
                 row("workflow_timer", """
   with d as (
       insert into workflow_definition (id, tenant_id, code, name, status, latest_version, created_at, updated_at)

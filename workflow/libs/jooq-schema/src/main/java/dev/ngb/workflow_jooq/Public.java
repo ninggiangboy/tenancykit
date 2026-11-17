@@ -17,9 +17,11 @@ import dev.ngb.workflow_jooq.tables.UserGrants;
 import dev.ngb.workflow_jooq.tables.WebhookDeliveries;
 import dev.ngb.workflow_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.workflow_jooq.tables.WebhookEndpoints;
+import dev.ngb.workflow_jooq.tables.WorkflowConnection;
 import dev.ngb.workflow_jooq.tables.WorkflowDefinition;
 import dev.ngb.workflow_jooq.tables.WorkflowInboundEvent;
 import dev.ngb.workflow_jooq.tables.WorkflowInstance;
+import dev.ngb.workflow_jooq.tables.WorkflowPlatformCredential;
 import dev.ngb.workflow_jooq.tables.WorkflowSchedule;
 import dev.ngb.workflow_jooq.tables.WorkflowStepRun;
 import dev.ngb.workflow_jooq.tables.WorkflowTimer;
@@ -116,6 +118,11 @@ public class Public extends SchemaImpl {
     public final WebhookEndpoints WEBHOOK_ENDPOINTS = WebhookEndpoints.WEBHOOK_ENDPOINTS;
 
     /**
+     * The table <code>public.workflow_connection</code>.
+     */
+    public final WorkflowConnection WORKFLOW_CONNECTION = WorkflowConnection.WORKFLOW_CONNECTION;
+
+    /**
      * The table <code>public.workflow_definition</code>.
      */
     public final WorkflowDefinition WORKFLOW_DEFINITION = WorkflowDefinition.WORKFLOW_DEFINITION;
@@ -129,6 +136,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.workflow_instance</code>.
      */
     public final WorkflowInstance WORKFLOW_INSTANCE = WorkflowInstance.WORKFLOW_INSTANCE;
+
+    /**
+     * The table <code>public.workflow_platform_credential</code>.
+     */
+    public final WorkflowPlatformCredential WORKFLOW_PLATFORM_CREDENTIAL = WorkflowPlatformCredential.WORKFLOW_PLATFORM_CREDENTIAL;
 
     /**
      * The table <code>public.workflow_schedule</code>.
@@ -194,9 +206,11 @@ public class Public extends SchemaImpl {
             WebhookDeliveries.WEBHOOK_DELIVERIES,
             WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS,
             WebhookEndpoints.WEBHOOK_ENDPOINTS,
+            WorkflowConnection.WORKFLOW_CONNECTION,
             WorkflowDefinition.WORKFLOW_DEFINITION,
             WorkflowInboundEvent.WORKFLOW_INBOUND_EVENT,
             WorkflowInstance.WORKFLOW_INSTANCE,
+            WorkflowPlatformCredential.WORKFLOW_PLATFORM_CREDENTIAL,
             WorkflowSchedule.WORKFLOW_SCHEDULE,
             WorkflowStepRun.WORKFLOW_STEP_RUN,
             WorkflowTimer.WORKFLOW_TIMER,

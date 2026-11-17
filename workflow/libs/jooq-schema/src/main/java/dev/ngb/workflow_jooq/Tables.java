@@ -17,9 +17,11 @@ import dev.ngb.workflow_jooq.tables.UserGrants;
 import dev.ngb.workflow_jooq.tables.WebhookDeliveries;
 import dev.ngb.workflow_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.workflow_jooq.tables.WebhookEndpoints;
+import dev.ngb.workflow_jooq.tables.WorkflowConnection;
 import dev.ngb.workflow_jooq.tables.WorkflowDefinition;
 import dev.ngb.workflow_jooq.tables.WorkflowInboundEvent;
 import dev.ngb.workflow_jooq.tables.WorkflowInstance;
+import dev.ngb.workflow_jooq.tables.WorkflowPlatformCredential;
 import dev.ngb.workflow_jooq.tables.WorkflowSchedule;
 import dev.ngb.workflow_jooq.tables.WorkflowStepRun;
 import dev.ngb.workflow_jooq.tables.WorkflowTimer;
@@ -101,6 +103,11 @@ public class Tables {
     public static final WebhookEndpoints WEBHOOK_ENDPOINTS = WebhookEndpoints.WEBHOOK_ENDPOINTS;
 
     /**
+     * The table <code>public.workflow_connection</code>.
+     */
+    public static final WorkflowConnection WORKFLOW_CONNECTION = WorkflowConnection.WORKFLOW_CONNECTION;
+
+    /**
      * The table <code>public.workflow_definition</code>.
      */
     public static final WorkflowDefinition WORKFLOW_DEFINITION = WorkflowDefinition.WORKFLOW_DEFINITION;
@@ -114,6 +121,11 @@ public class Tables {
      * The table <code>public.workflow_instance</code>.
      */
     public static final WorkflowInstance WORKFLOW_INSTANCE = WorkflowInstance.WORKFLOW_INSTANCE;
+
+    /**
+     * The table <code>public.workflow_platform_credential</code>.
+     */
+    public static final WorkflowPlatformCredential WORKFLOW_PLATFORM_CREDENTIAL = WorkflowPlatformCredential.WORKFLOW_PLATFORM_CREDENTIAL;
 
     /**
      * The table <code>public.workflow_schedule</code>.

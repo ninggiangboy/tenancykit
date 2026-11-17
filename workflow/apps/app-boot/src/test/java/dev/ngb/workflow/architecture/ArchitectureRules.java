@@ -90,7 +90,15 @@ final class ArchitectureRules {
     private static List<NamedRule> extras(String root) {
         return List.of(
                 new NamedRule("shared-core-is-independent", sharedCoreIsIndependent(root)),
-                new NamedRule("datasource-and-transactions-only-in-core-spring", datasourceOnlyInInfrastructure(root)));
+                new NamedRule("datasource-and-transactions-only-in-core-spring", datasourceOnlyInInfrastructure(root)),
+                new NamedRule("outbound-http-only-in-connections", outboundHttpOnlyInConnections(root)));
+    }
+
+    /** Only the connections context may open a socket, so the guards and redaction cannot be bypassed elsewhere. */
+    private static ArchRule outboundHttpOnlyInConnections(String root) {
+        return noClasses().that().resideOutsideOfPackages(root + ".connections..", root + ".boot..")
+                .should().dependOnClassesThat().resideInAnyPackage("org.apache.hc..", "java.net.http..", "okhttp3..")
+                .because("the connections context owns the guards, the credentials and the redaction of every outbound call");
     }
 
     private static ArchRule sharedCoreIsIndependent(String root) {

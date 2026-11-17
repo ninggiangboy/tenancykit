@@ -28,6 +28,7 @@ import dev.ngb.workflow.runtime.application.runtime.service.WaitResolverService;
 import dev.ngb.workflow.runtime.domain.step.BufferedEventLookup;
 import dev.ngb.workflow.runtime.domain.step.DefaultNodeExecutor;
 import dev.ngb.workflow.runtime.domain.step.NodeExecutor;
+import dev.ngb.workflow.runtime.domain.step.OutboundHttp;
 import java.util.UUID;
 import org.jooq.DSLContext;
 import org.springframework.context.annotation.Bean;
@@ -76,8 +77,8 @@ class RuntimeConfiguration {
     }
 
     @Bean
-    NodeExecutor nodeExecutor(ExpressionEvaluator expressions, BufferedEventLookup events) {
-        return new DefaultNodeExecutor(expressions, events);
+    NodeExecutor nodeExecutor(ExpressionEvaluator expressions, BufferedEventLookup events, OutboundHttp http) {
+        return new DefaultNodeExecutor(expressions, events, http);
     }
 
     @Bean

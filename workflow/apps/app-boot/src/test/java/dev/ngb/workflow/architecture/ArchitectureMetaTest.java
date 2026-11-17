@@ -62,6 +62,7 @@ class ArchitectureMetaTest {
         CULPRIT_BY_RULE_ID.put("domain-events-live-in-an-events-holder", "StandaloneEvent");
         CULPRIT_BY_RULE_ID.put("shared-core-is-independent", "SharedCoreKnowsAModule");
         CULPRIT_BY_RULE_ID.put("datasource-and-transactions-only-in-core-spring", "TouchesDataSource");
+        CULPRIT_BY_RULE_ID.put("outbound-http-only-in-connections", "OutboundCallOutsideConnections");
     }
 
     /** The test-package rule, which needs the packages production occupies rather than the whole import. */
