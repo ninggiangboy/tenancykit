@@ -81,16 +81,25 @@
         "app": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 64
+          "maxLength": 64,
+          "description": "A suite app to call; mutually exclusive with a connection."
+        },
+        "connection": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "A Tenant-owned connection to call; mutually exclusive with an app."
         },
         "method": {
           "type": "string",
           "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
         },
         "path": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 2048
+          "oneOf": [
+            { "type": "string", "minLength": 1, "maxLength": 2048 },
+            { "$ref": "#/$defs/expression" }
+          ],
+          "description": "A literal path, or an expression that builds one from the input or a step."
         },
         "headers": {
           "type": "object",
@@ -245,7 +254,7 @@
           "if": {
             "properties": { "type": { "const": "http" } }
           },
-          "then": { "required": ["app", "method", "path"] }
+          "then": { "required": ["method", "path"] }
         },
         {
           "if": {
