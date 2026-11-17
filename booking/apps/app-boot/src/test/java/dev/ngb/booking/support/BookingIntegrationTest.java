@@ -48,6 +48,9 @@ public abstract class BookingIntegrationTest {
         // A local test receiver is not https, so the harness allows insecure targets the way a dev deployment does.
         registry.add("booking.webhooks.allow-insecure-targets", () -> "true");
         // The webhook secret cipher refuses to start without a 32-byte key, so the harness supplies one.
+        registry.add(
+                "booking.webhooks.master-key",
+                () -> "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=");
     }
 
     /** Runs work with the tenant bound, which is what row-level security reads. */

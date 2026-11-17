@@ -66,6 +66,10 @@ final class ArchitectureRules {
         TABLE_OWNER.put("Bookings", "booking");
         TABLE_OWNER.put("BookingResources", "booking");
         TABLE_OWNER.put("BookingSeries", "booking");
+        // The webhook context owns its endpoints, deliveries and the append-only attempt log.
+        TABLE_OWNER.put("WebhookEndpoints", "webhook");
+        TABLE_OWNER.put("WebhookDeliveries", "webhook");
+        TABLE_OWNER.put("WebhookDeliveryAttempts", "webhook");
     }
 
     /** Every use case opens a unit of work; booking has no exception and should never grow one. */
@@ -99,7 +103,7 @@ final class ArchitectureRules {
                 Set.of(
                         "dev.ngb.billing..", "dev.ngb.mailer..", "dev.ngb.platform..", "dev.ngb.tenant..",
                         "dev.ngb.notification..", "dev.ngb.mailroom..", "dev.ngb.survey..", "dev.ngb.attribution..",
-                        "dev.ngb.crm..", "dev.ngb.loyalty.."),
+                        "dev.ngb.customer..", "dev.ngb.loyalty.."),
                 Set.of("*.adapter..persistence..", "boot.."),
                 Set.of("dev.ngb.booking_jooq.."),
                 NOT_YET_ON_THE_UNIT_OF_WORK,

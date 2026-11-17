@@ -277,6 +277,45 @@ class RowLevelSecurityTest {
                         values ('%1$s', gen_random_uuid(), gen_random_uuid(), 'cust-1', 'UTC',
                                 '2026-12-01T09:00', array['RRULE:FREQ=WEEKLY;COUNT=2'], 'ALL_OR_NOTHING',
                                 'ACTIVE', now(), now())
+                        """),
+                Arguments.of("webhook_endpoints", """
+                        insert into webhook_endpoints (tenant_id, id, url, event_types, status, key_id, secret_ciphertext,
+                                                       created_at, updated_at)
+                        values ('%1$s', gen_random_uuid(), 'https://example.com/hook', array['booking.held'],
+                                'ACTIVE', 'k1', 'v1.k1.aa.bb', now(), now())
+                        """),
+                Arguments.of("webhook_deliveries", """
+                        with e as (
+                            insert into webhook_endpoints (tenant_id, id, url, event_types, status, key_id,
+                                                           secret_ciphertext, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'https://example.com/hook', array['booking.held'],
+                                    'ACTIVE', 'k1', 'v1.k1.aa.bb', now(), now())
+                            returning id
+                        )
+                        insert into webhook_deliveries (tenant_id, id, endpoint_id, event_id, event_type, body, status,
+                                                        next_attempt_at, created_at)
+                        select '%1$s', gen_random_uuid(), e.id, gen_random_uuid(), 'booking.held', '{}', 'PENDING',
+                               now(), now()
+                        from e
+                        """),
+                Arguments.of("webhook_delivery_attempts", """
+                        with e as (
+                            insert into webhook_endpoints (tenant_id, id, url, event_types, status, key_id,
+                                                           secret_ciphertext, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'https://example.com/hook', array['booking.held'],
+                                    'ACTIVE', 'k1', 'v1.k1.aa.bb', now(), now())
+                            returning id
+                        ), d as (
+                            insert into webhook_deliveries (tenant_id, id, endpoint_id, event_id, event_type, body,
+                                                            status, next_attempt_at, created_at)
+                            select '%1$s', gen_random_uuid(), e.id, gen_random_uuid(), 'booking.held', '{}',
+                                   'PENDING', now(), now()
+                            from e
+                            returning id
+                        )
+                        insert into webhook_delivery_attempts (tenant_id, id, delivery_id, attempt_no, latency_ms,
+                                                               attempted_at)
+                        select '%1$s', gen_random_uuid(), d.id, 1, 5, now() from d
                         """));
     }
 

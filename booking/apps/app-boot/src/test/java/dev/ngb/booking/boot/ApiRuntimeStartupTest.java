@@ -39,6 +39,8 @@ class ApiRuntimeStartupTest {
         registry.add("spring.rabbitmq.password", rabbit::getAdminPassword);
         registry.add("suite.replica.rebuild-on-start", () -> "false");
         registry.add("booking.jobs.enabled", () -> "false");
+        // The webhook secret cipher refuses to start without a 32-byte key.
+        registry.add("booking.webhooks.master-key", () -> "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=");
         // A link key has no shipped default: a blank key fails startup, so the test supplies its own.
         // The webhook secret cipher refuses to start without a 32-byte key.
     }
