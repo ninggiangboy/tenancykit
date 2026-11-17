@@ -6,7 +6,9 @@ package dev.ngb.booking_jooq;
 
 import dev.ngb.booking_jooq.tables.AppEntitlements;
 import dev.ngb.booking_jooq.tables.Blocks;
+import dev.ngb.booking_jooq.tables.BookingResources;
 import dev.ngb.booking_jooq.tables.BookingSettings;
+import dev.ngb.booking_jooq.tables.Bookings;
 import dev.ngb.booking_jooq.tables.CalendarExceptions;
 import dev.ngb.booking_jooq.tables.CancellationWindows;
 import dev.ngb.booking_jooq.tables.CapacityUnits;
@@ -29,7 +31,9 @@ import dev.ngb.booking_jooq.tables.UserGrants;
 import dev.ngb.booking_jooq.tables.WorkingHours;
 import dev.ngb.booking_jooq.tables.records.AppEntitlementsRecord;
 import dev.ngb.booking_jooq.tables.records.BlocksRecord;
+import dev.ngb.booking_jooq.tables.records.BookingResourcesRecord;
 import dev.ngb.booking_jooq.tables.records.BookingSettingsRecord;
+import dev.ngb.booking_jooq.tables.records.BookingsRecord;
 import dev.ngb.booking_jooq.tables.records.CalendarExceptionsRecord;
 import dev.ngb.booking_jooq.tables.records.CancellationWindowsRecord;
 import dev.ngb.booking_jooq.tables.records.CapacityUnitsRecord;
@@ -72,7 +76,10 @@ public class Keys {
 
     public static final UniqueKey<AppEntitlementsRecord> APP_ENTITLEMENTS_PKEY = Internal.createUniqueKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_pkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID, AppEntitlements.APP_ENTITLEMENTS.APP_CODE }, true);
     public static final UniqueKey<BlocksRecord> BLOCKS_PKEY = Internal.createUniqueKey(Blocks.BLOCKS, DSL.name("blocks_pkey"), new TableField[] { Blocks.BLOCKS.ID }, true);
+    public static final UniqueKey<BookingResourcesRecord> BOOKING_RESOURCES_PKEY = Internal.createUniqueKey(BookingResources.BOOKING_RESOURCES, DSL.name("booking_resources_pkey"), new TableField[] { BookingResources.BOOKING_RESOURCES.TENANT_ID, BookingResources.BOOKING_RESOURCES.BOOKING_ID, BookingResources.BOOKING_RESOURCES.SLOT_CODE }, true);
     public static final UniqueKey<BookingSettingsRecord> BOOKING_SETTINGS_PKEY = Internal.createUniqueKey(BookingSettings.BOOKING_SETTINGS, DSL.name("booking_settings_pkey"), new TableField[] { BookingSettings.BOOKING_SETTINGS.TENANT_ID }, true);
+    public static final UniqueKey<BookingsRecord> BOOKINGS_PKEY = Internal.createUniqueKey(Bookings.BOOKINGS, DSL.name("bookings_pkey"), new TableField[] { Bookings.BOOKINGS.ID }, true);
+    public static final UniqueKey<BookingsRecord> BOOKINGS_TENANT_ID_IDEMPOTENCY_KEY_KEY = Internal.createUniqueKey(Bookings.BOOKINGS, DSL.name("bookings_tenant_id_idempotency_key_key"), new TableField[] { Bookings.BOOKINGS.TENANT_ID, Bookings.BOOKINGS.IDEMPOTENCY_KEY }, true);
     public static final UniqueKey<CalendarExceptionsRecord> CALENDAR_EXCEPTIONS_PKEY = Internal.createUniqueKey(CalendarExceptions.CALENDAR_EXCEPTIONS, DSL.name("calendar_exceptions_pkey"), new TableField[] { CalendarExceptions.CALENDAR_EXCEPTIONS.ID }, true);
     public static final UniqueKey<CancellationWindowsRecord> CANCELLATION_WINDOWS_PKEY = Internal.createUniqueKey(CancellationWindows.CANCELLATION_WINDOWS, DSL.name("cancellation_windows_pkey"), new TableField[] { CancellationWindows.CANCELLATION_WINDOWS.TENANT_ID, CancellationWindows.CANCELLATION_WINDOWS.OFFERING_ID, CancellationWindows.CANCELLATION_WINDOWS.MINUTES_BEFORE_START }, true);
     public static final UniqueKey<CapacityUnitsRecord> CAPACITY_UNITS_PKEY = Internal.createUniqueKey(CapacityUnits.CAPACITY_UNITS, DSL.name("capacity_units_pkey"), new TableField[] { CapacityUnits.CAPACITY_UNITS.ID }, true);
@@ -108,6 +115,7 @@ public class Keys {
 
     public static final ForeignKey<AppEntitlementsRecord, TenantsRecord> APP_ENTITLEMENTS__APP_ENTITLEMENTS_TENANT_ID_FKEY = Internal.createForeignKey(AppEntitlements.APP_ENTITLEMENTS, DSL.name("app_entitlements_tenant_id_fkey"), new TableField[] { AppEntitlements.APP_ENTITLEMENTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<BlocksRecord, ResourcesRecord> BLOCKS__BLOCKS_RESOURCE_ID_FKEY = Internal.createForeignKey(Blocks.BLOCKS, DSL.name("blocks_resource_id_fkey"), new TableField[] { Blocks.BLOCKS.RESOURCE_ID }, Keys.RESOURCES_PKEY, new TableField[] { Resources.RESOURCES.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<BookingResourcesRecord, BookingsRecord> BOOKING_RESOURCES__BOOKING_RESOURCES_BOOKING_ID_FKEY = Internal.createForeignKey(BookingResources.BOOKING_RESOURCES, DSL.name("booking_resources_booking_id_fkey"), new TableField[] { BookingResources.BOOKING_RESOURCES.BOOKING_ID }, Keys.BOOKINGS_PKEY, new TableField[] { Bookings.BOOKINGS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<CalendarExceptionsRecord, ResourcesRecord> CALENDAR_EXCEPTIONS__CALENDAR_EXCEPTIONS_RESOURCE_ID_FKEY = Internal.createForeignKey(CalendarExceptions.CALENDAR_EXCEPTIONS, DSL.name("calendar_exceptions_resource_id_fkey"), new TableField[] { CalendarExceptions.CALENDAR_EXCEPTIONS.RESOURCE_ID }, Keys.RESOURCES_PKEY, new TableField[] { Resources.RESOURCES.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<CancellationWindowsRecord, OfferingsRecord> CANCELLATION_WINDOWS__CANCELLATION_WINDOWS_OFFERING_ID_FKEY = Internal.createForeignKey(CancellationWindows.CANCELLATION_WINDOWS, DSL.name("cancellation_windows_offering_id_fkey"), new TableField[] { CancellationWindows.CANCELLATION_WINDOWS.OFFERING_ID }, Keys.OFFERINGS_PKEY, new TableField[] { Offerings.OFFERINGS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<CapacityUnitsRecord, SessionsRecord> CAPACITY_UNITS__CAPACITY_UNITS_SESSION_ID_FKEY = Internal.createForeignKey(CapacityUnits.CAPACITY_UNITS, DSL.name("capacity_units_session_id_fkey"), new TableField[] { CapacityUnits.CAPACITY_UNITS.SESSION_ID }, Keys.SESSIONS_PKEY, new TableField[] { Sessions.SESSIONS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);

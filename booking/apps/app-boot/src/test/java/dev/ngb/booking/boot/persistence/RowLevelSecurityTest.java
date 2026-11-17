@@ -253,6 +253,23 @@ class RowLevelSecurityTest {
                         )
                         insert into capacity_units (tenant_id, id, session_id, pool_code, status)
                         select '%1$s', gen_random_uuid(), s.id, 'default', 'AVAILABLE' from s
+                        """),
+                Arguments.of("bookings", """
+                        insert into bookings (tenant_id, id, offering_id, offering_kind, customer_ref, status, qty,
+                                              source, created_at, updated_at)
+                        values ('%1$s', gen_random_uuid(), gen_random_uuid(), 'INTERVAL', 'cust-1', 'HELD', 1,
+                                'TENANT', now(), now())
+                        """),
+                Arguments.of("booking_resources", """
+                        with b as (
+                            insert into bookings (tenant_id, id, offering_id, offering_kind, customer_ref, status, qty,
+                                                  source, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), gen_random_uuid(), 'INTERVAL', 'cust-1', 'HELD', 1,
+                                    'TENANT', now(), now())
+                            returning id
+                        )
+                        insert into booking_resources (tenant_id, booking_id, slot_code, resource_id)
+                        select '%1$s', b.id, 'staff', gen_random_uuid() from b
                         """));
     }
 
