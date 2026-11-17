@@ -66,6 +66,14 @@ public class JooqBookingReadRepository implements BookingReadRepository {
                         row, resourcesOf(List.of(bookingId)).getOrDefault(bookingId, List.of())));
     }
 
+    @Override
+    public List<BookingView> listBySeries(UUID seriesId) {
+        return toViews(dsl.selectFrom(BOOKINGS)
+                .where(BOOKINGS.SERIES_ID.eq(seriesId))
+                .orderBy(BOOKINGS.STARTS_AT, BOOKINGS.ID)
+                .fetch());
+    }
+
     private List<BookingView> toViews(List<BookingsRecord> rows) {
         List<UUID> ids = rows.stream().map(BookingsRecord::getId).toList();
         Map<UUID, List<AssignedResourceView>> resources = resourcesOf(ids);

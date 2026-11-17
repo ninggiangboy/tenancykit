@@ -4,6 +4,8 @@ import dev.ngb.booking.booking.application.booking.command.CancelBookingUseCase;
 import dev.ngb.booking.booking.application.booking.command.ConfirmBookingUseCase;
 import dev.ngb.booking.booking.application.booking.command.CreateBookingUseCase;
 import dev.ngb.booking.booking.application.booking.command.ExtendBookingUseCase;
+import dev.ngb.booking.booking.application.booking.command.MarkNoShowUseCase;
+import dev.ngb.booking.booking.application.booking.command.RescheduleBookingUseCase;
 import dev.ngb.booking.booking.application.booking.query.AssignedResourceView;
 import dev.ngb.booking.booking.application.booking.query.BookingListing;
 import dev.ngb.booking.booking.application.booking.query.BookingQueries;
@@ -59,6 +61,10 @@ public class BookingController {
 
     public record BookingExtendRequest(Integer seconds) {}
 
+    /** A move: the fields the caller omits keep the place the booking already has. */
+    public record BookingRescheduleRequest(
+            UUID sessionId, String poolCode, Instant start, Integer durationMinutes, UUID resourceId) {}
+
     public record AssignedResourceResponse(String slotCode, UUID resourceId) {
 
         static AssignedResourceResponse of(AssignedResource resource) {
@@ -91,7 +97,7 @@ public class BookingController {
             String policyCode,
             long version) {
 
-        static BookingResponse of(Booking booking) {
+        public static BookingResponse of(Booking booking) {
             return new BookingResponse(
                     booking.id().toString(),
                     booking.status().name(),
@@ -116,7 +122,7 @@ public class BookingController {
                     booking.version());
         }
 
-        static BookingResponse ofView(BookingView view) {
+        public static BookingResponse ofView(BookingView view) {
             return new BookingResponse(
                     view.id().toString(),
                     view.status(),
@@ -146,6 +152,8 @@ public class BookingController {
     private final ConfirmBookingUseCase confirms;
     private final ExtendBookingUseCase extensions;
     private final CancelBookingUseCase cancels;
+    private final RescheduleBookingUseCase reschedules;
+    private final MarkNoShowUseCase noShows;
     private final BookingQueries bookings;
 
     public BookingController(
@@ -153,11 +161,15 @@ public class BookingController {
             ConfirmBookingUseCase confirms,
             ExtendBookingUseCase extensions,
             CancelBookingUseCase cancels,
+            RescheduleBookingUseCase reschedules,
+            MarkNoShowUseCase noShows,
             BookingQueries bookings) {
         this.creates = creates;
         this.confirms = confirms;
         this.extensions = extensions;
         this.cancels = cancels;
+        this.reschedules = reschedules;
+        this.noShows = noShows;
         this.bookings = bookings;
     }
 
@@ -187,6 +199,7 @@ public class BookingController {
                 request.resourceId(),
                 request.partySize(),
                 idempotencyKey,
+                null,
                 null));
         HttpStatus status = result.replayed() ? HttpStatus.OK : HttpStatus.CREATED;
         return ResponseEntity.status(status)
@@ -226,6 +239,34 @@ public class BookingController {
     @RequiresPermission(BookingPermissions.BOOKING_HOLD)
     public ResponseEntity<BookingResponse> cancelBooking(@PathVariable UUID bookingId) {
         Booking booking = cancels.execute(bookingId);
+        return ResponseEntity.ok()
+                .eTag(ExpectedVersion.etag(booking.version()))
+                .body(BookingResponse.of(booking));
+    }
+
+    /** Claims the new place and releases the old one in one transaction, keeping the booking id and status. */
+    @PostMapping("/bookings/{bookingId}/reschedule")
+    @RequiresPermission(BookingPermissions.BOOKING_MANAGE)
+    public ResponseEntity<BookingResponse> rescheduleBooking(
+            @PathVariable UUID bookingId, @RequestBody BookingRescheduleRequest request) {
+        Booking booking = reschedules.execute(
+                bookingId,
+                new RescheduleBookingUseCase.Command(
+                        request.sessionId(),
+                        request.poolCode(),
+                        request.start(),
+                        request.durationMinutes(),
+                        request.resourceId()));
+        return ResponseEntity.ok()
+                .eTag(ExpectedVersion.etag(booking.version()))
+                .body(BookingResponse.of(booking));
+    }
+
+    /** Allowed once a confirmed booking's start has passed; the claims stay as history. */
+    @PostMapping("/bookings/{bookingId}/no-show")
+    @RequiresPermission(BookingPermissions.BOOKING_MANAGE)
+    public ResponseEntity<BookingResponse> markNoShow(@PathVariable UUID bookingId) {
+        Booking booking = noShows.execute(bookingId);
         return ResponseEntity.ok()
                 .eTag(ExpectedVersion.etag(booking.version()))
                 .body(BookingResponse.of(booking));

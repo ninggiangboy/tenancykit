@@ -69,6 +69,7 @@ public class JooqBookingRepository implements BookingRepository {
                         .set(BOOKINGS.EXTENDED_SECONDS, booking.extendedSeconds())
                         .set(BOOKINGS.CONFIRMED_AT, booking.confirmedAt())
                         .set(BOOKINGS.CANCELLED_AT, booking.cancelledAt())
+                        .set(BOOKINGS.NO_SHOW_AT, booking.noShowAt())
                         .set(BOOKINGS.POLICY_CODE, booking.policyCode())
                         .set(BOOKINGS.SERIES_ID, booking.seriesId())
                         .set(BOOKINGS.IDEMPOTENCY_KEY, booking.idempotencyKey())
@@ -93,10 +94,16 @@ public class JooqBookingRepository implements BookingRepository {
     public void update(Booking booking) {
         int updated = dsl.update(BOOKINGS)
                 .set(BOOKINGS.STATUS, booking.status().name())
+                .set(BOOKINGS.QTY, booking.qty())
+                .set(BOOKINGS.SESSION_ID, booking.sessionId())
+                .set(BOOKINGS.POOL_CODE, booking.poolCode())
+                .set(BOOKINGS.STARTS_AT, booking.startsAt())
+                .set(BOOKINGS.ENDS_AT, booking.endsAt())
                 .set(BOOKINGS.HOLD_EXPIRES_AT, booking.holdExpiresAt())
                 .set(BOOKINGS.EXTENDED_SECONDS, booking.extendedSeconds())
                 .set(BOOKINGS.CONFIRMED_AT, booking.confirmedAt())
                 .set(BOOKINGS.CANCELLED_AT, booking.cancelledAt())
+                .set(BOOKINGS.NO_SHOW_AT, booking.noShowAt())
                 .set(BOOKINGS.POLICY_CODE, booking.policyCode())
                 .set(BOOKINGS.VERSION, booking.version())
                 .set(BOOKINGS.UPDATED_AT, booking.updatedAt())
@@ -126,6 +133,32 @@ public class JooqBookingRepository implements BookingRepository {
                     .doNothing()
                     .execute();
         }
+    }
+
+    @Override
+    public void replaceResources(UUID bookingId, List<AssignedResource> resources) {
+        dsl.deleteFrom(BOOKING_RESOURCES)
+                .where(BOOKING_RESOURCES.BOOKING_ID.eq(bookingId))
+                .execute();
+        insertResources(bookingId, resources);
+    }
+
+    @Override
+    public List<Booking> findBySeriesId(UUID seriesId) {
+        List<BookingsRecord> rows = dsl.selectFrom(BOOKINGS)
+                .where(BOOKINGS.SERIES_ID.eq(seriesId))
+                .orderBy(BOOKINGS.STARTS_AT, BOOKINGS.ID)
+                .fetch();
+        if (rows.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> ids = rows.stream().map(BookingsRecord::getId).toList();
+        Map<UUID, List<AssignedResource>> resources = resourcesByBooking(ids);
+        List<Booking> bookings = new ArrayList<>(rows.size());
+        for (BookingsRecord row : rows) {
+            bookings.add(toBooking(row, resources.getOrDefault(row.getId(), List.of())));
+        }
+        return List.copyOf(bookings);
     }
 
     @Override
@@ -193,6 +226,7 @@ public class JooqBookingRepository implements BookingRepository {
                 row.getConfirmedAt(),
                 row.getCancelledAt(),
                 row.getPolicyCode(),
+                row.getNoShowAt(),
                 row.getSeriesId(),
                 resources,
                 row.getIdempotencyKey(),

@@ -175,6 +175,11 @@ public class Bookings extends TableImpl<BookingsRecord> {
      */
     public final TableField<BookingsRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.INSTANT.nullable(false), this, "");
 
+    /**
+     * The column <code>public.bookings.no_show_at</code>.
+     */
+    public final TableField<BookingsRecord, Instant> NO_SHOW_AT = createField(DSL.name("no_show_at"), SQLDataType.INSTANT, this, "");
+
     private Bookings(Name alias, Table<BookingsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

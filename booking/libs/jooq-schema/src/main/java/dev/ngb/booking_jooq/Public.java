@@ -7,6 +7,7 @@ package dev.ngb.booking_jooq;
 import dev.ngb.booking_jooq.tables.AppEntitlements;
 import dev.ngb.booking_jooq.tables.Blocks;
 import dev.ngb.booking_jooq.tables.BookingResources;
+import dev.ngb.booking_jooq.tables.BookingSeries;
 import dev.ngb.booking_jooq.tables.BookingSettings;
 import dev.ngb.booking_jooq.tables.Bookings;
 import dev.ngb.booking_jooq.tables.CalendarExceptions;
@@ -66,6 +67,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.booking_resources</code>.
      */
     public final BookingResources BOOKING_RESOURCES = BookingResources.BOOKING_RESOURCES;
+
+    /**
+     * The table <code>public.booking_series</code>.
+     */
+    public final BookingSeries BOOKING_SERIES = BookingSeries.BOOKING_SERIES;
 
     /**
      * The table <code>public.booking_settings</code>.
@@ -196,6 +202,7 @@ public class Public extends SchemaImpl {
             AppEntitlements.APP_ENTITLEMENTS,
             Blocks.BLOCKS,
             BookingResources.BOOKING_RESOURCES,
+            BookingSeries.BOOKING_SERIES,
             BookingSettings.BOOKING_SETTINGS,
             Bookings.BOOKINGS,
             CalendarExceptions.CALENDAR_EXCEPTIONS,

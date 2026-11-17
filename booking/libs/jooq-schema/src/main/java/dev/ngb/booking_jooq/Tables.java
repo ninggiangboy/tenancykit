@@ -7,6 +7,7 @@ package dev.ngb.booking_jooq;
 import dev.ngb.booking_jooq.tables.AppEntitlements;
 import dev.ngb.booking_jooq.tables.Blocks;
 import dev.ngb.booking_jooq.tables.BookingResources;
+import dev.ngb.booking_jooq.tables.BookingSeries;
 import dev.ngb.booking_jooq.tables.BookingSettings;
 import dev.ngb.booking_jooq.tables.Bookings;
 import dev.ngb.booking_jooq.tables.CalendarExceptions;
@@ -51,6 +52,11 @@ public class Tables {
      * The table <code>public.booking_resources</code>.
      */
     public static final BookingResources BOOKING_RESOURCES = BookingResources.BOOKING_RESOURCES;
+
+    /**
+     * The table <code>public.booking_series</code>.
+     */
+    public static final BookingSeries BOOKING_SERIES = BookingSeries.BOOKING_SERIES;
 
     /**
      * The table <code>public.booking_settings</code>.

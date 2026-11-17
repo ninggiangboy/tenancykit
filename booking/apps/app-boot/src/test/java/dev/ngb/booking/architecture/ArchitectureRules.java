@@ -65,6 +65,7 @@ final class ArchitectureRules {
         // The booking context owns the aggregate and the resources it took.
         TABLE_OWNER.put("Bookings", "booking");
         TABLE_OWNER.put("BookingResources", "booking");
+        TABLE_OWNER.put("BookingSeries", "booking");
     }
 
     /** Every use case opens a unit of work; booking has no exception and should never grow one. */

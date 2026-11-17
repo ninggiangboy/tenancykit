@@ -2,6 +2,7 @@ package dev.ngb.booking.booking.application.booking.query;
 
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,4 +15,7 @@ public interface BookingReadRepository {
     Page<BookingView> list(ListQuery query);
 
     Optional<BookingView> findById(UUID bookingId);
+
+    /** Every occurrence of one series, oldest start first. */
+    List<BookingView> listBySeries(UUID seriesId);
 }

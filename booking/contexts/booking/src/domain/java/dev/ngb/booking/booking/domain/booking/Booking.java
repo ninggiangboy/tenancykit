@@ -26,13 +26,13 @@ public final class Booking {
     private final String offeringKind;
     private final String customerRef;
     private final int qty;
-    private final UUID sessionId;
-    private final String poolCode;
-    private final Instant startsAt;
-    private final Instant endsAt;
+    private UUID sessionId;
+    private String poolCode;
+    private Instant startsAt;
+    private Instant endsAt;
     private final BookingSource source;
-    private final UUID seriesId;
-    private final List<AssignedResource> resources;
+    private UUID seriesId;
+    private List<AssignedResource> resources;
     private final String idempotencyKey;
     private final String requestFingerprint;
     private final Instant createdAt;
@@ -41,6 +41,7 @@ public final class Booking {
     private int extendedSeconds;
     private Instant confirmedAt;
     private Instant cancelledAt;
+    private Instant noShowAt;
     private String policyCode;
     private long version;
     private Instant updatedAt;
@@ -63,6 +64,7 @@ public final class Booking {
             Instant confirmedAt,
             Instant cancelledAt,
             String policyCode,
+            Instant noShowAt,
             UUID seriesId,
             List<AssignedResource> resources,
             String idempotencyKey,
@@ -89,6 +91,7 @@ public final class Booking {
         this.extendedSeconds = extendedSeconds;
         this.confirmedAt = confirmedAt;
         this.cancelledAt = cancelledAt;
+        this.noShowAt = noShowAt;
         this.policyCode = policyCode;
         this.seriesId = seriesId;
         this.resources = List.copyOf(resources);
@@ -113,6 +116,7 @@ public final class Booking {
             Instant endsAt,
             BookingSource source,
             Instant holdExpiresAt,
+            UUID seriesId,
             List<AssignedResource> resources,
             String idempotencyKey,
             String requestFingerprint,
@@ -136,6 +140,7 @@ public final class Booking {
                 null,
                 null,
                 null,
+                seriesId,
                 resources,
                 idempotencyKey,
                 requestFingerprint,
@@ -163,6 +168,7 @@ public final class Booking {
             Instant confirmedAt,
             Instant cancelledAt,
             String policyCode,
+            Instant noShowAt,
             UUID seriesId,
             List<AssignedResource> resources,
             String idempotencyKey,
@@ -188,6 +194,7 @@ public final class Booking {
                 confirmedAt,
                 cancelledAt,
                 policyCode,
+                noShowAt,
                 seriesId,
                 resources,
                 idempotencyKey,
@@ -256,6 +263,48 @@ public final class Booking {
             return false;
         }
         status = BookingStatus.EXPIRED;
+        bump(now);
+        return true;
+    }
+
+    /**
+     * Moves the booking to a new place, keeping its id, status and customer.
+     *
+     * <p>The caller releases the old claims and claims the new place in the same transaction, so either the booking is
+     * at the new place or it is unchanged. The resources are the ones the new place took, in requirement order.
+     *
+     * @return false when the booking is neither held nor confirmed
+     */
+    public boolean reschedule(
+            UUID sessionId,
+            String poolCode,
+            Instant startsAt,
+            Instant endsAt,
+            List<AssignedResource> resources,
+            Instant now) {
+        if (status != BookingStatus.HELD && status != BookingStatus.CONFIRMED) {
+            return false;
+        }
+        this.sessionId = sessionId;
+        this.poolCode = poolCode;
+        this.startsAt = startsAt;
+        this.endsAt = endsAt;
+        this.resources = List.copyOf(resources);
+        bump(now);
+        return true;
+    }
+
+    /**
+     * Marks a confirmed booking whose start has passed as a no-show; the claims stay as history.
+     *
+     * @return false when the booking is not confirmed or its start has not passed
+     */
+    public boolean markNoShow(Instant now) {
+        if (status != BookingStatus.CONFIRMED || startsAt == null || now.isBefore(startsAt)) {
+            return false;
+        }
+        status = BookingStatus.NO_SHOW;
+        noShowAt = now;
         bump(now);
         return true;
     }
@@ -332,6 +381,10 @@ public final class Booking {
 
     public Instant cancelledAt() {
         return cancelledAt;
+    }
+
+    public Instant noShowAt() {
+        return noShowAt;
     }
 
     public String policyCode() {

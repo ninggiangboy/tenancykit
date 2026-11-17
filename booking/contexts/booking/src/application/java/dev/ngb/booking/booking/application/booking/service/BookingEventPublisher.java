@@ -37,4 +37,12 @@ public class BookingEventPublisher {
     public void expired(Booking booking, Instant occurredAt) {
         events.publish(BookingEvents.expired(ids.newId(), booking, occurredAt));
     }
+
+    public void rescheduled(Booking booking, BookingEvents.Place previous, Instant occurredAt) {
+        events.publish(BookingEvents.rescheduled(ids.newId(), booking, previous, occurredAt));
+    }
+
+    public void noShow(Booking booking, Instant occurredAt) {
+        events.publish(BookingEvents.noShow(ids.newId(), booking, occurredAt));
+    }
 }

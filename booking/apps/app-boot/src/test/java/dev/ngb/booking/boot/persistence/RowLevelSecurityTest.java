@@ -270,6 +270,13 @@ class RowLevelSecurityTest {
                         )
                         insert into booking_resources (tenant_id, booking_id, slot_code, resource_id)
                         select '%1$s', b.id, 'staff', gen_random_uuid() from b
+                        """),
+                Arguments.of("booking_series", """
+                        insert into booking_series (tenant_id, id, offering_id, customer_ref, zone, dtstart, rule,
+                                                    mode, status, created_at, updated_at)
+                        values ('%1$s', gen_random_uuid(), gen_random_uuid(), 'cust-1', 'UTC',
+                                '2026-12-01T09:00', array['RRULE:FREQ=WEEKLY;COUNT=2'], 'ALL_OR_NOTHING',
+                                'ACTIVE', now(), now())
                         """));
     }
 

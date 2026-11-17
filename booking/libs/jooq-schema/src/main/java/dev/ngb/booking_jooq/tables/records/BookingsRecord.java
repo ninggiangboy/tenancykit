@@ -366,6 +366,21 @@ public class BookingsRecord extends UpdatableRecordImpl<BookingsRecord> {
         return (Instant) get(22);
     }
 
+    /**
+     * Setter for <code>public.bookings.no_show_at</code>.
+     */
+    public BookingsRecord setNoShowAt(Instant value) {
+        set(23, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.bookings.no_show_at</code>.
+     */
+    public Instant getNoShowAt() {
+        return (Instant) get(23);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -389,7 +404,7 @@ public class BookingsRecord extends UpdatableRecordImpl<BookingsRecord> {
     /**
      * Create a detached, initialised BookingsRecord
      */
-    public BookingsRecord(UUID tenantId, UUID id, UUID offeringId, String offeringKind, String customerRef, String status, Integer qty, UUID sessionId, String poolCode, Instant startsAt, Instant endsAt, String source, Instant holdExpiresAt, Integer extendedSeconds, Instant confirmedAt, Instant cancelledAt, String policyCode, UUID seriesId, String idempotencyKey, String requestFingerprint, Long version, Instant createdAt, Instant updatedAt) {
+    public BookingsRecord(UUID tenantId, UUID id, UUID offeringId, String offeringKind, String customerRef, String status, Integer qty, UUID sessionId, String poolCode, Instant startsAt, Instant endsAt, String source, Instant holdExpiresAt, Integer extendedSeconds, Instant confirmedAt, Instant cancelledAt, String policyCode, UUID seriesId, String idempotencyKey, String requestFingerprint, Long version, Instant createdAt, Instant updatedAt, Instant noShowAt) {
         super(Bookings.BOOKINGS);
 
         setTenantId(tenantId);
@@ -415,6 +430,7 @@ public class BookingsRecord extends UpdatableRecordImpl<BookingsRecord> {
         setVersion(version);
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
+        setNoShowAt(noShowAt);
         resetTouchedOnNotNull();
     }
 }

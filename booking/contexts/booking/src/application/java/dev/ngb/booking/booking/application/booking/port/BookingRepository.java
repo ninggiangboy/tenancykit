@@ -34,6 +34,12 @@ public interface BookingRepository {
 
     void insertResources(UUID bookingId, List<AssignedResource> resources);
 
+    /** Replaces every resource a booking names, which a reschedule does after it claims the new place. */
+    void replaceResources(UUID bookingId, List<AssignedResource> resources);
+
+    /** Every booking of one series, oldest start first, including the ones that left HELD. */
+    List<Booking> findBySeriesId(UUID seriesId);
+
     /** Every resource the booking claimed, ordered by slot code. */
     List<AssignedResource> resourcesOf(UUID bookingId);
 

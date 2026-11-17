@@ -61,7 +61,8 @@ public class CreateBookingUseCase {
             UUID resourceId,
             Integer partySize,
             String idempotencyKey,
-            BookingSource source) {}
+            BookingSource source,
+            UUID seriesId) {}
 
     /** The booking that now exists, and whether this call made it or replayed an earlier one. */
     public record Result(Booking booking, boolean replayed) {}
@@ -190,6 +191,7 @@ public class CreateBookingUseCase {
                 endsAt,
                 source,
                 expiresAt,
+                command.seriesId(),
                 resources,
                 key,
                 fingerprint,

@@ -27,6 +27,8 @@ public final class BookingEvents {
     public static final String CONFIRMED = "booking.confirmed";
     public static final String CANCELLED = "booking.cancelled";
     public static final String EXPIRED = "booking.expired";
+    public static final String RESCHEDULED = "booking.rescheduled";
+    public static final String NO_SHOW = "booking.no-show";
 
     /** How a booking that was never cancelled reports itself: no cancellation window matched a plain give-back. */
     public static final String NO_POLICY = "NONE";
@@ -115,6 +117,60 @@ public final class BookingEvents {
                 booking.resources(),
                 booking.seriesId(),
                 booking.holdExpiresAt(),
+                occurredAt);
+    }
+
+    /** The place a booking left, captured before the booking moved to the new one. */
+    public static Place placeOf(Booking booking) {
+        return new Place(
+                booking.sessionId(),
+                booking.poolCode(),
+                booking.startsAt(),
+                booking.endsAt(),
+                booking.qty(),
+                booking.resources());
+    }
+
+    public static Rescheduled rescheduled(UUID eventId, Booking booking, Place previous, Instant occurredAt) {
+        return new Rescheduled(
+                eventId,
+                booking.tenantId(),
+                booking.id().value(),
+                booking.version(),
+                booking.status(),
+                booking.customerRef(),
+                booking.offeringId(),
+                booking.offeringKind(),
+                booking.source(),
+                booking.qty(),
+                booking.sessionId(),
+                booking.poolCode(),
+                booking.startsAt(),
+                booking.endsAt(),
+                booking.resources(),
+                booking.seriesId(),
+                previous,
+                occurredAt);
+    }
+
+    public static NoShow noShow(UUID eventId, Booking booking, Instant occurredAt) {
+        return new NoShow(
+                eventId,
+                booking.tenantId(),
+                booking.id().value(),
+                booking.version(),
+                booking.customerRef(),
+                booking.offeringId(),
+                booking.offeringKind(),
+                booking.source(),
+                booking.qty(),
+                booking.sessionId(),
+                booking.poolCode(),
+                booking.startsAt(),
+                booking.endsAt(),
+                booking.resources(),
+                booking.seriesId(),
+                booking.noShowAt(),
                 occurredAt);
     }
 
@@ -342,6 +398,132 @@ public final class BookingEvents {
         }
     }
 
+    /** The place a booking left when it moved. */
+    public record Place(
+            UUID sessionId,
+            String poolCode,
+            Instant startsAt,
+            Instant endsAt,
+            int qty,
+            List<AssignedResource> resources) {}
+
+    /** The booking moved to a new place; the event carries the current state and the one it left. */
+    public record Rescheduled(
+            UUID eventId,
+            TenantId tenantId,
+            UUID bookingId,
+            long bookingVersion,
+            BookingStatus status,
+            String customerRef,
+            UUID offeringId,
+            String offeringKind,
+            BookingSource source,
+            int qty,
+            UUID sessionId,
+            String poolCode,
+            Instant startsAt,
+            Instant endsAt,
+            List<AssignedResource> resources,
+            UUID seriesId,
+            Place previous,
+            Instant occurredAt)
+            implements DomainEvent {
+
+        @Override
+        public String type() {
+            return RESCHEDULED;
+        }
+
+        @Override
+        public String aggregate() {
+            return "booking/" + bookingId;
+        }
+
+        @Override
+        public Map<String, Object> payload() {
+            Map<String, Object> payload = base(
+                    bookingId,
+                    bookingVersion,
+                    status,
+                    customerRef,
+                    offeringId,
+                    offeringKind,
+                    source,
+                    qty,
+                    sessionId,
+                    poolCode,
+                    startsAt,
+                    endsAt,
+                    resources,
+                    seriesId);
+            Map<String, Object> before = new LinkedHashMap<>();
+            before.put("sessionId", text(previous.sessionId()));
+            before.put("poolCode", previous.poolCode());
+            before.put("startsAt", text(previous.startsAt()));
+            before.put("endsAt", text(previous.endsAt()));
+            before.put("qty", previous.qty());
+            before.put("resources", assigned(previous.resources()));
+            payload.put("previous", before);
+            payload.put("occurredAt", text(occurredAt));
+            return payload;
+        }
+    }
+
+    /** A confirmed booking's start passed without the customer, and the Tenant recorded it. */
+    public record NoShow(
+            UUID eventId,
+            TenantId tenantId,
+            UUID bookingId,
+            long bookingVersion,
+            String customerRef,
+            UUID offeringId,
+            String offeringKind,
+            BookingSource source,
+            int qty,
+            UUID sessionId,
+            String poolCode,
+            Instant startsAt,
+            Instant endsAt,
+            List<AssignedResource> resources,
+            UUID seriesId,
+            Instant noShowAt,
+            Instant occurredAt)
+            implements DomainEvent {
+
+        @Override
+        public String type() {
+            return NO_SHOW;
+        }
+
+        @Override
+        public String aggregate() {
+            return "booking/" + bookingId;
+        }
+
+        @Override
+        public Map<String, Object> payload() {
+            Map<String, Object> payload = base(
+                    bookingId,
+                    bookingVersion,
+                    BookingStatus.NO_SHOW,
+                    customerRef,
+                    offeringId,
+                    offeringKind,
+                    source,
+                    qty,
+                    sessionId,
+                    poolCode,
+                    startsAt,
+                    endsAt,
+                    resources,
+                    seriesId);
+            payload.put("noShowAt", text(noShowAt));
+            payload.put("policyCode", BookingStatus.NO_SHOW.name());
+            payload.put("occurredAt", text(occurredAt));
+            return payload;
+        }
+    }
+
     /** The fields every state carries: the booking itself, whatever it has become. */
     private static Map<String, Object> base(
             UUID bookingId,
@@ -381,6 +563,17 @@ public final class BookingEvents {
         payload.put("resources", assigned);
         payload.put("seriesId", text(seriesId));
         return payload;
+    }
+
+    private static List<Map<String, Object>> assigned(List<AssignedResource> resources) {
+        List<Map<String, Object>> assigned = new ArrayList<>(resources.size());
+        for (AssignedResource resource : resources) {
+            Map<String, Object> one = new LinkedHashMap<>();
+            one.put("slotCode", resource.slotCode());
+            one.put("resourceId", resource.resourceId().toString());
+            assigned.add(one);
+        }
+        return assigned;
     }
 
     private static String text(Instant instant) {

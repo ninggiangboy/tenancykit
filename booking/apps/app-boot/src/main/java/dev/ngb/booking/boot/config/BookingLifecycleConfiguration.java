@@ -2,19 +2,30 @@ package dev.ngb.booking.boot.config;
 
 import dev.ngb.booking.booking.adapter.booking.persistence.JooqBookingReadRepository;
 import dev.ngb.booking.booking.adapter.booking.persistence.JooqBookingRepository;
+import dev.ngb.booking.booking.adapter.series.persistence.JooqSeriesReadRepository;
+import dev.ngb.booking.booking.adapter.series.persistence.JooqSeriesRepository;
 import dev.ngb.booking.booking.application.booking.command.CancelBookingUseCase;
 import dev.ngb.booking.booking.application.booking.command.ConfirmBookingUseCase;
 import dev.ngb.booking.booking.application.booking.command.CreateBookingUseCase;
 import dev.ngb.booking.booking.application.booking.command.ExpireHoldsUseCase;
 import dev.ngb.booking.booking.application.booking.command.ExtendBookingUseCase;
+import dev.ngb.booking.booking.application.booking.command.MarkNoShowUseCase;
+import dev.ngb.booking.booking.application.booking.command.RescheduleBookingUseCase;
 import dev.ngb.booking.booking.application.booking.port.BookingRepository;
 import dev.ngb.booking.booking.application.booking.query.BookingQueries;
 import dev.ngb.booking.booking.application.booking.query.BookingReadRepository;
 import dev.ngb.booking.booking.application.booking.service.BookingEventPublisher;
 import dev.ngb.booking.booking.application.booking.service.BookingRules;
 import dev.ngb.booking.booking.application.booking.service.InventoryEngines;
+import dev.ngb.booking.booking.application.series.command.CancelSeriesUseCase;
+import dev.ngb.booking.booking.application.series.command.ConfirmSeriesUseCase;
+import dev.ngb.booking.booking.application.series.command.CreateSeriesUseCase;
+import dev.ngb.booking.booking.application.series.port.SeriesRepository;
+import dev.ngb.booking.booking.application.series.query.SeriesQueries;
+import dev.ngb.booking.booking.application.series.query.SeriesReadRepository;
 import dev.ngb.booking.catalog.api.calendar.CalendarReader;
 import dev.ngb.booking.catalog.api.group.GroupCursorReader;
+import dev.ngb.booking.catalog.api.recurrence.RecurrenceReader;
 import dev.ngb.booking.inventory.api.assignment.ResourceAssignmentPlanner;
 import dev.ngb.booking.inventory.api.engine.InventoryEngine;
 import dev.ngb.core.event.EventPublisher;
@@ -129,9 +140,93 @@ class BookingLifecycleConfiguration {
             UnitOfWork unitOfWork,
             BookingRepository bookings,
             InventoryEngines engines,
+            CalendarReader calendars,
             BookingEventPublisher events,
             Clock clock) {
-        return new CancelBookingUseCase(unitOfWork, bookings, engines, events, clock);
+        return new CancelBookingUseCase(unitOfWork, bookings, engines, calendars, events, clock);
+    }
+
+    @Bean
+    RescheduleBookingUseCase rescheduleBookingUseCase(
+            UnitOfWork unitOfWork,
+            BookingRepository bookings,
+            BookingRules rules,
+            InventoryEngines engines,
+            CalendarReader calendars,
+            ResourceAssignmentPlanner planner,
+            BookingEventPublisher events,
+            Clock clock,
+            BookingSettings settings) {
+        return new RescheduleBookingUseCase(
+                unitOfWork,
+                bookings,
+                rules,
+                engines,
+                calendars,
+                planner,
+                events,
+                clock,
+                settings.timings().graceSeconds());
+    }
+
+    @Bean
+    MarkNoShowUseCase markNoShowUseCase(
+            UnitOfWork unitOfWork, BookingRepository bookings, BookingEventPublisher events, Clock clock) {
+        return new MarkNoShowUseCase(unitOfWork, bookings, events, clock);
+    }
+
+    @Bean
+    SeriesRepository seriesRepository(DSLContext dsl) {
+        return new JooqSeriesRepository(dsl);
+    }
+
+    @Bean
+    SeriesReadRepository seriesReadRepository(DSLContext dsl, BookingReadRepository bookings) {
+        return new JooqSeriesReadRepository(dsl, bookings);
+    }
+
+    @Bean
+    SeriesQueries seriesQueries(UnitOfWork unitOfWork, SeriesReadRepository series) {
+        return new SeriesQueries(unitOfWork, series);
+    }
+
+    @Bean
+    CreateSeriesUseCase createSeriesUseCase(
+            UnitOfWork unitOfWork,
+            SeriesRepository series,
+            CreateBookingUseCase creates,
+            BookingRules rules,
+            CalendarReader calendars,
+            RecurrenceReader recurrence,
+            EventPublisher events,
+            TenantContext tenantContext,
+            IdGenerator ids,
+            Clock clock) {
+        return new CreateSeriesUseCase(
+                unitOfWork, series, creates, rules, calendars, recurrence, events, tenantContext, ids, clock);
+    }
+
+    @Bean
+    ConfirmSeriesUseCase confirmSeriesUseCase(
+            UnitOfWork unitOfWork,
+            SeriesRepository series,
+            BookingRepository bookings,
+            ConfirmBookingUseCase confirms) {
+        return new ConfirmSeriesUseCase(unitOfWork, series, bookings, confirms);
+    }
+
+    @Bean
+    CancelSeriesUseCase cancelSeriesUseCase(
+            UnitOfWork unitOfWork,
+            SeriesRepository series,
+            BookingRepository bookings,
+            CancelBookingUseCase cancels,
+            EventPublisher events,
+            TenantContext tenantContext,
+            IdGenerator ids,
+            Clock clock) {
+        return new CancelSeriesUseCase(
+                unitOfWork, series, bookings, cancels, events, tenantContext, ids, clock);
     }
 
     @Bean

@@ -4,6 +4,8 @@ import dev.ngb.booking.booking.application.booking.exception.BookingProblem;
 import dev.ngb.booking.booking.application.booking.exception.ExtensionCapException;
 import dev.ngb.booking.booking.application.booking.exception.InvalidBookingException;
 import dev.ngb.booking.booking.application.booking.exception.OutsideOpenHoursException;
+import dev.ngb.booking.booking.application.series.exception.InvalidSeriesException;
+import dev.ngb.booking.booking.application.series.exception.SeriesConflictException;
 import dev.ngb.booking.catalog.application.catalog.exception.CatalogProblem;
 import dev.ngb.booking.catalog.application.catalog.exception.DuplicateCodeException;
 import dev.ngb.booking.catalog.application.catalog.exception.ResourceInUseException;
@@ -98,10 +100,19 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
         HttpStatus status = e instanceof OutsideOpenHoursException
                         || e instanceof ExtensionCapException
                         || e instanceof InvalidBookingException
+                        || e instanceof InvalidSeriesException
                 ? HttpStatus.UNPROCESSABLE_CONTENT
                 : HttpStatus.CONFLICT;
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(status, e.getMessage());
         detail.setProperty("code", e.code());
+        if (e instanceof SeriesConflictException conflict) {
+            detail.setProperty(
+                    "conflicts",
+                    conflict.conflicts().stream()
+                            .map(one -> java.util.Map.of(
+                                    "startsAt", one.startsAt().toString(), "reason", one.reason()))
+                            .toList());
+        }
         return detail;
     }
 }
