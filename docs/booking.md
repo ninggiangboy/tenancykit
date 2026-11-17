@@ -15,7 +15,7 @@ Booking never touches money. It holds a place, tells the Tenant the hold exists,
 | One `Booking` lifecycle over two inventory engines, capacity and interval | A seat map or a ticket: no named seats, no QR code, no check-in |
 | A producer of signed `Booking-*` webhooks to the Tenant's own endpoints | A consumer of another app's business data, and a caller of another app: it keeps the Platform replica and calls nothing |
 | An API with a thin public gate for the Tenant's own customers | A UI. It has no page, and the gate exists only so a Tenant's own site can call it |
-| A store of a Tenant's customers as an opaque `customerRef` | A CRM: it stores no name, phone, email or any other personal data |
+| A store of a Tenant's customers as an opaque `customerRef` | A Customer: it stores no name, phone, email or any other personal data |
 
 A Tenant's customer is an opaque reference the Tenant chooses. Booking never resolves it, matches it, or reads it back
 other than as the string it was given.
@@ -221,6 +221,16 @@ Booking declares no AMQP exchange of its own, so no app binds to it and it binds
 Event types, with a schema each under [contracts/events/booking](../contracts/events/booking/): `booking.held`,
 `booking.confirmed`, `booking.rescheduled`, `booking.cancelled`, `booking.expired`, `booking.no-show`,
 `waitlist.offered`, `waitlist.lapsed`, `series.created`, `series.cancelled`.
+
+The outbox row and the delivery rows are written in the transaction that records the fact, so a use case that fails
+after appending leaves neither. The worker's relay hands each due outbox row to the webhook listener in process, and one
+delivery is queued per subscribed endpoint (the unique `(endpoint_id, event_id)` index makes a redelivered row
+idempotent). The sender claims due deliveries with `for update skip locked`, posts them outside the transaction, and
+records the attempt; a failure retries with backoff and a `500` on one endpoint never affects another. Endpoints are
+managed under `booking:webhook:*`; the signing secret is returned only on create and rotation, and a change is
+conditional on `If-Match`. A destination must be public https: the destination policy and the DNS guard re-check every
+send, and only a deployment that explicitly allows insecure targets (the compose smoke forwarder) may use http or a
+private address.
 
 ## Settings and defaults
 

@@ -1,7 +1,7 @@
 ---
 phase: 11
 title: "Signed webhooks"
-status: pending
+status: completed
 priority: P1
 effort: "M"
 dependencies: [8]
