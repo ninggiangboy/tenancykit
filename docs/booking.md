@@ -157,8 +157,27 @@ A requirement names one resource or one group. The group's strategy picks the me
 | `LEAST_BUSY` | The member with the fewest booked minutes on the local day of the start, ties by priority |
 | `FIT_SEATS` | The single member with the fewest seats that still fits the party, or the smallest-waste combination of up to `max_combine` members |
 
-Candidates are tried in order under a savepoint; on `slot-taken` the next candidate is tried, and if none succeeds the
-whole claim fails. One booking never uses the same resource for two requirements.
+Candidates are ordered by the strategy; one that is outside open hours, blocked or already claimed is skipped, and a
+complete assignment never uses the same resource for two requirements. If no complete distinct assignment fits, nothing
+is claimed and the answer is `slot-taken`. Claims are inserted in ascending resource id whatever order the requirements
+name, so two bookings of crossing requirement sets meet the same row first instead of deadlocking.
+
+## Reschedule, series and no-show
+
+A reschedule keeps the booking id and status and moves the place in one transaction: the old claims are released and
+the new ones taken, so a refusal rolls the release back and the booking stays where it was. Shifting a range by minutes
+inside its own old range works because the exclusion constraint never sees both ranges at once. A hold that is
+extended, cancelled, expired or rescheduled writes its wake-up for the waitlist in the same transaction.
+
+A series stores the Tenant's RRULE lines and one `HELD` booking per occurrence, all sharing a hold expiry. The rule is
+expanded from the local `dtstart` in its zone, so a weekly series keeps the same wall-clock time across a DST change.
+`ALL_OR_NOTHING` books every occurrence in one transaction and answers `409 series-conflict` with each failing
+occurrence; `SKIP_CONFLICTS` books the free ones and reports the rest. A series holds at most 52 occurrences.
+
+A cancellation of a confirmed booking records the offering's first cancellation window whose threshold the remaining
+notice still meets, as its `policy_code`: `NONE` when no window matches, `AFTER_START` once the start has passed, and
+always `NONE` for a hold. A confirmed booking whose start has passed can be marked a no-show; the claims stay as
+history and `booking.no-show` carries `policyCode` `NO_SHOW`.
 
 ## Waitlist and waiting room
 

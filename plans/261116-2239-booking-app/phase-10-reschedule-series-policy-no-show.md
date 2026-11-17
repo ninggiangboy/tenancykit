@@ -1,7 +1,7 @@
 ---
 phase: 10
 title: "Reschedule, series, cancellation policy and no-show"
-status: pending
+status: completed
 priority: P1
 effort: "L"
 dependencies: [9]
