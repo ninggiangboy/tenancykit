@@ -7,6 +7,7 @@ package dev.ngb.workflow_jooq.tables;
 import dev.ngb.workflow_jooq.Keys;
 import dev.ngb.workflow_jooq.Public;
 import dev.ngb.workflow_jooq.tables.WorkflowStepRun.WorkflowStepRunPath;
+import dev.ngb.workflow_jooq.tables.WorkflowTask.WorkflowTaskPath;
 import dev.ngb.workflow_jooq.tables.WorkflowTimer.WorkflowTimerPath;
 import dev.ngb.workflow_jooq.tables.WorkflowToken.WorkflowTokenPath;
 import dev.ngb.workflow_jooq.tables.WorkflowVersion.WorkflowVersionPath;
@@ -269,6 +270,19 @@ public class WorkflowInstance extends TableImpl<WorkflowInstanceRecord> {
             _workflowStepRun = new WorkflowStepRunPath(this, null, Keys.WORKFLOW_STEP_RUN__WORKFLOW_STEP_RUN_INSTANCE_ID_FKEY.getInverseKey());
 
         return _workflowStepRun;
+    }
+
+    private transient WorkflowTaskPath _workflowTask;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.workflow_task</code> table
+     */
+    public WorkflowTaskPath workflowTask() {
+        if (_workflowTask == null)
+            _workflowTask = new WorkflowTaskPath(this, null, Keys.WORKFLOW_TASK__WORKFLOW_TASK_INSTANCE_ID_FKEY.getInverseKey());
+
+        return _workflowTask;
     }
 
     private transient WorkflowTimerPath _workflowTimer;

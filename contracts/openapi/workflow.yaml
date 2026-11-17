@@ -62,6 +62,50 @@ paths:
               schema:
                 $ref: "#/components/schemas/TriggerResponse"
       x-required-permission: "workflow:trigger:manage"
+  /api/v1/task-groups/{code}:
+    put:
+      tags:
+      - "task-group-controller"
+      operationId: "update"
+      parameters:
+      - name: "code"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+      x-required-permission: "workflow:task:manage"
+    delete:
+      tags:
+      - "task-group-controller"
+      operationId: "delete"
+      parameters:
+      - name: "code"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "204":
+          description: "No Content"
+      x-required-permission: "workflow:task:manage"
   /api/v1/platform-credential:
     get:
       tags:
@@ -150,7 +194,7 @@ paths:
     put:
       tags:
       - "connection-controller"
-      operationId: "update"
+      operationId: "update_1"
       parameters:
       - name: "id"
         in: "path"
@@ -583,6 +627,123 @@ paths:
               schema:
                 $ref: "#/components/schemas/TriggerWithSecretResponse"
       x-required-permission: "workflow:trigger:manage"
+  /api/v1/tasks/{id}/reassign:
+    post:
+      tags:
+      - "task-controller"
+      operationId: "reassign"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReassignRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TaskView"
+      x-required-permission: "workflow:task:complete"
+  /api/v1/tasks/{id}/complete:
+    post:
+      tags:
+      - "task-controller"
+      operationId: "complete"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TaskView"
+      x-required-permission: "workflow:task:complete"
+  /api/v1/tasks/{id}/claim:
+    post:
+      tags:
+      - "task-controller"
+      operationId: "claim"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TaskView"
+      x-required-permission: "workflow:task:complete"
+  /api/v1/task-groups:
+    get:
+      tags:
+      - "task-group-controller"
+      operationId: "list"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/GroupResponse"
+      x-required-permission: "workflow:task:read"
+    post:
+      tags:
+      - "task-group-controller"
+      operationId: "create"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+      x-required-permission: "workflow:task:manage"
   /api/v1/instances:
     post:
       tags:
@@ -1082,7 +1243,7 @@ paths:
     get:
       tags:
       - "connection-controller"
-      operationId: "list"
+      operationId: "list_1"
       responses:
         "200":
           description: "OK"
@@ -1096,7 +1257,7 @@ paths:
     post:
       tags:
       - "connection-controller"
-      operationId: "create"
+      operationId: "create_1"
       requestBody:
         content:
           application/json:
@@ -1111,6 +1272,46 @@ paths:
               schema:
                 $ref: "#/components/schemas/ConnectionResponse"
       x-required-permission: "workflow:connection:manage"
+  /api/v1/tasks:
+    get:
+      tags:
+      - "task-controller"
+      operationId: "inbox"
+      parameters:
+      - name: "status"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/TaskView"
+      x-required-permission: "workflow:task:read"
+  /api/v1/tasks/{id}:
+    get:
+      tags:
+      - "task-controller"
+      operationId: "get_1"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TaskView"
+      x-required-permission: "workflow:task:read"
   /api/v1/definitions/{id}:
     get:
       tags:
@@ -1216,6 +1417,33 @@ components:
         updatedAt:
           type: "string"
           format: "date-time"
+    GroupRequest:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        name:
+          type: "string"
+        members:
+          type: "array"
+          items:
+            type: "string"
+            format: "uuid"
+          uniqueItems: true
+    GroupResponse:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        name:
+          type: "string"
+        members:
+          type: "array"
+          items:
+            type: "string"
+        version:
+          type: "integer"
+          format: "int64"
     RegisterRequest:
       type: "object"
       properties:
@@ -1355,6 +1583,74 @@ components:
         trigger:
           $ref: "#/components/schemas/TriggerResponse"
         signingSecret:
+          type: "string"
+    ReassignRequest:
+      type: "object"
+      properties:
+        user:
+          type: "string"
+          format: "uuid"
+        group:
+          type: "string"
+    TaskView:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        title:
+          type: "string"
+        status:
+          type: "string"
+        instanceId:
+          type: "string"
+          format: "uuid"
+        nodeId:
+          type: "string"
+        assigneeKind:
+          type: "string"
+        assignee:
+          type: "string"
+        assigneeUserId:
+          type: "string"
+          format: "uuid"
+        outcomes:
+          type: "array"
+          items:
+            type: "string"
+        form: {}
+        dueAt:
+          type: "string"
+          format: "date-time"
+        escalateAt:
+          type: "string"
+          format: "date-time"
+        expiresAt:
+          type: "string"
+          format: "date-time"
+        decision:
+          type: "string"
+        output: {}
+        completedBy:
+          type: "string"
+        completedVia:
+          type: "string"
+        completedAt:
+          type: "string"
+          format: "date-time"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        version:
+          type: "integer"
+          format: "int64"
+    CompleteRequest:
+      type: "object"
+      properties:
+        decision:
+          type: "string"
+        output: {}
+        completedBy:
           type: "string"
     StartInstanceRequest:
       type: "object"

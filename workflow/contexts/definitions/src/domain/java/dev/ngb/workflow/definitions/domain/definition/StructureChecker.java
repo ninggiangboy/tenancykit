@@ -165,6 +165,9 @@ public final class StructureChecker {
                 }
                 required(node, pointer, "next", problems);
                 edge(node, pointer, "next", edges);
+                edge(node, pointer, "on_error", edges);
+                edge(node, pointer, "on_expire", edges);
+                edge(node, pointer, "compensate", edges);
             }
             case PARALLEL -> {
                 List<String> branches = node.textList("branches");

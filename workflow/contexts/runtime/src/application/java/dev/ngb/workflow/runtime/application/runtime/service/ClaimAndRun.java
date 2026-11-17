@@ -11,6 +11,7 @@ import dev.ngb.workflow.runtime.application.runtime.port.InstanceRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.JoinStateRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.LoopStateRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.StepRunRepository;
+import dev.ngb.workflow.runtime.application.runtime.port.TaskGateway;
 import dev.ngb.workflow.runtime.application.runtime.port.TimerRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.TokenRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.WaitSubscriptionRepository;
@@ -73,6 +74,7 @@ public class ClaimAndRun {
     private final WaitSubscriptionRepository subscriptions;
     private final JoinStateRepository joinStates;
     private final LoopStateRepository loops;
+    private final TaskGateway tasks;
     private final VersionReader versions;
     private final NodeExecutor executor;
     private final WakeUpPublisher wakeUp;
@@ -90,6 +92,7 @@ public class ClaimAndRun {
             WaitSubscriptionRepository subscriptions,
             JoinStateRepository joinStates,
             LoopStateRepository loops,
+            TaskGateway tasks,
             VersionReader versions,
             NodeExecutor executor,
             WakeUpPublisher wakeUp,
@@ -105,6 +108,7 @@ public class ClaimAndRun {
         this.subscriptions = subscriptions;
         this.joinStates = joinStates;
         this.loops = loops;
+        this.tasks = tasks;
         this.versions = versions;
         this.executor = executor;
         this.wakeUp = wakeUp;
@@ -170,6 +174,9 @@ public class ClaimAndRun {
         }
         if (outcome.subflowing()) {
             return startChild(token, instance, outcome, finishedAt);
+        }
+        if (outcome.hasTask()) {
+            return createTask(token, instance, outcome, finishedAt);
         }
         if (outcome.failed() && token.loopNodeId() != null) {
             InstanceStatus afterItemFailure = itemFailed(token, instance, outcome, finishedAt, graph);
@@ -424,6 +431,48 @@ public class ClaimAndRun {
         recordStep(token, StepOutcome.failed(reason, response, outcome.variables()), finishedAt);
         finishInstance(instance, InstanceStatus.FAILED, finishedAt, outcome);
         return InstanceStatus.FAILED;
+    }
+
+    /**
+     * Creates the human task the node asked for and parks this token on it. A group that no longer exists fails the
+     * step with a readable reason instead of creating a task nobody can see.
+     */
+    private InstanceStatus createTask(
+            Token token, Instance instance, StepOutcome outcome, Instant finishedAt) {
+        StepOutcome.Task task = outcome.task();
+        TaskGateway.Result created = tasks.create(new TaskGateway.Draft(
+                instance.id(),
+                token.id(),
+                token.nodeId(),
+                task.title(),
+                task.form(),
+                task.assigneeUser(),
+                task.assigneeGroup(),
+                task.dueAt(),
+                task.escalationGroup(),
+                task.escalateAt(),
+                task.expiresAt(),
+                task.outcomes()));
+        if (created.failed()) {
+            boolean finished = tokens.finish(token.id(), workerId, TokenStatus.FAILED, finishedAt);
+            if (!finished) {
+                return instance.status();
+            }
+            recordStep(
+                    token,
+                    StepOutcome.failed(created.failure(), Map.of("reason", created.failure()), outcome.variables()),
+                    finishedAt);
+            finishInstance(instance, InstanceStatus.FAILED, finishedAt, outcome);
+            return InstanceStatus.FAILED;
+        }
+        return park(
+                token,
+                instance,
+                StepOutcome.parked(
+                        Map.of("taskId", created.taskId().toString()),
+                        new StepOutcome.Reservation(null, null, null, null, null),
+                        outcome.variables()),
+                finishedAt);
     }
 
     /** Ends an instance and, when it is a sub-workflow's child, resumes the token that started it. */

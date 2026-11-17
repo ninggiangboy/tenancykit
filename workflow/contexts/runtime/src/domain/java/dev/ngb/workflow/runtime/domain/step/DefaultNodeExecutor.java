@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * The core's node behaviour: the trigger, a {@code set}, the end, a deliberate fail, a delay and an event wait.
@@ -51,6 +52,7 @@ public class DefaultNodeExecutor implements NodeExecutor {
             case "http" -> call(context);
             case "foreach" -> foreach(context);
             case "subflow" -> subflow(context);
+            case "task" -> task(context);
             default -> StepOutcome.failed(
                     "node_not_supported:" + context.node().type(), null, context.variables());
         };
@@ -233,6 +235,69 @@ public class DefaultNodeExecutor implements NodeExecutor {
         return StepOutcome.joining(
                 Map.of("branch", context.token().branchKey() == null ? "" : context.token().branchKey()),
                 new StepOutcome.Join(next, expected, context.token().branchKey(), contribution, !"all".equals(mode)),
+                context.variables());
+    }
+
+    /**
+     * Creates a human task and waits for its decision. The task outlives this process: the tasks context resumes the
+     * token when a person decides or the deadline passes, so the engine never polls.
+     */
+    private StepOutcome task(ExecutionContext context) {
+        String branch = context.token().resumeBranch();
+        if ("task".equals(branch)) {
+            return StepOutcome.succeeded(context.token().resumePayload(), context.node().next(), context.variables());
+        }
+        if ("expired".equals(branch)) {
+            Map<String, Object> response = Map.of("expired", true);
+            String onExpire = context.node().text("on_expire");
+            return onExpire == null
+                    ? StepOutcome.failed("task_expired", response, context.variables())
+                    : StepOutcome.succeeded(response, onExpire, context.variables());
+        }
+
+        Object title = evaluate(context, context.node().document("title"), context.variables());
+        if (title == null || String.valueOf(title).isBlank()) {
+            return StepOutcome.failed("task_without_a_title", null, context.variables());
+        }
+        Map<String, Object> assignee = object(context.node().document("assignee"));
+        UUID user = null;
+        String group = null;
+        if (assignee.get("user") instanceof String text) {
+            try {
+                user = UUID.fromString(text);
+            } catch (IllegalArgumentException invalid) {
+                return StepOutcome.failed("task_assignee_invalid", Map.of("assignee", text), context.variables());
+            }
+        } else if (assignee.get("group") instanceof String text) {
+            group = text;
+        } else {
+            return StepOutcome.failed("task_without_an_assignee", null, context.variables());
+        }
+        List<String> outcomes = context.node().textList("outcomes");
+        if (outcomes.isEmpty()) {
+            return StepOutcome.failed("task_without_outcomes", null, context.variables());
+        }
+        Object form = context.node().document("form") == null
+                ? null
+                : document(context, context.node().document("form"), context.variables());
+        Duration due = duration(context, context.node().document("due"));
+        Instant dueAt = due == null ? null : context.now().plus(due);
+        Map<String, Object> escalate = object(context.node().document("escalate"));
+        String escalationGroup = escalate.get("group") instanceof String text ? text : null;
+        Duration escalationDue = escalationGroup == null ? null : duration(context, escalate.get("due"));
+        Instant escalateAt = escalationGroup == null ? null : dueAt;
+        Instant expiresAt = escalationGroup == null ? dueAt : dueAt == null
+                ? null
+                : dueAt.plus(escalationDue == null ? Duration.ZERO : escalationDue);
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("title", String.valueOf(title));
+        response.put("assignee", user != null ? user.toString() : group);
+        return StepOutcome.tasking(
+                response,
+                new StepOutcome.Task(
+                        String.valueOf(title), form, user, group, dueAt, escalationGroup, escalateAt, expiresAt,
+                        outcomes),
                 context.variables());
     }
 

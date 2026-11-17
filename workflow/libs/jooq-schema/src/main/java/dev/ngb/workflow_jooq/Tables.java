@@ -26,6 +26,10 @@ import dev.ngb.workflow_jooq.tables.WorkflowLoopState;
 import dev.ngb.workflow_jooq.tables.WorkflowPlatformCredential;
 import dev.ngb.workflow_jooq.tables.WorkflowSchedule;
 import dev.ngb.workflow_jooq.tables.WorkflowStepRun;
+import dev.ngb.workflow_jooq.tables.WorkflowTask;
+import dev.ngb.workflow_jooq.tables.WorkflowTaskAssignee;
+import dev.ngb.workflow_jooq.tables.WorkflowTaskGroup;
+import dev.ngb.workflow_jooq.tables.WorkflowTaskGroupMember;
 import dev.ngb.workflow_jooq.tables.WorkflowTimer;
 import dev.ngb.workflow_jooq.tables.WorkflowToken;
 import dev.ngb.workflow_jooq.tables.WorkflowTrigger;
@@ -148,6 +152,26 @@ public class Tables {
      * The table <code>public.workflow_step_run</code>.
      */
     public static final WorkflowStepRun WORKFLOW_STEP_RUN = WorkflowStepRun.WORKFLOW_STEP_RUN;
+
+    /**
+     * The table <code>public.workflow_task</code>.
+     */
+    public static final WorkflowTask WORKFLOW_TASK = WorkflowTask.WORKFLOW_TASK;
+
+    /**
+     * The table <code>public.workflow_task_assignee</code>.
+     */
+    public static final WorkflowTaskAssignee WORKFLOW_TASK_ASSIGNEE = WorkflowTaskAssignee.WORKFLOW_TASK_ASSIGNEE;
+
+    /**
+     * The table <code>public.workflow_task_group</code>.
+     */
+    public static final WorkflowTaskGroup WORKFLOW_TASK_GROUP = WorkflowTaskGroup.WORKFLOW_TASK_GROUP;
+
+    /**
+     * The table <code>public.workflow_task_group_member</code>.
+     */
+    public static final WorkflowTaskGroupMember WORKFLOW_TASK_GROUP_MEMBER = WorkflowTaskGroupMember.WORKFLOW_TASK_GROUP_MEMBER;
 
     /**
      * The table <code>public.workflow_timer</code>.

@@ -41,6 +41,11 @@
   scopes: [tenant]
   grantable_to_tenant_system: true
 
+- code: workflow:task:manage
+  description: Create, rename, list and delete the task groups a human task may be assigned to.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
 - code: workflow:connection:manage
   description: Register the workflow's Platform credential and create, verify, rotate and delete the connections it calls external systems with.
   scopes: [tenant]

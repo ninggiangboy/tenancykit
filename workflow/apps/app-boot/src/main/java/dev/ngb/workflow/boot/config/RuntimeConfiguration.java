@@ -9,6 +9,7 @@ import dev.ngb.workflow.definitions.api.version.VersionReader;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqInstanceRepository;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqJoinStateRepository;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqLoopStateRepository;
+import dev.ngb.workflow.runtime.api.task.TaskResumer;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqStepRunRepository;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqTimerRepository;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqTokenRepository;
@@ -19,6 +20,7 @@ import dev.ngb.workflow.runtime.application.runtime.command.StartInstanceUseCase
 import dev.ngb.workflow.runtime.application.runtime.port.InstanceRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.JoinStateRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.LoopStateRepository;
+import dev.ngb.workflow.runtime.application.runtime.port.TaskGateway;
 import dev.ngb.workflow.runtime.application.runtime.port.StepRunRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.TimerRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.TokenRepository;
@@ -26,6 +28,7 @@ import dev.ngb.workflow.runtime.application.runtime.port.WaitSubscriptionReposit
 import dev.ngb.workflow.runtime.application.runtime.port.WakeUpPublisher;
 import dev.ngb.workflow.runtime.application.runtime.service.ClaimAndRun;
 import dev.ngb.workflow.runtime.application.runtime.service.InstanceStarterService;
+import dev.ngb.workflow.runtime.application.runtime.service.TaskResumerService;
 import dev.ngb.workflow.runtime.application.runtime.service.TimerSweep;
 import dev.ngb.workflow.runtime.application.runtime.service.TokenSweeper;
 import dev.ngb.workflow.runtime.application.runtime.service.WaitResolverService;
@@ -134,6 +137,7 @@ class RuntimeConfiguration {
             WaitSubscriptionRepository subscriptions,
             JoinStateRepository joinStates,
             LoopStateRepository loops,
+            TaskGateway tasks,
             VersionReader versions,
             NodeExecutor executor,
             WakeUpPublisher wakeUp,
@@ -149,6 +153,7 @@ class RuntimeConfiguration {
                 subscriptions,
                 joinStates,
                 loops,
+                tasks,
                 versions,
                 executor,
                 wakeUp,
@@ -166,6 +171,11 @@ class RuntimeConfiguration {
     @Bean
     LoopStateRepository loopStateRepository(DSLContext dsl, JsonMapper json) {
         return new JooqLoopStateRepository(dsl, json);
+    }
+
+    @Bean
+    TaskResumer taskResumer(TokenRepository tokens, Clock clock) {
+        return new TaskResumerService(tokens, clock);
     }
 
     @Bean

@@ -26,6 +26,10 @@ import dev.ngb.workflow_jooq.tables.WorkflowLoopState;
 import dev.ngb.workflow_jooq.tables.WorkflowPlatformCredential;
 import dev.ngb.workflow_jooq.tables.WorkflowSchedule;
 import dev.ngb.workflow_jooq.tables.WorkflowStepRun;
+import dev.ngb.workflow_jooq.tables.WorkflowTask;
+import dev.ngb.workflow_jooq.tables.WorkflowTaskAssignee;
+import dev.ngb.workflow_jooq.tables.WorkflowTaskGroup;
+import dev.ngb.workflow_jooq.tables.WorkflowTaskGroupMember;
 import dev.ngb.workflow_jooq.tables.WorkflowTimer;
 import dev.ngb.workflow_jooq.tables.WorkflowToken;
 import dev.ngb.workflow_jooq.tables.WorkflowTrigger;
@@ -165,6 +169,26 @@ public class Public extends SchemaImpl {
     public final WorkflowStepRun WORKFLOW_STEP_RUN = WorkflowStepRun.WORKFLOW_STEP_RUN;
 
     /**
+     * The table <code>public.workflow_task</code>.
+     */
+    public final WorkflowTask WORKFLOW_TASK = WorkflowTask.WORKFLOW_TASK;
+
+    /**
+     * The table <code>public.workflow_task_assignee</code>.
+     */
+    public final WorkflowTaskAssignee WORKFLOW_TASK_ASSIGNEE = WorkflowTaskAssignee.WORKFLOW_TASK_ASSIGNEE;
+
+    /**
+     * The table <code>public.workflow_task_group</code>.
+     */
+    public final WorkflowTaskGroup WORKFLOW_TASK_GROUP = WorkflowTaskGroup.WORKFLOW_TASK_GROUP;
+
+    /**
+     * The table <code>public.workflow_task_group_member</code>.
+     */
+    public final WorkflowTaskGroupMember WORKFLOW_TASK_GROUP_MEMBER = WorkflowTaskGroupMember.WORKFLOW_TASK_GROUP_MEMBER;
+
+    /**
      * The table <code>public.workflow_timer</code>.
      */
     public final WorkflowTimer WORKFLOW_TIMER = WorkflowTimer.WORKFLOW_TIMER;
@@ -227,6 +251,10 @@ public class Public extends SchemaImpl {
             WorkflowPlatformCredential.WORKFLOW_PLATFORM_CREDENTIAL,
             WorkflowSchedule.WORKFLOW_SCHEDULE,
             WorkflowStepRun.WORKFLOW_STEP_RUN,
+            WorkflowTask.WORKFLOW_TASK,
+            WorkflowTaskAssignee.WORKFLOW_TASK_ASSIGNEE,
+            WorkflowTaskGroup.WORKFLOW_TASK_GROUP,
+            WorkflowTaskGroupMember.WORKFLOW_TASK_GROUP_MEMBER,
             WorkflowTimer.WORKFLOW_TIMER,
             WorkflowToken.WORKFLOW_TOKEN,
             WorkflowTrigger.WORKFLOW_TRIGGER,

@@ -265,6 +265,67 @@ class RowLevelSecurityTest {
   select gen_random_uuid(), '%1$s', t.instance_id, t.id, 'external', 'thing.happened', now(), now() + interval '1 day'
   from t
   """),
+                row("workflow_task_group", """
+                    insert into workflow_task_group (id, tenant_id, code, name, created_at, updated_at)
+                    values (gen_random_uuid(), '%1$s', 'managers', 'Managers', now(), now())
+                    """),
+                row("workflow_task_group_member", """
+                    with g as (
+                        insert into workflow_task_group (id, tenant_id, code, name, created_at, updated_at)
+                        values (gen_random_uuid(), '%1$s', 'managers', 'Managers', now(), now())
+                        returning id
+                    )
+                    insert into workflow_task_group_member (group_id, tenant_id, user_id, added_at)
+                    select g.id, '%1$s', gen_random_uuid(), now() from g
+                    """),
+                row("workflow_task", """
+                    with d as (
+                        insert into workflow_definition (id, tenant_id, code, name, status, latest_version, created_at,
+                                                         updated_at)
+                        values (gen_random_uuid(), '%1$s', 'tasks', 'Tasks', 'PUBLISHED', 1, now(), now())
+                        returning id
+                    ), v as (
+                        insert into workflow_version (id, tenant_id, definition_id, version, graph, content_hash,
+                                                      published_at)
+                        select gen_random_uuid(), '%1$s', d.id, 1, '{}'::jsonb, 'hash', now() from d
+                        returning id, definition_id
+                    ), i as (
+                        insert into workflow_instance (id, tenant_id, definition_id, version_id, version_number, status,
+                                                       input, started_at)
+                        select gen_random_uuid(), '%1$s', v.definition_id, v.id, 1, 'RUNNING', '{}'::jsonb, now() from v
+                        returning id
+                    )
+                    insert into workflow_task (id, tenant_id, instance_id, token_id, node_id, title,
+                                               assignee_user_id, status, outcomes, created_at, updated_at)
+                    select gen_random_uuid(), '%1$s', i.id, gen_random_uuid(), 'approve', 'Approve',
+                           gen_random_uuid(), 'OPEN', '[]'::jsonb, now(), now() from i
+                    """),
+                row("workflow_task_assignee", """
+                    with d as (
+                        insert into workflow_definition (id, tenant_id, code, name, status, latest_version, created_at,
+                                                         updated_at)
+                        values (gen_random_uuid(), '%1$s', 'tasks', 'Tasks', 'PUBLISHED', 1, now(), now())
+                        returning id
+                    ), v as (
+                        insert into workflow_version (id, tenant_id, definition_id, version, graph, content_hash,
+                                                      published_at)
+                        select gen_random_uuid(), '%1$s', d.id, 1, '{}'::jsonb, 'hash', now() from d
+                        returning id, definition_id
+                    ), i as (
+                        insert into workflow_instance (id, tenant_id, definition_id, version_id, version_number, status,
+                                                       input, started_at)
+                        select gen_random_uuid(), '%1$s', v.definition_id, v.id, 1, 'RUNNING', '{}'::jsonb, now() from v
+                        returning id
+                    ), t as (
+                        insert into workflow_task (id, tenant_id, instance_id, token_id, node_id, title,
+                                                   assignee_user_id, status, outcomes, created_at, updated_at)
+                        select gen_random_uuid(), '%1$s', i.id, gen_random_uuid(), 'approve', 'Approve',
+                               gen_random_uuid(), 'OPEN', '[]'::jsonb, now(), now() from i
+                        returning id
+                    )
+                    insert into workflow_task_assignee (task_id, tenant_id, user_id)
+                    select t.id, '%1$s', gen_random_uuid() from t
+                    """),
                 row("event_inbox", """
                         insert into event_inbox (tenant_id, consumer, event_id)
                         values ('%1$s', 'workflow', gen_random_uuid())

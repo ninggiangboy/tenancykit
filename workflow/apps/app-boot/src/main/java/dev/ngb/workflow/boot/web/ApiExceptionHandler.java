@@ -51,10 +51,17 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
     @ExceptionHandler({
         PreconditionRequiredException.class,
         dev.ngb.workflow.connections.application.connection.exception.PreconditionRequiredException.class,
-        dev.ngb.workflow.triggers.application.trigger.exception.PreconditionRequiredException.class
+        dev.ngb.workflow.triggers.application.trigger.exception.PreconditionRequiredException.class,
+        dev.ngb.workflow.tasks.application.task.exception.PreconditionRequiredException.class
     })
     ProblemDetail preconditionRequired(RuntimeException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(428), e.getMessage());
+    }
+
+    /** A decision or an output a task cannot accept. */
+    @ExceptionHandler(dev.ngb.workflow.tasks.application.task.exception.TaskUnprocessableException.class)
+    ProblemDetail taskUnprocessable(dev.ngb.workflow.tasks.application.task.exception.TaskUnprocessableException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(422), e.getMessage());
     }
 
     private static Map<String, String> problem(Problem problem) {

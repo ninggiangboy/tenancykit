@@ -11,6 +11,7 @@ public final class WorkflowPermissions {
     public static final String INSTANCE_MANAGE = "workflow:instance:manage";
     public static final String TASK_READ = "workflow:task:read";
     public static final String TASK_COMPLETE = "workflow:task:complete";
+    public static final String TASK_MANAGE = "workflow:task:manage";
     public static final String CONNECTION_MANAGE = "workflow:connection:manage";
     public static final String TRIGGER_MANAGE = "workflow:trigger:manage";
     public static final String WEBHOOK_MANAGE = "workflow:webhook:manage";
@@ -22,6 +23,7 @@ public final class WorkflowPermissions {
             INSTANCE_MANAGE,
             TASK_READ,
             TASK_COMPLETE,
+            TASK_MANAGE,
             CONNECTION_MANAGE,
             TRIGGER_MANAGE,
             WEBHOOK_MANAGE);

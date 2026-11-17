@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * What running one node concluded: did it fail, what does the step history record, which nodes follow and what
@@ -25,7 +26,8 @@ public record StepOutcome(
         List<Successor> successors,
         Join join,
         Foreach foreach,
-        Subflow subflow) {
+        Subflow subflow,
+        Task task) {
 
     /** One following token: the node it starts at and, for a parallel branch, the name it is collected under. */
     public record Successor(String nodeId, String branchKey) {}
@@ -73,6 +75,31 @@ public record StepOutcome(
     public record Subflow(String definition, Integer version, Object input) {}
 
     /**
+     * A human task to create: what it asks, who takes it, when it is due and what may be decided. The engine creates it
+     * and parks this token; the tasks context resumes the token when the task is completed or expires.
+     *
+     * @param assigneeUser the user id the task is assigned to, or null with a group
+     * @param assigneeGroup the group code, or null with a user
+     * @param escalationGroup the group code that takes over at {@code escalateAt}, or null
+     * @param expiresAt when the task expires and the node takes its {@code on_expire} edge, or null
+     */
+    public record Task(
+            String title,
+            Object form,
+            UUID assigneeUser,
+            String assigneeGroup,
+            Instant dueAt,
+            String escalationGroup,
+            Instant escalateAt,
+            Instant expiresAt,
+            List<String> outcomes) {
+
+        public Task {
+            outcomes = outcomes == null ? List.of() : List.copyOf(outcomes);
+        }
+    }
+
+    /**
      * What the engine must write when it parks a token.
      *
      * @param kind the timer to create, or null when only an event can resume the token
@@ -100,34 +127,34 @@ public record StepOutcome(
     public static StepOutcome succeeded(Object response, String next, Map<String, Object> variables) {
         return new StepOutcome(
                 false, null, response, next == null ? List.of() : List.of(next), variables, null, List.of(), null, null,
-                null);
+                null, null);
     }
 
     public static StepOutcome failed(String failure, Object response, Map<String, Object> variables) {
-        return new StepOutcome(true, failure, response, List.of(), variables, null, List.of(), null, null, null);
+        return new StepOutcome(true, failure, response, List.of(), variables, null, List.of(), null, null, null, null);
     }
 
     public static StepOutcome parked(
             Object response, Reservation reservation, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, List.of(), variables, reservation, List.of(), null, null, null);
+        return new StepOutcome(false, null, response, List.of(), variables, reservation, List.of(), null, null, null, null);
     }
 
     /** Several following tokens, each carrying the branch it belongs to. */
     public static StepOutcome fannedOut(
             Object response, List<Successor> successors, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, List.of(), variables, null, successors, null, null, null);
+        return new StepOutcome(false, null, response, List.of(), variables, null, successors, null, null, null, null);
     }
 
     /** Waiting for the rest of its branches: the engine counts this arrival and decides whether the join fires. */
     public static StepOutcome joining(
             Object response, Join join, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), join, null, null);
+        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), join, null, null, null);
     }
 
     /** The engine owns the loop's progress: it starts iterations, counts arrivals and continues after the last one. */
     public static StepOutcome foreaching(
             Object response, Foreach foreach, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), null, foreach, null);
+        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), null, foreach, null, null);
     }
 
     public boolean parked() {
@@ -141,7 +168,7 @@ public record StepOutcome(
     /** The engine starts the child instance and parks this token until the child ends. */
     public static StepOutcome subflowing(
             Object response, Subflow subflow, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), null, null, subflow);
+        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), null, null, subflow, null);
     }
 
     public boolean iterating() {
@@ -150,5 +177,15 @@ public record StepOutcome(
 
     public boolean subflowing() {
         return subflow != null;
+    }
+
+    /** The engine creates the task and parks this token until the task ends. */
+    public static StepOutcome tasking(Object response, Task task, Map<String, Object> variables) {
+        return new StepOutcome(
+                false, null, response, List.of(), variables, null, List.of(), null, null, null, task);
+    }
+
+    public boolean hasTask() {
+        return task != null;
     }
 }
