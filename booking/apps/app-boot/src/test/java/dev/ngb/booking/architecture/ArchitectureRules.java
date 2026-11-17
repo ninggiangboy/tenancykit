@@ -59,6 +59,9 @@ final class ArchitectureRules {
                 "SessionPools")) {
             TABLE_OWNER.put(table, "catalog");
         }
+        // The two engines own the rows a claim is made of.
+        TABLE_OWNER.put("IntervalClaims", "inventory");
+        TABLE_OWNER.put("CapacityUnits", "inventory");
     }
 
     /** Every use case opens a unit of work; booking has no exception and should never grow one. */

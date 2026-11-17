@@ -9,6 +9,7 @@ import dev.ngb.booking_jooq.Public;
 import dev.ngb.booking_jooq.tables.Blocks.BlocksPath;
 import dev.ngb.booking_jooq.tables.CalendarExceptions.CalendarExceptionsPath;
 import dev.ngb.booking_jooq.tables.GroupMembers.GroupMembersPath;
+import dev.ngb.booking_jooq.tables.IntervalClaims.IntervalClaimsPath;
 import dev.ngb.booking_jooq.tables.OfferingRequirements.OfferingRequirementsPath;
 import dev.ngb.booking_jooq.tables.WorkingHours.WorkingHoursPath;
 import dev.ngb.booking_jooq.tables.records.ResourcesRecord;
@@ -228,6 +229,19 @@ public class Resources extends TableImpl<ResourcesRecord> {
             _groupMembers = new GroupMembersPath(this, null, Keys.GROUP_MEMBERS__GROUP_MEMBERS_RESOURCE_ID_FKEY.getInverseKey());
 
         return _groupMembers;
+    }
+
+    private transient IntervalClaimsPath _intervalClaims;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.interval_claims</code> table
+     */
+    public IntervalClaimsPath intervalClaims() {
+        if (_intervalClaims == null)
+            _intervalClaims = new IntervalClaimsPath(this, null, Keys.INTERVAL_CLAIMS__INTERVAL_CLAIMS_RESOURCE_ID_FKEY.getInverseKey());
+
+        return _intervalClaims;
     }
 
     private transient OfferingRequirementsPath _offeringRequirements;

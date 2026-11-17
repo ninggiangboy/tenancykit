@@ -9,8 +9,10 @@ import dev.ngb.booking_jooq.tables.Blocks;
 import dev.ngb.booking_jooq.tables.BookingSettings;
 import dev.ngb.booking_jooq.tables.CalendarExceptions;
 import dev.ngb.booking_jooq.tables.CancellationWindows;
+import dev.ngb.booking_jooq.tables.CapacityUnits;
 import dev.ngb.booking_jooq.tables.EventInbox;
 import dev.ngb.booking_jooq.tables.GroupMembers;
+import dev.ngb.booking_jooq.tables.IntervalClaims;
 import dev.ngb.booking_jooq.tables.OfferingRequirements;
 import dev.ngb.booking_jooq.tables.Offerings;
 import dev.ngb.booking_jooq.tables.Outbox;
@@ -74,6 +76,11 @@ public class Public extends SchemaImpl {
     public final CancellationWindows CANCELLATION_WINDOWS = CancellationWindows.CANCELLATION_WINDOWS;
 
     /**
+     * The table <code>public.capacity_units</code>.
+     */
+    public final CapacityUnits CAPACITY_UNITS = CapacityUnits.CAPACITY_UNITS;
+
+    /**
      * The table <code>public.event_inbox</code>.
      */
     public final EventInbox EVENT_INBOX = EventInbox.EVENT_INBOX;
@@ -82,6 +89,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.group_members</code>.
      */
     public final GroupMembers GROUP_MEMBERS = GroupMembers.GROUP_MEMBERS;
+
+    /**
+     * The table <code>public.interval_claims</code>.
+     */
+    public final IntervalClaims INTERVAL_CLAIMS = IntervalClaims.INTERVAL_CLAIMS;
 
     /**
      * The table <code>public.offering_requirements</code>.
@@ -174,8 +186,10 @@ public class Public extends SchemaImpl {
             BookingSettings.BOOKING_SETTINGS,
             CalendarExceptions.CALENDAR_EXCEPTIONS,
             CancellationWindows.CANCELLATION_WINDOWS,
+            CapacityUnits.CAPACITY_UNITS,
             EventInbox.EVENT_INBOX,
             GroupMembers.GROUP_MEMBERS,
+            IntervalClaims.INTERVAL_CLAIMS,
             OfferingRequirements.OFFERING_REQUIREMENTS,
             Offerings.OFFERINGS,
             Outbox.OUTBOX,

@@ -6,6 +6,7 @@ package dev.ngb.booking_jooq.tables;
 
 import dev.ngb.booking_jooq.Keys;
 import dev.ngb.booking_jooq.Public;
+import dev.ngb.booking_jooq.tables.CapacityUnits.CapacityUnitsPath;
 import dev.ngb.booking_jooq.tables.Offerings.OfferingsPath;
 import dev.ngb.booking_jooq.tables.SessionPools.SessionPoolsPath;
 import dev.ngb.booking_jooq.tables.SessionSeries.SessionSeriesPath;
@@ -217,6 +218,19 @@ public class Sessions extends TableImpl<SessionsRecord> {
             _sessionSeries = new SessionSeriesPath(this, Keys.SESSIONS__SESSIONS_SERIES_ID_FKEY, null);
 
         return _sessionSeries;
+    }
+
+    private transient CapacityUnitsPath _capacityUnits;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.capacity_units</code> table
+     */
+    public CapacityUnitsPath capacityUnits() {
+        if (_capacityUnits == null)
+            _capacityUnits = new CapacityUnitsPath(this, null, Keys.CAPACITY_UNITS__CAPACITY_UNITS_SESSION_ID_FKEY.getInverseKey());
+
+        return _capacityUnits;
     }
 
     private transient SessionPoolsPath _sessionPools;

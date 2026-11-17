@@ -224,6 +224,35 @@ class RowLevelSecurityTest {
                         )
                         insert into session_pools (tenant_id, session_id, code, capacity)
                         select '%1$s', s.id, 'default', 10 from s
+                        """),
+                Arguments.of("interval_claims", """
+                        with r as (
+                            insert into resources (tenant_id, id, code, name, zone, status, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'r-ic-%1$s', 'Resource', 'UTC', 'ACTIVE', now(), now())
+                            returning id
+                        )
+                        insert into interval_claims (tenant_id, id, resource_id, booking_id, during, expires_at, created_at)
+                        select '%1$s', gen_random_uuid(), r.id, gen_random_uuid(),
+                               tstzrange(now(), now() + interval '1 hour', '[)'), null, now()
+                        from r
+                        """),
+                Arguments.of("capacity_units", """
+                        with o as (
+                            insert into offerings (tenant_id, id, code, name, kind, status, duration_min, slot_step,
+                                                   horizon_days, created_at, updated_at)
+                            values ('%1$s', gen_random_uuid(), 'o-cu-%1$s', 'Offering', 'CAPACITY', 'ACTIVE', 30, 15,
+                                    30, now(), now())
+                            returning id
+                        ), s as (
+                            insert into sessions (tenant_id, id, series_id, offering_id, starts_at, ends_at, status,
+                                                  capacity, created_at, updated_at)
+                            select '%1$s', gen_random_uuid(), null, o.id, now(), now() + interval '1 hour',
+                                   'SCHEDULED', 10, now(), now()
+                            from o
+                            returning id
+                        )
+                        insert into capacity_units (tenant_id, id, session_id, pool_code, status)
+                        select '%1$s', gen_random_uuid(), s.id, 'default', 'AVAILABLE' from s
                         """));
     }
 

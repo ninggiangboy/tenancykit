@@ -9,8 +9,10 @@ import dev.ngb.booking_jooq.tables.Blocks;
 import dev.ngb.booking_jooq.tables.BookingSettings;
 import dev.ngb.booking_jooq.tables.CalendarExceptions;
 import dev.ngb.booking_jooq.tables.CancellationWindows;
+import dev.ngb.booking_jooq.tables.CapacityUnits;
 import dev.ngb.booking_jooq.tables.EventInbox;
 import dev.ngb.booking_jooq.tables.GroupMembers;
+import dev.ngb.booking_jooq.tables.IntervalClaims;
 import dev.ngb.booking_jooq.tables.OfferingRequirements;
 import dev.ngb.booking_jooq.tables.Offerings;
 import dev.ngb.booking_jooq.tables.Outbox;
@@ -59,6 +61,11 @@ public class Tables {
     public static final CancellationWindows CANCELLATION_WINDOWS = CancellationWindows.CANCELLATION_WINDOWS;
 
     /**
+     * The table <code>public.capacity_units</code>.
+     */
+    public static final CapacityUnits CAPACITY_UNITS = CapacityUnits.CAPACITY_UNITS;
+
+    /**
      * The table <code>public.event_inbox</code>.
      */
     public static final EventInbox EVENT_INBOX = EventInbox.EVENT_INBOX;
@@ -67,6 +74,11 @@ public class Tables {
      * The table <code>public.group_members</code>.
      */
     public static final GroupMembers GROUP_MEMBERS = GroupMembers.GROUP_MEMBERS;
+
+    /**
+     * The table <code>public.interval_claims</code>.
+     */
+    public static final IntervalClaims INTERVAL_CLAIMS = IntervalClaims.INTERVAL_CLAIMS;
 
     /**
      * The table <code>public.offering_requirements</code>.
