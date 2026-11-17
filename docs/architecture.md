@@ -215,6 +215,49 @@ It is API only, so the builder UI and the fill UI are a later plan; it never sen
 owns the rows, so `insight` calls it rather than writing a response itself. Its public `/p/*` endpoints are the
 suite's second unauthenticated surface, isolated in one controller and one ArchUnit rule.
 
+**CRM** (`crm/`) — the suite's app for keeping a Tenant's own customer data, in six contexts:
+
+| Directory | Module | Holds |
+|---|---|---|
+| `contexts/` | `platform` | The Platform replica it keeps (`tenants`, `tenant_domains`, `tenant_systems`, `user_grants`, `app_entitlements`) and the read ports `TenantDirectory` and `UserDirectory`. Nothing else reaches these tables |
+| | `customers` | Customers, batch upsert, search and filter, custom-field definitions and values, tags, consent topics with an append-only history, the CSV export and the erasure |
+| | `orders` | Orders with their lines, the returns against them, the order status and version, and the two order webhooks |
+| | `activity` | Activities on a customer's timeline, batch ingest and the filtered read |
+| | `profile` | The 360 read model: a bounded projection over the other three through their `api` packages; it writes no table |
+| | `webhook` | Webhook endpoints, deliveries, the four-type event catalog, and the claim and deliver use cases; it only listens to outbox events |
+| `libs/` | `shared-core` | Value objects and the permission constants |
+| | `jooq-schema` | jOOQ classes generated from the migrations and committed |
+| `apps/` | `app-boot` | Spring wiring, security, the three runtimes, jobs (replica rebuild, outbox relay, webhook delivery, housekeeping) and the Flyway migrations |
+| `testing/` | `arch-fixtures` | Deliberately violating classes that prove each ArchUnit rule can fail |
+
+It declares no exchange: its outbox feeds the webhook context in process, so its four facts leave only as signed webhooks
+to a Tenant System. The profile reads `customers`, `orders` and `activity` only through their `api` packages and writes
+nothing, orders and activities reach `customers` only through its `api`, and no business context imports `webhook` —
+which is what keeps `context-uses-only-own-tables` true while six contexts share one database. Erasure lives in
+`customers` because it owns the rows; the orders and activity contexts expose an erasure participant the customer use
+case calls in the same transaction.
+
+**Loyalty** (`loyalty/`) — the suite's app for running a Tenant's points program, in six contexts:
+
+| Directory | Module | Holds |
+|---|---|---|
+| `contexts/` | `platform` | The Platform replica it keeps (`tenants`, `tenant_domains`, `tenant_systems`, `user_grants`, `app_entitlements`) and the read ports `TenantDirectory` and `UserDirectory` |
+| | `program` | The one program per Tenant (currency, unit, expiry and tier windows, time zone), the ordered tiers and the promotions; the read port the other contexts use |
+| | `points` | Members, orders and returns as far as earn reads them, the earn calculator and its snapshot, the lots and the ledger, the balance and the debt, redemption and reversal, expiry and the expiry notice, and the erasure |
+| | `tiers` | The tier policy and the daily evaluation over the spend each earn record holds; it writes points through `points`' api |
+| | `rewards` | The rewards catalog, the vouchers and their use, and the reversal hook that voids an unused voucher |
+| | `webhook` | Webhook endpoints, deliveries, the twelve-type event catalog, and the claim and deliver use cases |
+| `libs/` | `shared-core` | Value objects and the permission constants |
+| | `jooq-schema` | jOOQ classes generated from the migrations and committed |
+| `apps/` | `app-boot` | Spring wiring, security, the three runtimes, jobs (replica rebuild, outbox relay, webhook delivery, expiry, expiry notice, tier evaluation, housekeeping), the `TierEvaluator` and `RedemptionReversalHook` adapters, and the Flyway migrations |
+| `testing/` | `arch-fixtures` | Deliberately violating classes that prove each ArchUnit rule can fail |
+
+It declares no exchange: like crm, its outbox feeds the webhook context in process and its twelve facts leave only as
+signed webhooks. The context graph has no cycle: `points` reaches `program` only through its `api`, `tiers` and
+`rewards` reach `points` only through its `api`, and `points` in turn reaches `tiers` and `rewards` only through ports
+it declares and app-boot implements. Every flow that changes a member's points locks the member row first, which is what
+makes the balance safe under parallel redemptions; a voucher use locks only the voucher, so it cannot form a cycle.
+
 **The shared core** sits beside the services, in `core/`. It is its own Gradle build that `platform/`, `billing/`,
 `notification/`, `mailer/`, `mailroom/`, `survey/` and `tenant/` include with `includeBuild("../core")`:
 

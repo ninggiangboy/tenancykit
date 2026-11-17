@@ -5,9 +5,9 @@ what they consented to. A Tenant's system sends customers, orders with line item
 them, serves a 360 profile with search, filters and a CSV export, and sends signed webhooks of what changed. It is a
 separate deployable (`crm/`) with the suite's three runtimes: `migrate`, `api` and `worker`.
 
-**Status: planned.** `crm/` is not built yet. This document is the contract the app is written against — what it owns,
-the identity and idempotency rules every later part measures against, and what a Tenant does with it. It is revisited as
-the app ships.
+**Status: shipped.** `crm/` builds, migrates and tests green against the suite's own infrastructure, and every endpoint and
+webhook below exists in it. This document describes what it is; the [API document](../contracts/openapi/crm.yaml) and the
+[event schemas](../contracts/events/crm/) are the shapes a client builds against.
 
 crm consumes another app's business data in no case. It keeps a replica of Platform and reads nothing from Billing,
 mailroom, survey or attribution; it never calls, listens to or names loyalty.
@@ -65,6 +65,45 @@ The Tenant's data is the Tenant's: another Tenant's token cannot read or write i
 - The tenant comes from the verified host, never from client input.
 - Money is an integer in minor units with an ISO 4217 currency.
 - crm never reaches into another app; another app never reaches into crm.
+
+## Runtimes and contexts
+
+| Runtime | Does |
+|---|---|
+| `migrate` | Runs Flyway as the table owner and exits. Nothing else starts. |
+| `api` | Serves `/api/v1/...` behind Caddy's `/crm` prefix. No job and no Platform listener runs here; readiness is `DOWN` until the worker has finished one replica rebuild. |
+| `worker` | Consumes `crm.platform-events` on its own queue, runs the in-process outbox relay, the webhook delivery round and housekeeping. |
+
+| Context | Owns |
+|---|---|
+| `customers` | `customers`, `field_definitions`, `customer_tags`, `consent_topics`, `consent_events`, `erasure_requests`; search, filter and the CSV export |
+| `orders` | `orders`, `order_lines`, `order_returns`, `order_return_lines` |
+| `activity` | `activities` |
+| `profile` | Nothing: a read model that reaches the other three through their `api` packages |
+| `webhook` | `webhook_endpoints`, `webhook_deliveries`, `webhook_delivery_attempts`; signed delivery |
+| `platform` | The replica of Platform's five tables and `replica_state` |
+
+The architecture gates hold those seams in the build: the profile writes no table, orders and activities reach customers
+only through its `api` package, no business context imports the webhook context (it listens to the outbox instead), and
+no class names another app or a foreign exchange.
+
+## Settings that change behaviour
+
+All are deployment settings, not per-Tenant ones. The defaults are the ones a fresh install gets.
+
+| Setting | Default | What it bounds |
+|---|---|---|
+| `crm.batches.max-customers`, `max-activities` | 1,000 | Items one batch call may carry |
+| `crm.batches.max-orders` / `max-order-lines` | 100 / 5,000 | Orders and their total lines in one batch call |
+| `crm.orders.max-lines-per-order` | 500 | Lines in one order, and so the size of one outbox row and webhook body |
+| `crm.orders.max-future-skew` | 5 minutes | How far ahead of the clock an order or return may be dated; there is no lower bound, so historic imports are allowed |
+| `crm.fields.max-active-definitions` / `max-bytes` | 50 / 16 KiB | One Tenant's active field definitions and one customer's serialized field values |
+| `crm.tags.max-per-customer` | 50 | Tags on one customer |
+| `crm.activity.max-payload-bytes` | 8 KiB | One activity payload |
+| `crm.housekeeping.*-retention` | 7 days | How long an inbox id, a relayed outbox payload, a dead outbox row and a finished delivery with its attempts are kept |
+
+Raising the order line cap raises the webhook body with it; a Tenant whose endpoint is slow should lower it rather than
+raise its own timeouts.
 
 ## Identity
 
@@ -140,16 +179,53 @@ Each app erases on its own endpoint. Erasing a person in crm does not erase them
 crm and loyalty must erase in both, or forward `customer.erased` to loyalty; the same duty holds the other way. A Tenant
 that keeps no copy in its own systems can treat the two erasure endpoints as its complete story.
 
+## Export
+
+`GET /customers/export` streams the same filters as the list as `text/csv`, through a server-side cursor and a bounded
+buffer. One export runs per Tenant at a time, held by a short lease; a second answers `429`. A cell beginning with `=`,
+`+`, `-` or `@` is prefixed with a quote, because a spreadsheet would otherwise run it as a formula.
+
+## Runbook
+
+**A delivery is `DEAD`.** `GET /webhook-deliveries?status=DEAD` lists what gave up and why in `lastError`, with every
+attempt and its status code. Fix the endpoint, then `POST /webhook-deliveries/{id}/retry`: the original stays as evidence
+and the retry is its own delivery.
+
+**Deliveries are slow or piling up.** The relay and the sender each poll on a setting; a large batch of orders on a slow
+endpoint shows as `attempts` rising against one endpoint. An endpoint can subscribe to only the types it needs, which is
+the first thing to narrow.
+
+**An order is larger than a delivery.** Raise `crm.orders.max-lines-per-order` only after confirming the endpoint accepts
+the body; the line cap is also the cap on the row the relay copies.
+
+**An activity payload is refused at 8 KiB.** Raise `crm.activity.max-payload-bytes` or send the detail as a field value
+and a small payload that points at it.
+
+**An export answers `429`.** Another export of that Tenant is still running; it releases its lease when it finishes, or
+when the lease runs out if the instance died.
+
+**A post-erasure support question.** The business rows remain: an order, a consent history and a typed, timed activity
+still exist without the person in them. The `erasure_requests` row proves the call happened, and holds only a hash of the
+reference. Backups and log aggregation are outside the app — they are the operator's retention duty, not something
+erasure can reach.
+
 ## The suite rule
 
 crm never calls, listens to or knows loyalty. Nothing crm does needs loyalty, and no loyalty fact reaches crm. This keeps
 crm optional: a Tenant can pair it with its own systems, another vendor's, or nothing at all.
 
-A Tenant that uses both apps connects them itself. It either sends each order and return to both apps — both are
-idempotent by the same `orderRef` and `returnRef` — or registers an endpoint for crm's webhooks and forwards
-`order.recorded`, `order.refunded` and `customer.erased` to loyalty. Because loyalty's request bodies use crm's field
-names, the forwarder is a field-for-field mapping and needs no other read of crm. This is the Tenant's integration, not a
-crm feature.
+A Tenant that uses both apps connects them itself, in one of two ways:
+
+- **Send twice.** Send each order and return to both apps. Both are idempotent by the same `orderRef` and `returnRef`, so
+  a retry after a failed call is safe; the same order earns the same points at either route. A Tenant that does this must
+  also erase in both, because each app erases only what it holds.
+- **Forward.** Register an endpoint for crm's webhooks and forward `order.recorded`, `order.refunded` and
+  `customer.erased` to the other app. Because the request bodies use the same field names, the forwarder is a
+  field-for-field mapping and needs no other read of crm. Answer loyalty's `422 ORDER_UNKNOWN` to a forwarded return with
+  a non-2xx so crm's retry schedule delivers it again once the order has arrived.
+
+Both recipes are proved end to end by `ops/smoke/crm-loyalty.sh` on the compose stack, which plays the Tenant System on
+each route and compares the points it gets.
 
 ## Non-goals
 

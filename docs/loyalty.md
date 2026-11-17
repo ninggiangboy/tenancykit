@@ -6,9 +6,10 @@ and returns from the Tenant's own system through its own API, and sends signed w
 points, tier and vouchers so the Tenant can react. It is a separate deployable (`loyalty/`) with the suite's three
 runtimes: `migrate`, `api` and `worker`.
 
-**Status: planned.** `loyalty/` is not built yet. This document is the contract the app is written against — what it
-owns, the earn, lot, debt and expiry rules every later part measures against, and what a Tenant does with it. It is
-revisited as the app ships.
+**Status: shipped.** `loyalty/` builds, migrates and tests green against the suite's own infrastructure, and every
+endpoint and webhook below exists in it. This document describes what it is; the
+[API document](../contracts/openapi/loyalty.yaml) and the [event schemas](../contracts/events/loyalty/) are the shapes a
+client builds against.
 
 loyalty keeps one program per Tenant, sends the member no message itself, and fulfils no reward. It keeps a replica of
 Platform and reads nothing from another app. It never calls, listens to or names crm.
@@ -109,12 +110,16 @@ The Tenant's data is the Tenant's: another Tenant's token cannot read or write i
 Points for an order are a pure function of the order and the rules in force at that moment:
 
 ```
-points = floor( sum over eligible lines of (line amount × line multiplier) ÷ currencyUnit )
+points = roundHALF_EVEN( sum over eligible lines of (line amount × line multiplier) ÷ currencyUnit )
 ```
 
 - `line multiplier` = the best matching promotion for the line (default 1) × the tier multiplier.
 - The sum runs over `earnEligible` lines only, net of any returns. Every intermediate value is a decimal with at most 2
-  fraction digits, and rounding is `HALF_EVEN` applied **once, at the end**.
+  fraction digits, and rounding is `HALF_EVEN` applied **once, at the end**: 2.5 becomes 2 and 3.5 becomes 4.
+- Worked example: a program with `currencyUnit = 100`, the member in a tier whose multiplier is 1.5, an order of two
+  eligible lines at 4,000 and 1,000 minor units, and one promotion giving ×2 on the second line's category. The second
+  line's multiplier is `2 × 1.5 = 3`, the first is `1 × 1.5 = 1.5`, so the sum is `4,000 × 1.5 + 1,000 × 3 = 9,000`, and
+  `9,000 ÷ 100 = 90` points.
 - The order's **earn record stores the snapshot**: the program rate, the matched promotions and the tier multiplier that
   were used. A return recomputes with that stored snapshot, never with today's rules, so changing a promotion after the
   fact cannot move points already granted.
@@ -212,16 +217,100 @@ Each app erases on its own endpoint, and erasing a person in loyalty does not er
 erases in one app must also erase in the other** if it uses both — or forward the erasure webhook: an `ERASURE` void and
 a `customer.erased` meet the same duty from the other side. Erasing only in one app leaves the person in the other.
 
+## Runtimes and contexts
+
+| Runtime | Does |
+|---|---|
+| `migrate` | Runs Flyway as the table owner and exits. |
+| `api` | Serves `/api/v1/...` behind Caddy's `/loyalty` prefix. No job runs here; readiness is `DOWN` until the worker has finished one replica rebuild. |
+| `worker` | Consumes `loyalty.platform-events`, runs the outbox relay, the webhook sender, the expiry run, the expiry notice, the daily tier evaluation and housekeeping. |
+
+| Context | Owns |
+|---|---|
+| `program` | `loyalty_programs`, `tiers`, `promotions`; the read port the other contexts use |
+| `points` | `members`, `orders`, `order_lines`, `order_returns`, `order_return_lines`, `ledger_entries`, `point_lots`, `lot_allocations`, `order_earns`, `redemptions`, `erasure_requests` |
+| `tiers` | Nothing: evaluates the tier over the spend each earn record holds, through `points`' api |
+| `rewards` | `rewards`, `vouchers` |
+| `webhook` | `webhook_endpoints`, `webhook_deliveries`, `webhook_delivery_attempts` |
+| `platform` | The replica of Platform's five tables and `replica_state` |
+
+The graph has no cycle: `points` reaches `program` only through its api, `tiers` and `rewards` reach `points` only
+through its api, and `points` reaches them only through ports it declares and app-boot implements.
+
+## Settings that change behaviour
+
+All are deployment settings except the program itself, which is per Tenant.
+
+| Setting | Default | What it does |
+|---|---|---|
+| `loyalty.expiry.interval` / `notice-interval` | hourly / daily | How often the expiry run and the notice run sweep |
+| `loyalty.expiry.batch-size` | 500 | Members one sweep claims at a time |
+| `loyalty.tier-evaluation.interval` / `batch-size` | daily / 500 | The evaluation that can lower a tier |
+| `loyalty.orders.max-lines-per-order` | 500 | The same cap the sibling app uses, so one order sent to both gets the same answer |
+| `loyalty.housekeeping.*-retention` | 7 days / 30 days | How long a relayed outbox payload or a dead row and an inbox id are kept |
+| `loyalty.webhooks.retention` | 30 days | How long a finished delivery and its attempts are kept |
+| `loyalty.webhooks.master-key` | empty | The 32-byte key that wraps each endpoint's signing secret; a deployment without one fails at boot |
+
+Per Tenant, the program sets `currency` and `currencyUnit` (minor units that earn one point), `expiryMonths` (default 12),
+`expiryNoticeDays` (default 30; `0` turns the notice off), `tierWindowMonths` (default 12) and `timeZone`.
+
+## Runbook
+
+**A delivery is `DEAD`.** `GET /webhook-deliveries?status=DEAD` lists it with `lastError` and every attempt. Fix the
+endpoint, then retry: the original stays as evidence and the retry is its own delivery.
+
+**The expiry run is behind.** A Tenant coming back from downtime has due lots older than the batch; the run catches up over
+several passes and never affects what the API reports, because an expired lot is excluded from the balance whether or not
+the job has written its `EXPIRE` entry yet.
+
+**A member's tier looks wrong.** A tier rises only on the earn that crosses a threshold and falls only in the daily
+evaluation; `tier_review_at` is when the evaluation will next look. Replacing the tier list marks every member, so a
+Tenant that changed its tiers sees the move after that run, not at once.
+
+**The same order earned twice.** It cannot: the second call is a replay by `orderRef`, and the response says so. If two
+orders carry different `orderRef` values for one purchase, the Tenant sent it twice under two keys, which only the Tenant
+can undo with returns.
+
+**A reward redemption is refused with `OUT_OF_STOCK` or `INSUFFICIENT_POINTS`.** The stock decrement and the spend happen
+in one transaction, so a refusal wrote nothing. A member in debt is refused with `MEMBER_IN_DEBT` until the next earn
+repays it.
+
+**A voucher will not use.** `409 VOUCHER_USED` means another `useRef` already consumed it; the same `useRef` replays
+successfully. `409 VOUCHER_EXPIRED` means its validity window passed — expiry is derived at read time and there is no job
+to wait for.
+
+**A post-erasure support question.** The ledger, lots and orders remain as anonymous rows keyed by the opaque member id;
+`member.erased` and the `voucher.voided` events name the member id earlier events gave the Tenant. Backups and log
+aggregation are the operator's retention duty.
+
+## Fulfilling a reward in another system
+
+loyalty issues a voucher and stops there. The Tenant decides what the code is worth. With Billing coupons as the example:
+
+1. On `voucher.issued`, look up the `rewardId` in the Tenant's own reward mapping (not in loyalty) to learn what the reward
+   grants.
+2. Grant it in the other system with an idempotency key derived from the **voucher id**, not the code, so a redelivered
+   webhook grants once.
+3. Hand the voucher `code` to the member and use the voucher at the POS **last**, with a `useRef` of the Tenant's choosing.
+4. If the other system refuses for good, reverse the reward redemption: loyalty voids the unused voucher, gives its stock
+   back and restores the points. The same recipe is in [coupons.md](coupons.md) from Billing's side.
+
 ## The suite rule
 
 loyalty never calls, listens to or knows crm. Nothing loyalty does needs crm, and no crm fact reaches loyalty. This keeps
 loyalty optional: a Tenant can pair it with its own systems, another vendor's, or nothing at all.
 
-A Tenant that uses both apps connects them itself. It either sends each order and return to both apps — both are
-idempotent by the same `orderRef` and `returnRef` — or registers an endpoint for crm's webhooks and forwards
-`order.recorded`, `order.refunded` and `customer.erased` to loyalty. Because loyalty's request bodies use crm's field
-names, the forwarder is a field-for-field mapping, and both routes give the same points for the same order. This is the
-Tenant's integration, not a loyalty feature.
+A Tenant that uses both apps connects them itself, in one of two ways:
+
+- **Send twice.** Send each order and return to both apps. Both are idempotent by the same `orderRef` and `returnRef`, the
+  request bodies use the same field names, and both routes give the same points for the same order. A Tenant that does
+  this must also erase in both.
+- **Forward.** Register an endpoint for crm's webhooks and forward `order.recorded`, `order.refunded` and
+  `customer.erased` to loyalty's order, return and erasure endpoints. The forwarder is a field-for-field mapping and needs
+  no other read of crm. A return that arrives before its order is `422 ORDER_UNKNOWN`: answer crm's webhook with a
+  non-2xx and crm's retry schedule delivers it again, which is why nothing is held for later.
+
+Both recipes are proved end to end by `ops/smoke/crm-loyalty.sh` on the compose stack.
 
 ## Non-goals
 
