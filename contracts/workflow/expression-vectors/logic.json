@@ -1,0 +1,146 @@
+[
+  {
+    "name": "eq: numbers compare by value, so 1 and 1.0 are equal",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "eq", "args": [1, 1.0] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "eq: text and a number are different types",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "eq", "args": ["1", 1] },
+    "expected": { "value": false }
+  },
+  {
+    "name": "eq: a comparison with null is false on both sides",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "eq", "args": [null, null] },
+    "expected": { "value": false }
+  },
+  {
+    "name": "neq: null is not unequal to null; neq is not the negation of eq",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "neq", "args": [null, null] },
+    "expected": { "value": false }
+  },
+  {
+    "name": "neq: two different numbers are unequal",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "neq", "args": [1, 2] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "gt: text orders by code point",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "gt", "args": ["b", "a"] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "gte: equal numbers pass",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "gte", "args": [2, 2] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "lt: a number below another passes",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "lt", "args": [1, 2] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "lte: two different types are false, not an error",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "lte", "args": [1, "2"] },
+    "expected": { "value": false }
+  },
+  {
+    "name": "and: a null operand is false",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "and", "args": [true, null] },
+    "expected": { "value": false }
+  },
+  {
+    "name": "or: one true operand is true even with a null",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "or", "args": [true, null] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "or: a false and a null are both false",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "or", "args": [false, null] },
+    "expected": { "value": false }
+  },
+  {
+    "name": "not: the negation of null is true",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "not", "args": [null] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "exists: empty text is absent",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "exists", "args": [""] },
+    "expected": { "value": false }
+  },
+  {
+    "name": "exists: zero and false exist",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "and", "args": [{ "op": "exists", "args": [0] }, { "op": "exists", "args": [false] }] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "empty: an empty list is empty",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "empty", "args": [[]] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "if: a null condition takes the else branch",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "if", "args": [null, "yes", "no"] },
+    "expected": { "value": "no" }
+  },
+  {
+    "name": "if: a true condition takes the then branch",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "if", "args": [true, "yes", "no"] },
+    "expected": { "value": "yes" }
+  },
+  {
+    "name": "coalesce: the first present argument wins, and empty text is present",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "coalesce", "args": [null, "", "fallback"] },
+    "expected": { "value": "" }
+  },
+  {
+    "name": "coalesce: nothing present is null",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "coalesce", "args": [null, null] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "eq: two lists are equal member by member",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "eq", "args": [[1, "a", true], [1, "a", true]] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "coalesce: reads the variable when the first operand is absent",
+    "environment": { "input": {}, "steps": {}, "vars": { "fallback": "x" } },
+    "expr": { "op": "coalesce", "args": [null, { "var": "fallback" }] },
+    "expected": { "value": "x" }
+  },
+  {
+    "name": "parse: an operator the language does not define is refused by pointer",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "regex", "args": ["a", "b"] },
+    "expected": { "errors": [{ "pointer": "/expr/op", "code": "unknown_operator" }] }
+  },
+  {
+    "name": "parse: an operator called with the wrong arity is refused by pointer",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "not", "args": [true, false] },
+    "expected": { "errors": [{ "pointer": "/expr/args", "code": "arity_mismatch" }] }
+  }
+]

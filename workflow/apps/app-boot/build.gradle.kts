@@ -62,6 +62,14 @@ tasks.processResources {
         include("*.yaml")
         into("permissions")
     }
+    from(layout.projectDirectory.dir("../../../contracts/workflow")) {
+        include("*.schema.json")
+        into("workflow")
+    }
+    from(layout.projectDirectory.dir("../../../contracts/workflow/expression-vectors")) {
+        include("*.json")
+        into("workflow/expression-vectors")
+    }
 }
 
 tasks.test {

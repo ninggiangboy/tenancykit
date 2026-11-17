@@ -1,0 +1,122 @@
+[
+  {
+    "name": "input: a path reads a nested member of the trigger payload",
+    "environment": { "input": { "customer": { "id": "c1" } }, "steps": {}, "vars": {} },
+    "expr": { "input": "customer.id" },
+    "expected": { "value": "c1" }
+  },
+  {
+    "name": "input: a numeric segment indexes a list",
+    "environment": { "input": { "items": [{ "price": 5 }] }, "steps": {}, "vars": {} },
+    "expr": { "input": "items.0.price" },
+    "expected": { "value": 5 }
+  },
+  {
+    "name": "input: an absent member is null, not an error",
+    "environment": { "input": { "customer": {} }, "steps": {}, "vars": {} },
+    "expr": { "input": "customer.id" },
+    "expected": { "value": null }
+  },
+  {
+    "name": "input: an empty path names the whole payload",
+    "environment": { "input": "hello", "steps": {}, "vars": {} },
+    "expr": { "input": "" },
+    "expected": { "value": "hello" }
+  },
+  {
+    "name": "step: an empty path returns a scalar output whole",
+    "environment": { "input": {}, "steps": { "fetch": "done" }, "vars": {} },
+    "expr": { "step": "fetch" },
+    "expected": { "value": "done" }
+  },
+  {
+    "name": "step: a path reads a member of a finished step's output",
+    "environment": { "input": {}, "steps": { "fetch": { "body": { "status": "ok" } } }, "vars": {} },
+    "expr": { "step": "fetch", "path": "body.status" },
+    "expected": { "value": "ok" }
+  },
+  {
+    "name": "var: a variable declared by a set node reads back",
+    "environment": { "input": {}, "steps": {}, "vars": { "total": 10 } },
+    "expr": { "var": "total" },
+    "expected": { "value": 10 }
+  },
+  {
+    "name": "item: the current for-each item reads by path",
+    "environment": { "input": {}, "steps": {}, "vars": {}, "item": { "sku": "A" } },
+    "expr": { "item": "sku" },
+    "expected": { "value": "A" }
+  },
+  {
+    "name": "index: the current iteration index is a number",
+    "environment": { "input": {}, "steps": {}, "vars": {}, "index": 3 },
+    "expr": { "index": true },
+    "expected": { "value": 3 }
+  },
+  {
+    "name": "check: a step reference to a node the graph does not have is refused",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "step": "missing", "path": "id" },
+    "expected": { "errors": [{ "pointer": "/expr/step", "code": "dangling_reference" }] }
+  },
+  {
+    "name": "check: a variable no set node declares is refused",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "var": "missing" },
+    "expected": { "errors": [{ "pointer": "/expr/var", "code": "dangling_reference" }] }
+  },
+  {
+    "name": "check: the current item is refused outside a for-each",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "item": "sku" },
+    "expected": { "errors": [{ "pointer": "/expr/item", "code": "reference_outside_iteration" }] }
+  },
+  {
+    "name": "check: the current index is refused outside a for-each",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "index": true },
+    "expected": { "errors": [{ "pointer": "/expr/index", "code": "reference_outside_iteration" }] }
+  },
+  {
+    "name": "parse: an empty path segment is not a path",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "input": "a..b" },
+    "expected": { "errors": [{ "pointer": "/expr/input", "code": "invalid_path" }] }
+  },
+  {
+    "name": "parse: a wildcard is not a path",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "input": "items.*.price" },
+    "expected": { "errors": [{ "pointer": "/expr/input", "code": "invalid_path" }] }
+  },
+  {
+    "name": "parse: an object with no known reference is not an expression",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "answer": "q1" },
+    "expected": { "errors": [{ "pointer": "/expr", "code": "expression_invalid" }] }
+  },
+  {
+    "name": "parse: an index reference is written with true",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "index": false },
+    "expected": { "errors": [{ "pointer": "/expr/index", "code": "expression_invalid" }] }
+  },
+  {
+    "name": "parse: a variable reference names text",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "var": 1 },
+    "expected": { "errors": [{ "pointer": "/expr/var", "code": "expression_invalid" }] }
+  },
+  {
+    "name": "check: every reference of a nested expression is resolved",
+    "environment": { "input": { "n": 1 }, "steps": { "one": { "v": 2 } }, "vars": { "v": 3 } },
+    "expr": {
+      "op": "add",
+      "args": [
+        { "input": "n" },
+        { "op": "add", "args": [{ "step": "one", "path": "v" }, { "var": "v" }] }
+      ]
+    },
+    "expected": { "value": 6 }
+  }
+]

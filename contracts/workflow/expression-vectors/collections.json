@@ -1,0 +1,80 @@
+[
+  {
+    "name": "count: a list of three has three members",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "count", "args": [[1, 2, 3]] },
+    "expected": { "value": 3 }
+  },
+  {
+    "name": "count: null has no members, which is zero",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "count", "args": [null] },
+    "expected": { "value": 0 }
+  },
+  {
+    "name": "count: a scalar is not a list and is null",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "count", "args": ["x"] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "sum: a list of decimals sums exactly",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "sum", "args": [[1, 2, 3.5]] },
+    "expected": { "value": 6.5 }
+  },
+  {
+    "name": "sum: a list holding a non-number is null, not a partial sum",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "sum", "args": [[1, "2"]] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "sum: a null is not a list and is null",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "sum", "args": [null] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "in: a scalar is a member of the list",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "in", "args": [2, [1, 2, 3]] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "in: any member of a listed list is enough",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "in", "args": [[2, 9], [1, 2]] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "in: a scalar absent from the list is not a member",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "in", "args": [4, [1, 2, 3]] },
+    "expected": { "value": false }
+  },
+  {
+    "name": "in: a null needle is never a member",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "in", "args": [null, [null, 1]] },
+    "expected": { "value": false }
+  },
+  {
+    "name": "contains: a list contains a member",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "contains", "args": [[1, 2], 2] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "contains: members compare by value, so 2.0 is the member 2",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "contains", "args": [[1, 2], 2.0] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "collections: an array literal evaluates its members",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": ["a", { "op": "add", "args": [1, 2] }, null],
+    "expected": { "value": ["a", 3, null] }
+  }
+]

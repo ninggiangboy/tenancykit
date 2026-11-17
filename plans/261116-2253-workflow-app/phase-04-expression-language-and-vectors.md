@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Expression language and vectors"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [3]

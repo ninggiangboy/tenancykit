@@ -1,0 +1,74 @@
+[
+  {
+    "name": "len: text counts code points, not UTF-16 units",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "len", "args": ["héllo"] },
+    "expected": { "value": 5 }
+  },
+  {
+    "name": "len: an emoji outside the basic plane is one code point",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "len", "args": ["a😀"] },
+    "expected": { "value": 2 }
+  },
+  {
+    "name": "len: null has no length",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "len", "args": [null] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "len: a number has no length",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "len", "args": [12] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "lower: text is lower-cased",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "lower", "args": ["ABC"] },
+    "expected": { "value": "abc" }
+  },
+  {
+    "name": "lower: a number is a type mismatch and is null",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "lower", "args": [1] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "concat: two texts join",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "concat", "args": ["a", "b"] },
+    "expected": { "value": "ab" }
+  },
+  {
+    "name": "concat: a null operand is null",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "concat", "args": ["a", null] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "concat: a number operand is a type mismatch and is null",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "concat", "args": [1, "a"] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "contains: text contains a substring, case sensitive",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "contains", "args": ["Hello", "ell"] },
+    "expected": { "value": true }
+  },
+  {
+    "name": "contains: the same substring in another case is absent",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "contains", "args": ["Hello", "hello"] },
+    "expected": { "value": false }
+  },
+  {
+    "name": "contains: a scalar haystack is a type mismatch and is false",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "contains", "args": [12, 1] },
+    "expected": { "value": false }
+  }
+]

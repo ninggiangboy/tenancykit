@@ -1,0 +1,289 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/workflow/expression.schema.json",
+  "title": "Workflow expression",
+  "description": "The one expression language a workflow version uses for branch conditions, node settings and variables. It is a JSON AST with a closed operator set: there is no function call, no regular expression, and no access to the host, the clock or the network. The engine evaluates it and the vectors in contracts/workflow/expression-vectors fix its behaviour. Limits the schema cannot express: depth <= 16 and nodes <= 500 per expression, checked by the parser; array literals are capped at 100 items here. Numbers are decimals: every arithmetic result is rounded to 6 fraction digits with HALF_EVEN, and a comparison is exact on the rounded values. Comparisons with null are false; `div` by zero is null; arithmetic on null is null.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/literal"
+    },
+    {
+      "$ref": "#/$defs/array"
+    },
+    {
+      "$ref": "#/$defs/input"
+    },
+    {
+      "$ref": "#/$defs/step"
+    },
+    {
+      "$ref": "#/$defs/var"
+    },
+    {
+      "$ref": "#/$defs/item"
+    },
+    {
+      "$ref": "#/$defs/index"
+    },
+    {
+      "$ref": "#/$defs/operation"
+    }
+  ],
+  "$defs": {
+    "literal": {
+      "description": "A constant. A string is text, a number is a decimal, a boolean is a flag and null is the empty value.",
+      "oneOf": [
+        {
+          "type": "string",
+          "maxLength": 2000
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "array": {
+      "description": "A list literal. Every element is an expression. At most 100 items.",
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/expression"
+      }
+    },
+    "path": {
+      "type": "string",
+      "maxLength": 256,
+      "pattern": "^$|^[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)*$",
+      "description": "A closed dotted path into a JSON value, for example `customer.id` or `items.0.price`. An empty path names the whole value. No wildcard, no filter and no expression."
+    },
+    "input": {
+      "description": "A value of the trigger or manual payload that started the instance.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input"
+      ],
+      "properties": {
+        "input": {
+          "$ref": "#/$defs/path"
+        }
+      }
+    },
+    "step": {
+      "description": "A value of a finished step's output, named by node id.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step"
+      ],
+      "properties": {
+        "step": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "The id of a node that exists in the graph."
+        },
+        "path": {
+          "$ref": "#/$defs/path"
+        }
+      }
+    },
+    "var": {
+      "description": "The value of a workflow variable. The name must be declared by a `set` node of the graph.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "var"
+      ],
+      "properties": {
+        "var": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,63}$"
+        }
+      }
+    },
+    "item": {
+      "description": "The current item of an enclosing for-each, or a member of it by path.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "item"
+      ],
+      "properties": {
+        "item": {
+          "$ref": "#/$defs/path"
+        }
+      }
+    },
+    "index": {
+      "description": "The index of the current for-each iteration. Only valid inside a for-each.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "index"
+      ],
+      "properties": {
+        "index": {
+          "const": true
+        }
+      }
+    },
+    "expression": {
+      "$ref": "#"
+    },
+    "operation": {
+      "description": "An operator and its arguments. The arity is fixed per operator: unary one, binary two, `and`, `or`, `min`, `max` and `coalesce` take two to eight, and `if` takes three.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "args"
+      ],
+      "properties": {
+        "op": {
+          "type": "string",
+          "enum": [
+            "eq",
+            "neq",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "in",
+            "contains",
+            "and",
+            "or",
+            "not",
+            "exists",
+            "empty",
+            "count",
+            "sum",
+            "add",
+            "sub",
+            "mul",
+            "div",
+            "min",
+            "max",
+            "if",
+            "len",
+            "lower",
+            "concat",
+            "coalesce"
+          ]
+        },
+        "args": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/expression"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "enum": [
+                  "eq",
+                  "neq",
+                  "gt",
+                  "gte",
+                  "lt",
+                  "lte",
+                  "in",
+                  "contains",
+                  "add",
+                  "sub",
+                  "mul",
+                  "div",
+                  "concat"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "args": {
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "enum": [
+                  "not",
+                  "exists",
+                  "empty",
+                  "count",
+                  "sum",
+                  "len",
+                  "lower"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "args": {
+                "minItems": 1,
+                "maxItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "enum": [
+                  "and",
+                  "or",
+                  "min",
+                  "max",
+                  "coalesce"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "args": {
+                "minItems": 2,
+                "maxItems": 8
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "if"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "args": {
+                "minItems": 3,
+                "maxItems": 3
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

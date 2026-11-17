@@ -1,0 +1,149 @@
+[
+  {
+    "name": "add: two decimals add exactly",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "add", "args": [0.1, 0.2] },
+    "expected": { "value": 0.3 }
+  },
+  {
+    "name": "add: 0.1 + 0.2 is 0.3, not the binary float 0.30000000000000004",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "add", "args": [0.1, 0.2] },
+    "expected": { "value": 0.3 }
+  },
+  {
+    "name": "add: a null operand makes the sum null",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "add", "args": [null, 1] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "add: a text operand is a type mismatch and is null",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "add", "args": ["1", 1] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "add: a result past the 6th fraction digit rounds HALF_EVEN down",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "add", "args": [0.1000005, 0] },
+    "expected": { "value": 0.1 }
+  },
+  {
+    "name": "add: a half at the 7th digit rounds upward to the odd 6th digit",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "add", "args": [0.1000015, 0] },
+    "expected": { "value": 0.100002 }
+  },
+  {
+    "name": "sub: a subtraction keeps the sign",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "sub", "args": [5, 10] },
+    "expected": { "value": -5 }
+  },
+  {
+    "name": "sub: a null operand makes the difference null",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "sub", "args": [5, null] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "mul: a multiplication of decimals is exact at 6 digits",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "mul", "args": [0.3, 3] },
+    "expected": { "value": 0.9 }
+  },
+  {
+    "name": "mul: a product with more than 6 fraction digits rounds HALF_EVEN",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "mul", "args": [0.1234567, 0.1234567] },
+    "expected": { "value": 0.015242 }
+  },
+  {
+    "name": "mul: a negative product keeps the sign",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "mul", "args": [-2.5, 1] },
+    "expected": { "value": -2.5 }
+  },
+  {
+    "name": "div: ten over four is two and a half",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "div", "args": [10, 4] },
+    "expected": { "value": 2.5 }
+  },
+  {
+    "name": "div: one over three rounds to 0.333333",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "div", "args": [1, 3] },
+    "expected": { "value": 0.333333 }
+  },
+  {
+    "name": "div: two over three rounds to 0.666667",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "div", "args": [2, 3] },
+    "expected": { "value": 0.666667 }
+  },
+  {
+    "name": "div: division by zero is null, not an error",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "div", "args": [1, 0] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "div: a null divisor is null, not an error",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "div", "args": [1, null] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "min: the smallest of its arguments",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "min", "args": [9, 4, 7] },
+    "expected": { "value": 4 }
+  },
+  {
+    "name": "max: the largest of its arguments",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "max", "args": [9, 4, 7] },
+    "expected": { "value": 9 }
+  },
+  {
+    "name": "min: a null operand makes the result null",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "min", "args": [null, 4] },
+    "expected": { "value": null }
+  },
+  {
+    "name": "max: eight operands are allowed",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "max", "args": [1, 2, 3, 4, 5, 6, 7, 8] },
+    "expected": { "value": 8 }
+  },
+  {
+    "name": "arithmetic: a large integer stays exact",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "add", "args": [1000000, 1] },
+    "expected": { "value": 1000001 }
+  },
+  {
+    "name": "arithmetic: a decimal is exact, not the binary approximation",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "mul", "args": [0.29, 100] },
+    "expected": { "value": 29 }
+  },
+  {
+    "name": "arithmetic: chained arithmetic rounds at each step, as the AST nests",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": {
+      "op": "mul",
+      "args": [{ "op": "div", "args": [1, 3] }, 3]
+    },
+    "expected": { "value": 0.999999 }
+  },
+  {
+    "name": "arithmetic: a list operand is a type mismatch and is null",
+    "environment": { "input": {}, "steps": {}, "vars": {} },
+    "expr": { "op": "add", "args": [[1, 2], 1] },
+    "expected": { "value": null }
+  }
+]
