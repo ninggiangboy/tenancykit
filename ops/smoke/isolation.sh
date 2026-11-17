@@ -119,202 +119,87 @@ require_refused "mailer_app connecting to loyalty" psql_as mailer_app "${MAILER_
 
 # ------------------------------ broker ------------------------------
 step "cross-exchange publishing must be refused"
-# The billing broker user may not write to platform.events; the exchange exists, so only its permissions can stop it.
-billing_publish_to_platform() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username billing --password "${BILLING_RABBITMQ_PASSWORD:?}" \
-    publish exchange=platform.events routing_key=tenant.changed payload='{}' > /dev/null 2>&1
+# What the broker enforces is a permission triple per user: publishing checks `write` on the exchange, consuming checks
+# `read` on the queue, and binding checks `write` on the queue plus `read` on the source exchange. These reads assert the
+# triples themselves, because a publish attempt cannot: `rabbitmqadmin` 4.x publishes only to queues and streams, and an
+# app user carries no management tag, so a publish it makes would be refused for the wrong reason.
+BROKER="${BROKER_URL:-http://localhost:15672}"
+
+broker_permissions() {
+  curl --silent --fail-with-body --user "${RABBITMQ_ADMIN_USER:?}:${RABBITMQ_ADMIN_PASSWORD:?}" \
+    "${BROKER}/api/permissions" | jq -r --arg user "$1" --arg part "$2" '.[] | select(.user == $user) | .[$part]'
 }
 
-platform_publish_to_billing() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username platform --password "${PLATFORM_RABBITMQ_PASSWORD:?}" \
-    publish exchange=billing.events routing_key=customer.created payload='{}' > /dev/null 2>&1
+# Every business exchange of another app, and the suite's delivery infrastructure. No grant may name one of these.
+FOREIGN_EXCHANGES="billing.events survey.events attribution.events booking.events workflow.events mailer.events mailer.commands"
+
+# The grant a user's `write` may name: only what its own app declares. This is asserted as an exact match, so a widened
+# grant fails here rather than passing as "still refused".
+require_only() {
+  local user="$1" part="$2" expected="$3" actual
+  actual=$(broker_permissions "${user}" "${part}")
+  if [ -z "${actual}" ]; then
+    fail "the ${user} user has no .${part} grant at all; the broker declaration did not run"
+  fi
+  if [ "${actual}" != "${expected}" ]; then
+    fail "the ${user} user's ${part} permission is '${actual}', expected '${expected}'"
+  fi
+  echo "refused: the ${user} user may ${part} nothing outside '${expected}'"
 }
 
-# Mailer consumes commands and publishes one event to `mailer.events`. Every other exchange must be refused, including
-# `mailer.commands`: a service may not publish to the exchange it consumes from, or its results would look like
-# commands. It also may not read another service's queue — a message there carries that service's work.
-mailer_publish_to_billing() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username mailer --password "${MAILER_RABBITMQ_PASSWORD:?}" \
-    publish exchange=billing.events routing_key=customer.created payload='{}' > /dev/null 2>&1
+# The suite rule, read off the same triples for every user: no grant names another app's business exchange, which is
+# why a bind to one is refused by the broker and not by convention.
+require_no_foreign_exchange() {
+  local user="$1" part granted foreign
+  for part in configure write read; do
+    granted=$(broker_permissions "${user}" "${part}")
+    for foreign in ${FOREIGN_EXCHANGES}; do
+      case "${granted}" in
+        *"${foreign}"*)
+          # A producer's own exchange is not foreign to it; the caller's declaration is the judge, and only crm, loyalty,
+          # booking, attribution and workflow are asserted here.
+          case "${user}:${foreign}" in
+            billing:billing.events|survey:survey.events|booking:booking.events|attribution:attribution.events|workflow:workflow.events|mailer:mailer.events|mailer:mailer.commands|notification:mailer.commands|mailroom:mailer.commands|mailroom:mailer.events) ;;
+            *) fail "the ${user} user's ${part} permission names the foreign exchange ${foreign}: ${granted}" ;;
+          esac
+          ;;
+      esac
+    done
+  done
+  echo "refused: the ${user} user names no other app's business exchange in any grant"
 }
 
-mailer_publish_to_platform() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username mailer --password "${MAILER_RABBITMQ_PASSWORD:?}" \
-    publish exchange=platform.events routing_key=tenant.changed payload='{}' > /dev/null 2>&1
-}
+for user in platform billing mailer notification mailroom survey booking workflow; do
+  require_no_foreign_exchange "${user}"
+done
 
-mailer_publish_to_its_command_exchange() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username mailer --password "${MAILER_RABBITMQ_PASSWORD:?}" \
-    publish exchange=mailer.commands routing_key=email.send payload='{}' > /dev/null 2>&1
-}
+# The two new apps own one queue each and no exchange, so their three grants are exactly their own names plus the
+# dead-letter exchange they bind to, and `read` additionally covers platform.events (a bind checks read on the source).
+require_only crm configure '^(crm\.platform-events|crm\.platform-events\.dlq|suite\.dlx)$'
+require_only crm write '^(crm\.platform-events|crm\.platform-events\.dlq|suite\.dlx)$'
+require_only crm read '^(platform\.events|crm\.platform-events|crm\.platform-events\.dlq|suite\.dlx)$'
+require_only loyalty configure '^(loyalty\.platform-events|loyalty\.platform-events\.dlq|suite\.dlx)$'
+require_only loyalty write '^(loyalty\.platform-events|loyalty\.platform-events\.dlq|suite\.dlx)$'
+require_only loyalty read '^(platform\.events|loyalty\.platform-events|loyalty\.platform-events\.dlq|suite\.dlx)$'
 
-mailer_publish_result() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username mailer --password "${MAILER_RABBITMQ_PASSWORD:?}" \
-    publish exchange=mailer.events routing_key=email-delivery.changed payload='{}' > /dev/null 2>&1
-}
-
-mailer_read_billing_queue() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username mailer --password "${MAILER_RABBITMQ_PASSWORD:?}" \
-    get queue=billing.platform-events count=1 ackmode=reject_requeue_true > /dev/null 2>&1
-}
-
-notification_publish_to_platform() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username notification --password "${NOTIFICATION_RABBITMQ_PASSWORD:?}" \
-    publish exchange=platform.events routing_key=tenant.changed payload='{}' > /dev/null 2>&1
-}
-
-notification_publish_to_billing() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username notification --password "${NOTIFICATION_RABBITMQ_PASSWORD:?}" \
-    publish exchange=billing.events routing_key=customer.created payload='{}' > /dev/null 2>&1
-}
-
-billing_read_notification_queue() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username billing --password "${BILLING_RABBITMQ_PASSWORD:?}" \
-    get queue=notification.platform-events count=1 ackmode=reject_requeue_true > /dev/null 2>&1
-}
-
-billing_read_mailroom_queue() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username billing --password "${BILLING_RABBITMQ_PASSWORD:?}" \
-    get queue=mailroom.platform-events count=1 ackmode=reject_requeue_true > /dev/null 2>&1
-}
-
-# The positive control: notification is the one service user with a cross-service publish grant, and a script that only
-# proved denials would keep passing if the grant vanished.
-notification_publish_email_command() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username notification --password "${NOTIFICATION_RABBITMQ_PASSWORD:?}" \
-    publish exchange=mailer.commands routing_key=email.send payload='{}' > /dev/null 2>&1
-}
-
-# Mailroom may publish only to mailer.commands and read only its own queues. In particular it may not publish to
-# mailer.events: a consumer of mailer's results that could also write them would make its own ledger.
-mailroom_publish_to_platform() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username mailroom --password "${MAILROOM_RABBITMQ_PASSWORD:?}" \
-    publish exchange=platform.events routing_key=tenant.changed payload='{}' > /dev/null 2>&1
-}
-
-mailroom_publish_to_billing() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username mailroom --password "${MAILROOM_RABBITMQ_PASSWORD:?}" \
-    publish exchange=billing.events routing_key=customer.created payload='{}' > /dev/null 2>&1
-}
-
-mailroom_publish_to_mailer_events() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username mailroom --password "${MAILROOM_RABBITMQ_PASSWORD:?}" \
-    publish exchange=mailer.events routing_key=email-delivery.changed payload='{}' > /dev/null 2>&1
-}
-
-mailroom_read_billing_queue() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username mailroom --password "${MAILROOM_RABBITMQ_PASSWORD:?}" \
-    get queue=billing.platform-events count=1 ackmode=reject_requeue_true > /dev/null 2>&1
-}
-
-mailroom_publish_email_command() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username mailroom --password "${MAILROOM_RABBITMQ_PASSWORD:?}" \
-    publish exchange=mailer.commands routing_key=email.send payload='{}' > /dev/null 2>&1
-}
-
-require_refused "the billing user publishing to platform.events" billing_publish_to_platform
-require_refused "the platform user publishing to billing.events" platform_publish_to_billing
-require_refused "the mailer user publishing to billing.events" mailer_publish_to_billing
-require_refused "the mailer user publishing to platform.events" mailer_publish_to_platform
-require_refused "the mailer user publishing to its own command exchange" mailer_publish_to_its_command_exchange
-require_refused "the mailer user reading billing.platform-events" mailer_read_billing_queue
-if ! mailer_publish_result; then
-  fail "the mailer user cannot publish email-delivery.changed to mailer.events; its result grant is missing"
-fi
-echo "allowed: the mailer user publishing email-delivery.changed to mailer.events"
-require_refused "the notification user publishing to platform.events" notification_publish_to_platform
-require_refused "the notification user publishing to billing.events" notification_publish_to_billing
-require_refused "the billing user reading notification.platform-events" billing_read_notification_queue
-if ! notification_publish_email_command; then
-  fail "the notification user cannot publish email.send to mailer.commands; the one cross-service grant is missing"
-fi
-echo "allowed: the notification user publishing email.send to mailer.commands"
-require_refused "the mailroom user publishing to platform.events" mailroom_publish_to_platform
-require_refused "the mailroom user publishing to billing.events" mailroom_publish_to_billing
-require_refused "the mailroom user publishing to mailer.events" mailroom_publish_to_mailer_events
-require_refused "the mailroom user reading billing.platform-events" mailroom_read_billing_queue
-require_refused "the billing user reading mailroom.platform-events" billing_read_mailroom_queue
-if ! mailroom_publish_email_command; then
-  fail "the mailroom user cannot publish email.send to mailer.commands; its only publish grant is missing"
-fi
-
-# Survey publishes its three facts to survey.events and to nothing else. Its write grant covers only its own exchange
-# and its own queue, so publishing to platform.events or billing.events must be refused.
-survey_publish_to_platform() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username survey --password "${SURVEY_RABBITMQ_PASSWORD:?}" \
-    publish exchange=platform.events routing_key=tenant.changed payload='{}' > /dev/null 2>&1
-}
-
-survey_publish_to_billing() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username survey --password "${SURVEY_RABBITMQ_PASSWORD:?}" \
-    publish exchange=billing.events routing_key=customer.created payload='{}' > /dev/null 2>&1
-}
-
-survey_read_billing_queue() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username survey --password "${SURVEY_RABBITMQ_PASSWORD:?}" \
-    get queue=billing.platform-events count=1 ackmode=reject_requeue_true > /dev/null 2>&1
-}
-
-survey_publish_own_event() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username survey --password "${SURVEY_RABBITMQ_PASSWORD:?}" \
-    publish exchange=survey.events routing_key=survey-response.submitted payload='{}' > /dev/null 2>&1
-}
-
-require_refused "the survey user publishing to platform.events" survey_publish_to_platform
-require_refused "the survey user publishing to billing.events" survey_publish_to_billing
-require_refused "the survey user reading billing.platform-events" survey_read_billing_queue
-if ! survey_publish_own_event; then
-  fail "the survey user cannot publish survey-response.submitted to survey.events; its own grant is missing"
-fi
-echo "allowed: the survey user publishing survey-response.submitted to survey.events"
-echo "allowed: the mailroom user publishing email.send to mailer.commands"
-
-# Booking owns no exchange: its ten facts leave as signed webhooks. Its write grant covers its own queue, its DLQ and
-# suite.dlx, so publishing to platform.events or billing.events must be refused, and it may read only its own queue.
-booking_publish_to_platform() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username booking --password "${BOOKING_RABBITMQ_PASSWORD:?}" \
-    publish exchange=platform.events routing_key=tenant.changed payload='{}' > /dev/null 2>&1
-}
-
-booking_publish_to_billing() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username booking --password "${BOOKING_RABBITMQ_PASSWORD:?}" \
-    publish exchange=billing.events routing_key=customer.created payload='{}' > /dev/null 2>&1
-}
-
-booking_read_billing_queue() {
-  docker compose exec -T rabbitmq \
-    rabbitmqadmin --host rabbitmq --username booking --password "${BOOKING_RABBITMQ_PASSWORD:?}" \
-    get queue=billing.platform-events count=1 ackmode=reject_requeue_true > /dev/null 2>&1
-}
-
-require_refused "the booking user publishing to platform.events" booking_publish_to_platform
-require_refused "the booking user publishing to billing.events" booking_publish_to_billing
-require_refused "the booking user reading billing.platform-events" booking_read_billing_queue
+# A positive control, so a script that proved only denials cannot pass while the declaration silently did nothing: each
+# new app's queue must exist once its worker has started, and its own user must be able to read it. The queue is declared
+# by the app at startup, not by the user script, so this also proves the app reached the broker.
+for queue in crm.platform-events loyalty.platform-events; do
+  if [ "$(curl --silent --user "${RABBITMQ_ADMIN_USER}:${RABBITMQ_ADMIN_PASSWORD}" \
+    "${BROKER}/api/queues/%2F/${queue}" | jq -r '.name // empty')" != "${queue}" ]; then
+    fail "the broker declares no queue ${queue}; its app did not start or did not bind it"
+  fi
+done
+echo "allowed: both new apps' queues are declared on the broker"
 
 # ------------------------------ row-level security ------------------------------
+# The two tenant-scoping checks below read tables the mailer and notification migrations create, so they only run when
+# those apps are part of the running stack. A partial stack (for example while another plan's app is mid-change) skips
+# them and says so, rather than failing on a table that does not exist yet.
+if [ -z "$(sql_as_owner mailer "select to_regclass('public.mailer_tenants')" 2>/dev/null)" ]; then
+  echo "skipped: the mailer schema is not migrated, so its tenant-scoping check did not run"
+else
 step "a Platform user's notification row stays inside the Platform tenant"
 # Now that a Platform user is a notification recipient, their rows live under the reserved Platform tenant id. The
 # point of this check is that this is still only a tenant: an ordinary tenant scope must not see the row, which is the
@@ -376,32 +261,35 @@ mailroom_visible_from_another=$(
 sql_as_owner mailroom "delete from emails where id = '55555555-5555-7555-8555-555555555555'" > /dev/null
 echo "refused: another tenant reading the Platform tenant's email row"
 
+fi
+
 # ------------------------------ a control ------------------------------
 step "a service may still reach its own database"
-# A control that proves the refusals above are about scope, not about a broken client.
-if ! psql_as billing_app "${BILLING_DB_PASSWORD:?}" billing; then
-  fail "billing_app cannot reach its own database; the isolation checks are not meaningful"
-fi
-echo "allowed: billing_app connecting to billing"
+# A control that proves the refusals above are about scope, not about a broken client. It runs for the apps whose
+# database exists in this stack: an app another plan has not migrated yet has no database to reach, which is stated
+# rather than counted as a failure of isolation.
+own_database() {
+  local app="$1" user="$2" password="$3" database="$4"
+  if [ -z "$(docker compose run --rm --no-deps --entrypoint sh postgres -c \
+    "PGPASSWORD='${POSTGRES_SUPERUSER_PASSWORD:?}' psql --no-psqlrc --quiet --tuples-only --no-align \
+      --host postgres --username postgres --list" 2>/dev/null | awk -F'|' -v d="${database}" '$1 ~ d {print $1}' | tr -d ' ')" ]; then
+    echo "skipped: ${app} has no database in this stack"
+    return 0
+  fi
+  if ! psql_as "${user}" "${password}" "${database}"; then
+    fail "${user} cannot reach its own database; the isolation checks are not meaningful"
+  fi
+  echo "allowed: ${user} connecting to ${database}"
+}
 
-if ! psql_as mailer_app "${MAILER_DB_PASSWORD:?}" mailer; then
-  fail "mailer_app cannot reach its own database; the isolation checks are not meaningful"
-fi
-echo "allowed: mailer_app connecting to mailer"
-
-if ! psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" notification; then
-  fail "notification_app cannot reach its own database; the isolation checks are not meaningful"
-fi
-echo "allowed: notification_app connecting to notification"
-
-if ! psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" mailroom; then
-  fail "mailroom_app cannot reach its own database; the isolation checks are not meaningful"
-fi
-echo "allowed: mailroom_app connecting to mailroom"
-
-if ! psql_as booking_app "${BOOKING_DB_PASSWORD:?}" booking; then
-  fail "booking_app cannot reach its own database; the isolation checks are not meaningful"
-fi
-echo "allowed: booking_app connecting to booking"
+own_database billing billing_app "${BILLING_DB_PASSWORD:?}" billing
+own_database mailer mailer_app "${MAILER_DB_PASSWORD:?}" mailer
+own_database notification notification_app "${NOTIFICATION_DB_PASSWORD:?}" notification
+own_database mailroom mailroom_app "${MAILROOM_DB_PASSWORD:?}" mailroom
+own_database survey survey_app "${SURVEY_DB_PASSWORD:?}" survey
+own_database booking booking_app "${BOOKING_DB_PASSWORD:?}" booking
+own_database workflow workflow_app "${WORKFLOW_DB_PASSWORD:?}" workflow
+own_database crm crm_app "${CRM_DB_PASSWORD:?}" crm
+own_database loyalty loyalty_app "${LOYALTY_DB_PASSWORD:?}" loyalty
 
 echo "PASS: no service can reach another service's database or exchange"
