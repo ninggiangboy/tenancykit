@@ -1,5 +1,9 @@
 package dev.ngb.booking.boot.web;
 
+import dev.ngb.booking.booking.application.booking.exception.BookingProblem;
+import dev.ngb.booking.booking.application.booking.exception.ExtensionCapException;
+import dev.ngb.booking.booking.application.booking.exception.InvalidBookingException;
+import dev.ngb.booking.booking.application.booking.exception.OutsideOpenHoursException;
 import dev.ngb.booking.catalog.application.catalog.exception.CatalogProblem;
 import dev.ngb.booking.catalog.application.catalog.exception.DuplicateCodeException;
 import dev.ngb.booking.catalog.application.catalog.exception.ResourceInUseException;
@@ -80,6 +84,23 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
     @ExceptionHandler(InvalidAvailabilityException.class)
     ProblemDetail invalidAvailability(InvalidAvailabilityException e) {
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
+        detail.setProperty("code", e.code());
+        return detail;
+    }
+
+    /**
+     * A booking refusal: a body the service cannot hold as sent, a range outside the resource's open hours or an
+     * extension past the cap answers {@code 422}; a claim or a state conflict answers {@code 409}. The code names the
+     * refusal, so a caller branches on it rather than on the wording of the message.
+     */
+    @ExceptionHandler(BookingProblem.class)
+    ProblemDetail bookingProblem(BookingProblem e) {
+        HttpStatus status = e instanceof OutsideOpenHoursException
+                        || e instanceof ExtensionCapException
+                        || e instanceof InvalidBookingException
+                ? HttpStatus.UNPROCESSABLE_CONTENT
+                : HttpStatus.CONFLICT;
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(status, e.getMessage());
         detail.setProperty("code", e.code());
         return detail;
     }
