@@ -407,3 +407,12 @@ no crm-event dependency and are unchanged. A grep for `crm.events`, `crm-events`
 `EventOrdering`, `EventConsumerExtension`, `orderVersion`, `customer.created`, `customer.erased`, `crm only`, `backfill` and
 `customerId` over all files leaves only intended hits (crm's webhook payloads, the removal notes and the non-goals). Phase
 titles and dependencies match the table.
+
+### Post-delivery rename (2026-11-17)
+
+The app this plan calls `crm` shipped as **`customer`**: the directory, the Java package (`dev.ngb.customer`), the
+permission codes (`customer:*`), the database and its roles, the broker user and queue, the environment prefix
+(`CUSTOMER_*`), the webhook headers (`Customer-*`), the route (`/customer/*`), the compose services, the Terraform stack,
+the contract files (`contracts/{permissions,openapi}/customer.yaml`, `contracts/events/customer/`) and the docs. The
+phase files keep the name they were written with because they are the record of what was planned; this note is the
+mapping. Nothing else changed: the endpoints, events, settings and behaviour are the ones these phases describe.
