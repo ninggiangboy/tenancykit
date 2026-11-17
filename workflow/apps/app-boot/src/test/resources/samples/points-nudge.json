@@ -1,0 +1,41 @@
+{
+  "start": "start",
+  "nodes": [
+    { "id": "start", "type": "trigger", "next": "nudge" },
+    {
+      "id": "nudge",
+      "type": "http",
+      "app": "mailroom",
+      "method": "POST",
+      "path": "/api/v1/emails",
+      "body": {
+        "to": { "input": "data.member.email" },
+        "subject": "Your points expire soon",
+        "template": "points-expiring"
+      },
+      "next": "wait"
+    },
+    {
+      "id": "wait",
+      "type": "wait",
+      "event": "order.recorded",
+      "timeout": "P14D",
+      "next": "done",
+      "on_timeout": "last"
+    },
+    {
+      "id": "last",
+      "type": "http",
+      "app": "mailroom",
+      "method": "POST",
+      "path": "/api/v1/emails",
+      "body": {
+        "to": { "input": "data.member.email" },
+        "subject": "Last chance: your points expire tomorrow",
+        "template": "points-last-chance"
+      },
+      "next": "done"
+    },
+    { "id": "done", "type": "end" }
+  ]
+}

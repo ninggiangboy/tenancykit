@@ -1,7 +1,7 @@
 ---
 phase: 15
 title: "Sample workflows, chaos, isolation, ops and docs"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [14]
@@ -56,6 +56,22 @@ verified against real operations found in the scout:
 5. Docs: `docs/workflow.md` describes what exists (graph, nodes, guarantees, credential setup steps, limits, baseline numbers),
    claims checked against source; update `docs/suite-messaging.md` and `docs/overview-and-scope.md` only where wording changed.
 6. Reconcile against `plan.md`'s Done means one item at a time and mark each in the plan.
+
+## Outcome
+
+Shipped: the four sample graphs under `workflow/apps/app-boot/src/test/resources/samples/` with `SampleWorkflowsTest`
+proving each is publishable; `ops/smoke/workflow.sh` (bootstrap, credential, connection, four publishes, dunning and
+points parking on their waits, erasure coming to rest, timeline) and `ops/smoke/workflow-chaos.sh` (SIGKILL cycles with
+the two invariants); compose services `workflow-migrate`, `workflow-api`, `workflow-worker` and the `workflow-echo`
+destination; the Caddy `/workflow/*` route; `.github/workflows/workflow.yml`; deployment env mappings in
+`application.yml`; and `docs/workflow.md` rewritten to say what exists.
+
+Verification gap, stated rather than hidden: the compose smoke, the chaos cycles and the throughput baseline were not run
+in the session that built this phase. The scripts and services are written against the APIs and env names the app ships,
+and `./gradlew check` is green; a deployment must execute `ops/smoke/workflow.sh` and `workflow-chaos.sh` on a clean stack
+and record the baseline numbers before the plan's two deployment claims can be marked proven. The refund task flow in the
+smoke needs a seeded replica user id (`SMOKE_USER_ID`); the erasure fan-out completes only when the suite refs it names
+exist, and the script accepts a dead-letter as its resting state and asserts the timeline either way.
 
 ## Validation
 

@@ -95,6 +95,15 @@ http://:80 {
 		reverse_proxy loyalty-api:8080
 	}
 
+	# Workflow is the Tenant side of the suite, reached through its own prefix on every host. It is not an app-to-app
+	# link: the engine calls apps under the Tenant's own hostname with a Tenant credential, and receives their signed
+	# hooks at /workflow/hooks/... (the prefix is stripped here; the application permits both spellings).
+	@workflowPath path /workflow/*
+	handle @workflowPath {
+		uri strip_prefix /workflow
+		reverse_proxy workflow-api:8080
+	}
+
 	@platformHost host platform.localhost
 	handle @platformHost {
 		reverse_proxy platform:8080

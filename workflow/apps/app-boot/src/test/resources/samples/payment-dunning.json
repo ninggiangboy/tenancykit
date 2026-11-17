@@ -1,0 +1,45 @@
+{
+  "start": "start",
+  "nodes": [
+    { "id": "start", "type": "trigger", "next": "email" },
+    {
+      "id": "email",
+      "type": "http",
+      "app": "mailroom",
+      "method": "POST",
+      "path": "/api/v1/emails",
+      "body": {
+        "to": { "input": "data.customer.email" },
+        "subject": "Your payment did not go through",
+        "template": "payment-dunning"
+      },
+      "next": "wait"
+    },
+    {
+      "id": "wait",
+      "type": "wait",
+      "event": "payment.succeeded",
+      "timeout": "PT72H",
+      "next": "done",
+      "on_timeout": "pay"
+    },
+    {
+      "id": "pay",
+      "type": "http",
+      "app": "billing",
+      "method": "POST",
+      "path": { "op": "concat", "args": ["/api/v1/invoices/", { "input": "data.invoiceId" }, "/payments"] },
+      "next": "done",
+      "on_error": "cancel"
+    },
+    {
+      "id": "cancel",
+      "type": "http",
+      "app": "billing",
+      "method": "POST",
+      "path": { "op": "concat", "args": ["/api/v1/subscriptions/", { "input": "data.subscriptionId" }, "/cancel"] },
+      "next": "done"
+    },
+    { "id": "done", "type": "end" }
+  ]
+}

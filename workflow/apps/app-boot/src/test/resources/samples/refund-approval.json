@@ -1,0 +1,52 @@
+{
+  "start": "start",
+  "nodes": [
+    { "id": "start", "type": "trigger", "next": "approve" },
+    {
+      "id": "approve",
+      "type": "task",
+      "title": "Approve the refund",
+      "assignee": { "group": "managers" },
+      "outcomes": ["approve", "reject"],
+      "due": "PT24H",
+      "escalate": { "group": "managers", "due": "PT24H" },
+      "next": "decide",
+      "on_expire": "rejected"
+    },
+    {
+      "id": "decide",
+      "type": "branch",
+      "cases": [
+        {
+          "when": { "op": "eq", "args": [{ "step": "approve", "path": "decision" }, "approve"] },
+          "next": "refund"
+        }
+      ],
+      "else": "rejected"
+    },
+    {
+      "id": "refund",
+      "type": "http",
+      "app": "billing",
+      "method": "POST",
+      "path": { "op": "concat", "args": ["/api/v1/payments/", { "input": "data.paymentId" }, "/refunds"] },
+      "body": { "amount": { "input": "data.amount" } },
+      "next": "done",
+      "on_error": "rejected"
+    },
+    {
+      "id": "rejected",
+      "type": "http",
+      "app": "mailroom",
+      "method": "POST",
+      "path": "/api/v1/emails",
+      "body": {
+        "to": { "input": "data.customer.email" },
+        "subject": "Your refund was not approved",
+        "template": "refund-rejected"
+      },
+      "next": "done"
+    },
+    { "id": "done", "type": "end" }
+  ]
+}

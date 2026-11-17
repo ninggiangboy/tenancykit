@@ -1,0 +1,47 @@
+{
+  "start": "start",
+  "nodes": [
+    { "id": "start", "type": "trigger", "next": "fan" },
+    {
+      "id": "fan",
+      "type": "parallel",
+      "branches": ["customerErase", "loyaltyErase", "mailroomErase", "externalErase"],
+      "join": "all"
+    },
+    {
+      "id": "customerErase",
+      "type": "http",
+      "app": "customer",
+      "method": "POST",
+      "path": { "op": "concat", "args": ["/api/v1/customers/", { "input": "data.externalRef" }, "/erasure"] },
+      "next": "all"
+    },
+    {
+      "id": "loyaltyErase",
+      "type": "http",
+      "app": "loyalty",
+      "method": "POST",
+      "path": { "op": "concat", "args": ["/api/v1/members/", { "input": "data.externalRef" }, "/erasure"] },
+      "next": "all"
+    },
+    {
+      "id": "mailroomErase",
+      "type": "http",
+      "app": "mailroom",
+      "method": "DELETE",
+      "path": { "op": "concat", "args": ["/api/v1/receivers/", { "input": "data.externalRef" }] },
+      "next": "all"
+    },
+    {
+      "id": "externalErase",
+      "type": "http",
+      "connection": "smokeEcho",
+      "method": "GET",
+      "path": "/erasure",
+      "retry": { "max": 2, "base": "PT1S", "cap": "PT5S" },
+      "next": "all"
+    },
+    { "id": "all", "type": "join", "mode": "all", "output": { "input": "externalRef" }, "next": "done" },
+    { "id": "done", "type": "end" }
+  ]
+}

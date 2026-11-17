@@ -235,6 +235,36 @@ x-app: &app
   restart: unless-stopped
   mem_limit: 512m
 
+# Workflow's settings, shared by its migrate step, api and worker. It is a Tenant System, not an app-to-app link: it
+# calls apps under the Tenant's own hostname with a Tenant credential, and its `compose` profile relaxes the destination
+# policy so the stack's own services and echo endpoint are reachable on the container network.
+x-workflow-environment: &workflow-environment
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50"
+  WORKFLOW_DB_URL: jdbc:postgresql://postgres:5432/workflow
+  WORKFLOW_DB_USER: workflow_app
+  WORKFLOW_DB_PASSWORD: ${WORKFLOW_DB_PASSWORD:?set it in .env}
+  WORKFLOW_MIGRATION_DB_USER: workflow_owner
+  WORKFLOW_MIGRATION_DB_PASSWORD: ${WORKFLOW_MIGRATION_DB_PASSWORD:?set it in .env}
+  WORKFLOW_RABBITMQ_HOST: rabbitmq
+  WORKFLOW_RABBITMQ_USER: workflow
+  WORKFLOW_RABBITMQ_PASSWORD: ${WORKFLOW_RABBITMQ_PASSWORD:?set it in .env}
+  WORKFLOW_OIDC_ISSUER_URI: ${WORKFLOW_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
+  WORKFLOW_OIDC_JWK_SET_URI: ${WORKFLOW_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  WORKFLOW_PLATFORM_BASE_URL: http://platform.localhost:8080
+  WORKFLOW_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
+  WORKFLOW_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
+  # The replica's own service client, never shared with another app.
+  PLATFORM_WORKFLOW_SERVICE_CLIENT_ID: workflow
+  PLATFORM_WORKFLOW_SERVICE_CLIENT_SECRET: ${WORKFLOW_REPLICA_CLIENT_SECRET:?set it in .env}
+  # Connection and Platform-credential secrets are envelope-encrypted with this key; 32 base64 bytes.
+  WORKFLOW_SECRET_KEY: ${WORKFLOW_SECRET_KEY:?set it in .env}
+  WORKFLOW_SECRET_KEY_ID: ${WORKFLOW_SECRET_KEY_ID:-k1}
+  WORKFLOW_TOKEN_URL: http://platform.localhost:8080/oauth/token
+  # Development only: the compose network is private, so a suite app and the echo endpoint resolve there.
+  WORKFLOW_ALLOW_NON_PUBLIC_TARGETS: "true"
+  WORKFLOW_WEBHOOKS_ALLOW_NON_PUBLIC_TARGETS: "true"
+  WORKFLOW_PORT: "8080"
+
 services:
   postgres:
     image: postgres:18
@@ -1093,6 +1123,71 @@ services:
       interval: 5s
       timeout: 5s
       retries: 60
+
+  # Workflow's schema: it applies Flyway as the table owner and exits.
+  workflow-migrate:
+    <<: *app
+    restart: "no"
+    build:
+      context: .
+      dockerfile: workflow/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+    environment:
+      <<: *workflow-environment
+      SPRING_PROFILES_ACTIVE: migrate
+
+  # Workflow's HTTP edge: definitions, instances, tasks, connections, triggers, endpoints and history. It schedules
+  # nothing; the worker owns every job.
+  workflow-api:
+    <<: *app
+    build:
+      context: .
+      dockerfile: workflow/apps/app-boot/Dockerfile
+    depends_on:
+      workflow-migrate:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+    environment:
+      <<: *workflow-environment
+      SPRING_PROFILES_ACTIVE: api,compose
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\r\n\r\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # Workflow's background edge: the claim loop, sweepers, the outbox relay, webhook delivery, task deadlines and
+  # retention.
+  workflow-worker:
+    <<: *app
+    build:
+      context: .
+      dockerfile: workflow/apps/app-boot/Dockerfile
+    depends_on:
+      workflow-migrate:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+    environment:
+      <<: *workflow-environment
+      SPRING_PROFILES_ACTIVE: worker,compose
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\r\n\r\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # A destination a Tenant's connection may call in the smoke run: any path, any method, a 200 with a small body.
+  workflow-echo:
+    image: nginx:1.27-alpine
+    command: ["sh", "-c", "printf 'ok' > /usr/share/nginx/html/erasure; exec nginx -g 'daemon off;'"]
 
 volumes:
   postgres-data:

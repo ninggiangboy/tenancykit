@@ -107,13 +107,19 @@ public final class StructureChecker {
                 edge(node, pointer, "next", edges);
             }
             case HTTP -> {
-                required(node, pointer, "app", problems);
+                if (node.text("app") == null && node.text("connection") == null) {
+                    problems.add(new Problem(
+                            pointer + "/app", ProblemCodes.GRAPH_INVALID, "an http node names an app or a connection"));
+                }
                 String method = required(node, pointer, "method", problems);
                 if (method != null && !METHODS.contains(method)) {
                     problems.add(new Problem(
                             pointer + "/method", ProblemCodes.GRAPH_INVALID, "an http node names a method GET, POST, PUT, PATCH or DELETE"));
                 }
-                required(node, pointer, "path", problems);
+                if (node.document("path") == null) {
+                    problems.add(new Problem(
+                            pointer + "/path", ProblemCodes.GRAPH_INVALID, "an http node names the path it calls"));
+                }
                 required(node, pointer, "next", problems);
                 edge(node, pointer, "next", edges);
                 edge(node, pointer, "on_error", edges);

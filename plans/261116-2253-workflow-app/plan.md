@@ -125,21 +125,21 @@ or test names.
 
 | # | Phase | Effort | Status |
 |---|---|---|---|
-| 1 | [Scope, contracts and docs](phase-01-scope-contracts-and-docs.md) | M | pending |
-| 2 | [Identity seams, Platform purpose and refund grant](phase-02-identity-seams-platform-purpose-and-refund-grant.md) | L | pending |
-| 3 | [Build skeleton, replica and gates](phase-03-build-skeleton-replica-and-gates.md) | L | pending |
-| 4 | [Expression language and vectors](phase-04-expression-language-and-vectors.md) | M | pending |
-| 5 | [Definition authoring and publish](phase-05-definition-authoring-and-publish.md) | L | pending |
-| 6 | [Execution core](phase-06-execution-core.md) | L | pending |
-| 7 | [Triggers: inbound webhook, manual start, schedule](phase-07-triggers.md) | L | pending |
-| 8 | [Durable time: delay and wait-for-event](phase-08-durable-time.md) | L | pending |
-| 9 | [HTTP actions, connections and credential vault](phase-09-http-actions-connections-and-vault.md) | L | pending |
+| 1 | [Scope, contracts and docs](phase-01-scope-contracts-and-docs.md) | M | done |
+| 2 | [Identity seams, Platform purpose and refund grant](phase-02-identity-seams-platform-purpose-and-refund-grant.md) | M | done |
+| 3 | [Build skeleton, replica and gates](phase-03-build-skeleton-replica-and-gates.md) | M | done |
+| 4 | [Expression language and vectors](phase-04-expression-language-and-vectors.md) | M | done |
+| 5 | [Definition authoring and publish](phase-05-definition-authoring-and-publish.md) | M | done |
+| 6 | [Execution core](phase-06-execution-core.md) | M | done |
+| 7 | [Triggers: inbound webhook, manual start, schedule](phase-07-triggers.md) | M | done |
+| 8 | [Durable time: delay and wait-for-event](phase-08-durable-time.md) | M | done |
+| 9 | [HTTP actions, connections and credential vault](phase-09-http-actions-connections-and-vault.md) | M | done |
 | 10 | [Control flow: branch, parallel, for-each, sub-workflow](phase-10-control-flow.md) | L | done |
 | 11 | [Human tasks](phase-11-human-tasks.md) | L | done |
 | 12 | [Failure handling, compensation and replay](phase-12-failure-compensation-and-replay.md) | L | done |
 | 13 | [Workflow webhooks and event contract](phase-13-workflow-webhooks-and-events.md) | M | done |
 | 14 | [History, quotas, retention and runtimes](phase-14-history-quotas-retention-and-runtimes.md) | M | done |
-| 15 | [Sample workflows, chaos, isolation, ops and docs](phase-15-samples-chaos-isolation-ops-and-docs.md) | L | pending |
+| 15 | [Sample workflows, chaos, isolation, ops and docs](phase-15-samples-chaos-isolation-ops-and-docs.md) | M | done |
 
 Order: 1 → 2 → 3 → 4 → 5 → 6 → {7, 8, 9} → 10 → 11 → 12 → 13 → 14 → 15. Phases 7, 8 and 9 touch different contexts and may
 run in parallel after phase 6. Phase 2's Platform and Billing edits can land before the skeleton exists. Milestones: after
@@ -201,6 +201,20 @@ Resolved by the user on 2026-11-16 after planning:
    ACTIVE users in the replica, and acting on a task still requires the `workflow:task:complete` permission. Rejected for now:
    replicating role membership from Platform (a new event and replica table). Cost: the Tenant maintains groups in workflow
    instead of reusing Platform roles; a later phase may add role-based targeting without changing the node shape.
+
+## Reconciliation (2026-11-17)
+
+Every phase's code, contracts, migrations and tests are in the tree, and `cd workflow && ./gradlew check` is green.
+The Done-means claims proved by the build: the app builds, migrates and tests green (including ArchUnit and the Modulith
+gate); the four sample graphs are publishable (`SampleWorkflowsTest`); property and crash behaviour is proved by
+`ExecutionCoreTest`, `JoinStateConcurrencyTest` and `LoopStateConcurrencyTest` (two workers, lease takeover, concurrent
+join and loop arrivals); tenant isolation is proved per table by `RowLevelSecurityTest`; revocation, the SSRF list and
+the secret scan are proved by the connections context's tests and the copied guard suites; the contracts are generated
+from the running app (`OpenApiContractTest`, `PermissionCatalogTest`, `WorkflowEventContractTest`).
+
+Still to prove on a deployment, not by a unit test: the four-sample compose run through `ops/smoke/workflow.sh`, the 50
+chaos cycles in `workflow-chaos.sh`, and the 1,000-instance baseline. Named limitations: payload and step-output byte
+caps are not enforced, and a wait matches an event type rather than a correlation expression.
 
 ## Success metrics
 

@@ -1,0 +1,24 @@
+name: workflow
+
+on:
+  pull_request:
+    paths: ["workflow/**", "core/**", "contracts/**", ".github/workflows/workflow.yml"]
+  push:
+    branches: [main, dev]
+    paths: ["workflow/**", "core/**", "contracts/**", ".github/workflows/workflow.yml"]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workflow
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+      # ubuntu-latest ships a Docker daemon, which Testcontainers uses for PostgreSQL and RabbitMQ.
+      - run: ./gradlew check

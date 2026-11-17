@@ -87,13 +87,21 @@ The four flows the app is proven against, as JSON fixtures under the app's test 
 | Sample | Shape |
 |---|---|
 | Payment dunning | Trigger Billing `subscription.payment_failed`; email the customer; wait for a renewal or a payment with a 3-day timeout; pay the invoice; cancel the subscription if that fails |
-| Refund approval | Manual or external trigger; a task for the `manager` role with a 24-hour due and an escalation; on approval a Billing refund, on rejection an email |
+| Refund approval | Manual or external trigger; a task for the `managers` group with a 24-hour due and an escalation; on approval a Billing refund, on rejection an email |
 | Points nudge | Trigger loyalty `points.expiring`; email the member; wait for a Customer order correlated on the member's `externalRef` up to 14 days; on timeout a second email or a loyalty voucher call |
 | Erasure fan-out | Trigger Customer `customer.erased`; a parallel fan-out over the Customer and loyalty erasure endpoints, mailroom's receiver removal and one external connection; join all; a completion event |
 
 ## What exists today
 
-The scope, the permission catalog and these contracts are written. The app itself — build, replica, expression
-evaluator, definitions, engine, triggers, timers, HTTP actions, control flow, tasks, failure handling, events,
-history, quotas and the sample runs — is being built and is not yet in this document; each section above states the
-decision, and this section will name what shipped as it ships.
+The app builds, migrates and tests green, and every piece the sections above describe is in the tree: the build skeleton
+with the committed jOOQ schema, the replica and its gates; the expression language with its vectors; versioned
+definitions with drafts, publishing, structure checking and simulation; the Postgres/RabbitMQ engine with competing
+workers, leases, timers, waits, control flow and sub-workflows; signed hooks, manual starts and cron schedules; HTTP
+actions with connections and the encrypted Platform credential; human tasks with groups, escalation and expiry; retry
+classes, dead letter, compensation and replay; ten signed events and endpoint management; history, quotas, retention and
+the api/worker/migrate runtimes; and the four sample graphs, which the build checks are publishable.
+
+What a deployment still proves rather than the build: `ops/smoke/workflow.sh` and `workflow-chaos.sh` run against a
+compose stack, and the throughput baseline (1,000 instances of 10 steps) is recorded from a run, not asserted by a test.
+Two limits are named and not yet enforced: payload and step-output byte caps. A wait matches an event type, not a
+correlation expression yet, so the points-nudge sample reacts to the first `order.recorded` of its tenant.

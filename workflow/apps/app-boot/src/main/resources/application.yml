@@ -86,3 +86,24 @@ workflow:
     dead-outbox-retention: P7D
     batch-size: 500
     interval: PT1H
+  secrets:
+    # Connection and Platform-credential secrets are envelope-encrypted with this key; there is no default, so a
+    # deployment that forgot it fails startup instead of storing a secret in the clear.
+    master-key: ${WORKFLOW_SECRET_KEY:}
+    key-id: ${WORKFLOW_SECRET_KEY_ID:k1}
+  connections:
+    token-url: ${WORKFLOW_TOKEN_URL:http://platform.localhost:8080/oauth/token}
+    # Development only: the compose network is private, so an app address resolves there.
+    allow-non-public-targets: ${WORKFLOW_ALLOW_NON_PUBLIC_TARGETS:false}
+    connect-timeout: PT5S
+    read-timeout: PT30S
+    apps:
+      billing: ${WORKFLOW_BILLING_URL:http://billing-api:8080}
+      mailroom: ${WORKFLOW_MAILROOM_URL:http://mailroom-api:8080}
+      customer: ${WORKFLOW_CUSTOMER_URL:http://customer-api:8080}
+      loyalty: ${WORKFLOW_LOYALTY_URL:http://loyalty-api:8080}
+      survey: ${WORKFLOW_SURVEY_URL:http://survey-api:8080}
+  webhooks:
+    allow-non-public-targets: ${WORKFLOW_WEBHOOKS_ALLOW_NON_PUBLIC_TARGETS:false}
+  migrate:
+    exit-on-finish: ${WORKFLOW_MIGRATE_EXIT_ON_FINISH:true}
