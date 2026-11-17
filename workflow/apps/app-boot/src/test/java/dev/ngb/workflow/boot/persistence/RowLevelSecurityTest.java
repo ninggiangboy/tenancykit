@@ -207,6 +207,11 @@ class RowLevelSecurityTest {
                         (tenant_id, client_id, secret_ciphertext, secret_key_id, status, updated_at)
                     values ('%1$s', 'client-%1$s', 'v1.v1.abc', 'v1', 'ACTIVE', now())
                     """),
+                row("workflow_join_state", """
+                    insert into workflow_join_state
+                        (instance_id, node_id, tenant_id, expected, arrived, updated_at)
+                    values (gen_random_uuid(), 'join', '%1$s', 2, 1, now())
+                    """),
                 row("workflow_timer", """
   with d as (
       insert into workflow_definition (id, tenant_id, code, name, status, latest_version, created_at, updated_at)

@@ -21,7 +21,18 @@ public record StepOutcome(
         Object response,
         List<String> nextNodeIds,
         Map<String, Object> variables,
-        Reservation reservation) {
+        Reservation reservation,
+        List<Successor> successors,
+        Join join) {
+
+    /** One following token: the node it starts at and, for a parallel branch, the name it is collected under. */
+    public record Successor(String nodeId, String branchKey) {}
+
+    /**
+     * An arrival at a join. The engine counts it in one conditional update; only the arrival that reaches the expected
+     * count continues, with every branch's output merged by branch name.
+     */
+    public record Join(String nextNodeId, int expected, String branchKey, Object contribution) {}
 
     /**
      * What the engine must write when it parks a token.
@@ -45,22 +56,40 @@ public record StepOutcome(
         variables = variables == null
                 ? Map.of()
                 : Collections.unmodifiableMap(new LinkedHashMap<>(variables));
+        successors = successors == null ? List.of() : List.copyOf(successors);
     }
 
     public static StepOutcome succeeded(Object response, String next, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, next == null ? List.of() : List.of(next), variables, null);
+        return new StepOutcome(
+                false, null, response, next == null ? List.of() : List.of(next), variables, null, List.of(), null);
     }
 
     public static StepOutcome failed(String failure, Object response, Map<String, Object> variables) {
-        return new StepOutcome(true, failure, response, List.of(), variables, null);
+        return new StepOutcome(true, failure, response, List.of(), variables, null, List.of(), null);
     }
 
     public static StepOutcome parked(
             Object response, Reservation reservation, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, List.of(), variables, reservation);
+        return new StepOutcome(false, null, response, List.of(), variables, reservation, List.of(), null);
+    }
+
+    /** Several following tokens, each carrying the branch it belongs to. */
+    public static StepOutcome fannedOut(
+            Object response, List<Successor> successors, Map<String, Object> variables) {
+        return new StepOutcome(false, null, response, List.of(), variables, null, successors, null);
+    }
+
+    /** Waiting for the rest of its branches: the engine counts this arrival and decides whether the join fires. */
+    public static StepOutcome joining(
+            Object response, Join join, Map<String, Object> variables) {
+        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), join);
     }
 
     public boolean parked() {
         return reservation != null;
+    }
+
+    public boolean joining() {
+        return join != null;
     }
 }

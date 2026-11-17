@@ -165,9 +165,16 @@ output (`{branch: <index|"else">, next: <id>}`). A true case with no `next`, or 
 instead of stalling. Truthiness is explicit: JSON `true`, a non-zero number, a non-blank string that is not
 `"false"`.
 
-Still open in phase 10: `parallel`/`join` (needs `join_state`, child tokens with `branch_key`, and a `Successor`
-shape on `StepOutcome` so one outcome can name several nodes with branch names), `foreach`, `subflow` and the
-run-time limits. The token already carries `parent_token`, `branch_key` and `iteration`, and instance completion is
+`parallel` and `join` are in (`V7__control_flow.sql`, `workflow_join_state` with RLS). A parallel names each branch
+and returns one `Successor` per branch; the engine creates a child token carrying `branch_key`. A join counts its
+arrival in one upsert (`arrived = arrived + 1 returning arrived`), merges the branch output under its name, and only
+the arrival that reaches `expect` continues — every earlier arrival finishes its token, and if no token is left the
+instance fails rather than stalling. Fifty concurrent arrivals produce counts 1..50 exactly once (a Postgres
+test proves it).
+
+Still open in phase 10: `foreach` (sequential or limited concurrency, `{item}`/`{index}`, `on_error`), `subflow`
+(pin version, wait for the child, cancel downward), the steps-per-instance and for-each limits, and the static
+publish checks (cycles, oversized branches). The token already carries `parent_token`, `branch_key` and `iteration`, and instance completion is
 "no live tokens", so a parallel is several ready tokens and a join is one waiting token plus a conditional arrival.
 
 ## Cautions

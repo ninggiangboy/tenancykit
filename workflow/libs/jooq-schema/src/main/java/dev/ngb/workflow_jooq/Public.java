@@ -21,6 +21,7 @@ import dev.ngb.workflow_jooq.tables.WorkflowConnection;
 import dev.ngb.workflow_jooq.tables.WorkflowDefinition;
 import dev.ngb.workflow_jooq.tables.WorkflowInboundEvent;
 import dev.ngb.workflow_jooq.tables.WorkflowInstance;
+import dev.ngb.workflow_jooq.tables.WorkflowJoinState;
 import dev.ngb.workflow_jooq.tables.WorkflowPlatformCredential;
 import dev.ngb.workflow_jooq.tables.WorkflowSchedule;
 import dev.ngb.workflow_jooq.tables.WorkflowStepRun;
@@ -138,6 +139,11 @@ public class Public extends SchemaImpl {
     public final WorkflowInstance WORKFLOW_INSTANCE = WorkflowInstance.WORKFLOW_INSTANCE;
 
     /**
+     * The table <code>public.workflow_join_state</code>.
+     */
+    public final WorkflowJoinState WORKFLOW_JOIN_STATE = WorkflowJoinState.WORKFLOW_JOIN_STATE;
+
+    /**
      * The table <code>public.workflow_platform_credential</code>.
      */
     public final WorkflowPlatformCredential WORKFLOW_PLATFORM_CREDENTIAL = WorkflowPlatformCredential.WORKFLOW_PLATFORM_CREDENTIAL;
@@ -210,6 +216,7 @@ public class Public extends SchemaImpl {
             WorkflowDefinition.WORKFLOW_DEFINITION,
             WorkflowInboundEvent.WORKFLOW_INBOUND_EVENT,
             WorkflowInstance.WORKFLOW_INSTANCE,
+            WorkflowJoinState.WORKFLOW_JOIN_STATE,
             WorkflowPlatformCredential.WORKFLOW_PLATFORM_CREDENTIAL,
             WorkflowSchedule.WORKFLOW_SCHEDULE,
             WorkflowStepRun.WORKFLOW_STEP_RUN,

@@ -48,8 +48,21 @@ public record Token(
 
     public static Token ready(
             UUID id, TenantId tenantId, UUID instanceId, String nodeId, UUID parentTokenId, int iteration, Instant now) {
+        return ready(id, tenantId, instanceId, nodeId, parentTokenId, null, iteration, now);
+    }
+
+    /** A ready token that carries the branch it belongs to, so a join can collect its output by name. */
+    public static Token ready(
+            UUID id,
+            TenantId tenantId,
+            UUID instanceId,
+            String nodeId,
+            UUID parentTokenId,
+            String branchKey,
+            int iteration,
+            Instant now) {
         return new Token(
-                id, tenantId, instanceId, nodeId, TokenStatus.READY, parentTokenId, null, iteration, 0, now, null, null,
-                null, null, now, now);
+                id, tenantId, instanceId, nodeId, TokenStatus.READY, parentTokenId, branchKey, iteration, 0, now, null,
+                null, null, null, now, now);
     }
 }

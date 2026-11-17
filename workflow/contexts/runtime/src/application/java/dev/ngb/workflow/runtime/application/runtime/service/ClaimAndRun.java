@@ -7,6 +7,7 @@ import dev.ngb.workflow.definitions.api.version.GraphNode;
 import dev.ngb.workflow.definitions.api.version.PublishedGraph;
 import dev.ngb.workflow.definitions.api.version.VersionReader;
 import dev.ngb.workflow.runtime.application.runtime.port.InstanceRepository;
+import dev.ngb.workflow.runtime.application.runtime.port.JoinStateRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.StepRunRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.TimerRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.TokenRepository;
@@ -57,6 +58,7 @@ public class ClaimAndRun {
     private final StepRunRepository steps;
     private final TimerRepository timers;
     private final WaitSubscriptionRepository subscriptions;
+    private final JoinStateRepository joinStates;
     private final VersionReader versions;
     private final NodeExecutor executor;
     private final WakeUpPublisher wakeUp;
@@ -72,6 +74,7 @@ public class ClaimAndRun {
             StepRunRepository steps,
             TimerRepository timers,
             WaitSubscriptionRepository subscriptions,
+            JoinStateRepository joinStates,
             VersionReader versions,
             NodeExecutor executor,
             WakeUpPublisher wakeUp,
@@ -85,6 +88,7 @@ public class ClaimAndRun {
         this.steps = steps;
         this.timers = timers;
         this.subscriptions = subscriptions;
+        this.joinStates = joinStates;
         this.versions = versions;
         this.executor = executor;
         this.wakeUp = wakeUp;
@@ -136,6 +140,33 @@ public class ClaimAndRun {
     }
 
     private InstanceStatus record(Token token, Instance instance, StepOutcome outcome, Instant finishedAt) {
+        if (outcome.joining()) {
+            JoinStateRepository.Arrival arrival = joinStates.arrive(
+                    token.tenantId(),
+                    token.instanceId(),
+                    token.nodeId(),
+                    outcome.join().expected(),
+                    outcome.join().branchKey(),
+                    outcome.join().contribution(),
+                    finishedAt);
+            if (arrival.complete()) {
+                // The last arrival continues with every branch's output merged by branch name.
+                outcome = StepOutcome.succeeded(arrival.outputs(), outcome.join().nextNodeId(), outcome.variables());
+            } else {
+                boolean completed = tokens.finish(token.id(), workerId, TokenStatus.DONE, finishedAt);
+                if (!completed) {
+                    return instance.status();
+                }
+                recordStep(token, outcome, finishedAt);
+                long parkedVersion = updateVariables(instance, outcome);
+                if (tokens.liveCount(token.instanceId()) > 0) {
+                    return InstanceStatus.RUNNING;
+                }
+                // No branch can arrive any more, so this join will never reach its count.
+                instances.finish(instance.id(), InstanceStatus.FAILED, finishedAt, parkedVersion);
+                return InstanceStatus.FAILED;
+            }
+        }
         if (outcome.parked()) {
             return park(token, instance, outcome, finishedAt);
         }
@@ -148,9 +179,18 @@ public class ClaimAndRun {
         recordStep(token, outcome, finishedAt);
 
         if (!outcome.failed()) {
-            for (String next : outcome.nextNodeIds()) {
-                tokens.add(Token.ready(
-                        ids.newId(), token.tenantId(), token.instanceId(), next, token.id(), token.iteration(), finishedAt));
+            if (outcome.successors().isEmpty()) {
+                for (String next : outcome.nextNodeIds()) {
+                    tokens.add(Token.ready(
+                            ids.newId(), token.tenantId(), token.instanceId(), next, token.id(), null,
+                            token.iteration(), finishedAt));
+                }
+            } else {
+                for (StepOutcome.Successor successor : outcome.successors()) {
+                    tokens.add(Token.ready(
+                            ids.newId(), token.tenantId(), token.instanceId(), successor.nodeId(), token.id(),
+                            successor.branchKey(), token.iteration(), finishedAt));
+                }
             }
         }
 

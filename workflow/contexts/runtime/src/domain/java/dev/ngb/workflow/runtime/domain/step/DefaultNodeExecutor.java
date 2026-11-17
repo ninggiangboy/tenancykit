@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -17,6 +18,8 @@ import java.util.Optional;
  * parallel, a for-each or a subflow each extend this class.
  */
 public class DefaultNodeExecutor implements NodeExecutor {
+
+    private static final int MAX_PARALLEL_BRANCHES = 50;
 
     private final ExpressionEvaluator expressions;
     private final BufferedEventLookup events;
@@ -39,6 +42,8 @@ public class DefaultNodeExecutor implements NodeExecutor {
             case "delay" -> delay(context);
             case "wait" -> wait(context);
             case "branch" -> branch(context);
+            case "parallel" -> parallel(context);
+            case "join" -> join(context);
             case "http" -> call(context);
             default -> StepOutcome.failed(
                     "node_not_supported:" + context.node().type(), null, context.variables());
@@ -166,6 +171,57 @@ public class DefaultNodeExecutor implements NodeExecutor {
             return StepOutcome.failed("branch_without_else", null, context.variables());
         }
         return StepOutcome.succeeded(Map.of("branch", "else", "next", otherwise), otherwise, context.variables());
+    }
+
+    /**
+     * Fans out to one child token per branch. The names are what the join collects: two branches with the same name
+     * would make the collected output ambiguous, so a duplicate is a failure, not a silent overwrite.
+     */
+    private StepOutcome parallel(ExecutionContext context) {
+        Object document = context.node().document("branches");
+        if (!(document instanceof java.util.List<?> branches) || branches.isEmpty()) {
+            return StepOutcome.failed("parallel_without_branches", null, context.variables());
+        }
+        if (branches.size() > MAX_PARALLEL_BRANCHES) {
+            return StepOutcome.failed("limit_exceeded:parallel_branches", Map.of("branches", branches.size()), context.variables());
+        }
+        Map<String, StepOutcome.Successor> successors = new LinkedHashMap<>();
+        for (Object entry : branches) {
+            Map<String, Object> branch = object(entry);
+            Object name = branch.get("name");
+            Object next = branch.get("next");
+            if (!(name instanceof String key) || key.isBlank() || !(next instanceof String nodeId)) {
+                return StepOutcome.failed("parallel_branch_without_a_name_or_next", null, context.variables());
+            }
+            if (successors.put(key, new StepOutcome.Successor(nodeId, key)) != null) {
+                return StepOutcome.failed("parallel_branch_name_repeated:" + key, null, context.variables());
+            }
+        }
+        return StepOutcome.fannedOut(
+                Map.of("branches", List.copyOf(successors.keySet())),
+                List.copyOf(successors.values()),
+                context.variables());
+    }
+
+    /**
+     * Arrives at a join. The engine counts the arrival; the one that reaches the expected count continues, with the
+     * branch outputs collected by branch name. Every arrival records its own output so the merged result is complete.
+     */
+    private StepOutcome join(ExecutionContext context) {
+        Object expected = context.node().document("expect");
+        if (!(expected instanceof Number number) || number.intValue() < 1) {
+            return StepOutcome.failed("join_without_an_expected_count", null, context.variables());
+        }
+        String next = context.node().text("next");
+        if (next == null) {
+            return StepOutcome.failed("join_without_a_next", null, context.variables());
+        }
+        Object output = context.node().document("output");
+        Object contribution = output == null ? null : evaluate(context, output, context.variables());
+        return StepOutcome.joining(
+                Map.of("branch", context.token().branchKey() == null ? "" : context.token().branchKey()),
+                new StepOutcome.Join(next, number.intValue(), context.token().branchKey(), contribution),
+                context.variables());
     }
 
     private Object evaluate(ExecutionContext context, Object expression, Map<String, Object> variables) {
