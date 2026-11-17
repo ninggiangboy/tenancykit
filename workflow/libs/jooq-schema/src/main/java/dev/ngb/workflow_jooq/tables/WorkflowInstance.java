@@ -128,6 +128,16 @@ public class WorkflowInstance extends TableImpl<WorkflowInstanceRecord> {
      */
     public final TableField<WorkflowInstanceRecord, Long> VERSION = createField(DSL.name("version"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("1"), SQLDataType.BIGINT)), this, "");
 
+    /**
+     * The column <code>public.workflow_instance.idempotency_key</code>.
+     */
+    public final TableField<WorkflowInstanceRecord, String> IDEMPOTENCY_KEY = createField(DSL.name("idempotency_key"), SQLDataType.CLOB, this, "");
+
+    /**
+     * The column <code>public.workflow_instance.request_hash</code>.
+     */
+    public final TableField<WorkflowInstanceRecord, String> REQUEST_HASH = createField(DSL.name("request_hash"), SQLDataType.CLOB, this, "");
+
     private WorkflowInstance(Name alias, Table<WorkflowInstanceRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

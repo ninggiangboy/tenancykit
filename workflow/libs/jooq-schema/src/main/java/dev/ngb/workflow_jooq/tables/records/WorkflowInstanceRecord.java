@@ -217,6 +217,36 @@ public class WorkflowInstanceRecord extends UpdatableRecordImpl<WorkflowInstance
         return (Long) get(12);
     }
 
+    /**
+     * Setter for <code>public.workflow_instance.idempotency_key</code>.
+     */
+    public WorkflowInstanceRecord setIdempotencyKey(String value) {
+        set(13, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.workflow_instance.idempotency_key</code>.
+     */
+    public String getIdempotencyKey() {
+        return (String) get(13);
+    }
+
+    /**
+     * Setter for <code>public.workflow_instance.request_hash</code>.
+     */
+    public WorkflowInstanceRecord setRequestHash(String value) {
+        set(14, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.workflow_instance.request_hash</code>.
+     */
+    public String getRequestHash() {
+        return (String) get(14);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -240,7 +270,7 @@ public class WorkflowInstanceRecord extends UpdatableRecordImpl<WorkflowInstance
     /**
      * Create a detached, initialised WorkflowInstanceRecord
      */
-    public WorkflowInstanceRecord(UUID id, UUID tenantId, UUID definitionId, UUID versionId, Integer versionNumber, String status, JSONB input, JSONB variables, String correlationKey, String startedBy, Instant startedAt, Instant finishedAt, Long version) {
+    public WorkflowInstanceRecord(UUID id, UUID tenantId, UUID definitionId, UUID versionId, Integer versionNumber, String status, JSONB input, JSONB variables, String correlationKey, String startedBy, Instant startedAt, Instant finishedAt, Long version, String idempotencyKey, String requestHash) {
         super(WorkflowInstance.WORKFLOW_INSTANCE);
 
         setId(id);
@@ -256,6 +286,8 @@ public class WorkflowInstanceRecord extends UpdatableRecordImpl<WorkflowInstance
         setStartedAt(startedAt);
         setFinishedAt(finishedAt);
         setVersion(version);
+        setIdempotencyKey(idempotencyKey);
+        setRequestHash(requestHash);
         resetTouchedOnNotNull();
     }
 }

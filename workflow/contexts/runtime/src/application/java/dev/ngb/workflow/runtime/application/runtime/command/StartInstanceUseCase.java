@@ -1,5 +1,6 @@
 package dev.ngb.workflow.runtime.application.runtime.command;
 
+import dev.ngb.core.error.IdempotencyConflictException;
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.runtime.Clock;
@@ -14,6 +15,9 @@ import dev.ngb.workflow.runtime.application.runtime.port.WakeUpPublisher;
 import dev.ngb.workflow.runtime.domain.instance.Instance;
 import dev.ngb.workflow.runtime.domain.token.Token;
 import java.time.Instant;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Starts one instance at the trigger of a published version and creates its first token.
@@ -23,7 +27,13 @@ import java.time.Instant;
  */
 public class StartInstanceUseCase {
 
-    public record Command(java.util.UUID versionId, Object input, String correlationKey, String startedBy) {}
+    public record Command(
+            UUID versionId,
+            Object input,
+            String correlationKey,
+            String startedBy,
+            String idempotencyKey,
+            String requestHash) {}
 
     private final UnitOfWork unitOfWork;
     private final VersionReader versions;
@@ -55,6 +65,16 @@ public class StartInstanceUseCase {
 
     public Instance execute(Command command) {
         TenantId tenant = tenantContext.requireTenant();
+        if (command.idempotencyKey() != null) {
+            Optional<Instance> existing =
+                    unitOfWork.transactional(() -> instances.findByIdempotencyKey(command.idempotencyKey()));
+            if (existing.isPresent()) {
+                if (!Objects.equals(existing.get().requestHash(), command.requestHash())) {
+                    throw new IdempotencyConflictException("workflow instance", command.idempotencyKey());
+                }
+                return existing.get();
+            }
+        }
         Instance instance = unitOfWork.transactional(() -> {
             PublishedGraph version = versions
                     .graph(command.versionId())
@@ -69,6 +89,8 @@ public class StartInstanceUseCase {
                     command.input(),
                     command.correlationKey(),
                     command.startedBy(),
+                    command.idempotencyKey(),
+                    command.requestHash(),
                     now);
             instances.add(started);
             tokens.add(Token.ready(

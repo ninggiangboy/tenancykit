@@ -239,7 +239,7 @@ class ExecutionCoreTest extends WorkflowIntegrationTest {
 
     private Instance startInstance(TenantId tenant, UUID version) {
         return inTenant(tenant, () -> start.execute(
-                new StartInstanceUseCase.Command(version, Map.of("kind", "test"), null, "test")));
+                new StartInstanceUseCase.Command(version, Map.of("kind", "test"), null, "test", null, null)));
     }
 
     private void runToTheEnd(TenantId tenant, UUID instanceId) {

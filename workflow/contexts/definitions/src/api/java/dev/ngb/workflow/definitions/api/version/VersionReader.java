@@ -12,4 +12,7 @@ import java.util.UUID;
 public interface VersionReader {
 
     Optional<PublishedGraph> graph(UUID versionId);
+
+    /** The newest published version of one definition, which is what a trigger starts from. */
+    Optional<PublishedGraph> latest(UUID definitionId);
 }

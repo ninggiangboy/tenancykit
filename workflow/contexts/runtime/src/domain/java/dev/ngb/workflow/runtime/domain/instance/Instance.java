@@ -27,6 +27,8 @@ public record Instance(
         String startedBy,
         Instant startedAt,
         Instant finishedAt,
+        String idempotencyKey,
+        String requestHash,
         long version) {
 
     public Instance {
@@ -50,10 +52,12 @@ public record Instance(
             Object input,
             String correlationKey,
             String startedBy,
+            String idempotencyKey,
+            String requestHash,
             Instant now) {
         return new Instance(
                 id, tenantId, definitionId, versionId, versionNumber, InstanceStatus.RUNNING, input, Map.of(),
-                correlationKey, startedBy, now, null, 1);
+                correlationKey, startedBy, now, null, idempotencyKey, requestHash, 1);
     }
 
     public boolean terminal() {
@@ -64,13 +68,13 @@ public record Instance(
     public Instance withVariables(Map<String, Object> values) {
         return new Instance(
                 id, tenantId, definitionId, versionId, versionNumber, status, input, values, correlationKey,
-                startedBy, startedAt, finishedAt, version);
+                startedBy, startedAt, finishedAt, idempotencyKey, requestHash, version);
     }
 
     /** The same instance at a terminal status. */
     public Instance finished(InstanceStatus terminal, Instant now) {
         return new Instance(
                 id, tenantId, definitionId, versionId, versionNumber, terminal, input, variables, correlationKey,
-                startedBy, startedAt, now, version);
+                startedBy, startedAt, now, idempotencyKey, requestHash, version);
     }
 }

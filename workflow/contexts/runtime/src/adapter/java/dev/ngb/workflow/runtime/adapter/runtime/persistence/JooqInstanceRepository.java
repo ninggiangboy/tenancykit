@@ -46,6 +46,8 @@ public class JooqInstanceRepository implements InstanceRepository {
                 .set(WORKFLOW_INSTANCE.STARTED_BY, instance.startedBy())
                 .set(WORKFLOW_INSTANCE.STARTED_AT, instance.startedAt())
                 .set(WORKFLOW_INSTANCE.FINISHED_AT, instance.finishedAt())
+                .set(WORKFLOW_INSTANCE.IDEMPOTENCY_KEY, instance.idempotencyKey())
+                .set(WORKFLOW_INSTANCE.REQUEST_HASH, instance.requestHash())
                 .set(WORKFLOW_INSTANCE.VERSION, instance.version())
                 .execute();
     }
@@ -54,6 +56,13 @@ public class JooqInstanceRepository implements InstanceRepository {
     public Optional<Instance> findById(UUID id) {
         return dsl.selectFrom(WORKFLOW_INSTANCE)
                 .where(WORKFLOW_INSTANCE.ID.eq(id))
+                .fetchOptional(row -> toDomain(row));
+    }
+
+    @Override
+    public Optional<Instance> findByIdempotencyKey(String key) {
+        return dsl.selectFrom(WORKFLOW_INSTANCE)
+                .where(WORKFLOW_INSTANCE.IDEMPOTENCY_KEY.eq(key))
                 .fetchOptional(row -> toDomain(row));
     }
 
@@ -105,6 +114,8 @@ public class JooqInstanceRepository implements InstanceRepository {
                 row.getStartedBy(),
                 row.getStartedAt(),
                 row.getFinishedAt(),
+                row.getIdempotencyKey(),
+                row.getRequestHash(),
                 row.getVersion());
     }
 }

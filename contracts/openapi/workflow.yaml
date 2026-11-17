@@ -9,6 +9,59 @@ servers:
 - url: "/workflow"
   description: "Any tenant hostname: <tenant-code>.<base-domain>/workflow"
 paths:
+  /api/v1/triggers/{id}:
+    get:
+      tags:
+      - "trigger-controller"
+      operationId: "getTrigger"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TriggerResponse"
+      x-required-permission: "workflow:trigger:manage"
+    put:
+      tags:
+      - "trigger-controller"
+      operationId: "updateTrigger"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTriggerRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TriggerResponse"
+      x-required-permission: "workflow:trigger:manage"
   /api/v1/definitions/{id}/draft:
     put:
       tags:
@@ -44,6 +97,443 @@ paths:
               schema:
                 $ref: "#/components/schemas/DraftResponse"
       x-required-permission: "workflow:definition:manage"
+  /hooks/{triggerId}:
+    post:
+      tags:
+      - "hook-controller"
+      operationId: "receive"
+      parameters:
+      - name: "triggerId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "string"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReceiptResponse"
+      x-public: true
+  /api/v1/triggers:
+    get:
+      tags:
+      - "trigger-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone."
+      operationId: "listTriggers"
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[enabled][eq]"
+        in: "query"
+        description: "`enabled` eq the value."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[enabled][neq]"
+        in: "query"
+        description: "`enabled` neq the value."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[event_type][eq]"
+        in: "query"
+        description: "`event_type` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[event_type][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `event_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_type][is_null]"
+        in: "query"
+        description: "`true` for rows where `event_type` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[event_type][neq]"
+        in: "query"
+        description: "`event_type` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[event_type][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `event_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_type][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `event_type`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[kind][eq]"
+        in: "query"
+        description: "`kind` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[kind][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `kind`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[kind][neq]"
+        in: "query"
+        description: "`kind` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[kind][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `kind`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[kind][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `kind`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][eq]"
+        in: "query"
+        description: "`name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][neq]"
+        in: "query"
+        description: "`name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[source][eq]"
+        in: "query"
+        description: "`source` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[source][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `source`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[source][neq]"
+        in: "query"
+        description: "`source` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[source][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `source`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[source][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `source`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageTriggerResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "workflow:trigger:manage"
+    post:
+      tags:
+      - "trigger-controller"
+      operationId: "createTrigger"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTriggerRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TriggerWithSecretResponse"
+      x-required-permission: "workflow:trigger:manage"
+  /api/v1/instances:
+    post:
+      tags:
+      - "instance-controller"
+      operationId: "startInstance"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      - name: "Idempotency-Key"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartInstanceRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/StartedInstanceResponse"
+      x-required-permission: "workflow:instance:manage"
   /api/v1/definitions:
     get:
       tags:
@@ -576,6 +1066,44 @@ paths:
       x-required-permission: "workflow:definition:read"
 components:
   schemas:
+    UpdateTriggerRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        eventType:
+          type: "string"
+        filter: {}
+        correlation: {}
+        input: {}
+        enabled:
+          type: "boolean"
+    TriggerResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        name:
+          type: "string"
+        kind:
+          type: "string"
+        source:
+          type: "string"
+        eventType:
+          type: "string"
+        definitionId:
+          type: "string"
+        filter: {}
+        correlation: {}
+        input: {}
+        enabled:
+          type: "boolean"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
     DraftRequest:
       type: "object"
       properties:
@@ -617,6 +1145,60 @@ components:
         code:
           type: "string"
         message:
+          type: "string"
+    ReceiptResponse:
+      type: "object"
+      properties:
+        eventId:
+          type: "string"
+        started:
+          type: "integer"
+          format: "int32"
+        duplicate:
+          type: "boolean"
+    CreateTriggerRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        kind:
+          type: "string"
+        source:
+          type: "string"
+        eventType:
+          type: "string"
+        definitionId:
+          type: "string"
+          format: "uuid"
+        filter: {}
+        correlation: {}
+        input: {}
+        cron:
+          type: "string"
+        timezone:
+          type: "string"
+    TriggerWithSecretResponse:
+      type: "object"
+      properties:
+        trigger:
+          $ref: "#/components/schemas/TriggerResponse"
+        signingSecret:
+          type: "string"
+    StartInstanceRequest:
+      type: "object"
+      properties:
+        definition:
+          type: "string"
+          format: "uuid"
+        input: {}
+        correlationKey:
+          type: "string"
+    StartedInstanceResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        status:
           type: "string"
     CreateDefinitionRequest:
       type: "object"
@@ -682,17 +1264,6 @@ components:
           format: "date-time"
         publishedBy:
           type: "string"
-    PageDefinitionResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/DefinitionResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
     PageInfo:
       type: "object"
       properties:
@@ -713,6 +1284,28 @@ components:
           type:
           - "string"
           - "null"
+    PageTriggerResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/TriggerResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageDefinitionResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DefinitionResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
   securitySchemes:
     oidc:
       type: "http"

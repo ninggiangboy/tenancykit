@@ -44,6 +44,8 @@ public abstract class WorkflowIntegrationTest {
         registry.add("suite.replica.rebuild-on-start", () -> "false");
         registry.add("workflow.jobs.enabled", () -> "false");
         registry.add("workflow.housekeeping.enabled", () -> "false");
+        // A base64 32-byte key; the secret box refuses to start without one, so the harness supplies its own.
+        registry.add("workflow.secrets.master-key", () -> "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHg=");
     }
 
     /** Runs work with the tenant bound, which is what row-level security reads. */

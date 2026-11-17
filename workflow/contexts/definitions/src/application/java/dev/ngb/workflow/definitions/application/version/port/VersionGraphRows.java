@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface VersionGraphRows {
 
     Optional<PublishedGraph> graph(UUID versionId);
+
+    Optional<PublishedGraph> latest(UUID definitionId);
 }

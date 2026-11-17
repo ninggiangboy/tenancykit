@@ -38,6 +38,16 @@ public class JooqVersionReader implements VersionGraphRows {
                 .flatMap(this::view);
     }
 
+    @Override
+    public Optional<PublishedGraph> latest(UUID definitionId) {
+        return dsl.selectFrom(WORKFLOW_VERSION)
+                .where(WORKFLOW_VERSION.DEFINITION_ID.eq(definitionId))
+                .orderBy(WORKFLOW_VERSION.VERSION.desc())
+                .limit(1)
+                .fetchOptional()
+                .flatMap(this::view);
+    }
+
     private Optional<PublishedGraph> view(WorkflowVersionRecord row) {
         JSONB document = row.getGraph();
         GraphParser.Result parsed = GraphParser.parse(json.readValue(document.data(), GRAPH));

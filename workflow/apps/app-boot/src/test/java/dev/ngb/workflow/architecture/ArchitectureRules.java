@@ -41,6 +41,9 @@ final class ArchitectureRules {
         for (String table : List.of("WorkflowInstance", "WorkflowToken", "WorkflowStepRun")) {
             TABLE_OWNER.put(table, "runtime");
         }
+        for (String table : List.of("WorkflowTrigger", "WorkflowInboundEvent", "WorkflowSchedule")) {
+            TABLE_OWNER.put(table, "triggers");
+        }
         for (String table : List.of(
                 "EventInbox", "ReplicaState", "Outbox", "JobLeases", "JobRuns",
                 "WebhookEndpoints", "WebhookDeliveries", "WebhookDeliveryAttempts")) {

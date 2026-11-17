@@ -42,6 +42,7 @@ class WorkerRuntimeStartupTest {
         registry.add("spring.rabbitmq.password", rabbit::getAdminPassword);
         registry.add("suite.replica.rebuild-on-start", () -> "false");
         registry.add("workflow.jobs.enabled", () -> "false");
+        registry.add("workflow.secrets.master-key", () -> "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHg=");
     }
 
     @Test

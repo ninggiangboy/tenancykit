@@ -1,5 +1,6 @@
 package dev.ngb.workflow.boot.web;
 
+import dev.ngb.core.error.UnauthorizedException;
 import dev.ngb.core.spring.web.CoreExceptionHandlers;
 import dev.ngb.workflow.definitions.application.definition.exception.DefinitionInvalidException;
 import dev.ngb.workflow.definitions.application.definition.exception.PreconditionRequiredException;
@@ -40,9 +41,18 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
         return detail;
     }
 
+    /** A delivery the trigger's secret does not prove, or a credential this deployment does not hold. */
+    @ExceptionHandler(UnauthorizedException.class)
+    ProblemDetail unauthorized(UnauthorizedException e) {
+        return ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(401), e.getMessage());
+    }
+
     /** A conditional change without its version says nothing about the state it was decided on. */
-    @ExceptionHandler(PreconditionRequiredException.class)
-    ProblemDetail preconditionRequired(PreconditionRequiredException e) {
+    @ExceptionHandler({
+        PreconditionRequiredException.class,
+        dev.ngb.workflow.triggers.application.trigger.exception.PreconditionRequiredException.class
+    })
+    ProblemDetail preconditionRequired(RuntimeException e) {
         return ProblemDetail.forStatusAndDetail(HttpStatusCode.valueOf(428), e.getMessage());
     }
 

@@ -14,7 +14,11 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  */
 @ConfigurationProperties(prefix = "workflow")
 public record WorkflowSettings(
-        @DefaultValue Jobs jobs, @DefaultValue Housekeeping housekeeping, @DefaultValue Runtime runtime) {
+        @DefaultValue Jobs jobs,
+        @DefaultValue Housekeeping housekeeping,
+        @DefaultValue Runtime runtime,
+        @DefaultValue Schedules schedules,
+        @DefaultValue Secrets secrets) {
 
     /**
      * @param enabled whether the worker's scheduled jobs run at all
@@ -47,4 +51,21 @@ public record WorkflowSettings(
             @DefaultValue("PT1M") Duration lease,
             @DefaultValue("50") int batch,
             @DefaultValue("PT2S") Duration sweepInterval) {}
+
+    /**
+     * @param enabled whether cron schedules fire at all
+     * @param interval how often the worker looks for due schedules
+     * @param batch how many due schedules one sweep fires per tenant
+     */
+    public record Schedules(
+            @DefaultValue("true") boolean enabled,
+            @DefaultValue("PT30S") Duration interval,
+            @DefaultValue("20") int batch) {}
+
+    /**
+     * @param masterKey a base64 32-byte AES-256 key; a deployment sets it in the environment and the app refuses to
+     *     start without one
+     * @param keyId the id stored with every envelope this deployment writes
+     */
+    public record Secrets(String masterKey, @DefaultValue("v1") String keyId) {}
 }

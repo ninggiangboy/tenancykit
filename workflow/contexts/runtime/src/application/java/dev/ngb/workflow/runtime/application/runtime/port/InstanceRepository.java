@@ -14,6 +14,9 @@ public interface InstanceRepository {
 
     Optional<Instance> findById(UUID id);
 
+    /** The instance a repeated caller already created under its idempotency key, if any. */
+    Optional<Instance> findByIdempotencyKey(String key);
+
     /** Replaces the variables under the optimistic version and returns the version the row now holds. */
     long updateVariables(UUID id, Map<String, Object> variables, long expectedVersion);
 

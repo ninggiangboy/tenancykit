@@ -14,7 +14,9 @@ import dev.ngb.workflow.runtime.application.runtime.port.InstanceRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.StepRunRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.TokenRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.WakeUpPublisher;
+import dev.ngb.workflow.runtime.api.instance.InstanceStarter;
 import dev.ngb.workflow.runtime.application.runtime.service.ClaimAndRun;
+import dev.ngb.workflow.runtime.application.runtime.service.InstanceStarterService;
 import dev.ngb.workflow.runtime.application.runtime.service.TokenSweeper;
 import dev.ngb.workflow.runtime.domain.step.DefaultNodeExecutor;
 import dev.ngb.workflow.runtime.domain.step.NodeExecutor;
@@ -65,6 +67,11 @@ class RuntimeConfiguration {
             Clock clock) {
         return new StartInstanceUseCase(
                 unitOfWork, versions, instances, tokens, wakeUp, tenantContext, ids, clock);
+    }
+
+    @Bean
+    InstanceStarter instanceStarter(StartInstanceUseCase start) {
+        return new InstanceStarterService(start);
     }
 
     @Bean

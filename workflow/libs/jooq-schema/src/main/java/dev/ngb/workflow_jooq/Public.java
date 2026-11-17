@@ -18,9 +18,12 @@ import dev.ngb.workflow_jooq.tables.WebhookDeliveries;
 import dev.ngb.workflow_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.workflow_jooq.tables.WebhookEndpoints;
 import dev.ngb.workflow_jooq.tables.WorkflowDefinition;
+import dev.ngb.workflow_jooq.tables.WorkflowInboundEvent;
 import dev.ngb.workflow_jooq.tables.WorkflowInstance;
+import dev.ngb.workflow_jooq.tables.WorkflowSchedule;
 import dev.ngb.workflow_jooq.tables.WorkflowStepRun;
 import dev.ngb.workflow_jooq.tables.WorkflowToken;
+import dev.ngb.workflow_jooq.tables.WorkflowTrigger;
 import dev.ngb.workflow_jooq.tables.WorkflowVersion;
 
 import java.util.Arrays;
@@ -116,9 +119,19 @@ public class Public extends SchemaImpl {
     public final WorkflowDefinition WORKFLOW_DEFINITION = WorkflowDefinition.WORKFLOW_DEFINITION;
 
     /**
+     * The table <code>public.workflow_inbound_event</code>.
+     */
+    public final WorkflowInboundEvent WORKFLOW_INBOUND_EVENT = WorkflowInboundEvent.WORKFLOW_INBOUND_EVENT;
+
+    /**
      * The table <code>public.workflow_instance</code>.
      */
     public final WorkflowInstance WORKFLOW_INSTANCE = WorkflowInstance.WORKFLOW_INSTANCE;
+
+    /**
+     * The table <code>public.workflow_schedule</code>.
+     */
+    public final WorkflowSchedule WORKFLOW_SCHEDULE = WorkflowSchedule.WORKFLOW_SCHEDULE;
 
     /**
      * The table <code>public.workflow_step_run</code>.
@@ -129,6 +142,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.workflow_token</code>.
      */
     public final WorkflowToken WORKFLOW_TOKEN = WorkflowToken.WORKFLOW_TOKEN;
+
+    /**
+     * The table <code>public.workflow_trigger</code>.
+     */
+    public final WorkflowTrigger WORKFLOW_TRIGGER = WorkflowTrigger.WORKFLOW_TRIGGER;
 
     /**
      * The table <code>public.workflow_version</code>.
@@ -165,9 +183,12 @@ public class Public extends SchemaImpl {
             WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS,
             WebhookEndpoints.WEBHOOK_ENDPOINTS,
             WorkflowDefinition.WORKFLOW_DEFINITION,
+            WorkflowInboundEvent.WORKFLOW_INBOUND_EVENT,
             WorkflowInstance.WORKFLOW_INSTANCE,
+            WorkflowSchedule.WORKFLOW_SCHEDULE,
             WorkflowStepRun.WORKFLOW_STEP_RUN,
             WorkflowToken.WORKFLOW_TOKEN,
+            WorkflowTrigger.WORKFLOW_TRIGGER,
             WorkflowVersion.WORKFLOW_VERSION
         );
     }

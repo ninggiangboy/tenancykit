@@ -6,6 +6,7 @@ package dev.ngb.workflow_jooq.tables;
 
 import dev.ngb.workflow_jooq.Keys;
 import dev.ngb.workflow_jooq.Public;
+import dev.ngb.workflow_jooq.tables.WorkflowTrigger.WorkflowTriggerPath;
 import dev.ngb.workflow_jooq.tables.WorkflowVersion.WorkflowVersionPath;
 import dev.ngb.workflow_jooq.tables.records.WorkflowDefinitionRecord;
 
@@ -181,6 +182,19 @@ public class WorkflowDefinition extends TableImpl<WorkflowDefinitionRecord> {
     @Override
     public UniqueKey<WorkflowDefinitionRecord> getPrimaryKey() {
         return Keys.WORKFLOW_DEFINITION_PKEY;
+    }
+
+    private transient WorkflowTriggerPath _workflowTrigger;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.workflow_trigger</code> table
+     */
+    public WorkflowTriggerPath workflowTrigger() {
+        if (_workflowTrigger == null)
+            _workflowTrigger = new WorkflowTriggerPath(this, null, Keys.WORKFLOW_TRIGGER__WORKFLOW_TRIGGER_DEFINITION_ID_FKEY.getInverseKey());
+
+        return _workflowTrigger;
     }
 
     private transient WorkflowVersionPath _workflowVersion;

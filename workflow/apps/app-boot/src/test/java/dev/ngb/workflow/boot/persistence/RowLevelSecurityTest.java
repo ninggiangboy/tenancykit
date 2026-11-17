@@ -165,6 +165,38 @@ class RowLevelSecurityTest {
                         select gen_random_uuid(), '%1$s', i.id, gen_random_uuid(), 'start', 1, now(), now(), 'SUCCEEDED',
                                repeat('a', 64) from i
                         """),
+                row("workflow_trigger", """
+                        with d as (
+                            insert into workflow_definition (id, tenant_id, code, name, status, latest_version, created_at,
+                                                             updated_at)
+                            values (gen_random_uuid(), '%1$s', 'hooks', 'Hooks', 'PUBLISHED', 1, now(), now())
+                            returning id
+                        )
+                        insert into workflow_trigger (id, tenant_id, name, kind, source, definition_id, enabled, created_at,
+                                                      updated_at)
+                        select gen_random_uuid(), '%1$s', 'Manual', 'MANUAL', 'manual', d.id, true, now(), now() from d
+                        """),
+                row("workflow_inbound_event", """
+                        insert into workflow_inbound_event (id, tenant_id, source, event_id, event_type, payload,
+                                                            received_at, expires_at)
+                        values (gen_random_uuid(), '%1$s', 'billing', gen_random_uuid(),
+                                'subscription.payment_failed', '{}'::jsonb, now(), now())
+                        """),
+                row("workflow_schedule", """
+                        with d as (
+                            insert into workflow_definition (id, tenant_id, code, name, status, latest_version, created_at,
+                                                             updated_at)
+                            values (gen_random_uuid(), '%1$s', 'schedules', 'Schedules', 'PUBLISHED', 1, now(), now())
+                            returning id
+                        ), t as (
+                            insert into workflow_trigger (id, tenant_id, name, kind, source, definition_id, enabled,
+                                                          created_at, updated_at)
+                            select gen_random_uuid(), '%1$s', 'Nightly', 'SCHEDULE', 'schedule', d.id, true, now(), now()
+                            from d returning id
+                        )
+                        insert into workflow_schedule (id, tenant_id, trigger_id, cron, timezone, next_due)
+                        select gen_random_uuid(), '%1$s', t.id, '0 2 * * *', 'UTC', now() from t
+                        """),
                 row("event_inbox", """
                         insert into event_inbox (tenant_id, consumer, event_id)
                         values ('%1$s', 'workflow', gen_random_uuid())

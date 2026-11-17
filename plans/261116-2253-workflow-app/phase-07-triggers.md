@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: "Triggers: inbound webhook, manual start, schedule"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [6]

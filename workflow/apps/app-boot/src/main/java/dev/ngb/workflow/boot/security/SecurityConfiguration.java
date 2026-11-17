@@ -46,6 +46,9 @@ class SecurityConfiguration {
                         // permitted because compose strips the prefix and the ALB cannot.
                         .requestMatchers("/t/**", "/workflow/t/**")
                         .permitAll()
+                        // The signed hook: the trigger's secret is the credential and the tenant comes from the host.
+                        .requestMatchers("/hooks/**", "/workflow/hooks/**")
+                        .permitAll()
                         .anyRequest()
                         .authenticated())
                 .oauth2ResourceServer(resource -> resource
