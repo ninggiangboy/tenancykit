@@ -13,6 +13,10 @@ import java.util.UUID;
  *
  * <p>An instance pins the version id it started with. Its {@code version} is the optimistic lock every write compares,
  * so a worker that read an older state can never overwrite a newer one.
+ *
+ * @param parentInstanceId the instance that started this one through a sub-workflow, or null at the top
+ * @param parentTokenId the parked token a finished child resumes
+ * @param depth how many sub-workflow steps separate this instance from a top-level one
  */
 public record Instance(
         UUID id,
@@ -29,6 +33,9 @@ public record Instance(
         Instant finishedAt,
         String idempotencyKey,
         String requestHash,
+        UUID parentInstanceId,
+        UUID parentTokenId,
+        int depth,
         long version) {
 
     public Instance {
@@ -55,9 +62,31 @@ public record Instance(
             String idempotencyKey,
             String requestHash,
             Instant now) {
+        return start(
+                id, tenantId, definitionId, versionId, versionNumber, input, correlationKey, startedBy,
+                idempotencyKey, requestHash, null, null, 0, now);
+    }
+
+    /** A child of a sub-workflow: it names the parent instance and the parked token that waits for it. */
+    public static Instance start(
+            UUID id,
+            TenantId tenantId,
+            UUID definitionId,
+            UUID versionId,
+            int versionNumber,
+            Object input,
+            String correlationKey,
+            String startedBy,
+            String idempotencyKey,
+            String requestHash,
+            UUID parentInstanceId,
+            UUID parentTokenId,
+            int depth,
+            Instant now) {
         return new Instance(
                 id, tenantId, definitionId, versionId, versionNumber, InstanceStatus.RUNNING, input, Map.of(),
-                correlationKey, startedBy, now, null, idempotencyKey, requestHash, 1);
+                correlationKey, startedBy, now, null, idempotencyKey, requestHash, parentInstanceId, parentTokenId,
+                depth, 1);
     }
 
     public boolean terminal() {
@@ -68,13 +97,15 @@ public record Instance(
     public Instance withVariables(Map<String, Object> values) {
         return new Instance(
                 id, tenantId, definitionId, versionId, versionNumber, status, input, values, correlationKey,
-                startedBy, startedAt, finishedAt, idempotencyKey, requestHash, version);
+                startedBy, startedAt, finishedAt, idempotencyKey, requestHash, parentInstanceId, parentTokenId, depth,
+                version);
     }
 
     /** The same instance at a terminal status. */
     public Instance finished(InstanceStatus terminal, Instant now) {
         return new Instance(
                 id, tenantId, definitionId, versionId, versionNumber, terminal, input, variables, correlationKey,
-                startedBy, startedAt, now, idempotencyKey, requestHash, version);
+                startedBy, startedAt, now, idempotencyKey, requestHash, parentInstanceId, parentTokenId, depth,
+                version);
     }
 }

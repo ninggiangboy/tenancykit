@@ -48,6 +48,9 @@ public class JooqInstanceRepository implements InstanceRepository {
                 .set(WORKFLOW_INSTANCE.FINISHED_AT, instance.finishedAt())
                 .set(WORKFLOW_INSTANCE.IDEMPOTENCY_KEY, instance.idempotencyKey())
                 .set(WORKFLOW_INSTANCE.REQUEST_HASH, instance.requestHash())
+                .set(WORKFLOW_INSTANCE.PARENT_INSTANCE_ID, instance.parentInstanceId())
+                .set(WORKFLOW_INSTANCE.PARENT_TOKEN_ID, instance.parentTokenId())
+                .set(WORKFLOW_INSTANCE.DEPTH, instance.depth())
                 .set(WORKFLOW_INSTANCE.VERSION, instance.version())
                 .execute();
     }
@@ -135,6 +138,9 @@ public class JooqInstanceRepository implements InstanceRepository {
                 row.getFinishedAt(),
                 row.getIdempotencyKey(),
                 row.getRequestHash(),
+                row.getParentInstanceId(),
+                row.getParentTokenId(),
+                row.getDepth(),
                 row.getVersion());
     }
 }

@@ -216,6 +216,11 @@
           "maxLength": 64,
           "description": "The code of the definition a subflow runs."
         },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The published version a subflow pins. Absent, the newest is resolved when it starts."
+        },
         "input": {
           "$ref": "#/$defs/expression"
         },

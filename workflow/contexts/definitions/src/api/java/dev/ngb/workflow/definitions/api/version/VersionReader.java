@@ -15,4 +15,11 @@ public interface VersionReader {
 
     /** The newest published version of one definition, which is what a trigger starts from. */
     Optional<PublishedGraph> latest(UUID definitionId);
+
+    /**
+     * A published version named by definition code, which is what a sub-workflow reaches for.
+     *
+     * @param version the exact version number, or null for the newest published one
+     */
+    Optional<PublishedGraph> graphOf(String definitionCode, Integer version);
 }

@@ -96,9 +96,10 @@ class DefinitionsConfiguration {
             DefinitionRepository definitions,
             VersionRepository versions,
             DefinitionRules rules,
+            VersionGraphRows published,
             IdGenerator ids,
             Clock clock) {
-        return new PublishDefinitionUseCase(unitOfWork, definitions, versions, rules, ids, clock);
+        return new PublishDefinitionUseCase(unitOfWork, definitions, versions, rules, published, ids, clock);
     }
 
     @Bean

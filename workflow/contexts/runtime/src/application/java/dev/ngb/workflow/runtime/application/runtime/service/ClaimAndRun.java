@@ -59,6 +59,9 @@ public class ClaimAndRun {
 
     private static final Outcome NOTHING = new Outcome(false, null, null, null);
 
+    /** How many sub-workflow steps may separate a child from a top-level instance. */
+    private static final int MAX_SUBFLOW_DEPTH = 5;
+
     private final UnitOfWork unitOfWork;
     private final InstanceRepository instances;
     private final TokenRepository tokens;
@@ -156,6 +159,9 @@ public class ClaimAndRun {
         if (outcome.iterating()) {
             return iterate(token, instance, outcome, finishedAt, graph);
         }
+        if (outcome.subflowing()) {
+            return startChild(token, instance, outcome, finishedAt);
+        }
         if (outcome.failed() && token.loopNodeId() != null) {
             InstanceStatus afterItemFailure = itemFailed(token, instance, outcome, finishedAt, graph);
             if (afterItemFailure != null) {
@@ -191,7 +197,7 @@ public class ClaimAndRun {
                     return InstanceStatus.RUNNING;
                 }
                 // No branch can arrive any more, so this join will never reach its count.
-                instances.finish(instance.id(), InstanceStatus.FAILED, finishedAt);
+                finishInstance(instance, InstanceStatus.FAILED, finishedAt, outcome);
                 return InstanceStatus.FAILED;
             }
         }
@@ -231,7 +237,7 @@ public class ClaimAndRun {
 
         updateVariables(instance, outcome);
         if (next.terminal()) {
-            instances.finish(instance.id(), next, finishedAt);
+            finishInstance(instance, next, finishedAt, outcome);
         }
         return next;
     }
@@ -289,7 +295,7 @@ public class ClaimAndRun {
         if (advance.complete()) {
             String next = graph.node(token.loopNodeId()).map(GraphNode::next).orElse(null);
             if (next == null) {
-                instances.finish(instance.id(), InstanceStatus.FAILED, finishedAt);
+                finishInstance(instance, InstanceStatus.FAILED, finishedAt, outcome);
                 return InstanceStatus.FAILED;
             }
             tokens.add(Token.ready(
@@ -334,7 +340,7 @@ public class ClaimAndRun {
         if (advance.complete()) {
             String next = loop.next();
             if (next == null) {
-                instances.finish(instance.id(), InstanceStatus.FAILED, finishedAt);
+                finishInstance(instance, InstanceStatus.FAILED, finishedAt, outcome);
                 return InstanceStatus.FAILED;
             }
             tokens.add(Token.ready(
@@ -345,6 +351,84 @@ public class ClaimAndRun {
         return tokens.liveCount(token.instanceId()) == 0
                 ? InstanceStatus.COMPLETED
                 : InstanceStatus.RUNNING;
+    }
+
+    /**
+     * Starts the child instance of a sub-workflow and parks this token on it. The child's own transaction resumes the
+     * token when it ends, so a slow child costs a wait rather than a poll, and a parent that dies in between is safe:
+     * its token is WAITING and the child's finish is the one event that makes it READY.
+     */
+    private InstanceStatus startChild(
+            Token token, Instance instance, StepOutcome outcome, Instant finishedAt) {
+        StepOutcome.Subflow subflow = outcome.subflow();
+        int depth = instance.depth() + 1;
+        if (depth > MAX_SUBFLOW_DEPTH) {
+            return failChildStart(token, instance, outcome, finishedAt,
+                    "limit_exceeded:sub_workflow_depth",
+                    Map.of("reason", "limit_exceeded:sub_workflow_depth", "depth", depth));
+        }
+        PublishedGraph childVersion = versions
+                .graphOf(subflow.definition(), subflow.version())
+                .orElse(null);
+        if (childVersion == null) {
+            return failChildStart(token, instance, outcome, finishedAt,
+                    "subflow_definition_missing:" + subflow.definition(),
+                    Map.of("reason", "subflow_definition_missing", "definition", subflow.definition()));
+        }
+        UUID childId = ids.newId();
+        instances.add(Instance.start(
+                childId,
+                token.tenantId(),
+                childVersion.definitionId(),
+                childVersion.versionId(),
+                childVersion.version(),
+                subflow.input(),
+                null,
+                "subflow:" + instance.id(),
+                null,
+                null,
+                instance.id(),
+                token.id(),
+                depth,
+                finishedAt));
+        tokens.add(Token.ready(
+                ids.newId(), token.tenantId(), childId, childVersion.graph().start(), null, 0, finishedAt));
+        return park(
+                token,
+                instance,
+                StepOutcome.parked(
+                        Map.of(
+                                "instanceId", childId.toString(),
+                                "definition", subflow.definition(),
+                                "version", childVersion.version()),
+                        new StepOutcome.Reservation(null, null, null, null, null),
+                        outcome.variables()),
+                finishedAt);
+    }
+
+    private InstanceStatus failChildStart(
+            Token token, Instance instance, StepOutcome outcome, Instant finishedAt, String reason, Object response) {
+        boolean completed = tokens.finish(token.id(), workerId, TokenStatus.FAILED, finishedAt);
+        if (!completed) {
+            return instance.status();
+        }
+        recordStep(token, StepOutcome.failed(reason, response, outcome.variables()), finishedAt);
+        finishInstance(instance, InstanceStatus.FAILED, finishedAt, outcome);
+        return InstanceStatus.FAILED;
+    }
+
+    /** Ends an instance and, when it is a sub-workflow's child, resumes the token that started it. */
+    private void finishInstance(Instance instance, InstanceStatus status, Instant finishedAt, StepOutcome outcome) {
+        instances.finish(instance.id(), status, finishedAt);
+        if (instance.parentTokenId() == null) {
+            return;
+        }
+        java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("instanceId", instance.id().toString());
+        payload.put("status", status.name());
+        payload.put("output", outcome.response());
+        payload.put("variables", outcome.variables());
+        tokens.resume(instance.parentTokenId(), "subflow", payload, finishedAt);
     }
 
     private void startIterations(

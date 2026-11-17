@@ -24,4 +24,9 @@ public class VersionReaderService implements VersionReader {
     public Optional<PublishedGraph> latest(UUID definitionId) {
         return rows.latest(definitionId);
     }
+
+    @Override
+    public Optional<PublishedGraph> graphOf(String definitionCode, Integer version) {
+        return rows.graphOf(definitionCode, version);
+    }
 }

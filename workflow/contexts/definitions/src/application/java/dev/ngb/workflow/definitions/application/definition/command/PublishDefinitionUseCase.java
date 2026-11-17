@@ -9,12 +9,15 @@ import dev.ngb.workflow.definitions.application.definition.exception.DefinitionI
 import dev.ngb.workflow.definitions.application.definition.port.DefinitionRepository;
 import dev.ngb.workflow.definitions.application.definition.port.VersionRepository;
 import dev.ngb.workflow.definitions.application.definition.service.DefinitionRules;
+import dev.ngb.workflow.definitions.application.definition.service.SubflowCycles;
+import dev.ngb.workflow.definitions.application.version.port.VersionGraphRows;
 import dev.ngb.workflow.definitions.domain.definition.ContentHash;
 import dev.ngb.workflow.definitions.domain.definition.Definition;
 import dev.ngb.workflow.definitions.domain.definition.PublishedVersion;
 import dev.ngb.workflow.definitions.domain.expression.Json;
 import dev.ngb.workflow.definitions.domain.problem.Problem;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,6 +35,7 @@ public class PublishDefinitionUseCase {
     private final DefinitionRepository definitions;
     private final VersionRepository versions;
     private final DefinitionRules rules;
+    private final VersionGraphRows published;
     private final IdGenerator ids;
     private final Clock clock;
 
@@ -40,12 +44,14 @@ public class PublishDefinitionUseCase {
             DefinitionRepository definitions,
             VersionRepository versions,
             DefinitionRules rules,
+            VersionGraphRows published,
             IdGenerator ids,
             Clock clock) {
         this.unitOfWork = unitOfWork;
         this.definitions = definitions;
         this.versions = versions;
         this.rules = rules;
+        this.published = published;
         this.ids = ids;
         this.clock = clock;
     }
@@ -57,7 +63,12 @@ public class PublishDefinitionUseCase {
                     .orElseThrow(() -> new NotFoundException("No workflow definition exists here."));
             command.expected().check(definition.version());
             Object draft = definition.draft();
-            List<Problem> problems = rules.problems(draft);
+            List<Problem> problems = new ArrayList<>(rules.problems(draft));
+            dev.ngb.workflow.definitions.domain.definition.GraphParser.Result parsed =
+                    dev.ngb.workflow.definitions.domain.definition.GraphParser.parse(draft);
+            if (parsed.graph() != null) {
+                problems.addAll(SubflowCycles.problems(parsed.graph(), definition.code(), published::latestByCode));
+            }
             if (!problems.isEmpty()) {
                 throw new DefinitionInvalidException(problems);
             }

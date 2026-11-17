@@ -10,4 +10,8 @@ public interface VersionGraphRows {
     Optional<PublishedGraph> graph(UUID versionId);
 
     Optional<PublishedGraph> latest(UUID definitionId);
+
+    Optional<PublishedGraph> graphOf(String definitionCode, Integer version);
+
+    Optional<PublishedGraph> latestByCode(String definitionCode);
 }

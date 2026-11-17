@@ -140,6 +140,21 @@ public class WorkflowInstance extends TableImpl<WorkflowInstanceRecord> {
      */
     public final TableField<WorkflowInstanceRecord, String> REQUEST_HASH = createField(DSL.name("request_hash"), SQLDataType.CLOB, this, "");
 
+    /**
+     * The column <code>public.workflow_instance.parent_instance_id</code>.
+     */
+    public final TableField<WorkflowInstanceRecord, UUID> PARENT_INSTANCE_ID = createField(DSL.name("parent_instance_id"), SQLDataType.UUID, this, "");
+
+    /**
+     * The column <code>public.workflow_instance.parent_token_id</code>.
+     */
+    public final TableField<WorkflowInstanceRecord, UUID> PARENT_TOKEN_ID = createField(DSL.name("parent_token_id"), SQLDataType.UUID, this, "");
+
+    /**
+     * The column <code>public.workflow_instance.depth</code>.
+     */
+    public final TableField<WorkflowInstanceRecord, Integer> DEPTH = createField(DSL.name("depth"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.INTEGER)), this, "");
+
     private WorkflowInstance(Name alias, Table<WorkflowInstanceRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -214,7 +229,20 @@ public class WorkflowInstance extends TableImpl<WorkflowInstanceRecord> {
 
     @Override
     public List<ForeignKey<WorkflowInstanceRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.WORKFLOW_INSTANCE__WORKFLOW_INSTANCE_VERSION_ID_FKEY);
+        return Arrays.asList(Keys.WORKFLOW_INSTANCE__WORKFLOW_INSTANCE_PARENT_INSTANCE_ID_FKEY, Keys.WORKFLOW_INSTANCE__WORKFLOW_INSTANCE_VERSION_ID_FKEY);
+    }
+
+    private transient WorkflowInstancePath _workflowInstance;
+
+    /**
+     * Get the implicit join path to the <code>public.workflow_instance</code>
+     * table.
+     */
+    public WorkflowInstancePath workflowInstance() {
+        if (_workflowInstance == null)
+            _workflowInstance = new WorkflowInstancePath(this, Keys.WORKFLOW_INSTANCE__WORKFLOW_INSTANCE_PARENT_INSTANCE_ID_FKEY, null);
+
+        return _workflowInstance;
     }
 
     private transient WorkflowVersionPath _workflowVersion;
@@ -287,6 +315,7 @@ public class WorkflowInstance extends TableImpl<WorkflowInstanceRecord> {
         return Arrays.asList(
             Internal.createCheck(this, DSL.name("workflow_instance_check"), "(((status = ANY (ARRAY['COMPLETED'::text, 'FAILED'::text, 'CANCELLED'::text])) = (finished_at IS NOT NULL)))", true),
             Internal.createCheck(this, DSL.name("workflow_instance_correlation_key_check"), "((length(correlation_key) <= 200))", true),
+            Internal.createCheck(this, DSL.name("workflow_instance_depth_check"), "((depth >= 0))", true),
             Internal.createCheck(this, DSL.name("workflow_instance_status_check"), "((status = ANY (ARRAY['RUNNING'::text, 'WAITING'::text, 'COMPLETED'::text, 'FAILED'::text, 'CANCELLED'::text, 'COMPENSATING'::text])))", true),
             Internal.createCheck(this, DSL.name("workflow_instance_version_check"), "((version >= 1))", true)
         );

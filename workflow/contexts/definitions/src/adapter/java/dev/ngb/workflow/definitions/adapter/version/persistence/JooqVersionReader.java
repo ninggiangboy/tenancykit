@@ -1,5 +1,6 @@
 package dev.ngb.workflow.definitions.adapter.version.persistence;
 
+import static dev.ngb.workflow_jooq.Tables.WORKFLOW_DEFINITION;
 import static dev.ngb.workflow_jooq.Tables.WORKFLOW_VERSION;
 
 import dev.ngb.workflow.definitions.api.version.GraphNode;
@@ -46,6 +47,27 @@ public class JooqVersionReader implements VersionGraphRows {
                 .limit(1)
                 .fetchOptional()
                 .flatMap(this::view);
+    }
+
+    @Override
+    public Optional<PublishedGraph> graphOf(String definitionCode, Integer version) {
+        var query = dsl.select(WORKFLOW_VERSION.asterisk())
+                .from(WORKFLOW_VERSION)
+                .join(WORKFLOW_DEFINITION)
+                .on(WORKFLOW_VERSION.DEFINITION_ID.eq(WORKFLOW_DEFINITION.ID))
+                .where(WORKFLOW_DEFINITION.CODE.eq(definitionCode));
+        if (version != null) {
+            query = query.and(WORKFLOW_VERSION.VERSION.eq(version));
+        }
+        return query.orderBy(WORKFLOW_VERSION.VERSION.desc())
+                .limit(1)
+                .fetchOptional()
+                .flatMap(row -> view(row.into(WORKFLOW_VERSION)));
+    }
+
+    @Override
+    public Optional<PublishedGraph> latestByCode(String definitionCode) {
+        return graphOf(definitionCode, null);
     }
 
     private Optional<PublishedGraph> view(WorkflowVersionRecord row) {

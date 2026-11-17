@@ -247,6 +247,51 @@ public class WorkflowInstanceRecord extends UpdatableRecordImpl<WorkflowInstance
         return (String) get(14);
     }
 
+    /**
+     * Setter for <code>public.workflow_instance.parent_instance_id</code>.
+     */
+    public WorkflowInstanceRecord setParentInstanceId(UUID value) {
+        set(15, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.workflow_instance.parent_instance_id</code>.
+     */
+    public UUID getParentInstanceId() {
+        return (UUID) get(15);
+    }
+
+    /**
+     * Setter for <code>public.workflow_instance.parent_token_id</code>.
+     */
+    public WorkflowInstanceRecord setParentTokenId(UUID value) {
+        set(16, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.workflow_instance.parent_token_id</code>.
+     */
+    public UUID getParentTokenId() {
+        return (UUID) get(16);
+    }
+
+    /**
+     * Setter for <code>public.workflow_instance.depth</code>.
+     */
+    public WorkflowInstanceRecord setDepth(Integer value) {
+        set(17, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.workflow_instance.depth</code>.
+     */
+    public Integer getDepth() {
+        return (Integer) get(17);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -270,7 +315,7 @@ public class WorkflowInstanceRecord extends UpdatableRecordImpl<WorkflowInstance
     /**
      * Create a detached, initialised WorkflowInstanceRecord
      */
-    public WorkflowInstanceRecord(UUID id, UUID tenantId, UUID definitionId, UUID versionId, Integer versionNumber, String status, JSONB input, JSONB variables, String correlationKey, String startedBy, Instant startedAt, Instant finishedAt, Long version, String idempotencyKey, String requestHash) {
+    public WorkflowInstanceRecord(UUID id, UUID tenantId, UUID definitionId, UUID versionId, Integer versionNumber, String status, JSONB input, JSONB variables, String correlationKey, String startedBy, Instant startedAt, Instant finishedAt, Long version, String idempotencyKey, String requestHash, UUID parentInstanceId, UUID parentTokenId, Integer depth) {
         super(WorkflowInstance.WORKFLOW_INSTANCE);
 
         setId(id);
@@ -288,6 +333,9 @@ public class WorkflowInstanceRecord extends UpdatableRecordImpl<WorkflowInstance
         setVersion(version);
         setIdempotencyKey(idempotencyKey);
         setRequestHash(requestHash);
+        setParentInstanceId(parentInstanceId);
+        setParentTokenId(parentTokenId);
+        setDepth(depth);
         resetTouchedOnNotNull();
     }
 }

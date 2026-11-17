@@ -54,6 +54,9 @@ public final class ProblemCodes {
     /** A graph needs exactly one trigger, and the start must be it. */
     public static final String TRIGGER_INVALID = "trigger_invalid";
 
+    /** A sub-workflow chain returns to a definition it already passed through. */
+    public static final String SUBFLOW_CYCLE = "subflow_cycle";
+
     /** A compensation action is not an http node of this graph. */
     public static final String COMPENSATE_INVALID = "compensate_invalid";
 

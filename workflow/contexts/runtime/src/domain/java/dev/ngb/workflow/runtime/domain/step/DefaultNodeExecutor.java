@@ -50,6 +50,7 @@ public class DefaultNodeExecutor implements NodeExecutor {
             case "join" -> join(context);
             case "http" -> call(context);
             case "foreach" -> foreach(context);
+            case "subflow" -> subflow(context);
             default -> StepOutcome.failed(
                     "node_not_supported:" + context.node().type(), null, context.variables());
         };
@@ -232,6 +233,35 @@ public class DefaultNodeExecutor implements NodeExecutor {
         return StepOutcome.joining(
                 Map.of("branch", context.token().branchKey() == null ? "" : context.token().branchKey()),
                 new StepOutcome.Join(next, expected, context.token().branchKey(), contribution, !"all".equals(mode)),
+                context.variables());
+    }
+
+    /**
+     * Starts another published workflow and waits for it. The child's input is the document the expression names, so a
+     * whole payload travels rather than a scalar view of it; the child's end resumes this token with its status.
+     */
+    private StepOutcome subflow(ExecutionContext context) {
+        if ("subflow".equals(context.token().resumeBranch())) {
+            Object payload = context.token().resumePayload();
+            String status = payload instanceof Map<?, ?> members && members.get("status") instanceof String text
+                    ? text
+                    : "FAILED";
+            if (!"COMPLETED".equals(status)) {
+                return StepOutcome.failed("subflow_failed:" + status, payload, context.variables());
+            }
+            return StepOutcome.succeeded(payload, context.node().next(), context.variables());
+        }
+        String definition = context.node().text("definition");
+        if (definition == null) {
+            return StepOutcome.failed("subflow_without_a_definition", null, context.variables());
+        }
+        Integer version = context.node().document("version") instanceof Number number ? number.intValue() : null;
+        Object input = context.node().document("input") == null
+                ? null
+                : document(context, context.node().document("input"), context.variables());
+        return StepOutcome.subflowing(
+                Map.of("definition", definition, "version", version == null ? "latest" : version),
+                new StepOutcome.Subflow(definition, version, input),
                 context.variables());
     }
 

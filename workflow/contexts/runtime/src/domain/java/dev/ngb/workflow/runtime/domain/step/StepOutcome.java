@@ -24,7 +24,8 @@ public record StepOutcome(
         Reservation reservation,
         List<Successor> successors,
         Join join,
-        Foreach foreach) {
+        Foreach foreach,
+        Subflow subflow) {
 
     /** One following token: the node it starts at and, for a parallel branch, the name it is collected under. */
     public record Successor(String nodeId, String branchKey) {}
@@ -66,6 +67,12 @@ public record StepOutcome(
     }
 
     /**
+     * A sub-workflow to start: the definition code, the version to pin ({@code null} resolves the latest at start) and
+     * the input the child reads. The engine creates the child and parks this token until the child finishes.
+     */
+    public record Subflow(String definition, Integer version, Object input) {}
+
+    /**
      * What the engine must write when it parks a token.
      *
      * @param kind the timer to create, or null when only an event can resume the token
@@ -92,34 +99,35 @@ public record StepOutcome(
 
     public static StepOutcome succeeded(Object response, String next, Map<String, Object> variables) {
         return new StepOutcome(
-                false, null, response, next == null ? List.of() : List.of(next), variables, null, List.of(), null, null);
+                false, null, response, next == null ? List.of() : List.of(next), variables, null, List.of(), null, null,
+                null);
     }
 
     public static StepOutcome failed(String failure, Object response, Map<String, Object> variables) {
-        return new StepOutcome(true, failure, response, List.of(), variables, null, List.of(), null, null);
+        return new StepOutcome(true, failure, response, List.of(), variables, null, List.of(), null, null, null);
     }
 
     public static StepOutcome parked(
             Object response, Reservation reservation, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, List.of(), variables, reservation, List.of(), null, null);
+        return new StepOutcome(false, null, response, List.of(), variables, reservation, List.of(), null, null, null);
     }
 
     /** Several following tokens, each carrying the branch it belongs to. */
     public static StepOutcome fannedOut(
             Object response, List<Successor> successors, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, List.of(), variables, null, successors, null, null);
+        return new StepOutcome(false, null, response, List.of(), variables, null, successors, null, null, null);
     }
 
     /** Waiting for the rest of its branches: the engine counts this arrival and decides whether the join fires. */
     public static StepOutcome joining(
             Object response, Join join, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), join, null);
+        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), join, null, null);
     }
 
     /** The engine owns the loop's progress: it starts iterations, counts arrivals and continues after the last one. */
     public static StepOutcome foreaching(
             Object response, Foreach foreach, Map<String, Object> variables) {
-        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), null, foreach);
+        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), null, foreach, null);
     }
 
     public boolean parked() {
@@ -130,7 +138,17 @@ public record StepOutcome(
         return join != null;
     }
 
+    /** The engine starts the child instance and parks this token until the child ends. */
+    public static StepOutcome subflowing(
+            Object response, Subflow subflow, Map<String, Object> variables) {
+        return new StepOutcome(false, null, response, List.of(), variables, null, List.of(), null, null, subflow);
+    }
+
     public boolean iterating() {
         return foreach != null;
+    }
+
+    public boolean subflowing() {
+        return subflow != null;
     }
 }
