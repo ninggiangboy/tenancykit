@@ -8,8 +8,6 @@ import dev.ngb.attribution.links.application.link.command.UpdateLinkUseCase;
 import dev.ngb.attribution.links.application.link.port.BulkRequestStore;
 import dev.ngb.attribution.links.application.link.query.LinkListing;
 import dev.ngb.attribution.links.application.link.query.LinkQueries;
-import dev.ngb.attribution.links.application.link.query.LinkStatsQueries;
-import dev.ngb.attribution.links.application.link.query.LinkStatsView;
 import dev.ngb.attribution.links.application.link.query.LinkView;
 import dev.ngb.attribution.links.domain.link.Link;
 import dev.ngb.attribution.links.application.link.service.SuiteHosts;
@@ -58,7 +56,6 @@ class LinkController {
     private final ChangeLinkStateUseCase changeState;
     private final CreateBulkLinksUseCase bulk;
     private final LinkQueries queries;
-    private final LinkStatsQueries stats;
     private final ZxingQrRenderer qr;
     private final SuiteHosts hosts;
 
@@ -68,7 +65,6 @@ class LinkController {
             ChangeLinkStateUseCase changeState,
             CreateBulkLinksUseCase bulk,
             LinkQueries queries,
-            LinkStatsQueries stats,
             ZxingQrRenderer qr,
             SuiteHosts hosts) {
         this.create = create;
@@ -76,7 +72,6 @@ class LinkController {
         this.changeState = changeState;
         this.bulk = bulk;
         this.queries = queries;
-        this.stats = stats;
         this.qr = qr;
         this.hosts = hosts;
     }
@@ -192,12 +187,6 @@ class LinkController {
                     .body(qr.svg(url, size).getBytes(java.nio.charset.StandardCharsets.UTF_8));
         }
         return ResponseEntity.ok().contentType(MediaType.valueOf(PNG)).body(qr.png(url, size));
-    }
-
-    @GetMapping("/{id}/stats")
-    @RequiresPermission(AttributionPermissions.LINK_READ)
-    LinkStatsView stats(@PathVariable UUID id) {
-        return stats.stats(id);
     }
 
     private String publicUrl(String slug) {

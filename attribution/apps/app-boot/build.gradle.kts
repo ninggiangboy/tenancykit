@@ -74,7 +74,20 @@ tasks.processResources {
 }
 
 tasks.test {
+    // The seeded report load test lives outside the build; `reportLoad` is the only way to run it.
+    useJUnitPlatform { excludeTags("loadtest") }
     // `./gradlew :apps:app-boot:test --tests '*JooqSchemaTest' -Djooq.update=true` regenerates the committed jOOQ schema.
     systemProperty("jooq.update", System.getProperty("jooq.update", "false"))
     systemProperty("openapi.update", System.getProperty("openapi.update", "false"))
+}
+
+tasks.register<Test>("reportLoad") {
+    group = "verification"
+    description = "Runs the seeded 5-million-click report load test; never part of build."
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform { includeTags("loadtest") }
+    // `./gradlew :apps:app-boot:reportLoad -Dattribution.load.clicks=500000` seeds a smaller run.
+    systemProperty("attribution.load.clicks", System.getProperty("attribution.load.clicks", "5000000"))
+    outputs.upToDateWhen { false }
 }

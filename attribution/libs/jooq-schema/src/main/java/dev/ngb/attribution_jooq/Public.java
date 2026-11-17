@@ -21,7 +21,12 @@ import dev.ngb.attribution_jooq.tables.PageEvents;
 import dev.ngb.attribution_jooq.tables.PartitionManagedTables;
 import dev.ngb.attribution_jooq.tables.RecomputeRuns;
 import dev.ngb.attribution_jooq.tables.ReplicaState;
+import dev.ngb.attribution_jooq.tables.RollupConversionsDaily;
+import dev.ngb.attribution_jooq.tables.RollupCursor;
+import dev.ngb.attribution_jooq.tables.RollupReferrersDaily;
+import dev.ngb.attribution_jooq.tables.RollupTrafficHourly;
 import dev.ngb.attribution_jooq.tables.Sessions;
+import dev.ngb.attribution_jooq.tables.SpendEntries;
 import dev.ngb.attribution_jooq.tables.TenantDomains;
 import dev.ngb.attribution_jooq.tables.TenantSystems;
 import dev.ngb.attribution_jooq.tables.Tenants;
@@ -136,9 +141,34 @@ public class Public extends SchemaImpl {
     public final ReplicaState REPLICA_STATE = ReplicaState.REPLICA_STATE;
 
     /**
+     * The table <code>public.rollup_conversions_daily</code>.
+     */
+    public final RollupConversionsDaily ROLLUP_CONVERSIONS_DAILY = RollupConversionsDaily.ROLLUP_CONVERSIONS_DAILY;
+
+    /**
+     * The table <code>public.rollup_cursor</code>.
+     */
+    public final RollupCursor ROLLUP_CURSOR = RollupCursor.ROLLUP_CURSOR;
+
+    /**
+     * The table <code>public.rollup_referrers_daily</code>.
+     */
+    public final RollupReferrersDaily ROLLUP_REFERRERS_DAILY = RollupReferrersDaily.ROLLUP_REFERRERS_DAILY;
+
+    /**
+     * The table <code>public.rollup_traffic_hourly</code>.
+     */
+    public final RollupTrafficHourly ROLLUP_TRAFFIC_HOURLY = RollupTrafficHourly.ROLLUP_TRAFFIC_HOURLY;
+
+    /**
      * The table <code>public.sessions</code>.
      */
     public final Sessions SESSIONS = Sessions.SESSIONS;
+
+    /**
+     * The table <code>public.spend_entries</code>.
+     */
+    public final SpendEntries SPEND_ENTRIES = SpendEntries.SPEND_ENTRIES;
 
     /**
      * The table <code>public.tenant_domains</code>.
@@ -198,7 +228,12 @@ public class Public extends SchemaImpl {
             PartitionManagedTables.PARTITION_MANAGED_TABLES,
             RecomputeRuns.RECOMPUTE_RUNS,
             ReplicaState.REPLICA_STATE,
+            RollupConversionsDaily.ROLLUP_CONVERSIONS_DAILY,
+            RollupCursor.ROLLUP_CURSOR,
+            RollupReferrersDaily.ROLLUP_REFERRERS_DAILY,
+            RollupTrafficHourly.ROLLUP_TRAFFIC_HOURLY,
             Sessions.SESSIONS,
+            SpendEntries.SPEND_ENTRIES,
             TenantDomains.TENANT_DOMAINS,
             TenantSystems.TENANT_SYSTEMS,
             Tenants.TENANTS,

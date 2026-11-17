@@ -6,14 +6,15 @@ import dev.ngb.attribution.links.adapter.campaign.persistence.JooqCampaignReposi
 import dev.ngb.attribution.links.adapter.link.crypto.BcryptPasswordHasher;
 import dev.ngb.attribution.links.adapter.link.persistence.JooqBulkRequestStore;
 import dev.ngb.attribution.links.adapter.settings.persistence.JooqClickParamProvider;
+import dev.ngb.attribution.links.adapter.link.persistence.JooqLinkMetadataReader;
 import dev.ngb.attribution.links.adapter.link.persistence.JooqLinkReadRepository;
 import dev.ngb.attribution.links.adapter.link.persistence.JooqLinkRepository;
-import dev.ngb.attribution.links.adapter.link.persistence.JooqLinkStatsReadRepository;
 import dev.ngb.attribution.links.adapter.link.qr.ZxingQrRenderer;
 import dev.ngb.attribution.links.application.campaign.command.ArchiveCampaignUseCase;
 import dev.ngb.attribution.links.application.campaign.command.CreateCampaignUseCase;
 import dev.ngb.attribution.links.application.campaign.command.UpdateCampaignUseCase;
 import dev.ngb.attribution.links.api.campaign.CampaignPolicyReader;
+import dev.ngb.attribution.links.api.link.LinkMetadataReader;
 import dev.ngb.attribution.links.application.campaign.port.CampaignRepository;
 import dev.ngb.attribution.links.application.campaign.port.RecomputeTrigger;
 import dev.ngb.attribution.links.application.campaign.query.CampaignQueries;
@@ -28,8 +29,6 @@ import dev.ngb.attribution.links.application.link.port.LinkRepository;
 import dev.ngb.attribution.links.application.link.port.PasswordHasher;
 import dev.ngb.attribution.links.application.link.query.LinkQueries;
 import dev.ngb.attribution.links.application.link.query.LinkReadRepository;
-import dev.ngb.attribution.links.application.link.query.LinkStatsQueries;
-import dev.ngb.attribution.links.application.link.query.LinkStatsReadRepository;
 import dev.ngb.attribution.links.application.link.service.SuiteHosts;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
@@ -107,8 +106,8 @@ class LinksConfiguration {
     }
 
     @Bean
-    LinkStatsReadRepository linkStatsReadRepository(DSLContext dsl) {
-        return new JooqLinkStatsReadRepository(dsl);
+    LinkMetadataReader linkMetadataReader(DSLContext dsl) {
+        return new JooqLinkMetadataReader(dsl);
     }
 
     @Bean
@@ -134,11 +133,6 @@ class LinksConfiguration {
     @Bean
     LinkQueries linkQueries(UnitOfWork unitOfWork, LinkReadRepository links, SuiteHosts hosts) {
         return new LinkQueries(unitOfWork, links);
-    }
-
-    @Bean
-    LinkStatsQueries linkStatsQueries(UnitOfWork unitOfWork, LinkStatsReadRepository stats) {
-        return new LinkStatsQueries(unitOfWork, stats);
     }
 
     @Bean

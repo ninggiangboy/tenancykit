@@ -58,6 +58,13 @@ final class ArchitectureRules {
         for (String table : List.of("Goals", "Conversions", "ConversionCredits", "RecomputeRuns")) {
             TABLE_OWNER.put(table, "attribution");
         }
+        // The rollups and the deployment-wide cursor are insight's; a report reads them and never a raw event.
+        for (String table : List.of(
+                "RollupTrafficHourly", "RollupReferrersDaily", "RollupConversionsDaily", "RollupCursor")) {
+            TABLE_OWNER.put(table, "insight");
+        }
+        // Cost entries are spend's; insight reads them only through the cost api.
+        TABLE_OWNER.put("SpendEntries", "spend");
     }
 
     /** Every use case opens a unit of work; attribution has no exception and should never grow one. */

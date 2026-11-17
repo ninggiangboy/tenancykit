@@ -97,6 +97,10 @@ attribution:
     interval: ${ATTRIBUTION_PARTITION_INTERVAL:PT1H}
   retention:
     interval: ${ATTRIBUTION_RETENTION_INTERVAL:PT24H}
+  # The rollup job recomputes the trailing three hours every minute. A report is one to two minutes behind and says so
+  # through data_through.
+  rollups:
+    interval: ${ATTRIBUTION_ROLLUPS_INTERVAL:PT1M}
   relay:
     poll-delay: PT2S
     batch-size: 50

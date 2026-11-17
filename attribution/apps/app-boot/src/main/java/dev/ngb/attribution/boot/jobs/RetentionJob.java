@@ -19,8 +19,8 @@ import org.springframework.stereotype.Component;
  *
  * <p>Raw retention is a deployment setting, not a Tenant setting, because partitions are shared across Tenants; a
  * Tenant's earlier deletion is the erasure endpoint. The job drops a partition only when the rollup cursor has passed
- * its whole day, so a report can still read a day that has not been rolled up. Until the rollup exists (a later phase)
- * the cursor check keeps the job from dropping anything and it says so once per run.
+ * its whole day, so a report can still read a day that has not been rolled up. Before the first rollup the cursor is
+ * null, and the job drops nothing rather than guessing.
  */
 @Profile("worker")
 @Component
@@ -57,8 +57,7 @@ public class RetentionJob {
         var cutoff = now.minus(retentionDays, ChronoUnit.DAYS).atZone(java.time.ZoneOffset.UTC).toLocalDate();
         java.time.LocalDate rolledUpThrough = cursor.rolledUpThrough();
         if (rolledUpThrough == null) {
-            // No rollup has run, so dropping a partition could remove a day a report still needs. This is the state a
-            // deployment is in until the rollup phase lands, so it is said once per run rather than as an error.
+            // No rollup has run, so dropping a partition could remove a day a report still needs.
             LOG.info("retention: no rollup cursor yet, so no partition is dropped (cutoff {})", cutoff);
             return 0;
         }

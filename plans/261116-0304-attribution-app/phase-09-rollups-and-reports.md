@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "Rollups, reports, funnel, cohort and exports"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [8]
@@ -18,10 +18,11 @@ exports any of them as CSV.
 ## Files to create / modify
 
 - Create: `attribution/contexts/insight/...` (`rollup`, `report`, `funnel`, `cohort`, `export` packages)
-- Create: migration `V6__rollups.sql`: `rollup_traffic_hourly` (tenant_id, bucket, link_id, campaign_id, destination_id,
-  device_class, country, entry, clicks, page_views, sessions, visitor_days), `rollup_referrers_daily` (tenant_id, day,
-  link_id, referrer_domain, clicks), `rollup_conversions_daily` (tenant_id, day, campaign_id, link_id, goal_id, model,
-  conversions numeric, credited_value numeric), `rollup_cursor`
+- Create: migration `V7__rollups.sql` (V6 is the list-query index migration): `rollup_traffic_hourly` (tenant_id, bucket,
+  link_id, campaign_id, destination_id, device_class, country, entry, traffic_class, clicks, page_views, sessions,
+  visitor_days), `rollup_referrers_daily` (tenant_id, day, link_id, referrer_domain, clicks),
+  `rollup_conversions_daily` (tenant_id, day, campaign_id, link_id, goal_id, model, currency, conversions numeric,
+  credited_value numeric, multi_touch_conversions numeric), `rollup_cursor`
 - Create: `attribution/apps/app-boot/.../jobs/RollupJob` (`@Profile("worker")`)
 - Modify: `contracts/openapi/attribution.yaml`, `RetentionJob` (phase 6) to read `rollup_cursor`
 

@@ -1,7 +1,7 @@
 ---
 phase: 10
 title: "Spend: manual cost and cost metrics"
-status: pending
+status: done
 priority: P1
 effort: "M"
 dependencies: [9]
@@ -17,7 +17,7 @@ cost table shaped so imports in phase 11 add rows without changing it.
 ## Files to create / modify
 
 - Create: `attribution/contexts/spend/...` (`entry`, `cost` packages)
-- Create: migration `V7__spend.sql`: `spend_entries` (id, tenant_id, campaign_id, day, source `MANUAL|GOOGLE_ADS|META_ADS`,
+- Create: migration `V8__spend.sql`: `spend_entries` (id, tenant_id, campaign_id, day, source `MANUAL|GOOGLE_ADS|META_ADS`,
   connection_id nullable, amount numeric(19,4), currency, impressions bigint nullable, clicks bigint nullable, updated_at;
   unique `(tenant_id, campaign_id, day, source, connection_id)` treating a null connection as one value)
 - Modify: `contracts/openapi/attribution.yaml`; `contexts/insight` (cost report reads `spend` only through its `api` package)

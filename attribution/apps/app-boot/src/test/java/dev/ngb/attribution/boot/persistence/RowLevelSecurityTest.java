@@ -137,6 +137,30 @@ class RowLevelSecurityTest {
                 row("bulk_link_requests", """
                         insert into bulk_link_requests (tenant_id, idempotency_key, request_hash, result, created_at)
                         values ('%1$s', 'key-1', 'hash', '{}', now())
+                        """),
+                row("rollup_traffic_hourly", """
+                        insert into rollup_traffic_hourly
+                            (tenant_id, bucket, device_class, traffic_class, clicks, page_views, sessions, visitor_days)
+                        values ('%1$s', date_trunc('hour', now()), 'DESKTOP', 'HUMAN', 1, 0, 0, 1)
+                        """),
+                row("rollup_referrers_daily", """
+                        insert into rollup_referrers_daily (tenant_id, day, referrer_domain, clicks)
+                        values ('%1$s', current_date, 'example.com', 1)
+                        """),
+                row("rollup_conversions_daily", """
+                        insert into rollup_conversions_daily
+                            (tenant_id, day, currency, conversions, credited_value, multi_touch_conversions)
+                        values ('%1$s', current_date, 'USD', 1, 10.00, 0)
+                        """),
+                row("spend_entries", """
+                        with c as (
+                            insert into campaigns (id, tenant_id, name, slug, status, attribution_model, window_days, currency,
+                                                   created_at, updated_at)
+                            values (gen_random_uuid(), '%1$s', 'Spring', 'spring-sale', 'ACTIVE', 'LAST', 30, 'USD', now(), now())
+                            returning id
+                        )
+                        insert into spend_entries (id, tenant_id, campaign_id, day, source, amount, currency, updated_at)
+                        select gen_random_uuid(), '%1$s', c.id, current_date, 'MANUAL', 10.00, 'USD', now() from c
                         """));
     }
 

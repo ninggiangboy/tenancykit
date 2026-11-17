@@ -7,6 +7,7 @@ package dev.ngb.attribution_jooq.tables;
 import dev.ngb.attribution_jooq.Keys;
 import dev.ngb.attribution_jooq.Public;
 import dev.ngb.attribution_jooq.tables.Links.LinksPath;
+import dev.ngb.attribution_jooq.tables.SpendEntries.SpendEntriesPath;
 import dev.ngb.attribution_jooq.tables.records.CampaignsRecord;
 
 import java.time.Instant;
@@ -218,6 +219,19 @@ public class Campaigns extends TableImpl<CampaignsRecord> {
             _links = new LinksPath(this, null, Keys.LINKS__LINKS_TENANT_ID_CAMPAIGN_ID_FKEY.getInverseKey());
 
         return _links;
+    }
+
+    private transient SpendEntriesPath _spendEntries;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.spend_entries</code> table
+     */
+    public SpendEntriesPath spendEntries() {
+        if (_spendEntries == null)
+            _spendEntries = new SpendEntriesPath(this, null, Keys.SPEND_ENTRIES__SPEND_ENTRIES_TENANT_ID_CAMPAIGN_ID_FKEY.getInverseKey());
+
+        return _spendEntries;
     }
 
     @Override

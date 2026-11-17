@@ -1,9 +1,12 @@
 package dev.ngb.attribution.boot.config;
 
 import dev.ngb.attribution.boot.rollup.RollupCursor;
+import dev.ngb.attribution.insight.api.rollup.RollupStateReader;
 import dev.ngb.attribution.tracking.adapter.ingest.amqp.IngestConsumer;
 import dev.ngb.attribution.tracking.adapter.ingest.persistence.JooqClickStore;
 import dev.ngb.attribution.tracking.adapter.ingest.persistence.JooqPartitionStore;
+import dev.ngb.attribution.tracking.adapter.traffic.persistence.JooqTrafficSource;
+import dev.ngb.attribution.tracking.api.traffic.TrafficSource;
 import dev.ngb.attribution.tracking.application.ingest.command.IngestClicksUseCase;
 import dev.ngb.attribution.tracking.application.ingest.port.ClickStore;
 import dev.ngb.attribution.tracking.application.ingest.port.PartitionStore;
@@ -53,9 +56,14 @@ class IngestConsumerConfiguration {
     }
 
     @Bean
-    RollupCursor rollupCursor() {
-        // No rollup exists yet; retention reads this and drops nothing rather than removing a day no report has read.
-        return RollupCursor.none();
+    TrafficSource trafficSource(DSLContext dsl) {
+        return new JooqTrafficSource(dsl);
+    }
+
+    @Bean
+    RollupCursor rollupCursor(RollupStateReader state) {
+        // The cursor is the last day the rollups absorbed; retention drops nothing until it exists.
+        return state::rolledUpThrough;
     }
 
     @Bean

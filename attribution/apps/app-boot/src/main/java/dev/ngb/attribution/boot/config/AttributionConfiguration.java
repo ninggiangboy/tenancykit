@@ -2,7 +2,9 @@ package dev.ngb.attribution.boot.config;
 
 import dev.ngb.attribution.attribution.adapter.conversion.persistence.JooqConversionJobs;
 import dev.ngb.attribution.attribution.adapter.conversion.persistence.JooqConversionPersonEraser;
+import dev.ngb.attribution.attribution.adapter.conversion.persistence.JooqConversionRollupSource;
 import dev.ngb.attribution.attribution.adapter.conversion.persistence.JooqRecomputeQueue;
+import dev.ngb.attribution.attribution.api.conversion.ConversionRollupSource;
 import dev.ngb.attribution.attribution.application.conversion.port.RecomputeQueue;
 import dev.ngb.attribution.attribution.adapter.conversion.persistence.JooqConversionReadRepository;
 import dev.ngb.attribution.attribution.adapter.conversion.persistence.JooqConversionRepository;
@@ -83,6 +85,11 @@ class AttributionConfiguration {
     @Bean
     ConversionReadRepository conversionReadRepository(DSLContext dsl) {
         return new JooqConversionReadRepository(dsl);
+    }
+
+    @Bean
+    ConversionRollupSource conversionRollupSource(DSLContext dsl) {
+        return new JooqConversionRollupSource(dsl);
     }
 
     @Bean

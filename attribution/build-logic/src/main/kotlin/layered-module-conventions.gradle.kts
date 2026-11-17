@@ -68,3 +68,9 @@ tasks.named("compileJava") { dependsOn(layers.map { it.classesTaskName }) }
 listOf("apiElements", "runtimeElements").forEach { name ->
     configurations.named(name) { outgoing.variants.clear() }
 }
+
+// A filtered build such as `./gradlew test --tests '*insight*'` runs only the modules with a matching test; a context
+// with no match is not a failure when another module proves the filter.
+tasks.withType<Test>().configureEach {
+    filter.isFailOnNoMatchingTests = false
+}
