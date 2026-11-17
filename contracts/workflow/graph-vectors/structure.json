@@ -271,5 +271,56 @@
       ]
     },
     "expected": {}
+  },
+  {
+    "name": "a for-each inside another for-each is refused",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "outer" },
+        {
+          "id": "outer",
+          "type": "foreach",
+          "items": { "input": "rows" },
+          "each": "body",
+          "next": "after"
+        },
+        {
+          "id": "inner",
+          "type": "foreach",
+          "items": { "item": "children" },
+          "each": "innerBody",
+          "next": "outer"
+        },
+        { "id": "innerBody", "type": "set", "values": { "x": 1 }, "next": "inner" },
+        { "id": "body", "type": "set", "values": { "row": { "item": "id" } }, "next": "inner" },
+        { "id": "after", "type": "end" }
+      ]
+    },
+    "expected": {
+      "errors": [{ "pointer": "/nodes/2/type", "code": "graph_invalid" }]
+    }
+  },
+  {
+    "name": "an n_of join waiting for more than its branches is refused",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "split" },
+        {
+          "id": "split",
+          "type": "parallel",
+          "branches": ["left", "right"],
+          "join": "done"
+        },
+        { "id": "left", "type": "end" },
+        { "id": "right", "type": "end" },
+        { "id": "done", "type": "join", "mode": "n_of", "count": 3, "next": "finish" },
+        { "id": "finish", "type": "end" }
+      ]
+    },
+    "expected": {
+      "errors": [{ "pointer": "/nodes/4/count", "code": "graph_invalid" }]
+    }
   }
 ]

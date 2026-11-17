@@ -62,6 +62,9 @@ public class ClaimAndRun {
     /** How many sub-workflow steps may separate a child from a top-level instance. */
     private static final int MAX_SUBFLOW_DEPTH = 5;
 
+    /** How many steps one instance may take before it stops with a reason instead of running forever. */
+    private static final int MAX_STEPS = 1_000;
+
     private final UnitOfWork unitOfWork;
     private final InstanceRepository instances;
     private final TokenRepository tokens;
@@ -130,10 +133,16 @@ public class ClaimAndRun {
         Map<String, Object> outputs = unitOfWork.transactional(() -> steps.outputs(instance.id()));
 
         GraphNode node = version.graph().node(token.nodeId()).orElse(null);
-        StepOutcome outcome = node == null
-                ? StepOutcome.failed("node_not_found:" + token.nodeId(), null, instance.variables())
-                : executor.execute(new ExecutionContext(
-                        token, instance, version.graph(), node, instance.variables(), outputs, clock.now()));
+        long taken = unitOfWork.transactional(() -> steps.count(instance.id()));
+        StepOutcome outcome = taken >= MAX_STEPS
+                ? StepOutcome.failed(
+                        "limit_exceeded:steps",
+                        Map.of("reason", "limit_exceeded:steps", "steps", MAX_STEPS),
+                        instance.variables())
+                : node == null
+                        ? StepOutcome.failed("node_not_found:" + token.nodeId(), null, instance.variables())
+                        : executor.execute(new ExecutionContext(
+                                token, instance, version.graph(), node, instance.variables(), outputs, clock.now()));
 
         Instant finishedAt = clock.now();
         InstanceStatus status =

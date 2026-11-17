@@ -80,6 +80,7 @@ public final class StructureChecker {
         joins(graph, indexes, problems);
         reachable(graph, byId, edges, indexes, problems);
         cycles(graph, byId, edges, problems);
+        nestedIterations(graph, byId, edges, indexes, problems);
         expressions(graph, byId, indexes, edges, problems);
         return List.copyOf(problems);
     }
@@ -401,6 +402,58 @@ public final class StructureChecker {
         }
         stack.remove(stack.size() - 1);
         onStack.remove(id);
+    }
+
+    /**
+     * A for-each body holds no other for-each. The runtime keeps one loop per token, so a nested loop would need a
+     * stack; v1 refuses it at publish rather than guess what the inner loop should do.
+     */
+    private static void nestedIterations(
+            Graph graph, Map<String, Node> byId, List<Edge> edges, Map<String, Integer> indexes, List<Problem> problems) {
+        Set<String> inside = insideIterations(graph, byId, edges);
+        for (Node node : graph.nodes()) {
+            if (node.type() != NodeType.FOREACH || !inside.contains(node.id())) {
+                continue;
+            }
+            Node owner = graph.nodes().stream()
+                    .filter(candidate -> candidate.type() == NodeType.FOREACH
+                            && !candidate.id().equals(node.id())
+                            && reaches(candidate, node.id(), byId, edges))
+                    .findFirst()
+                    .orElse(null);
+            if (owner != null) {
+                problems.add(new Problem(
+                        "/nodes/" + indexes.get(node.id()) + "/type",
+                        ProblemCodes.GRAPH_INVALID,
+                        "a for-each body holds no other for-each; split it into a sub-workflow"));
+            }
+        }
+    }
+
+    /** Whether the body of one for-each reaches a node. */
+    private static boolean reaches(Node loop, String target, Map<String, Node> byId, List<Edge> edges) {
+        String each = loop.text("each");
+        if (each == null || !byId.containsKey(each)) {
+            return false;
+        }
+        Deque<String> queue = new ArrayDeque<>();
+        Set<String> seen = new HashSet<>();
+        queue.add(each);
+        seen.add(each);
+        while (!queue.isEmpty()) {
+            String id = queue.remove();
+            if (id.equals(target)) {
+                return true;
+            }
+            for (Edge edge : edges) {
+                if (edge.compensation() || !edge.source().equals(id) || !byId.containsKey(edge.target())
+                        || edge.target().equals(loop.id()) || !seen.add(edge.target())) {
+                    continue;
+                }
+                queue.add(edge.target());
+            }
+        }
+        return false;
     }
 
     // ------------------------------------------------------------------ expressions

@@ -118,6 +118,30 @@ class ForeachExecutionTest extends WorkflowIntegrationTest {
                 .isEqualTo(3);
     }
 
+    @Test
+    void aLoopThatPassesAThousandStepsFailsTheInstanceInsteadOfRunningOn() {
+        TenantId tenant = replica.tenant().id();
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (int index = 0; index < 1_000; index++) {
+            items.add(Map.of("sku", "sku-" + index));
+        }
+        UUID version = publishedVersion(tenant, collectingLoop());
+        UUID instance = startInstance(tenant, version, Map.of("items", items));
+
+        runToTheEnd(tenant, instance);
+
+        assertThat(instanceStatus(tenant, instance)).isEqualTo("FAILED");
+        JSONB response = read(tenant, () -> dsl.select(WORKFLOW_STEP_RUN.RESPONSE)
+                .from(WORKFLOW_STEP_RUN)
+                .where(WORKFLOW_STEP_RUN.INSTANCE_ID.eq(instance))
+                .and(WORKFLOW_STEP_RUN.OUTCOME.eq("FAILED"))
+                .fetchOne(WORKFLOW_STEP_RUN.RESPONSE));
+        assertThat(response.data()).contains("limit_exceeded:steps");
+        assertThat(read(tenant, () -> dsl.fetchCount(WORKFLOW_STEP_RUN,
+                        WORKFLOW_STEP_RUN.INSTANCE_ID.eq(instance))))
+                .isBetween(1_000, 1_001);
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private UUID publishedVersion(TenantId tenant, Object graph) {
@@ -138,7 +162,7 @@ class ForeachExecutionTest extends WorkflowIntegrationTest {
     }
 
     private void runToTheEnd(TenantId tenant, UUID instanceId) {
-        for (int step = 0; step < 200; step++) {
+        for (int step = 0; step < 2_200; step++) {
             boolean claimed = inTenant(tenant, () -> claimAndRun.runOnce()).claimed();
             if (status(tenant, instanceId).terminal()) {
                 return;
