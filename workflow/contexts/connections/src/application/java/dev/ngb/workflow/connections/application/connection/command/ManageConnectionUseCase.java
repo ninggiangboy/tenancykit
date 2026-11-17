@@ -5,6 +5,7 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
+import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.workflow.connections.application.connection.port.ConnectionRepository;
 import dev.ngb.workflow.connections.application.credential.port.SecretCipher;
 import dev.ngb.workflow.connections.domain.connection.Connection;
@@ -23,7 +24,7 @@ public class ManageConnectionUseCase {
             Map<String, String> headers) {}
 
     public record UpdateCommand(
-            UUID id, long expectedVersion, String name, String kind, String allowedHost, String secret, Map<String, String> headers) {}
+            UUID id, String ifMatch, String name, String kind, String allowedHost, String secret, Map<String, String> headers) {}
 
     private final UnitOfWork unitOfWork;
     private final ConnectionRepository connections;
@@ -73,6 +74,7 @@ public class ManageConnectionUseCase {
         Connection current = unitOfWork
                 .transactional(() -> connections.findById(command.id()))
                 .orElseThrow(() -> new IllegalArgumentException("connection not found"));
+        ExpectedVersion.fromIfMatch(command.ifMatch()).check(current.version());
         Connection next = new Connection(
                 current.id(),
                 current.tenantId(),
@@ -85,7 +87,7 @@ public class ManageConnectionUseCase {
                 current.verifiedAt(),
                 current.createdAt(),
                 clock.now(),
-                command.expectedVersion());
-        return unitOfWork.transactional(() -> connections.update(next, command.expectedVersion()));
+                current.version());
+        return unitOfWork.transactional(() -> connections.update(next, current.version()));
     }
 }

@@ -50,6 +50,7 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
     /** A conditional change without its version says nothing about the state it was decided on. */
     @ExceptionHandler({
         PreconditionRequiredException.class,
+        dev.ngb.workflow.connections.application.connection.exception.PreconditionRequiredException.class,
         dev.ngb.workflow.triggers.application.trigger.exception.PreconditionRequiredException.class
     })
     ProblemDetail preconditionRequired(RuntimeException e) {

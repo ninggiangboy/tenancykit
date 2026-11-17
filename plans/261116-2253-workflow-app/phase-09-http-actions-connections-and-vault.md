@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "HTTP actions, connections and credential vault"
-status: in-progress
+status: done
 priority: P1
 effort: "L"
 dependencies: [6]

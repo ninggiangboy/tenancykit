@@ -28,8 +28,10 @@ import dev.ngb.workflow.boot.replica.feign.FeignSnapshotTransport;
 import dev.ngb.workflow.platform.adapter.platform.persistence.JooqTenantDirectory;
 import dev.ngb.workflow.platform.adapter.platform.persistence.JooqUserDirectory;
 import dev.ngb.workflow.platform.api.replica.TenantDirectory;
+import dev.ngb.workflow.platform.api.replica.TenantDomains;
 import dev.ngb.workflow.platform.api.replica.UserDirectory;
 import dev.ngb.workflow.platform.application.platform.service.TenantDirectoryService;
+import dev.ngb.workflow.platform.application.platform.service.TenantDomainsService;
 import dev.ngb.workflow.platform.application.platform.service.UserDirectoryService;
 import java.util.List;
 import org.jooq.DSLContext;
@@ -101,6 +103,11 @@ class ReplicaConfiguration {
     @Bean
     ReplicaState replicaRebuildState(DSLContext dsl) {
         return new ReplicaState(dsl);
+    }
+
+    @Bean
+    TenantDomains tenantDomains(DSLContext dsl) {
+        return new TenantDomainsService(new JooqTenantDirectory(dsl));
     }
 
     @Bean

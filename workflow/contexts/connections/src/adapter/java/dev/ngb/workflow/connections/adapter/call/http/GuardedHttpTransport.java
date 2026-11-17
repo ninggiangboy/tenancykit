@@ -38,6 +38,8 @@ import tools.jackson.databind.json.JsonMapper;
  */
 public class GuardedHttpTransport implements HttpTransport {
 
+    private static final int MAX_REDIRECTS = 1;
+
     private final CloseableHttpClient client;
     private final JsonMapper json;
 
@@ -76,6 +78,10 @@ public class GuardedHttpTransport implements HttpTransport {
 
     @Override
     public Response send(Request request) {
+        return send(request, 0);
+    }
+
+    private Response send(Request request, int redirects) {
         try {
             URI target = URI.create(encode(request.url()));
             if (!target.isAbsolute() || target.getHost() == null) {
@@ -90,8 +96,29 @@ public class GuardedHttpTransport implements HttpTransport {
                 call.setEntity(new ByteArrayEntity(bytes, null));
             }
             try (ClassicHttpResponse response = client.executeOpen(null, call, null)) {
-                return new Response(
-                        response.getCode(), headers(response), body(response.getEntity(), request.maxBodyBytes()), null);
+                int code = response.getCode();
+                String location = response.getFirstHeader("Location") == null
+                        ? null
+                        : response.getFirstHeader("Location").getValue();
+                if (redirects < MAX_REDIRECTS && isFollowable(request.method(), code) && location != null) {
+                    // The next hop is resolved by the same guard, so a redirect cannot carry the call somewhere the
+                    // resolver never checked.
+                    URI next = target.resolve(location);
+                    if (!next.isAbsolute() || next.getHost() == null) {
+                        return new Response(0, Map.of(), null, "invalid_redirect");
+                    }
+                    boolean toGet = code == 303 || (code == 301 || code == 302) && !"HEAD".equals(request.method());
+                    return send(
+                            new Request(
+                                    toGet ? "GET" : request.method(),
+                                    next.toString(),
+                                    request.headers(),
+                                    toGet ? null : request.body(),
+                                    request.timeout(),
+                                    request.maxBodyBytes()),
+                            redirects + 1);
+                }
+                return new Response(code, headers(response), body(response.getEntity(), request.maxBodyBytes()), null);
             }
         } catch (IOException | RuntimeException failure) {
             return new Response(0, Map.of(), null, describe(failure));
@@ -127,6 +154,11 @@ public class GuardedHttpTransport implements HttpTransport {
     /** A space in a path is the common mistake; the rest of an invalid URL is refused by {@link URI#create}. */
     private static String encode(String url) {
         return url.replace(" ", URLEncoder.encode(" ", StandardCharsets.UTF_8));
+    }
+
+    private static boolean isFollowable(String method, int status) {
+        boolean safe = "GET".equals(method) || "HEAD".equals(method);
+        return safe && (status == 301 || status == 302 || status == 303 || status == 307 || status == 308);
     }
 
     private static String describe(Exception failure) {

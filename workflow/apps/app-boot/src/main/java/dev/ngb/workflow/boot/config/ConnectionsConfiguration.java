@@ -6,21 +6,28 @@ import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.core.webhook.WebhookHttpSender;
 import dev.ngb.workflow.connections.adapter.call.http.GuardedHttpTransport;
+import dev.ngb.workflow.connections.adapter.connection.persistence.JooqConnectionReadRepository;
 import dev.ngb.workflow.connections.adapter.connection.persistence.JooqConnectionRepository;
 import dev.ngb.workflow.connections.adapter.credential.crypto.KeyringSecretCipher;
 import dev.ngb.workflow.connections.adapter.credential.http.PlatformTokenClient;
+import dev.ngb.workflow.connections.adapter.credential.persistence.JooqCredentialReadRepository;
 import dev.ngb.workflow.connections.adapter.credential.persistence.JooqCredentialRepository;
 import dev.ngb.workflow.connections.api.call.HttpCaller;
 import dev.ngb.workflow.connections.application.call.port.HttpTransport;
 import dev.ngb.workflow.connections.application.call.service.HttpCallerService;
 import dev.ngb.workflow.connections.application.connection.command.ManageConnectionUseCase;
 import dev.ngb.workflow.connections.application.connection.port.ConnectionRepository;
+import dev.ngb.workflow.connections.application.connection.query.ConnectionQueries;
+import dev.ngb.workflow.connections.application.connection.query.ConnectionReadRepository;
 import dev.ngb.workflow.connections.application.credential.command.RegisterCredentialUseCase;
 import dev.ngb.workflow.connections.application.credential.port.CredentialRepository;
 import dev.ngb.workflow.connections.application.credential.port.SecretCipher;
 import dev.ngb.workflow.connections.application.credential.port.TokenMinter;
 import dev.ngb.workflow.connections.application.credential.port.TokenProvider;
+import dev.ngb.workflow.connections.application.credential.query.CredentialQueries;
+import dev.ngb.workflow.connections.application.credential.query.CredentialReadRepository;
 import dev.ngb.workflow.connections.application.credential.service.CachingTokenProvider;
+import dev.ngb.workflow.platform.api.replica.TenantDomains;
 import dev.ngb.workflow.runtime.domain.step.OutboundHttp;
 import dev.ngb.workflow.shared.secret.SecretBox;
 import dev.ngb.workflow.shared.secret.SecretKeyring;
@@ -50,6 +57,26 @@ class ConnectionsConfiguration {
     @Bean
     CredentialRepository credentialRepository(DSLContext dsl) {
         return new JooqCredentialRepository(dsl);
+    }
+
+    @Bean
+    ConnectionReadRepository connectionReadRepository(DSLContext dsl, JsonMapper json) {
+        return new JooqConnectionReadRepository(dsl, json);
+    }
+
+    @Bean
+    CredentialReadRepository credentialReadRepository(DSLContext dsl) {
+        return new JooqCredentialReadRepository(dsl);
+    }
+
+    @Bean
+    ConnectionQueries connectionQueries(UnitOfWork unitOfWork, ConnectionReadRepository connections) {
+        return new ConnectionQueries(unitOfWork, connections);
+    }
+
+    @Bean
+    CredentialQueries credentialQueries(UnitOfWork unitOfWork, CredentialReadRepository credentials) {
+        return new CredentialQueries(unitOfWork, credentials);
     }
 
     @Bean
@@ -103,6 +130,7 @@ class ConnectionsConfiguration {
             SecretCipher cipher,
             HttpTransport transport,
             TenantContext tenantContext,
+            TenantDomains domains,
             WorkflowSettings settings) {
         return new HttpCallerService(
                 unitOfWork,
@@ -111,6 +139,7 @@ class ConnectionsConfiguration {
                 cipher,
                 transport,
                 tenantContext,
+                domains,
                 settings.connections().apps());
     }
 

@@ -1,6 +1,7 @@
 package dev.ngb.workflow.platform.adapter.platform.persistence;
 
 import static dev.ngb.workflow_jooq.Tables.APP_ENTITLEMENTS;
+import static dev.ngb.workflow_jooq.Tables.TENANT_DOMAINS;
 import static dev.ngb.workflow_jooq.Tables.TENANTS;
 
 import dev.ngb.core.id.TenantId;
@@ -47,6 +48,16 @@ public class JooqTenantDirectory implements TenantRows {
                 .where(APP_ENTITLEMENTS.TENANT_ID.eq(tenantId.value()))
                 .and(APP_ENTITLEMENTS.APP_CODE.eq(appCode))
                 .fetchOptional(APP_ENTITLEMENTS.ENABLED);
+    }
+
+    @Override
+    public Optional<String> hostname(TenantId tenantId) {
+        return dsl.select(TENANT_DOMAINS.HOSTNAME)
+                .from(TENANT_DOMAINS)
+                .where(TENANT_DOMAINS.TENANT_ID.eq(tenantId.value()))
+                .orderBy(TENANT_DOMAINS.KIND.desc(), TENANT_DOMAINS.CREATED_AT)
+                .limit(1)
+                .fetchOptional(TENANT_DOMAINS.HOSTNAME);
     }
 
     private static TenantView view(java.util.UUID id, String code, String name, String status) {

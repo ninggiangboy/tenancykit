@@ -12,6 +12,7 @@ import dev.ngb.workflow.connections.application.credential.port.SecretCipher;
 import dev.ngb.workflow.connections.application.credential.port.TokenProvider;
 import dev.ngb.workflow.connections.application.connection.port.ConnectionRepository;
 import dev.ngb.workflow.connections.domain.connection.Connection;
+import dev.ngb.workflow.platform.api.replica.TenantDomains;
 import dev.ngb.workflow.connections.domain.connection.ConnectionKind;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -38,6 +39,7 @@ public class HttpCallerService implements HttpCaller {
     private final SecretCipher cipher;
     private final HttpTransport transport;
     private final TenantContext tenantContext;
+    private final TenantDomains domains;
     private final Map<String, String> appBaseUrls;
 
     public HttpCallerService(
@@ -47,6 +49,7 @@ public class HttpCallerService implements HttpCaller {
             SecretCipher cipher,
             HttpTransport transport,
             TenantContext tenantContext,
+            TenantDomains domains,
             Map<String, String> appBaseUrls) {
         this.unitOfWork = unitOfWork;
         this.connections = connections;
@@ -54,6 +57,7 @@ public class HttpCallerService implements HttpCaller {
         this.cipher = cipher;
         this.transport = transport;
         this.tenantContext = tenantContext;
+        this.domains = domains;
         this.appBaseUrls = Map.copyOf(appBaseUrls);
     }
 
@@ -73,8 +77,9 @@ public class HttpCallerService implements HttpCaller {
             if (base == null) {
                 throw new CallNotAllowedException("app_unknown");
             }
-            url = join(base, request.path());
             TenantId tenant = tenantContext.requireTenant();
+            String host = domains.hostname(tenant).orElseThrow(() -> new CallNotAllowedException("tenant_domain_missing"));
+            url = join(base.replace("{host}", host), request.path());
             headers.put("Authorization", "Bearer " + tokens.token(tenant, request.app()));
         } else {
             url = request.url();

@@ -13,4 +13,6 @@ public interface TenantRows {
     Optional<TenantView> tenant(TenantId tenantId);
 
     Optional<Boolean> entitlementEnabled(TenantId tenantId, String appCode);
+
+    Optional<String> hostname(TenantId tenantId);
 }

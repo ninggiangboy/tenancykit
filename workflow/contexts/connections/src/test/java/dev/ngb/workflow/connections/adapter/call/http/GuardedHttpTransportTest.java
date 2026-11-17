@@ -3,6 +3,8 @@ package dev.ngb.workflow.connections.adapter.call.http;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.ngb.workflow.connections.application.call.port.HttpTransport;
+import com.sun.net.httpserver.HttpServer;
+import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -37,6 +39,49 @@ class GuardedHttpTransportTest {
     }
 
     @Test
+    void oneRedirectIsFollowedAndTheSecondIsNot() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/one", exchange -> {
+            exchange.getResponseHeaders().add("Location", "/two");
+            exchange.sendResponseHeaders(302, -1);
+            exchange.close();
+        });
+        server.createContext("/two", exchange -> {
+            byte[] body = "ok".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, body.length);
+            exchange.getResponseBody().write(body);
+            exchange.close();
+        });
+        server.createContext("/chain", exchange -> {
+            exchange.getResponseHeaders().add("Location", "/chain2");
+            exchange.sendResponseHeaders(302, -1);
+            exchange.close();
+        });
+        server.createContext("/chain2", exchange -> {
+            exchange.getResponseHeaders().add("Location", "/chain3");
+            exchange.sendResponseHeaders(302, -1);
+            exchange.close();
+        });
+        server.start();
+        try {
+            // A local target is only reachable when the deployment allows non-public destinations (compose, tests).
+            GuardedHttpTransport allowed = new GuardedHttpTransport(
+                    true, "workflow-test", 4, 2, Duration.ofSeconds(2), Duration.ofSeconds(2),
+                    JsonMapper.builder().build());
+            String base = "http://127.0.0.1:" + server.getAddress().getPort();
+
+            HttpTransport.Response followed = send(allowed, "GET", base + "/one");
+            assertThat(followed.status()).isEqualTo(200);
+            assertThat(followed.body()).isEqualTo("ok");
+
+            HttpTransport.Response chained = send(allowed, "GET", base + "/chain");
+            assertThat(chained.status()).as("the second hop is not followed").isEqualTo(302);
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
     void anInvalidUrlIsAFailureNotAnException() {
         HttpTransport.Response response = send("GET", "not a url");
         assertThat(response.error()).isEqualTo("invalid_url");
@@ -50,7 +95,11 @@ class GuardedHttpTransportTest {
     }
 
     private HttpTransport.Response send(String method, String url) {
+        return send(transport, method, url);
+    }
+
+    private static HttpTransport.Response send(GuardedHttpTransport transport, String method, String url) {
         return transport.send(new HttpTransport.Request(
-                method, url, Map.of(), null, Duration.ofSeconds(1), 1024));
+                method, url, Map.of(), null, Duration.ofSeconds(2), 1024));
     }
 }
