@@ -1,7 +1,7 @@
 ---
 phase: 15
 title: "loyalty rewards and vouchers"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [12]

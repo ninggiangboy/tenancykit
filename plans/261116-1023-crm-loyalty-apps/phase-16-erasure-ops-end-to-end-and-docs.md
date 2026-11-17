@@ -1,7 +1,7 @@
 ---
 phase: 16
 title: "loyalty erasure, ops seams, end-to-end and docs"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [9, 13, 14, 15]
