@@ -1,7 +1,7 @@
 ---
 phase: 12
 title: "Waitlist"
-status: pending
+status: completed
 priority: P1
 effort: "L"
 dependencies: [8, 11]

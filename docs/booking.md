@@ -181,11 +181,15 @@ history and `booking.no-show` carries `policyCode` `NO_SHOW`.
 
 ## Waitlist and waiting room
 
-A held place that frees by cancel, expiry, resize or reschedule writes a wake-up row in the releasing transaction; the
-worker processes wake-ups outside it. The next `WAITING` entry that fits receives the place as an ordinary `HELD`
-booking with source `WAITLIST` and the offer window as its TTL; the entry follows that booking's fate. The waitlist
-guarantees order *among waiters* only: a direct hold may take a freed place first, and this is documented rather than
-hidden.
+A held place that frees by cancel, expiry or reschedule writes a wake-up row in the releasing transaction; the worker
+processes wake-ups outside it, and also scans waiting targets on each poll so a place freed without a wake-up (a pool
+resize) still reaches the line. The next `WAITING` entry that fits receives the place as an ordinary `HELD` booking with
+source `WAITLIST` and the offer window as its TTL; the entry follows that booking's fate: confirming accepts it, while
+its expiry or cancellation lapses it, appends `waitlist.lapsed` and wakes the target again. An entry that does not fit
+keeps its position while a later one is offered. Joining is refused for a target that is free (`422 TARGET_AVAILABLE`);
+one customer has one `WAITING` entry per target (`409 ALREADY_WAITING`), and a target's line is capped by
+`waitlistCapPerTarget` (`409 waitlist-full`). The waitlist guarantees order *among waiters* only: a direct hold may take
+a freed place first, and this is documented rather than hidden.
 
 For a rush sale, an offering can set `queueMode = REQUIRED`. A customer enters the gate's queue, receives an
 insert-only numbered ticket and a signed ticket token, and is admitted in ticket order at the offering's
