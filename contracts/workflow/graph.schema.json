@@ -165,13 +165,27 @@
         "branches": {
           "type": "array",
           "minItems": 2,
-          "maxItems": 20,
+          "maxItems": 50,
+          "uniqueItems": true,
+          "description": "The nodes the branches start at. A branch is collected at its join under its own node id.",
           "items": {
             "$ref": "#/$defs/next"
           }
         },
         "join": {
-          "$ref": "#/$defs/next"
+          "$ref": "#/$defs/next",
+          "description": "The join node where this fan-out converges."
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["all", "any", "n_of"],
+          "description": "What a join waits for: every branch, the first, or count branches. Defaults to all."
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "description": "How many arrivals fire an n_of join."
         },
         "items": {
           "$ref": "#/$defs/expression"
@@ -241,6 +255,13 @@
             "properties": { "type": { "const": "parallel" } }
           },
           "then": { "required": ["branches", "join"] }
+        },
+        {
+          "if": {
+            "required": ["type", "mode"],
+            "properties": { "type": { "const": "join" }, "mode": { "const": "n_of" } }
+          },
+          "then": { "required": ["count"] }
         },
         {
           "if": {

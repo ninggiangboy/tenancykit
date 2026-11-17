@@ -208,5 +208,68 @@
     "expected": {
       "errors": [{ "pointer": "/nodes/1/cases/0/when/args/0/step", "code": "dangling_reference" }]
     }
+  },
+  {
+    "name": "two branches collected under the same node id are refused",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "split" },
+        {
+          "id": "split",
+          "type": "parallel",
+          "branches": ["left", "left"],
+          "join": "done"
+        },
+        { "id": "left", "type": "end" },
+        { "id": "done", "type": "join", "next": "finish" },
+        { "id": "finish", "type": "end" }
+      ]
+    },
+    "expected": {
+      "errors": [{ "pointer": "/nodes/1/branches", "code": "graph_invalid" }]
+    }
+  },
+  {
+    "name": "an n_of join without a count is refused",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "split" },
+        {
+          "id": "split",
+          "type": "parallel",
+          "branches": ["left", "right"],
+          "join": "done"
+        },
+        { "id": "left", "type": "end" },
+        { "id": "right", "type": "end" },
+        { "id": "done", "type": "join", "mode": "n_of", "next": "finish" },
+        { "id": "finish", "type": "end" }
+      ]
+    },
+    "expected": {
+      "errors": [{ "pointer": "/nodes/4/count", "code": "graph_invalid" }]
+    }
+  },
+  {
+    "name": "an n_of join with a count no bigger than its branches is accepted",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "split" },
+        {
+          "id": "split",
+          "type": "parallel",
+          "branches": ["left", "right"],
+          "join": "done"
+        },
+        { "id": "left", "type": "end" },
+        { "id": "right", "type": "end" },
+        { "id": "done", "type": "join", "mode": "n_of", "count": 1, "next": "finish" },
+        { "id": "finish", "type": "end" }
+      ]
+    },
+    "expected": {}
   }
 ]

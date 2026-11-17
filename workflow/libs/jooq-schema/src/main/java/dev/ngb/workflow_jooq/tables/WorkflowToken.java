@@ -267,7 +267,7 @@ public class WorkflowToken extends TableImpl<WorkflowTokenRecord> {
             Internal.createCheck(this, DSL.name("workflow_token_check1"), "(((status = 'RUNNING'::text) = (lease_until IS NOT NULL)))", true),
             Internal.createCheck(this, DSL.name("workflow_token_iteration_check"), "((iteration >= 0))", true),
             Internal.createCheck(this, DSL.name("workflow_token_node_id_check"), "(((length(node_id) >= 1) AND (length(node_id) <= 64)))", true),
-            Internal.createCheck(this, DSL.name("workflow_token_status_check"), "((status = ANY (ARRAY['READY'::text, 'RUNNING'::text, 'WAITING'::text, 'DONE'::text, 'FAILED'::text])))", true)
+            Internal.createCheck(this, DSL.name("workflow_token_status_check"), "((status = ANY (ARRAY['READY'::text, 'RUNNING'::text, 'WAITING'::text, 'DONE'::text, 'FAILED'::text, 'CANCELLED'::text])))", true)
         );
     }
 

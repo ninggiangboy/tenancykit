@@ -35,6 +35,12 @@ public interface TokenRepository {
     /** How many tokens of the instance are READY or RUNNING, which is what "still moving" means. */
     long activeCount(UUID instanceId);
 
+    /**
+     * Abandons every live token of the instance except one, because an {@code any} or {@code n_of} join has fired. A
+     * token cancelled mid-call writes nothing when its worker finishes, so its successors are never created.
+     */
+    int cancelLive(UUID instanceId, UUID exceptTokenId, Instant now);
+
     /** Makes every token whose lease ran out READY again, and returns how many were taken over. */
     int requeueExpired(Instant now);
 }

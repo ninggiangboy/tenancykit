@@ -140,6 +140,7 @@ public class ClaimAndRun {
     }
 
     private InstanceStatus record(Token token, Instance instance, StepOutcome outcome, Instant finishedAt) {
+        boolean joined = false;
         if (outcome.joining()) {
             JoinStateRepository.Arrival arrival = joinStates.arrive(
                     token.tenantId(),
@@ -150,8 +151,13 @@ public class ClaimAndRun {
                     outcome.join().contribution(),
                     finishedAt);
             if (arrival.complete()) {
+                if (outcome.join().cancelOthers()) {
+                    // The join has decided: the branches still moving must not act after the flow has left the fan-out.
+                    tokens.cancelLive(token.instanceId(), token.id(), finishedAt);
+                }
                 // The last arrival continues with every branch's output merged by branch name.
                 outcome = StepOutcome.succeeded(arrival.outputs(), outcome.join().nextNodeId(), outcome.variables());
+                joined = true;
             } else {
                 boolean completed = tokens.finish(token.id(), workerId, TokenStatus.DONE, finishedAt);
                 if (!completed) {
@@ -179,10 +185,12 @@ public class ClaimAndRun {
         recordStep(token, outcome, finishedAt);
 
         if (!outcome.failed()) {
+            // A branch keeps its name for every step until the join collects it; the flow after a join carries none.
+            String inheritedBranch = joined ? null : token.branchKey();
             if (outcome.successors().isEmpty()) {
                 for (String next : outcome.nextNodeIds()) {
                     tokens.add(Token.ready(
-                            ids.newId(), token.tenantId(), token.instanceId(), next, token.id(), null,
+                            ids.newId(), token.tenantId(), token.instanceId(), next, token.id(), inheritedBranch,
                             token.iteration(), finishedAt));
                 }
             } else {

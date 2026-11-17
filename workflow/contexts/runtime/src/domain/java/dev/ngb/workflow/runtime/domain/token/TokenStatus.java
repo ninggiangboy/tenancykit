@@ -6,7 +6,8 @@ public enum TokenStatus {
     RUNNING,
     WAITING,
     DONE,
-    FAILED;
+    FAILED,
+    CANCELLED;
 
     public boolean live() {
         return this == READY || this == RUNNING || this == WAITING;

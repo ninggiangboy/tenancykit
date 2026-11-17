@@ -31,8 +31,10 @@ public record StepOutcome(
     /**
      * An arrival at a join. The engine counts it in one conditional update; only the arrival that reaches the expected
      * count continues, with every branch's output merged by branch name.
+     *
+     * @param cancelOthers true for an {@code any} or {@code n_of} join, whose firing abandons the branches still moving
      */
-    public record Join(String nextNodeId, int expected, String branchKey, Object contribution) {}
+    public record Join(String nextNodeId, int expected, String branchKey, Object contribution, boolean cancelOthers) {}
 
     /**
      * What the engine must write when it parks a token.

@@ -37,6 +37,11 @@ public final class StructureChecker {
 
     private static final Set<String> METHODS = Set.of("GET", "POST", "PUT", "PATCH", "DELETE");
 
+    /** Branches one fan-out may name, matching the runtime guard. */
+    public static final int MAX_PARALLEL_BRANCHES = 50;
+
+    private static final Set<String> JOIN_MODES = Set.of("all", "any", "n_of");
+
     private StructureChecker() {}
 
     public static List<Problem> problems(Graph graph) {
@@ -72,7 +77,7 @@ public final class StructureChecker {
                     "/nodes", ProblemCodes.GRAPH_INVALID, "a graph ends at an end or a fail node"));
         }
         targets(edges, byId, problems);
-        joins(graph, indexes, byId, problems);
+        joins(graph, indexes, problems);
         reachable(graph, byId, edges, indexes, problems);
         cycles(graph, byId, edges, problems);
         expressions(graph, byId, indexes, edges, problems);
@@ -166,6 +171,16 @@ public final class StructureChecker {
                     problems.add(new Problem(
                             pointer + "/branches", ProblemCodes.GRAPH_INVALID, "a parallel node names at least two branches"));
                 }
+                if (branches.size() > MAX_PARALLEL_BRANCHES) {
+                    problems.add(new Problem(
+                            pointer + "/branches",
+                            ProblemCodes.LIMIT_EXCEEDED,
+                            "a parallel node names at most " + MAX_PARALLEL_BRANCHES + " branches"));
+                }
+                if (new HashSet<>(branches).size() != branches.size()) {
+                    problems.add(new Problem(
+                            pointer + "/branches", ProblemCodes.GRAPH_INVALID, "a branch is collected under its node id, so the ids are distinct"));
+                }
                 for (int index = 0; index < branches.size(); index++) {
                     edges.add(new Edge(node.id(), pointer + "/branches/" + index, branches.get(index), false));
                 }
@@ -184,6 +199,22 @@ public final class StructureChecker {
             }
             case JOIN -> {
                 required(node, pointer, "next", problems);
+                String mode = node.text("mode");
+                if (mode != null && !JOIN_MODES.contains(mode)) {
+                    problems.add(new Problem(
+                            pointer + "/mode", ProblemCodes.GRAPH_INVALID, "a join waits for all, any or n_of"));
+                }
+                if ("n_of".equals(mode)) {
+                    Object count = node.document("count");
+                    if (!(count instanceof Number number)
+                            || number.intValue() < 1
+                            || number.intValue() > MAX_PARALLEL_BRANCHES) {
+                        problems.add(new Problem(
+                                pointer + "/count",
+                                ProblemCodes.GRAPH_INVALID,
+                                "an n_of join names a count between 1 and " + MAX_PARALLEL_BRANCHES));
+                    }
+                }
                 edge(node, pointer, "next", edges);
                 edge(node, pointer, "on_error", edges);
             }
@@ -270,19 +301,31 @@ public final class StructureChecker {
         }
     }
 
-    private static void joins(Graph graph, Map<String, Integer> indexes, Map<String, Node> byId, List<Problem> problems) {
-        Set<String> joined = new HashSet<>();
+    private static void joins(Graph graph, Map<String, Integer> indexes, List<Problem> problems) {
+        Map<String, Integer> branchCounts = new LinkedHashMap<>();
         for (Node node : graph.nodes()) {
             if (node.type() == NodeType.PARALLEL) {
-                joined.add(node.text("join"));
+                branchCounts.put(node.text("join"), node.textList("branches").size());
             }
         }
         for (Node node : graph.nodes()) {
-            if (node.type() == NodeType.JOIN && !joined.contains(node.id())) {
+            if (node.type() != NodeType.JOIN) {
+                continue;
+            }
+            if (!branchCounts.containsKey(node.id())) {
                 problems.add(new Problem(
                         "/nodes/" + indexes.get(node.id()),
                         ProblemCodes.JOIN_WITHOUT_PARALLEL,
                         "a join node is the join of a parallel node"));
+                continue;
+            }
+            if ("n_of".equals(node.text("mode"))
+                    && node.document("count") instanceof Number number
+                    && number.intValue() > branchCounts.get(node.id())) {
+                problems.add(new Problem(
+                        "/nodes/" + indexes.get(node.id()) + "/count",
+                        ProblemCodes.GRAPH_INVALID,
+                        "an n_of join waits for at most its parallel's branches"));
             }
         }
     }

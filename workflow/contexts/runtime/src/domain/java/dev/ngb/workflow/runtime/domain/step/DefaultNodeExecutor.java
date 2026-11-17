@@ -1,6 +1,7 @@
 package dev.ngb.workflow.runtime.domain.step;
 
 import dev.ngb.workflow.definitions.api.expression.ExpressionEvaluator;
+import dev.ngb.workflow.definitions.api.version.GraphNode;
 import dev.ngb.workflow.runtime.domain.timer.TimerKind;
 import java.time.Duration;
 import java.time.Instant;
@@ -174,28 +175,28 @@ public class DefaultNodeExecutor implements NodeExecutor {
     }
 
     /**
-     * Fans out to one child token per branch. The names are what the join collects: two branches with the same name
-     * would make the collected output ambiguous, so a duplicate is a failure, not a silent overwrite.
+     * Fans out to one child token per branch. The branch's own node id is the name the join collects it under, so two
+     * branches cannot share a name and a duplicate is a failure, not a silent overwrite.
      */
     private StepOutcome parallel(ExecutionContext context) {
-        Object document = context.node().document("branches");
-        if (!(document instanceof java.util.List<?> branches) || branches.isEmpty()) {
+        List<String> branches = context.node().textList("branches");
+        if (branches.size() < 2) {
             return StepOutcome.failed("parallel_without_branches", null, context.variables());
         }
         if (branches.size() > MAX_PARALLEL_BRANCHES) {
             return StepOutcome.failed("limit_exceeded:parallel_branches", Map.of("branches", branches.size()), context.variables());
         }
         Map<String, StepOutcome.Successor> successors = new LinkedHashMap<>();
-        for (Object entry : branches) {
-            Map<String, Object> branch = object(entry);
-            Object name = branch.get("name");
-            Object next = branch.get("next");
-            if (!(name instanceof String key) || key.isBlank() || !(next instanceof String nodeId)) {
-                return StepOutcome.failed("parallel_branch_without_a_name_or_next", null, context.variables());
+        for (String nodeId : branches) {
+            if (nodeId == null || nodeId.isBlank()) {
+                return StepOutcome.failed("parallel_branch_without_a_next", null, context.variables());
             }
-            if (successors.put(key, new StepOutcome.Successor(nodeId, key)) != null) {
-                return StepOutcome.failed("parallel_branch_name_repeated:" + key, null, context.variables());
+            if (successors.put(nodeId, new StepOutcome.Successor(nodeId, nodeId)) != null) {
+                return StepOutcome.failed("parallel_branch_name_repeated:" + nodeId, null, context.variables());
             }
+        }
+        if (context.node().text("join") == null) {
+            return StepOutcome.failed("parallel_without_a_join", null, context.variables());
         }
         return StepOutcome.fannedOut(
                 Map.of("branches", List.copyOf(successors.keySet())),
@@ -204,23 +205,37 @@ public class DefaultNodeExecutor implements NodeExecutor {
     }
 
     /**
-     * Arrives at a join. The engine counts the arrival; the one that reaches the expected count continues, with the
-     * branch outputs collected by branch name. Every arrival records its own output so the merged result is complete.
+     * Arrives at a join. How many arrivals fire it comes from the parallel that names this node: every branch for
+     * {@code all}, the first for {@code any}, or its own {@code count} for {@code n_of}. The engine counts the
+     * arrival, and only the one that reaches that number continues, with every branch's output merged by name.
      */
     private StepOutcome join(ExecutionContext context) {
-        Object expected = context.node().document("expect");
-        if (!(expected instanceof Number number) || number.intValue() < 1) {
-            return StepOutcome.failed("join_without_an_expected_count", null, context.variables());
-        }
         String next = context.node().text("next");
         if (next == null) {
             return StepOutcome.failed("join_without_a_next", null, context.variables());
+        }
+        GraphNode parallel = context.graph().nodes().stream()
+                .filter(node -> "parallel".equals(node.type()) && context.node().id().equals(node.text("join")))
+                .findFirst()
+                .orElse(null);
+        if (parallel == null) {
+            return StepOutcome.failed("join_without_a_parallel", null, context.variables());
+        }
+        String mode = context.node().text("mode") == null ? "all" : context.node().text("mode");
+        int branches = parallel.textList("branches").size();
+        int expected = switch (mode) {
+            case "any" -> 1;
+            case "n_of" -> context.node().document("count") instanceof Number number ? number.intValue() : 0;
+            default -> branches;
+        };
+        if (expected < 1) {
+            return StepOutcome.failed("join_without_an_expected_count", null, context.variables());
         }
         Object output = context.node().document("output");
         Object contribution = output == null ? null : evaluate(context, output, context.variables());
         return StepOutcome.joining(
                 Map.of("branch", context.token().branchKey() == null ? "" : context.token().branchKey()),
-                new StepOutcome.Join(next, number.intValue(), context.token().branchKey(), contribution),
+                new StepOutcome.Join(next, expected, context.token().branchKey(), contribution, !"all".equals(mode)),
                 context.variables());
     }
 

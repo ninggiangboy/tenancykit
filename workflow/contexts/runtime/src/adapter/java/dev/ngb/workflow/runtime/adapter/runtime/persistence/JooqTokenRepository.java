@@ -145,6 +145,20 @@ public class JooqTokenRepository implements TokenRepository {
     }
 
     @Override
+    public int cancelLive(UUID instanceId, UUID exceptTokenId, Instant now) {
+        return dsl.update(WORKFLOW_TOKEN)
+                .set(WORKFLOW_TOKEN.STATUS, TokenStatus.CANCELLED.name())
+                .set(WORKFLOW_TOKEN.LEASE_OWNER, (String) null)
+                .set(WORKFLOW_TOKEN.LEASE_UNTIL, (Instant) null)
+                .set(WORKFLOW_TOKEN.UPDATED_AT, now)
+                .where(WORKFLOW_TOKEN.INSTANCE_ID.eq(instanceId))
+                .and(WORKFLOW_TOKEN.STATUS.in(
+                        TokenStatus.READY.name(), TokenStatus.RUNNING.name(), TokenStatus.WAITING.name()))
+                .and(WORKFLOW_TOKEN.ID.ne(exceptTokenId))
+                .execute();
+    }
+
+    @Override
     public int requeueExpired(Instant now) {
         return dsl.update(WORKFLOW_TOKEN)
                 .set(WORKFLOW_TOKEN.STATUS, TokenStatus.READY.name())
