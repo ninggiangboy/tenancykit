@@ -1,0 +1,111 @@
+# Every text, jsonb and array column of crm's schema, classified.
+#
+# `PersonalDataColumnsTest` reads information_schema and fails unless each such column is listed here, so a new column
+# cannot arrive without a decision about what it may hold. There are three answers:
+#
+#   [PERSONAL]  it can hold a person's data, and an erasure clears it: `CustomerErasureIntegrationTest` reads this list
+#               and asserts that after an erasure no column here holds a value for the erased customer.
+#   [PURGED]    it can hold a person's data, and the row itself leaves within the housekeeping retention, so a test
+#               proves the payload is gone from the table afterwards.
+#   [OTHER]     it cannot hold a person's data: an identifier crm owns, an enum, a bounded code, a product description,
+#               a hash of the reference rather than the reference, or a Platform-owned replica column.
+#
+# One line is `table.column`. Removing a column from the schema means removing its line: a line naming a column that
+# no longer exists fails the test in the other direction.
+
+[PERSONAL]
+# The customer's own attributes: the name, the phone, the derived digits, the address and the Tenant's own field values.
+customers.display_name
+customers.phone
+customers.phone_digits
+customers.email
+customers.fields
+# The tags a customer carries; the erasure deletes the rows.
+customer_tags.tag
+# The two free-text columns a consent record carries. The record stays as the proof that an agreement existed.
+consent_events.source
+consent_events.evidence_ref
+# An activity stays as a typed, timed marker; what the writer put in it does not.
+activities.payload
+activities.source
+activities.activity_ref
+
+[PURGED]
+# A relayed outbox row keeps the payload it delivered until the retention passes.
+outbox.payload
+outbox.last_error
+# A delivery body is the exact document a receiver got, and the attempt log keeps what came back.
+webhook_deliveries.body
+webhook_deliveries.last_error
+webhook_delivery_attempts.error
+webhook_delivery_attempts.response_excerpt
+
+[OTHER]
+# crm's own identifiers and markers. An erased customer's reference becomes `erased:<customerId>`, which names the row
+# and not the person.
+customers.external_ref
+customers.status
+# The tenant's vocabulary: keys, labels, types and the choices a CHOICE field offers.
+field_definitions.key
+field_definitions.label
+field_definitions.type
+field_definitions.choices
+consent_topics.key
+consent_topics.label
+consent_events.topic_key
+consent_events.status
+consent_events.consent_ref
+# What an activity was, not who it was: the free type string the writer chose.
+activities.type
+# A business record with no person in it once the customer is anonymized: what was sold, where and when.
+orders.order_ref
+orders.currency
+orders.store_code
+orders.channel
+orders.status
+orders.fingerprint
+order_lines.sku
+order_lines.name
+order_lines.category
+order_returns.return_ref
+order_returns.fingerprint
+# The erasure record keeps the hash of the reference, never the reference.
+erasure_requests.ref_hash
+# The outbox row's routing fields and the inbox's deduplication key.
+outbox.type
+outbox.aggregate
+outbox.status
+outbox.publish_status
+# The inbox holds no payload: it is the consumer's name and the event id it already handled, and the row leaves within
+# the retention with the id that pointed at the payload (`PersonalDataColumnsTest` proves that with a customer.created).
+event_inbox.consumer
+# A Tenant's own webhook configuration: a URL it chose, a label, the types it subscribes to and the encrypted secret.
+webhook_endpoints.url
+webhook_endpoints.description
+webhook_endpoints.event_types
+webhook_endpoints.key_id
+webhook_endpoints.secret_ciphertext
+webhook_endpoints.status
+webhook_deliveries.event_type
+webhook_deliveries.status
+# Job coordination: a job's name and the instance holding it.
+job_leases.name
+job_leases.owner
+job_runs.job
+job_runs.run_key
+# Platform's replicated rows. Platform owns its tenants and its users; crm erases the Tenant's customers, and this
+# copy is read-only here.
+tenants.code
+tenants.name
+tenants.status
+tenant_domains.hostname
+tenant_domains.kind
+tenant_systems.name
+tenant_systems.status
+user_grants.keycloak_subject
+user_grants.email
+user_grants.display_name
+user_grants.scope
+user_grants.status
+user_grants.permissions
+app_entitlements.app_code

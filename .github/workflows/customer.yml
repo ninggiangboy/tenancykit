@@ -1,0 +1,24 @@
+name: customer
+
+on:
+  pull_request:
+    paths: ["customer/**", "core/**", "contracts/**", ".github/workflows/customer.yml"]
+  push:
+    branches: [main, dev]
+    paths: ["customer/**", "core/**", "contracts/**", ".github/workflows/customer.yml"]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: customer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+      # ubuntu-latest ships a Docker daemon, which Testcontainers uses for PostgreSQL.
+      - run: ./gradlew build

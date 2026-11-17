@@ -1,0 +1,62 @@
+# Customer's permission catalog.
+#
+# codes are namespaced by the app that enforces them: <app>:<resource>:<action>. A role may hold only a code whose
+# `scopes` include the role's scope.
+#
+# scopes: platform and/or tenant. grantable_to_tenant_system: whether an API credential may carry the code.
+#
+# Every code is tenant scope: a customer, its profile and consents, an order and its returns, an activity, a
+# custom-field or consent-topic definition and a webhook endpoint all belong to one tenant's own customers, and no
+# platform-scope caller has a legitimate use for them. Customer is the app a Tenant's **own** system is expected to drive:
+# it upserts customers, records orders and activities, exports and erases data, defines fields and drives webhooks,
+# so every code is grantable to a Tenant System credential.
+
+- code: customer:customer:read
+  description: Read customers, the customer list and one customer's profile and consents.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: customer:customer:manage
+  description: Create, update, tag and record consent for customers, one at a time or in a batch.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: customer:customer:export
+  description: Request and download a streamed CSV export of customers.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: customer:customer:erase
+  description: Erase one customer together with its profile, orders and activities.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: customer:field:manage
+  description: Create, update and delete custom-field and consent-topic definitions.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: customer:order:read
+  description: Read orders, their returns and a customer's order history.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: customer:order:record
+  description: Record an order and its returns, one at a time or in a batch.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: customer:activity:read
+  description: Read activities and a customer's activity history.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: customer:activity:record
+  description: Record one or a batch of activities against a customer.
+  scopes: [tenant]
+  grantable_to_tenant_system: true
+
+- code: customer:webhook:manage
+  description: Create, update, disable and rotate the secret of a webhook endpoint; read and retry a delivery.
+  scopes: [tenant]
+  grantable_to_tenant_system: true

@@ -142,7 +142,7 @@ module "mq" {
   mailer_password        = module.secrets.values["MAILER_RABBITMQ_PASSWORD"]
   notification_password  = module.secrets.values["NOTIFICATION_RABBITMQ_PASSWORD"]
   mailroom_password         = module.secrets.values["MAILROOM_RABBITMQ_PASSWORD"]
-  crm_password              = module.secrets.values["CRM_RABBITMQ_PASSWORD"]
+  customer_password              = module.secrets.values["CRM_RABBITMQ_PASSWORD"]
   loyalty_password          = module.secrets.values["LOYALTY_RABBITMQ_PASSWORD"]
   secret_arns            = module.secrets.arns
 }

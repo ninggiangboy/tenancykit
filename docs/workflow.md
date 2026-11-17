@@ -27,7 +27,7 @@ and no app learns that workflow exists. The rule is written once in
 ## The Tenant System credential
 
 Workflow does not have its own identity model. The Tenant creates a Tenant System with `purpose=WORKFLOW` in Platform,
-grants it the app codes its flows need (for example `crm:customer:read` and `mailroom:email:send`), and registers the
+grants it the app codes its flows need (for example `customer:customer:read` and `mailroom:email:send`), and registers the
 resulting credential in workflow through the API. The credential's secret is encrypted at rest with a key outside the
 database, is write-only, and is never written to history, events or logs. Workflow mints one short-lived suite token
 per audience from Platform, caches it until shortly before expiry, and treats a `401` as `credential_invalid`; revoking
@@ -69,8 +69,8 @@ The four flows the app is proven against, as JSON fixtures under the app's test 
 |---|---|
 | Payment dunning | Trigger Billing `subscription.payment_failed`; email the customer; wait for a renewal or a payment with a 3-day timeout; pay the invoice; cancel the subscription if that fails |
 | Refund approval | Manual or external trigger; a task for the `manager` role with a 24-hour due and an escalation; on approval a Billing refund, on rejection an email |
-| Points nudge | Trigger loyalty `points.expiring`; email the member; wait for a CRM order correlated on the member's `externalRef` up to 14 days; on timeout a second email or a loyalty voucher call |
-| Erasure fan-out | Trigger CRM `customer.erased`; a parallel fan-out over the CRM and loyalty erasure endpoints, mailroom's receiver removal and one external connection; join all; a completion event |
+| Points nudge | Trigger loyalty `points.expiring`; email the member; wait for a Customer order correlated on the member's `externalRef` up to 14 days; on timeout a second email or a loyalty voucher call |
+| Erasure fan-out | Trigger Customer `customer.erased`; a parallel fan-out over the Customer and loyalty erasure endpoints, mailroom's receiver removal and one external connection; join all; a completion event |
 
 ## What exists today
 

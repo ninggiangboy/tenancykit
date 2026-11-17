@@ -10,7 +10,7 @@
 #   /notification/* -> Notification, prefix stripped.
 #   /mailroom/*    -> Mailroom, prefix stripped; /mailroom/t/* is the public tracking surface.
 #   /survey/*      -> Survey, prefix stripped; /survey/p/* is the public fill surface.
-#   /crm/*         -> CRM, prefix stripped; the Tenant's own system drives it and there is no public surface.
+#   /customer/*         -> Customer, prefix stripped; the Tenant's own system drives it and there is no public surface.
 #   /loyalty/*     -> Loyalty, prefix stripped; the Tenant's own system drives it and there is no public surface.
 #   everything else -> Billing (/api/*, /portal/*, /stripe/*), unchanged.
 #   platform.localhost also serves Platform at its root, because an administrator works from that one host.
@@ -78,17 +78,17 @@ http://:80 {
 		reverse_proxy booking-api:8080
 	}
 
-	# crm is reached through its own prefix on every host. It has no public surface: every path needs a suite token, so
+	# customer is reached through its own prefix on every host. It has no public surface: every path needs a suite token, so
 	# the proxy adds no credential and strips no header beyond the prefix. The app enforces its own body, batch and
 	# page limits, because the stock Caddy image has no rate-limit directive.
-	@crmPath path /crm/*
-	handle @crmPath {
-		uri strip_prefix /crm
-		reverse_proxy crm-api:8080
+	@customerPath path /customer/*
+	handle @customerPath {
+		uri strip_prefix /customer
+		reverse_proxy customer-api:8080
 	}
 
 	# Loyalty is reached through its own prefix on every host, in the same shape and for the same reason. The Tenant
-	# System connects crm and loyalty itself; the proxy never routes between the two.
+	# System connects customer and loyalty itself; the proxy never routes between the two.
 	@loyaltyPath path /loyalty/*
 	handle @loyaltyPath {
 		uri strip_prefix /loyalty

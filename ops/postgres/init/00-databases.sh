@@ -26,8 +26,8 @@ psql -v ON_ERROR_STOP=1 \
   -v mailroom_app_password="${MAILROOM_DB_PASSWORD:?set it}" \
   -v survey_owner_password="${SURVEY_MIGRATION_DB_PASSWORD:?set it}" \
   -v survey_app_password="${SURVEY_DB_PASSWORD:?set it}" \
-  -v crm_owner_password="${CRM_MIGRATION_DB_PASSWORD:?set it}" \
-  -v crm_app_password="${CRM_DB_PASSWORD:?set it}" \
+  -v customer_owner_password="${CUSTOMER_MIGRATION_DB_PASSWORD:?set it}" \
+  -v customer_app_password="${CUSTOMER_DB_PASSWORD:?set it}" \
   -v loyalty_owner_password="${LOYALTY_MIGRATION_DB_PASSWORD:?set it}" \
   -v loyalty_app_password="${LOYALTY_DB_PASSWORD:?set it}" \
   -v booking_owner_password="${BOOKING_MIGRATION_DB_PASSWORD:?set it}" \
@@ -56,8 +56,8 @@ create role mailroom_app login password :'mailroom_app_password' nosuperuser noc
 create role survey_owner login password :'survey_owner_password' nocreatedb nocreaterole;
 create role survey_app login password :'survey_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
-create role crm_owner login password :'crm_owner_password' nocreatedb nocreaterole;
-create role crm_app login password :'crm_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+create role customer_owner login password :'customer_owner_password' nocreatedb nocreaterole;
+create role customer_app login password :'customer_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
 create role loyalty_owner login password :'loyalty_owner_password' nocreatedb nocreaterole;
 create role loyalty_app login password :'loyalty_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
@@ -75,7 +75,7 @@ create database mailer owner mailer_owner;
 create database notification owner notification_owner;
 create database mailroom owner mailroom_owner;
 create database survey owner survey_owner;
-create database crm owner crm_owner;
+create database customer owner customer_owner;
 create database loyalty owner loyalty_owner;
 create database booking owner booking_owner;
 create database workflow owner workflow_owner;
@@ -87,7 +87,7 @@ revoke connect, temporary on database mailer from public;
 revoke connect, temporary on database notification from public;
 revoke connect, temporary on database mailroom from public;
 revoke connect, temporary on database survey from public;
-revoke connect, temporary on database crm from public;
+revoke connect, temporary on database customer from public;
 revoke connect, temporary on database loyalty from public;
 revoke connect, temporary on database booking from public;
 revoke connect, temporary on database workflow from public;
@@ -99,7 +99,7 @@ grant connect, temporary on database mailer to mailer_owner, mailer_app;
 grant connect, temporary on database notification to notification_owner, notification_app;
 grant connect, temporary on database mailroom to mailroom_owner, mailroom_app;
 grant connect, temporary on database survey to survey_owner, survey_app;
-grant connect, temporary on database crm to crm_owner, crm_app;
+grant connect, temporary on database customer to customer_owner, customer_app;
 grant connect, temporary on database loyalty to loyalty_owner, loyalty_app;
 grant connect, temporary on database booking to booking_owner, booking_app;
 grant connect, temporary on database workflow to workflow_owner, workflow_app;
@@ -148,11 +148,11 @@ alter default privileges for role survey_owner in schema public
 alter default privileges for role survey_owner in schema public
     grant usage, select on sequences to survey_app;
 
-\connect crm
-alter default privileges for role crm_owner in schema public
-    grant select, insert, update, delete on tables to crm_app;
-alter default privileges for role crm_owner in schema public
-    grant usage, select on sequences to crm_app;
+\connect customer
+alter default privileges for role customer_owner in schema public
+    grant select, insert, update, delete on tables to customer_app;
+alter default privileges for role customer_owner in schema public
+    grant usage, select on sequences to customer_app;
 
 \connect loyalty
 alter default privileges for role loyalty_owner in schema public

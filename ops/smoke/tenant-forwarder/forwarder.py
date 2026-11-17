@@ -2,7 +2,7 @@
 """A Tenant's own forwarder, standing in for the code a Tenant writes.
 
 It is not a suite service: it is test scaffolding that proves the supported integration, that a Tenant's system receives
-crm's signed webhooks and calls loyalty itself. It verifies the `Crm-*` signature with the endpoint secret it was
+customer's signed webhooks and calls loyalty itself. It verifies the `Customer-*` signature with the endpoint secret it was
 given, then maps `order.recorded`, `order.refunded` and `customer.erased` onto loyalty's endpoints, field for field.
 
 Only the standard library is used, so the container needs no package installation.
@@ -24,7 +24,7 @@ TOKEN = os.environ["FORWARDER_LOYALTY_TOKEN"]
 LOYALTY_HOST = os.environ["FORWARDER_LOYALTY_HOST"]
 LOG = os.environ.get("FORWARDER_LOG", "/tmp/forwarder.log")
 
-# The Tenant's own mapping from crm's opaque customer id to the reference it chose. `customer.erased` carries the id
+# The Tenant's own mapping from customer's opaque customer id to the reference it chose. `customer.erased` carries the id
 # only, deliberately, so a forwarder that wants to erase in another app keeps this mapping itself — as a Tenant's system
 # naturally can, because it chose the reference.
 REFS: dict = {}
@@ -61,7 +61,7 @@ def loyalty_call(method: str, path: str, payload) -> int:
 
 
 def order_body(data):
-    # crm's order carries `name` and a total; loyalty reads neither, and the rest maps field for field.
+    # customer's order carries `name` and a total; loyalty reads neither, and the rest maps field for field.
     return {
         "externalRef": data["externalRef"],
         "currency": data["currency"],
@@ -88,7 +88,7 @@ def forward(event_type: str, data) -> int:
     if event_type == "order.recorded":
         return loyalty_call("PUT", f"/api/v1/orders/{data['orderRef']}", order_body(data))
     if event_type == "order.refunded":
-        # loyalty answers 422 ORDER_UNKNOWN until the order is there; a non-2xx makes crm retry the delivery.
+        # loyalty answers 422 ORDER_UNKNOWN until the order is there; a non-2xx makes customer retry the delivery.
         return loyalty_call(
             "PUT",
             f"/api/v1/orders/{data['orderRef']}/returns/{data['return']['returnRef']}",
@@ -106,13 +106,13 @@ def forward(event_type: str, data) -> int:
 class Handler(BaseHTTPRequestHandler):
     def do_POST(self):  # noqa: N802 - the stdlib's spelling
         body = self.rfile.read(int(self.headers.get("Content-Length", "0")))
-        if self.path.startswith("/loyalty"):
+        if self.path.startswith("/record") or self.path.startswith("/loyalty"):
             self._receive_loyalty(body)
             return
-        timestamp = self.headers.get("Crm-Timestamp", "")
-        signature = self.headers.get("Crm-Signature", "")
+        timestamp = self.headers.get("Customer-Timestamp", "")
+        signature = self.headers.get("Customer-Signature", "")
         if not verify(timestamp, signature, body):
-            log(f"refused: a delivery whose Crm-Signature does not verify "
+            log(f"refused: a delivery whose Customer-Signature does not verify "
                 f"(ts={timestamp!r} got={signature[:10]!r} len={len(signature)} body={len(body)}B)")
             self.send_response(401)
             self.end_headers()
@@ -120,7 +120,7 @@ class Handler(BaseHTTPRequestHandler):
         envelope = json.loads(body)
         status = forward(envelope["type"], envelope["data"])
         log(f"forwarded {envelope['type']} -> loyalty answered {status}")
-        # A non-2xx to crm is how a forwarder asks for the delivery again.
+        # A non-2xx to customer is how a forwarder asks for the delivery again.
         self.send_response(200 if 200 <= status < 300 else 502)
         self.end_headers()
 

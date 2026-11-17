@@ -61,8 +61,8 @@ jobs:
       - name: Email rule ids
         working-directory: mailroom
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
-      - name: CRM rule ids
-        working-directory: crm
+      - name: Customer rule ids
+        working-directory: customer
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
       - name: Loyalty rule ids
         working-directory: loyalty

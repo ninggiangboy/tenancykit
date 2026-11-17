@@ -99,22 +99,22 @@ require_refused "booking_app connecting to platform" psql_as booking_app "${BOOK
 require_refused "booking_app connecting to survey" psql_as booking_app "${BOOKING_DB_PASSWORD:?}" survey
 require_refused "billing_app connecting to booking" psql_as billing_app "${BILLING_DB_PASSWORD:?}" booking
 require_refused "survey_app connecting to booking" psql_as survey_app "${SURVEY_DB_PASSWORD:?}" booking
-# crm and loyalty each own one database. Their roles reach nothing else, and no other role reaches theirs.
-require_refused "crm_app connecting to loyalty" psql_as crm_app "${CRM_DB_PASSWORD:?}" loyalty
-require_refused "crm_app connecting to platform" psql_as crm_app "${CRM_DB_PASSWORD:?}" platform
-require_refused "crm_app connecting to billing" psql_as crm_app "${CRM_DB_PASSWORD:?}" billing
-require_refused "crm_app connecting to survey" psql_as crm_app "${CRM_DB_PASSWORD:?}" survey
-require_refused "loyalty_app connecting to crm" psql_as loyalty_app "${LOYALTY_DB_PASSWORD:?}" crm
+# customer and loyalty each own one database. Their roles reach nothing else, and no other role reaches theirs.
+require_refused "customer_app connecting to loyalty" psql_as customer_app "${CUSTOMER_DB_PASSWORD:?}" loyalty
+require_refused "customer_app connecting to platform" psql_as customer_app "${CUSTOMER_DB_PASSWORD:?}" platform
+require_refused "customer_app connecting to billing" psql_as customer_app "${CUSTOMER_DB_PASSWORD:?}" billing
+require_refused "customer_app connecting to survey" psql_as customer_app "${CUSTOMER_DB_PASSWORD:?}" survey
+require_refused "loyalty_app connecting to customer" psql_as loyalty_app "${LOYALTY_DB_PASSWORD:?}" customer
 require_refused "loyalty_app connecting to platform" psql_as loyalty_app "${LOYALTY_DB_PASSWORD:?}" platform
 require_refused "loyalty_app connecting to billing" psql_as loyalty_app "${LOYALTY_DB_PASSWORD:?}" billing
 require_refused "loyalty_app connecting to survey" psql_as loyalty_app "${LOYALTY_DB_PASSWORD:?}" survey
-require_refused "billing_app connecting to crm" psql_as billing_app "${BILLING_DB_PASSWORD:?}" crm
+require_refused "billing_app connecting to customer" psql_as billing_app "${BILLING_DB_PASSWORD:?}" customer
 require_refused "billing_app connecting to loyalty" psql_as billing_app "${BILLING_DB_PASSWORD:?}" loyalty
-require_refused "platform_app connecting to crm" psql_as platform_app "${PLATFORM_DB_PASSWORD:?}" crm
+require_refused "platform_app connecting to customer" psql_as platform_app "${PLATFORM_DB_PASSWORD:?}" customer
 require_refused "platform_app connecting to loyalty" psql_as platform_app "${PLATFORM_DB_PASSWORD:?}" loyalty
-require_refused "mailroom_app connecting to crm" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" crm
+require_refused "mailroom_app connecting to customer" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" customer
 require_refused "mailroom_app connecting to loyalty" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" loyalty
-require_refused "mailer_app connecting to crm" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" crm
+require_refused "mailer_app connecting to customer" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" customer
 require_refused "mailer_app connecting to loyalty" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" loyalty
 
 # ------------------------------ broker ------------------------------
@@ -156,7 +156,7 @@ require_no_foreign_exchange() {
     for foreign in ${FOREIGN_EXCHANGES}; do
       case "${granted}" in
         *"${foreign}"*)
-          # A producer's own exchange is not foreign to it; the caller's declaration is the judge, and only crm, loyalty,
+          # A producer's own exchange is not foreign to it; the caller's declaration is the judge, and only customer, loyalty,
           # booking, attribution and workflow are asserted here.
           case "${user}:${foreign}" in
             billing:billing.events|survey:survey.events|booking:booking.events|attribution:attribution.events|workflow:workflow.events|mailer:mailer.events|mailer:mailer.commands|notification:mailer.commands|mailroom:mailer.commands|mailroom:mailer.events) ;;
@@ -175,9 +175,9 @@ done
 
 # The two new apps own one queue each and no exchange, so their three grants are exactly their own names plus the
 # dead-letter exchange they bind to, and `read` additionally covers platform.events (a bind checks read on the source).
-require_only crm configure '^(crm\.platform-events|crm\.platform-events\.dlq|suite\.dlx)$'
-require_only crm write '^(crm\.platform-events|crm\.platform-events\.dlq|suite\.dlx)$'
-require_only crm read '^(platform\.events|crm\.platform-events|crm\.platform-events\.dlq|suite\.dlx)$'
+require_only customer configure '^(customer\.platform-events|customer\.platform-events\.dlq|suite\.dlx)$'
+require_only customer write '^(customer\.platform-events|customer\.platform-events\.dlq|suite\.dlx)$'
+require_only customer read '^(platform\.events|customer\.platform-events|customer\.platform-events\.dlq|suite\.dlx)$'
 require_only loyalty configure '^(loyalty\.platform-events|loyalty\.platform-events\.dlq|suite\.dlx)$'
 require_only loyalty write '^(loyalty\.platform-events|loyalty\.platform-events\.dlq|suite\.dlx)$'
 require_only loyalty read '^(platform\.events|loyalty\.platform-events|loyalty\.platform-events\.dlq|suite\.dlx)$'
@@ -185,7 +185,7 @@ require_only loyalty read '^(platform\.events|loyalty\.platform-events|loyalty\.
 # A positive control, so a script that proved only denials cannot pass while the declaration silently did nothing: each
 # new app's queue must exist once its worker has started, and its own user must be able to read it. The queue is declared
 # by the app at startup, not by the user script, so this also proves the app reached the broker.
-for queue in crm.platform-events loyalty.platform-events; do
+for queue in customer.platform-events loyalty.platform-events; do
   if [ "$(curl --silent --user "${RABBITMQ_ADMIN_USER}:${RABBITMQ_ADMIN_PASSWORD}" \
     "${BROKER}/api/queues/%2F/${queue}" | jq -r '.name // empty')" != "${queue}" ]; then
     fail "the broker declares no queue ${queue}; its app did not start or did not bind it"
@@ -289,7 +289,7 @@ own_database mailroom mailroom_app "${MAILROOM_DB_PASSWORD:?}" mailroom
 own_database survey survey_app "${SURVEY_DB_PASSWORD:?}" survey
 own_database booking booking_app "${BOOKING_DB_PASSWORD:?}" booking
 own_database workflow workflow_app "${WORKFLOW_DB_PASSWORD:?}" workflow
-own_database crm crm_app "${CRM_DB_PASSWORD:?}" crm
+own_database customer customer_app "${CUSTOMER_DB_PASSWORD:?}" customer
 own_database loyalty loyalty_app "${LOYALTY_DB_PASSWORD:?}" loyalty
 
 echo "PASS: no service can reach another service's database or exchange"

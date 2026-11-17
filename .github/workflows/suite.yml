@@ -32,8 +32,8 @@ jobs:
               -e 's/^MAILROOM_DB_PASSWORD=.*/MAILROOM_DB_PASSWORD=ci-mailroom-app/' \
               -e 's/^SURVEY_MIGRATION_DB_PASSWORD=.*/SURVEY_MIGRATION_DB_PASSWORD=ci-survey-owner/' \
               -e 's/^SURVEY_DB_PASSWORD=.*/SURVEY_DB_PASSWORD=ci-survey-app/' \
-              -e 's/^CRM_MIGRATION_DB_PASSWORD=.*/CRM_MIGRATION_DB_PASSWORD=ci-crm-owner/' \
-              -e 's/^CRM_DB_PASSWORD=.*/CRM_DB_PASSWORD=ci-crm-app/' \
+              -e 's/^CUSTOMER_MIGRATION_DB_PASSWORD=.*/CUSTOMER_MIGRATION_DB_PASSWORD=ci-customer-owner/' \
+              -e 's/^CUSTOMER_DB_PASSWORD=.*/CUSTOMER_DB_PASSWORD=ci-customer-app/' \
               -e 's/^LOYALTY_MIGRATION_DB_PASSWORD=.*/LOYALTY_MIGRATION_DB_PASSWORD=ci-loyalty-owner/' \
               -e 's/^LOYALTY_DB_PASSWORD=.*/LOYALTY_DB_PASSWORD=ci-loyalty-app/' \
               -e 's/^BOOKING_MIGRATION_DB_PASSWORD=.*/BOOKING_MIGRATION_DB_PASSWORD=ci-booking-owner/' \
@@ -48,7 +48,7 @@ jobs:
               -e 's/^NOTIFICATION_RABBITMQ_PASSWORD=.*/NOTIFICATION_RABBITMQ_PASSWORD=ci-notification-broker/' \
               -e 's/^MAILROOM_RABBITMQ_PASSWORD=.*/MAILROOM_RABBITMQ_PASSWORD=ci-mailroom-broker/' \
               -e 's/^SURVEY_RABBITMQ_PASSWORD=.*/SURVEY_RABBITMQ_PASSWORD=ci-survey-broker/' \
-              -e 's/^CRM_RABBITMQ_PASSWORD=.*/CRM_RABBITMQ_PASSWORD=ci-crm-broker/' \
+              -e 's/^CUSTOMER_RABBITMQ_PASSWORD=.*/CUSTOMER_RABBITMQ_PASSWORD=ci-customer-broker/' \
               -e 's/^LOYALTY_RABBITMQ_PASSWORD=.*/LOYALTY_RABBITMQ_PASSWORD=ci-loyalty-broker/' \
               -e 's/^BOOKING_RABBITMQ_PASSWORD=.*/BOOKING_RABBITMQ_PASSWORD=ci-booking-broker/' \
               -e 's/^BILLING_REPLICA_CLIENT_SECRET=.*/BILLING_REPLICA_CLIENT_SECRET=ci-replica-secret/' \
@@ -74,9 +74,9 @@ jobs:
           sed -i "s/^BOOKING_REPLICA_CLIENT_SECRET=.*/BOOKING_REPLICA_CLIENT_SECRET=ci-booking-replica-secret/" .env
           sed -i "s/^PLATFORM_BOOKING_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_BOOKING_SERVICE_CLIENT_SECRET_HASH=${BOOKING_HASH}/" .env
           sed -i 's/^BOOKING_TOKEN_SECRET=.*/BOOKING_TOKEN_SECRET=ci-booking-token-secret/' .env
-          CRM_HASH=$(printf %s 'ci-crm-replica-secret' | sha256sum | cut -d' ' -f1)
-          sed -i "s/^CRM_REPLICA_CLIENT_SECRET=.*/CRM_REPLICA_CLIENT_SECRET=ci-crm-replica-secret/" .env
-          sed -i "s/^PLATFORM_CRM_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_CRM_SERVICE_CLIENT_SECRET_HASH=${CRM_HASH}/" .env
+          CUSTOMER_HASH=$(printf %s 'ci-customer-replica-secret' | sha256sum | cut -d' ' -f1)
+          sed -i "s/^CUSTOMER_REPLICA_CLIENT_SECRET=.*/CUSTOMER_REPLICA_CLIENT_SECRET=ci-customer-replica-secret/" .env
+          sed -i "s/^PLATFORM_CRM_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_CRM_SERVICE_CLIENT_SECRET_HASH=${CUSTOMER_HASH}/" .env
           LOYALTY_HASH=$(printf %s 'ci-loyalty-replica-secret' | sha256sum | cut -d' ' -f1)
           sed -i "s/^LOYALTY_REPLICA_CLIENT_SECRET=.*/LOYALTY_REPLICA_CLIENT_SECRET=ci-loyalty-replica-secret/" .env
           sed -i "s/^PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH=${LOYALTY_HASH}/" .env
@@ -90,9 +90,9 @@ jobs:
           # Booking's master key protects webhook signing secrets, and its customer-token key signs the public gate's
           # tokens; both need the same treatment.
           sed -i "s|^BOOKING_SECRETS_MASTER_KEY=.*|BOOKING_SECRETS_MASTER_KEY=${MASTER_KEY}|" .env
-          # crm's and loyalty's master keys wrap their webhook signing secrets and must decode to exactly 32 bytes, so a
+          # customer's and loyalty's master keys wrap their webhook signing secrets and must decode to exactly 32 bytes, so a
           # placeholder here would fail the worker at startup rather than at a delivery.
-          sed -i "s|^CRM_SECRETS_MASTER_KEY=.*|CRM_SECRETS_MASTER_KEY=${MASTER_KEY}|" .env
+          sed -i "s|^CUSTOMER_SECRETS_MASTER_KEY=.*|CUSTOMER_SECRETS_MASTER_KEY=${MASTER_KEY}|" .env
           sed -i "s|^LOYALTY_SECRETS_MASTER_KEY=.*|LOYALTY_SECRETS_MASTER_KEY=${MASTER_KEY}|" .env
           sed -i 's/^PLATFORM_BOOTSTRAP_ADMIN_EMAIL=.*/PLATFORM_BOOTSTRAP_ADMIN_EMAIL=admin@platform.test/' .env
           sed -i 's/^PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD=.*/PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD=ci-admin-password/' .env

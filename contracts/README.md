@@ -16,7 +16,7 @@ Documents the suite's services share, never code. The only code they share is th
 | `events/platform/` | Platform's replicated state-transfer events (`*.changed`). |
 | `events/mailer/` | Mailer's outbound events: one JSON Schema per type, today `email-delivery.changed`, the terminal delivery outcome a consumer reports as `SENT` or `FAILED`. |
 | `events/survey/` | Survey's outbound events: `survey-version.published`, `survey.closed` and `survey-response.submitted`. |
-| `events/crm/` | crm's outbound events: `customer.created`, `order.recorded`, `order.refunded` and `customer.erased`, the customer and order facts crm sends to a Tenant System as signed webhooks. |
+| `events/customer/` | customer's outbound events: `customer.created`, `order.recorded`, `order.refunded` and `customer.erased`, the customer and order facts customer sends to a Tenant System as signed webhooks. |
 | `events/loyalty/` | loyalty's outbound events: the twelve enrolment, points, tier and voucher facts loyalty sends to a Tenant System as signed webhooks. |
 | `events/booking/` | booking's outbound events: the ten hold, confirmation, reschedule, cancellation, expiry, no-show, waitlist and series facts booking sends to a Tenant System as signed `Booking-*` webhooks. |
 | `survey/` | The version document schema, the expression schema and the behaviour vectors both the server and a future fill UI must pass. See [survey/README.md](survey/README.md). |

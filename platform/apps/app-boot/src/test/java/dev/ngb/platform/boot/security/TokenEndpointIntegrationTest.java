@@ -67,7 +67,7 @@ class TokenEndpointIntegrationTest {
      */
     @Test
     void theAudiencesAreTheShippedApps() throws Exception {
-        for (String app : new String[] {"platform", "billing", "crm", "loyalty"}) {
+        for (String app : new String[] {"platform", "billing", "customer", "loyalty"}) {
             mvc.perform(post("/oauth/token")
                             .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                             .param("grant_type", "client_credentials")

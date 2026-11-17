@@ -39,7 +39,7 @@ public class TriggerRules {
             case APP -> {
                 if (!WebhookSignatures.knownSource(source)) {
                     throw new BadRequestException(
-                            "an APP trigger names a suite app: billing, survey, crm, loyalty or mailroom");
+                            "an APP trigger names a suite app: billing, survey, customer, loyalty or mailroom");
                 }
                 yield source;
             }

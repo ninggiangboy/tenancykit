@@ -14,7 +14,7 @@ track.
 | It is | It is not |
 |---|---|
 | The owner of a Tenant's campaigns, tracked links, destinations and rules, and the clicks, page views, sessions and conversions they produce | A link shortener: it redirects, but the redirect exists to measure, and a link is always attached to a campaign or a purpose |
-| The owner of conversions, their touchpoint chains and the credit each click receives under a model | A CRM or a customer-identity system: it resolves no person across devices and joins no data to mailroom or survey |
+| The owner of conversions, their touchpoint chains and the credit each click receives under a model | A Customer or a customer-identity system: it resolves no person across devices and joins no data to mailroom or survey |
 | A publisher of nothing and a consumer of its own ingest only: it writes `attribution.ingest` and reads `platform.events` | A producer of domain events in v1, a sender of messages, or a caller of another app |
 | The owner of advertising cost, entered by hand or imported from Google Ads and Meta Ads read-only | An ad manager: it never creates, edits, pauses or bids on an ad, and it only ever calls a provider's read endpoints |
 
@@ -83,7 +83,7 @@ measures differently changes the number here with the measurement, never silentl
 | Attribution window | Default 30 days, per campaign, 1 to 90 days | phase 4, phase 8 |
 | Ingest buffer | 10,000 events per instance, flushed every 200 ms or 500 events | phase 5 |
 | Link cache | 30 s TTL, single-flight loads, negative entries cached | phase 5 |
-| Report latency | p95 ≤ 500 ms on 5 million seeded clicks | phase 9 |
+| Report latency | p95 ≤ 500 ms on 5 million seeded clicks | phase 9 (`reportLoad`) |
 
 Two rules follow from the privacy decisions:
 
@@ -197,6 +197,71 @@ partitions are dropped still reproduces the same credits. Changing a campaign's 
 which pages the campaign's conversions by id and replaces each conversion's credits atomically. One run per campaign at a
 time; an interrupted run resumes from its cursor. Erasure removes a visitor's page views, sessions and bindings, and
 strips the visitor and click from their conversions while the amount and credits stay.
+
+## Rollups and reports
+
+A report never scans a raw event table. Every minute the worker recomputes the trailing **three hours** into three rollup
+tables — `rollup_traffic_hourly` (clicks, page views, sessions and unique visitor days per link, campaign, destination,
+device, country, entry and traffic class), `rollup_referrers_daily` (the top fifty referrer domains per link and day,
+the rest folded into `other`) and `rollup_conversions_daily` (conversions, credited value and multi-touch conversions
+per campaign, link, goal, model, currency and UTC day) — and writes a deployment-wide cursor. A late event inside three
+hours changes the next report; an older bucket is final once the cursor passes its day. The conversions rollup also
+re-reads the last three days, so a settle delay or a model recompute is absorbed. A fresh deployment or a worker that was
+down catches up from the day after the cursor (or from the ninety-day raw horizon on a first run) before it advances the
+cursor, so the cursor never passes a day no run absorbed. All buckets are UTC; a client that needs a local day reads
+hourly data. That is the recorded non-goal.
+
+`RetentionJob` reads the same cursor and drops a raw click partition only after the rollups have absorbed its whole day.
+Rollups are kept 25 months and are deleted by the same per-tenant run.
+
+The report endpoints are `GET /api/v1/reports/{timeseries,breakdown,funnel,cohorts,costs}`. Each answers `text/csv`
+when the request asks by `Accept: text/csv` or by the `.csv` path; the file is written from the same view the JSON
+answer would serialise, so an export and its JSON cannot disagree. An export is capped at 100,000 rows; beyond it the
+endpoint answers `400` and asks for a narrower range. `GET /api/v1/links/{id}/stats` returns JSON only: its totals and
+its thirty daily counts. Every response carries `data_through`, the instant the last rollup finished, so a client can see
+that a report is one to two minutes behind.
+
+Reports are **human by default**. `include=bot,suspect` adds machine traffic, and a response names how many bot clicks
+the default left out. `visitor_days` is the number of distinct daily visitor hashes in a bucket; over several days it is
+the sum of the daily values, and the API names it `unique_visitor_days`. A breakdown accepts one of `link`, `campaign`,
+`entry`, `device`, `country`, `referrer`, `destination` or `goal`; an unknown dimension or metric is `400`. Traffic
+dimensions answer page views, sessions and uniques, `referrer` answers clicks only, and `goal` answers conversions and
+credited value only. Conversion metrics read the credits of the current model, so a model change reaches a report after
+the recompute and the next rollup.
+
+The funnel is the one report that reads raw events, through tracking's `api`: non-bot clicks, the clicks whose click id
+has a page view (`landed`) and the clicks whose campaign/link received a conversion credit (`converted`, optionally for
+one goal). It reads a bounded range and names the bot clicks it left out; the rates are `landed / clicks` and
+`converted / landed`. A cohort is built from the snapshotted `touch_chain` and the credits, never from raw events: its
+cohort is the UTC week of the first click in the chain, its columns are the weeks since that click (at most twelve), and
+its cells are credited conversions and value. Conversion reports carry `multi_touch_share`, the share of conversions
+whose chain has more than one click, so a Tenant can see how far first and linear differ from last when consent is absent
+and every chain is one click.
+
+The load test is outside the normal build: `./gradlew :apps:app-boot:reportLoad` seeds the rolled-up dataset and measures
+p95 for every report against the 500 ms target. The size defaults to five million clicks and is configurable with
+`-Dattribution.load.clicks`. The 200,000-click run passes comfortably; a full five-million run needs enough free Docker
+disk for the seeded partitions, and this development machine's Docker disk was too small to complete it. The target,
+not a fabricated measurement, is what the table above records.
+
+## Spend and cost metrics
+
+A Tenant records advertising cost per campaign and day by hand: `PUT /api/v1/campaigns/{id}/spend/{day}` sets one day,
+`POST /api/v1/campaigns/{id}/spend` sets up to 366 days in one call, `DELETE` removes only the `MANUAL` row and
+`GET` lists every source's rows. A row is `(campaign, day, source, amount, currency, impressions, clicks)`; the source
+is `MANUAL`, `GOOGLE_ADS` or `META_ADS`, and an import writes only its own source, so it never overwrites a manual entry.
+An entry's currency must be the campaign's: a different one answers `409 currency_mismatch`, because v1 performs no
+currency conversion.
+
+`GET /api/v1/reports/costs` puts the money next to the results for a campaign and range, grouped by `campaign` or `day`.
+A day's cost is the sum over its sources, and the row lists the per-source breakdown beside the total, so a double entry
+(the same spend typed by hand and imported) is visible rather than hidden. The metrics are `cost`, `human_clicks`,
+`conversions` (the sum of credit weights, so linear credit can be fractional), `credited_value`, and `cpc = cost /
+human_clicks`, `cpa = cost / conversions`, `roas = credited_value / cost` and `roi = (credited_value - cost) / cost`.
+A zero denominator gives `null`, never `0` and never an error. Credit counts for the campaign of the clicked link that
+received it, whichever campaign owns the conversion; a conversion whose currency differs from the campaign's is kept out
+of the value metrics and counted in `excluded_conversions`. Cost exists per campaign and day, so link-level CPC is not
+offered.
 
 ## Cross-plan coordination
 

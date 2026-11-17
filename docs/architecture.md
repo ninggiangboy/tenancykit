@@ -215,7 +215,7 @@ It is API only, so the builder UI and the fill UI are a later plan; it never sen
 owns the rows, so `insight` calls it rather than writing a response itself. Its public `/p/*` endpoints are the
 suite's second unauthenticated surface, isolated in one controller and one ArchUnit rule.
 
-**CRM** (`crm/`) — the suite's app for keeping a Tenant's own customer data, in six contexts:
+**Customer** (`customer/`) — the suite's app for keeping a Tenant's own customer data, in six contexts:
 
 | Directory | Module | Holds |
 |---|---|---|
@@ -252,7 +252,7 @@ case calls in the same transaction.
 | `apps/` | `app-boot` | Spring wiring, security, the three runtimes, jobs (replica rebuild, outbox relay, webhook delivery, expiry, expiry notice, tier evaluation, housekeeping), the `TierEvaluator` and `RedemptionReversalHook` adapters, and the Flyway migrations |
 | `testing/` | `arch-fixtures` | Deliberately violating classes that prove each ArchUnit rule can fail |
 
-It declares no exchange: like crm, its outbox feeds the webhook context in process and its twelve facts leave only as
+It declares no exchange: like customer, its outbox feeds the webhook context in process and its twelve facts leave only as
 signed webhooks. The context graph has no cycle: `points` reaches `program` only through its `api`, `tiers` and
 `rewards` reach `points` only through its `api`, and `points` in turn reaches `tiers` and `rewards` only through ports
 it declares and app-boot implements. Every flow that changes a member's points locks the member row first, which is what

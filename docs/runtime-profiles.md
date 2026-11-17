@@ -52,9 +52,9 @@ no logic, retries nothing and rewrites no body. See [suite-messaging.md](suite-m
 | `mailroom-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
 | `mailroom-api` (`api`) | Templates, receivers, groups, segments, suppressions, emails, campaigns, settings and the public `/t/*` tracking endpoints | Its database, Platform (replica snapshots) |
 | `mailroom-worker` (`worker`) | The `platform.events` and `mailroom.mailer-events` listeners, the outbox relay, the campaign scheduler and publisher, housekeeping; the replica rebuild on start | Its database, the broker, Platform (replica snapshots) |
-| `crm-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
-| `crm-api` (`api`) | Customers, orders with lines and returns, activities, custom fields, tags, consent, the 360 profile, search, export and the webhook endpoint management | Its database, Platform (replica snapshots) |
-| `crm-worker` (`worker`) | The `crm.platform-events` listener, the outbox relay, the webhook delivery round and housekeeping; the replica rebuild on start | Its database, the broker, Platform (replica snapshots) |
+| `customer-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
+| `customer-api` (`api`) | Customers, orders with lines and returns, activities, custom fields, tags, consent, the 360 profile, search, export and the webhook endpoint management | Its database, Platform (replica snapshots) |
+| `customer-worker` (`worker`) | The `customer.platform-events` listener, the outbox relay, the webhook delivery round and housekeeping; the replica rebuild on start | Its database, the broker, Platform (replica snapshots) |
 | `loyalty-migrate` (`migrate`) | Flyway as the table owner, then exits | Its database |
 | `loyalty-api` (`api`) | The program, tiers, promotions, members, orders and returns, the balance and ledger, redemptions and reversals, rewards and vouchers, and the webhook endpoint management | Its database, Platform (replica snapshots) |
 | `loyalty-worker` (`worker`) | The `loyalty.platform-events` listener, the outbox relay, the webhook delivery round, the expiry run, the expiry notice, the daily tier evaluation and housekeeping; the replica rebuild on start | Its database, the broker, Platform (replica snapshots) |
@@ -135,9 +135,9 @@ other. The deployment has four long-running workloads and three one-shot tasks:
 | `mailroom-migrate` | `migrate` | One-shot task run to exit 0 before mailroom's services roll. |
 | `mailroom-api` | `api` | 2 replicas; ALB rule priority 50. |
 | `mailroom-worker` | `worker` | 2 replicas; no ALB target. |
-| `crm-migrate` | `migrate` | One-shot task run to exit 0 before crm's services roll. |
-| `crm-api` | `api` | 2 replicas; ALB rule priority 60. |
-| `crm-worker` | `worker` | 2 replicas; no ALB target. |
+| `customer-migrate` | `migrate` | One-shot task run to exit 0 before customer's services roll. |
+| `customer-api` | `api` | 2 replicas; ALB rule priority 60. |
+| `customer-worker` | `worker` | 2 replicas; no ALB target. |
 | `loyalty-migrate` | `migrate` | One-shot task run to exit 0 before loyalty's services roll. |
 | `loyalty-api` | `api` | 2 replicas; ALB rule priority 70. |
 | `loyalty-worker` | `worker` | 2 replicas; no ALB target. |

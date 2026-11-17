@@ -75,7 +75,7 @@ jobs:
           mailer_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .mailer)"
           notification_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .notification)"
           mailroom_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .mailroom)"
-          crm_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .crm)"
+          customer_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .customer)"
           loyalty_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .loyalty)"
 
           docker build -f platform/apps/app-boot/Dockerfile -t "${platform_repo}:${TAG}" .
@@ -96,8 +96,8 @@ jobs:
           docker build -f mailroom/apps/app-boot/Dockerfile -t "${mailroom_repo}:${TAG}" .
           docker push "${mailroom_repo}:${TAG}"
 
-          docker build -f crm/apps/app-boot/Dockerfile -t "${crm_repo}:${TAG}" .
-          docker push "${crm_repo}:${TAG}"
+          docker build -f customer/apps/app-boot/Dockerfile -t "${customer_repo}:${TAG}" .
+          docker push "${customer_repo}:${TAG}"
 
           docker build -f loyalty/apps/app-boot/Dockerfile -t "${loyalty_repo}:${TAG}" .
           docker push "${loyalty_repo}:${TAG}"
@@ -227,13 +227,13 @@ jobs:
             exit 1
           fi
 
-      - name: Migrate CRM
+      - name: Migrate Customer
         run: |
           set -euo pipefail
           cluster="$(terraform output -raw cluster_name)"
           subnets="$(terraform output -json private_subnet_ids | jq -r 'join(",")')"
           security_group="$(terraform output -raw task_security_group_id)"
-          definition="$(terraform output -json task_definition_arns | jq -r .crm_migrate)"
+          definition="$(terraform output -json task_definition_arns | jq -r .customer_migrate)"
 
           task="$(aws ecs run-task \
             --cluster "$cluster" \
@@ -296,7 +296,7 @@ jobs:
           roll notification_worker notification_worker
           roll mailroom_api mailroom_api
           roll mailroom_worker mailroom_worker
-          roll crm_api crm_api
-          roll crm_worker crm_worker
+          roll customer_api customer_api
+          roll customer_worker customer_worker
           roll loyalty_api loyalty_api
           roll loyalty_worker loyalty_worker

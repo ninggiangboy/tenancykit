@@ -10,12 +10,12 @@ import org.gradle.api.artifacts.ProjectDependency
  * A sibling service reaches this build as an external coordinate, whose only discriminator is the dependency's group.
  */
 val foreignServices = setOf(
-    "billing", "mailer", "platform", "tenant", "notification", "mailroom", "survey", "attribution", "crm", "loyalty",
+    "billing", "mailer", "platform", "tenant", "notification", "mailroom", "survey", "attribution", "customer", "loyalty",
 )
 val foreignGroups = setOf(
     "dev.ngb.billing", "dev.ngb.mailer", "dev.ngb.platform", "dev.ngb.tenant",
     "dev.ngb.notification", "dev.ngb.mailroom", "dev.ngb.survey", "dev.ngb.attribution",
-    "dev.ngb.crm", "dev.ngb.loyalty",
+    "dev.ngb.customer", "dev.ngb.loyalty",
 )
 // Booking keeps the replica and serves HTTP, so it legitimately needs every shared core module.
 val serviceOnlyCoreModules = emptySet<String>()

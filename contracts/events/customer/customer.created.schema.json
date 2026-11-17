@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suite.ngb.dev/events/customer/customer.created.schema.json",
+  "title": "Customer created",
+  "description": "A customer now exists in customer, recorded by the Tenant's own system. The Tenant uses `externalRef` to match the customer in its own records; customer never matches by phone or email. The event's `aggregate` is `customer/<customerId>`. This schema describes the `data` member; the envelope is described in ../../messaging/README.md.",
+  "type": "object",
+  "required": [
+    "customerId",
+    "externalRef",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "customerId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "customer's own opaque id for the customer."
+    },
+    "externalRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The Tenant's reference for the customer, unique per Tenant and immutable. The same ref the Tenant uses in its own system."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When customer created the customer, in UTC."
+    }
+  }
+}

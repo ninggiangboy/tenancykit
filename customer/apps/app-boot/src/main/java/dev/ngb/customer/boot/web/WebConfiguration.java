@@ -1,0 +1,92 @@
+package dev.ngb.customer.boot.web;
+
+import dev.ngb.core.openapi.ListingOpenApiCustomizer;
+import dev.ngb.core.security.Authorizer;
+import dev.ngb.core.security.PublicEndpoint;
+import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.query.ListQueryResolver;
+import dev.ngb.core.spring.security.PermissionInterceptor;
+import dev.ngb.core.tenancy.TenantContext;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
+import java.util.List;
+import org.springdoc.core.customizers.OperationCustomizer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+/**
+ * The HTTP edge's guards and its generated contract.
+ *
+ * <p>{@link PermissionInterceptor} fails closed: an endpoint with no access rule throws rather than being served.
+ * {@link TenantOnlyGuard} adds the rule the core cannot express — a Tenant's customers are tenant data, so the
+ * platform scope is refused even though the entitlement filter lets it through.
+ */
+@Configuration(proxyBeanMethods = false)
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+class WebConfiguration implements WebMvcConfigurer {
+
+    private final Authorizer authorizer;
+    private final TenantContext tenantContext;
+
+    WebConfiguration(Authorizer authorizer, TenantContext tenantContext) {
+        this.authorizer = authorizer;
+        this.tenantContext = tenantContext;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new TenantOnlyGuard(tenantContext)).addPathPatterns("/api/v1/**");
+        registry.addInterceptor(new PermissionInterceptor(authorizer)).addPathPatterns("/api/v1/**");
+    }
+
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(new ListQueryResolver());
+    }
+
+    /** Documents every {@code @Listing} operation from the schema it names. */
+    @Bean
+    ListingOpenApiCustomizer listingParameters() {
+        return new ListingOpenApiCustomizer();
+    }
+
+    /** Documents the permission an operation requires, and marks the public paths that need no token. */
+    @Bean
+    OperationCustomizer documentedAccess() {
+        return (operation, handlerMethod) -> {
+            RequiresPermission required = handlerMethod.getMethodAnnotation(RequiresPermission.class);
+            if (required != null) {
+                operation.addExtension("x-required-permission", required.value());
+            }
+            if (handlerMethod.hasMethodAnnotation(PublicEndpoint.class)) {
+                operation.addExtension("x-public", true);
+            }
+            return operation;
+        };
+    }
+
+    @Bean
+    OpenAPI crmOpenApi() {
+        return new OpenAPI()
+                .info(new Info().title("CRM API").version("v1")
+                        .description("The API a Tenant System uses to keep a Tenant's own customer data: customers, "
+                                + "orders with lines and returns, activities, custom fields, tags, consent, the 360 "
+                                + "profile, the CSV export and erasure, plus the signed webhook endpoints customer delivers "
+                                + "to. There is no public surface."))
+                .servers(List.of(new Server().url("/customer")
+                        .description("Any tenant hostname: <tenant-code>.<base-domain>/customer")))
+                .components(new Components()
+                        .addSecuritySchemes("oidc", new SecurityScheme()
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")
+                                .description("A suite token issued by Platform for this tenant")));
+    }
+}

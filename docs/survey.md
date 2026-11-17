@@ -16,7 +16,7 @@ mailroom campaign, a QR code on a receipt, a page on its own site. Delivery and 
 | The owner of a Tenant's surveys, their immutable versions, links, visits, page events, responses, answers, uploads and the analysis of all of it | A sender: it has no template, no recipient list and no channel, and publishes no `email.send` |
 | The single owner of the expression language that decides branching, computed variables, quiz scoring and piping | A form builder UI or a fill UI: both are a later plan; this app is API only |
 | A producer of `survey.events` and signed `Survey-*` webhooks to a Tenant System | A consumer of another app's business data: it keeps the Platform replica and reads nothing from Billing or mailroom |
-| Idempotent and reconciliation-free: a respondent is a link, a visit and a response, never an account | A CRM: it does not reconcile a respondent with a mailroom receiver, and does not deduplicate a person across links |
+| Idempotent and reconciliation-free: a respondent is a link, a visit and a response, never an account | A Customer: it does not reconcile a respondent with a mailroom receiver, and does not deduplicate a person across links |
 
 The suite stores a Tenant's customer data on the Tenant's behalf. Survey keeps the least it can: no raw IP, no user
 agent string, no referrer path, and an explicit delete that removes answers and uploaded objects.

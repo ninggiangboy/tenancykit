@@ -12,7 +12,7 @@ endpoint and webhook below exists in it. This document describes what it is; the
 client builds against.
 
 loyalty keeps one program per Tenant, sends the member no message itself, and fulfils no reward. It keeps a replica of
-Platform and reads nothing from another app. It never calls, listens to or names crm.
+Platform and reads nothing from another app. It never calls, listens to or names customer.
 
 ## What it is, and what it is not
 
@@ -68,7 +68,7 @@ The Tenant's data is the Tenant's: another Tenant's token cannot read or write i
 - **Owns the reward.** loyalty issues a voucher; the Tenant maps the voucher's `rewardId` to what it actually grants — a
   POS discount, a gift, or a Billing coupon — and delivers it. loyalty never fulfils a reward.
 - Owns every message to the member, sent from its handler of loyalty's webhooks.
-- Owns the connection between loyalty and crm if it uses both (see *The suite rule*).
+- Owns the connection between loyalty and customer if it uses both (see *The suite rule*).
 
 **Division rules**
 - The tenant comes from the verified host, never from client input.
@@ -95,12 +95,12 @@ The Tenant's data is the Tenant's: another Tenant's token cannot read or write i
 - There is no batch order endpoint and no backfill. A Tenant starts with the orders it sends from the day loyalty is
   enabled; orders from before then never earn points.
 - A return for an order loyalty has not seen is `422 ORDER_UNKNOWN`. The caller retries and succeeds once the order
-  exists; nothing is held for later. A forwarder gets this for free from crm's webhook retry.
+  exists; nothing is held for later. A forwarder gets this for free from customer's webhook retry.
 - An order before the program exists is `409 PROGRAM_NOT_CONFIGURED`; a currency other than the program's is `422
   CURRENCY_MISMATCH`.
-- loyalty stores only the fields earn and returns read. Its order and return bodies use crm's field names —
+- loyalty stores only the fields earn and returns read. Its order and return bodies use customer's field names —
   `externalRef`, `currency`, `occurredAt`, `storeCode`, `channel`, lines `{lineNo, sku, category, quantity, amount,
-  earnEligible}` and return lines `{lineNo, quantity, amount}` — so a Tenant's forwarder maps a crm webhook onto a
+  earnEligible}` and return lines `{lineNo, quantity, amount}` — so a Tenant's forwarder maps a customer webhook onto a
   loyalty call field for field. loyalty does not read a line's `name` or the order's `total`.
 - A return's quantity and amount never exceed what the order's own lines hold (`422`).
 - `GET /orders/{orderRef}` answers what the order earned and what its returns took back.
@@ -297,7 +297,7 @@ loyalty issues a voucher and stops there. The Tenant decides what the code is wo
 
 ## The suite rule
 
-loyalty never calls, listens to or knows crm. Nothing loyalty does needs crm, and no crm fact reaches loyalty. This keeps
+loyalty never calls, listens to or knows customer. Nothing loyalty does needs customer, and no customer fact reaches loyalty. This keeps
 loyalty optional: a Tenant can pair it with its own systems, another vendor's, or nothing at all.
 
 A Tenant that uses both apps connects them itself, in one of two ways:
@@ -305,19 +305,19 @@ A Tenant that uses both apps connects them itself, in one of two ways:
 - **Send twice.** Send each order and return to both apps. Both are idempotent by the same `orderRef` and `returnRef`, the
   request bodies use the same field names, and both routes give the same points for the same order. A Tenant that does
   this must also erase in both.
-- **Forward.** Register an endpoint for crm's webhooks and forward `order.recorded`, `order.refunded` and
+- **Forward.** Register an endpoint for customer's webhooks and forward `order.recorded`, `order.refunded` and
   `customer.erased` to loyalty's order, return and erasure endpoints. The forwarder is a field-for-field mapping and needs
-  no other read of crm. A return that arrives before its order is `422 ORDER_UNKNOWN`: answer crm's webhook with a
-  non-2xx and crm's retry schedule delivers it again, which is why nothing is held for later.
+  no other read of customer. A return that arrives before its order is `422 ORDER_UNKNOWN`: answer customer's webhook with a
+  non-2xx and customer's retry schedule delivers it again, which is why nothing is held for later.
 
-Both recipes are proved end to end by `ops/smoke/crm-loyalty.sh` on the compose stack.
+Both recipes are proved end to end by `ops/smoke/customer-loyalty.sh` on the compose stack.
 
 ## Non-goals
 
 - More than one program per Tenant; more than one currency per program.
 - A loyalty AMQP exchange, and any other app binding to a loyalty fact. A loyalty fact leaves only as a signed webhook.
 - loyalty sending the member any message itself. The Tenant does it from the webhooks.
-- Any link between loyalty and crm: no call, no event, no shared table and no shared code.
+- Any link between loyalty and customer: no call, no event, no shared table and no shared code.
 - Backfill or batch import of historic orders into loyalty.
 - Point transfer between members; gift cards; coupons. Billing's coupon scope is a different feature that discounts
   Billing charges, not a POS-side reward.

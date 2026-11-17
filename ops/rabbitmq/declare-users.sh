@@ -112,18 +112,18 @@ declare_user survey \
   '^(survey\\.platform-events|survey\\.platform-events\\.dlq|suite\\.dlx|survey\\.events)$' \
   '^(platform\\.events|survey\\.platform-events|survey\\.platform-events\\.dlq|suite\\.dlx)$'
 
-# crm and loyalty are replica consumers only: each declares one queue and its dead-letter pair and owns no exchange, so
-# its facts leave as webhooks and there is no crm or loyalty exchange to grant. `write` stops at its own queue
+# customer and loyalty are replica consumers only: each declares one queue and its dead-letter pair and owns no exchange, so
+# its facts leave as webhooks and there is no customer or loyalty exchange to grant. `write` stops at its own queue
 # (queue.declare with a dead-letter exchange and queue.bind both check write on the queue, and a publish would check
 # write on the exchange), which is what refuses a publish to platform.events. `read` covers platform.events (a
 # queue.bind checks read on the source) and its own queues only, so neither user can read the other's queue, Billing's,
 # Survey's or a mailer exchange. The suite rule "apps never consume each other's business events" is therefore a broker
 # fact and not a convention.
-declare_user crm \
-  "${CRM_BROKER_PASSWORD:?set the crm broker password}" \
-  '^(crm\\.platform-events|crm\\.platform-events\\.dlq|suite\\.dlx)$' \
-  '^(crm\\.platform-events|crm\\.platform-events\\.dlq|suite\\.dlx)$' \
-  '^(platform\\.events|crm\\.platform-events|crm\\.platform-events\\.dlq|suite\\.dlx)$'
+declare_user customer \
+  "${CUSTOMER_BROKER_PASSWORD:?set the customer broker password}" \
+  '^(customer\\.platform-events|customer\\.platform-events\\.dlq|suite\\.dlx)$' \
+  '^(customer\\.platform-events|customer\\.platform-events\\.dlq|suite\\.dlx)$' \
+  '^(platform\\.events|customer\\.platform-events|customer\\.platform-events\\.dlq|suite\\.dlx)$'
 
 declare_user loyalty \
   "${LOYALTY_BROKER_PASSWORD:?set the loyalty broker password}" \
@@ -131,7 +131,7 @@ declare_user loyalty \
   '^(loyalty\\.platform-events|loyalty\\.platform-events\\.dlq|suite\\.dlx)$' \
   '^(platform\\.events|loyalty\\.platform-events|loyalty\\.platform-events\\.dlq|suite\\.dlx)$'
 
-# Booking is a replica consumer only, like crm and loyalty: it declares one queue and its dead-letter pair and owns no
+# Booking is a replica consumer only, like customer and loyalty: it declares one queue and its dead-letter pair and owns no
 # exchange, so its ten facts leave as signed webhooks and there is no booking exchange to grant. `write` stops at its
 # own queue (declaring a queue with a dead-letter exchange and binding the DLQ both check write on the queue, and a
 # publish would check write on the exchange), which is what refuses a publish to platform.events. `read` covers

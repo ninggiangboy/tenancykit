@@ -1,8 +1,8 @@
-# One repository per deployable: Platform, Billing, Mailer, Notification, Mailroom, CRM, Loyalty and the Keycloak image
+# One repository per deployable: Platform, Billing, Mailer, Notification, Mailroom, Customer, Loyalty and the Keycloak image
 # that bakes the realm export. A service's migrate, api and worker runtimes share that service's repository, so the
 # count of repositories is the count of deployables and not of workloads.
 resource "aws_ecr_repository" "this" {
-  for_each = toset(["platform", "billing", "keycloak", "mailer", "notification", "mailroom", "crm", "loyalty"])
+  for_each = toset(["platform", "billing", "keycloak", "mailer", "notification", "mailroom", "customer", "loyalty"])
 
   name                 = "${var.suite_name}/${var.environment}/${each.key}"
   image_tag_mutability = "MUTABLE"

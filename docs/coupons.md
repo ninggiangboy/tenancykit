@@ -261,7 +261,7 @@ are in [concurrency-and-locking.md](concurrency-and-locking.md).
 
 ## Granting a coupon from another system
 
-A coupon can originate outside Billing — a loyalty programme that issues a voucher, a CRM campaign that grants a
+A coupon can originate outside Billing — a loyalty programme that issues a voucher, a Customer campaign that grants a
 discount. **Suite apps never link to each other**: with no Billing change, this is the Tenant System's integration,
 which holds the mapping between the other system's reward and a Billing coupon id or code. Billing only ever sees that
 id or code.

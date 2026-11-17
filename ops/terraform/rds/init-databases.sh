@@ -27,8 +27,8 @@ psql --set=ON_ERROR_STOP=1 \
   --set=notification_app_password="${NOTIFICATION_DB_PASSWORD:?set the notification app password}" \
   --set=mailroom_owner_password="${MAILROOM_MIGRATION_DB_PASSWORD:?set the mailroom owner password}" \
   --set=mailroom_app_password="${MAILROOM_DB_PASSWORD:?set the mailroom app password}" \
-  --set=crm_owner_password="${CRM_MIGRATION_DB_PASSWORD:?set the crm owner password}" \
-  --set=crm_app_password="${CRM_DB_PASSWORD:?set the crm app password}" \
+  --set=customer_owner_password="${CRM_MIGRATION_DB_PASSWORD:?set the customer owner password}" \
+  --set=customer_app_password="${CRM_DB_PASSWORD:?set the customer app password}" \
   --set=loyalty_owner_password="${LOYALTY_MIGRATION_DB_PASSWORD:?set the loyalty owner password}" \
   --set=loyalty_app_password="${LOYALTY_DB_PASSWORD:?set the loyalty app password}" \
   --set=keycloak_owner_password="${KEYCLOAK_DB_PASSWORD:?set the keycloak owner password}" \
@@ -51,8 +51,8 @@ create role notification_app login password :'notification_app_password' nosuper
 create role mailroom_owner login password :'mailroom_owner_password' nocreatedb nocreaterole;
 create role mailroom_app login password :'mailroom_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
-create role crm_owner login password :'crm_owner_password' nocreatedb nocreaterole;
-create role crm_app login password :'crm_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+create role customer_owner login password :'customer_owner_password' nocreatedb nocreaterole;
+create role customer_app login password :'customer_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
 create role loyalty_owner login password :'loyalty_owner_password' nocreatedb nocreaterole;
 create role loyalty_app login password :'loyalty_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
@@ -65,7 +65,7 @@ create database tenant owner tenant_owner;
 create database mailer owner mailer_owner;
 create database notification owner notification_owner;
 create database mailroom owner mailroom_owner;
-create database crm owner crm_owner;
+create database customer owner customer_owner;
 create database loyalty owner loyalty_owner;
 create database keycloak owner keycloak_owner;
 
@@ -75,7 +75,7 @@ revoke connect, temporary on database tenant from public;
 revoke connect, temporary on database mailer from public;
 revoke connect, temporary on database notification from public;
 revoke connect, temporary on database mailroom from public;
-revoke connect, temporary on database crm from public;
+revoke connect, temporary on database customer from public;
 revoke connect, temporary on database loyalty from public;
 revoke connect, temporary on database keycloak from public;
 
@@ -85,7 +85,7 @@ grant connect, temporary on database tenant to tenant_owner, tenant_app;
 grant connect, temporary on database mailer to mailer_owner, mailer_app;
 grant connect, temporary on database notification to notification_owner, notification_app;
 grant connect, temporary on database mailroom to mailroom_owner, mailroom_app;
-grant connect, temporary on database crm to crm_owner, crm_app;
+grant connect, temporary on database customer to customer_owner, customer_app;
 grant connect, temporary on database loyalty to loyalty_owner, loyalty_app;
 grant connect, temporary on database keycloak to keycloak_owner;
 SQL
@@ -107,7 +107,7 @@ apply_default_privileges tenant_owner "${TENANT_MIGRATION_DB_PASSWORD}" tenant t
 apply_default_privileges mailer_owner "${MAILER_MIGRATION_DB_PASSWORD}" mailer mailer_app
 apply_default_privileges notification_owner "${NOTIFICATION_MIGRATION_DB_PASSWORD}" notification notification_app
 apply_default_privileges mailroom_owner "${MAILROOM_MIGRATION_DB_PASSWORD}" mailroom mailroom_app
-apply_default_privileges crm_owner "${CRM_MIGRATION_DB_PASSWORD}" crm crm_app
+apply_default_privileges customer_owner "${CRM_MIGRATION_DB_PASSWORD}" customer customer_app
 apply_default_privileges loyalty_owner "${LOYALTY_MIGRATION_DB_PASSWORD}" loyalty loyalty_app
 
-echo "created platform, billing, tenant, mailer, notification, mailroom, crm, loyalty and keycloak databases with their owner and app roles"
+echo "created platform, billing, tenant, mailer, notification, mailroom, customer, loyalty and keycloak databases with their owner and app roles"

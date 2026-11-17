@@ -67,14 +67,14 @@ locals {
       PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH = sha256(random_password.this["NOTIFICATION_REPLICA_CLIENT_SECRET"].result)
       # Email's own replica client, hashed the same way; never shared with another service's client.
       PLATFORM_MAILROOM_SERVICE_CLIENT_SECRET_HASH = sha256(random_password.this["MAILROOM_REPLICA_CLIENT_SECRET"].result)
-      # CRM's and Loyalty's own replica clients, hashed the same way; neither is shared with another app's client.
+      # Customer's and Loyalty's own replica clients, hashed the same way; neither is shared with another app's client.
       PLATFORM_CRM_SERVICE_CLIENT_SECRET_HASH     = sha256(random_password.this["CRM_REPLICA_CLIENT_SECRET"].result)
       PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH = sha256(random_password.this["LOYALTY_REPLICA_CLIENT_SECRET"].result)
       # base64 of 32 bytes, which is what Billing's AES-256 master key expects.
       BILLING_SECRETS_MASTER_KEY = base64encode(random_password.this["BILLING_SECRETS_MASTER_KEY"].result)
       # Same encoding, same reason: Mailer's AesGcmSecretCipher refuses a key that does not decode to exactly 32 bytes.
       MAILER_SECRETS_MASTER_KEY = base64encode(random_password.this["MAILER_SECRETS_MASTER_KEY"].result)
-      # crm and loyalty wrap their webhook signing secrets with the same kind of key and the same length check.
+      # customer and loyalty wrap their webhook signing secrets with the same kind of key and the same length check.
       CRM_SECRETS_MASTER_KEY     = base64encode(random_password.this["CRM_SECRETS_MASTER_KEY"].result)
       LOYALTY_SECRETS_MASTER_KEY = base64encode(random_password.this["LOYALTY_SECRETS_MASTER_KEY"].result)
     }

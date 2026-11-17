@@ -40,6 +40,59 @@ paths:
               schema:
                 $ref: "#/components/schemas/SettingsView"
       x-required-permission: attribution:settings:manage
+  /api/v1/campaigns/{campaignId}/spend/{day}:
+    put:
+      tags:
+      - spend-controller
+      operationId: set
+      parameters:
+      - name: campaignId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: day
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpendRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SpendResponse"
+      x-required-permission: attribution:spend:manage
+    delete:
+      tags:
+      - spend-controller
+      operationId: delete
+      parameters:
+      - name: campaignId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: day
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        "204":
+          description: No Content
+      x-required-permission: attribution:spend:manage
   /t/v1/events:
     post:
       tags:
@@ -127,8 +180,10 @@ paths:
         \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
         \ and `nin` do not match rows where the field is null. Send `limit` with either\
         \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone."
       operationId: list
       parameters:
       - name: "filter[campaign_id][eq]"
@@ -599,11 +654,15 @@ paths:
           type: string
       - name: page_info
         in: query
-        description: "Fills `page` with the limit, offset, total and next cursor."
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
         required: false
         schema:
-          type: boolean
-          default: false
+          type: string
+          enum:
+          - full
+          - cursor
       responses:
         "200":
           description: OK
@@ -718,8 +777,10 @@ paths:
         \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
         \ and `nin` do not match rows where the field is null. Send `limit` with either\
         \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone."
       operationId: list_1
       parameters:
       - name: "filter[created_at][eq]"
@@ -1077,11 +1138,15 @@ paths:
           type: string
       - name: page_info
         in: query
-        description: "Fills `page` with the limit, offset, total and next cursor."
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
         required: false
         schema:
-          type: boolean
-          default: false
+          type: string
+          enum:
+          - full
+          - cursor
       responses:
         "200":
           description: OK
@@ -1140,8 +1205,10 @@ paths:
         \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
         \ and `nin` do not match rows where the field is null. Send `limit` with either\
         \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone."
       operationId: list_2
       parameters:
       - name: "filter[click_id][eq]"
@@ -1550,11 +1617,15 @@ paths:
           type: string
       - name: page_info
         in: query
-        description: "Fills `page` with the limit, offset, total and next cursor."
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
         required: false
         schema:
-          type: boolean
-          default: false
+          type: string
+          enum:
+          - full
+          - cursor
       responses:
         "200":
           description: OK
@@ -1600,8 +1671,10 @@ paths:
         \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
         \ and `nin` do not match rows where the field is null. Send `limit` with either\
         \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`; `page_info=true`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`."
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone."
       operationId: list_3
       parameters:
       - name: "filter[attribution_model][eq]"
@@ -1969,11 +2042,15 @@ paths:
           type: string
       - name: page_info
         in: query
-        description: "Fills `page` with the limit, offset, total and next cursor."
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
         required: false
         schema:
-          type: boolean
-          default: false
+          type: string
+          enum:
+          - full
+          - cursor
       responses:
         "200":
           description: OK
@@ -2019,6 +2096,67 @@ paths:
         "204":
           description: No Content
       x-required-permission: attribution:campaign:manage
+  /api/v1/campaigns/{campaignId}/spend:
+    get:
+      tags:
+      - spend-controller
+      operationId: list_4
+      parameters:
+      - name: campaignId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SpendView"
+      x-required-permission: attribution:spend:read
+    post:
+      tags:
+      - spend-controller
+      operationId: bulk_1
+      parameters:
+      - name: campaignId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SpendResponse"
+      x-required-permission: attribution:spend:manage
   /api/v1/links/{id}:
     get:
       tags:
@@ -2169,6 +2307,621 @@ paths:
               schema:
                 $ref: "#/components/schemas/CampaignResponse"
       x-required-permission: attribution:campaign:manage
+  /api/v1/reports/timeseries:
+    get:
+      tags:
+      - report-controller
+      operationId: timeseries
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: granularity
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: metrics
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: include
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: link_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: campaign_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: destination_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: goal_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: entry
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: device
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: country
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+            text/csv:
+              schema:
+                type: object
+      x-required-permission: attribution:report:read
+  /api/v1/reports/timeseries.csv:
+    get:
+      tags:
+      - report-controller
+      operationId: timeseriesCsv
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: granularity
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: metrics
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: include
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: link_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: campaign_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: destination_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: goal_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: entry
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: device
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: country
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            text/csv:
+              schema:
+                $ref: "#/components/schemas/StreamingResponseBody"
+      x-required-permission: attribution:report:read
+  /api/v1/reports/funnel:
+    get:
+      tags:
+      - report-controller
+      operationId: funnel
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: campaign_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: link_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: goal_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: include
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+            text/csv:
+              schema:
+                type: object
+      x-required-permission: attribution:report:read
+  /api/v1/reports/funnel.csv:
+    get:
+      tags:
+      - report-controller
+      operationId: funnelCsv
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: campaign_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: link_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: goal_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: include
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            text/csv:
+              schema:
+                $ref: "#/components/schemas/StreamingResponseBody"
+      x-required-permission: attribution:report:read
+  /api/v1/reports/costs:
+    get:
+      tags:
+      - report-controller
+      operationId: costs
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: campaign_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: group_by
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+            text/csv:
+              schema:
+                type: object
+      x-required-permission: attribution:report:read
+  /api/v1/reports/costs.csv:
+    get:
+      tags:
+      - report-controller
+      operationId: costsCsv
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: campaign_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: group_by
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            text/csv:
+              schema:
+                $ref: "#/components/schemas/StreamingResponseBody"
+      x-required-permission: attribution:report:read
+  /api/v1/reports/cohorts:
+    get:
+      tags:
+      - report-controller
+      operationId: cohorts
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: campaign_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: cohort
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: periods
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 12
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+            text/csv:
+              schema:
+                type: object
+      x-required-permission: attribution:report:read
+  /api/v1/reports/cohorts.csv:
+    get:
+      tags:
+      - report-controller
+      operationId: cohortsCsv
+      parameters:
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: campaign_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: cohort
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: periods
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 12
+      responses:
+        "200":
+          description: OK
+          content:
+            text/csv:
+              schema:
+                $ref: "#/components/schemas/StreamingResponseBody"
+      x-required-permission: attribution:report:read
+  /api/v1/reports/breakdown:
+    get:
+      tags:
+      - report-controller
+      operationId: breakdown
+      parameters:
+      - name: dimension
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: granularity
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: metrics
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: include
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: link_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: campaign_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: destination_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: goal_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: entry
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: device
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: country
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: referrer
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+            text/csv:
+              schema:
+                type: object
+      x-required-permission: attribution:report:read
+  /api/v1/reports/breakdown.csv:
+    get:
+      tags:
+      - report-controller
+      operationId: breakdownCsv
+      parameters:
+      - name: dimension
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: from
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: to
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: granularity
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: metrics
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: include
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: link_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: campaign_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: destination_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: goal_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+      - name: entry
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: device
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: country
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: referrer
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            text/csv:
+              schema:
+                $ref: "#/components/schemas/StreamingResponseBody"
+      x-required-permission: attribution:report:read
   /api/v1/ping:
     get:
       tags:
@@ -2186,7 +2939,7 @@ paths:
   /api/v1/links/{id}/stats:
     get:
       tags:
-      - link-controller
+      - link-stats-controller
       operationId: stats
       parameters:
       - name: id
@@ -2283,6 +3036,43 @@ components:
         defaultWindowDays:
           type: integer
           format: int32
+    SpendRequest:
+      type: object
+      properties:
+        amount:
+          type: string
+        currency:
+          type: string
+        impressions:
+          type: integer
+          format: int64
+        clicks:
+          type: integer
+          format: int64
+    SpendResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        campaignId:
+          type: string
+          format: uuid
+        day:
+          type: string
+          format: date
+        source:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        impressions:
+          type: integer
+          format: int64
+        clicks:
+          type: integer
+          format: int64
     EventBatch:
       type: object
       properties:
@@ -2634,6 +3424,7 @@ components:
         updatedAt:
           type: string
           format: date-time
+    StreamingResponseBody: {}
     PageInfo:
       type: object
       properties:
@@ -2641,13 +3432,19 @@ components:
           type: integer
           format: int32
         offset:
-          type: integer
+          type:
+          - integer
+          - "null"
           format: int32
         total:
-          type: integer
+          type:
+          - integer
+          - "null"
           format: int64
         next_cursor:
-          type: string
+          type:
+          - string
+          - "null"
     PageLinkResponse:
       type: object
       properties:
@@ -2656,7 +3453,9 @@ components:
           items:
             $ref: "#/components/schemas/LinkResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     DailyCount:
       type: object
       properties:
@@ -2669,18 +3468,27 @@ components:
     LinkStatsView:
       type: object
       properties:
-        clicksCounted:
-          type: integer
-          format: int64
+        linkId:
+          type: string
+          format: uuid
+        status:
+          type: string
         maxClicks:
           type: integer
           format: int64
-        status:
-          type: string
+        clicks:
+          type: integer
+          format: int64
         last30Days:
           type: array
           items:
             $ref: "#/components/schemas/DailyCount"
+        botClicksExcluded:
+          type: integer
+          format: int64
+        dataThrough:
+          type: string
+          format: date-time
     PageGoalResponse:
       type: object
       properties:
@@ -2689,7 +3497,9 @@ components:
           items:
             $ref: "#/components/schemas/GoalResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageConversionResponse:
       type: object
       properties:
@@ -2698,7 +3508,9 @@ components:
           items:
             $ref: "#/components/schemas/ConversionResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageCampaignResponse:
       type: object
       properties:
@@ -2707,7 +3519,39 @@ components:
           items:
             $ref: "#/components/schemas/CampaignResponse"
         page:
-          $ref: "#/components/schemas/PageInfo"
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    SpendView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        campaignId:
+          type: string
+          format: uuid
+        day:
+          type: string
+          format: date
+        source:
+          type: string
+        connectionId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        currency:
+          type: string
+        impressions:
+          type: integer
+          format: int64
+        clicks:
+          type: integer
+          format: int64
+        updatedAt:
+          type: string
+          format: date-time
   securitySchemes:
     oidc:
       type: http

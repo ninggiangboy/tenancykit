@@ -12,7 +12,7 @@ Documentation lives in [docs/](docs/README.md). Code lives in:
 | `survey/` | Survey app: a Tenant's surveys, immutable versions, links, visits, responses, uploads, analytics and signed webhooks; a replica consumer that publishes `survey.events` and sends no message |
 | `attribution/` | Attribution app: a Tenant's campaigns, tracked links, the redirect and its signed click id, clicks, page views, sessions and conversions, the credit each click receives under a per-campaign model, and advertising cost entered by hand or imported from Google Ads and Meta Ads |
 | `booking/` | Booking app: a Tenant's bookable resources, weekly hours and exceptions, groups, interval and capacity offerings, the two inventory engines behind one `Booking` lifecycle, availability, reschedules, series, a waitlist and a waiting room, the public customer gate and signed webhooks; a replica consumer that sends no message and touches no money |
-| `crm/` | CRM app: a Tenant's own customers, orders with line items, returns, activities, custom fields, tags and consent, the 360 profile, search and CSV export, and four signed webhooks; a replica consumer that declares no exchange and never reads another app's data |
+| `customer/` | Customer app: a Tenant's own customers, orders with line items, returns, activities, custom fields, tags and consent, the 360 profile, search and CSV export, and four signed webhooks; a replica consumer that declares no exchange and never reads another app's data |
 | `loyalty/` | Loyalty app: a Tenant's points program, its program and tier settings and promotions, members, the lot-based points ledger, redemption and reversal, tiers, expiry with an advance notice, rewards and single-use vouchers, and twelve signed webhooks; a replica consumer that declares no exchange |
 | `tenant/` | Sample Tenant System, built and deployed independently; it calls Billing over REST with a Platform-issued suite token |
 | `web/` | Placeholder for the frontends (Platform Admin, Tenant Admin, Customer Portal, Sample Tenant UI); no code yet |
@@ -47,7 +47,7 @@ cd mailroom && ./gradlew build
 cd survey && ./gradlew build
 cd attribution && ./gradlew build
 cd booking && ./gradlew build
-cd crm && ./gradlew build
+cd customer && ./gradlew build
 cd loyalty && ./gradlew build
 cd tenant && ./gradlew build
 ```

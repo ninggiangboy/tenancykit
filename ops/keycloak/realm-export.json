@@ -115,12 +115,12 @@
           }
         },
         {
-          "name": "crm-audience",
+          "name": "customer-audience",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "consentRequired": false,
           "config": {
-            "included.custom.audience": "crm",
+            "included.custom.audience": "customer",
             "id.token.claim": "false",
             "access.token.claim": "true"
           }
@@ -246,12 +246,12 @@
           }
         },
         {
-          "name": "crm-audience",
+          "name": "customer-audience",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "consentRequired": false,
           "config": {
-            "included.custom.audience": "crm",
+            "included.custom.audience": "customer",
             "id.token.claim": "false",
             "access.token.claim": "true"
           }

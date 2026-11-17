@@ -1,0 +1,158 @@
+spring:
+  application:
+    name: customer
+  profiles:
+    # With no active profile (dev, bootRun and every default-mode test) both runtime profiles are active, which
+    # keeps the all-in-one behaviour. The two profile files stay out of that run: each guards itself with an
+    # on-profile expression so only a runtime that runs alone applies its settings.
+    default: api,worker
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${CUSTOMER_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}
+          jwk-set-uri: ${CUSTOMER_OIDC_JWK_SET_URI:${CUSTOMER_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}/protocol/openid-connect/certs}
+          audiences: customer
+  datasource:
+    url: ${CUSTOMER_DB_URL:jdbc:postgresql://localhost:5432/customer}
+    username: ${CUSTOMER_DB_USER:customer_app}
+    password: ${CUSTOMER_DB_PASSWORD:customer_app}
+  rabbitmq:
+    host: ${CUSTOMER_RABBITMQ_HOST:localhost}
+    port: ${CUSTOMER_RABBITMQ_PORT:5672}
+    username: ${CUSTOMER_RABBITMQ_USER:customer}
+    password: ${CUSTOMER_RABBITMQ_PASSWORD:customer}
+  flyway:
+    locations: classpath:db/migration
+    # Migrations run as the table owner; the application connects as customer_app, which owns nothing.
+    url: ${CUSTOMER_MIGRATION_DB_URL:${CUSTOMER_DB_URL:jdbc:postgresql://localhost:5432/customer}}
+    user: ${CUSTOMER_MIGRATION_DB_USER:customer_owner}
+    password: ${CUSTOMER_MIGRATION_DB_PASSWORD:customer_owner}
+    placeholders:
+      # The baseline creates customer_app with this password. Without the placeholder Flyway aborts the whole set.
+      appDbPassword: ${CUSTOMER_DB_PASSWORD:customer_app}
+  task:
+    scheduling:
+      pool:
+        size: ${CUSTOMER_SCHEDULER_POOL_SIZE:4}
+      shutdown:
+        await-termination: true
+        await-termination-period: 30s
+
+server:
+  port: ${CUSTOMER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          # The replica is part of readiness: the api runtime serves nothing useful until one rebuild has finished.
+          include: readinessState,db,replicaState
+
+suite:
+  app-code: customer
+  replica:
+    platform-base-url: ${CUSTOMER_PLATFORM_BASE_URL:http://localhost:8082}
+    client-id: ${PLATFORM_CUSTOMER_SERVICE_CLIENT_ID:customer}
+    client-secret: ${PLATFORM_CUSTOMER_SERVICE_CLIENT_SECRET:customer}
+    rebuild-on-start: ${CUSTOMER_REPLICA_REBUILD_ON_START:true}
+    page-limit: 200
+    request-timeout: PT10S
+    platform-issuer: ${CUSTOMER_PLATFORM_ISSUER:http://localhost:8082}
+    platform-jwk-set-uri: ${CUSTOMER_PLATFORM_JWK_SET_URI:http://localhost:8082/.well-known/jwks.json}
+    # The worker's queue; the api runtime serves HTTP and consumes nothing.
+    queue: customer.platform-events
+    exchange: platform.events
+    max-attempts: 3
+    retry-backoff: PT0.5S
+    refresh-skew: PT30S
+
+customer:
+  messaging:
+    # Platform's exchange: customer binds a queue to it and declares no exchange of its own.
+    exchange: ${CUSTOMER_MESSAGING_EXCHANGE:platform.events}
+    queue: ${CUSTOMER_MESSAGING_QUEUE:customer.platform-events}
+  relay:
+    # The in-process relay that turns outbox rows into webhook deliveries. No broker, no export route.
+    poll-delay: PT2S
+    batch-size: 50
+    max-attempts: 10
+    backoff-base: PT10S
+    backoff-cap: PT1H
+    jitter: 0.2
+    claim-deadline: PT30S
+  jobs:
+    enabled: ${CUSTOMER_JOBS_ENABLED:true}
+    # At most this many tenants run at once across all jobs; keep it below the connection pool.
+    tenant-parallelism: ${CUSTOMER_WORKER_TENANT_PARALLELISM:4}
+  batches:
+    # Deployment limits, not per-Tenant settings: a Tenant cannot raise them. A batch reports each item's outcome and
+    # never fails as a whole because one item is bad, so these bound one request's work rather than its correctness.
+    max-customers: ${CUSTOMER_MAX_CUSTOMERS_PER_BATCH:1000}
+    max-activities: ${CUSTOMER_MAX_ACTIVITIES_PER_BATCH:1000}
+    max-orders: ${CUSTOMER_MAX_ORDERS_PER_BATCH:100}
+    max-order-lines: ${CUSTOMER_MAX_ORDER_LINES_PER_BATCH:5000}
+  orders:
+    # The largest order one call may record. It also bounds one outbox row and one webhook body, so a deployment with
+    # a slow endpoint can lower it.
+    max-lines-per-order: ${CUSTOMER_MAX_LINES_PER_ORDER:500}
+    # An order or a return may not be dated further in the future than this. There is no lower bound: a Tenant that
+    # imports historic orders sends dates no window can accept.
+    max-future-skew: ${CUSTOMER_ORDER_MAX_FUTURE_SKEW:PT5M}
+  fields:
+    # The Tenant's own customer attributes: how many definitions may accept values, and how large one customer's
+    # values may be serialized. These bound one Tenant's vocabulary and one row, so a deployment sets them.
+    max-active-definitions: ${CUSTOMER_MAX_FIELD_DEFINITIONS:50}
+    max-bytes: ${CUSTOMER_MAX_FIELD_BYTES:16384}
+  tags:
+    max-per-customer: ${CUSTOMER_MAX_TAGS_PER_CUSTOMER:50}
+  consents:
+    # A consent's occurredAt may not be further in the future than this, so a bad clock cannot sort above every
+    # honest record of the history.
+    max-future-skew: ${CUSTOMER_CONSENT_MAX_FUTURE_SKEW:PT5M}
+  activity:
+    max-payload-bytes: ${CUSTOMER_MAX_ACTIVITY_PAYLOAD_BYTES:8192}
+  exports:
+    page-size: ${CUSTOMER_EXPORT_PAGE_SIZE:500}
+    # One export per tenant at a time: the claim is a lease, so an instance that dies mid-export stops blocking its
+    # tenant once it runs out.
+    lease: ${CUSTOMER_EXPORT_LEASE:PT5M}
+  housekeeping:
+    enabled: ${CUSTOMER_HOUSEKEEPING_ENABLED:true}
+    inbox-retention: P30D
+    # A relayed outbox row keeps its payload after the relay has turned it into deliveries, so it is only evidence; seven
+    # days is long enough to explain a delivery and short enough that an erased customer's reference does not linger.
+    relayed-outbox-retention: P7D
+    dead-outbox-retention: P7D
+    # A delivery body carries the customer's and the order's data, so a finished delivery is not kept forever.
+    webhook-delivery-retention: P30D
+    batch-size: 500
+    interval: PT1H
+  webhooks:
+    # Endpoint signing secrets are envelope-encrypted with this key. A deployment must supply it; there is no default,
+    # so a forgotten key fails startup rather than storing a secret in the clear.
+    master-key: ${CUSTOMER_SECRETS_MASTER_KEY:}
+    master-key-id: ${CUSTOMER_SECRETS_MASTER_KEY_ID:k1}
+    # False everywhere but the compose profile, where the smoke forwarder receives a delivery on a container network.
+    # With false, a Tenant's endpoint must be a public https address and every send is re-checked by the DNS guard.
+    allow-non-public-targets: ${CUSTOMER_WEBHOOKS_ALLOW_NON_PUBLIC_TARGETS:false}
+    batch-size: 25
+    max-attempts: 10
+    backoff-base: PT30S
+    backoff-cap: PT6H
+    lease: PT2M
+    max-connections: 100
+    max-connections-per-route: 25
+    connection-request-timeout: PT2S
+    connect-timeout: PT3S
+    read-timeout: PT10S
+    deadline: PT15S

@@ -89,8 +89,8 @@ platform:
     # The two apps that keep a Tenant's customers and its points program. Each consumes Platform's state-transfer
     # events on its own queue and nothing else, so its own secret and the same narrow scope are the whole change;
     # their permission catalogs under contracts/permissions are packaged at build time and name the apps.
-    - id: ${PLATFORM_CRM_SERVICE_CLIENT_ID:crm}
-      secret-hash: ${PLATFORM_CRM_SERVICE_CLIENT_SECRET_HASH:}
+    - id: ${PLATFORM_CUSTOMER_SERVICE_CLIENT_ID:customer}
+      secret-hash: ${PLATFORM_CUSTOMER_SERVICE_CLIENT_SECRET_HASH:}
       scopes: [platform:replica:read]
     - id: ${PLATFORM_LOYALTY_SERVICE_CLIENT_ID:loyalty}
       secret-hash: ${PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH:}

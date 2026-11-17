@@ -31,7 +31,7 @@ public final class WebhookSignatures {
     private static final Map<String, Headers> SOURCES = Map.of(
             "billing", new Headers("Billing-Event-Id", "Billing-Event-Type", "Billing-Timestamp", "Billing-Key-Id", "Billing-Signature"),
             "survey", new Headers("Survey-Event-Id", "Survey-Event-Type", "Survey-Timestamp", "Survey-Key-Id", "Survey-Signature"),
-            "crm", new Headers("Crm-Event-Id", "Crm-Event-Type", "Crm-Timestamp", "Crm-Key-Id", "Crm-Signature"),
+            "customer", new Headers("Customer-Event-Id", "Customer-Event-Type", "Customer-Timestamp", "Customer-Key-Id", "Customer-Signature"),
             "loyalty", new Headers("Loyalty-Event-Id", "Loyalty-Event-Type", "Loyalty-Timestamp", "Loyalty-Key-Id", "Loyalty-Signature"),
             "mailroom", new Headers("Mailroom-Event-Id", "Mailroom-Event-Type", "Mailroom-Timestamp", "Mailroom-Key-Id", "Mailroom-Signature"),
             "external", new Headers("X-Workflow-Event-Id", "X-Workflow-Event-Type", "X-Workflow-Timestamp", "X-Workflow-Key-Id", "X-Workflow-Signature"));
