@@ -1,7 +1,7 @@
 ---
 title: "Booking app — generic appointments, rentals, capacity sessions and multi-resource holds"
 description: "An API-only booking/ deployable with two inventory engines (capacity: one row per place; interval: exclusion constraint on time ranges) behind one hold-confirm lifecycle, full RFC 5545 recurrence, waitlist, signed Booking-* webhooks and a public customer gate with anti-bot; a Tenant System confirms after its own payment and never shares code with another app."
-status: pending
+status: completed
 priority: P1
 effort: "16 phases, 4 × M, 12 × L"
 branch: dev

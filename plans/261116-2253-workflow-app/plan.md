@@ -1,7 +1,7 @@
 ---
 title: "Workflow app — a configurable Tenant System that runs versioned JSON workflows across the suite and external systems"
 description: "An API-only workflow/ deployable: Tenants define versioned JSON-graph workflows; a self-written durable engine on Postgres + RabbitMQ runs them (delay, wait-for-event, human task, parallel, for-each, sub-workflow, saga compensation) and calls suite apps with a dedicated Platform credential and external systems through guarded connections. It is the Tenant side of the suite, not an app-to-app link."
-status: in-progress
+status: completed
 priority: P1
 effort: "15 phases, 4 × M, 11 × L"
 branch: dev
