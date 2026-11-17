@@ -6,6 +6,7 @@ import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.platform.access.application.permission.port.PermissionCatalog;
+import dev.ngb.platform.boot.catalog.CatalogAudiences;
 import dev.ngb.platform.boot.catalog.CatalogTenantSystemScopes;
 import dev.ngb.platform.boot.catalog.TenantReadCodes;
 import dev.ngb.platform.boot.security.SuiteTokenIssuer;
@@ -27,8 +28,10 @@ import dev.ngb.platform.integration.application.tenantsystem.port.TenantSystemRe
 import dev.ngb.platform.integration.api.tenantsystem.TenantSystemQueries;
 import dev.ngb.platform.integration.api.tenantsystem.TenantSystemReadRepository;
 import dev.ngb.platform.integration.application.token.command.IssueTokenUseCase;
+import dev.ngb.platform.integration.application.token.port.AudienceCatalog;
 import dev.ngb.platform.integration.application.token.port.TenantCodes;
 import dev.ngb.platform.integration.application.token.port.TokenIssuer;
+import dev.ngb.platform.tenancy.application.entitlement.port.AppCatalog;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantQueries;
 import java.security.SecureRandom;
 import org.jooq.DSLContext;
@@ -70,6 +73,11 @@ class IntegrationConfiguration {
     @Bean
     TenantCodes tenantCodes(TenantQueries tenants) {
         return new TenantReadCodes(tenants);
+    }
+
+    @Bean
+    AudienceCatalog audienceCatalog(AppCatalog apps) {
+        return new CatalogAudiences(apps);
     }
 
     @Bean

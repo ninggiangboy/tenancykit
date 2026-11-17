@@ -4,6 +4,7 @@ import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.platform.integration.application.auth.exception.RateLimitExceededException;
 import dev.ngb.platform.integration.application.token.command.IssueTokenUseCase;
+import dev.ngb.platform.integration.application.token.port.AudienceCatalog;
 import dev.ngb.platform.integration.application.token.port.TokenIssuer;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
@@ -11,7 +12,6 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,13 +27,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 class TokenEndpointController {
 
-    private static final Set<String> AUDIENCES = Set.of("platform", "billing");
     private static final String RETRY_AFTER = "1";
 
     private final IssueTokenUseCase tokens;
+    private final AudienceCatalog audiences;
 
-    TokenEndpointController(IssueTokenUseCase tokens) {
+    TokenEndpointController(IssueTokenUseCase tokens, AudienceCatalog audiences) {
         this.tokens = tokens;
+        this.audiences = audiences;
     }
 
     @PostMapping(path = "/oauth/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
@@ -44,7 +45,7 @@ class TokenEndpointController {
             @RequestParam("grant_type") String grantType,
             @RequestParam("audience") String audience,
             @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
-        if (!"client_credentials".equals(grantType) || !AUDIENCES.contains(audience)) {
+        if (!"client_credentials".equals(grantType) || !audiences.offers(audience)) {
             return ResponseEntity.badRequest().build();
         }
         String[] credentials = basicCredentials(authorization).orElse(null);

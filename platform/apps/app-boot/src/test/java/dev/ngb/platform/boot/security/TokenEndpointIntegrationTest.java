@@ -61,6 +61,30 @@ class TokenEndpointIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    /**
+     * The audiences a token may name are the apps the deployment ships, one per permission catalog: a catalog added to
+     * the build becomes mintable, and a name nobody ships is refused before any credential is read.
+     */
+    @Test
+    void theAudiencesAreTheShippedApps() throws Exception {
+        for (String app : new String[] {"platform", "billing", "crm", "loyalty"}) {
+            mvc.perform(post("/oauth/token")
+                            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                            .param("grant_type", "client_credentials")
+                            .param("audience", app)
+                            .header("Authorization", basic(
+                                    PlatformContainerConfig.CLIENT_ID, PlatformContainerConfig.CLIENT_SECRET)))
+                    .andExpect(status().isOk());
+        }
+        mvc.perform(post("/oauth/token")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("grant_type", "client_credentials")
+                        .param("audience", "no-such-app")
+                        .header("Authorization", basic(
+                                PlatformContainerConfig.CLIENT_ID, PlatformContainerConfig.CLIENT_SECRET)))
+                .andExpect(status().isBadRequest());
+    }
+
     private static String basic(String id, String secret) {
         return "Basic " + Base64.getEncoder().encodeToString((id + ":" + secret).getBytes(StandardCharsets.UTF_8));
     }
