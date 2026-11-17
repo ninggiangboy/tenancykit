@@ -135,7 +135,7 @@ or test names.
 | 8 | [Durable time: delay and wait-for-event](phase-08-durable-time.md) | L | pending |
 | 9 | [HTTP actions, connections and credential vault](phase-09-http-actions-connections-and-vault.md) | L | pending |
 | 10 | [Control flow: branch, parallel, for-each, sub-workflow](phase-10-control-flow.md) | L | done |
-| 11 | [Human tasks](phase-11-human-tasks.md) | L | pending |
+| 11 | [Human tasks](phase-11-human-tasks.md) | L | done |
 | 12 | [Failure handling, compensation and replay](phase-12-failure-compensation-and-replay.md) | L | pending |
 | 13 | [Workflow webhooks and event contract](phase-13-workflow-webhooks-and-events.md) | M | pending |
 | 14 | [History, quotas, retention and runtimes](phase-14-history-quotas-retention-and-runtimes.md) | M | pending |

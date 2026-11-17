@@ -1,7 +1,7 @@
 ---
 phase: 11
 title: "Human tasks"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [10]
@@ -57,6 +57,15 @@ workflow/contexts/platform`); if it has changed and now carries roles, say so an
    the second due the task takes the node's `on_expire` branch (`expired`, reject, or fail).
 6. Task events (created, assigned, escalated, completed, expired) go to the outbox for phase 13.
 7. Cancelling an instance cancels its open tasks.
+
+## Outcome
+
+Shipped: `workflow/contexts/tasks` (domain, use cases, inbox query, sweep), migration `V11__tasks.sql`, the runtime task
+gateway and resumer, `workflow:task:manage` as the tenth code, and the API tests. Two deviations, both recorded here: the
+task's deadlines live on its own row and a per-tenant sweep applies them (not `TASK_DUE` timers, which the runtime owned
+and could not act on without a cycle between the contexts), and the task events named in task 6 are emitted in phase 13,
+where the event schemas and the outbox wiring land. Cancelling an instance's open tasks is `TaskRepository.cancelOpen`,
+called by phase 12's cancel.
 
 ## Validation
 
