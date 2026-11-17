@@ -22,6 +22,9 @@ public interface CalendarReader {
 
     Optional<SessionCalendar> session(UUID sessionId);
 
+    /** The cancellation thresholds of one offering, longest notice first, or none when none were named. */
+    List<CancellationWindow> cancellationWindows(UUID offeringId);
+
     /** The closed ranges of one resource that intersect {@code [from, to)}, expanded from any recurring block. */
     List<BlockRange> blocks(UUID resourceId, Instant from, Instant to);
 }

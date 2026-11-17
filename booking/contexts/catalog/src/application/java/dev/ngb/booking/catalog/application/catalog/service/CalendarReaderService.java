@@ -3,6 +3,7 @@ package dev.ngb.booking.catalog.application.catalog.service;
 import dev.ngb.booking.catalog.api.calendar.BlockRange;
 import dev.ngb.booking.catalog.api.calendar.CalendarExceptionRange;
 import dev.ngb.booking.catalog.api.calendar.CalendarReader;
+import dev.ngb.booking.catalog.api.calendar.CancellationWindow;
 import dev.ngb.booking.catalog.api.calendar.GroupCalendar;
 import dev.ngb.booking.catalog.api.calendar.GroupMemberRef;
 import dev.ngb.booking.catalog.api.calendar.OfferingCalendar;
@@ -84,6 +85,15 @@ public class CalendarReaderService implements CalendarReader {
     @Override
     public Optional<SessionCalendar> session(UUID sessionId) {
         return sessions.findById(sessionId).map(this::calendar);
+    }
+
+    @Override
+    public List<CancellationWindow> cancellationWindows(UUID offeringId) {
+        return offerings.findById(offeringId).stream()
+                .flatMap(offering -> offering.cancellationWindows().stream())
+                .map(window -> new CancellationWindow(window.minutesBeforeStart(), window.code()))
+                .sorted((left, right) -> Integer.compare(right.minutesBeforeStart(), left.minutesBeforeStart()))
+                .toList();
     }
 
     @Override

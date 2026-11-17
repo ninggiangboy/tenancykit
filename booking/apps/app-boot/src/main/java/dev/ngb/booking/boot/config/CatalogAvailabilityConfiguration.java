@@ -2,12 +2,14 @@ package dev.ngb.booking.boot.config;
 
 import dev.ngb.booking.catalog.api.calendar.CalendarReader;
 import dev.ngb.booking.catalog.api.group.GroupCursorReader;
+import dev.ngb.booking.catalog.api.recurrence.RecurrenceReader;
 import dev.ngb.booking.catalog.adapter.group.persistence.JooqGroupCursorReader;
 import dev.ngb.booking.catalog.application.block.query.BlockReadRepository;
 import dev.ngb.booking.catalog.application.calendar.query.CalendarReadRepository;
 import dev.ngb.booking.catalog.application.catalog.service.CalendarReaderService;
 import dev.ngb.booking.catalog.application.group.query.GroupReadRepository;
 import dev.ngb.booking.catalog.application.offering.query.OfferingReadRepository;
+import dev.ngb.booking.catalog.application.recurrence.service.RecurrenceReaderService;
 import dev.ngb.booking.catalog.application.recurrence.service.RecurrenceValidator;
 import dev.ngb.booking.catalog.application.resource.query.ResourceReadRepository;
 import dev.ngb.booking.catalog.application.session.query.SessionReadRepository;
@@ -34,5 +36,10 @@ class CatalogAvailabilityConfiguration {
     @Bean
     GroupCursorReader groupCursorReader(DSLContext dsl) {
         return new JooqGroupCursorReader(dsl);
+    }
+
+    @Bean
+    RecurrenceReader recurrenceReader(RecurrenceValidator recurrence) {
+        return new RecurrenceReaderService(recurrence);
     }
 }
