@@ -22,9 +22,11 @@ import dev.ngb.workflow_jooq.tables.WorkflowInboundEvent;
 import dev.ngb.workflow_jooq.tables.WorkflowInstance;
 import dev.ngb.workflow_jooq.tables.WorkflowSchedule;
 import dev.ngb.workflow_jooq.tables.WorkflowStepRun;
+import dev.ngb.workflow_jooq.tables.WorkflowTimer;
 import dev.ngb.workflow_jooq.tables.WorkflowToken;
 import dev.ngb.workflow_jooq.tables.WorkflowTrigger;
 import dev.ngb.workflow_jooq.tables.WorkflowVersion;
+import dev.ngb.workflow_jooq.tables.WorkflowWaitSubscription;
 
 import java.util.Arrays;
 import java.util.List;
@@ -139,6 +141,11 @@ public class Public extends SchemaImpl {
     public final WorkflowStepRun WORKFLOW_STEP_RUN = WorkflowStepRun.WORKFLOW_STEP_RUN;
 
     /**
+     * The table <code>public.workflow_timer</code>.
+     */
+    public final WorkflowTimer WORKFLOW_TIMER = WorkflowTimer.WORKFLOW_TIMER;
+
+    /**
      * The table <code>public.workflow_token</code>.
      */
     public final WorkflowToken WORKFLOW_TOKEN = WorkflowToken.WORKFLOW_TOKEN;
@@ -152,6 +159,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.workflow_version</code>.
      */
     public final WorkflowVersion WORKFLOW_VERSION = WorkflowVersion.WORKFLOW_VERSION;
+
+    /**
+     * The table <code>public.workflow_wait_subscription</code>.
+     */
+    public final WorkflowWaitSubscription WORKFLOW_WAIT_SUBSCRIPTION = WorkflowWaitSubscription.WORKFLOW_WAIT_SUBSCRIPTION;
 
     /**
      * No further instances allowed
@@ -187,9 +199,11 @@ public class Public extends SchemaImpl {
             WorkflowInstance.WORKFLOW_INSTANCE,
             WorkflowSchedule.WORKFLOW_SCHEDULE,
             WorkflowStepRun.WORKFLOW_STEP_RUN,
+            WorkflowTimer.WORKFLOW_TIMER,
             WorkflowToken.WORKFLOW_TOKEN,
             WorkflowTrigger.WORKFLOW_TRIGGER,
-            WorkflowVersion.WORKFLOW_VERSION
+            WorkflowVersion.WORKFLOW_VERSION,
+            WorkflowWaitSubscription.WORKFLOW_WAIT_SUBSCRIPTION
         );
     }
 }

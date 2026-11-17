@@ -14,6 +14,8 @@ import java.util.UUID;
  *
  * @param iteration the for-each iteration this token belongs to, zero outside one
  * @param attempt the number of times this token has been claimed; the step history uses it as its key
+ * @param resumeBranch which way a parked token was resumed: {@code delay}, {@code event} or {@code timeout}
+ * @param resumePayload the event data a wait resumed with, or null
  */
 public record Token(
         UUID id,
@@ -28,6 +30,8 @@ public record Token(
         Instant availableAt,
         String leaseOwner,
         Instant leaseUntil,
+        String resumeBranch,
+        Object resumePayload,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -46,6 +50,6 @@ public record Token(
             UUID id, TenantId tenantId, UUID instanceId, String nodeId, UUID parentTokenId, int iteration, Instant now) {
         return new Token(
                 id, tenantId, instanceId, nodeId, TokenStatus.READY, parentTokenId, null, iteration, 0, now, null, null,
-                now, now);
+                null, null, now, now);
     }
 }

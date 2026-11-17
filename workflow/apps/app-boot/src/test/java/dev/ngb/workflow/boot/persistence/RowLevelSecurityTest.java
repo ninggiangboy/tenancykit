@@ -197,6 +197,54 @@ class RowLevelSecurityTest {
                         insert into workflow_schedule (id, tenant_id, trigger_id, cron, timezone, next_due)
                         select gen_random_uuid(), '%1$s', t.id, '0 2 * * *', 'UTC', now() from t
                         """),
+                row("workflow_timer", """
+  with d as (
+      insert into workflow_definition (id, tenant_id, code, name, status, latest_version, created_at, updated_at)
+      values (gen_random_uuid(), '%1$s', 'waits', 'Waits', 'PUBLISHED', 1, now(), now())
+      returning id
+  ), v as (
+      insert into workflow_version (id, tenant_id, definition_id, version, graph, content_hash, published_at)
+      select gen_random_uuid(), '%1$s', d.id, 1, '{}'::jsonb, 'seed', now() from d
+      returning id
+  ), i as (
+      insert into workflow_instance (id, tenant_id, definition_id, version_id, version_number, status, input,
+                                     variables, started_at)
+      select gen_random_uuid(), '%1$s', d.id, v.id, 1, 'RUNNING', '{}'::jsonb, '{}'::jsonb, now() from d, v
+      returning id
+  ), t as (
+      insert into workflow_token (id, tenant_id, instance_id, node_id, status, iteration, attempt, available_at,
+                                  created_at, updated_at)
+      select gen_random_uuid(), '%1$s', i.id, 'start', 'WAITING', 0, 0, now(), now(), now() from i
+      returning id, instance_id
+  )
+  insert into workflow_timer (id, tenant_id, instance_id, token_id, kind, due_at, created_at)
+  select gen_random_uuid(), '%1$s', t.instance_id, t.id, 'DELAY', now(), now() from t
+  """),
+                row("workflow_wait_subscription", """
+  with d as (
+      insert into workflow_definition (id, tenant_id, code, name, status, latest_version, created_at, updated_at)
+      values (gen_random_uuid(), '%1$s', 'waits', 'Waits', 'PUBLISHED', 1, now(), now())
+      returning id
+  ), v as (
+      insert into workflow_version (id, tenant_id, definition_id, version, graph, content_hash, published_at)
+      select gen_random_uuid(), '%1$s', d.id, 1, '{}'::jsonb, 'seed', now() from d
+      returning id
+  ), i as (
+      insert into workflow_instance (id, tenant_id, definition_id, version_id, version_number, status, input,
+                                     variables, started_at)
+      select gen_random_uuid(), '%1$s', d.id, v.id, 1, 'RUNNING', '{}'::jsonb, '{}'::jsonb, now() from d, v
+      returning id
+  ), t as (
+      insert into workflow_token (id, tenant_id, instance_id, node_id, status, iteration, attempt, available_at,
+                                  created_at, updated_at)
+      select gen_random_uuid(), '%1$s', i.id, 'start', 'WAITING', 0, 0, now(), now(), now() from i
+      returning id, instance_id
+  )
+  insert into workflow_wait_subscription (id, tenant_id, instance_id, token_id, source, event_type,
+                                              registered_at, expires_at)
+  select gen_random_uuid(), '%1$s', t.instance_id, t.id, 'external', 'thing.happened', now(), now() + interval '1 day'
+  from t
+  """),
                 row("event_inbox", """
                         insert into event_inbox (tenant_id, consumer, event_id)
                         values ('%1$s', 'workflow', gen_random_uuid())

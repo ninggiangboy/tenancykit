@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -178,14 +179,20 @@ class ExecutionCoreTest extends WorkflowIntegrationTest {
         }
 
         AtomicInteger claims = new AtomicInteger();
+        AtomicReference<RuntimeException> failure = new AtomicReference<>();
         CountDownLatch started = new CountDownLatch(1);
         try (ExecutorService workers = Executors.newFixedThreadPool(8)) {
             for (int worker = 0; worker < 8; worker++) {
                 workers.submit(() -> {
                     started.await();
-                    // Each thread loops until nothing is due; the claim's SKIP LOCKED hands out one token at a time.
-                    while (tenantContext.callAs(RequestScope.tenant(tenant), () -> claimAndRun.runOnce()).claimed()) {
-                        claims.incrementAndGet();
+                    try {
+                        // Each thread loops until nothing is due; SKIP LOCKED hands out one token at a time.
+                        while (tenantContext.callAs(RequestScope.tenant(tenant), () -> claimAndRun.runOnce()).claimed()) {
+                            claims.incrementAndGet();
+                        }
+                    } catch (RuntimeException e) {
+                        // A worker that dies must fail the test, not shrink the count silently.
+                        failure.compareAndSet(null, e);
                     }
                     return null;
                 });
@@ -195,6 +202,9 @@ class ExecutionCoreTest extends WorkflowIntegrationTest {
             assertThat(workers.awaitTermination(120, TimeUnit.SECONDS)).isTrue();
         }
 
+        if (failure.get() != null) {
+            throw new AssertionError("a worker failed", failure.get());
+        }
         assertThat(claims.get()).isEqualTo(200);
         assertThat(read(tenant, () -> dsl.fetchCount(
                         WORKFLOW_INSTANCE,

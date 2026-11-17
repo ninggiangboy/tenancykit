@@ -22,9 +22,11 @@ import dev.ngb.workflow_jooq.tables.WorkflowInboundEvent;
 import dev.ngb.workflow_jooq.tables.WorkflowInstance;
 import dev.ngb.workflow_jooq.tables.WorkflowSchedule;
 import dev.ngb.workflow_jooq.tables.WorkflowStepRun;
+import dev.ngb.workflow_jooq.tables.WorkflowTimer;
 import dev.ngb.workflow_jooq.tables.WorkflowToken;
 import dev.ngb.workflow_jooq.tables.WorkflowTrigger;
 import dev.ngb.workflow_jooq.tables.WorkflowVersion;
+import dev.ngb.workflow_jooq.tables.WorkflowWaitSubscription;
 
 
 /**
@@ -124,6 +126,11 @@ public class Tables {
     public static final WorkflowStepRun WORKFLOW_STEP_RUN = WorkflowStepRun.WORKFLOW_STEP_RUN;
 
     /**
+     * The table <code>public.workflow_timer</code>.
+     */
+    public static final WorkflowTimer WORKFLOW_TIMER = WorkflowTimer.WORKFLOW_TIMER;
+
+    /**
      * The table <code>public.workflow_token</code>.
      */
     public static final WorkflowToken WORKFLOW_TOKEN = WorkflowToken.WORKFLOW_TOKEN;
@@ -137,4 +144,9 @@ public class Tables {
      * The table <code>public.workflow_version</code>.
      */
     public static final WorkflowVersion WORKFLOW_VERSION = WorkflowVersion.WORKFLOW_VERSION;
+
+    /**
+     * The table <code>public.workflow_wait_subscription</code>.
+     */
+    public static final WorkflowWaitSubscription WORKFLOW_WAIT_SUBSCRIPTION = WorkflowWaitSubscription.WORKFLOW_WAIT_SUBSCRIPTION;
 }

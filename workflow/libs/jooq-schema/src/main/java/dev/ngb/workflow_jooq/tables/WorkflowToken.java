@@ -7,6 +7,8 @@ package dev.ngb.workflow_jooq.tables;
 import dev.ngb.workflow_jooq.Keys;
 import dev.ngb.workflow_jooq.Public;
 import dev.ngb.workflow_jooq.tables.WorkflowInstance.WorkflowInstancePath;
+import dev.ngb.workflow_jooq.tables.WorkflowTimer.WorkflowTimerPath;
+import dev.ngb.workflow_jooq.tables.WorkflowWaitSubscription.WorkflowWaitSubscriptionPath;
 import dev.ngb.workflow_jooq.tables.records.WorkflowTokenRecord;
 
 import java.time.Instant;
@@ -20,6 +22,7 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.InverseForeignKey;
+import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Path;
 import org.jooq.PlainSQL;
@@ -130,6 +133,16 @@ public class WorkflowToken extends TableImpl<WorkflowTokenRecord> {
      */
     public final TableField<WorkflowTokenRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.INSTANT.nullable(false), this, "");
 
+    /**
+     * The column <code>public.workflow_token.resume_branch</code>.
+     */
+    public final TableField<WorkflowTokenRecord, String> RESUME_BRANCH = createField(DSL.name("resume_branch"), SQLDataType.CLOB, this, "");
+
+    /**
+     * The column <code>public.workflow_token.resume_payload</code>.
+     */
+    public final TableField<WorkflowTokenRecord, JSONB> RESUME_PAYLOAD = createField(DSL.name("resume_payload"), SQLDataType.JSONB, this, "");
+
     private WorkflowToken(Name alias, Table<WorkflowTokenRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -218,6 +231,32 @@ public class WorkflowToken extends TableImpl<WorkflowTokenRecord> {
             _workflowInstance = new WorkflowInstancePath(this, Keys.WORKFLOW_TOKEN__WORKFLOW_TOKEN_INSTANCE_ID_FKEY, null);
 
         return _workflowInstance;
+    }
+
+    private transient WorkflowTimerPath _workflowTimer;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.workflow_timer</code> table
+     */
+    public WorkflowTimerPath workflowTimer() {
+        if (_workflowTimer == null)
+            _workflowTimer = new WorkflowTimerPath(this, null, Keys.WORKFLOW_TIMER__WORKFLOW_TIMER_TOKEN_ID_FKEY.getInverseKey());
+
+        return _workflowTimer;
+    }
+
+    private transient WorkflowWaitSubscriptionPath _workflowWaitSubscription;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.workflow_wait_subscription</code> table
+     */
+    public WorkflowWaitSubscriptionPath workflowWaitSubscription() {
+        if (_workflowWaitSubscription == null)
+            _workflowWaitSubscription = new WorkflowWaitSubscriptionPath(this, null, Keys.WORKFLOW_WAIT_SUBSCRIPTION__WORKFLOW_WAIT_SUBSCRIPTION_TOKEN_ID_FKEY.getInverseKey());
+
+        return _workflowWaitSubscription;
     }
 
     @Override

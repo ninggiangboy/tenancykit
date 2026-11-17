@@ -7,6 +7,7 @@ import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.workflow.definitions.api.expression.ExpressionEvaluator;
 import dev.ngb.workflow.definitions.api.version.VersionReader;
 import dev.ngb.workflow.runtime.api.instance.InstanceStarter;
+import dev.ngb.workflow.runtime.api.wait.WaitResolver;
 import dev.ngb.workflow.shared.secret.SecretBox;
 import dev.ngb.workflow.triggers.adapter.trigger.cron.SpringCronCalendar;
 import dev.ngb.workflow.triggers.adapter.trigger.crypto.AesSecretCipher;
@@ -113,13 +114,14 @@ class TriggersConfiguration {
             InboundEventRepository events,
             VersionReader versions,
             InstanceStarter starter,
+            WaitResolver waits,
             SecretCipher cipher,
             EventFilters filters,
             TenantContext tenantContext,
             IdGenerator ids,
             Clock clock) {
         return new ReceiveEventUseCase(
-                unitOfWork, triggers, events, versions, starter, cipher, filters, tenantContext, ids, clock);
+                unitOfWork, triggers, events, versions, starter, waits, cipher, filters, tenantContext, ids, clock);
     }
 
     @Bean

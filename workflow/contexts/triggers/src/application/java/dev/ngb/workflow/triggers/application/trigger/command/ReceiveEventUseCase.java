@@ -10,6 +10,7 @@ import dev.ngb.workflow.definitions.api.version.PublishedGraph;
 import dev.ngb.workflow.definitions.api.version.VersionReader;
 import dev.ngb.workflow.runtime.api.instance.InstanceStarter;
 import dev.ngb.workflow.runtime.api.instance.StartRequest;
+import dev.ngb.workflow.runtime.api.wait.WaitResolver;
 import dev.ngb.workflow.triggers.application.trigger.port.InboundEventRepository;
 import dev.ngb.workflow.triggers.application.trigger.port.SecretCipher;
 import dev.ngb.workflow.triggers.application.trigger.port.TriggerRepository;
@@ -46,6 +47,7 @@ public class ReceiveEventUseCase {
     private final InboundEventRepository events;
     private final VersionReader versions;
     private final InstanceStarter starter;
+    private final WaitResolver waits;
     private final SecretCipher cipher;
     private final EventFilters filters;
     private final TenantContext tenantContext;
@@ -58,6 +60,7 @@ public class ReceiveEventUseCase {
             InboundEventRepository events,
             VersionReader versions,
             InstanceStarter starter,
+            WaitResolver waits,
             SecretCipher cipher,
             EventFilters filters,
             TenantContext tenantContext,
@@ -68,6 +71,7 @@ public class ReceiveEventUseCase {
         this.events = events;
         this.versions = versions;
         this.starter = starter;
+        this.waits = waits;
         this.cipher = cipher;
         this.filters = filters;
         this.tenantContext = tenantContext;
@@ -97,6 +101,8 @@ public class ReceiveEventUseCase {
             if (!fresh) {
                 return new Receipt(event.eventId(), 0, true);
             }
+            // Waits parked in this tenant resume in the same transaction as the event that satisfies them.
+            waits.resolve(source, event.type(), command.document(), now);
 
             int started = 0;
             List<Trigger> candidates = triggers.enabledForSource(source, event.type());

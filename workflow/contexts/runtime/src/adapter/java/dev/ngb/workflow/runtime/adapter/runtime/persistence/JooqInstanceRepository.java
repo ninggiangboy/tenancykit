@@ -81,6 +81,21 @@ public class JooqInstanceRepository implements InstanceRepository {
     }
 
     @Override
+    public long setStatus(UUID id, InstanceStatus status, long expectedVersion) {
+        int updated = dsl.update(WORKFLOW_INSTANCE)
+                .set(WORKFLOW_INSTANCE.STATUS, status.name())
+                .set(WORKFLOW_INSTANCE.VERSION, expectedVersion + 1)
+                .where(WORKFLOW_INSTANCE.ID.eq(id))
+                .and(WORKFLOW_INSTANCE.VERSION.eq(expectedVersion))
+                .and(WORKFLOW_INSTANCE.FINISHED_AT.isNull())
+                .execute();
+        if (updated != 1) {
+            throw new IllegalStateException("instance " + id + " changed its status under this step");
+        }
+        return expectedVersion + 1;
+    }
+
+    @Override
     public void finish(UUID id, InstanceStatus status, Instant finishedAt, long expectedVersion) {
         int updated = dsl.update(WORKFLOW_INSTANCE)
                 .set(WORKFLOW_INSTANCE.STATUS, status.name())

@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: "Durable time: delay and wait-for-event"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [6]

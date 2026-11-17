@@ -9,6 +9,7 @@ import dev.ngb.workflow_jooq.tables.WorkflowToken;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.jooq.JSONB;
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
 
@@ -231,6 +232,36 @@ public class WorkflowTokenRecord extends UpdatableRecordImpl<WorkflowTokenRecord
         return (Instant) get(13);
     }
 
+    /**
+     * Setter for <code>public.workflow_token.resume_branch</code>.
+     */
+    public WorkflowTokenRecord setResumeBranch(String value) {
+        set(14, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.workflow_token.resume_branch</code>.
+     */
+    public String getResumeBranch() {
+        return (String) get(14);
+    }
+
+    /**
+     * Setter for <code>public.workflow_token.resume_payload</code>.
+     */
+    public WorkflowTokenRecord setResumePayload(JSONB value) {
+        set(15, value);
+        return this;
+    }
+
+    /**
+     * Getter for <code>public.workflow_token.resume_payload</code>.
+     */
+    public JSONB getResumePayload() {
+        return (JSONB) get(15);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -254,7 +285,7 @@ public class WorkflowTokenRecord extends UpdatableRecordImpl<WorkflowTokenRecord
     /**
      * Create a detached, initialised WorkflowTokenRecord
      */
-    public WorkflowTokenRecord(UUID id, UUID tenantId, UUID instanceId, String nodeId, String status, UUID parentTokenId, String branchKey, Integer iteration, Integer attempt, Instant availableAt, String leaseOwner, Instant leaseUntil, Instant createdAt, Instant updatedAt) {
+    public WorkflowTokenRecord(UUID id, UUID tenantId, UUID instanceId, String nodeId, String status, UUID parentTokenId, String branchKey, Integer iteration, Integer attempt, Instant availableAt, String leaseOwner, Instant leaseUntil, Instant createdAt, Instant updatedAt, String resumeBranch, JSONB resumePayload) {
         super(WorkflowToken.WORKFLOW_TOKEN);
 
         setId(id);
@@ -271,6 +302,8 @@ public class WorkflowTokenRecord extends UpdatableRecordImpl<WorkflowTokenRecord
         setLeaseUntil(leaseUntil);
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
+        setResumeBranch(resumeBranch);
+        setResumePayload(resumePayload);
         resetTouchedOnNotNull();
     }
 }

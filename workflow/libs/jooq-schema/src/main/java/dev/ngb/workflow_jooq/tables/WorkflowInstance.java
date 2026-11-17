@@ -7,8 +7,10 @@ package dev.ngb.workflow_jooq.tables;
 import dev.ngb.workflow_jooq.Keys;
 import dev.ngb.workflow_jooq.Public;
 import dev.ngb.workflow_jooq.tables.WorkflowStepRun.WorkflowStepRunPath;
+import dev.ngb.workflow_jooq.tables.WorkflowTimer.WorkflowTimerPath;
 import dev.ngb.workflow_jooq.tables.WorkflowToken.WorkflowTokenPath;
 import dev.ngb.workflow_jooq.tables.WorkflowVersion.WorkflowVersionPath;
+import dev.ngb.workflow_jooq.tables.WorkflowWaitSubscription.WorkflowWaitSubscriptionPath;
 import dev.ngb.workflow_jooq.tables.records.WorkflowInstanceRecord;
 
 import java.time.Instant;
@@ -241,6 +243,19 @@ public class WorkflowInstance extends TableImpl<WorkflowInstanceRecord> {
         return _workflowStepRun;
     }
 
+    private transient WorkflowTimerPath _workflowTimer;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.workflow_timer</code> table
+     */
+    public WorkflowTimerPath workflowTimer() {
+        if (_workflowTimer == null)
+            _workflowTimer = new WorkflowTimerPath(this, null, Keys.WORKFLOW_TIMER__WORKFLOW_TIMER_INSTANCE_ID_FKEY.getInverseKey());
+
+        return _workflowTimer;
+    }
+
     private transient WorkflowTokenPath _workflowToken;
 
     /**
@@ -252,6 +267,19 @@ public class WorkflowInstance extends TableImpl<WorkflowInstanceRecord> {
             _workflowToken = new WorkflowTokenPath(this, null, Keys.WORKFLOW_TOKEN__WORKFLOW_TOKEN_INSTANCE_ID_FKEY.getInverseKey());
 
         return _workflowToken;
+    }
+
+    private transient WorkflowWaitSubscriptionPath _workflowWaitSubscription;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.workflow_wait_subscription</code> table
+     */
+    public WorkflowWaitSubscriptionPath workflowWaitSubscription() {
+        if (_workflowWaitSubscription == null)
+            _workflowWaitSubscription = new WorkflowWaitSubscriptionPath(this, null, Keys.WORKFLOW_WAIT_SUBSCRIPTION__WORKFLOW_WAIT_SUBSCRIPTION_INSTANCE_ID_FKEY.getInverseKey());
+
+        return _workflowWaitSubscription;
     }
 
     @Override

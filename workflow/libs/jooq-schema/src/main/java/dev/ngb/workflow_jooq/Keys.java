@@ -22,9 +22,11 @@ import dev.ngb.workflow_jooq.tables.WorkflowInboundEvent;
 import dev.ngb.workflow_jooq.tables.WorkflowInstance;
 import dev.ngb.workflow_jooq.tables.WorkflowSchedule;
 import dev.ngb.workflow_jooq.tables.WorkflowStepRun;
+import dev.ngb.workflow_jooq.tables.WorkflowTimer;
 import dev.ngb.workflow_jooq.tables.WorkflowToken;
 import dev.ngb.workflow_jooq.tables.WorkflowTrigger;
 import dev.ngb.workflow_jooq.tables.WorkflowVersion;
+import dev.ngb.workflow_jooq.tables.WorkflowWaitSubscription;
 import dev.ngb.workflow_jooq.tables.records.AppEntitlementsRecord;
 import dev.ngb.workflow_jooq.tables.records.EventInboxRecord;
 import dev.ngb.workflow_jooq.tables.records.JobLeasesRecord;
@@ -43,9 +45,11 @@ import dev.ngb.workflow_jooq.tables.records.WorkflowInboundEventRecord;
 import dev.ngb.workflow_jooq.tables.records.WorkflowInstanceRecord;
 import dev.ngb.workflow_jooq.tables.records.WorkflowScheduleRecord;
 import dev.ngb.workflow_jooq.tables.records.WorkflowStepRunRecord;
+import dev.ngb.workflow_jooq.tables.records.WorkflowTimerRecord;
 import dev.ngb.workflow_jooq.tables.records.WorkflowTokenRecord;
 import dev.ngb.workflow_jooq.tables.records.WorkflowTriggerRecord;
 import dev.ngb.workflow_jooq.tables.records.WorkflowVersionRecord;
+import dev.ngb.workflow_jooq.tables.records.WorkflowWaitSubscriptionRecord;
 
 import org.jooq.ForeignKey;
 import org.jooq.TableField;
@@ -90,9 +94,11 @@ public class Keys {
     public static final UniqueKey<WorkflowScheduleRecord> WORKFLOW_SCHEDULE_TRIGGER_ID_KEY = Internal.createUniqueKey(WorkflowSchedule.WORKFLOW_SCHEDULE, DSL.name("workflow_schedule_trigger_id_key"), new TableField[] { WorkflowSchedule.WORKFLOW_SCHEDULE.TRIGGER_ID }, true);
     public static final UniqueKey<WorkflowStepRunRecord> WORKFLOW_STEP_RUN_PKEY = Internal.createUniqueKey(WorkflowStepRun.WORKFLOW_STEP_RUN, DSL.name("workflow_step_run_pkey"), new TableField[] { WorkflowStepRun.WORKFLOW_STEP_RUN.ID }, true);
     public static final UniqueKey<WorkflowStepRunRecord> WORKFLOW_STEP_RUN_TOKEN_ID_ATTEMPT_KEY = Internal.createUniqueKey(WorkflowStepRun.WORKFLOW_STEP_RUN, DSL.name("workflow_step_run_token_id_attempt_key"), new TableField[] { WorkflowStepRun.WORKFLOW_STEP_RUN.TOKEN_ID, WorkflowStepRun.WORKFLOW_STEP_RUN.ATTEMPT }, true);
+    public static final UniqueKey<WorkflowTimerRecord> WORKFLOW_TIMER_PKEY = Internal.createUniqueKey(WorkflowTimer.WORKFLOW_TIMER, DSL.name("workflow_timer_pkey"), new TableField[] { WorkflowTimer.WORKFLOW_TIMER.ID }, true);
     public static final UniqueKey<WorkflowTokenRecord> WORKFLOW_TOKEN_PKEY = Internal.createUniqueKey(WorkflowToken.WORKFLOW_TOKEN, DSL.name("workflow_token_pkey"), new TableField[] { WorkflowToken.WORKFLOW_TOKEN.ID }, true);
     public static final UniqueKey<WorkflowTriggerRecord> WORKFLOW_TRIGGER_PKEY = Internal.createUniqueKey(WorkflowTrigger.WORKFLOW_TRIGGER, DSL.name("workflow_trigger_pkey"), new TableField[] { WorkflowTrigger.WORKFLOW_TRIGGER.ID }, true);
     public static final UniqueKey<WorkflowVersionRecord> WORKFLOW_VERSION_PKEY = Internal.createUniqueKey(WorkflowVersion.WORKFLOW_VERSION, DSL.name("workflow_version_pkey"), new TableField[] { WorkflowVersion.WORKFLOW_VERSION.ID }, true);
+    public static final UniqueKey<WorkflowWaitSubscriptionRecord> WORKFLOW_WAIT_SUBSCRIPTION_PKEY = Internal.createUniqueKey(WorkflowWaitSubscription.WORKFLOW_WAIT_SUBSCRIPTION, DSL.name("workflow_wait_subscription_pkey"), new TableField[] { WorkflowWaitSubscription.WORKFLOW_WAIT_SUBSCRIPTION.ID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
@@ -107,7 +113,11 @@ public class Keys {
     public static final ForeignKey<WorkflowInstanceRecord, WorkflowVersionRecord> WORKFLOW_INSTANCE__WORKFLOW_INSTANCE_VERSION_ID_FKEY = Internal.createForeignKey(WorkflowInstance.WORKFLOW_INSTANCE, DSL.name("workflow_instance_version_id_fkey"), new TableField[] { WorkflowInstance.WORKFLOW_INSTANCE.VERSION_ID }, Keys.WORKFLOW_VERSION_PKEY, new TableField[] { WorkflowVersion.WORKFLOW_VERSION.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<WorkflowScheduleRecord, WorkflowTriggerRecord> WORKFLOW_SCHEDULE__WORKFLOW_SCHEDULE_TRIGGER_ID_FKEY = Internal.createForeignKey(WorkflowSchedule.WORKFLOW_SCHEDULE, DSL.name("workflow_schedule_trigger_id_fkey"), new TableField[] { WorkflowSchedule.WORKFLOW_SCHEDULE.TRIGGER_ID }, Keys.WORKFLOW_TRIGGER_PKEY, new TableField[] { WorkflowTrigger.WORKFLOW_TRIGGER.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<WorkflowStepRunRecord, WorkflowInstanceRecord> WORKFLOW_STEP_RUN__WORKFLOW_STEP_RUN_INSTANCE_ID_FKEY = Internal.createForeignKey(WorkflowStepRun.WORKFLOW_STEP_RUN, DSL.name("workflow_step_run_instance_id_fkey"), new TableField[] { WorkflowStepRun.WORKFLOW_STEP_RUN.INSTANCE_ID }, Keys.WORKFLOW_INSTANCE_PKEY, new TableField[] { WorkflowInstance.WORKFLOW_INSTANCE.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<WorkflowTimerRecord, WorkflowInstanceRecord> WORKFLOW_TIMER__WORKFLOW_TIMER_INSTANCE_ID_FKEY = Internal.createForeignKey(WorkflowTimer.WORKFLOW_TIMER, DSL.name("workflow_timer_instance_id_fkey"), new TableField[] { WorkflowTimer.WORKFLOW_TIMER.INSTANCE_ID }, Keys.WORKFLOW_INSTANCE_PKEY, new TableField[] { WorkflowInstance.WORKFLOW_INSTANCE.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<WorkflowTimerRecord, WorkflowTokenRecord> WORKFLOW_TIMER__WORKFLOW_TIMER_TOKEN_ID_FKEY = Internal.createForeignKey(WorkflowTimer.WORKFLOW_TIMER, DSL.name("workflow_timer_token_id_fkey"), new TableField[] { WorkflowTimer.WORKFLOW_TIMER.TOKEN_ID }, Keys.WORKFLOW_TOKEN_PKEY, new TableField[] { WorkflowToken.WORKFLOW_TOKEN.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<WorkflowTokenRecord, WorkflowInstanceRecord> WORKFLOW_TOKEN__WORKFLOW_TOKEN_INSTANCE_ID_FKEY = Internal.createForeignKey(WorkflowToken.WORKFLOW_TOKEN, DSL.name("workflow_token_instance_id_fkey"), new TableField[] { WorkflowToken.WORKFLOW_TOKEN.INSTANCE_ID }, Keys.WORKFLOW_INSTANCE_PKEY, new TableField[] { WorkflowInstance.WORKFLOW_INSTANCE.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<WorkflowTriggerRecord, WorkflowDefinitionRecord> WORKFLOW_TRIGGER__WORKFLOW_TRIGGER_DEFINITION_ID_FKEY = Internal.createForeignKey(WorkflowTrigger.WORKFLOW_TRIGGER, DSL.name("workflow_trigger_definition_id_fkey"), new TableField[] { WorkflowTrigger.WORKFLOW_TRIGGER.DEFINITION_ID }, Keys.WORKFLOW_DEFINITION_PKEY, new TableField[] { WorkflowDefinition.WORKFLOW_DEFINITION.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<WorkflowVersionRecord, WorkflowDefinitionRecord> WORKFLOW_VERSION__WORKFLOW_VERSION_DEFINITION_ID_FKEY = Internal.createForeignKey(WorkflowVersion.WORKFLOW_VERSION, DSL.name("workflow_version_definition_id_fkey"), new TableField[] { WorkflowVersion.WORKFLOW_VERSION.DEFINITION_ID }, Keys.WORKFLOW_DEFINITION_PKEY, new TableField[] { WorkflowDefinition.WORKFLOW_DEFINITION.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<WorkflowWaitSubscriptionRecord, WorkflowInstanceRecord> WORKFLOW_WAIT_SUBSCRIPTION__WORKFLOW_WAIT_SUBSCRIPTION_INSTANCE_ID_FKEY = Internal.createForeignKey(WorkflowWaitSubscription.WORKFLOW_WAIT_SUBSCRIPTION, DSL.name("workflow_wait_subscription_instance_id_fkey"), new TableField[] { WorkflowWaitSubscription.WORKFLOW_WAIT_SUBSCRIPTION.INSTANCE_ID }, Keys.WORKFLOW_INSTANCE_PKEY, new TableField[] { WorkflowInstance.WORKFLOW_INSTANCE.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<WorkflowWaitSubscriptionRecord, WorkflowTokenRecord> WORKFLOW_WAIT_SUBSCRIPTION__WORKFLOW_WAIT_SUBSCRIPTION_TOKEN_ID_FKEY = Internal.createForeignKey(WorkflowWaitSubscription.WORKFLOW_WAIT_SUBSCRIPTION, DSL.name("workflow_wait_subscription_token_id_fkey"), new TableField[] { WorkflowWaitSubscription.WORKFLOW_WAIT_SUBSCRIPTION.TOKEN_ID }, Keys.WORKFLOW_TOKEN_PKEY, new TableField[] { WorkflowToken.WORKFLOW_TOKEN.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }

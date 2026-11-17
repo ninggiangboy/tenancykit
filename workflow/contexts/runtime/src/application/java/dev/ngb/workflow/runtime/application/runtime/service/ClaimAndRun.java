@@ -8,7 +8,9 @@ import dev.ngb.workflow.definitions.api.version.PublishedGraph;
 import dev.ngb.workflow.definitions.api.version.VersionReader;
 import dev.ngb.workflow.runtime.application.runtime.port.InstanceRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.StepRunRepository;
+import dev.ngb.workflow.runtime.application.runtime.port.TimerRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.TokenRepository;
+import dev.ngb.workflow.runtime.application.runtime.port.WaitSubscriptionRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.WakeUpPublisher;
 import dev.ngb.workflow.runtime.domain.instance.Instance;
 import dev.ngb.workflow.runtime.domain.instance.InstanceStatus;
@@ -17,8 +19,10 @@ import dev.ngb.workflow.runtime.domain.step.IdempotencyKeys;
 import dev.ngb.workflow.runtime.domain.step.NodeExecutor;
 import dev.ngb.workflow.runtime.domain.step.StepOutcome;
 import dev.ngb.workflow.runtime.domain.step.StepRun;
+import dev.ngb.workflow.runtime.domain.timer.Timer;
 import dev.ngb.workflow.runtime.domain.token.Token;
 import dev.ngb.workflow.runtime.domain.token.TokenStatus;
+import dev.ngb.workflow.runtime.domain.wait.WaitSubscription;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -30,7 +34,9 @@ import java.util.UUID;
  *
  * <p>The claim commits before the node runs, and the completion is a conditional update on the token's status and the
  * lease owner. A worker that dies after the call leaves a RUNNING token; the sweeper makes it READY after the lease runs
- * out, and the retry writes one step row because the token's attempt is part of its key.
+ * out, and the retry writes one step row because the token's attempt is part of its key. A node that cannot finish now
+ * parks its token: the same transaction writes the timer or subscription that will resume it, so a crash cannot leave a
+ * wait without a deadline or a deadline without a wait.
  */
 public class ClaimAndRun {
 
@@ -49,6 +55,8 @@ public class ClaimAndRun {
     private final InstanceRepository instances;
     private final TokenRepository tokens;
     private final StepRunRepository steps;
+    private final TimerRepository timers;
+    private final WaitSubscriptionRepository subscriptions;
     private final VersionReader versions;
     private final NodeExecutor executor;
     private final WakeUpPublisher wakeUp;
@@ -62,6 +70,8 @@ public class ClaimAndRun {
             InstanceRepository instances,
             TokenRepository tokens,
             StepRunRepository steps,
+            TimerRepository timers,
+            WaitSubscriptionRepository subscriptions,
             VersionReader versions,
             NodeExecutor executor,
             WakeUpPublisher wakeUp,
@@ -73,6 +83,8 @@ public class ClaimAndRun {
         this.instances = instances;
         this.tokens = tokens;
         this.steps = steps;
+        this.timers = timers;
+        this.subscriptions = subscriptions;
         this.versions = versions;
         this.executor = executor;
         this.wakeUp = wakeUp;
@@ -124,12 +136,74 @@ public class ClaimAndRun {
     }
 
     private InstanceStatus record(Token token, Instance instance, StepOutcome outcome, Instant finishedAt) {
+        if (outcome.parked()) {
+            return park(token, instance, outcome, finishedAt);
+        }
         boolean completed = tokens.finish(
                 token.id(), workerId, outcome.failed() ? TokenStatus.FAILED : TokenStatus.DONE, finishedAt);
         if (!completed) {
             // The lease ran out and another worker owns the token; it writes the only completion.
             return instance.status();
         }
+        recordStep(token, outcome, finishedAt);
+
+        if (!outcome.failed()) {
+            for (String next : outcome.nextNodeIds()) {
+                tokens.add(Token.ready(
+                        ids.newId(), token.tenantId(), token.instanceId(), next, token.id(), token.iteration(), finishedAt));
+            }
+        }
+
+        InstanceStatus next = outcome.failed()
+                ? InstanceStatus.FAILED
+                : tokens.liveCount(token.instanceId()) == 0 ? InstanceStatus.COMPLETED : InstanceStatus.RUNNING;
+
+        long version = updateVariables(instance, outcome);
+        if (next.terminal()) {
+            instances.finish(instance.id(), next, finishedAt, version);
+        }
+        return next;
+    }
+
+    /** Moves the token to WAITING and writes the deadline or subscription that will resume it. */
+    private InstanceStatus park(Token token, Instance instance, StepOutcome outcome, Instant finishedAt) {
+        if (!tokens.park(token.id(), workerId, finishedAt)) {
+            return instance.status();
+        }
+        recordStep(token, outcome, finishedAt);
+
+        StepOutcome.Reservation reservation = outcome.reservation();
+        if (reservation.kind() != null) {
+            timers.add(Timer.due(
+                    ids.newId(),
+                    token.tenantId(),
+                    token.instanceId(),
+                    token.id(),
+                    reservation.kind(),
+                    reservation.dueAt(),
+                    finishedAt));
+        }
+        if (reservation.waits()) {
+            subscriptions.add(WaitSubscription.opening(
+                    ids.newId(),
+                    token.tenantId(),
+                    token.instanceId(),
+                    token.id(),
+                    reservation.waitSource(),
+                    reservation.waitEventType(),
+                    finishedAt,
+                    reservation.waitExpiresAt()));
+        }
+
+        long version = updateVariables(instance, outcome);
+        if (tokens.activeCount(token.instanceId()) == 0) {
+            instances.setStatus(instance.id(), InstanceStatus.WAITING, version);
+            return InstanceStatus.WAITING;
+        }
+        return InstanceStatus.RUNNING;
+    }
+
+    private void recordStep(Token token, StepOutcome outcome, Instant finishedAt) {
         steps.add(new StepRun(
                 ids.newId(),
                 token.tenantId(),
@@ -143,25 +217,13 @@ public class ClaimAndRun {
                 null,
                 outcome.response(),
                 IdempotencyKeys.of(token.instanceId(), token.id(), token.nodeId(), token.iteration())));
+    }
 
-        if (!outcome.failed()) {
-            for (String next : outcome.nextNodeIds()) {
-                tokens.add(Token.ready(
-                        ids.newId(), token.tenantId(), token.instanceId(), next, token.id(), token.iteration(), finishedAt));
-            }
-        }
-
-        InstanceStatus next = outcome.failed()
-                ? InstanceStatus.FAILED
-                : tokens.liveCount(token.instanceId()) == 0 ? InstanceStatus.COMPLETED : InstanceStatus.RUNNING;
-
+    private long updateVariables(Instance instance, StepOutcome outcome) {
         long version = instance.version();
         if (!outcome.variables().equals(instance.variables())) {
             version = instances.updateVariables(instance.id(), outcome.variables(), version);
         }
-        if (next.terminal()) {
-            instances.finish(instance.id(), next, finishedAt, version);
-        }
-        return next;
+        return version;
     }
 }

@@ -8,16 +8,24 @@ import dev.ngb.workflow.definitions.api.expression.ExpressionEvaluator;
 import dev.ngb.workflow.definitions.api.version.VersionReader;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqInstanceRepository;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqStepRunRepository;
+import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqTimerRepository;
 import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqTokenRepository;
+import dev.ngb.workflow.runtime.adapter.runtime.persistence.JooqWaitSubscriptionRepository;
+import dev.ngb.workflow.runtime.api.instance.InstanceStarter;
+import dev.ngb.workflow.runtime.api.wait.WaitResolver;
 import dev.ngb.workflow.runtime.application.runtime.command.StartInstanceUseCase;
 import dev.ngb.workflow.runtime.application.runtime.port.InstanceRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.StepRunRepository;
+import dev.ngb.workflow.runtime.application.runtime.port.TimerRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.TokenRepository;
+import dev.ngb.workflow.runtime.application.runtime.port.WaitSubscriptionRepository;
 import dev.ngb.workflow.runtime.application.runtime.port.WakeUpPublisher;
-import dev.ngb.workflow.runtime.api.instance.InstanceStarter;
 import dev.ngb.workflow.runtime.application.runtime.service.ClaimAndRun;
 import dev.ngb.workflow.runtime.application.runtime.service.InstanceStarterService;
+import dev.ngb.workflow.runtime.application.runtime.service.TimerSweep;
 import dev.ngb.workflow.runtime.application.runtime.service.TokenSweeper;
+import dev.ngb.workflow.runtime.application.runtime.service.WaitResolverService;
+import dev.ngb.workflow.runtime.domain.step.BufferedEventLookup;
 import dev.ngb.workflow.runtime.domain.step.DefaultNodeExecutor;
 import dev.ngb.workflow.runtime.domain.step.NodeExecutor;
 import java.util.UUID;
@@ -27,7 +35,8 @@ import org.springframework.context.annotation.Configuration;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
- * Wires the runtime: its three stores, the node executor, the manual start, the claim loop and the lease sweeper.
+ * Wires the runtime: its stores, the node executor, the manual start, the claim loop, the lease sweeper, the timer sweep
+ * and the event-wait resolver.
  *
  * <p>The worker id is created once per process, so every claim this runtime makes is attributable and a restarted
  * process never reuses another's name while its lease is still live.
@@ -41,8 +50,8 @@ class RuntimeConfiguration {
     }
 
     @Bean
-    TokenRepository tokenRepository(DSLContext dsl) {
-        return new JooqTokenRepository(dsl);
+    TokenRepository tokenRepository(DSLContext dsl, JsonMapper json) {
+        return new JooqTokenRepository(dsl, json);
     }
 
     @Bean
@@ -51,8 +60,24 @@ class RuntimeConfiguration {
     }
 
     @Bean
-    NodeExecutor nodeExecutor(ExpressionEvaluator expressions) {
-        return new DefaultNodeExecutor(expressions);
+    TimerRepository timerRepository(DSLContext dsl) {
+        return new JooqTimerRepository(dsl);
+    }
+
+    @Bean
+    WaitSubscriptionRepository waitSubscriptionRepository(DSLContext dsl) {
+        return new JooqWaitSubscriptionRepository(dsl);
+    }
+
+    @Bean
+    BufferedEventLookup bufferedEventLookup(
+            UnitOfWork unitOfWork, dev.ngb.workflow.triggers.application.trigger.port.InboundEventRepository events) {
+        return new TriggeredEventLookup(unitOfWork, events);
+    }
+
+    @Bean
+    NodeExecutor nodeExecutor(ExpressionEvaluator expressions, BufferedEventLookup events) {
+        return new DefaultNodeExecutor(expressions, events);
     }
 
     @Bean
@@ -75,11 +100,33 @@ class RuntimeConfiguration {
     }
 
     @Bean
+    WaitResolver waitResolver(
+            UnitOfWork unitOfWork,
+            WaitSubscriptionRepository subscriptions,
+            TokenRepository tokens,
+            TimerRepository timers,
+            WakeUpPublisher wakeUp) {
+        return new WaitResolverService(unitOfWork, subscriptions, tokens, timers, wakeUp);
+    }
+
+    @Bean
+    TimerSweep timerSweep(
+            UnitOfWork unitOfWork,
+            TimerRepository timers,
+            TokenRepository tokens,
+            WaitSubscriptionRepository subscriptions,
+            WakeUpPublisher wakeUp) {
+        return new TimerSweep(unitOfWork, timers, tokens, subscriptions, wakeUp);
+    }
+
+    @Bean
     ClaimAndRun claimAndRun(
             UnitOfWork unitOfWork,
             InstanceRepository instances,
             TokenRepository tokens,
             StepRunRepository steps,
+            TimerRepository timers,
+            WaitSubscriptionRepository subscriptions,
             VersionReader versions,
             NodeExecutor executor,
             WakeUpPublisher wakeUp,
@@ -91,6 +138,8 @@ class RuntimeConfiguration {
                 instances,
                 tokens,
                 steps,
+                timers,
+                subscriptions,
                 versions,
                 executor,
                 wakeUp,

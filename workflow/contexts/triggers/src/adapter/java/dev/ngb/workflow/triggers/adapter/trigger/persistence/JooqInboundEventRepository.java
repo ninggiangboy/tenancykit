@@ -4,6 +4,9 @@ import static dev.ngb.workflow_jooq.Tables.WORKFLOW_INBOUND_EVENT;
 
 import dev.ngb.workflow.triggers.application.trigger.port.InboundEventRepository;
 import dev.ngb.workflow.triggers.domain.event.InboundEvent;
+import dev.ngb.workflow_jooq.tables.records.WorkflowInboundEventRecord;
+import java.time.Instant;
+import java.util.Optional;
 import org.jooq.DSLContext;
 import org.jooq.JSONB;
 import tools.jackson.databind.json.JsonMapper;
@@ -33,5 +36,30 @@ public class JooqInboundEventRepository implements InboundEventRepository {
                         .onConflictDoNothing()
                         .execute()
                 == 1;
+    }
+
+    @Override
+    public Optional<InboundEvent> earliestMatch(String source, String eventType, Instant receivedAfter) {
+        var query = dsl.selectFrom(WORKFLOW_INBOUND_EVENT)
+                .where(WORKFLOW_INBOUND_EVENT.EVENT_TYPE.eq(eventType))
+                .and(WORKFLOW_INBOUND_EVENT.RECEIVED_AT.ge(receivedAfter));
+        if (!"any".equals(source)) {
+            query = query.and(WORKFLOW_INBOUND_EVENT.SOURCE.eq(source));
+        }
+        return query.orderBy(WORKFLOW_INBOUND_EVENT.RECEIVED_AT)
+                .limit(1)
+                .fetchOptional(row -> toDomain(row));
+    }
+
+    private InboundEvent toDomain(WorkflowInboundEventRecord row) {
+        return new InboundEvent(
+                row.getId(),
+                row.getTenantId(),
+                row.getSource(),
+                row.getEventId(),
+                row.getEventType(),
+                row.getPayload() == null ? null : json.readValue(row.getPayload().data(), Object.class),
+                row.getReceivedAt(),
+                row.getExpiresAt());
     }
 }
