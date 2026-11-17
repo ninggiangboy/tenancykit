@@ -20,6 +20,8 @@ import dev.ngb.booking_jooq.tables.IntervalClaims;
 import dev.ngb.booking_jooq.tables.OfferingRequirements;
 import dev.ngb.booking_jooq.tables.Offerings;
 import dev.ngb.booking_jooq.tables.Outbox;
+import dev.ngb.booking_jooq.tables.QueueState;
+import dev.ngb.booking_jooq.tables.QueueTickets;
 import dev.ngb.booking_jooq.tables.ReplicaState;
 import dev.ngb.booking_jooq.tables.ResourceGroups;
 import dev.ngb.booking_jooq.tables.Resources;
@@ -140,6 +142,16 @@ public class Public extends SchemaImpl {
     public final Outbox OUTBOX = Outbox.OUTBOX;
 
     /**
+     * The table <code>public.queue_state</code>.
+     */
+    public final QueueState QUEUE_STATE = QueueState.QUEUE_STATE;
+
+    /**
+     * The table <code>public.queue_tickets</code>.
+     */
+    public final QueueTickets QUEUE_TICKETS = QueueTickets.QUEUE_TICKETS;
+
+    /**
      * The table <code>public.replica_state</code>.
      */
     public final ReplicaState REPLICA_STATE = ReplicaState.REPLICA_STATE;
@@ -251,6 +263,8 @@ public class Public extends SchemaImpl {
             OfferingRequirements.OFFERING_REQUIREMENTS,
             Offerings.OFFERINGS,
             Outbox.OUTBOX,
+            QueueState.QUEUE_STATE,
+            QueueTickets.QUEUE_TICKETS,
             ReplicaState.REPLICA_STATE,
             ResourceGroups.RESOURCE_GROUPS,
             Resources.RESOURCES,

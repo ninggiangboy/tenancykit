@@ -1,9 +1,14 @@
 package dev.ngb.booking.boot.config;
 
+import dev.ngb.booking.gate.adapter.queue.persistence.CachedQueueWatermarks;
+import dev.ngb.booking.gate.adapter.queue.persistence.JooqQueueTicketRepository;
 import dev.ngb.booking.gate.adapter.settings.persistence.JooqGateSettingsRepository;
 import dev.ngb.booking.gate.adapter.publicgate.web.ClientFingerprint;
 import dev.ngb.booking.gate.adapter.publicgate.web.PublicRateLimiter;
 import dev.ngb.booking.gate.application.service.AdmissionControl;
+import dev.ngb.booking.gate.application.queue.port.QueueTicketRepository;
+import dev.ngb.booking.gate.application.queue.port.WatermarkCache;
+import dev.ngb.booking.gate.application.queue.service.QueueService;
 import dev.ngb.booking.gate.application.service.GateLimits;
 import dev.ngb.booking.gate.application.settings.port.GateSettingsRepository;
 import dev.ngb.booking.gate.application.settings.service.GateSettingsService;
@@ -12,6 +17,7 @@ import dev.ngb.booking.gate.application.token.command.IssueCustomerTokenUseCase;
 import dev.ngb.booking.gate.domain.token.CustomerTokens;
 import dev.ngb.booking.catalog.api.calendar.CalendarReader;
 import dev.ngb.core.runtime.Clock;
+import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.tenancy.TenantContext;
 import java.util.Map;
@@ -93,6 +99,28 @@ class GateConfiguration {
     @Bean
     ClientFingerprint clientFingerprint(CustomerTokens.Keys keys) {
         return new ClientFingerprint(keys.keys().get(keys.activeKeyId()));
+    }
+
+    @Bean
+    QueueTicketRepository queueTicketRepository(DSLContext dsl, TenantContext tenantContext) {
+        return new JooqQueueTicketRepository(dsl, tenantContext);
+    }
+
+    @Bean
+    WatermarkCache watermarkCache(QueueTicketRepository tickets, Clock clock) {
+        return new CachedQueueWatermarks(tickets, clock);
+    }
+
+    @Bean
+    QueueService queueService(
+            UnitOfWork unitOfWork,
+            QueueTicketRepository tickets,
+            WatermarkCache watermarks,
+            CustomerTokens.Keys keys,
+            TenantContext tenantContext,
+            IdGenerator ids,
+            Clock clock) {
+        return new QueueService(unitOfWork, tickets, watermarks, keys, tenantContext, ids, clock);
     }
 
     @Bean

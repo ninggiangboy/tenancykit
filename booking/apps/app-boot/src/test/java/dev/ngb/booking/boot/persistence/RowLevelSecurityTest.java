@@ -298,6 +298,15 @@ class RowLevelSecurityTest {
                                now(), now()
                         from e
                         """),
+                Arguments.of("queue_tickets", """
+                        insert into queue_tickets (tenant_id, id, target_id, ticket_no, customer_ref, status, issued_at)
+                        values ('%1$s', gen_random_uuid(), 'offering:x', 1, 'cust-1', 'WAITING', now())
+                        """),
+                Arguments.of("queue_state", """
+                        insert into queue_state (tenant_id, target_id, watermark_ticket_no, admit_per_second,
+                                                 admit_window_seconds, updated_at)
+                        values ('%1$s', 'offering:x', 0, 50, 120, now())
+                        """),
                 Arguments.of("gate_settings", """
                         insert into gate_settings (tenant_id, allowed_origins, max_token_ttl_seconds, updated_at)
                         values ('%1$s', array['https://example.com'], 600, now())

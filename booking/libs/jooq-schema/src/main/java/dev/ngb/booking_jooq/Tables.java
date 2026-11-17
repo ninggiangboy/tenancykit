@@ -20,6 +20,8 @@ import dev.ngb.booking_jooq.tables.IntervalClaims;
 import dev.ngb.booking_jooq.tables.OfferingRequirements;
 import dev.ngb.booking_jooq.tables.Offerings;
 import dev.ngb.booking_jooq.tables.Outbox;
+import dev.ngb.booking_jooq.tables.QueueState;
+import dev.ngb.booking_jooq.tables.QueueTickets;
 import dev.ngb.booking_jooq.tables.ReplicaState;
 import dev.ngb.booking_jooq.tables.ResourceGroups;
 import dev.ngb.booking_jooq.tables.Resources;
@@ -123,6 +125,16 @@ public class Tables {
      * The table <code>public.outbox</code>.
      */
     public static final Outbox OUTBOX = Outbox.OUTBOX;
+
+    /**
+     * The table <code>public.queue_state</code>.
+     */
+    public static final QueueState QUEUE_STATE = QueueState.QUEUE_STATE;
+
+    /**
+     * The table <code>public.queue_tickets</code>.
+     */
+    public static final QueueTickets QUEUE_TICKETS = QueueTickets.QUEUE_TICKETS;
 
     /**
      * The table <code>public.replica_state</code>.

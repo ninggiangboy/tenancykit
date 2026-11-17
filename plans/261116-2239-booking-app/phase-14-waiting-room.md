@@ -1,7 +1,7 @@
 ---
 phase: 14
 title: "Waiting room: ordered admission queue"
-status: pending
+status: completed
 priority: P1
 effort: "L"
 dependencies: [13]

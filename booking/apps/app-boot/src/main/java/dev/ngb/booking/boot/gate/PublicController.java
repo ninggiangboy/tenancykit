@@ -16,8 +16,10 @@ import dev.ngb.booking.catalog.application.offering.query.OfferingView;
 import dev.ngb.booking.gate.adapter.publicgate.web.GateAttributes;
 import dev.ngb.booking.gate.application.service.AdmissionControl;
 import dev.ngb.booking.gate.application.exception.GateException;
+import dev.ngb.booking.gate.application.queue.service.QueueService;
 import dev.ngb.booking.gate.application.service.GateLimits;
 import dev.ngb.booking.gate.domain.token.CustomerClaims;
+import dev.ngb.booking.gate.domain.queue.TicketClaims;
 import dev.ngb.booking.gate.domain.token.GateScope;
 import dev.ngb.booking.inventory.application.availability.query.AvailabilityQueries;
 import dev.ngb.booking.inventory.application.availability.query.AvailabilitySlot;
@@ -63,6 +65,12 @@ public class PublicController {
     public record PublicAvailabilitySlot(Instant start, Instant end, List<UUID> resourceIds) {}
 
     public record PublicAvailability(List<PublicAvailabilitySlot> data) {}
+
+    public record QueueEntry(UUID offeringId, UUID sessionId) {}
+
+    public record QueueTicketResponse(String ticketToken, int retryAfterSeconds) {}
+
+    public record QueueStatusResponse(String status, Integer position, Integer retryAfterSeconds) {}
 
     public record PublicBookingCreate(
             UUID offeringId,
@@ -175,6 +183,7 @@ public class PublicController {
     private final LeaveWaitlistUseCase leaves;
     private final WaitlistQueries waitlist;
     private final AdmissionControl admissions;
+    private final QueueService queue;
     private final GateLimits limits;
     private final UnitOfWork unitOfWork;
     private final Clock clock;
@@ -189,6 +198,7 @@ public class PublicController {
             LeaveWaitlistUseCase leaves,
             WaitlistQueries waitlist,
             AdmissionControl admissions,
+            QueueService queue,
             GateLimits limits,
             UnitOfWork unitOfWork,
             Clock clock) {
@@ -201,6 +211,7 @@ public class PublicController {
         this.leaves = leaves;
         this.waitlist = waitlist;
         this.admissions = admissions;
+        this.queue = queue;
         this.limits = limits;
         this.unitOfWork = unitOfWork;
         this.clock = clock;
@@ -244,6 +255,18 @@ public class PublicController {
             HttpServletRequest request, @RequestBody PublicBookingCreate body) {
         CustomerClaims claims = require(request, GateScope.hold);
         requireOffering(claims, body.offeringId());
+        OfferingView offering = offerings.get(body.offeringId());
+        TicketClaims ticket = null;
+        if ("REQUIRED".equals(offering.queueMode().name())) {
+            String ticketToken = request.getHeader("X-Queue-Ticket");
+            if (ticketToken == null || ticketToken.isBlank()) {
+                throw new GateException(403, "queue-required", "This offering requires a queue ticket.");
+            }
+            ticket = queue.verify(ticketToken, body.offeringId(), body.sessionId(), claims.customerRef());
+            if (!queue.use(ticket, offering.admitWindowSeconds())) {
+                throw new GateException(403, "not-admitted", "The ticket is not admitted, or its window has passed.");
+            }
+        }
         String target = body.sessionId() != null ? "session:" + body.sessionId() : "offering:" + body.offeringId();
         if (!admissions.tryAcquire(target)) {
             throw new GateException(
@@ -268,6 +291,11 @@ public class PublicController {
                     null,
                     null));
             return ResponseEntity.status(HttpStatus.CREATED).body(PublicBooking.of(result.booking()));
+        } catch (RuntimeException refused) {
+            if (ticket != null) {
+                queue.release(ticket);
+            }
+            throw refused;
         } finally {
             admissions.release(target);
         }
@@ -283,6 +311,38 @@ public class PublicController {
                 .filter(found -> found.status() == BookingStatus.HELD)
                 .orElseThrow(() -> new NotFoundException("No booking exists here with that id.")));
         cancels.execute(booking.id().value());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/queue")
+    public ResponseEntity<QueueTicketResponse> enterQueue(
+            HttpServletRequest request, @RequestBody QueueEntry body) {
+        CustomerClaims claims = require(request, GateScope.hold);
+        requireOffering(claims, body.offeringId());
+        OfferingView offering = offerings.get(body.offeringId());
+        QueueService.Ticket ticket = queue.enter(
+                body.offeringId(),
+                body.sessionId(),
+                claims.customerRef(),
+                offering.admitPerSecond(),
+                offering.admitWindowSeconds());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new QueueTicketResponse(ticket.token(), ticket.retryAfterSeconds()));
+    }
+
+    @GetMapping("/queue/status")
+    public QueueStatusResponse queueStatus(HttpServletRequest request) {
+        require(request, GateScope.hold);
+        TicketClaims ticket = queue.raw(requiredTicket(request));
+        OfferingView offering = offerings.get(ticket.offeringId());
+        QueueService.Status status = queue.status(ticket, offering.admitPerSecond());
+        return new QueueStatusResponse(status.status(), status.position(), status.retryAfterSeconds());
+    }
+
+    @DeleteMapping("/queue")
+    public ResponseEntity<Void> leaveQueue(HttpServletRequest request) {
+        require(request, GateScope.hold);
+        queue.leave(queue.raw(requiredTicket(request)));
         return ResponseEntity.noContent().build();
     }
 
@@ -339,6 +399,14 @@ public class PublicController {
             throw new NotFoundException("No waitlist entry exists here with that id.");
         }
         return view;
+    }
+
+    private static String requiredTicket(HttpServletRequest request) {
+        String token = request.getHeader("X-Queue-Ticket");
+        if (token == null || token.isBlank()) {
+            throw new GateException(403, "queue-required", "A queue ticket is required.");
+        }
+        return token;
     }
 
     private static void requireOffering(CustomerClaims claims, UUID offeringId) {
