@@ -35,6 +35,9 @@ final class ArchitectureRules {
         for (String table : List.of("Tenants", "TenantDomains", "TenantSystems", "UserGrants", "AppEntitlements")) {
             TABLE_OWNER.put(table, "platform");
         }
+        for (String table : List.of("WorkflowDefinition", "WorkflowVersion")) {
+            TABLE_OWNER.put(table, "definitions");
+        }
         for (String table : List.of(
                 "EventInbox", "ReplicaState", "Outbox", "JobLeases", "JobRuns",
                 "WebhookEndpoints", "WebhookDeliveries", "WebhookDeliveryAttempts")) {

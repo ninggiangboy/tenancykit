@@ -1,0 +1,212 @@
+[
+  {
+    "name": "a trigger that ends is an accepted graph",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "done" },
+        { "id": "done", "type": "end" }
+      ]
+    },
+    "expected": {}
+  },
+  {
+    "name": "a branch over the trigger payload with a variable and two ends is accepted",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "choose" },
+        {
+          "id": "choose",
+          "type": "branch",
+          "cases": [
+            { "when": { "op": "eq", "args": [{ "input": "kind" }, "refund"] }, "next": "refund" },
+            { "when": { "op": "gt", "args": [{ "input": "amount" }, 10] }, "next": "large" }
+          ],
+          "else": "other"
+        },
+        {
+          "id": "refund",
+          "type": "set",
+          "values": { "amount": { "input": "amount" } },
+          "next": "refunded"
+        },
+        { "id": "large", "type": "set", "values": { "large": true }, "next": "other" },
+        { "id": "refunded", "type": "end" },
+        { "id": "other", "type": "end" }
+      ]
+    },
+    "expected": {}
+  },
+  {
+    "name": "an unknown node type is refused at the node",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "done" },
+        { "id": "mail", "type": "email", "to": "a@example.com" },
+        { "id": "done", "type": "end" }
+      ]
+    },
+    "expected": {
+      "errors": [{ "pointer": "/nodes/1/type", "code": "unknown_node_type" }]
+    }
+  },
+  {
+    "name": "two nodes with one id are refused at the second",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "done" },
+        { "id": "done", "type": "end" },
+        { "id": "done", "type": "end" }
+      ]
+    },
+    "expected": {
+      "errors": [{ "pointer": "/nodes/2/id", "code": "duplicate_node" }]
+    }
+  },
+  {
+    "name": "an edge to a node the graph does not have is refused at the edge",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "missing" },
+        { "id": "done", "type": "end" }
+      ]
+    },
+    "expected": {
+      "errors": [
+        { "pointer": "/nodes/0/next", "code": "missing_target" },
+        { "pointer": "/nodes/1", "code": "unreachable_node" }
+      ]
+    }
+  },
+  {
+    "name": "a node no path reaches is refused",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "done" },
+        { "id": "done", "type": "end" },
+        { "id": "orphan", "type": "end" }
+      ]
+    },
+    "expected": {
+      "errors": [{ "pointer": "/nodes/2", "code": "unreachable_node" }]
+    }
+  },
+  {
+    "name": "a parallel whose join is not a join node is refused",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "split" },
+        {
+          "id": "split",
+          "type": "parallel",
+          "branches": ["left", "right"],
+          "join": "done"
+        },
+        { "id": "left", "type": "end" },
+        { "id": "right", "type": "end" },
+        { "id": "done", "type": "end" }
+      ]
+    },
+    "expected": {
+      "errors": [{ "pointer": "/nodes/1/join", "code": "parallel_without_join" }]
+    }
+  },
+  {
+    "name": "a graph with no end and no fail is refused",
+    "graph": {
+      "start": "start",
+      "nodes": [{ "id": "start", "type": "trigger", "next": "nothing" }]
+    },
+    "expected": {
+      "errors": [
+        { "pointer": "/nodes", "code": "graph_invalid" },
+        { "pointer": "/nodes/0/next", "code": "missing_target" }
+      ]
+    }
+  },
+  {
+    "name": "a compensation that is not an http node is refused",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "charge" },
+        {
+          "id": "charge",
+          "type": "http",
+          "app": "billing",
+          "method": "POST",
+          "path": "/api/v1/charges",
+          "next": "done",
+          "compensate": "done"
+        },
+        { "id": "done", "type": "end" }
+      ]
+    },
+    "expected": {
+      "errors": [{ "pointer": "/nodes/1/compensate", "code": "compensate_invalid" }]
+    }
+  },
+  {
+    "name": "a cycle that no for-each bounds is refused",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "first" },
+        { "id": "first", "type": "set", "values": { "n": 1 }, "next": "second" },
+        { "id": "second", "type": "set", "values": { "n": 2 }, "next": "first" }
+      ]
+    },
+    "expected": {
+      "errors": [
+        { "pointer": "/nodes", "code": "graph_invalid" },
+        { "pointer": "/nodes/2/next", "code": "unbounded_cycle" }
+      ]
+    }
+  },
+  {
+    "name": "a for-each loop back to its own body is a bounded cycle",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "each" },
+        {
+          "id": "each",
+          "type": "foreach",
+          "items": { "input": "items" },
+          "each": "body",
+          "next": "done"
+        },
+        { "id": "body", "type": "set", "values": { "sku": { "item": "sku" } }, "next": "each" },
+        { "id": "done", "type": "end" }
+      ]
+    },
+    "expected": {}
+  },
+  {
+    "name": "an expression that reads a step the graph does not have is refused",
+    "graph": {
+      "start": "start",
+      "nodes": [
+        { "id": "start", "type": "trigger", "next": "choose" },
+        {
+          "id": "choose",
+          "type": "branch",
+          "cases": [
+            { "when": { "op": "eq", "args": [{ "step": "missing", "path": "id" }, 1] }, "next": "done" }
+          ],
+          "else": "done"
+        },
+        { "id": "done", "type": "end" }
+      ]
+    },
+    "expected": {
+      "errors": [{ "pointer": "/nodes/1/cases/0/when/args/0/step", "code": "dangling_reference" }]
+    }
+  }
+]

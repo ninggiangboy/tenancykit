@@ -91,6 +91,21 @@ class RowLevelSecurityTest {
 
     static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> tenantTableRows() {
         return java.util.stream.Stream.of(
+                row("workflow_definition", """
+                        insert into workflow_definition (id, tenant_id, code, name, status, latest_version, created_at,
+                                                         updated_at)
+                        values (gen_random_uuid(), '%1$s', 'dunning', 'Dunning', 'DRAFT', 0, now(), now())
+                        """),
+                row("workflow_version", """
+                        with d as (
+                            insert into workflow_definition (id, tenant_id, code, name, status, latest_version, created_at,
+                                                             updated_at)
+                            values (gen_random_uuid(), '%1$s', 'refunds', 'Refunds', 'PUBLISHED', 1, now(), now())
+                            returning id
+                        )
+                        insert into workflow_version (id, tenant_id, definition_id, version, graph, content_hash, published_at)
+                        select gen_random_uuid(), '%1$s', d.id, 1, '{}'::jsonb, 'hash', now() from d
+                        """),
                 row("event_inbox", """
                         insert into event_inbox (tenant_id, consumer, event_id)
                         values ('%1$s', 'workflow', gen_random_uuid())

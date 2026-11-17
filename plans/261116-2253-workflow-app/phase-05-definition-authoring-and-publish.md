@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Definition authoring and publish"
-status: pending
+status: done
 priority: P1
 effort: "L"
 dependencies: [4]

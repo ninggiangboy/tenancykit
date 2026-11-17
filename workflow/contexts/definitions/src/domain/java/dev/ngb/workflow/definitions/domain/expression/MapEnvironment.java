@@ -14,8 +14,15 @@ public record MapEnvironment(
         implements Environment {
 
     public MapEnvironment {
-        steps = steps == null ? Map.of() : Map.copyOf(steps);
-        vars = vars == null ? Map.of() : Map.copyOf(vars);
+        steps = frozen(steps);
+        vars = frozen(vars);
+    }
+
+    /** A variable may hold null, so the copy is unmodifiable rather than {@code Map.copyOf}. */
+    private static Map<String, Object> frozen(Map<String, Object> values) {
+        return values == null
+                ? Map.of()
+                : java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(values));
     }
 
     /** An environment with no values, which is what an empty draft simulates against. */

@@ -17,6 +17,8 @@ import dev.ngb.workflow_jooq.tables.UserGrants;
 import dev.ngb.workflow_jooq.tables.WebhookDeliveries;
 import dev.ngb.workflow_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.workflow_jooq.tables.WebhookEndpoints;
+import dev.ngb.workflow_jooq.tables.WorkflowDefinition;
+import dev.ngb.workflow_jooq.tables.WorkflowVersion;
 
 import java.util.Arrays;
 import java.util.List;
@@ -106,6 +108,16 @@ public class Public extends SchemaImpl {
     public final WebhookEndpoints WEBHOOK_ENDPOINTS = WebhookEndpoints.WEBHOOK_ENDPOINTS;
 
     /**
+     * The table <code>public.workflow_definition</code>.
+     */
+    public final WorkflowDefinition WORKFLOW_DEFINITION = WorkflowDefinition.WORKFLOW_DEFINITION;
+
+    /**
+     * The table <code>public.workflow_version</code>.
+     */
+    public final WorkflowVersion WORKFLOW_VERSION = WorkflowVersion.WORKFLOW_VERSION;
+
+    /**
      * No further instances allowed
      */
     private Public() {
@@ -133,7 +145,9 @@ public class Public extends SchemaImpl {
             UserGrants.USER_GRANTS,
             WebhookDeliveries.WEBHOOK_DELIVERIES,
             WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS,
-            WebhookEndpoints.WEBHOOK_ENDPOINTS
+            WebhookEndpoints.WEBHOOK_ENDPOINTS,
+            WorkflowDefinition.WORKFLOW_DEFINITION,
+            WorkflowVersion.WORKFLOW_VERSION
         );
     }
 }

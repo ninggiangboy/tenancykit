@@ -70,6 +70,10 @@ tasks.processResources {
         include("*.json")
         into("workflow/expression-vectors")
     }
+    from(layout.projectDirectory.dir("../../../contracts/workflow/graph-vectors")) {
+        include("*.json")
+        into("workflow/graph-vectors")
+    }
 }
 
 tasks.test {

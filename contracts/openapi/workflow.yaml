@@ -8,8 +8,711 @@ info:
 servers:
 - url: "/workflow"
   description: "Any tenant hostname: <tenant-code>.<base-domain>/workflow"
-paths: {}
+paths:
+  /api/v1/definitions/{id}/draft:
+    put:
+      tags:
+      - "definition-controller"
+      operationId: "putDraft"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DraftRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DraftResponse"
+      x-required-permission: "workflow:definition:manage"
+  /api/v1/definitions:
+    get:
+      tags:
+      - "definition-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone."
+      operationId: "listDefinitions"
+      parameters:
+      - name: "filter[code][eq]"
+        in: "query"
+        description: "`code` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[code][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[code][neq]"
+        in: "query"
+        description: "`code` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[code][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[code][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `code`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[latest_version][eq]"
+        in: "query"
+        description: "`latest_version` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[latest_version][gt]"
+        in: "query"
+        description: "`latest_version` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[latest_version][gte]"
+        in: "query"
+        description: "`latest_version` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[latest_version][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `latest_version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[latest_version][lt]"
+        in: "query"
+        description: "`latest_version` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[latest_version][lte]"
+        in: "query"
+        description: "`latest_version` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[latest_version][neq]"
+        in: "query"
+        description: "`latest_version` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[latest_version][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `latest_version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][eq]"
+        in: "query"
+        description: "`name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][neq]"
+        in: "query"
+        description: "`name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "DRAFT"
+          - "PUBLISHED"
+          - "RETIRED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "DRAFT"
+          - "PUBLISHED"
+          - "RETIRED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id, latest_version, updated_at. At most\
+          \ 4 fields; `id` is appended to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageDefinitionResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "workflow:definition:read"
+    post:
+      tags:
+      - "definition-controller"
+      operationId: "createDefinition"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDefinitionRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DefinitionResponse"
+      x-required-permission: "workflow:definition:manage"
+  /api/v1/definitions/{id}/simulate:
+    post:
+      tags:
+      - "definition-controller"
+      operationId: "simulateDefinition"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimulateRequest"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SimulationResponse"
+      x-required-permission: "workflow:definition:read"
+  /api/v1/definitions/{id}/retire:
+    post:
+      tags:
+      - "definition-controller"
+      operationId: "retireDefinition"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DefinitionResponse"
+      x-required-permission: "workflow:definition:manage"
+  /api/v1/definitions/{id}/publish:
+    post:
+      tags:
+      - "definition-controller"
+      operationId: "publishDefinition"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VersionResponse"
+      x-required-permission: "workflow:definition:manage"
+  /api/v1/definitions/{id}:
+    get:
+      tags:
+      - "definition-controller"
+      operationId: "getDefinition"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DefinitionResponse"
+      x-required-permission: "workflow:definition:read"
+  /api/v1/definitions/{id}/versions:
+    get:
+      tags:
+      - "definition-controller"
+      operationId: "listVersions"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/VersionResponse"
+      x-required-permission: "workflow:definition:read"
+  /api/v1/definitions/{id}/versions/{version}:
+    get:
+      tags:
+      - "definition-controller"
+      operationId: "getVersion"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "version"
+        in: "path"
+        required: true
+        schema:
+          type: "integer"
+          format: "int32"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VersionResponse"
+      x-required-permission: "workflow:definition:read"
 components:
+  schemas:
+    DraftRequest:
+      type: "object"
+      properties:
+        graph: {}
+    DefinitionResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        code:
+          type: "string"
+        name:
+          type: "string"
+        status:
+          type: "string"
+        latestVersion:
+          type: "integer"
+          format: "int32"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+    DraftResponse:
+      type: "object"
+      properties:
+        definition:
+          $ref: "#/components/schemas/DefinitionResponse"
+        problems:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ProblemResponse"
+    ProblemResponse:
+      type: "object"
+      properties:
+        pointer:
+          type: "string"
+        code:
+          type: "string"
+        message:
+          type: "string"
+    CreateDefinitionRequest:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        name:
+          type: "string"
+    SimulateRequest:
+      type: "object"
+      properties:
+        input:
+          type: "object"
+          additionalProperties: {}
+        steps:
+          type: "object"
+          additionalProperties: {}
+    DecisionResponse:
+      type: "object"
+      properties:
+        node:
+          type: "string"
+        caseIndex:
+          type: "integer"
+          format: "int32"
+        next:
+          type: "string"
+    SimulationResponse:
+      type: "object"
+      properties:
+        path:
+          type: "array"
+          items:
+            type: "string"
+        decisions:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DecisionResponse"
+        variables:
+          type: "object"
+          additionalProperties: {}
+        stoppedAt:
+          type: "string"
+        problems:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ProblemResponse"
+    VersionResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        definitionId:
+          type: "string"
+        version:
+          type: "integer"
+          format: "int32"
+        graph: {}
+        contentHash:
+          type: "string"
+        publishedAt:
+          type: "string"
+          format: "date-time"
+        publishedBy:
+          type: "string"
+    PageDefinitionResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DefinitionResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageInfo:
+      type: "object"
+      properties:
+        limit:
+          type: "integer"
+          format: "int32"
+        offset:
+          type:
+          - "integer"
+          - "null"
+          format: "int32"
+        total:
+          type:
+          - "integer"
+          - "null"
+          format: "int64"
+        next_cursor:
+          type:
+          - "string"
+          - "null"
   securitySchemes:
     oidc:
       type: "http"

@@ -17,6 +17,8 @@ import dev.ngb.workflow_jooq.tables.UserGrants;
 import dev.ngb.workflow_jooq.tables.WebhookDeliveries;
 import dev.ngb.workflow_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.workflow_jooq.tables.WebhookEndpoints;
+import dev.ngb.workflow_jooq.tables.WorkflowDefinition;
+import dev.ngb.workflow_jooq.tables.WorkflowVersion;
 import dev.ngb.workflow_jooq.tables.records.AppEntitlementsRecord;
 import dev.ngb.workflow_jooq.tables.records.EventInboxRecord;
 import dev.ngb.workflow_jooq.tables.records.JobLeasesRecord;
@@ -30,6 +32,8 @@ import dev.ngb.workflow_jooq.tables.records.UserGrantsRecord;
 import dev.ngb.workflow_jooq.tables.records.WebhookDeliveriesRecord;
 import dev.ngb.workflow_jooq.tables.records.WebhookDeliveryAttemptsRecord;
 import dev.ngb.workflow_jooq.tables.records.WebhookEndpointsRecord;
+import dev.ngb.workflow_jooq.tables.records.WorkflowDefinitionRecord;
+import dev.ngb.workflow_jooq.tables.records.WorkflowVersionRecord;
 
 import org.jooq.ForeignKey;
 import org.jooq.TableField;
@@ -67,6 +71,8 @@ public class Keys {
     public static final UniqueKey<WebhookDeliveryAttemptsRecord> WEBHOOK_DELIVERY_ATTEMPTS_DELIVERY_ID_ATTEMPT_NO_KEY = Internal.createUniqueKey(WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS, DSL.name("webhook_delivery_attempts_delivery_id_attempt_no_key"), new TableField[] { WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS.DELIVERY_ID, WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS.ATTEMPT_NO }, true);
     public static final UniqueKey<WebhookDeliveryAttemptsRecord> WEBHOOK_DELIVERY_ATTEMPTS_PKEY = Internal.createUniqueKey(WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS, DSL.name("webhook_delivery_attempts_pkey"), new TableField[] { WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS.ID }, true);
     public static final UniqueKey<WebhookEndpointsRecord> WEBHOOK_ENDPOINTS_PKEY = Internal.createUniqueKey(WebhookEndpoints.WEBHOOK_ENDPOINTS, DSL.name("webhook_endpoints_pkey"), new TableField[] { WebhookEndpoints.WEBHOOK_ENDPOINTS.ID }, true);
+    public static final UniqueKey<WorkflowDefinitionRecord> WORKFLOW_DEFINITION_PKEY = Internal.createUniqueKey(WorkflowDefinition.WORKFLOW_DEFINITION, DSL.name("workflow_definition_pkey"), new TableField[] { WorkflowDefinition.WORKFLOW_DEFINITION.ID }, true);
+    public static final UniqueKey<WorkflowVersionRecord> WORKFLOW_VERSION_PKEY = Internal.createUniqueKey(WorkflowVersion.WORKFLOW_VERSION, DSL.name("workflow_version_pkey"), new TableField[] { WorkflowVersion.WORKFLOW_VERSION.ID }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
@@ -78,4 +84,5 @@ public class Keys {
     public static final ForeignKey<UserGrantsRecord, TenantsRecord> USER_GRANTS__USER_GRANTS_TENANT_ID_FKEY = Internal.createForeignKey(UserGrants.USER_GRANTS, DSL.name("user_grants_tenant_id_fkey"), new TableField[] { UserGrants.USER_GRANTS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<WebhookDeliveriesRecord, WebhookEndpointsRecord> WEBHOOK_DELIVERIES__WEBHOOK_DELIVERIES_ENDPOINT_ID_FKEY = Internal.createForeignKey(WebhookDeliveries.WEBHOOK_DELIVERIES, DSL.name("webhook_deliveries_endpoint_id_fkey"), new TableField[] { WebhookDeliveries.WEBHOOK_DELIVERIES.ENDPOINT_ID }, Keys.WEBHOOK_ENDPOINTS_PKEY, new TableField[] { WebhookEndpoints.WEBHOOK_ENDPOINTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<WebhookDeliveryAttemptsRecord, WebhookDeliveriesRecord> WEBHOOK_DELIVERY_ATTEMPTS__WEBHOOK_DELIVERY_ATTEMPTS_DELIVERY_ID_FKEY = Internal.createForeignKey(WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS, DSL.name("webhook_delivery_attempts_delivery_id_fkey"), new TableField[] { WebhookDeliveryAttempts.WEBHOOK_DELIVERY_ATTEMPTS.DELIVERY_ID }, Keys.WEBHOOK_DELIVERIES_PKEY, new TableField[] { WebhookDeliveries.WEBHOOK_DELIVERIES.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<WorkflowVersionRecord, WorkflowDefinitionRecord> WORKFLOW_VERSION__WORKFLOW_VERSION_DEFINITION_ID_FKEY = Internal.createForeignKey(WorkflowVersion.WORKFLOW_VERSION, DSL.name("workflow_version_definition_id_fkey"), new TableField[] { WorkflowVersion.WORKFLOW_VERSION.DEFINITION_ID }, Keys.WORKFLOW_DEFINITION_PKEY, new TableField[] { WorkflowDefinition.WORKFLOW_DEFINITION.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
 }

@@ -17,6 +17,8 @@ import dev.ngb.workflow_jooq.tables.UserGrants;
 import dev.ngb.workflow_jooq.tables.WebhookDeliveries;
 import dev.ngb.workflow_jooq.tables.WebhookDeliveryAttempts;
 import dev.ngb.workflow_jooq.tables.WebhookEndpoints;
+import dev.ngb.workflow_jooq.tables.WorkflowDefinition;
+import dev.ngb.workflow_jooq.tables.WorkflowVersion;
 
 
 /**
@@ -89,4 +91,14 @@ public class Tables {
      * The table <code>public.webhook_endpoints</code>.
      */
     public static final WebhookEndpoints WEBHOOK_ENDPOINTS = WebhookEndpoints.WEBHOOK_ENDPOINTS;
+
+    /**
+     * The table <code>public.workflow_definition</code>.
+     */
+    public static final WorkflowDefinition WORKFLOW_DEFINITION = WorkflowDefinition.WORKFLOW_DEFINITION;
+
+    /**
+     * The table <code>public.workflow_version</code>.
+     */
+    public static final WorkflowVersion WORKFLOW_VERSION = WorkflowVersion.WORKFLOW_VERSION;
 }
