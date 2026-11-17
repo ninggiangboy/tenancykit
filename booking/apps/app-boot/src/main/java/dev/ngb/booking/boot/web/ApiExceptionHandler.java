@@ -5,6 +5,8 @@ import dev.ngb.booking.catalog.application.catalog.exception.DuplicateCodeExcept
 import dev.ngb.booking.catalog.application.catalog.exception.ResourceInUseException;
 import dev.ngb.booking.catalog.application.recurrence.exception.InvalidRecurrenceException;
 import dev.ngb.booking.catalog.application.session.exception.SessionInUseException;
+import dev.ngb.booking.inventory.application.availability.exception.InvalidAvailabilityException;
+import dev.ngb.booking.inventory.application.availability.exception.InvalidDurationException;
 import dev.ngb.booking.shared.PreconditionRequiredException;
 import dev.ngb.core.spring.web.CoreExceptionHandlers;
 import org.springframework.http.HttpStatus;
@@ -61,6 +63,22 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
      */
     @ExceptionHandler(InvalidRecurrenceException.class)
     ProblemDetail invalidRecurrence(InvalidRecurrenceException e) {
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
+        detail.setProperty("code", e.code());
+        return detail;
+    }
+
+    /** A duration outside the offering's range or off its step: {@code 422} with the contract's {@code INVALID_DURATION}. */
+    @ExceptionHandler(InvalidDurationException.class)
+    ProblemDetail invalidDuration(InvalidDurationException e) {
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
+        detail.setProperty("code", e.code());
+        return detail;
+    }
+
+    /** An availability request this service will not answer, such as a {@code CAPACITY} offering: {@code 422}. */
+    @ExceptionHandler(InvalidAvailabilityException.class)
+    ProblemDetail invalidAvailability(InvalidAvailabilityException e) {
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, e.getMessage());
         detail.setProperty("code", e.code());
         return detail;
