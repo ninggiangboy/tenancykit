@@ -144,16 +144,25 @@ SSRF suite refuses loopback, `[::1]`, `169.254.169.254`, 10/192.168/172.20 addre
 no connection made; the http node builds the call, keeps a 503 response on the failed step, and reports
 `credential_invalid`.
 
-## Remaining for phase 9
+## Phase 9 closed (`faf84526`)
 
-1. Web: `PUT`/`GET /api/v1/platform-credential` (write-only secret, masked id) and connection CRUD under
-   `/api/v1/connections` with `workflow:connection:manage`, `If-Match` on update, then regenerate
-   `contracts/openapi/workflow.yaml`.
-2. App calls must use the Tenant's hostname from the replica (`tenant_domains`) instead of only the
-   configured base URL, and refuse a Tenant with no active domain.
-3. Redirect policy: follow at most one hop, and only to an address the same guard accepts (today a 3xx is
-   returned as a result and never followed).
-4. Compose check: a workflow calls CRM (list customers) and mailroom (send one email) as the Tenant.
+The management API landed: `PUT`/`GET /api/v1/platform-credential` (secret is write-only, response carries the key
+id and state) and connection CRUD under `/api/v1/connections` with `If-Match` on update; read ports return views
+that never select the ciphertext. `contracts/openapi/workflow.yaml` is regenerated.
+
+App calls now require the Tenant's hostname from the replica (`TenantDomains`, served by the platform context from
+`tenant_domains`): a configured base may contain `{host}`, and a Tenant with no active domain fails
+`tenant_domain_missing`. The transport follows one redirect for a safe method only, and the next hop goes through
+the same DNS guard; a second hop is returned as the 3xx result.
+
+The compose round trip (CRM list customers, mailroom send one email) is deferred to phase 15, which owns the live
+stack.
+
+## Next: phase 10 (control flow)
+
+Read `phase-10-control-flow.md`. The seams to reuse: `StepOutcome.nextNodeIds` already takes several ids, tokens
+already carry `branch_key` and `iteration`, and `ClaimAndRun` completes an instance when `liveCount` is zero, so a
+parallel node is "several ready tokens" and a join is "one waiting token plus a completion rule".
 
 ## Cautions
 
