@@ -8,6 +8,8 @@ import dev.ngb.booking.catalog.api.calendar.GroupMemberRef;
 import dev.ngb.booking.catalog.api.calendar.OfferingCalendar;
 import dev.ngb.booking.catalog.api.calendar.OfferingRequirement;
 import dev.ngb.booking.catalog.api.calendar.ResourceCalendar;
+import dev.ngb.booking.catalog.api.calendar.SessionCalendar;
+import dev.ngb.booking.catalog.api.calendar.SessionPool;
 import dev.ngb.booking.catalog.api.calendar.WorkingHourWindow;
 import dev.ngb.booking.catalog.application.block.query.BlockReadRepository;
 import dev.ngb.booking.catalog.application.block.query.BlockView;
@@ -22,6 +24,9 @@ import dev.ngb.booking.catalog.application.offering.query.RequirementView;
 import dev.ngb.booking.catalog.application.recurrence.service.RecurrenceValidator;
 import dev.ngb.booking.catalog.application.resource.query.ResourceReadRepository;
 import dev.ngb.booking.catalog.application.resource.query.ResourceView;
+import dev.ngb.booking.catalog.application.session.query.PoolView;
+import dev.ngb.booking.catalog.application.session.query.SessionReadRepository;
+import dev.ngb.booking.catalog.application.session.query.SessionView;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -41,6 +46,7 @@ public class CalendarReaderService implements CalendarReader {
     private final OfferingReadRepository offerings;
     private final GroupReadRepository groups;
     private final BlockReadRepository blocks;
+    private final SessionReadRepository sessions;
     private final RecurrenceValidator recurrence;
 
     public CalendarReaderService(
@@ -49,12 +55,14 @@ public class CalendarReaderService implements CalendarReader {
             OfferingReadRepository offerings,
             GroupReadRepository groups,
             BlockReadRepository blocks,
+            SessionReadRepository sessions,
             RecurrenceValidator recurrence) {
         this.resources = resources;
         this.calendars = calendars;
         this.offerings = offerings;
         this.groups = groups;
         this.blocks = blocks;
+        this.sessions = sessions;
         this.recurrence = recurrence;
     }
 
@@ -71,6 +79,11 @@ public class CalendarReaderService implements CalendarReader {
     @Override
     public Optional<GroupCalendar> group(UUID groupId) {
         return groups.findById(groupId).map(this::calendar);
+    }
+
+    @Override
+    public Optional<SessionCalendar> session(UUID sessionId) {
+        return sessions.findById(sessionId).map(this::calendar);
     }
 
     @Override
@@ -139,6 +152,8 @@ public class CalendarReaderService implements CalendarReader {
                 offering.bufferAfter(),
                 offering.leadTimeSeconds(),
                 offering.horizonDays(),
+                offering.holdTtlSeconds(),
+                offering.maxQty(),
                 requirements);
     }
 
@@ -148,5 +163,20 @@ public class CalendarReaderService implements CalendarReader {
             members.add(new GroupMemberRef(member.resourceId(), member.priority()));
         }
         return new GroupCalendar(group.id(), group.strategy(), group.maxCombine(), members);
+    }
+
+    private SessionCalendar calendar(SessionView session) {
+        List<SessionPool> pools = new ArrayList<>();
+        for (PoolView pool : session.pools()) {
+            pools.add(new SessionPool(pool.code(), pool.capacity()));
+        }
+        return new SessionCalendar(
+                session.id(),
+                session.offeringId(),
+                session.startsAt(),
+                session.endsAt(),
+                session.status(),
+                session.capacity(),
+                pools);
     }
 }

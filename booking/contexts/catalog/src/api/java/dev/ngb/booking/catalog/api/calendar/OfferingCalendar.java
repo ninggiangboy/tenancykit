@@ -19,6 +19,8 @@ public record OfferingCalendar(
         int bufferAfter,
         int leadTimeSeconds,
         int horizonDays,
+        Integer holdTtlSeconds,
+        int maxQty,
         List<OfferingRequirement> requirements) {
 
     public OfferingCalendar {

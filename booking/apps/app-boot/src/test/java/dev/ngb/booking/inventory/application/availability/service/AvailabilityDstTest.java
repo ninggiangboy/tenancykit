@@ -42,6 +42,8 @@ class AvailabilityDstTest {
                 0,
                 0,
                 365,
+                null,
+                1,
                 List.of(new OfferingRequirement("staff", resource, null)));
         ResourceCalendar calendar = new ResourceCalendar(
                 resource, NEW_YORK.getId(), List.of(new WorkingHourWindow(7, 60, 300)), List.of());

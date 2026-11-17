@@ -20,6 +20,8 @@ public interface CalendarReader {
 
     Optional<GroupCalendar> group(UUID groupId);
 
+    Optional<SessionCalendar> session(UUID sessionId);
+
     /** The closed ranges of one resource that intersect {@code [from, to)}, expanded from any recurring block. */
     List<BlockRange> blocks(UUID resourceId, Instant from, Instant to);
 }

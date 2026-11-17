@@ -188,7 +188,7 @@ class AvailabilityTest {
     @Test
     void aCapacityOfferingIsRefused() {
         OfferingCalendar offering = new OfferingCalendar(
-                UUID.randomUUID(), "CAPACITY", 60, null, 1, 60, 0, 0, 0, 365, List.of());
+                UUID.randomUUID(), "CAPACITY", 60, null, 1, 60, 0, 0, 0, 365, null, 1, List.of());
 
         assertThatThrownBy(() -> starts(offering, Map.of(), Map.of(), Map.of()))
                 .isInstanceOf(InvalidAvailabilityException.class)
@@ -270,6 +270,8 @@ class AvailabilityTest {
                 bufferAfter,
                 leadTimeSeconds,
                 horizonDays,
+                null,
+                1,
                 requirements);
     }
 

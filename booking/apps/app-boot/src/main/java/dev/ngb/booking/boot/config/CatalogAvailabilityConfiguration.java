@@ -8,6 +8,7 @@ import dev.ngb.booking.catalog.application.group.query.GroupReadRepository;
 import dev.ngb.booking.catalog.application.offering.query.OfferingReadRepository;
 import dev.ngb.booking.catalog.application.recurrence.service.RecurrenceValidator;
 import dev.ngb.booking.catalog.application.resource.query.ResourceReadRepository;
+import dev.ngb.booking.catalog.application.session.query.SessionReadRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,7 +23,8 @@ class CatalogAvailabilityConfiguration {
             OfferingReadRepository offerings,
             GroupReadRepository groups,
             BlockReadRepository blocks,
+            SessionReadRepository sessions,
             RecurrenceValidator recurrence) {
-        return new CalendarReaderService(resources, calendars, offerings, groups, blocks, recurrence);
+        return new CalendarReaderService(resources, calendars, offerings, groups, blocks, sessions, recurrence);
     }
 }
