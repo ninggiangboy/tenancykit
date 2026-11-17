@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: "Multi-resource claims and any-available assignment"
-status: pending
+status: completed
 priority: P1
 effort: "L"
 dependencies: [8]
