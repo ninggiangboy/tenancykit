@@ -20,7 +20,7 @@ public class PostgresContainerConfig {
     /** The password the migration assigns to the unprivileged role; the application connects with it. */
     public static final String APP_ROLE = "customer_app";
 
-    public static final String APP_PASSWORD = "crm_app_test_password";
+    public static final String APP_PASSWORD = "customer_app_test_password";
 
     private static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(IMAGE);
 

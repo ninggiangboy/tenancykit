@@ -205,10 +205,10 @@ register_receiver() {
 
 # Starts the Tenant's own receiver/forwarder, which is test scaffolding and not a suite service.
 start_receiver() {
-  local crm_secret="${1:-}" loyalty_token="${2:-}" loyalty_secret="${3:-}"
+  local customer_secret="${1:-}" loyalty_token="${2:-}" loyalty_secret="${3:-}"
   # The receiver is rebuilt every run: a cached image would keep an older handler and an older signature check.
   stop_receiver
-  FORWARDER_CRM_SECRET="${crm_secret}" FORWARDER_LOYALTY_TOKEN="${loyalty_token}" \
+  FORWARDER_CRM_SECRET="${customer_secret}" FORWARDER_LOYALTY_TOKEN="${loyalty_token}" \
     FORWARDER_LOYALTY_SECRET="${loyalty_secret}" FORWARDER_LOYALTY_HOST="${HOST}" \
     docker compose -f docker-compose.yml -f ops/smoke/tenant-forwarder/docker-compose.smoke.yml --profile smoke \
     up -d --build --wait tenant-forwarder > /dev/null

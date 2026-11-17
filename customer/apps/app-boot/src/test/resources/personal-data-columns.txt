@@ -1,4 +1,4 @@
-# Every text, jsonb and array column of crm's schema, classified.
+# Every text, jsonb and array column of customer's schema, classified.
 #
 # `PersonalDataColumnsTest` reads information_schema and fails unless each such column is listed here, so a new column
 # cannot arrive without a decision about what it may hold. There are three answers:
@@ -7,7 +7,7 @@
 #               and asserts that after an erasure no column here holds a value for the erased customer.
 #   [PURGED]    it can hold a person's data, and the row itself leaves within the housekeeping retention, so a test
 #               proves the payload is gone from the table afterwards.
-#   [OTHER]     it cannot hold a person's data: an identifier crm owns, an enum, a bounded code, a product description,
+#   [OTHER]     it cannot hold a person's data: an identifier customer owns, an enum, a bounded code, a product description,
 #               a hash of the reference rather than the reference, or a Platform-owned replica column.
 #
 # One line is `table.column`. Removing a column from the schema means removing its line: a line naming a column that
@@ -41,7 +41,7 @@ webhook_delivery_attempts.error
 webhook_delivery_attempts.response_excerpt
 
 [OTHER]
-# crm's own identifiers and markers. An erased customer's reference becomes `erased:<customerId>`, which names the row
+# customer's own identifiers and markers. An erased customer's reference becomes `erased:<customerId>`, which names the row
 # and not the person.
 customers.external_ref
 customers.status
@@ -93,7 +93,7 @@ job_leases.name
 job_leases.owner
 job_runs.job
 job_runs.run_key
-# Platform's replicated rows. Platform owns its tenants and its users; crm erases the Tenant's customers, and this
+# Platform's replicated rows. Platform owns its tenants and its users; customer erases the Tenant's customers, and this
 # copy is read-only here.
 tenants.code
 tenants.name
