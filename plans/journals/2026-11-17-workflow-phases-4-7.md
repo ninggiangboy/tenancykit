@@ -117,33 +117,43 @@ Caveat found while landing it: the old `UPDATE ... WHERE id IN (SELECT ... SKIP 
 claim could return more than one row under eight workers. `claimNext` now selects the id first (locking it)
 and updates that one row, guarded by `status = READY`.
 
-## Next: phase 9 (HTTP actions, connections, vault) concrete plan
+## Phase 9 as landed so far (`66ea381a`)
 
-Read `phase-09-http-actions-connections-and-vault.md` for the full scope; these are the seams it lands in.
+- `V6__connections.sql`: `workflow_connection` (kind, allowed host, envelope + key id, headers, version) and
+  `workflow_platform_credential` (one per tenant, status ACTIVE/INVALID), both RLS. jOOQ regenerated.
+- `libs/shared-core`: `SecretKeyring` reads an envelope from any key still in the ring and refuses one whose
+  key left; `SecretBox` itself is unchanged.
+- `contexts/connections`: domain (`Connection` with `allows(host)`, `PlatformCredential`), ports
+  (`ConnectionRepository`, `CredentialRepository`, `SecretCipher`, `TokenMinter`, `TokenProvider`,
+  `HttpTransport`), services (`CachingTokenProvider`, `HttpCallerService`), api `api.call`
+  (`HttpCaller`, `OutboundRequest`, `OutboundResponse`), adapter jOOQ stores, `PlatformTokenClient`
+  (WebhookHttpSender, POST-only), `GuardedHttpTransport` (HC5 + `GuardedDnsResolver`, no redirects, body cap).
+- Runtime: domain port `OutboundHttp`; the executor's `http` node builds method/app|connection|url/path/
+  headers/body/timeout from settings and variables, sends the step idempotency key, treats 4xx/5xx or a
+  transport error as a failed step with the response attached.
+- Boot: `ConnectionsConfiguration` (cipher ring, token client, cache, transport, `HttpCallerService`, the
+  two use cases) and `ConnectionHttpAdapter` (runtime port → connections api). `WorkflowSettings` gained
+  `connections.token-url`, `allow-non-public-targets`, timeouts and the `apps` base-URL map, plus
+  `secrets.previous-keys` for rotation.
+- Gates: ArchUnit rule `outbound-http-only-in-connections` (+ fixture), RLS rows for both tables, and the
+  full build is green.
 
-1. `V6__connections.sql`: `workflow_connection` (tenant, name, kind BEARER/BASIC/API_KEY/HMAC/NONE,
-   allowed host pattern, encrypted secret, key id, last verified) and `workflow_platform_credential` (one
-   per tenant: client id, encrypted secret, key id, status), both with RLS. Reuse
-   `workflow.shared.secret.SecretBox`; it already produces `v1.<keyId>.<base64(nonce||ciphertext)>`.
-2. New context `connections` with its own `build.gradle.kts` (copy the triggers module's wiring):
-   domain + application (`RegisterCredential`, `ManageConnection`, `TokenProvider`, `HttpCall` ports) +
-   adapter (controllers under `/api/v1/connections` and `/api/v1/platform-credential`, jOOQ stores, the
-   Platform token client and the outbound sender).
-3. `TokenProvider` is a port in the connections application layer with an adapter cache keyed by
-   `(tenant, audience)`, refreshed about a minute before `exp`, one in-flight request per key, and
-   `Retry-After` on 429. A 401 from the token endpoint flips the credential to `INVALID`.
-4. Only `connections` may make an outbound call. Runtime's `HttpNodeExecutor` (domain) must go through a
-   runtime-owned port, implemented in boot by delegating to the connections api — the same trick as
-   `TriggeredEventLookup`, so neither context imports the other's internals.
-5. Reuse `core/core-webhook` `DestinationPolicy`, `GuardedDnsResolver`, `WebhookHttpSender` and
-   `RetrySchedule`; do not write new guards. App calls resolve the base URL from configuration and the
-   tenant host from the replica; an external call is limited to the connection's allowed host pattern.
-6. History keeps a redacted request/response (authorization, cookies, the connection's secret, configured
-   header names). `StepRun.response` is where the redaction shows up.
-7. Tests: key rotation still decrypts; no secret in any history row; one token reused until near expiry
-   and refreshed once under 50 concurrent calls; 401 flips the credential; the SSRF suite refuses
-   localhost, 127.0.0.1, 169.254.169.254, `[::1]`, a name resolving to 10.0.0.1, redirects to each, and an
-   allowed-host mismatch, with no connection made.
+Tests: 50 concurrent callers mint one token; refresh a minute before expiry; a 401 marks the credential
+INVALID and Platform is not asked again; a key rotation still decrypts and a departed key is refused; the
+SSRF suite refuses loopback, `[::1]`, `169.254.169.254`, 10/192.168/172.20 addresses and an invalid URL with
+no connection made; the http node builds the call, keeps a 503 response on the failed step, and reports
+`credential_invalid`.
+
+## Remaining for phase 9
+
+1. Web: `PUT`/`GET /api/v1/platform-credential` (write-only secret, masked id) and connection CRUD under
+   `/api/v1/connections` with `workflow:connection:manage`, `If-Match` on update, then regenerate
+   `contracts/openapi/workflow.yaml`.
+2. App calls must use the Tenant's hostname from the replica (`tenant_domains`) instead of only the
+   configured base URL, and refuse a Tenant with no active domain.
+3. Redirect policy: follow at most one hop, and only to an address the same guard accepts (today a 3xx is
+   returned as a result and never followed).
+4. Compose check: a workflow calls CRM (list customers) and mailroom (send one email) as the Tenant.
 
 ## Cautions
 
