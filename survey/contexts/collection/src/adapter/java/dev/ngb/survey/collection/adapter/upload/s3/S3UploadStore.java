@@ -21,7 +21,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 /**
- * MinIO or S3 over the AWS SDK v2, the same major the mailer uses for SES.
+ * SeaweedFS or S3 over the AWS SDK v2, the same major the mailer uses for SES.
  *
  * <p>Two endpoints: the client signs against the address the server reaches, while the presigner signs with
  * {@code publicEndpoint}, so the URL a browser receives names a host the browser can actually resolve. Signing with
@@ -50,7 +50,7 @@ public class S3UploadStore implements UploadStore {
                 .endpointOverride(URI.create(endpoint))
                 .region(Region.of(region))
                 .credentialsProvider(credentials)
-                // MinIO serves a path-style address, which is what the compose deployment runs.
+                // SeaweedFS serves a path-style address, which is what the compose deployment runs.
                 .forcePathStyle(true)
                 .build();
         this.presigner = S3Presigner.builder()

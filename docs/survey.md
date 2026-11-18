@@ -191,7 +191,7 @@ the first thing to measure and the first thing to narrow.
 
 ## Files
 
-A file question presigns a PUT to MinIO/S3 with the AWS SDK v2, fixing `Content-Length` and `Content-Type`; the URL
+A file question presigns a PUT to S3 (SeaweedFS in the compose stack) with the AWS SDK v2, fixing `Content-Length` and `Content-Type`; the URL
 names the host a respondent's browser reaches (`SURVEY_S3_PUBLIC_ENDPOINT`), which is not necessarily the host the
 server uses. At submit the server `HEAD`s each referenced object (the size must equal the declared size and fit the
 question's limit) and reads its first 512 bytes to match magic bytes against the question's allowed types, then marks
