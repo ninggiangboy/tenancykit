@@ -34,6 +34,7 @@ public final class AggregateTargets {
     public static final String TENANT_SYSTEM = "tenant-system";
     public static final String USER = "user";
     public static final String ENTITLEMENT = "entitlement";
+    public static final String UI_REMOTE = "ui-remote";
     public static final String CREDENTIAL = "credential";
     public static final String CUSTOMER = "customer";
     public static final String ORDER = "order";
@@ -133,6 +134,11 @@ public final class AggregateTargets {
     /** {@code entitlement/<tenant>/<app>}, the target of an app being enabled or disabled. */
     public static String entitlement(Object tenantId, Object appCode) {
         return of(ENTITLEMENT, tenantId) + SEPARATOR + appCode;
+    }
+
+    /** {@code ui-remote/<name>}, the target of a console UI remote and of its registered versions. */
+    public static String uiRemote(Object name) {
+        return of(UI_REMOTE, name);
     }
 
     /** A sub-resource of a target: {@code <target>/<kind>/<id>}. */

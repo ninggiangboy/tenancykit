@@ -40,6 +40,17 @@ platform:
     realm: ${PLATFORM_KEYCLOAK_REALM:billing}
     admin-client-id: ${PLATFORM_KEYCLOAK_ADMIN_CLIENT_ID:platform-admin}
     admin-client-secret: ${PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET:}
+    # The console's public client. Keycloak accepts a wildcard only at the end of a redirect URI, so the client's
+    # redirect URIs follow the tenant hosts the Platform manages: a domain add registers it, a removed or deactivated
+    # one drops out, and the reconciler makes the whole set equal what exists.
+    console-client-id: ${PLATFORM_KEYCLOAK_CONSOLE_CLIENT_ID:suite-console}
+    console-scheme: ${PLATFORM_KEYCLOAK_CONSOLE_SCHEME:http}
+    # The port the console is published on when it is not the scheme's default; blank for 80 or 443.
+    console-port: ${PLATFORM_KEYCLOAK_CONSOLE_PORT:}
+    console-fixed-hosts: ${PLATFORM_KEYCLOAK_CONSOLE_FIXED_HOSTS:localhost,platform.localhost,localhost:5173,platform.localhost:5173}
+    console-sync-enabled: ${PLATFORM_KEYCLOAK_CONSOLE_SYNC_ENABLED:true}
+    console-sync-delay: ${PLATFORM_KEYCLOAK_CONSOLE_SYNC_DELAY:PT5M}
+    console-sync-initial-delay: ${PLATFORM_KEYCLOAK_CONSOLE_SYNC_INITIAL_DELAY:PT15S}
   bootstrap:
     # Optional: creates the first Platform administrator on start, through Keycloak.
     platform-admin-email: ${PLATFORM_BOOTSTRAP_ADMIN_EMAIL:}
@@ -104,6 +115,11 @@ platform:
     - id: ${PLATFORM_WORKFLOW_SERVICE_CLIENT_ID:workflow}
       secret-hash: ${PLATFORM_WORKFLOW_SERVICE_CLIENT_SECRET_HASH:}
       scopes: [platform:replica:read]
+    # The console's CI registers a UI remote version after publishing its build. It holds nothing else, so a leaked
+    # secret cannot read a tenant or enable a remote; only the operator's manage permission can do that.
+    - id: ${PLATFORM_FRONTEND_CI_SERVICE_CLIENT_ID:frontend-ci}
+      secret-hash: ${PLATFORM_FRONTEND_CI_SERVICE_CLIENT_SECRET_HASH:}
+      scopes: [platform:ui-remote:register]
   outbox:
     poll-delay: PT1S
 

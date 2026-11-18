@@ -68,6 +68,9 @@ public class PlatformContainerConfig {
             registry.add("platform.service-clients[0].id", () -> CLIENT_ID);
             registry.add("platform.service-clients[0].secret-hash", () -> secretHash);
             registry.add("platform.service-clients[0].scopes[0]", () -> "platform:replica:read");
+            // No test talks to a real Keycloak, so the console redirect sync stays off; the add-domain hook logs and
+            // leaves the repair to the reconciler, which is exactly the production behaviour when Keycloak is down.
+            registry.add("platform.keycloak.console-sync-enabled", () -> "false");
         };
     }
 }

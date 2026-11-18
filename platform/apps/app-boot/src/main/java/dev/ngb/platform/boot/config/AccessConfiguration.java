@@ -6,6 +6,8 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.platform.access.adapter.access.persistence.JooqAccessRepository;
+import dev.ngb.platform.access.adapter.auth.keycloak.KeycloakAdmin;
+import dev.ngb.platform.access.adapter.auth.keycloak.KeycloakConsoleClient;
 import dev.ngb.platform.access.adapter.auth.keycloak.KeycloakIdentityProvider;
 import dev.ngb.platform.access.adapter.catalog.yaml.YamlPermissionCatalog;
 import dev.ngb.platform.access.adapter.role.persistence.JooqRoleReadRepository;
@@ -14,6 +16,7 @@ import dev.ngb.platform.access.adapter.user.persistence.JooqUserReadRepository;
 import dev.ngb.platform.access.adapter.user.persistence.JooqUserRepository;
 import dev.ngb.platform.access.application.access.port.AccessRepository;
 import dev.ngb.platform.access.application.access.service.AccessPublisher;
+import dev.ngb.platform.access.application.auth.port.ConsoleClientPort;
 import dev.ngb.platform.access.application.auth.port.IdentityProviderPort;
 import dev.ngb.platform.access.application.permission.port.PermissionCatalog;
 import dev.ngb.platform.access.application.role.command.CreateRoleUseCase;
@@ -70,14 +73,31 @@ class AccessConfiguration {
         return new YamlPermissionCatalog();
     }
 
+    /** One admin client for everything Platform asks Keycloak to change. */
     @Bean
-    @org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean(IdentityProviderPort.class)
-    IdentityProviderPort identityProvider(
+    KeycloakAdmin keycloakAdmin(
             @Value("${platform.keycloak.base-url:http://localhost:8081}") String baseUrl,
             @Value("${platform.keycloak.realm:billing}") String realm,
             @Value("${platform.keycloak.admin-client-id:platform-admin}") String clientId,
             @Value("${platform.keycloak.admin-client-secret:}") String clientSecret) {
-        return new KeycloakIdentityProvider(baseUrl, realm, clientId, clientSecret);
+        return new KeycloakAdmin(baseUrl, realm, clientId, clientSecret);
+    }
+
+    @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean(IdentityProviderPort.class)
+    IdentityProviderPort identityProvider(KeycloakAdmin admin) {
+        return new KeycloakIdentityProvider(admin);
+    }
+
+    /** The console client's redirect targets, which follow the tenant hosts the Platform manages. */
+    @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean(ConsoleClientPort.class)
+    ConsoleClientPort consoleClient(
+            KeycloakAdmin admin,
+            @Value("${platform.keycloak.console-client-id:suite-console}") String consoleClientId,
+            @Value("${platform.keycloak.console-scheme:http}") String scheme,
+            @Value("${platform.keycloak.console-port:}") String port) {
+        return new KeycloakConsoleClient(admin, consoleClientId, scheme, port);
     }
 
     @Bean

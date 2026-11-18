@@ -1,6 +1,7 @@
 package dev.ngb.platform.boot.catalog;
 
 import dev.ngb.platform.tenancy.application.entitlement.port.AppCatalog;
+import dev.ngb.platform.tenancy.application.entitlement.query.AvailableApps;
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -11,7 +12,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
  * The suite's apps are the permission catalogs under {@code contracts/permissions}, packaged on the classpath under
  * {@code permissions/}: the file {@code billing.yaml} names the app {@code billing}.
  */
-public class ClasspathAppCatalog implements AppCatalog {
+public class ClasspathAppCatalog implements AppCatalog, AvailableApps {
 
     private static final String SUFFIX = ".yaml";
 

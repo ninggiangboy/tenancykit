@@ -55,7 +55,7 @@ public class JwtActorConverter implements Converter<Jwt, AbstractAuthenticationT
 
     private Actor user(String subject) {
         TenantId hostTenant = tenantContext.current().dataTenantId();
-        return users.find(subject)
+        return users.findBySubject(subject)
                 .filter(me -> "ACTIVE".equals(me.user().status()))
                 .filter(me -> hostTenant.value().equals(me.user().tenantId()))
                 .map(me -> new Actor(

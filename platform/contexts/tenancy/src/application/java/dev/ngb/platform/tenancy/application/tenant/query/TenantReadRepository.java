@@ -23,4 +23,7 @@ public interface TenantReadRepository {
     Optional<TenantDomainView> findDomainByHostname(String hostname);
 
     List<TenantDomainView> listDomains(UUID tenantId);
+
+    /** Every hostname of an active Tenant, in order: the console hosts Keycloak must accept while signing in. */
+    List<String> activeConsoleHosts();
 }

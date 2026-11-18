@@ -31,3 +31,7 @@ Documents the suite's services share, never code. The only code they share is th
 
 An app's OpenAPI document and event schemas are the executable owners of its API and event shapes; these files are
 the documents every service reads to agree on them. See [docs/architecture.md](../docs/architecture.md).
+
+`platform.yaml`'s OpenAPI document includes the console's registry: `/api/v1/ui-remotes`, its versions and the
+`/api/v1/console/remotes` feed. The matching codes are `platform:ui-remote:read`, `platform:ui-remote:manage` (the
+operator) and `platform:ui-remote:register` (the `frontend-ci` service client only).

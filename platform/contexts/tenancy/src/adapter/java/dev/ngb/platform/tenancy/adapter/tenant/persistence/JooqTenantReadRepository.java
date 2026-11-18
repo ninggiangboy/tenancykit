@@ -11,6 +11,8 @@ import dev.ngb.platform.tenancy.application.tenant.query.TenantDomainView;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantListing;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantReadRepository;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantView;
+import dev.ngb.platform.tenancy.domain.tenant.DomainKind;
+import dev.ngb.platform.tenancy.domain.tenant.TenantStatus;
 import dev.ngb.platform_jooq.tables.records.TenantDomainsRecord;
 import dev.ngb.platform_jooq.tables.records.TenantsRecord;
 import java.util.List;
@@ -78,6 +80,18 @@ public class JooqTenantReadRepository implements TenantReadRepository {
                 .orderBy(TENANT_DOMAINS.ID)
                 .limit(limit)
                 .fetch(JooqTenantReadRepository::toDomainView);
+    }
+
+    /** The join to a Tenant is what makes a host "active": a deactivated Tenant's hosts stop being redirect targets. */
+    @Override
+    public List<String> activeConsoleHosts() {
+        return dsl.select(TENANT_DOMAINS.HOSTNAME)
+                .from(TENANT_DOMAINS)
+                .join(TENANTS).on(TENANTS.ID.eq(TENANT_DOMAINS.TENANT_ID))
+                .where(TENANTS.STATUS.eq(TenantStatus.ACTIVE.name()))
+                .and(TENANT_DOMAINS.KIND.eq(DomainKind.TENANT_SUBDOMAIN.name()))
+                .orderBy(TENANT_DOMAINS.HOSTNAME)
+                .fetch(TENANT_DOMAINS.HOSTNAME);
     }
 
     @Override

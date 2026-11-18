@@ -70,6 +70,23 @@
   scopes: [platform]
   grantable_to_tenant_system: false
 
+# The console's UI remote registry. Registration belongs to CI alone, so no role can hold it; enabling, disabling and
+# activating a version is an operator's decision.
+- code: platform:ui-remote:register
+  description: Register a version of a console UI remote.
+  scopes: []
+  grantable_to_tenant_system: false
+
+- code: platform:ui-remote:manage
+  description: Enable, disable and point a console UI remote at one of its versions.
+  scopes: [platform]
+  grantable_to_tenant_system: false
+
+- code: platform:ui-remote:read
+  description: Read the console UI remotes and their registered versions.
+  scopes: [platform]
+  grantable_to_tenant_system: false
+
 # Service clients only: no user role can hold it. The snapshot API answers with whole replica streams.
 - code: platform:replica:read
   description: Read a service's replica snapshot stream.

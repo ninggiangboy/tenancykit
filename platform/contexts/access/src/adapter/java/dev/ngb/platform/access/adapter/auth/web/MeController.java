@@ -27,11 +27,11 @@ class MeController {
     @GetMapping("/api/v1/me")
     @Authenticated
     MeResponse me() {
-        String subject = currentActor.get().displayName();
-        return queries.find(subject)
+        UUID caller = currentActor.get().id();
+        return queries.findById(caller)
                 .map(me -> new MeResponse(
                         me.user().id(), me.user().tenantId(), me.user().scope(), me.user().email(), me.user().displayName(),
                         me.user().status(), me.permissions()))
-                .orElseThrow(() -> new NotFoundException("no user for subject " + subject));
+                .orElseThrow(() -> new NotFoundException("no user for id " + caller));
     }
 }

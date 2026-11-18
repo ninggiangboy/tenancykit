@@ -19,6 +19,8 @@ import dev.ngb.platform_jooq.tables.Roles;
 import dev.ngb.platform_jooq.tables.TenantDomains;
 import dev.ngb.platform_jooq.tables.TenantSystems;
 import dev.ngb.platform_jooq.tables.Tenants;
+import dev.ngb.platform_jooq.tables.UiRemoteVersions;
+import dev.ngb.platform_jooq.tables.UiRemotes;
 import dev.ngb.platform_jooq.tables.UserPermissions;
 import dev.ngb.platform_jooq.tables.Users;
 import dev.ngb.platform_jooq.tables.records.ApiCredentialsRecord;
@@ -36,6 +38,8 @@ import dev.ngb.platform_jooq.tables.records.RolesRecord;
 import dev.ngb.platform_jooq.tables.records.TenantDomainsRecord;
 import dev.ngb.platform_jooq.tables.records.TenantSystemsRecord;
 import dev.ngb.platform_jooq.tables.records.TenantsRecord;
+import dev.ngb.platform_jooq.tables.records.UiRemoteVersionsRecord;
+import dev.ngb.platform_jooq.tables.records.UiRemotesRecord;
 import dev.ngb.platform_jooq.tables.records.UserPermissionsRecord;
 import dev.ngb.platform_jooq.tables.records.UsersRecord;
 
@@ -79,6 +83,8 @@ public class Keys {
     public static final UniqueKey<TenantSystemsRecord> TENANT_SYSTEMS_TENANT_ID_ID_KEY = Internal.createUniqueKey(TenantSystems.TENANT_SYSTEMS, DSL.name("tenant_systems_tenant_id_id_key"), new TableField[] { TenantSystems.TENANT_SYSTEMS.TENANT_ID, TenantSystems.TENANT_SYSTEMS.ID }, true);
     public static final UniqueKey<TenantsRecord> TENANTS_CODE_KEY = Internal.createUniqueKey(Tenants.TENANTS, DSL.name("tenants_code_key"), new TableField[] { Tenants.TENANTS.CODE }, true);
     public static final UniqueKey<TenantsRecord> TENANTS_PKEY = Internal.createUniqueKey(Tenants.TENANTS, DSL.name("tenants_pkey"), new TableField[] { Tenants.TENANTS.ID }, true);
+    public static final UniqueKey<UiRemoteVersionsRecord> UI_REMOTE_VERSIONS_PKEY = Internal.createUniqueKey(UiRemoteVersions.UI_REMOTE_VERSIONS, DSL.name("ui_remote_versions_pkey"), new TableField[] { UiRemoteVersions.UI_REMOTE_VERSIONS.REMOTE_NAME, UiRemoteVersions.UI_REMOTE_VERSIONS.VERSION }, true);
+    public static final UniqueKey<UiRemotesRecord> UI_REMOTES_PKEY = Internal.createUniqueKey(UiRemotes.UI_REMOTES, DSL.name("ui_remotes_pkey"), new TableField[] { UiRemotes.UI_REMOTES.NAME }, true);
     public static final UniqueKey<UserPermissionsRecord> USER_PERMISSIONS_PKEY = Internal.createUniqueKey(UserPermissions.USER_PERMISSIONS, DSL.name("user_permissions_pkey"), new TableField[] { UserPermissions.USER_PERMISSIONS.USER_ID, UserPermissions.USER_PERMISSIONS.PERMISSION_CODE }, true);
     public static final UniqueKey<UsersRecord> USERS_KEYCLOAK_SUBJECT_KEY = Internal.createUniqueKey(Users.USERS, DSL.name("users_keycloak_subject_key"), new TableField[] { Users.USERS.KEYCLOAK_SUBJECT }, true);
     public static final UniqueKey<UsersRecord> USERS_PKEY = Internal.createUniqueKey(Users.USERS, DSL.name("users_pkey"), new TableField[] { Users.USERS.ID }, true);
@@ -102,6 +108,8 @@ public class Keys {
     public static final ForeignKey<RolesRecord, TenantsRecord> ROLES__ROLES_TENANT_ID_FKEY = Internal.createForeignKey(Roles.ROLES, DSL.name("roles_tenant_id_fkey"), new TableField[] { Roles.ROLES.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<TenantDomainsRecord, TenantsRecord> TENANT_DOMAINS__TENANT_DOMAINS_TENANT_ID_FKEY = Internal.createForeignKey(TenantDomains.TENANT_DOMAINS, DSL.name("tenant_domains_tenant_id_fkey"), new TableField[] { TenantDomains.TENANT_DOMAINS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<TenantSystemsRecord, TenantsRecord> TENANT_SYSTEMS__TENANT_SYSTEMS_TENANT_ID_FKEY = Internal.createForeignKey(TenantSystems.TENANT_SYSTEMS, DSL.name("tenant_systems_tenant_id_fkey"), new TableField[] { TenantSystems.TENANT_SYSTEMS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<UiRemoteVersionsRecord, UiRemotesRecord> UI_REMOTE_VERSIONS__UI_REMOTE_VERSIONS_REMOTE_NAME_FKEY = Internal.createForeignKey(UiRemoteVersions.UI_REMOTE_VERSIONS, DSL.name("ui_remote_versions_remote_name_fkey"), new TableField[] { UiRemoteVersions.UI_REMOTE_VERSIONS.REMOTE_NAME }, Keys.UI_REMOTES_PKEY, new TableField[] { UiRemotes.UI_REMOTES.NAME }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
+    public static final ForeignKey<UiRemotesRecord, UiRemoteVersionsRecord> UI_REMOTES__UI_REMOTES_ACTIVE_VERSION_FK = Internal.createForeignKey(UiRemotes.UI_REMOTES, DSL.name("ui_remotes_active_version_fk"), new TableField[] { UiRemotes.UI_REMOTES.NAME, UiRemotes.UI_REMOTES.ACTIVE_VERSION }, Keys.UI_REMOTE_VERSIONS_PKEY, new TableField[] { UiRemoteVersions.UI_REMOTE_VERSIONS.REMOTE_NAME, UiRemoteVersions.UI_REMOTE_VERSIONS.VERSION }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<UserPermissionsRecord, TenantsRecord> USER_PERMISSIONS__USER_PERMISSIONS_TENANT_ID_FKEY = Internal.createForeignKey(UserPermissions.USER_PERMISSIONS, DSL.name("user_permissions_tenant_id_fkey"), new TableField[] { UserPermissions.USER_PERMISSIONS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<UserPermissionsRecord, UsersRecord> USER_PERMISSIONS__USER_PERMISSIONS_USER_ID_FKEY = Internal.createForeignKey(UserPermissions.USER_PERMISSIONS, DSL.name("user_permissions_user_id_fkey"), new TableField[] { UserPermissions.USER_PERMISSIONS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true, ForeignKeyRule.CASCADE, ForeignKeyRule.NO_ACTION);
     public static final ForeignKey<UsersRecord, TenantsRecord> USERS__USERS_TENANT_ID_FKEY = Internal.createForeignKey(Users.USERS, DSL.name("users_tenant_id_fkey"), new TableField[] { Users.USERS.TENANT_ID }, Keys.TENANTS_PKEY, new TableField[] { Tenants.TENANTS.ID }, true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION);

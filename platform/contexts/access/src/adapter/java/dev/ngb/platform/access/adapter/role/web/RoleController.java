@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/roles")
 class RoleController {
 
-    record CreateRequest(String name, Set<String> permissions) {}
+    record CreateRoleRequest(String name, Set<String> permissions) {}
 
     record PermissionsRequest(Set<String> permissions) {}
 
@@ -75,7 +75,7 @@ class RoleController {
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(PlatformPermissions.ROLE_MANAGE)
     RoleResponse create(
-            @RequestBody CreateRequest request,
+            @RequestBody CreateRoleRequest request,
             @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         Actor actor = currentActor.get();
         return RoleResponse.of(createRole.execute(actor, requestId, new CreateRoleUseCase.Command(

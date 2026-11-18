@@ -15,6 +15,7 @@ import dev.ngb.platform.integration.adapter.credential.persistence.JooqCredentia
 import dev.ngb.platform.integration.adapter.tenantsystem.persistence.JooqTenantSystemReadRepository;
 import dev.ngb.platform.support.PlatformContainerConfig;
 import dev.ngb.platform.tenancy.adapter.tenant.persistence.JooqTenantReadRepository;
+import dev.ngb.platform.tenancy.adapter.uiremote.persistence.JooqUiRemoteReadRepository;
 import dev.ngb.platform_jooq.Tables;
 import java.util.Map;
 import org.jooq.DSLContext;
@@ -41,7 +42,8 @@ class ListingIndexIntegrationTest {
                 "user", JooqUserReadRepository.listBinding(),
                 "role", JooqRoleReadRepository.listBinding(),
                 "tenant system", JooqTenantSystemReadRepository.listBinding(),
-                "credential", JooqCredentialReadRepository.listBinding());
+                "credential", JooqCredentialReadRepository.listBinding(),
+                "ui remote", JooqUiRemoteReadRepository.listBinding());
 
         listings.forEach((name, binding) ->
                 assertThat(ListingIndexCoverage.missing(dsl, binding)).as("the %s listing", name).isEmpty());

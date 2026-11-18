@@ -7,9 +7,13 @@ import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.platform.tenancy.application.entitlement.command.SetAppEntitlementUseCase;
+import dev.ngb.platform.tenancy.application.entitlement.query.AppEntitlementView;
+import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementQueries;
 import dev.ngb.platform.tenancy.domain.entitlement.AppEntitlement;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,12 +36,28 @@ class EntitlementController {
         }
     }
 
+    record AppResponse(String appCode, boolean enabled, long version) {
+
+        static AppResponse of(AppEntitlementView view) {
+            return new AppResponse(view.appCode(), view.enabled(), view.version());
+        }
+    }
+
     private final SetAppEntitlementUseCase setApp;
+    private final EntitlementQueries queries;
     private final CurrentActor currentActor;
 
-    EntitlementController(SetAppEntitlementUseCase setApp, CurrentActor currentActor) {
+    EntitlementController(SetAppEntitlementUseCase setApp, EntitlementQueries queries, CurrentActor currentActor) {
         this.setApp = setApp;
+        this.queries = queries;
         this.currentActor = currentActor;
+    }
+
+    /** Every app of the suite with this Tenant's state of it; an app the tenant never changed is disabled at 0. */
+    @GetMapping
+    @RequiresPermission(PlatformPermissions.TENANT_READ)
+    List<AppResponse> apps(@PathVariable UUID tenantId) {
+        return queries.appsForTenant(new TenantId(tenantId)).stream().map(AppResponse::of).toList();
     }
 
     @PutMapping("/{appCode}")

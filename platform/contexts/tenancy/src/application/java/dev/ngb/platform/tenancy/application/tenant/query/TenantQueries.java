@@ -35,6 +35,11 @@ public class TenantQueries {
         return unitOfWork.transactional(() -> tenants.pageDomains(after, limit));
     }
 
+    /** The console hosts of every active Tenant, which Keycloak must accept as redirect targets. */
+    public List<String> activeConsoleHosts() {
+        return unitOfWork.transactional(tenants::activeConsoleHosts);
+    }
+
     public java.util.Optional<TenantView> byId(UUID id) {
         return unitOfWork.transactional(() -> tenants.findById(id));
     }

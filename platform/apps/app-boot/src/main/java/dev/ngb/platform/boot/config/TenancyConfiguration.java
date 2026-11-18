@@ -6,6 +6,8 @@ import dev.ngb.platform.tenancy.adapter.entitlement.persistence.JooqEntitlementR
 import dev.ngb.platform.tenancy.adapter.tenant.persistence.JooqTenantDomainRepository;
 import dev.ngb.platform.tenancy.adapter.tenant.persistence.JooqTenantReadRepository;
 import dev.ngb.platform.tenancy.adapter.tenant.persistence.JooqTenantRepository;
+import dev.ngb.platform.tenancy.adapter.uiremote.persistence.JooqUiRemoteReadRepository;
+import dev.ngb.platform.tenancy.adapter.uiremote.persistence.JooqUiRemoteRepository;
 import dev.ngb.platform.tenancy.api.provisioning.TenantProvisioning;
 import dev.ngb.platform.tenancy.application.service.TenantProvisioningService;
 import dev.ngb.platform.boot.catalog.ClasspathAppCatalog;
@@ -16,6 +18,7 @@ import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.platform.tenancy.application.entitlement.command.SetAppEntitlementUseCase;
 import dev.ngb.platform.tenancy.application.entitlement.port.AppCatalog;
 import dev.ngb.platform.tenancy.application.entitlement.port.AppEntitlementRepository;
+import dev.ngb.platform.tenancy.application.entitlement.query.AvailableApps;
 import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementQueries;
 import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementReadRepository;
 import dev.ngb.platform.tenancy.application.tenant.command.AddTenantDomainUseCase;
@@ -24,10 +27,18 @@ import dev.ngb.platform.tenancy.application.tenant.command.DeactivateTenantUseCa
 import dev.ngb.platform.tenancy.application.tenant.command.EnsurePlatformDomainUseCase;
 import dev.ngb.platform.tenancy.application.tenant.command.RenameTenantUseCase;
 import dev.ngb.platform.tenancy.application.tenant.command.ResolveHostUseCase;
+import dev.ngb.platform.tenancy.application.tenant.port.ConsoleHostPort;
 import dev.ngb.platform.tenancy.application.tenant.port.TenantDomainRepository;
 import dev.ngb.platform.tenancy.application.tenant.port.TenantRepository;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantQueries;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantReadRepository;
+import dev.ngb.platform.access.application.auth.port.ConsoleClientPort;
+import dev.ngb.platform.tenancy.application.uiremote.command.RegisterUiRemoteVersionUseCase;
+import dev.ngb.platform.tenancy.application.uiremote.command.SetUiRemoteStateUseCase;
+import dev.ngb.platform.tenancy.application.uiremote.query.UiRemoteReadRepository;
+import dev.ngb.platform.tenancy.application.uiremote.port.UiRemoteRepository;
+import dev.ngb.platform.tenancy.application.uiremote.query.ConsoleRemoteQueries;
+import dev.ngb.platform.tenancy.application.uiremote.query.UiRemoteQueries;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -63,7 +74,7 @@ class TenancyConfiguration {
     }
 
     @Bean
-    AppCatalog appCatalog() {
+    ClasspathAppCatalog appCatalog() {
         return new ClasspathAppCatalog();
     }
 
@@ -74,9 +85,10 @@ class TenancyConfiguration {
 
     @Bean
     CreateTenantUseCase createTenantUseCase(
-            UnitOfWork unitOfWork, TenantRepository tenants, TenantDomainRepository domains, EventPublisher events, AuditLog auditLog,
-            IdGenerator ids, Clock clock, @Value("${platform.tenancy.base-domain:localhost}") String baseDomain) {
-        return new CreateTenantUseCase(unitOfWork, tenants, domains, events, auditLog, ids, clock, baseDomain);
+            UnitOfWork unitOfWork, TenantRepository tenants, TenantDomainRepository domains, ConsoleHostPort consoleHosts,
+            EventPublisher events, AuditLog auditLog, IdGenerator ids, Clock clock,
+            @Value("${platform.tenancy.base-domain:localhost}") String baseDomain) {
+        return new CreateTenantUseCase(unitOfWork, tenants, domains, consoleHosts, events, auditLog, ids, clock, baseDomain);
     }
 
     @Bean
@@ -92,10 +104,15 @@ class TenancyConfiguration {
     }
 
     @Bean
+    ConsoleHostPort consoleHostPort(ConsoleClientPort consoleClient) {
+        return consoleClient::registerHost;
+    }
+
+    @Bean
     AddTenantDomainUseCase addTenantDomainUseCase(
-            UnitOfWork unitOfWork, TenantRepository tenants, TenantDomainRepository domains, EventPublisher events, AuditLog auditLog,
-            IdGenerator ids, Clock clock) {
-        return new AddTenantDomainUseCase(unitOfWork, tenants, domains, events, auditLog, ids, clock);
+            UnitOfWork unitOfWork, TenantRepository tenants, TenantDomainRepository domains, ConsoleHostPort consoleHosts,
+            EventPublisher events, AuditLog auditLog, IdGenerator ids, Clock clock) {
+        return new AddTenantDomainUseCase(unitOfWork, tenants, domains, consoleHosts, events, auditLog, ids, clock);
     }
 
     @Bean
@@ -115,8 +132,41 @@ class TenancyConfiguration {
     }
 
     @Bean
-    EntitlementQueries entitlementQueries(UnitOfWork unitOfWork, EntitlementReadRepository entitlements) {
-        return new EntitlementQueries(unitOfWork, entitlements);
+    EntitlementQueries entitlementQueries(
+            UnitOfWork unitOfWork, EntitlementReadRepository entitlements, TenantReadRepository tenants, AvailableApps apps) {
+        return new EntitlementQueries(unitOfWork, entitlements, tenants, apps);
+    }
+
+    @Bean
+    UiRemoteRepository uiRemoteRepository(DSLContext dsl) {
+        return new JooqUiRemoteRepository(dsl);
+    }
+
+    @Bean
+    UiRemoteReadRepository uiRemoteReadRepository(DSLContext dsl) {
+        return new JooqUiRemoteReadRepository(dsl);
+    }
+
+    @Bean
+    RegisterUiRemoteVersionUseCase registerUiRemoteVersionUseCase(
+            UnitOfWork unitOfWork, UiRemoteRepository remotes, AuditLog auditLog, Clock clock) {
+        return new RegisterUiRemoteVersionUseCase(unitOfWork, remotes, auditLog, clock);
+    }
+
+    @Bean
+    SetUiRemoteStateUseCase setUiRemoteStateUseCase(
+            UnitOfWork unitOfWork, UiRemoteRepository remotes, AuditLog auditLog, Clock clock) {
+        return new SetUiRemoteStateUseCase(unitOfWork, remotes, auditLog, clock);
+    }
+
+    @Bean
+    UiRemoteQueries uiRemoteQueries(UnitOfWork unitOfWork, UiRemoteReadRepository remotes) {
+        return new UiRemoteQueries(unitOfWork, remotes);
+    }
+
+    @Bean
+    ConsoleRemoteQueries consoleRemoteQueries(UnitOfWork unitOfWork, UiRemoteReadRepository remotes) {
+        return new ConsoleRemoteQueries(unitOfWork, remotes);
     }
 
     @Bean

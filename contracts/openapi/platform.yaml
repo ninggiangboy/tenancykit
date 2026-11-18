@@ -46,6 +46,41 @@ paths:
               schema:
                 $ref: "#/components/schemas/UserResponse"
       x-required-permission: platform:user:manage
+  /api/v1/ui-remotes/{name}:
+    put:
+      tags:
+      - ui-remote-controller
+      operationId: setState
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: If-Match
+        in: header
+        required: false
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StateRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RemoteResponse"
+      x-required-permission: platform:ui-remote:manage
   /api/v1/tenants/{tenantId}/apps/{appCode}:
     put:
       tags:
@@ -676,6 +711,36 @@ paths:
               schema:
                 $ref: "#/components/schemas/UserResponse"
       x-required-permission: platform:user:manage
+  /api/v1/ui-remotes/{name}/versions:
+    post:
+      tags:
+      - ui-remote-controller
+      operationId: registerVersion
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: X-Request-Id
+        in: header
+        required: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VersionResponse"
+      x-required-permission: platform:ui-remote:register
   /api/v1/tenants:
     get:
       tags:
@@ -2212,7 +2277,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateRequest"
+              $ref: "#/components/schemas/CreateRoleRequest"
         required: true
       responses:
         "201":
@@ -2352,6 +2417,348 @@ paths:
                 type: object
                 additionalProperties: {}
       x-required-permission: platform:replica:read
+  /api/v1/ui-remotes:
+    get:
+      tags:
+      - ui-remote-controller
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone."
+      operationId: listRemotes
+      parameters:
+      - name: "filter[app_code][eq]"
+        in: query
+        description: '`app_code` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[app_code][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `app_code`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[app_code][neq]"
+        in: query
+        description: '`app_code` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[app_code][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `app_code`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[app_code][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `app_code`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[created_at][eq]"
+        in: query
+        description: '`created_at` eq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][gt]"
+        in: query
+        description: '`created_at` gt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][gte]"
+        in: query
+        description: '`created_at` gte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `created_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[created_at][lt]"
+        in: query
+        description: '`created_at` lt the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][lte]"
+        in: query
+        description: '`created_at` lte the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][neq]"
+        in: query
+        description: '`created_at` neq the value.'
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - name: "filter[created_at][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `created_at`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[enabled][eq]"
+        in: query
+        description: '`enabled` eq the value.'
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[enabled][neq]"
+        in: query
+        description: '`enabled` neq the value.'
+        required: false
+        schema:
+          type: boolean
+      - name: "filter[name][contains]"
+        in: query
+        description: Case-insensitive substring match on `name`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[name][eq]"
+        in: query
+        description: '`name` eq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[name][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `name`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[name][neq]"
+        in: query
+        description: '`name` neq the value.'
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[name][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `name`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[name][starts_with]"
+        in: query
+        description: Case-insensitive prefix match on `name`.
+        required: false
+        schema:
+          type: string
+          maxLength: 255
+      - name: "filter[nav_order][eq]"
+        in: query
+        description: '`nav_order` eq the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[nav_order][gt]"
+        in: query
+        description: '`nav_order` gt the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[nav_order][gte]"
+        in: query
+        description: '`nav_order` gte the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[nav_order][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `nav_order`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[nav_order][lt]"
+        in: query
+        description: '`nav_order` lt the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[nav_order][lte]"
+        in: query
+        description: '`nav_order` lte the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[nav_order][neq]"
+        in: query
+        description: '`nav_order` neq the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[nav_order][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `nav_order`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[version][eq]"
+        in: query
+        description: '`version` eq the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[version][gt]"
+        in: query
+        description: '`version` gt the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[version][gte]"
+        in: query
+        description: '`version` gte the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[version][in]"
+        in: query
+        description: Comma-separated list of up to 100 values; `in` of `version`.
+        required: false
+        schema:
+          type: string
+      - name: "filter[version][lt]"
+        in: query
+        description: '`version` lt the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[version][lte]"
+        in: query
+        description: '`version` lte the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[version][neq]"
+        in: query
+        description: '`version` neq the value.'
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: "filter[version][nin]"
+        in: query
+        description: Comma-separated list of up to 100 values; `nin` of `version`.
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, name, nav_order. At most 4 fields; `name`\
+          \ is appended to make the order total. Default: `nav_order,name`."
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: offset
+        in: query
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: cursor
+        in: query
+        description: The `next_cursor` of the previous page. Valid only with the same
+          filter and sort.
+        required: false
+        schema:
+          type: string
+      - name: page_info
+        in: query
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: string
+          enum:
+          - full
+          - cursor
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageRemoteResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: platform:ui-remote:read
+  /api/v1/tenants/{tenantId}/apps:
+    get:
+      tags:
+      - entitlement-controller
+      operationId: apps
+      parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppResponse"
+      x-required-permission: platform:tenant:read
   /api/v1/me:
     get:
       tags:
@@ -2364,6 +2771,20 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/MeResponse"
+  /api/v1/console/remotes:
+    get:
+      tags:
+      - console-remote-controller
+      operationId: feed
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConsoleRemoteResponse"
   /.well-known/jwks.json:
     get:
       tags:
@@ -2429,6 +2850,63 @@ components:
         version:
           type: integer
           format: int64
+    StateRequest:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        activeVersion:
+          type: string
+        title:
+          type: string
+        navOrder:
+          type: integer
+          format: int32
+    RemoteResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        appCode:
+          type: string
+        title:
+          type: string
+        navOrder:
+          type: integer
+          format: int32
+        audiences:
+          type: array
+          items:
+            type: string
+        enabled:
+          type: boolean
+        activeVersion:
+          type: string
+        createdAt:
+          type: string
+        version:
+          type: integer
+          format: int64
+        versions:
+          type: array
+          items:
+            $ref: "#/components/schemas/VersionResponse"
+    VersionResponse:
+      type: object
+      properties:
+        version:
+          type: string
+        entryPath:
+          type: string
+        integrity:
+          type: string
+        sdkMajor:
+          type: integer
+          format: int32
+        registeredAt:
+          type: string
+        registeredBy:
+          type: string
     EntitlementRequest:
       type: object
       properties:
@@ -2535,6 +3013,29 @@ components:
           type: string
         temporaryPassword:
           type: string
+    RegisterRequest:
+      type: object
+      properties:
+        version:
+          type: string
+        entryPath:
+          type: string
+        integrity:
+          type: string
+        sdkMajor:
+          type: integer
+          format: int32
+        appCode:
+          type: string
+        title:
+          type: string
+        audiences:
+          type: array
+          items:
+            type: string
+        navOrder:
+          type: integer
+          format: int32
     ProvisionRequest:
       type: object
       properties:
@@ -2613,6 +3114,16 @@ components:
         overlapMinutes:
           type: integer
           format: int64
+    CreateRoleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
     UpdateRequest:
       type: object
       properties:
@@ -2651,6 +3162,17 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
+    PageRemoteResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RemoteResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
     PageTenantResponse:
       type: object
       properties:
@@ -2662,6 +3184,16 @@ components:
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
+    AppResponse:
+      type: object
+      properties:
+        appCode:
+          type: string
+        enabled:
+          type: boolean
+        version:
+          type: integer
+          format: int64
     PageSystemResponse:
       type: object
       properties:
@@ -2716,3 +3248,24 @@ components:
           type: array
           items:
             type: string
+    ConsoleRemoteResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        appCode:
+          type: string
+        navOrder:
+          type: integer
+          format: int32
+        version:
+          type: string
+        entryPath:
+          type: string
+        integrity:
+          type: string
+        sdkMajor:
+          type: integer
+          format: int32

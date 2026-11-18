@@ -19,6 +19,8 @@ import dev.ngb.platform_jooq.tables.Roles;
 import dev.ngb.platform_jooq.tables.TenantDomains;
 import dev.ngb.platform_jooq.tables.TenantSystems;
 import dev.ngb.platform_jooq.tables.Tenants;
+import dev.ngb.platform_jooq.tables.UiRemoteVersions;
+import dev.ngb.platform_jooq.tables.UiRemotes;
 import dev.ngb.platform_jooq.tables.UserPermissions;
 import dev.ngb.platform_jooq.tables.Users;
 
@@ -103,6 +105,16 @@ public class Tables {
      * The table <code>public.tenants</code>.
      */
     public static final Tenants TENANTS = Tenants.TENANTS;
+
+    /**
+     * The table <code>public.ui_remote_versions</code>.
+     */
+    public static final UiRemoteVersions UI_REMOTE_VERSIONS = UiRemoteVersions.UI_REMOTE_VERSIONS;
+
+    /**
+     * The table <code>public.ui_remotes</code>.
+     */
+    public static final UiRemotes UI_REMOTES = UiRemotes.UI_REMOTES;
 
     /**
      * The table <code>public.user_permissions</code>.

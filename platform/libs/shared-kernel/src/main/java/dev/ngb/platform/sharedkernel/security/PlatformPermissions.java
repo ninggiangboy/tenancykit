@@ -30,6 +30,13 @@ public final class PlatformPermissions {
     /** Enables or disables an app of the suite for a Tenant. */
     public static final String ENTITLEMENT_MANAGE = "platform:entitlement:manage";
 
+    /** Registers a version of a console UI remote; granted to no role, only to the frontend CI service client. */
+    public static final String UI_REMOTE_REGISTER = "platform:ui-remote:register";
+    /** Enables, disables and points a console UI remote at one of its versions. */
+    public static final String UI_REMOTE_MANAGE = "platform:ui-remote:manage";
+    /** Reads the console UI remote registry. */
+    public static final String UI_REMOTE_READ = "platform:ui-remote:read";
+
     /** The snapshot API's code: granted to no role, only to a service client of the suite. */
     public static final String REPLICA_READ = "platform:replica:read";
 
