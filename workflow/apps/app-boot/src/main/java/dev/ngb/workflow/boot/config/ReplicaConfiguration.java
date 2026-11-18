@@ -78,7 +78,6 @@ class ReplicaConfiguration {
         String name = suite.replica().queue();
         String deadLetter = name + ".dlq";
         return new Declarables(
-                new TopicExchange(suite.replica().exchange(), true, false),
                 new TopicExchange("suite.dlx", true, false),
                 QueueBuilder.durable(name)
                         .deadLetterExchange("suite.dlx")

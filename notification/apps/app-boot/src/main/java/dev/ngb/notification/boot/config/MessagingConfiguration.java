@@ -19,6 +19,10 @@ import org.springframework.context.annotation.Configuration;
  * <p>It consumes the five Platform state-transfer streams on its own queue and produces one command:
  * {@code email.send} to {@code mailer.commands}. It declares no exchange of its own, because it exports no event that
  * another app consumes. The envelope {@code schemaVersion} is <b>2</b>; a wrong value rejects every message.
+ *
+ * <p>{@code MessagingProperties.exchange} is the <em>producing</em> exchange, so it is {@code mailer.commands}. The
+ * consumed exchange is Platform's: the queue binds to it as a foreign exchange, which the broker user may do but not
+ * declare, so {@code SuiteTopology} declares only the producing exchange and the dead-letter exchange.
  */
 @Configuration(proxyBeanMethods = false)
 class MessagingConfiguration {
@@ -32,9 +36,9 @@ class MessagingConfiguration {
     MessagingProperties messagingProperties(NotificationSettings settings) {
         Email email = settings.email();
         return new MessagingProperties(
-                settings.messaging().exchange(),
+                settings.commands().exchange(),
                 Map.of(settings.commands().routingKey(), settings.commands().exchange()),
-                List.of(new QueueBinding(
+                List.of(QueueBinding.toForeignExchange(
                         settings.messaging().queue(),
                         settings.messaging().exchange(),
                         ReplicaStream.eventTypes())),

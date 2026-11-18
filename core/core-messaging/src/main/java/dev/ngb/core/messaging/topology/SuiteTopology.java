@@ -16,7 +16,9 @@ import org.springframework.amqp.core.TopicExchange;
 /**
  * Builds the exchanges, queues, bindings and dead-letter wiring one service needs, from its configuration. A
  * producer declares its exchange; a consumer declares its queue, its bindings and the queue's dead-letter pair.
- * Every declaration is idempotent, so startup order does not matter.
+ * An exchange a queue binds to is declared only when its binding says the service owns it, because a broker user
+ * that does not own an exchange may bind to it but is refused when it declares it. Every declaration is idempotent,
+ * so startup order does not matter, except that a foreign exchange must already exist when the queue binds to it.
  */
 public final class SuiteTopology {
 
@@ -29,7 +31,9 @@ public final class SuiteTopology {
         List<Declarable> items = new ArrayList<>();
         Set<String> exchanges = new LinkedHashSet<>();
         exchanges.add(properties.exchange());
-        properties.queues().forEach(queue -> exchanges.add(queue.exchange()));
+        properties.queues().stream()
+                .filter(QueueBinding::declareExchange)
+                .forEach(queue -> exchanges.add(queue.exchange()));
         exchanges.add(DEAD_LETTER_EXCHANGE);
         for (String exchange : exchanges) {
             items.add(new TopicExchange(exchange, true, false));

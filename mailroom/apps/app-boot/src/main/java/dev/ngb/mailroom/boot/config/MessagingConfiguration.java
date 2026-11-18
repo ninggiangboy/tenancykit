@@ -21,8 +21,8 @@ import org.springframework.context.annotation.Configuration;
  * The envelope {@code schemaVersion} is <b>2</b>; a wrong value rejects every message.
  *
  * <p>{@code MessagingProperties.exchange} is the <em>producing</em> exchange, so it is {@code mailer.commands}. The two
- * consumed exchanges are declared through their queue bindings; {@code SuiteTopology} declares every exchange a queue
- * binds to as well as the producing one.
+ * consumed exchanges belong to Platform and mailer: the queues bind to them as foreign exchanges, which the broker user
+ * may do but not declare, so {@code SuiteTopology} declares only the producing exchange and the dead-letter exchange.
  */
 @Configuration(proxyBeanMethods = false)
 class MessagingConfiguration {
@@ -39,11 +39,11 @@ class MessagingConfiguration {
                 settings.commands().exchange(),
                 Map.of(settings.commands().routingKey(), settings.commands().exchange()),
                 List.of(
-                        new QueueBinding(
+                        QueueBinding.toForeignExchange(
                                 settings.messaging().queue(),
                                 settings.messaging().exchange(),
                                 ReplicaStream.eventTypes()),
-                        new QueueBinding(
+                        QueueBinding.toForeignExchange(
                                 settings.mailer().queue(),
                                 settings.mailer().exchange(),
                                 List.of("email-delivery.changed"))),

@@ -20,8 +20,8 @@ import org.springframework.context.annotation.Configuration;
  * envelope {@code schemaVersion} is <b>2</b>; a wrong value rejects every message.
  *
  * <p>{@code MessagingProperties.exchange} is the <em>producing</em> exchange, so it is {@code survey.events}. The
- * consumed exchange is declared through its queue binding; {@code SuiteTopology} declares every exchange a queue binds
- * to as well as the producing one.
+ * consumed exchange is Platform's: the queue binds to it as a foreign exchange, which the broker user may do but not
+ * declare, so {@code SuiteTopology} declares only the producing exchange and the dead-letter exchange.
  */
 @Configuration(proxyBeanMethods = false)
 class MessagingConfiguration {
@@ -41,7 +41,7 @@ class MessagingConfiguration {
                         "survey-version.published", exchange,
                         "survey.closed", exchange,
                         "survey-response.submitted", exchange),
-                List.of(new QueueBinding(
+                List.of(QueueBinding.toForeignExchange(
                         settings.messaging().queue(),
                         settings.messaging().exchange(),
                         ReplicaStream.eventTypes())),

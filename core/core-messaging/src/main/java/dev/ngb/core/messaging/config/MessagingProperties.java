@@ -33,13 +33,26 @@ public record MessagingProperties(String exchange, Map<String, String> exports, 
      * @param name the durable queue name, for example {@code billing.platform-events}
      * @param exchange the exchange the queue binds to
      * @param routingKeys the event types the queue accepts, or a pattern such as {@code #}
+     * @param declareExchange whether {@link dev.ngb.core.messaging.topology.SuiteTopology} also declares the exchange.
+     *     It is {@code false} for an exchange another service owns: the broker lets the consumer bind a queue to it, not
+     *     declare it, and the owner has already declared it.
      */
-    public record QueueBinding(String name, String exchange, List<String> routingKeys) {
+    public record QueueBinding(String name, String exchange, List<String> routingKeys, boolean declareExchange) {
 
         public QueueBinding {
             Objects.requireNonNull(name, "name");
             Objects.requireNonNull(exchange, "exchange");
             routingKeys = List.copyOf(routingKeys);
+        }
+
+        /** A binding to an exchange this service declares itself. */
+        public QueueBinding(String name, String exchange, List<String> routingKeys) {
+            this(name, exchange, routingKeys, true);
+        }
+
+        /** A binding to an exchange another service owns and declares. */
+        public static QueueBinding toForeignExchange(String name, String exchange, List<String> routingKeys) {
+            return new QueueBinding(name, exchange, routingKeys, false);
         }
     }
 
