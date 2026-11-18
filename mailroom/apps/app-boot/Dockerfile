@@ -11,7 +11,7 @@ WORKDIR /workspace
 COPY mailroom/ mailroom/
 COPY core/ core/
 COPY contracts/ contracts/
-RUN --mount=type=cache,target=/root/.gradle \
+RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
     cd mailroom && ./gradlew :apps:app-boot:bootJar --no-daemon
 
 FROM eclipse-temurin:25-jre AS runtime

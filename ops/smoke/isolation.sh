@@ -46,7 +46,7 @@ sql_as_tenant() {
   docker compose run --rm --no-deps --entrypoint sh postgres -c \
     "PGPASSWORD='${password}' psql --no-psqlrc --quiet --tuples-only --no-align \
       --host postgres --username ${user} --dbname ${database} \
-      --command \"begin; select set_config('app.tenant_id', '${tenant}', true); ${statement}; commit;\"" 2>/dev/null |
+      --command \"begin; set local app.tenant_id = '${tenant}'; ${statement}; commit;\"" 2>/dev/null |
     tr -d '[:space:]'
 }
 

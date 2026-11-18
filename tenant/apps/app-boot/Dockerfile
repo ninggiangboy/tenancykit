@@ -7,7 +7,7 @@ FROM eclipse-temurin:25-jdk AS build
 WORKDIR /workspace
 COPY tenant/ tenant/
 COPY core/ core/
-RUN --mount=type=cache,target=/root/.gradle \
+RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
     cd tenant && ./gradlew :apps:app-boot:bootJar --no-daemon
 
 FROM eclipse-temurin:25-jre AS runtime

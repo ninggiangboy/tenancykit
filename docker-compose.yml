@@ -132,8 +132,8 @@ x-survey-environment: &survey-environment
   SURVEY_SECRETS_MASTER_KEY: ${SURVEY_SECRETS_MASTER_KEY:?set it in .env}
   # The public host a respondent reaches /survey/p/... from; it must be a hostname Caddy serves.
   SURVEY_PUBLIC_BASE_URL: ${SURVEY_PUBLIC_BASE_URL:-http://localhost:8090/survey}
-  # MinIO: the server reaches it at minio:9000, a browser at localhost:9000 for a presigned PUT.
-  SURVEY_S3_ENDPOINT: http://minio:9000
+  # SeaweedFS S3: the server reaches it at seaweedfs:9000, a browser at localhost:9000 for a presigned PUT.
+  SURVEY_S3_ENDPOINT: http://seaweedfs:9000
   SURVEY_S3_PUBLIC_ENDPOINT: ${SURVEY_S3_PUBLIC_ENDPOINT:-http://localhost:9000}
   SURVEY_S3_BUCKET: ${SURVEY_S3_BUCKET:-survey-uploads}
   SURVEY_S3_ACCESS_KEY: ${SURVEY_S3_ACCESS_KEY:-minio}
@@ -268,6 +268,9 @@ x-workflow-environment: &workflow-environment
 services:
   postgres:
     image: postgres:18
+    # Twelve apps each hold a pool for their api, worker and migrate runtimes; the default of 100 connections is
+    # exhausted once the whole suite runs, and a service then fails to start with "remaining connection slots".
+    command: ["postgres", "-c", "max_connections=300"]
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?set it in .env}
@@ -408,6 +411,12 @@ services:
       PLATFORM_KEYCLOAK_REALM: ${KEYCLOAK_REALM:-billing}
       PLATFORM_KEYCLOAK_ADMIN_CLIENT_ID: platform-admin
       PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET: ${PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET:?set it in .env}
+      PLATFORM_KEYCLOAK_CONSOLE_CLIENT_ID: ${PLATFORM_KEYCLOAK_CONSOLE_CLIENT_ID:-suite-console}
+      PLATFORM_KEYCLOAK_CONSOLE_SCHEME: ${PLATFORM_KEYCLOAK_CONSOLE_SCHEME:-http}
+      # Caddy publishes the stack on 8090, so the console's own port is part of every redirect target.
+      PLATFORM_KEYCLOAK_CONSOLE_PORT: ${PLATFORM_KEYCLOAK_CONSOLE_PORT:-8090}
+      PLATFORM_KEYCLOAK_CONSOLE_FIXED_HOSTS: ${PLATFORM_KEYCLOAK_CONSOLE_FIXED_HOSTS:-localhost,platform.localhost,localhost:5173,platform.localhost:5173}
+      PLATFORM_KEYCLOAK_CONSOLE_SYNC_DELAY: ${PLATFORM_KEYCLOAK_CONSOLE_SYNC_DELAY:-PT5M}
       PLATFORM_BASE_DOMAIN: ${BASE_DOMAIN:-localhost}
       PLATFORM_HOSTNAME: ${PLATFORM_HOSTNAME:-platform.localhost}
       PLATFORM_TOKEN_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
@@ -423,12 +432,18 @@ services:
       PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
       PLATFORM_MAILROOM_SERVICE_CLIENT_ID: mailroom
       PLATFORM_MAILROOM_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_MAILROOM_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
+      PLATFORM_SURVEY_SERVICE_CLIENT_ID: survey
+      PLATFORM_SURVEY_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_SURVEY_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
       PLATFORM_CUSTOMER_SERVICE_CLIENT_ID: customer
       PLATFORM_CUSTOMER_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_CUSTOMER_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
       PLATFORM_LOYALTY_SERVICE_CLIENT_ID: loyalty
       PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
+      PLATFORM_BOOKING_SERVICE_CLIENT_ID: booking
+      PLATFORM_BOOKING_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_BOOKING_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
       PLATFORM_WORKFLOW_SERVICE_CLIENT_ID: workflow
       PLATFORM_WORKFLOW_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_WORKFLOW_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
+      PLATFORM_FRONTEND_CI_SERVICE_CLIENT_ID: ${PLATFORM_FRONTEND_CI_SERVICE_CLIENT_ID:-frontend-ci}
+      PLATFORM_FRONTEND_CI_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_FRONTEND_CI_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
     ports:
       - "8082:8080"
     networks:
@@ -767,9 +782,42 @@ services:
       retries: 60
 
   # Routes on the Host header alone; see ops/caddy/Caddyfile.
+  # The console's static server: one hostname's shell plus every published remote version, under /console/ on every
+  # host. It only reads the volume, so a published build cannot be changed by the server that serves it.
+  console-static:
+    image: caddy:2.9
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_AUTHORITY: ${CONSOLE_KEYCLOAK_AUTHORITY:-http://localhost:8081/realms/billing}
+      KEYCLOAK_CLIENT_ID: ${CONSOLE_KEYCLOAK_CLIENT_ID:-suite-console}
+      KEYCLOAK_PUBLIC_ORIGIN: ${CONSOLE_KEYCLOAK_ORIGIN:-http://localhost:8081}
+      PLATFORM_HOSTNAME: ${PLATFORM_HOSTNAME:-platform.localhost}
+    volumes:
+      - console-assets:/srv:ro
+      - ./ops/console/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./ops/console/entrypoint.sh:/usr/local/bin/console-entrypoint:ro
+      - ./ops/console/config.json.template:/etc/console/config.json.template:ro
+    entrypoint: ["/bin/sh", "/usr/local/bin/console-entrypoint"]
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost/config.json"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # The write side of the same volume, only ever started for one `docker compose run` by the deploy scripts. It shares
+  # the image the server uses, so the stack pulls nothing extra.
+  console-deploy:
+    image: caddy:2.9
+    profiles: ["tools"]
+    volumes:
+      - console-assets:/srv
+    entrypoint: ["/bin/sh"]
+
   caddy:
     image: caddy:2.9
     depends_on:
+      console-static:
+        condition: service_healthy
       platform:
         condition: service_healthy
       billing:
@@ -794,37 +842,42 @@ services:
       timeout: 5s
       retries: 5
 
-  # MinIO stands in for S3: a file question presigns a PUT, and the offline GeoIP file is mounted beside the apps.
-  minio:
-    image: minio/minio:RELEASE.2024-10-13T13-34-11Z
-    command: server /data --console-address ":9001"
+  # SeaweedFS stands in for S3 (a single process with master, volume, filer and the S3 gateway on :9000): a file
+  # question presigns a PUT against it. The one S3 identity comes from the standard AWS variables.
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.54
+    command: ["server", "-dir=/data", "-s3", "-s3.port=9000", "-ip.bind=0.0.0.0"]
     environment:
-      MINIO_ROOT_USER: ${SURVEY_S3_ACCESS_KEY:-minio}
-      MINIO_ROOT_PASSWORD: ${SURVEY_S3_SECRET_KEY:?set it in .env}
+      AWS_ACCESS_KEY_ID: ${SURVEY_S3_ACCESS_KEY:-minio}
+      AWS_SECRET_ACCESS_KEY: ${SURVEY_S3_SECRET_KEY:?set it in .env}
     ports:
       - "9000:9000"
-      - "9001:9001"
     volumes:
-      - minio-data:/data
+      - seaweedfs-data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      # The master answers once the cluster is up; the gateway must also accept connections before a PUT can succeed.
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:9333/cluster/healthz && nc -z localhost 9000"]
       interval: 5s
       timeout: 5s
       retries: 20
 
-  # Creates the upload bucket once MinIO is ready. The app role needs no bucket at startup, only at the first presign.
-  minio-setup:
-    image: minio/mc:RELEASE.2024-10-08T09-37-26Z
+  # Creates the upload bucket once SeaweedFS is ready. The app role needs no bucket at startup, only at the first
+  # presign. A bucket that already exists answers 409, which counts as done. It reuses the SeaweedFS image for curl.
+  seaweedfs-setup:
+    image: chrislusf/seaweedfs:4.54
     depends_on:
-      minio:
+      seaweedfs:
         condition: service_healthy
     environment:
-      MINIO_USER: ${SURVEY_S3_ACCESS_KEY:-minio}
-      MINIO_PASSWORD: ${SURVEY_S3_SECRET_KEY:?set it in .env}
-      MINIO_BUCKET: ${SURVEY_S3_BUCKET:-survey-uploads}
+      S3_USER: ${SURVEY_S3_ACCESS_KEY:-minio}
+      S3_PASSWORD: ${SURVEY_S3_SECRET_KEY:?set it in .env}
+      S3_BUCKET: ${SURVEY_S3_BUCKET:-survey-uploads}
     entrypoint: ["/bin/sh", "-c"]
     command:
-      - mc alias set local http://minio:9000 "$$MINIO_USER" "$$MINIO_PASSWORD" && mc mb --ignore-existing "local/$$MINIO_BUCKET"
+      - |
+        code=$$(curl -s -o /dev/null -w '%{http_code}' --aws-sigv4 aws:amz:us-east-1:s3 \
+          --user "$$S3_USER:$$S3_PASSWORD" -X PUT "http://seaweedfs:9000/$$S3_BUCKET")
+        [ "$$code" = 200 ] || [ "$$code" = 409 ] || { echo "bucket create answered $$code" >&2; exit 1; }
     restart: "no"
 
   survey-migrate:
@@ -887,7 +940,7 @@ services:
         condition: service_healthy
       survey-migrate:
         condition: service_completed_successfully
-      minio-setup:
+      seaweedfs-setup:
         condition: service_completed_successfully
     environment:
       <<: *survey-environment
@@ -1190,6 +1243,7 @@ services:
     command: ["sh", "-c", "printf 'ok' > /usr/share/nginx/html/erasure; exec nginx -g 'daemon off;'"]
 
 volumes:
+  console-assets:
   postgres-data:
   rabbitmq-data:
-  minio-data:
+  seaweedfs-data:

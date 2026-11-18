@@ -124,7 +124,7 @@ ADMIN_TOKEN=$(user_token "platform:${BOOTSTRAP_EMAIL}" "${BOOTSTRAP_PASSWORD}")
 step "creating tenant ${TENANT_CODE} with an admin and enabling billing"
 # A repeat run finds the tenant already there; the tenant list tells its id, so the script is re-runnable.
 TENANT_ID=$(call GET "${PROXY}/platform/api/v1/tenants" platform.localhost "${ADMIN_TOKEN}" |
-  jq -r --arg code "${TENANT_CODE}" 'map(select(.code == $code))[0].id // empty')
+  jq -r --arg code "${TENANT_CODE}" '(.data // .) | map(select(.code == $code))[0].id // empty')
 if [ -z "${TENANT_ID}" ]; then
   PROVISIONED=$(call POST "${PROXY}/platform/api/v1/tenants" platform.localhost "${ADMIN_TOKEN}" \
     "{\"code\":\"${TENANT_CODE}\",\"name\":\"Acme\",\"adminEmail\":\"${ADMIN_EMAIL}\",\"adminTemporaryPassword\":\"Temporary-1\"}")
@@ -155,7 +155,7 @@ echo "replica caught up in $(( $(date +%s) - START ))s"
 step "creating a tenant system and credential, then calling Billing with its suite token"
 # Re-running reuses the Tenant System this script creates, so a name collision never fails the second run.
 SYSTEM_ID=$(call GET "${PROXY}/platform/api/v1/tenant-systems" "${TENANT_CODE}.localhost" "${TENANT_ADMIN_TOKEN}" |
-  jq -r 'map(select(.name == "smoke"))[0].id // empty')
+  jq -r '(.data // .) | map(select(.name == "smoke"))[0].id // empty')
 if [ -z "${SYSTEM_ID}" ]; then
   SYSTEM_ID=$(call POST "${PROXY}/platform/api/v1/tenant-systems" "${TENANT_CODE}.localhost" "${TENANT_ADMIN_TOKEN}" \
     '{"name":"smoke"}' | json .id)
@@ -194,7 +194,7 @@ step "registering the tenant app's webhook endpoint at Billing"
 # The same endpoint URL registered twice would 409, so each run names its own description and reuses the URL only
 # once: an existing endpoint for the URL is reused.
 EXISTING_ENDPOINT=$(call GET "${PROXY}/api/v1/webhook-endpoints" "${TENANT_CODE}.localhost" "${SYSTEM_TOKEN}" 2>/dev/null |
-  jq -r 'map(select(.url == "http://tenant:8080/webhooks/billing"))[0].id // empty' 2>/dev/null || true)
+  jq -r '(.data // .) | map(select(.url == "http://tenant:8080/webhooks/billing"))[0].id // empty' 2>/dev/null || true)
 if [ -n "${EXISTING_ENDPOINT}" ]; then
   # The signing secret is shown once, on creation. Rotating gives a fresh one the tenant can adopt.
   WEBHOOK_SECRET=$(call POST "${PROXY}/api/v1/webhook-endpoints/${EXISTING_ENDPOINT}/rotate-secret" \
@@ -257,7 +257,7 @@ done
 # ------------------------------ 8. revocation latency ------------------------------
 step "revoking the tenant admin's role at Platform and asserting Billing refuses within ${REVOCATION_TIMEOUT_SECONDS}s"
 ROLE_ID=$(call GET "${PROXY}/platform/api/v1/roles?tenantId=${TENANT_ID}" platform.localhost "${ADMIN_TOKEN}" |
-  jq -er 'map(select(.name == "Tenant Administrator"))[0].id')
+  jq -er '(.data // .) | map(select(.name == "Tenant Administrator"))[0].id')
 call PUT "${PROXY}/platform/api/v1/roles/${ROLE_ID}/permissions" platform.localhost "${ADMIN_TOKEN}" \
   '{"permissions":[]}' > /dev/null
 
