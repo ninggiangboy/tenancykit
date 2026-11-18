@@ -33,7 +33,7 @@ Source: `/ak-advise` session of 2026-11-12. Preview: [suite preview](../reports/
 
 ## Out of scope
 
-Business apps (CRM, HR...), a Notification Hub or any email, in-app, SMS or push channel, moving webhooks out of Billing, charging tenants for suite use, payment providers other than Stripe, custom domains, an API gateway with logic, CDC or event sourcing, migrating existing data, the Suite Console UI (separate follow-up plan, see phase 14).
+Business apps (CRM, HR...), a Notification Hub or any email, in-app, SMS or push channel, moving webhooks out of Billing, charging tenants for suite use, payment providers other than Stripe, custom domains, an API gateway with logic, CDC or event sourcing, migrating existing data, the Suite Console UI (delivered by `plans/261117-1456-suite-console`; see [docs/console.md](../../docs/console.md)).
 
 ## Constraints
 
