@@ -12,6 +12,7 @@
 #   /survey/*      -> Survey, prefix stripped; /survey/p/* is the public fill surface.
 #   /customer/*         -> Customer, prefix stripped; the Tenant's own system drives it and there is no public surface.
 #   /loyalty/*     -> Loyalty, prefix stripped; the Tenant's own system drives it and there is no public surface.
+#   /attribution/* -> Attribution, prefix stripped; /go/* and /t/* are its public redirect and collection surfaces.
 #   everything else -> Billing (/api/*, /portal/*, /stripe/*), unchanged.
 #   platform.localhost also serves Platform at its root, because an administrator works from that one host.
 #
@@ -102,6 +103,21 @@ http://:80 {
 	handle @workflowPath {
 		uri strip_prefix /workflow
 		reverse_proxy workflow-api:8080
+	}
+
+	# Attribution is reached through its own prefix on every host for its API, and at /go/* and /t/* at the root because
+	# a tracked link and a browser's collection call are public and live on the Tenant's own domain. The signed click
+	# token in the path is their proof; the application enforces its own rate, body and admission limits, because the
+	# stock Caddy image has no rate-limit directive.
+	@attributionPath path /attribution/*
+	handle @attributionPath {
+		uri strip_prefix /attribution
+		reverse_proxy attribution-api:8080
+	}
+
+	@attributionPublic path /go/* /t/*
+	handle @attributionPublic {
+		reverse_proxy attribution-api:8080
 	}
 
 	# The console runs under /console/ on every host, so no existing route moves: a tenant host serves its own shell and

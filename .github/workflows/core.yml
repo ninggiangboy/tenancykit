@@ -1,6 +1,6 @@
 name: core
 
-# A change under core/ reaches the three service builds through includeBuild("../../libs/core"), but a composite build only
+# A change under backend/libs/core/ reaches every service build through includeBuild("../../libs/core"), but a composite build only
 # builds the tasks it needs: billing, platform and tenant compile core and never run its tests. This workflow runs
 # them, and it re-runs the rule-id comparison in all four builds so the shared rule set cannot drift apart unnoticed.
 on:
@@ -66,4 +66,7 @@ jobs:
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
       - name: Loyalty rule ids
         working-directory: backend/services/loyalty
+        run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
+      - name: Attribution rule ids
+        working-directory: backend/services/attribution
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'

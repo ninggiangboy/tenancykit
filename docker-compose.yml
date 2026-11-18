@@ -265,6 +265,36 @@ x-workflow-environment: &workflow-environment
   WORKFLOW_WEBHOOKS_ALLOW_NON_PUBLIC_TARGETS: "true"
   WORKFLOW_PORT: "8080"
 
+# Attribution's settings, shared by its migrate step, api and worker. It consumes platform.events on its own replica
+# queue and its own ingest queue, and publishes clicks to its own `attribution.ingest` exchange; it declares no
+# `*.events` exchange. The api runtime serves HTTP only; the worker owns the replica rebuild and every consumer.
+x-attribution-environment: &attribution-environment
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50"
+  ATTRIBUTION_DB_URL: jdbc:postgresql://postgres:5432/attribution
+  ATTRIBUTION_DB_USER: attribution_app
+  ATTRIBUTION_DB_PASSWORD: ${ATTRIBUTION_DB_PASSWORD:?set it in .env}
+  ATTRIBUTION_MIGRATION_DB_USER: attribution_owner
+  ATTRIBUTION_MIGRATION_DB_PASSWORD: ${ATTRIBUTION_MIGRATION_DB_PASSWORD:?set it in .env}
+  ATTRIBUTION_RABBITMQ_HOST: rabbitmq
+  ATTRIBUTION_RABBITMQ_USER: attribution
+  ATTRIBUTION_RABBITMQ_PASSWORD: ${ATTRIBUTION_RABBITMQ_PASSWORD:?set it in .env}
+  # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
+  ATTRIBUTION_OIDC_ISSUER_URI: ${ATTRIBUTION_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
+  ATTRIBUTION_OIDC_JWK_SET_URI: ${ATTRIBUTION_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  ATTRIBUTION_PLATFORM_BASE_URL: http://platform.localhost:8080
+  ATTRIBUTION_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
+  ATTRIBUTION_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
+  # The replica's own service client, never shared with another app.
+  PLATFORM_ATTRIBUTION_SERVICE_CLIENT_ID: attribution
+  PLATFORM_ATTRIBUTION_SERVICE_CLIENT_SECRET: ${ATTRIBUTION_REPLICA_CLIENT_SECRET:?set it in .env}
+  # Click-token HMAC key and the daily visitor hash; the app refuses to start without both.
+  ATTRIBUTION_CLICK_KEY_ID: ${ATTRIBUTION_CLICK_KEY_ID:-k1}
+  ATTRIBUTION_CLICK_SECRET: ${ATTRIBUTION_CLICK_SECRET:?set it in .env}
+  ATTRIBUTION_VISITOR_HASH_KEY: ${ATTRIBUTION_VISITOR_HASH_KEY:?set it in .env}
+  # The public host a visitor reaches /go/... and /t/... from; a hostname Caddy serves.
+  ATTRIBUTION_PUBLIC_BASE_URL: ${ATTRIBUTION_PUBLIC_BASE_URL:-http://localhost:8090}
+  ATTRIBUTION_PORT: "8080"
+
 services:
   postgres:
     image: postgres:18
@@ -297,6 +327,8 @@ services:
       BOOKING_DB_PASSWORD: ${BOOKING_DB_PASSWORD:?set it in .env}
       WORKFLOW_MIGRATION_DB_PASSWORD: ${WORKFLOW_MIGRATION_DB_PASSWORD:?set it in .env}
       WORKFLOW_DB_PASSWORD: ${WORKFLOW_DB_PASSWORD:?set it in .env}
+      ATTRIBUTION_MIGRATION_DB_PASSWORD: ${ATTRIBUTION_MIGRATION_DB_PASSWORD:?set it in .env}
+      ATTRIBUTION_DB_PASSWORD: ${ATTRIBUTION_DB_PASSWORD:?set it in .env}
     ports:
       - "5432:5432"
     volumes:
@@ -345,6 +377,7 @@ services:
       LOYALTY_BROKER_PASSWORD: ${LOYALTY_RABBITMQ_PASSWORD:?set it in .env}
       BOOKING_BROKER_PASSWORD: ${BOOKING_RABBITMQ_PASSWORD:?set it in .env}
       WORKFLOW_BROKER_PASSWORD: ${WORKFLOW_RABBITMQ_PASSWORD:?set it in .env}
+      ATTRIBUTION_BROKER_PASSWORD: ${ATTRIBUTION_RABBITMQ_PASSWORD:?set it in .env}
     entrypoint: ["/bin/sh", "-c"]
     command: ["sh /ops/rabbitmq/declare-users.sh"]
     volumes:
@@ -442,6 +475,8 @@ services:
       PLATFORM_BOOKING_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_BOOKING_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
       PLATFORM_WORKFLOW_SERVICE_CLIENT_ID: workflow
       PLATFORM_WORKFLOW_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_WORKFLOW_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
+      PLATFORM_ATTRIBUTION_SERVICE_CLIENT_ID: attribution
+      PLATFORM_ATTRIBUTION_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_ATTRIBUTION_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
       PLATFORM_FRONTEND_CI_SERVICE_CLIENT_ID: ${PLATFORM_FRONTEND_CI_SERVICE_CLIENT_ID:-frontend-ci}
       PLATFORM_FRONTEND_CI_SERVICE_CLIENT_SECRET_HASH: ${PLATFORM_FRONTEND_CI_SERVICE_CLIENT_SECRET_HASH:?set it in .env}
     ports:
@@ -1233,6 +1268,79 @@ services:
       SPRING_PROFILES_ACTIVE: worker,compose
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\r\n\r\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # Writes Attribution's schema once, as the table owner, then exits.
+  attribution-migrate:
+    <<: *app
+    restart: "no"
+    build:
+      context: .
+      dockerfile: backend/services/attribution/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+    environment:
+      <<: *attribution-environment
+      SPRING_PROFILES_ACTIVE: migrate
+
+  # Attribution's HTTP edge: campaigns, links, goals, reports, spend, connections, the public redirect and collection.
+  attribution-api:
+    <<: *app
+    build:
+      context: .
+      dockerfile: backend/services/attribution/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+      attribution-migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *attribution-environment
+      SPRING_PROFILES_ACTIVE: api
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # Attribution's background edge: the platform-events listener, the replica rebuild, the ingest consumer, the
+  # partition, retention, credit, rollup and ad-sync jobs, and the outbox relay.
+  attribution-worker:
+    <<: *app
+    build:
+      context: .
+      dockerfile: backend/services/attribution/apps/app-boot/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      rabbitmq-users:
+        condition: service_completed_successfully
+      platform:
+        condition: service_healthy
+      attribution-migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *attribution-environment
+      SPRING_PROFILES_ACTIVE: worker
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
       interval: 5s
       timeout: 5s
       retries: 60

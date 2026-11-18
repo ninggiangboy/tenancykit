@@ -34,6 +34,8 @@ psql -v ON_ERROR_STOP=1 \
   -v booking_app_password="${BOOKING_DB_PASSWORD:?set it}" \
   -v workflow_owner_password="${WORKFLOW_MIGRATION_DB_PASSWORD:?set it}" \
   -v workflow_app_password="${WORKFLOW_DB_PASSWORD:?set it}" \
+  -v attribution_owner_password="${ATTRIBUTION_MIGRATION_DB_PASSWORD:?set it}" \
+  -v attribution_app_password="${ATTRIBUTION_DB_PASSWORD:?set it}" \
   --dbname postgres <<'SQL'
 create role platform_owner login password :'platform_owner_password' nocreatedb nocreaterole;
 create role platform_app login password :'platform_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
@@ -68,6 +70,9 @@ create role booking_app login password :'booking_app_password' nosuperuser nocre
 create role workflow_owner login password :'workflow_owner_password' nocreatedb nocreaterole;
 create role workflow_app login password :'workflow_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
+create role attribution_owner login password :'attribution_owner_password' nocreatedb nocreaterole;
+create role attribution_app login password :'attribution_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+
 create database platform owner platform_owner;
 create database billing owner billing_owner;
 create database tenant owner tenant_owner;
@@ -79,6 +84,7 @@ create database customer owner customer_owner;
 create database loyalty owner loyalty_owner;
 create database booking owner booking_owner;
 create database workflow owner workflow_owner;
+create database attribution owner attribution_owner;
 
 revoke connect, temporary on database platform from public;
 revoke connect, temporary on database billing from public;
@@ -91,6 +97,7 @@ revoke connect, temporary on database customer from public;
 revoke connect, temporary on database loyalty from public;
 revoke connect, temporary on database booking from public;
 revoke connect, temporary on database workflow from public;
+revoke connect, temporary on database attribution from public;
 
 grant connect, temporary on database platform to platform_owner, platform_app;
 grant connect, temporary on database billing to billing_owner, billing_app;
@@ -103,6 +110,7 @@ grant connect, temporary on database customer to customer_owner, customer_app;
 grant connect, temporary on database loyalty to loyalty_owner, loyalty_app;
 grant connect, temporary on database booking to booking_owner, booking_app;
 grant connect, temporary on database workflow to workflow_owner, workflow_app;
+grant connect, temporary on database attribution to attribution_owner, attribution_app;
 
 -- The app role creates nothing; Flyway, as the owner, grants the tables it creates. These defaults cover every
 -- table a later migration adds without a per-table grant.
@@ -171,5 +179,11 @@ alter default privileges for role workflow_owner in schema public
     grant select, insert, update, delete on tables to workflow_app;
 alter default privileges for role workflow_owner in schema public
     grant usage, select on sequences to workflow_app;
+
+\connect attribution
+alter default privileges for role attribution_owner in schema public
+    grant select, insert, update, delete on tables to attribution_app;
+alter default privileges for role attribution_owner in schema public
+    grant usage, select on sequences to attribution_app;
 
 SQL

@@ -153,3 +153,14 @@ declare_user workflow \
   '^(workflow\\.platform-events|workflow\\.platform-events\\.dlq|workflow\\.runnable|workflow\\.runnable\\.dlq|suite\\.dlx)$' \
   '^(workflow\\.platform-events|workflow\\.platform-events\\.dlq|workflow\\.runnable|workflow\\.runnable\\.dlq|suite\\.dlx)$' \
   '^(platform\\.events|workflow\\.platform-events|workflow\\.platform-events\\.dlq|workflow\\.runnable|workflow\\.runnable\\.dlq|suite\\.dlx)$'
+
+# Attribution consumes platform.events on its own replica queue and its own `attribution.ingest` queue, and publishes
+# clicks to the `attribution.ingest` exchange. It owns no `*.events` exchange, so `write` stops at its queues, its
+# ingest exchange and suite.dlx; `read` covers platform.events (a queue.bind checks read on the source) and its own
+# queues. The ingest exchange and its queue share the name `attribution.ingest`; a regex cannot tell them apart, and
+# the grants deliberately cover both.
+declare_user attribution \
+  "${ATTRIBUTION_BROKER_PASSWORD:?set the attribution broker password}" \
+  '^(attribution\\.platform-events|attribution\\.platform-events\\.dlq|attribution\\.ingest|attribution\\.ingest\\.dlq|suite\\.dlx)$' \
+  '^(attribution\\.platform-events|attribution\\.platform-events\\.dlq|attribution\\.ingest|attribution\\.ingest\\.dlq|suite\\.dlx)$' \
+  '^(platform\\.events|attribution\\.platform-events|attribution\\.platform-events\\.dlq|attribution\\.ingest|attribution\\.ingest\\.dlq|suite\\.dlx)$'

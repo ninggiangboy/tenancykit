@@ -39,6 +39,8 @@ jobs:
               -e 's/^LOYALTY_DB_PASSWORD=.*/LOYALTY_DB_PASSWORD=ci-loyalty-app/' \
               -e 's/^BOOKING_MIGRATION_DB_PASSWORD=.*/BOOKING_MIGRATION_DB_PASSWORD=ci-booking-owner/' \
               -e 's/^BOOKING_DB_PASSWORD=.*/BOOKING_DB_PASSWORD=ci-booking-app/' \
+              -e 's/^ATTRIBUTION_MIGRATION_DB_PASSWORD=.*/ATTRIBUTION_MIGRATION_DB_PASSWORD=ci-attribution-owner/' \
+              -e 's/^ATTRIBUTION_DB_PASSWORD=.*/ATTRIBUTION_DB_PASSWORD=ci-attribution-app/' \
               -e 's/^KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD=.*/KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD=ci-keycloak-admin/' \
               -e 's/^PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET=.*/PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET=ci-keycloak-client/' \
               -e 's/^SMOKE_CLIENT_SECRET=.*/SMOKE_CLIENT_SECRET=ci-smoke-client/' \
@@ -52,6 +54,7 @@ jobs:
               -e 's/^CUSTOMER_RABBITMQ_PASSWORD=.*/CUSTOMER_RABBITMQ_PASSWORD=ci-customer-broker/' \
               -e 's/^LOYALTY_RABBITMQ_PASSWORD=.*/LOYALTY_RABBITMQ_PASSWORD=ci-loyalty-broker/' \
               -e 's/^BOOKING_RABBITMQ_PASSWORD=.*/BOOKING_RABBITMQ_PASSWORD=ci-booking-broker/' \
+              -e 's/^ATTRIBUTION_RABBITMQ_PASSWORD=.*/ATTRIBUTION_RABBITMQ_PASSWORD=ci-attribution-broker/' \
               -e 's/^BILLING_REPLICA_CLIENT_SECRET=.*/BILLING_REPLICA_CLIENT_SECRET=ci-replica-secret/' \
               -e 's/^PLATFORM_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_SERVICE_CLIENT_SECRET_HASH=ci-replica-hash/' \
               .env.example > .env
@@ -81,6 +84,11 @@ jobs:
           LOYALTY_HASH=$(printf %s 'ci-loyalty-replica-secret' | sha256sum | cut -d' ' -f1)
           sed -i "s/^LOYALTY_REPLICA_CLIENT_SECRET=.*/LOYALTY_REPLICA_CLIENT_SECRET=ci-loyalty-replica-secret/" .env
           sed -i "s/^PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH=${LOYALTY_HASH}/" .env
+          ATTRIBUTION_HASH=$(printf %s 'ci-attribution-replica-secret' | sha256sum | cut -d' ' -f1)
+          sed -i "s/^ATTRIBUTION_REPLICA_CLIENT_SECRET=.*/ATTRIBUTION_REPLICA_CLIENT_SECRET=ci-attribution-replica-secret/" .env
+          sed -i "s/^PLATFORM_ATTRIBUTION_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_ATTRIBUTION_SERVICE_CLIENT_SECRET_HASH=${ATTRIBUTION_HASH}/" .env
+          sed -i 's/^ATTRIBUTION_CLICK_SECRET=.*/ATTRIBUTION_CLICK_SECRET=ci-attribution-click-secret/' .env
+          sed -i 's/^ATTRIBUTION_VISITOR_HASH_KEY=.*/ATTRIBUTION_VISITOR_HASH_KEY=ci-attribution-visitor-key/' .env
           FRONTEND_CI_HASH=$(printf %s 'ci-frontend-ci' | sha256sum | cut -d' ' -f1)
           sed -i "s/^PLATFORM_FRONTEND_CI_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_FRONTEND_CI_SERVICE_CLIENT_SECRET_HASH=${FRONTEND_CI_HASH}/" .env
           sed -i "s/^FRONTEND_CI_SERVICE_CLIENT_SECRET=.*/FRONTEND_CI_SERVICE_CLIENT_SECRET=ci-frontend-ci/" .env

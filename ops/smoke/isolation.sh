@@ -116,6 +116,12 @@ require_refused "mailroom_app connecting to customer" psql_as mailroom_app "${MA
 require_refused "mailroom_app connecting to loyalty" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" loyalty
 require_refused "mailer_app connecting to customer" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" customer
 require_refused "mailer_app connecting to loyalty" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" loyalty
+# attribution also owns one database, and its role reaches no other.
+require_refused "attribution_app connecting to billing" psql_as attribution_app "${ATTRIBUTION_DB_PASSWORD:?}" billing
+require_refused "attribution_app connecting to platform" psql_as attribution_app "${ATTRIBUTION_DB_PASSWORD:?}" platform
+require_refused "attribution_app connecting to survey" psql_as attribution_app "${ATTRIBUTION_DB_PASSWORD:?}" survey
+require_refused "billing_app connecting to attribution" psql_as billing_app "${BILLING_DB_PASSWORD:?}" attribution
+require_refused "survey_app connecting to attribution" psql_as survey_app "${SURVEY_DB_PASSWORD:?}" attribution
 
 # ------------------------------ broker ------------------------------
 step "cross-exchange publishing must be refused"
@@ -169,7 +175,7 @@ require_no_foreign_exchange() {
   echo "refused: the ${user} user names no other app's business exchange in any grant"
 }
 
-for user in platform billing mailer notification mailroom survey booking workflow; do
+for user in platform billing mailer notification mailroom survey booking workflow attribution; do
   require_no_foreign_exchange "${user}"
 done
 
@@ -184,11 +190,16 @@ require_only loyalty read '^(platform\.events|loyalty\.platform-events|loyalty\.
 require_only booking configure '^(booking\.platform-events|booking\.platform-events\.dlq|suite\.dlx)$'
 require_only booking write '^(booking\.platform-events|booking\.platform-events\.dlq|suite\.dlx)$'
 require_only booking read '^(platform\.events|booking\.platform-events|booking\.platform-events\.dlq|suite\.dlx)$'
+# attribution owns the `attribution.ingest` exchange and two queues, so its three grants are that set plus the
+# dead-letter exchange, and `read` additionally covers platform.events (a bind checks read on the source).
+require_only attribution configure '^(attribution\.platform-events|attribution\.platform-events\.dlq|attribution\.ingest|attribution\.ingest\.dlq|suite\.dlx)$'
+require_only attribution write '^(attribution\.platform-events|attribution\.platform-events\.dlq|attribution\.ingest|attribution\.ingest\.dlq|suite\.dlx)$'
+require_only attribution read '^(platform\.events|attribution\.platform-events|attribution\.platform-events\.dlq|attribution\.ingest|attribution\.ingest\.dlq|suite\.dlx)$'
 
 # A positive control, so a script that proved only denials cannot pass while the declaration silently did nothing: each
 # new app's queue must exist once its worker has started, and its own user must be able to read it. The queue is declared
 # by the app at startup, not by the user script, so this also proves the app reached the broker.
-for queue in customer.platform-events loyalty.platform-events; do
+for queue in customer.platform-events loyalty.platform-events attribution.platform-events; do
   if [ "$(curl --silent --user "${RABBITMQ_ADMIN_USER}:${RABBITMQ_ADMIN_PASSWORD}" \
     "${BROKER}/api/queues/%2F/${queue}" | jq -r '.name // empty')" != "${queue}" ]; then
     fail "the broker declares no queue ${queue}; its app did not start or did not bind it"
@@ -294,5 +305,6 @@ own_database booking booking_app "${BOOKING_DB_PASSWORD:?}" booking
 own_database workflow workflow_app "${WORKFLOW_DB_PASSWORD:?}" workflow
 own_database customer customer_app "${CUSTOMER_DB_PASSWORD:?}" customer
 own_database loyalty loyalty_app "${LOYALTY_DB_PASSWORD:?}" loyalty
+own_database attribution attribution_app "${ATTRIBUTION_DB_PASSWORD:?}" attribution
 
 echo "PASS: no service can reach another service's database or exchange"
