@@ -46,6 +46,31 @@ class UuidV7IdGeneratorTest {
     }
 
     @Test
+    void idsCreatedInOneMillisecondSortInCreationOrder() {
+        UUID previous = ids.newId();
+        for (int i = 0; i < 1_000; i++) {
+            UUID next = ids.newId();
+            assertThat(next).as("an id never sorts before the one created before it").isGreaterThan(previous);
+            previous = next;
+        }
+    }
+
+    @Test
+    void aClockThatStepsBackNeverGoesBackOnAnId() {
+        Instant[] now = { NOW };
+        UuidV7IdGenerator generator = new UuidV7IdGenerator(() -> now[0]);
+
+        UUID first = generator.newId();
+        now[0] = NOW.minusSeconds(5);
+        UUID second = generator.newId();
+
+        assertThat(second).as("a step back never hands out an earlier id").isGreaterThan(first);
+        assertThat(second.getMostSignificantBits() >>> 16)
+                .as("it keeps counting inside the millisecond already used")
+                .isEqualTo(first.getMostSignificantBits() >>> 16);
+    }
+
+    @Test
     void twoIdsInTheSameMillisecondStillDiffer() {
         Set<UUID> seen = new HashSet<>();
         for (int i = 0; i < 1_000; i++) {
