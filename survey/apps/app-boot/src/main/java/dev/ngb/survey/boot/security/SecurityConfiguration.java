@@ -6,7 +6,6 @@ import dev.ngb.core.security.Authorizer;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.suite.security.SuiteActorConverter;
 import dev.ngb.core.suite.security.SuiteActorResolver;
-import dev.ngb.core.suite.security.SuiteAuthentication;
 import dev.ngb.core.suite.security.SuiteJwtDecoders;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
@@ -15,7 +14,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -61,17 +59,6 @@ class SecurityConfiguration {
                                 .jwtAuthenticationConverter(new SuiteActorConverter(actorResolver))))
                 .headers(Customizer.withDefaults());
         return http.build();
-    }
-
-    @Bean
-    CurrentActor currentActor() {
-        return () -> {
-            var authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication instanceof SuiteAuthentication suite) {
-                return suite.actor();
-            }
-            throw new IllegalStateException("the request is not authenticated");
-        };
     }
 
     @Bean
