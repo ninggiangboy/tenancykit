@@ -249,7 +249,9 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 - An API gateway with logic. The reverse proxy routes on the Host header only.
 - CDC or event sourcing. A consumer rebuilds by paging the snapshot API.
 - Migrating existing data from an earlier layout.
-- The Suite Console UI, which is a separate follow-up plan.
+- ~~The Suite Console UI~~, which was a follow-up plan and is now delivered for Platform and Billing: two shells and
+  the `remote-platform` and `remote-billing` remotes in `frontend/` ([console.md](console.md)). The UIs of the other
+  apps, the Customer Portal and a per-tenant rollout stay out of scope.
 - A first business app beyond Billing; the extension trace is proven a second time with `survey/`.
 - **Reversed (2026-11-16):** `booking/` is a further tenant-facing business app that sells time and places. It joins
   the same way a third time, and it adds a public gate of its own; it changes no existing app and no code in `core/`.

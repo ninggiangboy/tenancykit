@@ -14,7 +14,8 @@ Documentation for the suite: the **Platform** service, the **Billing** and **Not
 |---|---|
 | [overview-and-scope.md](overview-and-scope.md) | Purpose, vocabulary, who is responsible for what, non-goals |
 | [architecture.md](architecture.md) | System diagram, decision ledger, module boundaries, technical principles |
-| [platform-service.md](platform-service.md) | Platform's contexts, surface, token issuance, snapshot and streams |
+| [platform-service.md](platform-service.md) | Platform's contexts, surface, token issuance, snapshot and streams, the UI remote registry |
+| [console.md](console.md) | The Suite Console: the monorepo, the two shells, how a remote loads, the design system, the registry, deploy and the end-to-end gate |
 | [suite-messaging.md](suite-messaging.md) | RabbitMQ topology, envelope, versioned replicas, rebuild, dead-letter handling |
 | [notification.md](notification.md) | The notification app: its five types, templates, locale, in-app store, dispatch ledger and replica rebuild |
 | [mailroom.md](mailroom.md) | The mailroom app: a Tenant's templates, receivers, groups, segments, campaigns, tracking and retention for its own customers |

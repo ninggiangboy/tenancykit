@@ -23,7 +23,10 @@ app enforces what Platform grants.
 | `POST /oauth/token` | The client-credentials grant for a service client or a Tenant System |
 | `GET /.well-known/jwks.json` | The public halves of the signing keys, so any app verifies a suite token |
 | `GET /internal/replica/{stream}` | The snapshot API: one page of a replica stream |
-| `GET /api/v1/me` | The caller's enabled apps and effective permission codes |
+| `GET /api/v1/me` | The caller's scope, tenant and effective permission codes |
+| `/api/v1/ui-remotes`, `…/{name}/versions` | The UI remote registry: list, enable or disable, activate a version, register a version (CI) |
+| `GET /api/v1/console/remotes` | The shells' feed: the remotes this caller may use, filtered on the server |
+| `GET /api/v1/tenants/{tenantId}/apps` | A Tenant's app entitlements, for the tenants screen and its switches |
 
 `/api/v1/me` answers the app switcher and the app's own checks; it is the one place a user's whole access is visible.
 
@@ -57,6 +60,34 @@ one writer.
 The rebuild order is `tenants`, `tenant-domains`, `tenant-systems`, `user-access`, `entitlements`, because a child row
 references its parent. A page is bounded so one tenant or one aggregate's children never split across a boundary in a
 way the writer cannot apply. The details of the protocol are in [suite-messaging.md](suite-messaging.md).
+
+## The UI remote registry
+
+The console is a set of independently deployed UIs, and Platform is what decides which one a browser runs. Two tables
+hold it: `ui_remotes` (name, app code, title, navigation order, audiences, `enabled`, `active_version`) and
+`ui_remote_versions` (an immutable version, its manifest path, its `sha384` hash and the shell-sdk major it was built
+against). The versions of a remote are its history; the active version is the one the shells load.
+
+- A remote's CI registers a version with the `frontend-ci` service client, which holds exactly
+  `platform:ui-remote:register`. Registering never activates: an operator enables the remote and activates a version
+  with `platform:ui-remote:manage`, and pointing it back at an older version is the rollback.
+- The entry path is allow-listed to `/console/remotes/<name>/<version>/`; anything else is `400` and nothing is
+  stored. The shell verifies the stored hash on the manifest it loads.
+- The feed answers only what the caller may use: enabled, for the caller's audience, and — for a Tenant — with the
+  app's entitlement on. A Tenant's app entitlement is the same fact that makes its APIs answer.
+- The `frontend-ci` secret is `FRONTEND_CI_SERVICE_CLIENT_SECRET`; Platform stores its SHA-256 in
+  `PLATFORM_FRONTEND_CI_SERVICE_CLIENT_SECRET_HASH`. Rotate both together — the client is a configuration entry, so no
+  code changes.
+
+## The console client's redirect targets
+
+Keycloak accepts a wildcard only at the end of a redirect URI, so a Tenant host cannot be wildcarded: the
+`suite-console` client's redirect URIs are the hosts that exist. Adding a Tenant (its default subdomain) or a domain
+registers the host with Keycloak right after the transaction commits, and a startup-and-every-five-minutes reconciler
+makes the whole set equal the hosts that exist, so a Keycloak that was down repairs itself. The port the console is
+published on is part of every entry (`platform.keycloak.console-port`). The client's web origins are the single `*`
+entry: a public PKCE client gains nothing from a per-host list, and Keycloak copies the origins into every access
+token, so one per Tenant would grow each person's token without bound.
 
 ## Security
 

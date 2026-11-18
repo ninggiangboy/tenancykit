@@ -21,6 +21,24 @@ Platform creates the Keycloak identity when it creates a user, and removes it ag
 identity has a temporary password that Keycloak refuses to hand out from a direct grant until it is changed; a user
 signs in through the normal flow and is then active.
 
+## The console's sign-in
+
+The Suite Console ([console.md](console.md)) signs a person in with the public Keycloak client `suite-console`
+(authorization code with PKCE S256, no secret) and holds the tokens in the shell's memory: a remote pulls in script
+from the registry, and a token in storage would be readable by it. A reload signs in again through Keycloak's own
+session, which costs a redirect, not a password.
+
+Keycloak accepts a wildcard only at the end of a redirect URI, so the client's redirect targets are the hosts that
+exist: the platform host and every active Tenant's host, each as `http://<host>/console/*` (plus the console port when
+it is not the scheme's default). Adding a Tenant or a domain registers its host; the reconciler in Platform makes the
+whole set equal the hosts that exist, and the domain add is what keeps a new Tenant usable immediately. The web
+origins are the single entry `*`: a public PKCE client gains nothing from a per-host list, and Keycloak writes the
+origins into every access token (`allowed-origins`), so one per Tenant would grow each person's token with every
+Tenant the suite ever creates.
+
+Where a person may go is still the backend's decision: the shell reads `/api/v1/me` and the console feed, and every
+call carries the user's own token.
+
 ## Platform Users and RBAC
 
 A Platform User is an account used to administer the suite. A Tenant User administers and operates the apps of one

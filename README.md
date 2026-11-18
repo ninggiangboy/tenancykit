@@ -15,7 +15,7 @@ Documentation lives in [docs/](docs/README.md). Code lives in:
 | `customer/` | Customer app: a Tenant's own customers, orders with line items, returns, activities, custom fields, tags and consent, the 360 profile, search and CSV export, and four signed webhooks; a replica consumer that declares no exchange and never reads another app's data |
 | `loyalty/` | Loyalty app: a Tenant's points program, its program and tier settings and promotions, members, the lot-based points ledger, redemption and reversal, tiers, expiry with an advance notice, rewards and single-use vouchers, and twelve signed webhooks; a replica consumer that declares no exchange |
 | `tenant/` | Sample Tenant System, built and deployed independently; it calls Billing over REST with a Platform-issued suite token |
-| `web/` | Placeholder for the frontends (Platform Admin, Tenant Admin, Customer Portal, Sample Tenant UI); no code yet |
+| `frontend/` | Suite Console: one pnpm + Turborepo monorepo with two shells (Platform, Tenant) and every UI as a Module Federation remote (`remote-platform`, `remote-billing`), built on shared packages (`shell-core`, `shell-sdk`, `auth`, `ui`, `api-client`); see [docs/console.md](docs/console.md) |
 | `core/` | The technical core every service builds against: kernel, Spring implementations, messaging (`core-messaging`), the Platform replica (`core-replica`), snapshot sync (`core-platform-sync`), suite policy (`core-suite`), signed webhook mechanics (`core-webhook`), the shared Feign client (`core-feign`) and the shared architecture rule set (`core-arch`); the only code they share |
 | `contracts/` | OpenAPI, event schemas, the messaging contract, permission catalogs and the token claim list, shared between services as documents, never as code |
 | `ops/` | Local runtime: PostgreSQL init, RabbitMQ users, the Keycloak realm import, the Caddy route table, the load-test entry and the smoke scripts |
@@ -66,6 +66,10 @@ cp .env.example .env                 # then replace every placeholder value
 docker compose up -d --build --wait   # PostgreSQL, RabbitMQ, Keycloak, Platform, Billing (api + worker), tenant, Caddy
 docker compose ps                     # every service healthy
 ```
+
+`make help` lists the shortcuts: `make up` creates `.env` with generated secrets when it is missing (it never overwrites
+one; see `ops/env/generate-env.sh`) and starts the stack, `make console` builds the console and publishes its shells and
+remotes into it (then activate the new remote versions in Platform Admin), and `make dev` runs the hot-reload dev servers.
 
 The proxy listens on `:8090` and routes on the Host header alone: `platform.localhost` reaches Platform at its
 root, and `/platform/*` on any host reaches Platform with the prefix stripped, so `<tenant-code>.localhost/platform/*`
