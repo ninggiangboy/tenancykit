@@ -13,6 +13,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-jooq")
     implementation(project(":libs:jooq-schema"))
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    // The worker serves no business endpoint, but its health probe is an HTTP call on the server port, so it needs a
+    // web server for the actuator to answer on.
+    implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
     // The wiring class selects between the two senders, so it needs JavaMailSender on its own compile classpath.
     implementation("org.springframework.boot:spring-boot-starter-mail")
