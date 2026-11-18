@@ -1,0 +1,22 @@
+{
+  "title": "Webhooks",
+  "description": "Outbound endpoints and their deliveries.",
+  "create": "Create endpoint",
+  "createTitle": "Create endpoint",
+  "createHint": "The signing secret is shown once when the endpoint is created.",
+  "url": "Endpoint URL",
+  "descriptionField": "Description",
+  "eventTypes": "Event types",
+  "rotate": "Rotate secret",
+  "deliveries": "Deliveries",
+  "resend": "Resend delivery",
+  "attempts": "Attempts",
+  "lastError": "Last error",
+  "emptyTitle": "No webhook endpoints yet",
+  "emptyHint": "Add an endpoint to receive events.",
+  "created": "Endpoint created",
+  "updated": "Endpoint updated",
+  "rotated": "Secret rotated",
+  "emptyDeliveries": "This endpoint has no deliveries.",
+  "delivery": "Delivery"
+}

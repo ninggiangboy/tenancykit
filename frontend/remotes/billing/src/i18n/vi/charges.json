@@ -1,0 +1,16 @@
+{
+  "title": "Khoản tính tiền",
+  "description": "Tiền lấy từ ví, kèm giảm giá đã áp dụng.",
+  "create": "Tạo khoản tính",
+  "createTitle": "Tạo khoản tính",
+  "createHint": "Khoản tính trừ ví ngay.",
+  "walletId": "ID ví",
+  "amount": "Số tiền",
+  "currency": "Tiền tệ",
+  "reference": "Tham chiếu",
+  "usageRef": "Tham chiếu sử dụng",
+  "discounts": "Giảm giá",
+  "emptyTitle": "Chưa có khoản tính",
+  "emptyHint": "Khoản tính xuất hiện khi tiền được lấy từ ví.",
+  "created": "Đã tạo khoản tính"
+}

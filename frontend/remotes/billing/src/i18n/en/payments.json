@@ -1,0 +1,17 @@
+{
+  "title": "Payments",
+  "description": "Card payments, their refunds and top-ups.",
+  "refund": "Refund",
+  "refundTitle": "Refund payment",
+  "refundAmount": "Refund amount",
+  "refundable": "Remaining refundable",
+  "topUp": "Top up",
+  "topUpTitle": "Create top-up",
+  "walletId": "Wallet ID",
+  "created": "Payment created",
+  "emptyTitle": "No payments yet",
+  "emptyHint": "A payment appears when a customer pays an invoice or tops up a wallet.",
+  "refunded": "Refund requested",
+  "remaining": "Remaining refundable",
+  "minorUnits": "Minor units, as the API stores them."
+}

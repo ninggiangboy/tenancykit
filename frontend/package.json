@@ -1,0 +1,23 @@
+{
+  "name": "suite-console",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.21.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "format": "biome format --write .",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "test": "turbo run test --filter=!@suite/e2e",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.8",
+    "turbo": "2.11.11",
+    "typescript": "catalog:"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "title": "UI remotes",
+  "description": "Every console remote CI registered, with its versions. Activating a version is what makes a deploy live.",
+  "enable": "Enable remote",
+  "disable": "Disable remote",
+  "activateTitle": "Activate version",
+  "activateHint": "The shell loads the active version after a reload. Activating an older version is a rollback.",
+  "versions": "Versions",
+  "active": "Active",
+  "registered": "Registered",
+  "emptyTitle": "No remotes registered",
+  "emptyHint": "A remote's CI registers a version; an operator activates it.",
+  "enabled": "Remote enabled",
+  "disabled": "Remote disabled",
+  "activated": "{{name}} now serves {{version}}",
+  "versionCount": "{{count}} versions",
+  "audiences": "Audiences"
+}

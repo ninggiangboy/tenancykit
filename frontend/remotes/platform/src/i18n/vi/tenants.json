@@ -1,0 +1,22 @@
+{
+  "title": "Tenant",
+  "description": "Mọi tenant trong bộ ứng dụng, kèm ứng dụng và tên miền của nó.",
+  "create": "Tạo tenant",
+  "createTitle": "Tạo tenant",
+  "createHint": "Quản trị viên tenant đăng nhập bằng mật khẩu tạm và có thể đổi ở lần đăng nhập đầu.",
+  "adminEmail": "Email quản trị",
+  "apps": "Ứng dụng",
+  "appsTitle": "Quyền dùng ứng dụng",
+  "appsDescription": "Bật một ứng dụng sẽ thêm nó vào console của tenant sau khi tải lại.",
+  "domainTitle": "Thêm tên miền",
+  "domainHint": "Chuyển hướng Keycloak đi theo tên miền được ghi ở đây. Host của tenant không dùng được wildcard.",
+  "created": "Đã tạo tenant",
+  "renamed": "Đã đổi tên tenant",
+  "deactivated": "Đã ngừng tenant",
+  "domainAdded": "Đã thêm tên miền",
+  "appEnabled": "Đã bật {{app}} cho {{tenant}}",
+  "appDisabled": "Đã tắt {{app}} cho {{tenant}}",
+  "emptyTitle": "Chưa có tenant",
+  "emptyHint": "Tạo tenant đầu tiên để cấp console cho một nhóm.",
+  "noApps": "Tenant này chưa bật ứng dụng nào."
+}

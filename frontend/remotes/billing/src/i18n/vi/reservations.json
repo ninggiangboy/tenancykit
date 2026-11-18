@@ -1,0 +1,21 @@
+{
+  "title": "Đặt trước",
+  "description": "Tiền được giữ trước khi tính phí, rồi giữ hoặc giải phóng.",
+  "create": "Tạo đặt trước",
+  "createTitle": "Tạo đặt trước",
+  "createHint": "Số tiền được giữ cho đến khi giữ hoặc giải phóng.",
+  "walletId": "ID ví",
+  "amount": "Số tiền",
+  "currency": "Tiền tệ",
+  "reference": "Tham chiếu",
+  "expires": "Hết hạn (UTC)",
+  "capture": "Giữ tiền",
+  "release": "Giải phóng",
+  "capturedAmount": "Đã giữ",
+  "emptyTitle": "Chưa có đặt trước",
+  "emptyHint": "Giữ tiền từ một ví.",
+  "created": "Đã tạo đặt trước",
+  "captured": "Đã giữ tiền",
+  "released": "Đã giải phóng",
+  "ttl": "TTL giây"
+}

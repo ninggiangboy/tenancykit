@@ -1,0 +1,22 @@
+{
+  "title": "Webhook",
+  "description": "Các endpoint gửi đi và lượt giao.",
+  "create": "Tạo endpoint",
+  "createTitle": "Tạo endpoint",
+  "createHint": "Signing secret chỉ hiện một lần khi tạo endpoint.",
+  "url": "URL endpoint",
+  "descriptionField": "Mô tả",
+  "eventTypes": "Loại sự kiện",
+  "rotate": "Xoay vòng secret",
+  "deliveries": "Lượt giao",
+  "resend": "Gửi lại lượt giao",
+  "attempts": "Số lần thử",
+  "lastError": "Lỗi gần nhất",
+  "emptyTitle": "Chưa có endpoint webhook",
+  "emptyHint": "Thêm endpoint để nhận sự kiện.",
+  "created": "Đã tạo endpoint",
+  "updated": "Đã cập nhật endpoint",
+  "rotated": "Đã xoay vòng secret",
+  "emptyDeliveries": "Endpoint này chưa có lượt giao.",
+  "delivery": "Lượt giao"
+}

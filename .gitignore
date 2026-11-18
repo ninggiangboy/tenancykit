@@ -17,6 +17,8 @@ bin/
 *.key
 # node
 node_modules/
+dist/
+.turbo/
 # local agent config
 .commandcode/
 # kotlin tool cache
@@ -28,3 +30,5 @@ node_modules/
 .terraform/
 crash.log
 
+playwright-report/
+test-results/

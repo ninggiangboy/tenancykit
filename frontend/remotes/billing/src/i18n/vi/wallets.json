@@ -1,0 +1,21 @@
+{
+  "title": "Ví",
+  "description": "Số dư, sổ cái chỉ ghi thêm và lượt đổi.",
+  "create": "Mở ví",
+  "createTitle": "Mở ví",
+  "createHint": "Mỗi ví thuộc một khách hàng và một loại tiền.",
+  "customerId": "ID khách hàng",
+  "currency": "Tiền tệ",
+  "mode": "Chế độ",
+  "creditLimit": "Hạn mức tín dụng",
+  "ledger": "Sổ cái",
+  "reverse": "Đảo bút toán",
+  "amount": "Số tiền",
+  "reference": "Tham chiếu",
+  "sequence": "Số thứ tự",
+  "emptyTitle": "Chưa có ví",
+  "emptyHint": "Mở ví cho một khách hàng.",
+  "created": "Đã mở ví",
+  "reversed": "Đã đảo bút toán",
+  "emptyLedger": "Ví này chưa có bút toán nào."
+}

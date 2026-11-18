@@ -1,0 +1,57 @@
+name: remote-billing
+
+on:
+  pull_request:
+    paths: ["frontend/**", "contracts/openapi/**", "ops/console/**", ".github/workflows/remote-billing.yml"]
+  push:
+    branches: [main, dev]
+    paths: ["frontend/**", "contracts/openapi/**", "ops/console/**", ".github/workflows/remote-billing.yml"]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec biome ci .
+      - run: pnpm turbo run typecheck test build --filter=@suite/remote-billing... --filter=!@suite/e2e
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: console
+    env:
+      FRONTEND_CI_SERVICE_CLIENT_SECRET: ${{ secrets.FRONTEND_CI_SERVICE_CLIENT_SECRET }}
+      CONSOLE_BASE_URL: ${{ vars.CONSOLE_BASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+        working-directory: frontend
+      - name: Build the version this commit publishes
+        working-directory: frontend
+        run: |
+          VERSION="$(node -p "require('./remotes/billing/package.json').version")+$(git rev-parse --short HEAD)"
+          REMOTE_VERSION="$VERSION" pnpm --filter @suite/remote-billing build
+      - name: Publish and register the version
+        run: ops/console/deploy-remote.sh billing frontend/remotes/billing/dist

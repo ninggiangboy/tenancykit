@@ -1,0 +1,17 @@
+{
+  "title": "Thanh toán",
+  "description": "Thanh toán thẻ, hoàn tiền và nạp tiền.",
+  "refund": "Hoàn tiền",
+  "refundTitle": "Hoàn tiền thanh toán",
+  "refundAmount": "Số tiền hoàn",
+  "refundable": "Còn có thể hoàn",
+  "topUp": "Nạp tiền",
+  "topUpTitle": "Tạo nạp tiền",
+  "walletId": "ID ví",
+  "created": "Đã tạo thanh toán",
+  "emptyTitle": "Chưa có thanh toán",
+  "emptyHint": "Thanh toán xuất hiện khi khách trả hoá đơn hoặc nạp ví.",
+  "refunded": "Đã yêu cầu hoàn tiền",
+  "remaining": "Còn có thể hoàn",
+  "minorUnits": "Đơn vị nhỏ nhất, như API lưu."
+}

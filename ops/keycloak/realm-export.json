@@ -36,13 +36,16 @@
       "serviceAccountsEnabled": false,
       "redirectUris": [
         "http://localhost:5173/*",
-        "http://platform.localhost:5173/*"
+        "http://platform.localhost:5173/*",
+        "http://localhost/console/*",
+        "http://platform.localhost/console/*"
       ],
       "webOrigins": [
-        "+"
+        "*"
       ],
       "attributes": {
-        "pkce.code.challenge.method": "S256"
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*##http://platform.localhost:5173/*##http://localhost/console/*##http://platform.localhost/console/*"
       },
       "protocolMappers": [
         {
@@ -299,7 +302,9 @@
       "serviceAccountClientId": "platform-admin",
       "clientRoles": {
         "realm-management": [
+          "manage-clients",
           "manage-users",
+          "view-clients",
           "view-users"
         ]
       }

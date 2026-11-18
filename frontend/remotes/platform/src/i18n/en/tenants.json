@@ -1,0 +1,22 @@
+{
+  "title": "Tenants",
+  "description": "Every tenant in the suite, with its apps and domains.",
+  "create": "Create tenant",
+  "createTitle": "Create tenant",
+  "createHint": "The tenant admin signs in with the temporary password and can change it on first use.",
+  "adminEmail": "Admin email",
+  "apps": "Apps",
+  "appsTitle": "App entitlements",
+  "appsDescription": "Turning an app on adds it to this tenant's console after a reload.",
+  "domainTitle": "Add a domain",
+  "domainHint": "Keycloak redirects follow the domains recorded here. A tenant host cannot use a wildcard.",
+  "created": "Tenant created",
+  "renamed": "Tenant renamed",
+  "deactivated": "Tenant deactivated",
+  "domainAdded": "Domain added",
+  "appEnabled": "{{app}} enabled for {{tenant}}",
+  "appDisabled": "{{app}} disabled for {{tenant}}",
+  "emptyTitle": "No tenants yet",
+  "emptyHint": "Create the first tenant to give a team its console.",
+  "noApps": "No apps are enabled for this tenant."
+}

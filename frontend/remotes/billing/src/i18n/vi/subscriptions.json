@@ -1,0 +1,17 @@
+{
+  "title": "Đăng ký",
+  "description": "Gói định kỳ tính vào ví.",
+  "create": "Tạo đăng ký",
+  "createTitle": "Tạo đăng ký",
+  "createHint": "Chọn một ví và một gói giá.",
+  "walletId": "ID ví",
+  "planId": "ID gói",
+  "cancel": "Huỷ đăng ký",
+  "history": "Lịch sử",
+  "cycle": "Chu kỳ",
+  "nextRenewal": "Gia hạn kế tiếp (UTC)",
+  "periods": "Số kỳ đã tính",
+  "emptyTitle": "Chưa có đăng ký",
+  "emptyHint": "Đăng ký một ví vào gói giá.",
+  "canceled": "Đã huỷ đăng ký"
+}

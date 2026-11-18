@@ -1,0 +1,16 @@
+{
+  "title": "Khách hàng",
+  "description": "Những người thanh toán, và danh tính hệ thống tenant họ đăng nhập.",
+  "create": "Tạo khách hàng",
+  "createTitle": "Tạo khách hàng",
+  "createHint": "Khách hàng được tạo trong tenant này.",
+  "deactivate": "Ngừng khách hàng",
+  "identities": "Danh tính",
+  "identitySystem": "Hệ thống tenant",
+  "identityUser": "Người dùng ngoài",
+  "emptyTitle": "Chưa có khách hàng",
+  "emptyHint": "Tạo khách hàng để mở ví và xuất hoá đơn.",
+  "created": "Đã tạo khách hàng",
+  "updated": "Đã cập nhật khách hàng",
+  "deactivated": "Đã ngừng khách hàng"
+}

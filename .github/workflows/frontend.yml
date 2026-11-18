@@ -1,0 +1,31 @@
+name: frontend
+
+on:
+  pull_request:
+    paths: ["frontend/**", "contracts/openapi/**", ".github/workflows/frontend.yml"]
+  push:
+    branches: [main, dev]
+    paths: ["frontend/**", "contracts/openapi/**", ".github/workflows/frontend.yml"]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec biome ci .
+      - run: pnpm turbo run typecheck test build --filter=!@suite/e2e
+      # The generated client and the permission map are committed, so a contract change is a visible diff.
+      - run: pnpm --filter @suite/api-client generate
+      - run: git diff --exit-code -- packages/api-client

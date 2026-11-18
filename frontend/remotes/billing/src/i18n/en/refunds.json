@@ -1,0 +1,7 @@
+{
+  "title": "Refunds",
+  "description": "Refunds requested against payments.",
+  "emptyTitle": "No refunds yet",
+  "emptyHint": "Refunds appear here once requested from a payment.",
+  "payment": "Payment"
+}

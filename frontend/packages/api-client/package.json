@@ -1,0 +1,32 @@
+{
+  "name": "@suite/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./platform": "./src/generated/platform/index.ts",
+    "./platform/query": "./src/generated/platform/@tanstack/react-query.gen.ts",
+    "./billing": "./src/generated/billing/index.ts",
+    "./billing/query": "./src/generated/billing/@tanstack/react-query.gen.ts",
+    "./permissions": "./src/generated/permissions.ts"
+  },
+  "scripts": {
+    "generate": "pnpm run generate:openapi && pnpm run generate:permissions",
+    "generate:openapi": "openapi-ts -f openapi-ts.platform.config.ts && openapi-ts -f openapi-ts.billing.config.ts",
+    "generate:permissions": "node scripts/generate-permissions.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "6.0.3",
+    "vitest": "catalog:",
+    "yaml": "catalog:"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "catalog:",
+    "zod": "catalog:"
+  }
+}

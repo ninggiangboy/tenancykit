@@ -1,0 +1,16 @@
+{
+  "title": "Customers",
+  "description": "People who pay, and the tenant system identities they sign in with.",
+  "create": "Create customer",
+  "createTitle": "Create customer",
+  "createHint": "The customer is created in this tenant.",
+  "deactivate": "Deactivate customer",
+  "identities": "Identities",
+  "identitySystem": "Tenant system",
+  "identityUser": "External user",
+  "emptyTitle": "No customers yet",
+  "emptyHint": "Create a customer to open a wallet and raise invoices.",
+  "created": "Customer created",
+  "updated": "Customer updated",
+  "deactivated": "Customer deactivated"
+}

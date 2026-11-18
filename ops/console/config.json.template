@@ -1,0 +1,6 @@
+{
+  "authority": "__KEYCLOAK_AUTHORITY__",
+  "clientId": "__KEYCLOAK_CLIENT_ID__",
+  "platformApi": "/platform",
+  "billingApi": ""
+}

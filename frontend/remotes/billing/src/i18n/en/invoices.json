@@ -1,0 +1,22 @@
+{
+  "title": "Invoices",
+  "description": "Bills issued to customers, with their items and payments.",
+  "create": "Create invoice",
+  "createTitle": "Create invoice",
+  "createHint": "An invoice is raised from a charge.",
+  "chargeId": "Charge ID",
+  "void": "Void invoice",
+  "voidReason": "Void reason",
+  "uncollectible": "Mark uncollectible",
+  "pay": "Record payment",
+  "payTitle": "Record a payment",
+  "paymentId": "Payment ID",
+  "items": "Items",
+  "payments": "Payments",
+  "number": "Number",
+  "emptyTitle": "No invoices yet",
+  "emptyHint": "Invoices appear when a charge is invoiced.",
+  "voided": "Invoice voided",
+  "uncollectibleDone": "Invoice marked uncollectible",
+  "paid": "Payment recorded"
+}

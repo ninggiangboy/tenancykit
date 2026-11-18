@@ -1,0 +1,18 @@
+{
+  "title": "Lượt đổi",
+  "description": "Lượt đổi mã giảm giá theo ví.",
+  "walletId": "ID ví",
+  "emptyTitle": "Không có lượt đổi",
+  "emptyHint": "Ví hiện lượt đổi khi một code được dùng.",
+  "revoke": "Thu hồi lượt đổi",
+  "redeem": "Đổi một code",
+  "attach": "Gắn mã giảm giá",
+  "applications": "Số lần áp dụng",
+  "discountTotal": "Tổng giảm",
+  "empty": "Chọn một ví để xem lượt đổi.",
+  "revoked": "Đã thu hồi lượt đổi",
+  "redeemed": "Đã đổi code",
+  "attached": "Đã gắn mã giảm giá",
+  "couponId": "ID mã giảm giá",
+  "redeemHint": "Mã khuyến mãi, hoặc coupon:<id>."
+}

@@ -1,0 +1,49 @@
+{
+  "name": "@suite/remote-platform",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist-mono": "catalog:",
+    "@fontsource-variable/inter": "catalog:",
+    "@fontsource/be-vietnam-pro": "catalog:",
+    "@suite/api-client": "workspace:*",
+    "@suite/shell-sdk": "workspace:*",
+    "@suite/ui": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "@tanstack/react-router": "catalog:",
+    "i18next": "catalog:",
+    "react": "catalog:",
+    "react-i18next": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@suite/build-config": "workspace:*",
+    "@testing-library/dom": "catalog:",
+    "@testing-library/jest-dom": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "jsdom": "catalog:",
+    "msw": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:",
+    "@testing-library/user-event": "catalog:"
+  },
+  "console": {
+    "appCode": "platform",
+    "title": "Platform",
+    "audiences": [
+      "PLATFORM",
+      "TENANT"
+    ],
+    "navOrder": 10
+  }
+}

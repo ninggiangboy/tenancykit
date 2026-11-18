@@ -1,0 +1,21 @@
+{
+  "title": "Wallets",
+  "description": "Balances, the append-only ledger and redemptions.",
+  "create": "Open wallet",
+  "createTitle": "Open wallet",
+  "createHint": "A wallet belongs to one customer and one currency.",
+  "customerId": "Customer ID",
+  "currency": "Currency",
+  "mode": "Mode",
+  "creditLimit": "Credit limit",
+  "ledger": "Ledger",
+  "reverse": "Reverse entry",
+  "amount": "Amount",
+  "reference": "Reference",
+  "sequence": "Sequence",
+  "emptyTitle": "No wallets yet",
+  "emptyHint": "Open a wallet for a customer.",
+  "created": "Wallet created",
+  "reversed": "Entry reversed",
+  "emptyLedger": "This wallet has no ledger entries."
+}

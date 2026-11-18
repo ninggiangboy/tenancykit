@@ -1,0 +1,18 @@
+{
+  "title": "UI remote",
+  "description": "Mọi remote console do CI đăng ký, kèm các phiên bản. Kích hoạt một phiên bản là điều đưa bản triển khai lên sống.",
+  "enable": "Bật remote",
+  "disable": "Tắt remote",
+  "activateTitle": "Kích hoạt phiên bản",
+  "activateHint": "Shell tải phiên bản đang dùng sau khi tải lại. Kích hoạt phiên bản cũ hơn là quay lui.",
+  "versions": "Phiên bản",
+  "active": "Đang dùng",
+  "registered": "Đã đăng ký",
+  "emptyTitle": "Chưa có remote nào",
+  "emptyHint": "CI của remote đăng ký một phiên bản; quản trị viên kích hoạt nó.",
+  "enabled": "Đã bật remote",
+  "disabled": "Đã tắt remote",
+  "activated": "{{name}} đang phục vụ {{version}}",
+  "versionCount": "{{count}} phiên bản",
+  "audiences": "Đối tượng"
+}

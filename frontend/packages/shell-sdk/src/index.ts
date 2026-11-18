@@ -1,0 +1,73 @@
+import type { RouterHistory } from '@tanstack/react-router'
+import type { ComponentType } from 'react'
+
+/** Bumped only for a breaking change in this contract; a shell refuses a remote built against another major. */
+export const SDK_MAJOR = 1
+
+export type Locale = 'en' | 'vi'
+export type Theme = 'light' | 'dark' | 'system'
+export type Scope = 'PLATFORM' | 'TENANT'
+
+/** The signed-in user as `/me` reports them. The backend still decides what every request may do. */
+export interface ShellUser {
+  id: string
+  email: string
+  displayName: string
+  scope: Scope
+  tenantId: string | null
+  permissions: readonly string[]
+}
+
+export interface ShellTenant {
+  id: string
+  code: string
+  name: string
+}
+
+/** An entry a remote adds to the shell's command palette. */
+export interface CommandItem {
+  id: string
+  label: string
+  keywords?: string[]
+  group?: string
+  shortcut?: string
+  onSelect: () => void
+}
+
+/**
+ * What a shell gives a remote. The remote never imports the shell, the auth library or another remote: this object and
+ * `@suite/ui` are the whole seam.
+ */
+export interface ShellContext {
+  /** The remote's path prefix, for example `/console/r/billing`; the remote's router uses it as its basepath. */
+  basepath: string
+  /** The shell's browser history. A remote builds its router on it, so a remote navigation leaves the shell mounted. */
+  history: RouterHistory
+  /** Always resolves to a token the shell holds in memory, refreshing it when it is near expiry. */
+  getToken: () => Promise<string>
+  user: ShellUser
+  tenant: ShellTenant | null
+  theme: Theme
+  locale: Locale
+  /** Navigates within the console, keeping the browser history the shell owns. */
+  navigate: (to: string) => void
+  /** Registers palette items; returns the removal. A remote calls it on mount and removes on unmount. */
+  registerCommands: (items: CommandItem[]) => () => void
+}
+
+/** What a remote module must export from its `./app` entry. */
+export interface RemoteModule {
+  name: string
+  sdkMajor: number
+  Root: ComponentType<{ ctx: ShellContext }>
+}
+
+/** Identity helper: it types the module a remote exports and nothing else. */
+export function defineRemote(module: RemoteModule): RemoteModule {
+  return module
+}
+
+/** A shell mounts only a remote whose major matches its own. */
+export function isCompatible(sdkMajor: number): boolean {
+  return sdkMajor === SDK_MAJOR
+}

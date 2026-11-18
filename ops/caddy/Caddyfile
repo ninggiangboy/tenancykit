@@ -104,6 +104,19 @@ http://:80 {
 		reverse_proxy workflow-api:8080
 	}
 
+	# The console runs under /console/ on every host, so no existing route moves: a tenant host serves its own shell and
+	# platform.localhost serves the Platform Shell. This handle must sit before the platform-host rule below, because
+	# Caddy picks the first matching handle.
+	handle /console {
+		redir * /console/ 301
+	}
+
+	@consolePath path /console/*
+	handle @consolePath {
+		uri strip_prefix /console
+		reverse_proxy console-static:80
+	}
+
 	@platformHost host platform.localhost
 	handle @platformHost {
 		reverse_proxy platform:8080

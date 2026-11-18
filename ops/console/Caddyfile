@@ -1,0 +1,62 @@
+{
+	admin off
+	auto_https off
+	servers {
+		protocols h1 h2c
+	}
+}
+
+# The console's static server. It serves one hostname's shell and every published remote version, and it adds the
+# headers the console needs: a CSP that only allows this origin's scripts, no caching for the shell's entry files, and a
+# year-long cache for a version directory, which never changes once published.
+#
+# The volume layout is shelves/../srv: shells/platform, shells/tenant and remotes/<name>/<version>. The platform hostname
+# gets the Platform Shell and every other host gets the Tenant Shell; an unknown path under the shell falls back to its
+# index.html, which is how a client route reloads.
+#
+# `unsafe-inline` for styles is the Tailwind and Radix runtime need; fonts are self-hosted, so font-src stays 'self'.
+http://:80 {
+	root * /srv
+	encode gzip
+
+	header {
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' {$KEYCLOAK_PUBLIC_ORIGIN:http://localhost:8081}; font-src 'self'; img-src 'self' data:; frame-ancestors 'none'"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+	}
+
+	# A published version is immutable, so the browser may keep it for as long as it likes. `try_files` before the file
+	# server answers a missing file with 404 rather than the shell's HTML.
+	handle /remotes/* {
+		header Cache-Control "public, max-age=31536000, immutable"
+		try_files {path}
+		file_server
+	}
+
+	# The runtime configuration is read on every load: it names the Keycloak authority, which differs per environment.
+	# It is rendered into the container's own filesystem, because the build volume is mounted read-only.
+	handle /config.json {
+		header Cache-Control "no-cache"
+		root * /tmp
+		file_server
+	}
+
+	@platformHost host {$PLATFORM_HOSTNAME:platform.localhost}
+	handle @platformHost {
+		root * /srv/shells/platform
+		header Cache-Control "no-cache"
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		try_files {path} /index.html
+		file_server
+	}
+
+	handle {
+		root * /srv/shells/tenant
+		header Cache-Control "no-cache"
+		@assets path /assets/*
+		header @assets Cache-Control "public, max-age=31536000, immutable"
+		try_files {path} /index.html
+		file_server
+	}
+}

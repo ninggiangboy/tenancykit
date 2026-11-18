@@ -1,0 +1,16 @@
+{
+  "title": "Charges",
+  "description": "Money taken from a wallet, with any discounts applied.",
+  "create": "Create charge",
+  "createTitle": "Create charge",
+  "createHint": "A charge debits the wallet at once.",
+  "walletId": "Wallet ID",
+  "amount": "Amount",
+  "currency": "Currency",
+  "reference": "Reference",
+  "usageRef": "Usage reference",
+  "discounts": "Discounts",
+  "emptyTitle": "No charges yet",
+  "emptyHint": "Charges appear here once money is taken from a wallet.",
+  "created": "Charge created"
+}

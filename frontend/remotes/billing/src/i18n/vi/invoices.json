@@ -1,0 +1,22 @@
+{
+  "title": "Hoá đơn",
+  "description": "Hoá đơn gửi khách hàng, kèm dòng hàng và thanh toán.",
+  "create": "Tạo hoá đơn",
+  "createTitle": "Tạo hoá đơn",
+  "createHint": "Hoá đơn được tạo từ một khoản tính tiền.",
+  "chargeId": "ID khoản tính",
+  "void": "Vô hiệu hoá hoá đơn",
+  "voidReason": "Lý do vô hiệu",
+  "uncollectible": "Đánh dấu khó đòi",
+  "pay": "Ghi nhận thanh toán",
+  "payTitle": "Ghi nhận thanh toán",
+  "paymentId": "ID thanh toán",
+  "items": "Dòng hàng",
+  "payments": "Thanh toán",
+  "number": "Số hoá đơn",
+  "emptyTitle": "Chưa có hoá đơn",
+  "emptyHint": "Hoá đơn xuất hiện khi một khoản tính được xuất hoá đơn.",
+  "voided": "Đã vô hiệu hoá hoá đơn",
+  "uncollectibleDone": "Đã đánh dấu khó đòi",
+  "paid": "Đã ghi nhận thanh toán"
+}

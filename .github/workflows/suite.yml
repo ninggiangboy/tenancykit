@@ -11,6 +11,7 @@ on:
 jobs:
   smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -80,6 +81,9 @@ jobs:
           LOYALTY_HASH=$(printf %s 'ci-loyalty-replica-secret' | sha256sum | cut -d' ' -f1)
           sed -i "s/^LOYALTY_REPLICA_CLIENT_SECRET=.*/LOYALTY_REPLICA_CLIENT_SECRET=ci-loyalty-replica-secret/" .env
           sed -i "s/^PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH=${LOYALTY_HASH}/" .env
+          FRONTEND_CI_HASH=$(printf %s 'ci-frontend-ci' | sha256sum | cut -d' ' -f1)
+          sed -i "s/^PLATFORM_FRONTEND_CI_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_FRONTEND_CI_SERVICE_CLIENT_SECRET_HASH=${FRONTEND_CI_HASH}/" .env
+          sed -i "s/^FRONTEND_CI_SERVICE_CLIENT_SECRET=.*/FRONTEND_CI_SERVICE_CLIENT_SECRET=ci-frontend-ci/" .env
           MASTER_KEY=$(openssl rand -base64 32)
           sed -i "s|^BILLING_SECRETS_MASTER_KEY=.*|BILLING_SECRETS_MASTER_KEY=${MASTER_KEY}|" .env
           # Mailer's master key protects tenant credentials and must decode to exactly 32 bytes too; the cipher refuses
@@ -111,6 +115,50 @@ jobs:
           PLATFORM_BOOTSTRAP_ADMIN_EMAIL: admin@platform.test
           PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD: ci-admin-password
         run: ops/smoke/suite-smoke.sh
+
+      # The console gate runs on the same stack the smoke just proved: the shells are staged, both remotes are
+      # published and registered, and Playwright drives the deployed console through Caddy.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install the console
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Install the gate's browser
+        working-directory: frontend
+        run: pnpm --filter @suite/e2e exec playwright install --with-deps chromium
+
+      - name: Build the console for this commit
+        working-directory: frontend
+        run: |
+          VERSION="0.0.0+$(git rev-parse --short HEAD)"
+          echo "CONSOLE_VERSION=${VERSION}" >> "$GITHUB_ENV"
+          REMOTE_VERSION="${VERSION}" pnpm --filter @suite/remote-platform --filter @suite/remote-billing build
+          pnpm --filter @suite/platform-shell --filter @suite/tenant-shell build
+
+      - name: Stage the shells on the console volume
+        run: |
+          ops/console/deploy-shell.sh platform frontend/apps/platform-shell/dist
+          ops/console/deploy-shell.sh tenant frontend/apps/tenant-shell/dist
+
+      - name: Publish and register both remotes
+        env:
+          FRONTEND_CI_SERVICE_CLIENT_SECRET: ci-frontend-ci
+        run: |
+          REMOTE_VERSION_OVERRIDE="${CONSOLE_VERSION}" ops/console/deploy-remote.sh platform frontend/remotes/platform/dist
+          REMOTE_VERSION_OVERRIDE="${CONSOLE_VERSION}" ops/console/deploy-remote.sh billing frontend/remotes/billing/dist
+
+      - name: Console end-to-end gate
+        env:
+          FRONTEND_CI_SERVICE_CLIENT_SECRET: ci-frontend-ci
+        run: pnpm --dir frontend --filter @suite/e2e test
 
       # On failure the logs are the only forensic record; the stack is torn down after they are taken.
       - name: Logs
