@@ -20,7 +20,10 @@ import java.util.UUID;
 import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
-/** The reconciler makes the client's hosts exactly the fixed hosts, the platform host and every active tenant's host. */
+/**
+ * The reconciler makes the client's hosts exactly the fixed hosts, the platform host and every active tenant's host.
+ * The published port is the client's to apply, so a host is handed over exactly as it is recorded.
+ */
 class ConsoleRedirectSyncJobTest {
 
     private static final UnitOfWork IMMEDIATE = new UnitOfWork() {
@@ -39,8 +42,8 @@ class ConsoleRedirectSyncJobTest {
         Set<String> desired = job().desiredHosts();
 
         assertThat(desired).containsExactlyInAnyOrder(
-                "localhost:8090", "platform.localhost:8090", "localhost:5173", "platform.localhost:5173",
-                "acme.localhost:8090", "beta.localhost:8090");
+                "localhost", "platform.localhost", "localhost:5173", "platform.localhost:5173",
+                "acme.localhost", "beta.localhost");
     }
 
     @Test
@@ -52,14 +55,14 @@ class ConsoleRedirectSyncJobTest {
 
         assertThat(consoleClient.synced).hasSize(2);
         assertThat(consoleClient.synced.get(0)).isEqualTo(consoleClient.synced.get(1));
-        assertThat(consoleClient.synced.get(1)).contains("acme.localhost:8090", "platform.localhost:8090");
+        assertThat(consoleClient.synced.get(1)).contains("acme.localhost", "platform.localhost");
     }
 
     @Test
     void aLeaseHeldElsewhereSkipsTheRun() {
         ConsoleRedirectSyncJob job = new ConsoleRedirectSyncJob(
                 new dev.ngb.core.spring.tenancy.ScopedTenantContext(), tenants, consoleClient,
-                (name, duration) -> false, List.of("localhost"), "platform.localhost", "8090");
+                (name, duration) -> false, List.of("localhost"), "platform.localhost");
 
         job.reconcile();
 
@@ -73,8 +76,7 @@ class ConsoleRedirectSyncJobTest {
                 consoleClient,
                 (name, duration) -> true,
                 List.of("localhost", "platform.localhost", "localhost:5173", "platform.localhost:5173"),
-                "platform.localhost",
-                "8090");
+                "platform.localhost");
     }
 
     private record RecordingConsoleClient(List<Set<String>> synced) implements ConsoleClientPort {
