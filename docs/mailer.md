@@ -1,7 +1,7 @@
 # Mailer
 
 The suite's **delivery** service. It takes an email a producer has already rendered and hands it to a transport: Amazon
-SES in a deployment, SMTP (Mailpit) locally. It is a separate deployable (`mailer/`, root package `dev.ngb.mailer`) with
+SES in a deployment, SMTP (Mailpit) locally. It is a separate deployable (`backend/services/mailer/`, root package `dev.ngb.mailer`) with
 **no business HTTP API and no load balancer**, because nothing calls it — it reacts to a command on the broker.
 
 ## What it is, and what it is not
@@ -192,8 +192,8 @@ as `AccessDenied`, which kills those deliveries immediately rather than retrying
 
 ## Where the code lives
 
-`mailer/contexts/email` owns the delivery domain and ledger, the SES and SMTP adapters and the credential resolver;
-`mailer/apps/app-boot` owns the wiring, the jobs and the Flyway migrations. `core/core-messaging` owns the envelope, the
+`backend/services/mailer/contexts/email` owns the delivery domain and ledger, the SES and SMTP adapters and the credential resolver;
+`backend/services/mailer/apps/app-boot` owns the wiring, the jobs and the Flyway migrations. `backend/libs/core/core-messaging` owns the envelope, the
 inbox and `SuiteTopology`, so mailer's listener is a wiring exercise rather than a reimplementation. Deployment is
 `ops/terraform/mailer/`.
 

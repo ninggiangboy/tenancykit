@@ -3,9 +3,9 @@
 The suite's app for keeping a **Tenant's own customer data**: who its customers are, what they bought, what they did and
 what they consented to. A Tenant's system sends customers, orders with line items, returns and activities; customer stores
 them, serves a 360 profile with search, filters and a CSV export, and sends signed webhooks of what changed. It is a
-separate deployable (`customer/`) with the suite's three runtimes: `migrate`, `api` and `worker`.
+separate deployable (`backend/services/customer/`) with the suite's three runtimes: `migrate`, `api` and `worker`.
 
-**Status: shipped.** `customer/` builds, migrates and tests green against the suite's own infrastructure, and every endpoint and
+**Status: shipped.** `backend/services/customer/` builds, migrates and tests green against the suite's own infrastructure, and every endpoint and
 webhook below exists in it. This document describes what it is; the [API document](../contracts/openapi/customer.yaml) and the
 [event schemas](../contracts/events/customer/) are the shapes a client builds against.
 
@@ -159,7 +159,7 @@ and no other app consumes a customer fact.
 | `order.refunded` | the same full order state, plus `return: {returnRef, occurredAt, lines:[{lineNo, quantity, amount}]}` |
 | `customer.erased` | `{customerId}` |
 
-- `aggregate` is `customer/<id>` or `order/<orderRef>`. The envelope's `id` is the deduplication key.
+- `aggregate` is `backend/services/customer/<id>` or `order/<orderRef>`. The envelope's `id` is the deduplication key.
 - The two order events both carry the order's **complete current state**, with cumulative returned quantity and amount,
   and an `orderVersion` that rises with every return. `order.refunded` also carries the return that caused it, so a
   forwarder needs no other call back to customer.

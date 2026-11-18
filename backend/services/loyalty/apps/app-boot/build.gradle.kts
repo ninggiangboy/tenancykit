@@ -59,12 +59,12 @@ dependencies {
 // test reads the real catalog file, and the webhook event-type catalog is the schemas in contracts/events/loyalty, so a
 // subscription to a type the app does not send cannot be created. A schema added there needs no code change.
 tasks.processResources {
-    from(layout.projectDirectory.dir("../../../contracts/permissions")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/permissions")) {
         // Only this app's catalog: another app's codes are neither its contract nor its business.
         include("loyalty.yaml")
         into("permissions")
     }
-    from(layout.projectDirectory.dir("../../../contracts/events/loyalty")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/events/loyalty")) {
         include("*.schema.json")
         into("events")
     }

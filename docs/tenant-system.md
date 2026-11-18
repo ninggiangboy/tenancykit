@@ -74,11 +74,11 @@ It owns Resources, Orders, Execution and its own users; it decides what to do wi
 
 ## Stack
 
-Same backend and frontend toolchain as Billing, see [architecture.md](architecture.md). It builds against the same technical core as the other services (`core/`): `UnitOfWork`, `Clock` and `IdGenerator`. It plugs no `TransactionScopeHook` into `UnitOfWork` because it has no row-level security.
+Same backend and frontend toolchain as Billing, see [architecture.md](architecture.md). It builds against the same technical core as the other services (`backend/libs/core/`): `UnitOfWork`, `Clock` and `IdGenerator`. It plugs no `TransactionScopeHook` into `UnitOfWork` because it has no row-level security.
 
 ## Module layout
 
-`tenant/settings.gradle.kts` lists the modules; each is a Gradle project with `api`, `domain`,
+`backend/samples/tenant/settings.gradle.kts` lists the modules; each is a Gradle project with `api`, `domain`,
 `application` and `adapter` source sets. Packages are grouped by feature and then by role, exactly as
 in Billing:
 
@@ -132,7 +132,7 @@ Decisions:
   `checkNoBillingDependency` flag the sample's own project path. Only `webhook-receiver` was renamed
   to `webhook`.
 - **D3**: the sample has its own ArchUnit rule set and fixture module, copied from Billing's generic
-  rules and kept free of Billing-specific ones. `core/` is not touched.
+  rules and kept free of Billing-specific ones. `backend/libs/core/` is not touched.
 - **D4**: Spring Modulith verifies the modules and writes their documentation; `api` sub-packages are
   exposed as named interfaces from `package-info` files in the adapter source set.
 
@@ -150,4 +150,4 @@ Decisions:
 - `JooqSchemaTest` (schema drift), `ArchitectureTest` plus `ArchitectureMetaTest` (every rule fails on
   its fixture), `ModulithVerificationTest` and `ApplicationContextTest`.
 
-Integration tests need Docker. See `tenant/README.md` for the commands.
+Integration tests need Docker. See `backend/samples/tenant/README.md` for the commands.

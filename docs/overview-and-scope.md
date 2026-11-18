@@ -14,34 +14,34 @@ The goal is that a new business app (Customer, HR, …) joins the suite by addin
 
 | System | Owns | Reached at |
 |---|---|---|
-| **Platform** (`platform/`) | Tenants, tenant domains, users, centralized RBAC, app entitlement, Tenant Systems, API credentials and the suite's signed tokens | `platform.<base-domain>` |
-| **Billing** (`billing/`) | Pricing, Wallet, Ledger, Reservation, Charge, Invoice, Payment, Refund, Subscription, Webhook, the Billing Session and the Customer Portal. It keeps a **replica** of the Platform data it enforces and owns no tenant, user or role logic | `<tenant-code>.<base-domain>` |
-| **Notification** (`notification/`) | Notification types, suite-wide templates, locale and user preferences, the stored in-app notification list, the email dispatch ledger and the outbox that produces `email.send`. It keeps the Platform replica, notifies the suite's own users (tenant users and Platform administrators), and reads no other app's business data; delivery stays with `mailer/` | `<tenant-code>.<base-domain>` and `platform.<base-domain>`, through the `/notification` prefix |
-| **Mailroom** (`mailroom/`) | A Tenant's templates, receivers, groups, segments, suppressions, the sent-email ledger, campaigns and tracking events for the Tenant's **own customers**. It keeps the Platform replica, renders with a sandboxed Mustache and publishes `email.send`; delivery stays with `mailer/`, which reports the outcome back on `mailer.events` | `<tenant-code>.<base-domain>` through the `/mailroom` prefix; `/mailroom/t/*` is public for recipients |
-| **Survey** (`survey/`) | A Tenant's surveys, their immutable versions, links, visits, page events, responses, answers, uploads and the analysis of all of it, including the one expression language that decides branching, computed variables, scoring and piping. It keeps the Platform replica, consumes no business data from another app and sends nothing: it issues links and the Tenant places them | `<tenant-code>.<base-domain>` through the `/survey` prefix; `/survey/p/*` is public for respondents |
-| **Attribution** (`attribution/`) | A Tenant's campaigns and tracked links, the clicks, page views, sessions and conversions they produce, the credit each click receives under a per-campaign model, and the advertising cost behind it, entered by hand or imported from Google Ads and Meta Ads. It keeps the Platform replica, writes `attribution.ingest` for its own worker, and reads no other app's business data | `<tenant-code>.<base-domain>` through the `/attribution` prefix; `/go/*` is the public redirect and `/t/*` the public collection surface |
-| **Booking** (`booking/`) | A Tenant's bookable time and places: resources with a zone and weekly hours, exceptions, groups, interval and capacity offerings, repeating sessions, holds, confirmations, reschedules, series, a waitlist and a waiting room, and the signed webhooks a Tenant acts on. Two inventory engines behind one `Booking` lifecycle; the public gate lets a Tenant's own customers browse, hold and join a waitlist with a short-lived customer token and never confirm. It keeps the Platform replica, stores no money and no personal data, declares no exchange and calls no app | `<tenant-code>.<base-domain>` through the `/booking` prefix; `/booking/p/*` is public for a Tenant's customers |
-| **Customer** (`customer/`) | A Tenant's own customers: the people it sells to, the orders with their line items and the returns against them, the activities on a customer's timeline, its own custom fields, tags and consent topics, the 360 profile, search, filters and a CSV export. It keeps the Platform replica, declares no exchange, reads no other app's data and sends four signed webhooks (`customer.created`, `order.recorded`, `order.refunded`, `customer.erased`); erasure is its own idempotent endpoint | `<tenant-code>.<base-domain>` through the `/customer` prefix; there is no public surface |
-| **Loyalty** (`loyalty/`) | A Tenant's points program: one program per Tenant with its currency, expiry and tier window, the ordered tiers, the promotions that multiply points, the members, the lot-based points ledger with its debt, redemption and its reversal, point expiry with an advance notice, the rewards catalog and single-use vouchers, and twelve signed webhooks of every change to a member's points, tier and vouchers. It keeps the Platform replica, takes orders through its own API, declares no exchange and calls no app | `<tenant-code>.<base-domain>` through the `/loyalty` prefix; there is no public surface |
-| **Sample Tenant System** (`tenant/`) | Its own users, catalog, orders, usage and the policy it applies to Billing's state changes. It proves the integration and deploys without Billing | its own host |
-| **Workflow** (`workflow/`) | A Tenant's workflow definitions and their immutable published versions, the durable engine that runs them, the instances, the human tasks, the external connections, the triggers and the signed events it emits. It keeps the Platform replica and acts as the Tenant's own system: it calls apps by their public API with a Tenant-owned credential and receives their signed webhooks as triggers | `<tenant-code>.<base-domain>` through the `/workflow` prefix; `/workflow/hooks/*` is public for the signed triggers |
+| **Platform** (`backend/services/platform/`) | Tenants, tenant domains, users, centralized RBAC, app entitlement, Tenant Systems, API credentials and the suite's signed tokens | `platform.<base-domain>` |
+| **Billing** (`backend/services/billing/`) | Pricing, Wallet, Ledger, Reservation, Charge, Invoice, Payment, Refund, Subscription, Webhook, the Billing Session and the Customer Portal. It keeps a **replica** of the Platform data it enforces and owns no tenant, user or role logic | `<tenant-code>.<base-domain>` |
+| **Notification** (`backend/services/notification/`) | Notification types, suite-wide templates, locale and user preferences, the stored in-app notification list, the email dispatch ledger and the outbox that produces `email.send`. It keeps the Platform replica, notifies the suite's own users (tenant users and Platform administrators), and reads no other app's business data; delivery stays with `backend/services/mailer/` | `<tenant-code>.<base-domain>` and `platform.<base-domain>`, through the `/notification` prefix |
+| **Mailroom** (`backend/services/mailroom/`) | A Tenant's templates, receivers, groups, segments, suppressions, the sent-email ledger, campaigns and tracking events for the Tenant's **own customers**. It keeps the Platform replica, renders with a sandboxed Mustache and publishes `email.send`; delivery stays with `backend/services/mailer/`, which reports the outcome back on `mailer.events` | `<tenant-code>.<base-domain>` through the `/mailroom` prefix; `/mailroom/t/*` is public for recipients |
+| **Survey** (`backend/services/survey/`) | A Tenant's surveys, their immutable versions, links, visits, page events, responses, answers, uploads and the analysis of all of it, including the one expression language that decides branching, computed variables, scoring and piping. It keeps the Platform replica, consumes no business data from another app and sends nothing: it issues links and the Tenant places them | `<tenant-code>.<base-domain>` through the `/survey` prefix; `/survey/p/*` is public for respondents |
+| **Attribution** (`backend/services/attribution/`) | A Tenant's campaigns and tracked links, the clicks, page views, sessions and conversions they produce, the credit each click receives under a per-campaign model, and the advertising cost behind it, entered by hand or imported from Google Ads and Meta Ads. It keeps the Platform replica, writes `attribution.ingest` for its own worker, and reads no other app's business data | `<tenant-code>.<base-domain>` through the `/attribution` prefix; `/go/*` is the public redirect and `/t/*` the public collection surface |
+| **Booking** (`backend/services/booking/`) | A Tenant's bookable time and places: resources with a zone and weekly hours, exceptions, groups, interval and capacity offerings, repeating sessions, holds, confirmations, reschedules, series, a waitlist and a waiting room, and the signed webhooks a Tenant acts on. Two inventory engines behind one `Booking` lifecycle; the public gate lets a Tenant's own customers browse, hold and join a waitlist with a short-lived customer token and never confirm. It keeps the Platform replica, stores no money and no personal data, declares no exchange and calls no app | `<tenant-code>.<base-domain>` through the `/booking` prefix; `/booking/p/*` is public for a Tenant's customers |
+| **Customer** (`backend/services/customer/`) | A Tenant's own customers: the people it sells to, the orders with their line items and the returns against them, the activities on a customer's timeline, its own custom fields, tags and consent topics, the 360 profile, search, filters and a CSV export. It keeps the Platform replica, declares no exchange, reads no other app's data and sends four signed webhooks (`customer.created`, `order.recorded`, `order.refunded`, `customer.erased`); erasure is its own idempotent endpoint | `<tenant-code>.<base-domain>` through the `/customer` prefix; there is no public surface |
+| **Loyalty** (`backend/services/loyalty/`) | A Tenant's points program: one program per Tenant with its currency, expiry and tier window, the ordered tiers, the promotions that multiply points, the members, the lot-based points ledger with its debt, redemption and its reversal, point expiry with an advance notice, the rewards catalog and single-use vouchers, and twelve signed webhooks of every change to a member's points, tier and vouchers. It keeps the Platform replica, takes orders through its own API, declares no exchange and calls no app | `<tenant-code>.<base-domain>` through the `/loyalty` prefix; there is no public surface |
+| **Sample Tenant System** (`backend/samples/tenant/`) | Its own users, catalog, orders, usage and the policy it applies to Billing's state changes. It proves the integration and deploys without Billing | its own host |
+| **Workflow** (`backend/services/workflow/`) | A Tenant's workflow definitions and their immutable published versions, the durable engine that runs them, the instances, the human tasks, the external connections, the triggers and the signed events it emits. It keeps the Platform replica and acts as the Tenant's own system: it calls apps by their public API with a Tenant-owned credential and receives their signed webhooks as triggers | `<tenant-code>.<base-domain>` through the `/workflow` prefix; `/workflow/hooks/*` is public for the signed triggers |
 
-`notification/` is the suite's app for **notifying the suite's own users** about platform-side state changes. It
+`backend/services/notification/` is the suite's app for **notifying the suite's own users** about platform-side state changes. It
 owns the notification types, the suite-wide templates, locale and user preferences and the stored in-app
 notification list; it does not notify a Tenant's customers and reads no business data from another app; email
-delivery stays with `mailer/`. Templates are the suite's content rather than a tenant's: one row serves every tenant and
+delivery stays with `backend/services/mailer/`. Templates are the suite's content rather than a tenant's: one row serves every tenant and
 only a Platform user at platform scope may edit it, so a tenant administrator has no surface for rewriting an email.
 This supersedes the cancelled phase 10 of `261112-0726-enterprise-suite-foundation`
 (the dated reversal, 2026-11-15, moves notification from a non-goal to a deployable because recipients are the suite's
 own users, so no business data crosses a boundary).
 
-`mailroom/` is the suite's app for letting a **Tenant email its own customers**. It owns that tenant's templates,
+`backend/services/mailroom/` is the suite's app for letting a **Tenant email its own customers**. It owns that tenant's templates,
 receivers, groups, segments, suppressions, sent-email ledger, campaigns and tracking events; it keeps the Platform
-replica, renders with a sandboxed Mustache and publishes `email.send`, while delivery stays with `mailer/`. Unlike
+replica, renders with a sandboxed Mustache and publishes `email.send`, while delivery stays with `backend/services/mailer/`. Unlike
 notification, it is tenant-facing and stores personal data of the Tenant's customers, so it has its own database and
 its own retention and deletion rules. Its own customers are the Tenant's, not the suite's: the data is stored on the
 Tenant's behalf, never read by Platform or another app, and a hard delete removes the customer while keeping the
-suppression that says the address must not be mailed again. It is `mailroom/` and not a module of `notification/`
+suppression that says the address must not be mailed again. It is `backend/services/mailroom/` and not a module of `backend/services/notification/`
 because the two have different recipients, different data-protection obligations and different runtimes.
 
 The dated reversal of 2026-11-15 (recorded with the mailroom app plan) moves "notifying a Tenant's customers" and
@@ -50,15 +50,15 @@ own, and the suite stores it on the Tenant's behalf under explicit retention and
 those two non-goal bullets still stands — no SMS, push, Slack, Telegram or real-time stream; no tenant-configurable
 rules engine or template editor; no attachments, bounce/complaint processing, digest scheduling or second retry loop.
 
-`survey/` is the suite's app for **asking a Tenant's own customers something**. It owns a Tenant's surveys, their
+`backend/services/survey/` is the suite's app for **asking a Tenant's own customers something**. It owns a Tenant's surveys, their
 immutable versions, the links that reach a respondent, the visits those links produce, the responses and the analysis
 of all of it. It never sends a message and knows no channel: it issues links, and the Tenant places one wherever it
-likes — a mailroom campaign, a QR code, a page on its own site. Delivery therefore stays with `mailroom/` and
-`mailer/`, and Survey publishes no `email.send`. Its data is the Tenant's customer data on the Tenant's behalf, so it
+likes — a mailroom campaign, a QR code, a page on its own site. Delivery therefore stays with `backend/services/mailroom/` and
+`backend/services/mailer/`, and Survey publishes no `email.send`. Its data is the Tenant's customer data on the Tenant's behalf, so it
 has its own database, its own retention and deletion rules, and no raw IP is stored. It is API only: the builder UI
 and the fill UI are a later plan.
 
-`attribution/` is the suite's app for **telling a Tenant which marketing link, channel or ad brought a customer, and
+`backend/services/attribution/` is the suite's app for **telling a Tenant which marketing link, channel or ad brought a customer, and
 what that cost**. It owns the campaigns, the tracked links that redirect through `<tenant-code>.<base-domain>/go/<slug>`,
 the clicks, page views, sessions and conversions those links produce, the credit each click receives under a
 per-campaign model, and the advertising spend behind it. It reads no business data from another app and calls no other
@@ -67,7 +67,7 @@ why it is an attribution product rather than a web-analytics one, and it stores 
 consent. It counts as a deployable in the same sense as Survey: a build, a permission catalog, an entitlement and a
 proxy route, with Platform, Billing, mailroom and the shared resolver untouched.
 
-`booking/` is the suite's app for letting a Tenant **sell time or places**. It owns what may be booked, when it is
+`backend/services/booking/` is the suite's app for letting a Tenant **sell time or places**. It owns what may be booked, when it is
 open, and who holds what: resources with a zone, weekly hours and exceptions, groups, interval offerings (staff plus
 room, a rental, a table) and capacity offerings (a class or session with N seats), and one `Booking` lifecycle over
 two engines — interval claims refused by a PostgreSQL exclusion constraint, and capacity places claimed row by row
@@ -76,7 +76,7 @@ stores a customer as an opaque `customerRef`, publishes ten signed `Booking-*` w
 calls no app, which is why it joins the suite the same way Survey and Attribution did, with Platform, Billing,
 mailroom and the shared resolver untouched. Details are in [booking.md](booking.md).
 
-`workflow/` is the suite's app for letting a Tenant **describe a flow instead of writing one**. It owns that Tenant's
+`backend/services/workflow/` is the suite's app for letting a Tenant **describe a flow instead of writing one**. It owns that Tenant's
 workflow definitions and their immutable published versions, the durable engine that runs them on PostgreSQL and
 RabbitMQ, the instances and their step history, the human tasks, the Tenant's connections to external systems, the
 triggers, and the signed events it emits. It is not an app-to-app link: it acts as the Tenant's own system, so it calls
@@ -103,7 +103,7 @@ Apps stand alone. An app never consumes another app's business events: the broke
 the suite's infrastructure commands and outcomes, and an app's traffic with itself, but no app binds to another app's
 business exchange. A fact a Tenant's own system reacts to leaves the producing app as a signed webhook to that Tenant
 System. A Tenant System is the only party that connects two apps: it decides whether to call both, or to forward one
-app's webhooks to the other, and no app ever calls or listens to another. `workflow/` is the Tenant side of this rule,
+app's webhooks to the other, and no app ever calls or listens to another. `backend/services/workflow/` is the Tenant side of this rule,
 not an exception to it: it authenticates as a Tenant System, calls apps by their public API under the Tenant's
 hostname, and receives their signed webhooks.
 
@@ -207,7 +207,7 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 
 **Division rules**
 - Keycloak authenticates; Platform authorizes; apps only enforce.
-- No shared database. Shared code lives only in `core/`; contracts live in `contracts/`.
+- No shared database. Shared code lives only in `backend/libs/core/`; contracts live in `contracts/`.
 - An app never operates on another app's resources; the sample tenant controls its own resource lifecycle.
 - Billing publishes state and results through API, Events and Webhooks. It never imposes actions on the Tenant
   System, which decides its own next step.
@@ -222,26 +222,26 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 - Custom domains. Only the domain-mapping seam is designed.
 - Platform or an app managing a Tenant System's own users, passwords, roles or permissions.
 - Billing operating on resources or deciding on a Tenant System's behalf.
-- **Reversed (2026-11-15):** notifying a Tenant's **customers**. `mailroom/` now serves them, under the decisions recorded
+- **Reversed (2026-11-15):** notifying a Tenant's **customers**. `backend/services/mailroom/` now serves them, under the decisions recorded
   in [mailroom.md](mailroom.md): the recipient is the Tenant's customer, the data is the Tenant's own, and the suite stores it
   on the Tenant's behalf with retention and deletion rules. The notification app still serves Platform tenant users
   only and reads no Billing data.
 - SMS, push, Slack, Telegram or a real-time SSE stream; a tenant-configurable rules engine, a template editor;
   attachments, bounce and complaint processing, digest scheduling, or a second email retry loop. Email **delivery**
-  stays with `mailer/`, which sends an email a producer has already rendered and owns no template, no rule about who is
+  stays with `backend/services/mailer/`, which sends an email a producer has already rendered and owns no template, no rule about who is
   notified and no localisation. Webhooks stay in Billing. **Reversed (2026-11-15):** bulk/marketing campaigns are now in
-  scope for `mailroom/`, which owns the campaign state machine, suppression and tracking; mailer still owns delivery.
+  scope for `backend/services/mailroom/`, which owns the campaign state machine, suppression and tracking; mailer still owns delivery.
 - A second **business app** beyond Billing in the sense of an app that owns commercial data. The suite's first app
-  beyond Billing is `notification/`, a platform-facing app rather than a business app; the extension trace — a build, a
+  beyond Billing is `backend/services/notification/`, a platform-facing app rather than a business app; the extension trace — a build, a
   permission catalog, an entitlement and a proxy route, with no Platform code change — is now proven rather than
-  hypothesised. **Reversed (2026-11-16):** `survey/` is the second tenant-facing business app beyond Billing and the
+  hypothesised. **Reversed (2026-11-16):** `backend/services/survey/` is the second tenant-facing business app beyond Billing and the
   first one that is not about money or mail. It joins the suite the same way, proving the trace a second time from a
   different direction: it publishes its own events and signed webhooks, and Platform, mailroom and the shared resolver
   are untouched.
-- A builder UI or a fill UI for `survey/`; sending invitations or reminders from Survey; reconciling a respondent with
+- A builder UI or a fill UI for `backend/services/survey/`; sending invitations or reminders from Survey; reconciling a respondent with
   a mailroom receiver; CAPTCHA, virus scanning, realtime co-editing, and a retention schedule for responses (only an
   explicit deletion). A Tenant that must not keep an answer deletes the response.
-- `attribution/` measuring traffic that did not arrive through a tracked link, and any claim to be a general web
+- `backend/services/attribution/` measuring traffic that did not arrive through a tracked link, and any claim to be a general web
   analytics product. It also does not create or edit ads on any ad platform, serve a custom domain, store a raw IP,
   resolve one person across devices, fingerprint, stream in real time, convert currency, bucket reports in a time zone
   other than UTC, or export to object storage (CSV is streamed).
@@ -252,8 +252,8 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 - ~~The Suite Console UI~~, which was a follow-up plan and is now delivered for Platform and Billing: two shells and
   the `remote-platform` and `remote-billing` remotes in `frontend/` ([console.md](console.md)). The UIs of the other
   apps, the Customer Portal and a per-tenant rollout stay out of scope.
-- A first business app beyond Billing; the extension trace is proven a second time with `survey/`.
-- **Reversed (2026-11-16):** `booking/` is a further tenant-facing business app that sells time and places. It joins
-  the same way a third time, and it adds a public gate of its own; it changes no existing app and no code in `core/`.
+- A first business app beyond Billing; the extension trace is proven a second time with `backend/services/survey/`.
+- **Reversed (2026-11-16):** `backend/services/booking/` is a further tenant-facing business app that sells time and places. It joins
+  the same way a third time, and it adds a public gate of its own; it changes no existing app and no code in `backend/libs/core/`.
   It stores no money and no personal data, so it crosses no boundary a Tenant has not already allowed for its own
   customers.

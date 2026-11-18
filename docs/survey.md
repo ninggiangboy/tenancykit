@@ -2,7 +2,7 @@
 
 The suite's app for letting a **Tenant ask its own customers something**. A Tenant builds a survey, publishes it as
 an immutable version, hands out links, and reads who answered, where people stopped and what the answers add up to.
-It is a separate deployable (`survey/`, root package `dev.ngb.survey`) with three runtimes: `migrate`, `api` and
+It is a separate deployable (`backend/services/survey/`, root package `dev.ngb.survey`) with three runtimes: `migrate`, `api` and
 `worker`.
 
 Survey never sends a message and knows no channel. It issues links; the Tenant puts a link wherever it likes — a
@@ -196,7 +196,7 @@ names the host a respondent's browser reaches (`SURVEY_S3_PUBLIC_ENDPOINT`), whi
 server uses. At submit the server `HEAD`s each referenced object (the size must equal the declared size and fit the
 question's limit) and reads its first 512 bytes to match magic bytes against the question's allowed types, then marks
 the upload `ATTACHED`. A renamed `.exe` declared as `image/png` fails that check. Object keys are
-`tenant/{tenant_id}/survey/{survey_id}/{upload_id}`; a filename is never used as a key.
+`backend/samples/tenant/{tenant_id}/survey/{survey_id}/{upload_id}`; a filename is never used as a key.
 
 Downloads go only through a presigned GET with `Content-Disposition: attachment`. Pending uploads older than 24 hours
 are deleted, together with their objects, by the worker's housekeeping job. There is no virus scan: that is a

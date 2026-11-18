@@ -4,23 +4,25 @@ Documentation lives in [docs/](docs/README.md). Code lives in:
 
 | Directory | Contents |
 |---|---|
-| `platform/` | Platform service (Gradle multi-module, Spring Boot): tenants, users, centralized RBAC, app entitlement, tenant systems and the suite's tokens |
-| `billing/` | Billing app (Gradle multi-module, Spring Boot): the eight billing contexts, replicating the Platform data it enforces |
-| `mailer/` | Mailer service (Gradle multi-module, Spring Boot): consumes `email.send` commands and delivers already-rendered email through SESv2 or SMTP, with a per-recipient delivery ledger |
-| `notification/` | Notification service: the suite's in-app inbox and transactional email for Platform users, a replica consumer that publishes `email.send` |
-| `mailroom/` | Mailroom app: a Tenant's own templates, receivers, groups, segments, campaigns and tracking, a replica consumer that publishes `email.send` and consumes `email-delivery.changed` |
-| `survey/` | Survey app: a Tenant's surveys, immutable versions, links, visits, responses, uploads, analytics and signed webhooks; a replica consumer that publishes `survey.events` and sends no message |
-| `attribution/` | Attribution app: a Tenant's campaigns, tracked links, the redirect and its signed click id, clicks, page views, sessions and conversions, the credit each click receives under a per-campaign model, and advertising cost entered by hand or imported from Google Ads and Meta Ads |
-| `booking/` | Booking app: a Tenant's bookable resources, weekly hours and exceptions, groups, interval and capacity offerings, the two inventory engines behind one `Booking` lifecycle, availability, reschedules, series, a waitlist and a waiting room, the public customer gate and signed webhooks; a replica consumer that sends no message and touches no money |
-| `customer/` | Customer app: a Tenant's own customers, orders with line items, returns, activities, custom fields, tags and consent, the 360 profile, search and CSV export, and four signed webhooks; a replica consumer that declares no exchange and never reads another app's data |
-| `loyalty/` | Loyalty app: a Tenant's points program, its program and tier settings and promotions, members, the lot-based points ledger, redemption and reversal, tiers, expiry with an advance notice, rewards and single-use vouchers, and twelve signed webhooks; a replica consumer that declares no exchange |
-| `tenant/` | Sample Tenant System, built and deployed independently; it calls Billing over REST with a Platform-issued suite token |
+| `backend/services/platform/` | Platform service (Gradle multi-module, Spring Boot): tenants, users, centralized RBAC, app entitlement, tenant systems and the suite's tokens |
+| `backend/services/billing/` | Billing app (Gradle multi-module, Spring Boot): the eight billing contexts, replicating the Platform data it enforces |
+| `backend/services/mailer/` | Mailer service (Gradle multi-module, Spring Boot): consumes `email.send` commands and delivers already-rendered email through SESv2 or SMTP, with a per-recipient delivery ledger |
+| `backend/services/notification/` | Notification service: the suite's in-app inbox and transactional email for Platform users, a replica consumer that publishes `email.send` |
+| `backend/services/mailroom/` | Mailroom app: a Tenant's own templates, receivers, groups, segments, campaigns and tracking, a replica consumer that publishes `email.send` and consumes `email-delivery.changed` |
+| `backend/services/survey/` | Survey app: a Tenant's surveys, immutable versions, links, visits, responses, uploads, analytics and signed webhooks; a replica consumer that publishes `survey.events` and sends no message |
+| `backend/services/attribution/` | Attribution app: a Tenant's campaigns, tracked links, the redirect and its signed click id, clicks, page views, sessions and conversions, the credit each click receives under a per-campaign model, and advertising cost entered by hand or imported from Google Ads and Meta Ads |
+| `backend/services/booking/` | Booking app: a Tenant's bookable resources, weekly hours and exceptions, groups, interval and capacity offerings, the two inventory engines behind one `Booking` lifecycle, availability, reschedules, series, a waitlist and a waiting room, the public customer gate and signed webhooks; a replica consumer that sends no message and touches no money |
+| `backend/services/customer/` | Customer app: a Tenant's own customers, orders with line items, returns, activities, custom fields, tags and consent, the 360 profile, search and CSV export, and four signed webhooks; a replica consumer that declares no exchange and never reads another app's data |
+| `backend/services/loyalty/` | Loyalty app: a Tenant's points program, its program and tier settings and promotions, members, the lot-based points ledger, redemption and reversal, tiers, expiry with an advance notice, rewards and single-use vouchers, and twelve signed webhooks; a replica consumer that declares no exchange |
+| `backend/samples/tenant/` | Sample Tenant System, built and deployed independently; it calls Billing over REST with a Platform-issued suite token |
 | `frontend/` | Suite Console: one pnpm + Turborepo monorepo with two shells (Platform, Tenant) and every UI as a Module Federation remote (`remote-platform`, `remote-billing`), built on shared packages (`shell-core`, `shell-sdk`, `auth`, `ui`, `api-client`); see [docs/console.md](docs/console.md) |
-| `core/` | The technical core every service builds against: kernel, Spring implementations, messaging (`core-messaging`), the Platform replica (`core-replica`), snapshot sync (`core-platform-sync`), suite policy (`core-suite`), signed webhook mechanics (`core-webhook`), the shared Feign client (`core-feign`) and the shared architecture rule set (`core-arch`); the only code they share |
+| `backend/libs/core/` | The technical core every service builds against: kernel, Spring implementations, messaging (`core-messaging`), the Platform replica (`core-replica`), snapshot sync (`core-platform-sync`), suite policy (`core-suite`), signed webhook mechanics (`core-webhook`), the shared Feign client (`core-feign`) and the shared architecture rule set (`core-arch`); the only code they share |
 | `contracts/` | OpenAPI, event schemas, the messaging contract, permission catalogs and the token claim list, shared between services as documents, never as code |
 | `ops/` | Local runtime: PostgreSQL init, RabbitMQ users, the Keycloak realm import, the Caddy route table, the load-test entry and the smoke scripts |
 
-Each service is its own Gradle build. Inside a service the modules are grouped by role, and each Gradle project
+`backend/` separates the three kinds of Gradle build: `services/` are deployable products, `libs/` is the shared
+technical core, and `samples/` is a reference Tenant System that proves the integration. Only `services/` and
+`samples/` are deployed, and each service is its own Gradle build. Inside a service the modules are grouped by role, and each Gradle project
 path follows its directory:
 
 | Directory | Contents |
@@ -38,18 +40,19 @@ Read [docs/architecture.md](docs/architecture.md#module-boundaries) for what eac
 Each service builds on its own and needs JDK 25 and a Docker daemon for Testcontainers:
 
 ```bash
-cd core && ./gradlew build
-cd platform && ./gradlew build
-cd billing && ./gradlew build
-cd mailer && ./gradlew build
-cd notification && ./gradlew build
-cd mailroom && ./gradlew build
-cd survey && ./gradlew build
-cd attribution && ./gradlew build
-cd booking && ./gradlew build
-cd customer && ./gradlew build
-cd loyalty && ./gradlew build
-cd tenant && ./gradlew build
+cd backend/libs/core && ./gradlew build
+cd backend/services/platform && ./gradlew build
+cd backend/services/billing && ./gradlew build
+cd backend/services/mailer && ./gradlew build
+cd backend/services/notification && ./gradlew build
+cd backend/services/mailroom && ./gradlew build
+cd backend/services/survey && ./gradlew build
+cd backend/services/attribution && ./gradlew build
+cd backend/services/booking && ./gradlew build
+cd backend/services/customer && ./gradlew build
+cd backend/services/loyalty && ./gradlew build
+cd backend/services/workflow && ./gradlew build
+cd backend/samples/tenant && ./gradlew build
 ```
 
 `./gradlew check` in every service also runs the isolation gate: a Gradle task that fails when the service
@@ -85,7 +88,7 @@ Infrastructure only, with the apps on `bootRun`:
 ```bash
 docker compose up -d postgres rabbitmq keycloak
 set -a; source .env; set +a
-cd billing && ./gradlew :apps:app-boot:bootRun
+cd backend/services/billing && ./gradlew :apps:app-boot:bootRun
 ```
 
 The same suite also deploys to AWS ECS Fargate with managed RDS and Amazon MQ, in parallel with compose rather than

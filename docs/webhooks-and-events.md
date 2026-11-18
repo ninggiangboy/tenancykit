@@ -73,7 +73,7 @@ Reliability mechanics (outbox, backoff, dead-letter queue, idempotent consumers)
 
 ## The shared mechanics
 
-The parts of a signed delivery that are identical in every app live in `core/core-webhook`: `WebhookSigner` (the
+The parts of a signed delivery that are identical in every app live in `backend/libs/core/core-webhook`: `WebhookSigner` (the
 `v1=` HMAC rule), `WebhookHeaderSet` (`BILLING` and `SURVEY`, the two header sets), `DestinationPolicy` (which
 addresses are public), `GuardedDnsResolver` (the check inside the connection's own resolution, so a changed DNS answer
 cannot slip past it), `WebhookHttpSender` (no redirects, bounded connect/read timeouts, a bounded response excerpt)
@@ -109,7 +109,7 @@ Billing's above, with `Survey-*` header names. **A response event carries no ans
 customer data and are read from the API with `survey:response:read`.
 
 The mechanics — signing, the destination policy, the guarded DNS resolver, the HTTP sender and the retry schedule —
-are shared from `core/core-webhook`; the endpoints, the delivery state and the event catalog stay in Survey, so a
+are shared from `backend/libs/core/core-webhook`; the endpoints, the delivery state and the event catalog stay in Survey, so a
 delivery is never cross-app and one app's outbound state cannot be read by another.
 
 ## Between services: `billing.events`

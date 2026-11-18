@@ -61,19 +61,19 @@ dependencies {
 // for the same reason: the catalog test reads the real files and the expression tests are generated from the vectors
 // a future fill UI must pass too.
 tasks.processResources {
-    from(layout.projectDirectory.dir("../../../contracts/permissions")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/permissions")) {
         include("*.yaml")
         into("permissions")
     }
-    from(layout.projectDirectory.dir("../../../contracts/survey")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/survey")) {
         include("*.schema.json")
         into("survey")
     }
-    from(layout.projectDirectory.dir("../../../contracts/survey/expression-vectors")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/survey/expression-vectors")) {
         include("*.json")
         into("survey/expression-vectors")
     }
-    from(layout.projectDirectory.dir("../../../contracts/events/survey")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/events/survey")) {
         include("*.schema.json")
         into("events")
     }

@@ -2,7 +2,7 @@ pluginManagement {
     includeBuild("build-logic")
 }
 
-includeBuild("../core")
+includeBuild("../../libs/core")
 
 dependencyResolutionManagement {
     repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS

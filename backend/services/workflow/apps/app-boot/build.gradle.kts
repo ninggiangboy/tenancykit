@@ -60,24 +60,24 @@ dependencies {
 // The permission catalog is packaged so the catalog test reads the real file. Event schemas are packaged as each one
 // lands, for the same reason: a contract test must read the same bytes the running app uses.
 tasks.processResources {
-    from(layout.projectDirectory.dir("../../../contracts/permissions")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/permissions")) {
         include("*.yaml")
         into("permissions")
     }
-    from(layout.projectDirectory.dir("../../../contracts/workflow")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/workflow")) {
         include("*.schema.json")
         into("workflow")
     }
-    from(layout.projectDirectory.dir("../../../contracts/workflow/expression-vectors")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/workflow/expression-vectors")) {
         include("*.json")
         into("workflow/expression-vectors")
     }
-    from(layout.projectDirectory.dir("../../../contracts/workflow/graph-vectors")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/workflow/graph-vectors")) {
         include("*.json")
         into("workflow/graph-vectors")
     }
     // The event schemas are the catalog the webhook endpoints subscribe against, and the contract test's input.
-    from(layout.projectDirectory.dir("../../../contracts/events/workflow")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/events/workflow")) {
         include("*.schema.json")
         into("events")
     }

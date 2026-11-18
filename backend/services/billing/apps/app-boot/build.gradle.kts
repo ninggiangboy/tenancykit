@@ -61,12 +61,12 @@ dependencies {
 // The event schemas under contracts/events/billing are the source of truth for which event types exist; the
 // application reads them from the classpath, so the catalog and the contract cannot drift apart.
 tasks.processResources {
-    from(layout.projectDirectory.dir("../../../contracts/events/billing")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/events/billing")) {
         include("*.schema.json")
         into("events")
     }
     // The permission catalogs drive x-allowed-callers in the OpenAPI document, so they must be on the classpath too.
-    from(layout.projectDirectory.dir("../../../contracts/permissions")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/permissions")) {
         include("*.yaml")
         into("permissions")
     }

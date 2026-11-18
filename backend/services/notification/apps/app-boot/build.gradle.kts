@@ -55,7 +55,7 @@ dependencies {
 // The command schema under contracts/commands is the source of truth for what a producer may send; the
 // application reads it from the classpath, so the validator and the contract cannot drift apart.
 tasks.processResources {
-    from(layout.projectDirectory.dir("../../../contracts/commands")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/commands")) {
         include("*.schema.json")
         into("commands")
     }

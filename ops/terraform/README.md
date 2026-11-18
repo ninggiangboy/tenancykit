@@ -155,12 +155,12 @@ Then build and push the images into the repositories Terraform created:
 tag="2026-11-14"
 registry="$(terraform output -json ecr_repository_urls | jq -r .platform)"
 
-docker build -f ../../platform/apps/app-boot/Dockerfile -t "$registry:$tag" ../..
+docker build -f ../../backend/services/platform/apps/app-boot/Dockerfile -t "$registry:$tag" ../..
 docker push "$registry:$tag"
 
 # billing (shared by migrate, api and worker)
 billing_repo="$(terraform output -json ecr_repository_urls | jq -r .billing)"
-docker build -f ../../billing/apps/app-boot/Dockerfile -t "$billing_repo:$tag" ../..
+docker build -f ../../backend/services/billing/apps/app-boot/Dockerfile -t "$billing_repo:$tag" ../..
 docker push "$billing_repo:$tag"
 
 # keycloak, with the realm export baked in; the build context is the repository root
@@ -170,7 +170,7 @@ docker push "$keycloak_repo:$tag"
 
 # mailer (shared by migrate and worker)
 mailer_repo="$(terraform output -json ecr_repository_urls | jq -r .mailer)"
-docker build -f ../../mailer/apps/app-boot/Dockerfile -t "$mailer_repo:$tag" ../..
+docker build -f ../../backend/services/mailer/apps/app-boot/Dockerfile -t "$mailer_repo:$tag" ../..
 docker push "$mailer_repo:$tag"
 ```
 

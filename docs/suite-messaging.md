@@ -41,7 +41,7 @@ A consumer declares its own queue, its bindings and the queue's dead-letter pair
 Every declaration is idempotent, so startup order does not matter. No app binds a queue to another app's business
 exchange: `billing.events` is consumed by Billing itself, which reads its own facts in its invoicing cycle, and
 `survey.events` by nobody. A fact a Tenant's own system reacts to leaves the producing app as a signed webhook to that
-Tenant System, and the Tenant System is the only party that connects two apps. `workflow/` joins on the Tenant side of
+Tenant System, and the Tenant System is the only party that connects two apps. `backend/services/workflow/` joins on the Tenant side of
 that rule rather than as a new consumer: it calls apps by their public API with a Tenant-owned credential, receives
 their signed webhooks as triggers, and binds only to `platform.events` and its own internal queue. The rule itself is
 written once in [contracts/messaging/README.md](../contracts/messaging/README.md#the-suite-rule). Every service has its

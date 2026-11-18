@@ -8,20 +8,20 @@
 # tenant-shaped Dockerfile produces an image that builds green and then crash-loops on a missing schema resource — and
 # only in ECS, never on a laptop where the resource is on the classpath from the source tree.
 #
-# Build: docker build -f mailer/apps/app-boot/Dockerfile .
+# Build: docker build -f backend/services/mailer/apps/app-boot/Dockerfile .
 
 FROM eclipse-temurin:25-jdk AS build
 WORKDIR /workspace
 # Only what this build reads; a change under any other service never invalidates it.
-COPY mailer/ mailer/
-COPY core/ core/
+COPY backend/services/mailer/ backend/services/mailer/
+COPY backend/libs/core/ backend/libs/core/
 COPY contracts/ contracts/
 RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
-    cd mailer && ./gradlew :apps:app-boot:bootJar --no-daemon
+    cd backend/services/mailer && ./gradlew :apps:app-boot:bootJar --no-daemon
 
 FROM eclipse-temurin:25-jre AS runtime
 WORKDIR /app
 RUN groupadd --system app && useradd --system --gid app --home /app app
-COPY --from=build /workspace/mailer/apps/app-boot/build/libs/app-boot.jar /app/application.jar
+COPY --from=build /workspace/backend/services/mailer/apps/app-boot/build/libs/app-boot.jar /app/application.jar
 USER app
 ENTRYPOINT ["java", "-jar", "/app/application.jar"]

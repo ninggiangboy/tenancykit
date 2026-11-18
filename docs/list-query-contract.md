@@ -1,8 +1,8 @@
 # List query contract
 
 Every list endpoint of the suite filters, sorts and pages the same way, so a Tenant System learns one syntax. The
-parsing, validation and cursor live in `core/core-query`; the jOOQ compiler, the Spring argument resolver and the index
-check live in `core/core-spring`; the OpenAPI generation lives in `core/core-openapi`. Each resource declares only
+parsing, validation and cursor live in `backend/libs/core/core-query`; the jOOQ compiler, the Spring argument resolver and the index
+check live in `backend/libs/core/core-spring`; the OpenAPI generation lives in `backend/libs/core/core-openapi`. Each resource declares only
 *what* may be filtered and sorted, in a schema.
 
 The OpenAPI document of every migrated endpoint is generated from that schema, so it is the complete reference for the

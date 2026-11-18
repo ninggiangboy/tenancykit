@@ -59,15 +59,15 @@ dependencies {
 // The permission catalogs and the event schema are packaged for the same reason: the catalog test reads the real
 // files and the result consumer can name the event type without a literal.
 tasks.processResources {
-    from(layout.projectDirectory.dir("../../../contracts/commands")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/commands")) {
         include("*.schema.json")
         into("commands")
     }
-    from(layout.projectDirectory.dir("../../../contracts/permissions")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/permissions")) {
         include("*.yaml")
         into("permissions")
     }
-    from(layout.projectDirectory.dir("../../../contracts/events/mailer")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/events/mailer")) {
         include("*.schema.json")
         into("events")
     }

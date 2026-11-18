@@ -2,7 +2,7 @@
 
 The suite's app for letting a Tenant **sell time or places**: an appointment with a staff member and a room, a rental,
 a class or a session with N seats, a table for four, a recurring weekly slot. It is a separate deployable
-(`booking/`, root package `dev.ngb.booking`) with the three runtimes every app has: `migrate`, `api` and `worker`.
+(`backend/services/booking/`, root package `dev.ngb.booking`) with the three runtimes every app has: `migrate`, `api` and `worker`.
 
 Booking never touches money. It holds a place, tells the Tenant the hold exists, and the Tenant charges through
 [Billing](invoicing-and-subscriptions.md) and then confirms. Nothing in this app stores a price, a fee or a currency.
@@ -123,7 +123,7 @@ resolved in that zone, never in the caller's.
 ## Recurrence
 
 The expander behind `RecurrenceExpander` is `Rfc5545RecurrenceExpander` in
-`booking/contexts/catalog/.../adapter/recurrence/rfc5545/`, and it is the only class that names the library. The spike's
+`backend/services/booking/contexts/catalog/.../adapter/recurrence/rfc5545/`, and it is the only class that names the library. The spike's
 two candidates were `org.dmfs:lib-recur` and `org.mnode.ical4j:ical4j`; measured against every vector, `lib-recur`
 (0.17.1) passes all of them, so it is the one dependency. The port is what a later swap changes, and nothing above it
 moves.
@@ -278,7 +278,7 @@ after the run.
   webhook delivery run in the worker only. Each is bounded and idempotent on a rerun: a claim uses `skip locked`, a
   watermark advance uses the highest admitted ticket number, and retention deletes only what is old enough.
 - **Keys.** Customer tokens and webhook signing secrets rotate; the active key id is in settings and previous keys
-  stay valid for verification. `BOOKING_TOKEN_KEY_ID` and `BOOKING_TOKEN_SECRET` set the customer/queue key;
+  stay valid for verification. `BOOKING_TOKEN_KEY_ID` and `BOOKING_TOKEN_SECRET` set the backend/services/customer/queue key;
   `BOOKING_SECRETS_MASTER_KEY` envelops webhook signing secrets.
 - **Smoke.** `ops/smoke/booking.sh` plays the Tenant: catalog, gate hold, confirm, waiting room, waitlist offer,
   reschedule, series, invariants. It needs a running compose stack and the usual smoke helpers.
@@ -301,4 +301,4 @@ after the run.
 Stripe or any money, prices or fee amounts; seat maps, named seats and seat selection; tickets, QR codes and check-in;
 any UI; external calendar sync; storing personal data of a customer; booking sending any message itself; a booking
 AMQP exchange; any call to or from another suite app; third-party CAPTCHA; Redis or any store beyond PostgreSQL and
-RabbitMQ; multi-currency; and any code change in an existing app or in `core/`.
+RabbitMQ; multi-currency; and any code change in an existing app or in `backend/libs/core/`.

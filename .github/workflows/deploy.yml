@@ -78,28 +78,28 @@ jobs:
           customer_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .customer)"
           loyalty_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .loyalty)"
 
-          docker build -f platform/apps/app-boot/Dockerfile -t "${platform_repo}:${TAG}" .
+          docker build -f backend/services/platform/apps/app-boot/Dockerfile -t "${platform_repo}:${TAG}" .
           docker push "${platform_repo}:${TAG}"
 
-          docker build -f billing/apps/app-boot/Dockerfile -t "${billing_repo}:${TAG}" .
+          docker build -f backend/services/billing/apps/app-boot/Dockerfile -t "${billing_repo}:${TAG}" .
           docker push "${billing_repo}:${TAG}"
 
           docker build -f ops/terraform/keycloak/Dockerfile -t "${keycloak_repo}:${TAG}" .
           docker push "${keycloak_repo}:${TAG}"
 
-          docker build -f mailer/apps/app-boot/Dockerfile -t "${mailer_repo}:${TAG}" .
+          docker build -f backend/services/mailer/apps/app-boot/Dockerfile -t "${mailer_repo}:${TAG}" .
           docker push "${mailer_repo}:${TAG}"
 
-          docker build -f notification/apps/app-boot/Dockerfile -t "${notification_repo}:${TAG}" .
+          docker build -f backend/services/notification/apps/app-boot/Dockerfile -t "${notification_repo}:${TAG}" .
           docker push "${notification_repo}:${TAG}"
 
-          docker build -f mailroom/apps/app-boot/Dockerfile -t "${mailroom_repo}:${TAG}" .
+          docker build -f backend/services/mailroom/apps/app-boot/Dockerfile -t "${mailroom_repo}:${TAG}" .
           docker push "${mailroom_repo}:${TAG}"
 
-          docker build -f customer/apps/app-boot/Dockerfile -t "${customer_repo}:${TAG}" .
+          docker build -f backend/services/customer/apps/app-boot/Dockerfile -t "${customer_repo}:${TAG}" .
           docker push "${customer_repo}:${TAG}"
 
-          docker build -f loyalty/apps/app-boot/Dockerfile -t "${loyalty_repo}:${TAG}" .
+          docker build -f backend/services/loyalty/apps/app-boot/Dockerfile -t "${loyalty_repo}:${TAG}" .
           docker push "${loyalty_repo}:${TAG}"
 
       - name: Bootstrap the database and broker (first deploy only)

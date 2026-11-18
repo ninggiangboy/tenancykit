@@ -59,15 +59,15 @@ dependencies {
 // The permission catalog and the event schemas are packaged so the catalog test and the webhook payload tests read the
 // real files, the same way every app does.
 tasks.processResources {
-    from(layout.projectDirectory.dir("../../../contracts/permissions")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/permissions")) {
         include("*.yaml")
         into("permissions")
     }
-    from(layout.projectDirectory.dir("../../../contracts/booking")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/booking")) {
         include("**/*.json")
         into("booking")
     }
-    from(layout.projectDirectory.dir("../../../contracts/events/booking")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/events/booking")) {
         include("*.schema.json")
         into("events")
     }

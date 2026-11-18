@@ -387,7 +387,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: platform/apps/app-boot/Dockerfile
+      dockerfile: backend/services/platform/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -465,7 +465,7 @@ services:
     restart: "no"
     build:
       context: .
-      dockerfile: billing/apps/app-boot/Dockerfile
+      dockerfile: backend/services/billing/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -486,7 +486,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: billing/apps/app-boot/Dockerfile
+      dockerfile: backend/services/billing/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -516,7 +516,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: billing/apps/app-boot/Dockerfile
+      dockerfile: backend/services/billing/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -545,7 +545,7 @@ services:
     restart: "no"
     build:
       context: .
-      dockerfile: mailer/apps/app-boot/Dockerfile
+      dockerfile: backend/services/mailer/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -566,7 +566,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: mailer/apps/app-boot/Dockerfile
+      dockerfile: backend/services/mailer/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -595,7 +595,7 @@ services:
     restart: "no"
     build:
       context: .
-      dockerfile: notification/apps/app-boot/Dockerfile
+      dockerfile: backend/services/notification/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -614,7 +614,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: notification/apps/app-boot/Dockerfile
+      dockerfile: backend/services/notification/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -645,7 +645,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: notification/apps/app-boot/Dockerfile
+      dockerfile: backend/services/notification/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -675,7 +675,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: mailroom/apps/app-boot/Dockerfile
+      dockerfile: backend/services/mailroom/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -702,7 +702,7 @@ services:
     restart: "no"
     build:
       context: .
-      dockerfile: mailroom/apps/app-boot/Dockerfile
+      dockerfile: backend/services/mailroom/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -722,7 +722,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: mailroom/apps/app-boot/Dockerfile
+      dockerfile: backend/services/mailroom/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -750,7 +750,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: tenant/apps/app-boot/Dockerfile
+      dockerfile: backend/samples/tenant/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -885,7 +885,7 @@ services:
     restart: "no"
     build:
       context: .
-      dockerfile: survey/apps/app-boot/Dockerfile
+      dockerfile: backend/services/survey/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -903,7 +903,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: survey/apps/app-boot/Dockerfile
+      dockerfile: backend/services/survey/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -928,7 +928,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: survey/apps/app-boot/Dockerfile
+      dockerfile: backend/services/survey/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -959,7 +959,7 @@ services:
     restart: "no"
     build:
       context: .
-      dockerfile: booking/apps/app-boot/Dockerfile
+      dockerfile: backend/services/booking/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -977,7 +977,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: booking/apps/app-boot/Dockerfile
+      dockerfile: backend/services/booking/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -1002,7 +1002,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: booking/apps/app-boot/Dockerfile
+      dockerfile: backend/services/booking/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -1030,7 +1030,7 @@ services:
     restart: "no"
     build:
       context: .
-      dockerfile: customer/apps/app-boot/Dockerfile
+      dockerfile: backend/services/customer/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -1050,7 +1050,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: customer/apps/app-boot/Dockerfile
+      dockerfile: backend/services/customer/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -1080,7 +1080,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: customer/apps/app-boot/Dockerfile
+      dockerfile: backend/services/customer/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -1107,7 +1107,7 @@ services:
     restart: "no"
     build:
       context: .
-      dockerfile: loyalty/apps/app-boot/Dockerfile
+      dockerfile: backend/services/loyalty/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -1127,7 +1127,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: loyalty/apps/app-boot/Dockerfile
+      dockerfile: backend/services/loyalty/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -1156,7 +1156,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: loyalty/apps/app-boot/Dockerfile
+      dockerfile: backend/services/loyalty/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -1183,7 +1183,7 @@ services:
     restart: "no"
     build:
       context: .
-      dockerfile: workflow/apps/app-boot/Dockerfile
+      dockerfile: backend/services/workflow/apps/app-boot/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -1201,7 +1201,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: workflow/apps/app-boot/Dockerfile
+      dockerfile: backend/services/workflow/apps/app-boot/Dockerfile
     depends_on:
       workflow-migrate:
         condition: service_completed_successfully
@@ -1222,7 +1222,7 @@ services:
     <<: *app
     build:
       context: .
-      dockerfile: workflow/apps/app-boot/Dockerfile
+      dockerfile: backend/services/workflow/apps/app-boot/Dockerfile
     depends_on:
       workflow-migrate:
         condition: service_completed_successfully

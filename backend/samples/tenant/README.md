@@ -2,7 +2,7 @@
 
 A reference Cloud Resource Management tenant. It is its own Gradle build and database and
 integrates with Billing only over REST and signed webhooks; it shares no code with
-`billing/` and builds against the technical `core/` beside it. See [docs/tenant-system.md](../docs/tenant-system.md).
+`backend/services/billing/` and builds against the technical `backend/libs/core/` beside it. See [docs/tenant-system.md](../docs/tenant-system.md).
 
 ## Build and run
 
@@ -26,7 +26,7 @@ caches the token until a minute before it expires, and refreshes it once on a 40
 Tenant System from the token, so no API key or Tenant System id is configured here. Platform issues the
 credential through tenant-system credential management; see [docs/tenant-system.md](../docs/tenant-system.md).
 
-The `billing/` deployment is only a dependency at runtime. With Billing stopped the service
+The `backend/services/billing/` deployment is only a dependency at runtime. With Billing stopped the service
 still starts and serves registration (the mapping stays `PENDING`), login, users, the catalog
 and webhook verification. Actions that need Billing fail with a clear `502` and leave no
 executable order behind: an order is stored as `PENDING` first and is only `QUEUED` once Billing

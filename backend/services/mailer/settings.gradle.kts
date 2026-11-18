@@ -3,7 +3,7 @@ pluginManagement {
 }
 
 // The technical core every service builds against, shared as a separate build by its coordinates.
-includeBuild("../core")
+includeBuild("../../libs/core")
 
 dependencyResolutionManagement {
     repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS

@@ -1,6 +1,6 @@
 # contracts
 
-Documents the suite's services share, never code. The only code they share is the technical `core/`.
+Documents the suite's services share, never code. The only code they share is the technical `backend/libs/core/`.
 
 | Path | Owns |
 |---|---|
@@ -19,11 +19,11 @@ Documents the suite's services share, never code. The only code they share is th
 | `events/customer/` | customer's outbound events: `customer.created`, `order.recorded`, `order.refunded` and `customer.erased`, the customer and order facts customer sends to a Tenant System as signed webhooks. |
 | `events/loyalty/` | loyalty's outbound events: the twelve enrolment, points, tier and voucher facts loyalty sends to a Tenant System as signed webhooks. |
 | `events/booking/` | booking's outbound events: the ten hold, confirmation, reschedule, cancellation, expiry, no-show, waitlist and series facts booking sends to a Tenant System as signed `Booking-*` webhooks. |
-| `survey/` | The version document schema, the expression schema and the behaviour vectors both the server and a future fill UI must pass. See [survey/README.md](survey/README.md). |
-| `attribution/` | The attribution vectors the credit engine must reproduce and the ingest payload schemas. See [attribution/README.md](attribution/README.md). |
-| `loyalty/` | The loyalty earn vectors the earn engine must reproduce: the vector schema and the hand-computed vectors for orders, returns, promotions, tiers and expiry. |
-| `workflow/` | The workflow graph schema, the expression schema and the behaviour vectors the engine must reproduce. See [workflow/README.md](workflow/README.md). |
-| `booking/` | The RFC 5545 recurrence vectors the expander must reproduce, with the vector schema and a note per case. See [booking/README.md](booking/README.md). |
+| `backend/services/survey/` | The version document schema, the expression schema and the behaviour vectors both the server and a future fill UI must pass. See [backend/services/survey/README.md](backend/services/survey/README.md). |
+| `backend/services/attribution/` | The attribution vectors the credit engine must reproduce and the ingest payload schemas. See [backend/services/attribution/README.md](backend/services/attribution/README.md). |
+| `backend/services/loyalty/` | The loyalty earn vectors the earn engine must reproduce: the vector schema and the hand-computed vectors for orders, returns, promotions, tiers and expiry. |
+| `backend/services/workflow/` | The workflow graph schema, the expression schema and the behaviour vectors the engine must reproduce. See [backend/services/workflow/README.md](backend/services/workflow/README.md). |
+| `backend/services/booking/` | The RFC 5545 recurrence vectors the expander must reproduce, with the vector schema and a note per case. See [backend/services/booking/README.md](backend/services/booking/README.md). |
 | `commands/` | The commands one app sends to the app that owns the work, one JSON Schema per type (`data` only). The consumer owns the type; a producer implements it. See [commands/README.md](commands/README.md). |
 | `messaging/` | The AMQP envelope, topology, delivery guarantees and the dead-letter runbook. See [messaging/README.md](messaging/README.md). |
 | `permissions/` | One permission catalog per app (`billing.yaml`, `notification.yaml`, `mailroom.yaml`, `survey.yaml`, `attribution.yaml`, `booking.yaml`, `workflow.yaml`, `platform.yaml`): `code`, `description`, `scopes`, `grantable_to_tenant_system`. Platform validates credential scopes against it and seeds roles from it; the file name is the app code. |

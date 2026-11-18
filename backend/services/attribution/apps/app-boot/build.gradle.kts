@@ -63,11 +63,11 @@ dependencies {
 // The permission catalog and the OpenAPI document are read from the classpath so the tests compare the real files
 // with the code, and the ingest schema is read from the classpath so the consumer and the contract cannot drift apart.
 tasks.processResources {
-    from(layout.projectDirectory.dir("../../../contracts/permissions")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/permissions")) {
         include("*.yaml")
         into("permissions")
     }
-    from(layout.projectDirectory.dir("../../../contracts/attribution")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/attribution")) {
         include("**/*.schema.json")
         into("attribution")
     }

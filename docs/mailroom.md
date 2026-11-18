@@ -1,12 +1,12 @@
 # Mailroom
 
 The suite's app for letting a **Tenant email its own customers**. A *mailroom* writes, addresses and dispatches the
-mail; mailer is the carrier that delivers. It is a separate deployable (`mailroom/`, root package `dev.ngb.mailroom`)
+mail; mailer is the carrier that delivers. It is a separate deployable (`backend/services/mailroom/`, root package `dev.ngb.mailroom`)
 with three runtimes: `migrate`, `api` and `worker`.
 
 A Tenant's system calls it with a suite token: it manages templates, its customers as receivers, groups and segments,
 sends one email or a batch, runs a campaign and reads what happened to every message. Delivery does not live here.
-`mailroom/` renders an email and publishes the `email.send` command; [mailer](mailer.md) owns the transport, the retry and
+`backend/services/mailroom/` renders an email and publishes the `email.send` command; [mailer](mailer.md) owns the transport, the retry and
 the delivery truth, and reports the outcome back as the `email-delivery.changed` event.
 
 ## What it is, and what it is not

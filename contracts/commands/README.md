@@ -33,7 +33,7 @@ command carries its own idempotency key as well).
 
 **A command's `tenantId` is asserted by the publisher, not authenticated by the consumer.**
 `AmqpInboundDispatcher` binds the transaction scope straight from `event.tenantId()`
-(`core/core-messaging/.../inbound/AmqpInboundDispatcher.java`), and broker users are per service, never per
+(`backend/libs/core/core-messaging/.../inbound/AmqpInboundDispatcher.java`), and broker users are per service, never per
 tenant. So anything holding `write` on a command exchange can name any tenant in the suite.
 
 The controls are:

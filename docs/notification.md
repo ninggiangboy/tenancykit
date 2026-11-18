@@ -1,7 +1,7 @@
 # Notification
 
 The suite's app for **notifying Platform users** about platform-side state changes. It is a separate deployable
-(`notification/`, root package `dev.ngb.notification`) with three runtimes: `migrate`, `api` and `worker`.
+(`backend/services/notification/`, root package `dev.ngb.notification`) with three runtimes: `migrate`, `api` and `worker`.
 
 It turns a `platform.events` state transfer into typed notifications, renders suite-wide templates, stores
 in-app notifications and publishes **already-rendered** `email.send` commands to `mailer.commands`. Delivery stays with

@@ -60,11 +60,11 @@ dependencies {
 // copies are the committed contracts themselves: the catalog test cannot pass against a stale copy, and the
 // event-type catalog can name a type without a literal.
 tasks.processResources {
-    from(layout.projectDirectory.dir("../../../contracts/permissions")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/permissions")) {
         include("*.yaml")
         into("permissions")
     }
-    from(layout.projectDirectory.dir("../../../contracts/events/customer")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/events/customer")) {
         include("*.schema.json")
         into("events")
     }

@@ -48,7 +48,7 @@ publish() {
   created=$(call POST "${WORKFLOW}/definitions" "${HOST}" "${TOKEN}" "{\"code\":\"${code}\",\"name\":\"${code}\"}")
   local id
   id=$(printf '%s' "${created}" | json .id)
-  graph=$(jq -c '{graph: .}' "workflow/apps/app-boot/src/test/resources/samples/${file}.json")
+  graph=$(jq -c '{graph: .}' "backend/services/workflow/apps/app-boot/src/test/resources/samples/${file}.json")
   etag=$(curl --silent --head --request PUT "${WORKFLOW}/definitions/${id}/draft" \
     --header "Host: ${HOST}" --header "Authorization: Bearer ${TOKEN}" |
     awk -F': ' 'tolower($1)=="etag"{print $2}' | tr -d '\r')

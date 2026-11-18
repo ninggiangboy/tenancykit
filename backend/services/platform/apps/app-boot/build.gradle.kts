@@ -51,7 +51,7 @@ dependencies {
 
 // The permission catalogs are the suite's one list of app codes and permission codes.
 tasks.processResources {
-    from(layout.projectDirectory.dir("../../../contracts/permissions")) {
+    from(layout.projectDirectory.dir("../../../../../contracts/permissions")) {
         include("*.yaml")
         into("permissions")
     }
