@@ -11,18 +11,17 @@ One topic exchange per producer, one durable queue per consuming app, one dead-l
 
 | Exchange (topic, durable) | Producer | Routing key | Queues |
 |---|---|---|---|
-| `platform.events` | Platform | event type, e.g. `tenant.changed` | `billing.platform-events`, `notification.platform-events`, `mailroom.platform-events`, `survey.platform-events`, `booking.platform-events` |
+| `platform.events` | Platform | event type, e.g. `tenant.changed` | one `<app>.platform-events` per replicating app; each service's `MessagingConfiguration` declares its own |
 | `billing.events` | Billing | event type | consumed by its own app only |
 | `survey.events` | Survey | event type | no consumer; no other app may bind to it |
 | `mailer.commands` | any producer | command type, today `email.send` | `mailer.commands`, `mailer.commands.dlq` |
 | `mailer.events` | Mailer | event type, today `email-delivery.changed` | `mailroom.mailer-events`, `mailroom.mailer-events.dlq` |
 | `suite.dlx` | — | queue name | `<queue>.dlq` per consumer |
 
-`notification.platform-events`, `mailroom.platform-events`, `survey.platform-events` and `booking.platform-events` are
-durable, bound to `platform.events` with the five state-transfer routing keys (`tenant.changed`,
-`tenant-domain.changed`, `tenant-system.changed`, `user-access.changed`, `entitlement.changed`), declare
-`x-dead-letter-exchange: suite.dlx`, and their dead-letter queues are `notification.platform-events.dlq`,
-`mailroom.platform-events.dlq`, `survey.platform-events.dlq` and `booking.platform-events.dlq`.
+Each `<app>.platform-events` queue is durable, bound to `platform.events` with the five state-transfer routing keys
+(`tenant.changed`, `tenant-domain.changed`, `tenant-system.changed`, `user-access.changed`, `entitlement.changed`),
+declares `x-dead-letter-exchange: suite.dlx`, and has a matching `<app>.platform-events.dlq`. `platform.events` is
+Platform's, so a consumer binds to it as a foreign exchange: its broker user may bind to it but not declare it.
 
 Notification declares **no exchange of its own**: it publishes the `email.send` command to `mailer.commands` and owns
 no event that another app consumes. Mailroom declares no exchange either: it publishes `email.send` to

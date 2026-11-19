@@ -144,6 +144,12 @@ pnpm turbo run lint typecheck test build
 
 Ports: Platform Shell 5173, remote-platform 5174, Tenant Shell 5175, remote-billing 5176; all `strictPort`.
 
+A shell's dev server proxies `/platform`, `/console/config.json` and `/console/remotes` to the gateway on `:8090`
+(`make up` or `make gateway`; `shellConfig` in `frontend/packages/build-config` owns the list). Vite cannot answer the
+last two: the runtime config is rendered by the static server's entrypoint, and the registry hands the shell manifest
+URLs of published remote versions that only the static server holds. Without the proxy Vite returns `index.html` for
+both and the shell fails on a JSON parse error before it paints.
+
 The end-to-end suite (`frontend/e2e`) drives the deployed console through Caddy, never a dev server. It needs the
 compose stack up, the two shells staged and both remotes published, and it reads the same `.env` the compose file uses
 (or the environment CI passes):
