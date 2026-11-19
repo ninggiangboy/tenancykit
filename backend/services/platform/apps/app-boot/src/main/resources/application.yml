@@ -115,6 +115,10 @@ platform:
     - id: ${PLATFORM_WORKFLOW_SERVICE_CLIENT_ID:workflow}
       secret-hash: ${PLATFORM_WORKFLOW_SERVICE_CLIENT_SECRET_HASH:}
       scopes: [platform:replica:read]
+    # Attribution is the same replica seam again: one entry and a secret hash, no Java code moves.
+    - id: ${PLATFORM_ATTRIBUTION_SERVICE_CLIENT_ID:attribution}
+      secret-hash: ${PLATFORM_ATTRIBUTION_SERVICE_CLIENT_SECRET_HASH:}
+      scopes: [platform:replica:read]
     # The console's CI registers a UI remote version after publishing its build. It holds nothing else, so a leaked
     # secret cannot read a tenant or enable a remote; only the operator's manage permission can do that.
     - id: ${PLATFORM_FRONTEND_CI_SERVICE_CLIENT_ID:frontend-ci}

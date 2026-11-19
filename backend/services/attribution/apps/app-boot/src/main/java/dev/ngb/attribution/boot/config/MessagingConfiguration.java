@@ -25,7 +25,8 @@ import org.springframework.context.annotation.Configuration;
  * queue. The envelope {@code schemaVersion} is <b>2</b>; a wrong value rejects every message.
  *
  * <p>{@code MessagingProperties.exchange} is the <em>producing</em> exchange, so it is {@code attribution.ingest}.
- * {@code SuiteTopology} declares every exchange a queue binds to as well as the producing one.
+ * {@code SuiteTopology} declares the producing exchange and every exchange a binding owns; {@code platform.events} is
+ * Platform's, so it is bound as a foreign exchange (attribution's broker user may bind to it but not declare it).
  */
 @Configuration(proxyBeanMethods = false)
 class MessagingConfiguration {
@@ -42,7 +43,7 @@ class MessagingConfiguration {
                 settings.ingest().exchange(),
                 Map.of("click", settings.ingest().exchange()),
                 List.of(
-                        new QueueBinding(
+                        QueueBinding.toForeignExchange(
                                 settings.messaging().queue(),
                                 settings.messaging().exchange(),
                                 ReplicaStream.eventTypes()),
