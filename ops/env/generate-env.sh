@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Writes a ready-to-use .env for the local compose stack from .env.example: every placeholder becomes a fresh random
 # value, and every service-client hash is the SHA-256 of the secret it must match. It never overwrites an existing
-# .env; remove that file yourself (or pass FORCE=1) to start over.
+# .env; remove that file yourself (or pass FORCE=1) to start over. When a .env exists it only gains the variables that
+# .env.example has and it lacks (for a service added since it was written), each with a fresh value; every value
+# already in it is kept.
 #
 #   ops/env/generate-env.sh                       # writes .env at the repository root
 #   ENV_OUTPUT=/some/path ops/env/generate-env.sh # writes elsewhere
@@ -20,10 +22,8 @@ ADMIN_EMAIL="${PLATFORM_ADMIN_EMAIL:-admin@suite.localhost}"
 ADMIN_PASSWORD="${PLATFORM_ADMIN_PASSWORD:-Temporary-1}"
 
 [ -f "${EXAMPLE}" ] || { echo "generate-env: ${EXAMPLE} is missing" >&2; exit 1; }
-if [ -e "${TARGET}" ] && [ "${FORCE:-0}" != "1" ]; then
-  echo "generate-env: ${TARGET} already exists; leaving it untouched (FORCE=1 replaces it)" >&2
-  exit 0
-fi
+MERGE=0
+if [ -e "${TARGET}" ] && [ "${FORCE:-0}" != "1" ]; then MERGE=1; fi
 
 random_hex() { openssl rand -hex 24; }
 random_key() { openssl rand -base64 32; }
@@ -76,6 +76,22 @@ for line in "${lines[@]}"; do
       printf -v "V_${key}" %s "$(sha256 "${!secret_var}")" ;;
   esac
 done
+
+# Merge: append only what the existing file lacks, keeping the example's order and comments for those lines.
+if [ "${MERGE}" = "1" ]; then
+  missing=0
+  for line in "${lines[@]}"; do
+    case "${line}" in ''|'#'*) continue ;; esac
+    key="${line%%=*}"
+    grep -q "^${key}=" "${TARGET}" && continue
+    if [ "${missing}" = "0" ]; then printf '\n# Added by ops/env/generate-env.sh: present in .env.example, missing here.\n' >> "${TARGET}"; fi
+    missing=$((missing + 1))
+    chosen="V_${key}"
+    if [ -n "${!chosen+set}" ]; then printf '%s=%s\n' "${key}" "${!chosen}" >> "${TARGET}"; else printf '%s\n' "${line}" >> "${TARGET}"; fi
+  done
+  echo "generate-env: ${TARGET} kept as is; added ${missing} missing variable(s)" >&2
+  exit 0
+fi
 
 # Write: same lines as the example with the chosen values substituted.
 umask 077

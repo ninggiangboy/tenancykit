@@ -1,6 +1,9 @@
 # Local runtime for the suite and its console. `make help` lists the targets.
 #
 #   make up        backends in Docker (needs .env)
+#   make infra     only PostgreSQL, RabbitMQ, Keycloak and Mailpit in Docker; run each service yourself with
+#                  `make run SERVICE=platform` (one terminal per service), no image build
+#   make gateway   the :8090 proxy in front of those host services, so `make dev` and the console reach them
 #   make console   build the console, publish the shells and remotes into the stack
 #   make dev       hot-reload dev servers for every shell and remote
 #
@@ -20,13 +23,23 @@ CONSOLE_SERVICES ?= caddy
 
 .DEFAULT_GOAL := help
 
-.PHONY: help env-check up up-all down clean ps logs frontend-install console-build console-publish console dev e2e smoke isolation
+.PHONY: help env-check infra gateway run up up-all down clean ps logs frontend-install console-build console-publish console dev e2e smoke isolation
 
 help: ## List the targets
 	@grep -E '^[a-zA-Z0-9_-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-18s %s\n", $$1, $$2}'
 
-env-check: ## Create .env with generated secrets if it does not exist (never overwrites)
+env-check: ## Create .env with generated secrets, or append the variables an existing one lacks (never changes a value)
 	@ops/env/generate-env.sh
+
+infra: env-check ## Start only PostgreSQL, RabbitMQ, Keycloak and Mailpit (no image build)
+	$(COMPOSE) up -d --wait postgres rabbitmq keycloak mailpit
+	$(COMPOSE) up rabbitmq-users
+
+gateway: env-check ## Start the :8090 proxy for services started with `make run` (stop `make up`'s Caddy first)
+	$(COMPOSE) --profile host up -d gateway-host
+
+run: env-check ## Run one service with bootRun on the host: SERVICE=platform|billing|notification|mailroom|customer|loyalty|...
+	ops/dev/run-service.sh $(SERVICE)
 
 up: env-check ## Start what the console needs (Caddy and its dependencies) and wait until healthy
 	$(COMPOSE) up -d --build --wait $(CONSOLE_SERVICES)
@@ -37,10 +50,10 @@ up-all: env-check ## Start every service, including Survey, Booking and Workflow
 	$(COMPOSE) ps
 
 down: ## Stop the stack, keep the data
-	$(COMPOSE) down
+	$(COMPOSE) --profile host down
 
 clean: ## Stop the stack and delete its volumes (databases, console assets)
-	$(COMPOSE) down -v
+	$(COMPOSE) --profile host down -v
 
 ps: ## Show the stack's services
 	$(COMPOSE) ps

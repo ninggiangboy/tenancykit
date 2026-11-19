@@ -71,8 +71,9 @@ docker compose up -d --build --wait   # PostgreSQL, RabbitMQ, Keycloak, Platform
 docker compose ps                     # every service healthy
 ```
 
-`make help` lists the shortcuts: `make up` creates `.env` with generated secrets when it is missing (it never overwrites
-one; see `ops/env/generate-env.sh`) and starts the stack, `make console` builds the console and publishes its shells and
+`make help` lists the shortcuts: `make up` creates `.env` with generated secrets when it is missing, and in an existing
+one only appends the variables `.env.example` gained since, keeping every value already there (see
+`ops/env/generate-env.sh`), then starts the stack, `make console` builds the console and publishes its shells and
 remotes into it (then activate the new remote versions in Platform Admin), and `make dev` runs the hot-reload dev servers.
 
 The proxy listens on `:8090` and routes on the Host header alone: `platform.localhost` reaches Platform at its
@@ -84,13 +85,22 @@ Platform migrates on start; Billing writes its schema once through the `billing-
 runtimes connect as `billing_app` with Flyway off. Every service has a health check and starts only after the
 services it depends on are healthy.
 
-Infrastructure only, with the apps on `bootRun`:
+Infrastructure only, with the apps on `bootRun` (no image build):
 
 ```bash
-docker compose up -d postgres rabbitmq keycloak
-set -a; source .env; set +a
-cd backend/services/billing && ./gradlew :apps:app-boot:bootRun
+make infra                      # PostgreSQL, RabbitMQ, Keycloak and Mailpit in Docker
+make run SERVICE=platform       # one terminal per service; Platform first, then billing, notification, ...
+make run SERVICE=billing
 ```
+
+`make run` takes each service's settings from its block in `docker-compose.yml`, so `.env` stays the only place for
+secrets, and points them at the host ports compose publishes. It runs the service's migrate step first when it has
+one, then the api and worker runtimes in one process. Each service has its own host port, listed in
+`ops/dev/run-service.sh`, so the whole suite can run side by side. The `caddy` service on `:8090` routes to containers,
+so it does not reach services started this way. `make gateway` starts `gateway-host` instead: the same
+`ops/caddy/Caddyfile`, with every upstream pointing at that host port, also on `:8090`. Run it instead of `make up`'s
+Caddy, never beside it; it is what `make dev` (the console's dev servers) and the tenant hostnames
+(`<tenant>.localhost:8090`) go through.
 
 The same suite also deploys to AWS ECS Fargate with managed RDS and Amazon MQ, in parallel with compose rather than
 instead of it. The infrastructure lives in [`ops/terraform/`](ops/terraform/README.md); `docker-compose.yml` is

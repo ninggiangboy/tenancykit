@@ -877,6 +877,30 @@ services:
       timeout: 5s
       retries: 5
 
+  # The same routes as `caddy`, for services started on the host with `make run`: every upstream is the host's port
+  # instead of a container (see ops/dev/run-service.sh for the ports). It publishes the same :8090, so run one or the
+  # other. `make gateway` starts it; it is not part of `make up`.
+  gateway-host:
+    image: caddy:2.9
+    profiles: ["host"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      PLATFORM_UPSTREAM: host.docker.internal:8082
+      BILLING_UPSTREAM: host.docker.internal:8080
+      NOTIFICATION_UPSTREAM: host.docker.internal:8085
+      MAILROOM_UPSTREAM: host.docker.internal:8086
+      CUSTOMER_UPSTREAM: host.docker.internal:8087
+      LOYALTY_UPSTREAM: host.docker.internal:8088
+      SURVEY_UPSTREAM: host.docker.internal:8091
+      BOOKING_UPSTREAM: host.docker.internal:8092
+      WORKFLOW_UPSTREAM: host.docker.internal:8093
+      ATTRIBUTION_UPSTREAM: host.docker.internal:8094
+    ports:
+      - "8090:80"
+    volumes:
+      - ./ops/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+
   # SeaweedFS stands in for S3 (a single process with master, volume, filer and the S3 gateway on :9000): a file
   # question presigns a PUT against it. The one S3 identity comes from the standard AWS variables.
   seaweedfs:

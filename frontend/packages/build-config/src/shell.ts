@@ -19,7 +19,7 @@ export interface ShellConfigOptions {
   name: string
   /** The dev-server port; strict, so a stale process is a failure rather than a second server. */
   port?: number
-  /** Where the dev server proxies `/platform`; the compose stack's Caddy by default. */
+  /** Where the dev server proxies `/platform` and the runtime `config.json`; the compose stack's Caddy by default. */
   platformOrigin?: string
   outDir?: string
 }
@@ -53,6 +53,12 @@ export function shellConfig({
       strictPort: true,
       proxy: {
         '/platform': { target: platformOrigin },
+        // The static server renders this per environment; without the proxy Vite answers with index.html and the
+        // shell dies on a JSON parse error before it paints anything.
+        '/console/config.json': { target: platformOrigin },
+        // The registry hands the shell the manifest URL of each published remote version, an absolute path on the
+        // shell's own origin; the static server behind the gateway holds those builds, not Vite.
+        '/console/remotes': { target: platformOrigin },
       },
     },
     build: { target: 'esnext', outDir },

@@ -16,6 +16,9 @@
 #   everything else -> Billing (/api/*, /portal/*, /stripe/*), unchanged.
 #   platform.localhost also serves Platform at its root, because an administrator works from that one host.
 #
+# Every upstream is `{$NAME_UPSTREAM:container:8080}`: the container by default, and the host's port when the gateway-host
+# service in docker-compose.yml sets the variable, so services started with `make run` are reached by the same rules.
+#
 # The listener is plain HTTP on port 80 with automatic TLS off: this is a local stack, and `*.localhost` resolves to
 # 127.0.0.1, where a self-signed certificate would only get in the way. A named host would otherwise make Caddy
 # redirect every request to https.
@@ -36,7 +39,7 @@ http://:80 {
 	@platformPath path /platform/*
 	handle @platformPath {
 		uri strip_prefix /platform
-		reverse_proxy platform:8080
+		reverse_proxy {$PLATFORM_UPSTREAM:platform:8080}
 	}
 
 	# Notification is a fourth app, reached through its own prefix on every host — including platform.localhost, where a
@@ -46,7 +49,7 @@ http://:80 {
 	@notificationPath path /notification/*
 	handle @notificationPath {
 		uri strip_prefix /notification
-		reverse_proxy notification-api:8080
+		reverse_proxy {$NOTIFICATION_UPSTREAM:notification-api:8080}
 	}
 
 	# Mailroom is the fifth app, reached through its own prefix on every tenant host. The public tracking paths live under
@@ -56,7 +59,7 @@ http://:80 {
 	@mailroomPath path /mailroom/*
 	handle @mailroomPath {
 		uri strip_prefix /mailroom
-		reverse_proxy mailroom-api:8080
+		reverse_proxy {$MAILROOM_UPSTREAM:mailroom-api:8080}
 	}
 
 	# Survey is the sixth app, reached through its own prefix on every tenant host. The public fill paths live under the
@@ -66,7 +69,7 @@ http://:80 {
 	@surveyPath path /survey/*
 	handle @surveyPath {
 		uri strip_prefix /survey
-		reverse_proxy survey-api:8080
+		reverse_proxy {$SURVEY_UPSTREAM:survey-api:8080}
 	}
 
 	# Booking is reached through its own prefix on every tenant host. The public gate lives under the same prefix
@@ -76,7 +79,7 @@ http://:80 {
 	@bookingPath path /booking/*
 	handle @bookingPath {
 		uri strip_prefix /booking
-		reverse_proxy booking-api:8080
+		reverse_proxy {$BOOKING_UPSTREAM:booking-api:8080}
 	}
 
 	# customer is reached through its own prefix on every host. It has no public surface: every path needs a suite token, so
@@ -85,7 +88,7 @@ http://:80 {
 	@customerPath path /customer/*
 	handle @customerPath {
 		uri strip_prefix /customer
-		reverse_proxy customer-api:8080
+		reverse_proxy {$CUSTOMER_UPSTREAM:customer-api:8080}
 	}
 
 	# Loyalty is reached through its own prefix on every host, in the same shape and for the same reason. The Tenant
@@ -93,7 +96,7 @@ http://:80 {
 	@loyaltyPath path /loyalty/*
 	handle @loyaltyPath {
 		uri strip_prefix /loyalty
-		reverse_proxy loyalty-api:8080
+		reverse_proxy {$LOYALTY_UPSTREAM:loyalty-api:8080}
 	}
 
 	# Workflow is the Tenant side of the suite, reached through its own prefix on every host. It is not an app-to-app
@@ -102,7 +105,7 @@ http://:80 {
 	@workflowPath path /workflow/*
 	handle @workflowPath {
 		uri strip_prefix /workflow
-		reverse_proxy workflow-api:8080
+		reverse_proxy {$WORKFLOW_UPSTREAM:workflow-api:8080}
 	}
 
 	# Attribution is reached through its own prefix on every host for its API, and at /go/* and /t/* at the root because
@@ -112,12 +115,12 @@ http://:80 {
 	@attributionPath path /attribution/*
 	handle @attributionPath {
 		uri strip_prefix /attribution
-		reverse_proxy attribution-api:8080
+		reverse_proxy {$ATTRIBUTION_UPSTREAM:attribution-api:8080}
 	}
 
 	@attributionPublic path /go/* /t/*
 	handle @attributionPublic {
-		reverse_proxy attribution-api:8080
+		reverse_proxy {$ATTRIBUTION_UPSTREAM:attribution-api:8080}
 	}
 
 	# The console runs under /console/ on every host, so no existing route moves: a tenant host serves its own shell and
@@ -135,10 +138,10 @@ http://:80 {
 
 	@platformHost host platform.localhost
 	handle @platformHost {
-		reverse_proxy platform:8080
+		reverse_proxy {$PLATFORM_UPSTREAM:platform:8080}
 	}
 
 	handle {
-		reverse_proxy billing:8080
+		reverse_proxy {$BILLING_UPSTREAM:billing:8080}
 	}
 }
