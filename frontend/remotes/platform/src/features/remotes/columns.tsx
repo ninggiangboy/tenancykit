@@ -11,6 +11,7 @@ export function useRemoteColumns(state: RemoteState, canManage: boolean): DataTa
     {
       key: 'name',
       header: tc('fields.name'),
+      mobile: 'primary',
       render: (row) => (
         <span className="flex items-center gap-2">
           <AppMark app={row.appCode ?? row.name ?? ''} size="sm" />
@@ -25,6 +26,7 @@ export function useRemoteColumns(state: RemoteState, canManage: boolean): DataTa
       key: 'audiences',
       header: tc('fields.audiences'),
       sortable: false,
+      mobile: 'secondary',
       render: (row) => (
         <span className="text-small">{row.audiences?.map((scope) => tc(`scope.${scope}`)).join(', ')}</span>
       ),
@@ -33,6 +35,7 @@ export function useRemoteColumns(state: RemoteState, canManage: boolean): DataTa
       key: 'activeVersion',
       header: tc('fields.activeVersion'),
       sortable: false,
+      mobile: 'hidden',
       render: (row) => (
         <span className="block max-w-56 truncate font-mono text-code" title={row.activeVersion}>
           <Maybe value={row.activeVersion} />
@@ -43,6 +46,7 @@ export function useRemoteColumns(state: RemoteState, canManage: boolean): DataTa
       key: 'versions',
       header: t('versions'),
       sortable: false,
+      mobile: 'meta',
       render: (row) => t('versionCount', { count: row.versions?.length ?? 0 }),
     },
     {
@@ -50,6 +54,7 @@ export function useRemoteColumns(state: RemoteState, canManage: boolean): DataTa
       header: tc('fields.enabled'),
       sortable: false,
       align: 'end',
+      mobile: 'badge',
       render: (row) => (
         <PermissionGate allowed={canManage}>
           {/* biome-ignore lint/a11y/noStaticElementInteractions: keeps a switch click from also opening the row's sheet. */}

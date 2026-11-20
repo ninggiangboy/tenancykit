@@ -38,11 +38,11 @@ export function Credentials({ system, canManage }: { system: SystemResponse; can
       actions={
         <PermissionGate allowed={canManage}>
           {live && (
-            <Button variant="outline" size="sm" icon="refresh" onClick={() => setDialog('rotate')}>
+            <Button variant="outline" icon="refresh" onClick={() => setDialog('rotate')}>
               {t('rotate')}
             </Button>
           )}
-          <Button size="sm" icon="plus" onClick={() => setDialog('issue')}>
+          <Button icon="plus" onClick={() => setDialog('issue')}>
             {t('createCredential')}
           </Button>
         </PermissionGate>
@@ -70,7 +70,7 @@ export function Credentials({ system, canManage }: { system: SystemResponse; can
               <span className="flex shrink-0 items-center gap-2">
                 <StatusBadge status={row.status} />
                 <PermissionGate allowed={canManage && row.status !== 'REVOKED'}>
-                  <Button variant="ghost" size="sm" onClick={() => setRevoking(row)}>
+                  <Button variant="ghost" onClick={() => setRevoking(row)}>
                     {t('revoke')}
                   </Button>
                 </PermissionGate>

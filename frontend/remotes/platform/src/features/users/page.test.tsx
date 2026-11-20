@@ -47,7 +47,8 @@ describe('users page', () => {
     const actor = userEvent.setup()
     renderPage((state) => <UsersPage state={state} />, { permissions: allPlatformPermissions })
 
-    await actor.click(await screen.findByRole('button', { name: 'Create user' }))
+    // The page names its one primary action; the header renders it first, then the phone's floating copy.
+    await actor.click((await screen.findAllByRole('button', { name: 'Create user' }))[0] as HTMLElement)
     await actor.type(screen.getByLabelText('Display name'), 'Ana')
     await actor.type(screen.getByLabelText('Email'), 'ana@example.com')
     await actor.type(screen.getByLabelText('Temporary password'), 'change-me-1')

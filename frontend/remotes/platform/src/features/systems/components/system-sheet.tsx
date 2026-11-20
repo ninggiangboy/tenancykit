@@ -1,6 +1,6 @@
 import type { SystemResponse } from '@suite/api-client/platform'
-import { DetailRow, DetailRows, IdValue, Maybe, RecordSheet, Timestamp } from '@suite/remote-kit'
-import { Button, PermissionGate, StatusBadge } from '@suite/ui'
+import { DetailRow, DetailRows, Maybe, RecordSheet, Timestamp } from '@suite/remote-kit'
+import { Button, CopyId, PermissionGate, StatusBadge } from '@suite/ui'
 import { useState } from 'react'
 import { useT } from '../../../i18n'
 import { useSystemPermissions } from '../hooks/use-systems'
@@ -30,15 +30,15 @@ export function SystemSheet({ system, onClose, onPrev, onNext }: SystemSheetProp
         description={system.purpose}
         onPrev={onPrev}
         onNext={onNext}
-        footer={
+        actions={
           <>
             <PermissionGate allowed={can.rename}>
-              <Button variant="outline" size="sm" icon="settings" onClick={() => setDialog('rename')}>
+              <Button variant="outline" icon="settings" onClick={() => setDialog('rename')}>
                 {tc('actions.rename')}
               </Button>
             </PermissionGate>
             <PermissionGate allowed={can.create && system.status !== 'DISABLED'}>
-              <Button variant="destructive" size="sm" icon="ban" onClick={() => setDialog('disable')}>
+              <Button variant="danger" icon="ban" onClick={() => setDialog('disable')}>
                 {t('disable')}
               </Button>
             </PermissionGate>
@@ -57,7 +57,7 @@ export function SystemSheet({ system, onClose, onPrev, onNext }: SystemSheetProp
               <Maybe value={system.version} />
             </DetailRow>
             <DetailRow label={tc('fields.id')}>
-              <IdValue value={system.id} />
+              <CopyId value={system.id ?? ''} />
             </DetailRow>
           </DetailRows>
           <Credentials system={system} canManage={can.credentials} />

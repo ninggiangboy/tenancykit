@@ -1,5 +1,5 @@
 import type { RoleResponse } from '@suite/api-client/platform'
-import { IdValue, Maybe } from '@suite/remote-kit'
+import { Maybe } from '@suite/remote-kit'
 import { type DataTableColumn, StatusBadge } from '@suite/ui'
 import { useShowsTenants } from '../../components/tenant-lookup'
 import { useT } from '../../i18n'
@@ -12,6 +12,7 @@ export function useRoleColumns(tenantCodes: Map<string, string>): DataTableColum
     {
       key: 'name',
       header: t('name'),
+      mobile: 'primary',
       render: (row) => (
         <span className="flex items-center gap-2">
           <span className="text-body-strong text-foreground">{row.name}</span>
@@ -22,12 +23,14 @@ export function useRoleColumns(tenantCodes: Map<string, string>): DataTableColum
     {
       key: 'scope',
       header: tc('fields.scope'),
-      render: (row) => <StatusBadge tone="neutral">{tc(`scope.${row.scope}`)}</StatusBadge>,
+      mobile: 'secondary',
+      render: (row) => <span className="text-small">{tc(`scope.${row.scope}`)}</span>,
     },
     showTenant && {
       key: 'tenant',
       header: tc('fields.tenantCode'),
       sortable: false,
+      mobile: 'secondary',
       render: (row) => (
         <span className="font-mono text-caption">
           <Maybe
@@ -40,9 +43,9 @@ export function useRoleColumns(tenantCodes: Map<string, string>): DataTableColum
       key: 'permissions',
       header: tc('fields.permissions'),
       sortable: false,
+      mobile: 'meta',
       render: (row) => tc('permissions.count', { count: row.permissions?.length ?? 0 }),
     },
-    { key: 'id', header: tc('fields.id'), sortable: false, render: (row) => <IdValue value={row.id} /> },
   ]
   return columns.filter((column): column is DataTableColumn<RoleResponse> => Boolean(column))
 }

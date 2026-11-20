@@ -19,6 +19,7 @@
   "actions.search": "Tìm kiếm",
   "actions.clear": "Bỏ lọc",
   "actions.export": "Xuất",
+  "actions.more": "Thao tác khác",
   "actions.copy": "Sao chép",
   "actions.copyIds": "Sao chép ID",
   "actions.previous": "Trước",

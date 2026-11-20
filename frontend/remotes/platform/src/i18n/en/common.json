@@ -19,6 +19,7 @@
   "actions.search": "Search",
   "actions.clear": "Clear",
   "actions.export": "Export",
+  "actions.more": "More actions",
   "actions.copy": "Copy",
   "actions.copyIds": "Copy IDs",
   "actions.previous": "Previous",

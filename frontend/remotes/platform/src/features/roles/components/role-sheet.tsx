@@ -1,6 +1,6 @@
 import type { RoleResponse } from '@suite/api-client/platform'
-import { DetailRow, DetailRows, IdValue, Maybe, RecordSheet } from '@suite/remote-kit'
-import { Button, PermissionGate } from '@suite/ui'
+import { DetailRow, DetailRows, Maybe, RecordSheet } from '@suite/remote-kit'
+import { Button, CopyId, PermissionGate } from '@suite/ui'
 import { useState } from 'react'
 import { useT } from '../../../i18n'
 import { useCanManageRoles } from '../hooks/use-roles'
@@ -33,9 +33,9 @@ export function RoleSheet({ role, tenantCode, onClose, onPrev, onNext }: RoleShe
         description={role.scope === 'TENANT' && tenantCode ? `${scope} · ${tenantCode}` : scope}
         onPrev={onPrev}
         onNext={onNext}
-        footer={
+        actions={
           <PermissionGate allowed={canManage && !role.system}>
-            <Button variant="outline" size="sm" icon="settings" onClick={() => setRenaming(true)}>
+            <Button variant="outline" icon="settings" onClick={() => setRenaming(true)}>
               {tc('actions.rename')}
             </Button>
           </PermissionGate>
@@ -46,14 +46,14 @@ export function RoleSheet({ role, tenantCode, onClose, onPrev, onNext }: RoleShe
             <DetailRow label={tc('fields.scope')}>{scope}</DetailRow>
             {role.scope === 'TENANT' && (
               <DetailRow label={tc('fields.tenant')}>
-                {tenantCode ? <span className="font-mono">{tenantCode}</span> : <IdValue value={role.tenantId} />}
+                {tenantCode ? <span className="font-mono">{tenantCode}</span> : <CopyId value={role.tenantId ?? ''} />}
               </DetailRow>
             )}
             <DetailRow label={tc('fields.version')}>
               <Maybe value={role.version} />
             </DetailRow>
             <DetailRow label={tc('fields.id')}>
-              <IdValue value={role.id} />
+              <CopyId value={role.id ?? ''} />
             </DetailRow>
           </DetailRows>
           <RolePermissions key={`${role.id}:${role.version}`} role={role} canManage={canManage} />

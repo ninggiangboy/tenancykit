@@ -1,5 +1,6 @@
 import type { RemoteResponse } from '@suite/api-client/platform'
-import { ResourcePage, useListState, useRecordSelection } from '@suite/remote-kit'
+import { listRemotesOptions } from '@suite/api-client/platform/query'
+import { asListQuery, ResourcePage, useApi, useListState, useRecordSelection, useViewCounts } from '@suite/remote-kit'
 import type { UrlState } from '@suite/ui'
 import { useT } from '../../i18n'
 import { useRemoteColumns } from './columns'
@@ -19,11 +20,16 @@ export function RemotesPage({ state }: { state: UrlState }) {
   const canManage = useCanManageRemotes()
   const remoteState = useRemoteState()
   const columns = useRemoteColumns(remoteState, canManage)
+  const { platform } = useApi()
+  const viewCounts = useViewCounts(spec.views, (params) =>
+    listRemotesOptions({ client: platform, throwOnError: true, query: asListQuery(params) }),
+  )
 
   return (
     <ResourcePage
       title={t('title')}
       description={t('description')}
+      viewCounts={viewCounts}
       spec={spec}
       list={list}
       rows={rows}
