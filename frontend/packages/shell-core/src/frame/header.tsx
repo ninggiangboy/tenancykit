@@ -1,25 +1,76 @@
-import { DropdownMenu, Icon, Kbd } from '@suite/ui'
+import { AppMark, DropdownMenu, Icon, Kbd, type MenuItem, PHONE_QUERY, useMedia } from '@suite/ui'
 import { Link, useLocation } from '@tanstack/react-router'
 import { currentPlace, useFrame } from './frame-context'
 
-/** The breadcrumb (shell, app, screen), the scope pill, search and the account menus. */
+/** The breadcrumb (shell, app, screen), search and the account menus; on phones a 56px top bar with a nav button. */
 export function Header() {
   const frame = useFrame()
-  const { definition, me, onToggleSidebar, onOpenPalette, onTheme, locale, onLocale, onSignOut, t } = frame
+  const {
+    definition,
+    me,
+    density,
+    onToggleSidebar,
+    onToggleDrawer,
+    onOpenPalette,
+    onTheme,
+    onDensity,
+    locale,
+    onLocale,
+    onSignOut,
+    t,
+  } = frame
   const pathname = useLocation({ select: (location) => location.pathname })
   const place = currentPlace(pathname, frame)
+  const phone = useMedia(PHONE_QUERY)
+  const pageLabel = place.item?.label ?? place.remote?.title ?? t('shell.home')
+
+  const accountItems: MenuItem[] = [
+    { heading: me.email },
+    { heading: t('shell.density') },
+    {
+      label: t('shell.comfortable'),
+      icon: density === 'comfortable' ? 'check' : undefined,
+      onSelect: () => onDensity('comfortable'),
+    },
+    {
+      label: t('shell.compact'),
+      icon: density === 'compact' ? 'check' : undefined,
+      onSelect: () => onDensity('compact'),
+    },
+    { separator: true },
+    ...(phone
+      ? ([
+          { heading: t('shell.language') },
+          { label: t('shell.english'), onSelect: () => onLocale('en') },
+          { label: t('shell.vietnamese'), onSelect: () => onLocale('vi') },
+        ] satisfies MenuItem[])
+      : []),
+    ...(onSignOut ? ([{ label: t('shell.signOut'), icon: 'log-out', onSelect: onSignOut }] satisfies MenuItem[]) : []),
+  ]
 
   return (
-    <div className="flex h-13 items-center gap-2 px-2">
+    <div className="flex h-13 items-center gap-2 px-2 max-md:sticky max-md:top-0 max-md:z-[5] max-md:h-[56px] max-md:border-b max-md:border-border max-md:bg-background">
+      <button
+        type="button"
+        onClick={onToggleDrawer}
+        aria-label={t('shell.openNavigation')}
+        className="flex size-(--size-touch-target) items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
+      >
+        <Icon name="panel-left" size={18} />
+      </button>
       <button
         type="button"
         onClick={onToggleSidebar}
         aria-label={t('shell.toggleSidebar')}
-        className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+        className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground max-md:hidden"
       >
         <Icon name="panel-left" size={14} />
       </button>
-      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-small">
+      <span className="flex min-w-0 flex-1 items-center gap-2 md:hidden">
+        {place.remote && <AppMark app={place.remote.appCode} size="sm" />}
+        <span className="truncate text-[17px] font-semibold">{pageLabel}</span>
+      </span>
+      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-small max-md:hidden">
         {place.remote ? (
           <>
             <Link
@@ -54,61 +105,71 @@ export function Header() {
         <button
           type="button"
           onClick={onOpenPalette}
-          className="inline-flex h-7 items-center gap-2 rounded-md border border-input bg-background px-2 text-small text-muted-foreground shadow-xs hover:bg-accent"
+          className="inline-flex h-7 items-center gap-2 rounded-md border border-input bg-background px-2 text-small text-muted-foreground shadow-xs hover:bg-accent max-md:hidden"
         >
           <Icon name="search" size={14} />
           {/* `max-sm:hidden`, not `hidden sm:inline`: a remote's stylesheet loads later and its own `.hidden` would win. */}
           <span className="w-36 text-left max-sm:hidden">{t('shell.search')}</span>
           <Kbd keys={['mod', 'k']} className="max-sm:hidden" />
         </button>
-        <DropdownMenu
-          label={t('shell.theme')}
-          items={[
-            { label: t('shell.light'), icon: 'sparkle', onSelect: () => onTheme('light') },
-            { label: t('shell.dark'), icon: 'ring', onSelect: () => onTheme('dark') },
-            { label: t('shell.system'), icon: 'settings', onSelect: () => onTheme('system') },
-          ]}
-          trigger={
-            <button
-              type="button"
-              aria-label={t('shell.theme')}
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-            >
-              <Icon name="sparkle" size={14} />
-            </button>
-          }
-        />
-        <DropdownMenu
-          label={t('shell.language')}
-          items={[
-            { label: t('shell.english'), onSelect: () => onLocale('en') },
-            { label: t('shell.vietnamese'), onSelect: () => onLocale('vi') },
-          ]}
-          trigger={
-            <button
-              type="button"
-              aria-label={`${t('shell.language')}: ${locale.toUpperCase()}`}
-              className="rounded-md px-1.5 py-1 text-caption text-muted-foreground hover:bg-accent hover:text-foreground"
-            >
-              {locale.toUpperCase()}
-            </button>
-          }
-        />
-        {onSignOut && (
+        <button
+          type="button"
+          onClick={onOpenPalette}
+          aria-label={t('shell.search')}
+          className="flex size-(--size-touch-target) items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
+        >
+          <Icon name="search" size={18} />
+        </button>
+        <div className="max-md:hidden">
           <DropdownMenu
-            label={t('shell.user')}
-            items={[{ heading: me.email }, { label: t('shell.signOut'), icon: 'log-out', onSelect: onSignOut }]}
+            label={t('shell.theme')}
+            items={[
+              { label: t('shell.light'), icon: 'sparkle', onSelect: () => onTheme('light') },
+              { label: t('shell.dark'), icon: 'ring', onSelect: () => onTheme('dark') },
+              { label: t('shell.system'), icon: 'settings', onSelect: () => onTheme('system') },
+            ]}
             trigger={
               <button
                 type="button"
-                aria-label={t('shell.user')}
-                className="flex size-6 items-center justify-center rounded-full bg-secondary text-caption"
+                aria-label={t('shell.theme')}
+                className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
               >
-                {me.displayName.slice(0, 1).toUpperCase()}
+                <Icon name="sparkle" size={14} />
               </button>
             }
           />
-        )}
+        </div>
+        <div className="max-md:hidden">
+          <DropdownMenu
+            label={t('shell.language')}
+            items={[
+              { label: t('shell.english'), onSelect: () => onLocale('en') },
+              { label: t('shell.vietnamese'), onSelect: () => onLocale('vi') },
+            ]}
+            trigger={
+              <button
+                type="button"
+                aria-label={`${t('shell.language')}: ${locale.toUpperCase()}`}
+                className="rounded-md px-1.5 py-1 text-caption text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                {locale.toUpperCase()}
+              </button>
+            }
+          />
+        </div>
+        <DropdownMenu
+          label={t('shell.user')}
+          items={accountItems}
+          trigger={
+            <button
+              type="button"
+              aria-label={t('shell.user')}
+              className="flex size-[28px] items-center justify-center rounded-full bg-secondary text-caption"
+            >
+              {me.displayName.slice(0, 1).toUpperCase()}
+            </button>
+          }
+        />
       </div>
     </div>
   )

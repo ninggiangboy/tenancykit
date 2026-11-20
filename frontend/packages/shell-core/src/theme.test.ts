@@ -1,11 +1,22 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { createShellI18n, shellResources } from './i18n'
-import { applyTheme, preferredLocale, preferredTheme, resolveTheme, saveLocale, saveTheme } from './theme'
+import {
+  applyDensity,
+  applyTheme,
+  preferredDensity,
+  preferredLocale,
+  preferredTheme,
+  resolveTheme,
+  saveDensity,
+  saveLocale,
+  saveTheme,
+} from './theme'
 
 afterEach(() => {
   globalThis.localStorage?.clear()
   globalThis.document?.documentElement.classList.remove('dark')
   delete (globalThis.document?.documentElement as unknown as { className?: string })?.className
+  delete globalThis.document?.documentElement.dataset.density
 })
 
 describe('theme and language', () => {
@@ -42,6 +53,16 @@ describe('theme and language', () => {
 
     applyTheme('light')
     expect(globalThis.document.documentElement.classList.contains('dark')).toBe(false)
+  })
+
+  it('remembers the density choice and writes it on the document', () => {
+    expect(preferredDensity()).toBe('comfortable')
+
+    saveDensity('compact')
+    expect(preferredDensity()).toBe('compact')
+
+    applyDensity('compact')
+    expect(globalThis.document.documentElement.dataset.density).toBe('compact')
   })
 })
 

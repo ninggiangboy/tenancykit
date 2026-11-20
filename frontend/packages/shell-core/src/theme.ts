@@ -2,6 +2,9 @@ import type { Locale, Theme } from '@suite/shell-sdk'
 
 const THEME_KEY = 'suite.theme'
 const LOCALE_KEY = 'suite.locale'
+export const DENSITY_KEY = 'suite.density'
+
+export type Density = 'comfortable' | 'compact'
 
 /** A browser's own preference, when storage is unavailable or holds nothing. */
 export function preferredTheme(): Theme {
@@ -22,6 +25,23 @@ export function preferredLocale(navigatorLanguage = globalThis.navigator?.langua
 
 export function saveTheme(theme: Theme): void {
   write(THEME_KEY, theme)
+}
+
+/** Comfortable unless this browser chose compact. */
+export function preferredDensity(): Density {
+  return read(DENSITY_KEY) === 'compact' ? 'compact' : 'comfortable'
+}
+
+export function saveDensity(density: Density): void {
+  write(DENSITY_KEY, density)
+}
+
+/** Density is read from `<html>`, so a control in a portal follows it too. */
+export function applyDensity(density: Density): void {
+  const root = globalThis.document?.documentElement
+  if (root) {
+    root.dataset.density = density
+  }
 }
 
 export function saveLocale(locale: Locale): void {

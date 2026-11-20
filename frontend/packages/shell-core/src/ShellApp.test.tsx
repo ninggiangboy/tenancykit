@@ -1,9 +1,9 @@
 import { useShell } from '@suite/shell-sdk/react'
 import { createBrowserHistory } from '@tanstack/react-router'
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useEffect } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ConsoleRemote, MeResponse } from './contracts'
 import type { RemoteLoader } from './remote-loader.types'
 import { ShellApp } from './ShellApp'
@@ -82,6 +82,11 @@ function Sections() {
 }
 
 describe('the shell frame', () => {
+  afterEach(() => {
+    globalThis.localStorage?.clear()
+    delete document.documentElement.dataset.density
+  })
+
   it('shows one navigation item per remote and the caller’s name', async () => {
     mount()
 
@@ -171,5 +176,38 @@ describe('the shell frame', () => {
     )
 
     expect(await screen.findByText('No apps are enabled for this tenant')).toBeInTheDocument()
+  })
+
+  it('marks the open app on the document and clears it on home', async () => {
+    globalThis.history.replaceState({}, '', '/console/r/billing/invoices')
+    const history = createBrowserHistory()
+    render(
+      <ShellApp
+        definition={{ audience: 'TENANT', title: 'Console' }}
+        me={me}
+        remotes={remotes}
+        history={history}
+        loader={loader(async () => ({ name: 'billing', sdkMajor: 1, Root: Sections }))}
+        getToken={async () => 'token'}
+      />,
+    )
+
+    await screen.findByText('Billing invoices')
+    expect(document.documentElement.dataset.app).toBe('billing')
+
+    await act(async () => {
+      await history.push('/console/')
+    })
+    await waitFor(() => expect(document.documentElement.dataset.app).toBeUndefined())
+  })
+
+  it('switches density from the account menu', async () => {
+    mount()
+    await appLink(/Billing/)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Account' }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Compact' }))
+
+    await waitFor(() => expect(document.documentElement.dataset.density).toBe('compact'))
   })
 })

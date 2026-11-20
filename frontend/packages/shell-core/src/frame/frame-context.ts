@@ -4,6 +4,7 @@ import type { CommandRegistry } from '../commands'
 import type { ConsoleRemote, MeResponse } from '../contracts'
 import type { ShellMessageKey } from '../i18n'
 import type { RemoteLoader } from '../remote-loader.types'
+import type { Density } from '../theme'
 
 /** Everything the frame's parts read: who is signed in, which remotes exist, what each registered as its screens. */
 export interface Frame {
@@ -18,9 +19,15 @@ export interface Frame {
   setNavigation: (remote: string, sections: NavSection[] | null) => void
   locale: Locale
   theme: Theme
+  density: Density
+  /** The sidebar as a rail or a drawer. */
   collapsed: boolean
   onToggleSidebar: () => void
+  /** The phone's nav drawer. */
+  drawerOpen: boolean
+  onToggleDrawer: () => void
   onTheme: (theme: Theme) => void
+  onDensity: (density: Density) => void
   onLocale: (locale: Locale) => void
   onSignOut?: () => void
   onOpenPalette: () => void

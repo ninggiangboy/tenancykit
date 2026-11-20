@@ -39,6 +39,8 @@ export interface NavItem {
   id: string
   label: string
   to: string
+  /** A Lucide icon name from `@suite/ui`'s `IconName`; the shell falls back to `file`. */
+  icon?: string
 }
 
 /** A titled group of a remote's screens; the shell lists them under the app in its sidebar. */

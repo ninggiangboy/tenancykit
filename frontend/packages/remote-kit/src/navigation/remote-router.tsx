@@ -1,6 +1,6 @@
 import type { NavSection, ShellContext } from '@suite/shell-sdk'
 import { can, useShell } from '@suite/shell-sdk/react'
-import { EmptyState, type UrlState, urlState } from '@suite/ui'
+import { EmptyState, type IconName, type UrlState, urlState } from '@suite/ui'
 import {
   createRootRoute,
   createRoute,
@@ -25,6 +25,8 @@ export interface Screen {
   label: string
   /** The permission that lets a caller list this screen's records; without it the screen is hidden and forbidden. */
   permission?: string
+  /** The nav icon the shell shows beside this screen. */
+  icon?: IconName
   component: ComponentType<{ state: UrlState }>
 }
 
@@ -54,7 +56,7 @@ function useSections(screens: Screen[], sections: ScreenSection[]): NavSection[]
       label: section.label ? t(section.label) : undefined,
       items: screens
         .filter((screen) => screen.section === section.id && allowed(ctx, screen))
-        .map((screen) => ({ id: screen.id, label: t(screen.label), to: screen.path })),
+        .map((screen) => ({ id: screen.id, label: t(screen.label), to: screen.path, icon: screen.icon })),
     }))
     .filter((section) => section.items.length > 0)
 }

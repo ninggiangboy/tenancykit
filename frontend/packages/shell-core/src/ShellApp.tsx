@@ -8,12 +8,13 @@ import {
   createRouter,
   Outlet,
   RouterProvider,
+  useLocation,
 } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { type CommandRegistry, createCommandRegistry } from './commands'
 import type { ConsoleRemote, MeResponse } from './contracts'
-import { type Frame, FrameContext, isNarrowViewport, useFrame } from './frame/frame-context'
+import { currentPlace, type Frame, FrameContext, isNarrowViewport, useFrame } from './frame/frame-context'
 import { Header } from './frame/header'
 import { Home, NotFound } from './frame/home'
 import { Palette } from './frame/palette'
@@ -21,7 +22,17 @@ import { RemoteHost } from './frame/remote-host'
 import { Sidebar } from './frame/sidebar'
 import { createShellI18n, type ShellMessageKey } from './i18n'
 import type { RemoteLoader } from './remote-loader.types'
-import { applyTheme, preferredLocale, preferredTheme, saveLocale, saveTheme } from './theme'
+import {
+  applyDensity,
+  applyTheme,
+  type Density,
+  preferredDensity,
+  preferredLocale,
+  preferredTheme,
+  saveDensity,
+  saveLocale,
+  saveTheme,
+} from './theme'
 
 export interface ShellAppProps {
   definition: { audience: 'PLATFORM' | 'TENANT'; title: string }
@@ -59,8 +70,10 @@ export function ShellApp({
   const [history] = useState(() => historyProp ?? createBrowserHistory())
   const [registry] = useState(() => registryProp ?? createCommandRegistry())
   const [theme, setTheme] = useState<Theme>(initialTheme ?? preferredTheme())
+  const [density, setDensity] = useState<Density>(preferredDensity)
   const [locale, setLocale] = useState<Locale>(initialLocale ?? preferredLocale())
   const [collapsed, setCollapsed] = useState(isNarrowViewport)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [navigation, setNavigationState] = useState<Record<string, NavSection[]>>({})
   const [toasts, , dismissToast] = useToasts()
@@ -72,6 +85,11 @@ export function ShellApp({
     applyTheme(theme)
     saveTheme(theme)
   }, [theme])
+
+  useEffect(() => {
+    applyDensity(density)
+    saveDensity(density)
+  }, [density])
 
   const setNavigation = useCallback((remote: string, sections: NavSection[] | null) => {
     setNavigationState((current) => {
@@ -116,9 +134,13 @@ export function ShellApp({
       setNavigation,
       locale,
       theme,
+      density,
       collapsed,
       onToggleSidebar: () => setCollapsed((value) => !value),
+      drawerOpen,
+      onToggleDrawer: () => setDrawerOpen((value) => !value),
       onTheme: setTheme,
+      onDensity: setDensity,
       onLocale: (next) => {
         setLocale(next)
         saveLocale(next)
@@ -138,7 +160,9 @@ export function ShellApp({
       setNavigation,
       locale,
       theme,
+      density,
       collapsed,
+      drawerOpen,
       onSignOut,
       t,
     ],
@@ -165,15 +189,25 @@ export function ShellApp({
 /** The frame renders inside the router, because the header reads the route and the sidebar's links are router links. */
 function FrameLayout() {
   const frame = useFrame()
+  const pathname = useLocation({ select: (location) => location.pathname })
+  const appCode = currentPlace(pathname, frame).remote?.appCode
+
+  // `<html>` and not this div: Radix portals the sheet, the dialogs and the menus into <body>, outside the frame.
+  useEffect(() => {
+    const root = document.documentElement
+    if (appCode) root.dataset.app = appCode
+    else delete root.dataset.app
+    return () => {
+      delete root.dataset.app
+    }
+  }, [appCode])
+
   return (
     <div className="flex min-h-dvh bg-sidebar text-foreground">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col p-2 pl-0">
         <Header />
         <main className="relative min-h-0 flex-1 overflow-auto rounded-xl border border-border bg-background">
-          {frame.definition.audience === 'PLATFORM' && (
-            <span aria-hidden className="absolute inset-x-0 top-0 h-0.5 rounded-t-xl bg-scope-platform" />
-          )}
           <Outlet />
         </main>
       </div>
