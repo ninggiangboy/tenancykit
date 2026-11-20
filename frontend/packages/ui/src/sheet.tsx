@@ -44,8 +44,15 @@ export function Sheet({
         <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay/40 data-[state=open]:animate-in" />
         <DialogPrimitive.Content
           onInteractOutside={onInteractOutside}
+          // Focus lands on the panel itself, not on the first button (the "next record" arrow), so a keyboard user
+          // starts at the top of the record and Esc still closes it.
+          onOpenAutoFocus={(event) => {
+            event.preventDefault()
+            ;(event.currentTarget as HTMLElement | null)?.focus()
+          }}
+          tabIndex={-1}
           className={cn(
-            'fixed inset-y-2 right-2 z-50 flex w-full max-w-[420px] flex-col rounded-xl border border-border bg-popover text-popover-foreground shadow-lg',
+            'fixed inset-y-2 right-2 z-50 flex w-[calc(100%-1rem)] max-w-[460px] flex-col rounded-xl border border-border bg-popover text-popover-foreground shadow-lg outline-none',
           )}
         >
           <header className="flex flex-col gap-1 border-b border-border p-4">

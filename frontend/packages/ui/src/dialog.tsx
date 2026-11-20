@@ -2,6 +2,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { useEffect, useRef } from 'react'
 import { cn } from './cn'
 import { Icon } from './icon'
+import { useUiMessages } from './messages'
 
 export interface DialogProps {
   open: boolean
@@ -13,6 +14,8 @@ export interface DialogProps {
   role?: 'dialog' | 'alertdialog'
   /** Renders inside its container instead of the viewport; a remote's dialog still stacks over the shell's sheet. */
   contained?: boolean
+  /** `lg` for a form with two columns or a long list. */
+  size?: 'md' | 'lg'
 }
 
 /**
@@ -28,7 +31,9 @@ export function Dialog({
   footer,
   role = 'dialog',
   contained,
+  size = 'md',
 }: DialogProps) {
+  const t = useUiMessages()
   // Radix restores focus to a Trigger; this dialog is opened by a caller's own button, so it remembers the element
   // that had focus when it opened and hands focus back to it on close.
   const opener = useRef<HTMLElement | null>(null)
@@ -49,7 +54,8 @@ export function Dialog({
             opener.current?.focus()
           }}
           className={cn(
-            'fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-border bg-popover p-5 text-popover-foreground shadow-xl',
+            'fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-popover p-5 text-popover-foreground shadow-xl',
+            size === 'lg' ? 'max-w-2xl' : 'max-w-md',
           )}
         >
           <div className="flex items-start justify-between gap-3">
@@ -62,13 +68,13 @@ export function Dialog({
               )}
             </div>
             <DialogPrimitive.Close
-              aria-label="Close"
+              aria-label={t('action.close')}
               className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               <Icon name="x" size={14} />
             </DialogPrimitive.Close>
           </div>
-          {children && <div className="mt-4">{children}</div>}
+          {children && <div className="-mx-1 mt-4 min-h-0 overflow-auto px-1">{children}</div>}
           {footer && <div className="mt-5 flex justify-end gap-2">{footer}</div>}
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
