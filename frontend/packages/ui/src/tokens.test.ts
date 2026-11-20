@@ -44,15 +44,27 @@ describe('generated tokens', () => {
       'input',
       'ring',
       'primary',
+      'app-accent',
+      'app-accent-soft',
+      'app-accent-foreground',
+      'app-platform',
+      'app-billing',
+      'success-soft',
+      'warning-soft',
+      'destructive-soft',
+      'info-soft',
+      'neutral-soft',
     ]) {
       expect(css).toContain(`--${name}:`)
     }
   })
 
   it('writes the radius, shadow, size and timing scales', () => {
-    expect(css).toContain('--radius-lg: 8px;')
+    expect(css).toContain('--radius-lg: 10px;')
     expect(css).toContain('--shadow-md:')
-    expect(css).toContain('--size-control-md: 32px;')
+    expect(css).toContain('--size-control-md: 36px;')
+    expect(css).toContain('--size-touch-target: 44px;')
+    expect(css).toContain('--space-8: 32px;')
     expect(css).toContain('--duration-base: 180ms;')
   })
 })

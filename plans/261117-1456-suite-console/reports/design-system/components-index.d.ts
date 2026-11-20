@@ -19,7 +19,7 @@ export interface KbdProps { keys?: KeyName[]; children?: React.ReactNode }
 export declare function Kbd(props: KbdProps): React.ReactElement;
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'brand' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'link';
+  variant?: 'default' | 'brand' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'destructive' | 'link';
   size?: 'sm' | 'md' | 'lg';
   icon?: IconName; iconEnd?: IconName;
   /** Square button; `children` must be a string and becomes the aria-label. Wrap in Tooltip. */
@@ -29,7 +29,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   /** Shows the shortcut that does the same thing, e.g. ['mod', 'k']. */
   shortcut?: KeyName[];
 }
-/** One action. One `default` (primary) per view; `destructive` only inside a confirmation. */
+/** One action. One `default` (primary, the app accent) per view; `danger` (red text) for destructive actions on a page or sheet; `destructive` (filled) only confirms inside a Dialog. */
 export declare function Button(props: ButtonProps): React.ReactElement;
 
 export interface FieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> {
@@ -51,10 +51,11 @@ export interface SwitchProps extends React.InputHTMLAttributes<HTMLInputElement>
 export declare function Switch(props: SwitchProps): React.ReactElement;
 
 export interface StatusBadgeProps { status?: string; tone?: Tone; variant?: 'outline' | 'plain'; children?: React.ReactNode; className?: string }
-/** A coloured dot and a word, in an outlined pill (or `plain` on muted). Pass a suite enum `status` (PAID, PAST_DUE…) or a `tone` with children. */
+/** An icon and a word in a pill tinted by its tone (or `plain`: muted text, no pill). Pass a suite enum `status` (PAID, PAST_DUE…) or a `tone` with children. */
 export declare function StatusBadge(props: StatusBadgeProps): React.ReactElement;
 
-export interface AppMarkProps { app: AppCode; size?: 'sm' | 'md' | 'lg'; withName?: boolean; name?: string; className?: string }
+export interface AppMarkProps { app: AppCode; size?: 'sm' | 'md' | 'lg'; withName?: boolean; name?: string; tone?: 'color' | 'neutral'; className?: string }
+/** The app's glyph on its accent (it sets its own data-app); `tone: 'neutral'` for a monochrome tile. */
 export declare function AppMark(props: AppMarkProps): React.ReactElement;
 
 export interface MoneyProps { minor: number; currency?: string; locale?: string; signed?: boolean; className?: string }
@@ -65,8 +66,8 @@ export interface CopyIdProps { value: string; children?: React.ReactNode; mono?:
 /** An identifier that copies itself on click and confirms with a check. */
 export declare function CopyId(props: CopyIdProps): React.ReactElement;
 
-export interface TabsProps { items: Array<{ id: string; label: React.ReactNode; count?: number; icon?: IconName }>; value?: string; defaultValue?: string; onChange?: (id: string) => void; variant?: 'segmented' | 'line'; label?: string; className?: string }
-/** Segmented tabs for views of one list; line tabs for sections of one record. Arrow keys move. */
+export interface TabsProps { items: Array<{ id: string; label: React.ReactNode; count?: number; icon?: IconName }>; value?: string; defaultValue?: string; onChange?: (id: string) => void; variant?: 'tiles' | 'segmented' | 'line'; label?: string; className?: string }
+/** Tiles for a list's saved views with counts (pills on phones); segmented for small views; line for sections of one record. Arrow keys move. */
 export declare function Tabs(props: TabsProps): React.ReactElement;
 
 export interface CardProps extends React.HTMLAttributes<HTMLElement> { title?: React.ReactNode; description?: React.ReactNode; action?: React.ReactNode; footer?: React.ReactNode; flush?: boolean }
@@ -88,7 +89,14 @@ export interface FacetedFilterProps { label: string; options: Array<{ value: str
 /** A dashed button that opens a searchable multi-select of one field's values with counts. */
 export declare function FacetedFilter(props: FacetedFilterProps): React.ReactElement;
 
-export interface DataTableColumn<Row> { key: string; header: React.ReactNode; align?: 'start' | 'end'; mono?: boolean; width?: string | number; sortable?: boolean; sort?: 'asc' | 'desc'; render?: (row: Row) => React.ReactNode }
+export type MobileRole = 'primary' | 'badge' | 'secondary' | 'meta' | 'hidden';
+export interface DataTableColumn<Row> {
+  key: string; header: React.ReactNode; align?: 'start' | 'end'; mono?: boolean; width?: string | number; sortable?: boolean; sort?: 'asc' | 'desc'; render?: (row: Row) => React.ReactNode;
+  /** Where the column goes in the phone card list; `hidden` also leaves the table on tablets. Every column declares one. */
+  mobile: MobileRole;
+  /** Plain text for the card list when `render` returns a two-line cell. */
+  cardText?: (row: Row) => React.ReactNode;
+}
 export interface DataTableProps<Row> {
   columns: DataTableColumn<Row>[]; rows: Row[]; rowKey?: string | ((row: Row) => string);
   selectable?: boolean; selected?: string[]; defaultSelected?: string[]; onSelect?: (keys: string[]) => void;
@@ -98,6 +106,11 @@ export interface DataTableProps<Row> {
   /** Actions shown on row hover, focus or when active. */
   rowActions?: (row: Row) => React.ReactNode;
   onSort?: (key: string, dir: 'asc' | 'desc') => void;
+  /** `auto` (default) shows the card list below 768px. */
+  layout?: 'auto' | 'table' | 'cards';
+  /** Phones: show checkboxes on the cards (turned on by a Select button). */
+  selecting?: boolean;
+  /** Normally inherited from data-density on the root. */
   density?: 'comfortable' | 'compact'; loading?: boolean; empty?: React.ReactNode; footer?: React.ReactNode; caption?: string; className?: string;
 }
 /** Records of one kind. Keyboard: j/k or arrows move, Enter opens, x selects. */
@@ -119,8 +132,17 @@ export interface DialogProps { open: boolean; onClose: () => void; title: React.
 /** A modal decision. Focus moves in on open and returns to the opener on close; Esc closes. */
 export declare function Dialog(props: DialogProps): React.ReactElement | null;
 
-export interface SheetProps { open: boolean; onClose: () => void; title: React.ReactNode; eyebrow?: React.ReactNode; description?: React.ReactNode; children?: React.ReactNode; footer?: React.ReactNode; onPrev?: () => void; onNext?: () => void; modal?: boolean; contained?: boolean }
-/** A side panel to read or edit one record without leaving the list. */
+export interface SheetProps {
+  open: boolean; onClose: () => void; title: React.ReactNode; eyebrow?: React.ReactNode; description?: React.ReactNode; children?: React.ReactNode;
+  /** The primary action, an outline action and a More menu: under the title on wide screens, docked at the bottom of a bottom sheet. */
+  actions?: React.ReactNode;
+  /** The title is the record's key figure (an amount): text-metric. */
+  figure?: boolean;
+  /** `auto` (default) is a bottom sheet below 768px, a side sheet above. */
+  placement?: 'auto' | 'side' | 'bottom';
+  footer?: React.ReactNode; onPrev?: () => void; onNext?: () => void; modal?: boolean; contained?: boolean;
+}
+/** A panel to read or act on one record without leaving the list: side sheet, or a bottom sheet dragged down to close on phones. */
 export declare function Sheet(props: SheetProps): React.ReactElement | null;
 
 export interface Toast { id: number; title: React.ReactNode; description?: React.ReactNode; tone?: 'success' | 'danger' | 'info'; duration?: number; action?: { label: string; icon?: IconName; onClick: () => void } }
@@ -135,6 +157,8 @@ export interface CommandPaletteProps { open: boolean; onClose: () => void; group
 export declare function CommandPalette(props: CommandPaletteProps): React.ReactElement | null;
 /** Binds a shortcut such as 'mod+k' or '/'; ignores keys typed in fields unless allowInFields. */
 export declare function useHotkey(combo: string, handler: (e: KeyboardEvent) => void, allowInFields?: boolean): void;
+/** True while the media query matches. Only the kit and the shell use it: '(max-width: 767.98px)' is a phone. */
+export declare function useMedia(query: string): boolean;
 
 export interface SkeletonProps { width?: string | number; height?: number; circle?: boolean; className?: string }
 export declare function Skeleton(props: SkeletonProps): React.ReactElement;
@@ -149,7 +173,7 @@ declare global {
       Money: typeof Money; CopyId: typeof CopyId; Kbd: typeof Kbd; Tabs: typeof Tabs; Card: typeof Card; Stat: typeof Stat; Alert: typeof Alert;
       FilterChip: typeof FilterChip; FacetedFilter: typeof FacetedFilter; DataTable: typeof DataTable; BulkBar: typeof BulkBar; DropdownMenu: typeof DropdownMenu;
       Tooltip: typeof Tooltip; Dialog: typeof Dialog; Sheet: typeof Sheet; Toaster: typeof Toaster; CommandPalette: typeof CommandPalette; Skeleton: typeof Skeleton;
-      EmptyState: typeof EmptyState; Icon: typeof Icon; useToasts: typeof useToasts; useHotkey: typeof useHotkey;
+      EmptyState: typeof EmptyState; Icon: typeof Icon; useToasts: typeof useToasts; useHotkey: typeof useHotkey; useMedia: typeof useMedia;
     };
   }
 }

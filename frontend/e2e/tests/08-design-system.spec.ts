@@ -7,12 +7,15 @@ import { provisionTenantFixture, seedBilling, waitForBilling } from '../support/
 
 const tokens = JSON.parse(
   readFileSync(resolve(repoRoot, 'plans/261117-1456-suite-console/reports/design-system/tokens.json'), 'utf8'),
-) as { color: { tokens: Array<{ name: string; value: { light: string; dark: string } }> } }
+) as { color: { tokens: Array<{ name: string; value: string | { light: string; dark: string } }> } }
 
+/** `{name}` means "that token's value in the same theme", as in the token build. */
 const tokenValue = (name: string, theme: 'light' | 'dark'): string => {
   const token = tokens.color.tokens.find((entry) => entry.name === name)
   if (!token) throw new Error(`tokens.json has no ${name}`)
-  return token.value[theme]
+  if (typeof token.value !== 'string') return token.value[theme]
+  const target = token.value.match(/^\{(.+)\}$/)?.[1]
+  return target ? tokenValue(target, theme) : token.value
 }
 
 /** A colour as the browser resolved it; a computed custom property may keep oklch's percentage form. */

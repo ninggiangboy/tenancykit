@@ -38,6 +38,7 @@ const declarations = (theme) =>
 
 const radii = tokens.radius.tokens.map((token) => `  --radius-${token.name.replace('radius-', '')}: ${token.value};`)
 const sizes = tokens.size.tokens.map((token) => `  --size-${token.name}: ${token.value};`)
+const spacing = tokens.spacing.tokens.map((token) => `  --${token.name.replace('.', '_')}: ${token.value};`)
 const durations = tokens.timing.tokens.map((token) => `  --${token.name}: ${token.value};`)
 
 const shadows = (theme) =>
@@ -50,6 +51,7 @@ ${declarations('light')}
 ${shadows('light').join('\n')}
 ${radii.join('\n')}
 ${sizes.join('\n')}
+${spacing.join('\n')}
 ${durations.join('\n')}
   --font-sans: ${tokens.type.families.sans};
   --font-mono: ${tokens.type.families.mono};

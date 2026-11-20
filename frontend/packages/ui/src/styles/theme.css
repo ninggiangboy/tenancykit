@@ -1,6 +1,88 @@
 @import "tailwindcss";
 @import "./tokens.css";
 
+/*
+ * App scope. tokens.css resolves primary, selection and the other accent aliases to literal values on :root and .dark,
+ * and a custom property resolves where it is declared, so setting --app-accent alone changes nothing below it. Every
+ * alias that must follow the app is declared again inside [data-app].
+ */
+:root {
+  --link: var(--brand);
+  --page-pad: var(--space-8);
+  --page-gap: var(--space-5);
+}
+[data-app] {
+  --link: var(--app-accent);
+  --primary: var(--app-accent);
+  --primary-foreground: var(--app-accent-foreground);
+  --selection: var(--app-accent-soft);
+  --ring: var(--app-accent);
+  --ring-halo: color-mix(in oklab, var(--app-accent) 28%, transparent);
+  --sidebar-ring: var(--app-accent);
+}
+[data-app="platform"] {
+  --app-accent: var(--app-platform);
+  --app-accent-soft: var(--app-platform-soft);
+}
+[data-app="billing"] {
+  --app-accent: var(--app-billing);
+  --app-accent-soft: var(--app-billing-soft);
+}
+[data-app="customer"] {
+  --app-accent: var(--app-customer);
+  --app-accent-soft: var(--app-customer-soft);
+}
+[data-app="mailroom"] {
+  --app-accent: var(--app-mailroom);
+  --app-accent-soft: var(--app-mailroom-soft);
+}
+[data-app="notification"] {
+  --app-accent: var(--app-notification);
+  --app-accent-soft: var(--app-notification-soft);
+}
+[data-app="survey"] {
+  --app-accent: var(--app-survey);
+  --app-accent-soft: var(--app-survey-soft);
+}
+[data-app="loyalty"] {
+  --app-accent: var(--app-loyalty);
+  --app-accent-soft: var(--app-loyalty-soft);
+}
+[data-app="booking"] {
+  --app-accent: var(--app-booking);
+  --app-accent-soft: var(--app-booking-soft);
+}
+[data-app="attribution"] {
+  --app-accent: var(--app-attribution);
+  --app-accent-soft: var(--app-attribution-soft);
+}
+[data-app="workflow"] {
+  --app-accent: var(--app-workflow);
+  --app-accent-soft: var(--app-workflow-soft);
+}
+[data-app="helpdesk"] {
+  --app-accent: var(--app-helpdesk);
+  --app-accent-soft: var(--app-helpdesk-soft);
+}
+
+/* Density. Comfortable is the token default; compact swaps the *-compact sizes in. Phones raise touch controls to the touch target. */
+[data-density="compact"] {
+  --size-control-sm: var(--size-control-sm-compact);
+  --size-control-md: var(--size-control-md-compact);
+  --size-row-height: var(--size-row-height-compact);
+  --page-pad: var(--space-6);
+  --page-gap: var(--space-4);
+}
+@media (max-width: 767.98px) {
+  :root,
+  [data-density] {
+    --size-control-md: var(--size-touch-target);
+    --size-control-sm: 36px;
+    --page-pad: var(--space-4);
+    --page-gap: var(--space-4);
+  }
+}
+
 /* The design system's own components carry utilities too, and Tailwind's automatic scan stops at the project root. */
 @source "../**/*.{ts,tsx}";
 
@@ -25,6 +107,15 @@
   --color-input: var(--input);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-soft: var(--app-accent-soft);
+  --color-app-accent-foreground: var(--app-accent-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-warning-soft: var(--warning-soft);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-info-soft: var(--info-soft);
+  --color-neutral-soft: var(--neutral-soft);
+  --color-link: var(--link);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-selection: var(--selection);
@@ -64,13 +155,17 @@
 
 @theme {
   --text-metric: 28px;
-  --text-metric--line-height: 32px;
+  --text-metric--line-height: 34px;
   --text-metric--letter-spacing: -0.03em;
-  --text-metric--font-weight: 600;
-  --text-title: 22px;
-  --text-title--line-height: 28px;
+  --text-metric--font-weight: 700;
+  --text-title: 24px;
+  --text-title--line-height: 30px;
   --text-title--letter-spacing: -0.025em;
-  --text-title--font-weight: 600;
+  --text-title--font-weight: 700;
+  --text-figure: 20px;
+  --text-figure--line-height: 26px;
+  --text-figure--letter-spacing: -0.02em;
+  --text-figure--font-weight: 600;
   --text-heading: 15px;
   --text-heading--line-height: 22px;
   --text-heading--letter-spacing: -0.01em;
