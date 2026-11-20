@@ -21,6 +21,7 @@ frontend/
   packages/shell-sdk       the contract between a shell and a remote: ShellContext, RemoteModule, SDK_MAJOR
   packages/auth            oidc-client-ts against Keycloak; imported by the shells only
   packages/ui              the Suite Console design system, ported to React 19 and Tailwind 4
+  packages/remote-kit      the runtime provider, list and sheet kit, dialogs, forms and router every remote shares
   packages/api-client      the generated client for contracts/openapi, list-query helpers, error type
   e2e                      Playwright against the compose stack
 ```
@@ -28,6 +29,12 @@ frontend/
 Both shells are built from `shell-core`; they differ in one `definition` (audience and title). A remote exports
 `Root({ ctx })` through `defineRemote` and builds its own TanStack Router on the history and basepath the shell hands
 it, so a navigation inside a remote never re-renders the shell.
+
+A remote also hands the shell its screens through `ctx.registerNavigation(sections)`, already filtered by the caller's
+permissions. The shell lists them under the app in its sidebar and uses the current one in the breadcrumb. The field is
+optional on both sides, so the SDK major stays 1: a shell without it leaves the remote to render its own section bar,
+and a remote that never registers shows no sections in the sidebar. `@suite/remote-kit` does the registering for every
+remote built on its router.
 
 ## The `/console/` prefix
 

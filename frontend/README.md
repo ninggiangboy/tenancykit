@@ -20,6 +20,7 @@ packages/shell-core    the boot sequence, the frame and the remote host used by 
 packages/shell-sdk     the contract between a shell and a remote: ShellContext, RemoteModule, SDK_MAJOR
 packages/auth          oidc-client-ts against Keycloak; imported by the shells only
 packages/ui            the Suite Console design system, ported to React 19 and Tailwind 4
+packages/remote-kit    what every remote shares: runtime provider, list and sheet kit, dialogs, forms, router
 packages/api-client    the generated client for contracts/openapi, list-query helpers, error type
 e2e                    Playwright against the compose stack
 ```
@@ -53,6 +54,29 @@ pnpm --filter @suite/remote-billing build
 
 Ports: Platform Shell 5173, remote-platform 5174, Tenant Shell 5175, remote-billing 5176. All are `strictPort`, so a
 stale process fails loudly instead of being shadowed.
+
+## How a remote is organised
+
+A remote is a table of screens plus one folder per feature. `src/routes.tsx` lists each screen once (path, nav section,
+permission, component) and `@suite/remote-kit` builds the router, the permission checks and the navigation the shell
+shows in its sidebar from it. A feature folder never holds logic in `page.tsx` alone:
+
+```
+features/<name>/
+  page.tsx          composition only: spec, list, sheet, dialogs
+  list-spec.ts      search, facets, views and sortable columns
+  columns.tsx       the table's columns
+  schema.ts         Zod schemas of the forms (messages are kit keys)
+  hooks/            one hook per query or write; permissions in one place
+  components/       the sheet, the dialogs and any other piece of the screen
+```
+
+Forms are React Hook Form with Zod (`useZodForm`, `FormField`, `FormEntityPicker`). A form never asks for a record's raw
+ID: it uses a picker (`useCustomerOptions`, `useWalletOptions`, `usePlanOptions` in `src/components/lookups.tsx`).
+Amounts are typed in the currency's own units and converted to minor units in `src/components/money.ts`.
+
+Tailwind does not scan another package, so a remote's `index.css` names `remote-kit` with `@source` and a shell's names
+`shell-core`; a utility used only inside a shared package is missing without it.
 
 ## Adding a remote
 
