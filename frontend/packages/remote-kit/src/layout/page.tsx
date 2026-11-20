@@ -7,26 +7,38 @@ export interface PageHeaderProps {
   description?: ReactNode
   /** The page's actions, primary last. */
   actions?: ReactNode
+  /** The one main action: a `Button` with the default variant. A floating button on phones. */
+  primaryAction?: ReactNode
 }
 
-export function PageHeader({ title, description, actions }: PageHeaderProps) {
+export function PageHeader({ title, description, actions, primaryAction }: PageHeaderProps) {
   return (
-    <header className="flex flex-wrap items-start justify-between gap-3 px-6 pt-5 pb-4">
+    <header className="flex flex-wrap items-start justify-between gap-3 px-(--page-pad) pt-5 pb-4">
       <div className="flex min-w-0 flex-col gap-1">
-        <h1 className="text-title text-foreground">{title}</h1>
+        <h1 className="text-title text-foreground max-md:text-[22px] max-md:leading-7">{title}</h1>
         {description && <p className="max-w-2xl text-small text-muted-foreground">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {(actions || primaryAction) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {actions}
+          {primaryAction && <span className="max-md:hidden">{primaryAction}</span>}
+        </div>
+      )}
     </header>
   )
 }
 
 /** A screen: its header and a padded body. */
-export function Page({ children, ...header }: PageHeaderProps & { children: ReactNode }) {
+export function Page({ children, primaryAction, ...header }: PageHeaderProps & { children: ReactNode }) {
   return (
     <div className="flex flex-col">
-      <PageHeader {...header} />
-      <div className="flex flex-col gap-4 px-6 pb-8">{children}</div>
+      <PageHeader {...header} primaryAction={primaryAction} />
+      <div className="flex flex-col gap-(--page-gap) px-(--page-pad) pb-8">{children}</div>
+      {primaryAction && (
+        <div className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-20 md:hidden [&_button]:h-13 [&_button]:rounded-2xl [&_button]:px-5 [&_button]:text-[15px] [&_button]:shadow-lg">
+          {primaryAction}
+        </div>
+      )}
     </div>
   )
 }

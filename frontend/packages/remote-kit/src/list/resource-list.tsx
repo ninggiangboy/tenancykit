@@ -2,7 +2,6 @@ import { BulkBar, DataTable, type DataTableColumn, EmptyState, Tabs } from '@sui
 import { type ReactNode, useState } from 'react'
 import { useKitT } from '../i18n/create-remote-i18n'
 import { ErrorPanel } from '../layout/error-panel'
-import { BulkCopyIds } from './bulk-copy-ids'
 import { ListPager } from './list-pager'
 import type { ListSpec, PageInfo } from './list-spec'
 import { ListToolbar } from './list-toolbar'
@@ -21,8 +20,10 @@ export interface ResourceListProps<Row> {
   columns: DataTableColumn<Row>[]
   rowKey: (row: Row) => string
   onRowOpen?: (row: Row) => void
-  /** Actions for the selected rows; copying their identifiers is the default. */
+  /** Actions for the selected rows. A list without them shows no selection at all. */
   bulkActions?: (keys: string[]) => ReactNode
+  /** Each saved view's total, as `useViewCounts` returns it. */
+  viewCounts?: Record<string, number | undefined>
   emptyTitle?: string
   emptyHint?: string
   /** A call to action inside the empty state, usually the page's create button. */
@@ -43,6 +44,7 @@ export function ResourceList<Row>({
   rowKey,
   onRowOpen,
   bulkActions,
+  viewCounts,
   emptyTitle,
   emptyHint,
   emptyAction,
@@ -60,10 +62,11 @@ export function ResourceList<Row>({
     <div className="flex flex-col gap-3">
       {spec.views && spec.views.length > 0 && (
         <Tabs
-          items={spec.views.map((view) => ({ id: view.id, label: view.label }))}
+          items={spec.views.map((view) => ({ id: view.id, label: view.label, count: viewCounts?.[view.id] }))}
           value={list.viewId ?? spec.views[0]?.id}
           onChange={list.setView}
           label={label}
+          variant="tiles"
         />
       )}
       <ListToolbar spec={spec} list={list} />
@@ -77,7 +80,7 @@ export function ResourceList<Row>({
           loading={loading}
           onSort={list.setSort}
           onRowOpen={onRowOpen}
-          selectable
+          selectable={Boolean(bulkActions)}
           selected={selected}
           onSelect={setSelected}
           caption={label}
@@ -99,9 +102,11 @@ export function ResourceList<Row>({
           }
         />
       )}
-      <BulkBar count={selected.length} onClear={() => setSelected([])}>
-        {(bulkActions ?? ((keys) => <BulkCopyIds ids={keys} />))(selected)}
-      </BulkBar>
+      {bulkActions && (
+        <BulkBar count={selected.length} onClear={() => setSelected([])}>
+          {bulkActions(selected)}
+        </BulkBar>
+      )}
     </div>
   )
 }
