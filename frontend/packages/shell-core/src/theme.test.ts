@@ -9,6 +9,14 @@ afterEach(() => {
 })
 
 describe('theme and language', () => {
+  it('freezes transitions while the theme changes and releases them straight after', async () => {
+    applyTheme('dark')
+    expect(document.head.textContent).toContain('transition:none')
+    await new Promise((resolve) => setTimeout(resolve, 5))
+    expect(document.head.textContent ?? '').not.toContain('transition:none')
+    expect(document.documentElement.classList.contains('dark')).toBe(true)
+  })
+
   it('resolves system to the viewer’s preference and keeps an explicit choice', () => {
     expect(resolveTheme('system', true)).toBe('dark')
     expect(resolveTheme('system', false)).toBe('light')

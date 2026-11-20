@@ -33,11 +33,26 @@ export function resolveTheme(theme: Theme, prefersDark: boolean): 'light' | 'dar
   return theme === 'system' ? (prefersDark ? 'dark' : 'light') : theme
 }
 
-/** Applies the theme to the document; the tokens live on `.dark`, exactly as the design system defines them. */
+/**
+ * Applies the theme to the document; the tokens live on `.dark`, exactly as the design system defines them.
+ *
+ * Every colour transition is switched off for the moment of the change: otherwise each button, row and badge fades on
+ * its own for 120 ms, so the page is a mix of both themes (and unreadable to a contrast check) while it settles.
+ */
 export function applyTheme(theme: Theme): 'light' | 'dark' {
   const prefersDark = globalThis.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
   const resolved = resolveTheme(theme, prefersDark)
-  globalThis.document?.documentElement.classList.toggle('dark', resolved === 'dark')
+  const root = globalThis.document?.documentElement
+  if (!root || root.classList.contains('dark') === (resolved === 'dark')) {
+    return resolved
+  }
+  const freeze = globalThis.document.createElement('style')
+  freeze.textContent = '*,*::before,*::after{transition:none!important}'
+  globalThis.document.head.append(freeze)
+  root.classList.toggle('dark', resolved === 'dark')
+  // Reading a computed style makes the browser apply the new tokens while the freeze is still in place.
+  void globalThis.getComputedStyle(root).color
+  globalThis.setTimeout(() => freeze.remove(), 0)
   return resolved
 }
 

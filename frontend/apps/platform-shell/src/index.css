@@ -1,1 +1,4 @@
 @import "@suite/ui/styles/theme.css";
+
+/* The frame, sidebar and header live in shell-core; Tailwind's automatic scan stops at the project root. */
+@source "../../../packages/shell-core/src/**/*.{ts,tsx}";
