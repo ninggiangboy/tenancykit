@@ -166,5 +166,7 @@
   "enum.WORKLOAD_BASED": "Theo khối lượng",
   "enum.EVENT_BASED": "Theo sự kiện",
   "enum.SUBSCRIPTION": "Thuê bao",
-  "enum.HYBRID": "Kết hợp"
+  "enum.HYBRID": "Kết hợp",
+  "actions.more": "Thao tác khác",
+  "fields.number": "Số"
 }

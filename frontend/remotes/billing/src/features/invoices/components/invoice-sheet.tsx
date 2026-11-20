@@ -1,6 +1,6 @@
 import type { InvoiceResponse } from '@suite/api-client/billing'
-import { DetailRow, DetailRows, IdValue, RecordSheet, Section, Timestamp } from '@suite/remote-kit'
-import { Button, Money, PermissionGate, Skeleton, StatusBadge } from '@suite/ui'
+import { DetailRow, DetailRows, RecordSheet, Section, Timestamp } from '@suite/remote-kit'
+import { Button, CopyId, Money, PermissionGate, Skeleton, StatusBadge } from '@suite/ui'
 import { useState } from 'react'
 import { CustomerCell, type CustomerName } from '../../../components/lookups'
 import { useT } from '../../../i18n'
@@ -30,24 +30,34 @@ export function InvoiceSheet({ invoice, names, onClose, onPrev, onNext }: Invoic
       <RecordSheet
         open
         onClose={onClose}
-        eyebrow={t('title')}
-        title={invoice.number ?? ''}
-        description={<StatusBadge status={invoice.status} />}
+        eyebrow={
+          <>
+            {t('recordType')} · <CopyId value={invoice.number ?? invoice.id ?? ''} />
+          </>
+        }
+        title={<Money minor={invoice.total?.amount ?? 0} currency={invoice.total?.currency} />}
+        figure
+        description={
+          <>
+            <StatusBadge status={invoice.status} />
+            <Timestamp value={invoice.issuedAt} />
+          </>
+        }
         onPrev={onPrev}
         onNext={onNext}
-        footer={
+        actions={
           open ? (
             <>
               <PermissionGate allowed={can.pay}>
-                <Button variant="outline" size="sm" icon="credit-card" onClick={() => setAction('pay')}>
+                <Button icon="credit-card" onClick={() => setAction('pay')}>
                   {t('pay')}
                 </Button>
               </PermissionGate>
               <PermissionGate allowed={can.manage}>
-                <Button variant="outline" size="sm" icon="ban" onClick={() => setAction('uncollectible')}>
+                <Button variant="outline" icon="ban" onClick={() => setAction('uncollectible')}>
                   {t('uncollectible')}
                 </Button>
-                <Button variant="destructive" size="sm" icon="x-circle" onClick={() => setAction('void')}>
+                <Button variant="danger" icon="x-circle" onClick={() => setAction('void')}>
                   {t('void')}
                 </Button>
               </PermissionGate>
@@ -64,7 +74,7 @@ export function InvoiceSheet({ invoice, names, onClose, onPrev, onNext }: Invoic
               <CustomerCell id={invoice.customerId} names={names} />
             </DetailRow>
             <DetailRow label={tc('fields.wallet')}>
-              <IdValue value={invoice.walletId} />
+              <CopyId value={invoice.walletId ?? ''} />
             </DetailRow>
             <DetailRow label={t('issued')}>
               <Timestamp value={invoice.issuedAt} />
@@ -75,7 +85,7 @@ export function InvoiceSheet({ invoice, names, onClose, onPrev, onNext }: Invoic
               </DetailRow>
             )}
             <DetailRow label={tc('fields.id')}>
-              <IdValue value={invoice.id} />
+              <CopyId value={invoice.id ?? ''} />
             </DetailRow>
           </DetailRows>
           <Section title={t('items')}>
@@ -99,7 +109,7 @@ export function InvoiceSheet({ invoice, names, onClose, onPrev, onNext }: Invoic
           </Section>
           <Section title={t('payments')}>
             {payments.length === 0 ? (
-              <p className="text-small text-muted-foreground">{tc('state.none')}</p>
+              <p className="text-small text-muted-foreground">{t('noPayments')}</p>
             ) : (
               <ul className="divide-y divide-border rounded-lg border border-border">
                 {payments.map((entry) => (
@@ -108,7 +118,7 @@ export function InvoiceSheet({ invoice, names, onClose, onPrev, onNext }: Invoic
                       <StatusBadge status={entry.status} />
                       <Money minor={entry.amount?.amount ?? 0} currency={entry.amount?.currency} />
                     </span>
-                    <IdValue value={entry.paymentId} />
+                    <CopyId value={entry.paymentId ?? ''} />
                   </li>
                 ))}
               </ul>

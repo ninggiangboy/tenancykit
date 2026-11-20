@@ -1,7 +1,8 @@
 import { listQuery, permissions } from '@suite/api-client'
 import { list1Options, listPlansOptions, wallet1Options, walletsOptions } from '@suite/api-client/billing/query'
-import { asListQuery, type EntityOptions, IdValue, useApi } from '@suite/remote-kit'
+import { asListQuery, type EntityOptions, Maybe, useApi } from '@suite/remote-kit'
 import { usePermission } from '@suite/shell-sdk/react'
+import { CopyId } from '@suite/ui'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 
 export interface CustomerName {
@@ -34,7 +35,13 @@ export function useCustomerNames(ids: Array<string | null | undefined>): Map<str
 /** A customer as a person reads one: the name, with the email under it; the id when the name is not known. */
 export function CustomerCell({ id, names }: { id?: string | null; names: Map<string, CustomerName> }) {
   const customer = id ? names.get(id) : undefined
-  if (!customer) return <IdValue value={id} />
+  if (!customer) {
+    return (
+      <Maybe value={id}>
+        <CopyId value={id ?? ''} />
+      </Maybe>
+    )
+  }
   return (
     <span className="flex min-w-0 flex-col">
       <span className="truncate text-foreground">{customer.displayName ?? customer.email}</span>

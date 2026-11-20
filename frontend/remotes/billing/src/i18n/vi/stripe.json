@@ -47,5 +47,7 @@
   "connectionTitle": "Kết nối",
   "resolvedBadge": "Đã xử lý",
   "urlPlaceholder": "https://app.example.com/billing/return",
-  "secretMissing": "Chưa đặt webhook signing secret nên không xác minh được sự kiện Stripe. Hãy thêm nó từ dashboard Stripe."
+  "secretMissing": "Chưa đặt webhook signing secret nên không xác minh được sự kiện Stripe. Hãy thêm nó từ dashboard Stripe.",
+  "startOnboarding": "Bắt đầu kết nối",
+  "enterKeys": "Nhập API key"
 }

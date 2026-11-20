@@ -43,6 +43,7 @@ export const kitEn = {
   'form.email': 'Enter an email address',
   'form.url': 'Enter a full URL starting with https://',
   'form.uuid': 'Pick a record or paste its ID',
+  'errors.utcFormat': 'Use YYYY-MM-DD HH:mm in UTC',
 } as const
 
 export type KitKey = keyof typeof kitEn
@@ -88,4 +89,5 @@ export const kitVi: Record<KitKey, string> = {
   'form.email': 'Nhập địa chỉ email',
   'form.url': 'Nhập URL đầy đủ bắt đầu bằng https://',
   'form.uuid': 'Chọn một bản ghi hoặc dán ID của nó',
+  'errors.utcFormat': 'Nhập theo dạng YYYY-MM-DD HH:mm (UTC)',
 }

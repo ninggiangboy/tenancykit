@@ -1,15 +1,6 @@
 import type { SubscriptionResponse } from '@suite/api-client/billing'
-import {
-  ConfirmDialog,
-  DetailRow,
-  DetailRows,
-  IdValue,
-  Maybe,
-  RecordSheet,
-  Section,
-  Timestamp,
-} from '@suite/remote-kit'
-import { Button, Money, PermissionGate, Skeleton, StatusBadge } from '@suite/ui'
+import { ConfirmDialog, DetailRow, DetailRows, Maybe, RecordSheet, Section, Timestamp } from '@suite/remote-kit'
+import { Button, CopyId, Money, PermissionGate, Skeleton, StatusBadge } from '@suite/ui'
 import { useState } from 'react'
 import { useEnumLabel } from '../../../components/facets'
 import { CustomerCell, type CustomerName } from '../../../components/lookups'
@@ -44,9 +35,9 @@ export function SubscriptionSheet({ subscription, names, onClose, onPrev, onNext
         description={<StatusBadge status={subscription.status} />}
         onPrev={onPrev}
         onNext={onNext}
-        footer={
+        actions={
           <PermissionGate allowed={canManage && subscription.status !== 'CANCELED'}>
-            <Button variant="destructive" size="sm" icon="ban" onClick={() => setCanceling(true)}>
+            <Button variant="danger" icon="ban" onClick={() => setCanceling(true)}>
               {t('cancel')}
             </Button>
           </PermissionGate>
@@ -71,10 +62,10 @@ export function SubscriptionSheet({ subscription, names, onClose, onPrev, onNext
               <Timestamp value={subscription.nextRenewalAt} />
             </DetailRow>
             <DetailRow label={tc('fields.wallet')}>
-              <IdValue value={subscription.walletId} />
+              <CopyId value={subscription.walletId ?? ''} />
             </DetailRow>
             <DetailRow label={tc('fields.id')}>
-              <IdValue value={subscription.id} />
+              <CopyId value={subscription.id ?? ''} />
             </DetailRow>
           </DetailRows>
           <Section title={t('history')}>

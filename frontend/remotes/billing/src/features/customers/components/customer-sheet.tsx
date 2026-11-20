@@ -1,6 +1,6 @@
 import type { CustomerResponse } from '@suite/api-client/billing'
-import { DetailRow, DetailRows, IdValue, Maybe, RecordSheet, Section, Timestamp } from '@suite/remote-kit'
-import { Button, PermissionGate, StatusBadge } from '@suite/ui'
+import { DetailRow, DetailRows, Maybe, RecordSheet, Section, Timestamp } from '@suite/remote-kit'
+import { Button, CopyId, PermissionGate, StatusBadge } from '@suite/ui'
 import { useState } from 'react'
 import { useT } from '../../../i18n'
 import { useCanWriteCustomers } from '../hooks/use-customers'
@@ -30,13 +30,13 @@ export function CustomerSheet({ customer, onClose, onPrev, onNext }: CustomerShe
         description={customer.email}
         onPrev={onPrev}
         onNext={onNext}
-        footer={
+        actions={
           <PermissionGate allowed={canWrite}>
-            <Button variant="outline" size="sm" icon="settings" onClick={() => setDialog('edit')}>
+            <Button variant="outline" icon="settings" onClick={() => setDialog('edit')}>
               {tc('actions.edit')}
             </Button>
             {customer.status !== 'DEACTIVATED' && (
-              <Button variant="destructive" size="sm" icon="ban" onClick={() => setDialog('deactivate')}>
+              <Button variant="danger" icon="ban" onClick={() => setDialog('deactivate')}>
                 {t('deactivate')}
               </Button>
             )}
@@ -55,7 +55,7 @@ export function CustomerSheet({ customer, onClose, onPrev, onNext }: CustomerShe
               <Timestamp value={customer.createdAt} />
             </DetailRow>
             <DetailRow label={tc('fields.id')}>
-              <IdValue value={customer.id} />
+              <CopyId value={customer.id ?? ''} />
             </DetailRow>
           </DetailRows>
           <Section title={t('identities')}>
@@ -68,7 +68,7 @@ export function CustomerSheet({ customer, onClose, onPrev, onNext }: CustomerShe
                     key={`${identity.tenantSystemId}:${identity.externalUserId}`}
                     label={<span className="font-mono text-caption">{identity.externalUserId}</span>}
                   >
-                    <IdValue value={identity.tenantSystemId} />
+                    <CopyId value={identity.tenantSystemId ?? ''} />
                   </DetailRow>
                 ))}
               </DetailRows>

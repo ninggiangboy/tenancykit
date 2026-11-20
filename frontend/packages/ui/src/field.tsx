@@ -16,19 +16,7 @@ export interface FieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   hint?: ReactNode
   error?: ReactNode
   optional?: boolean
-  // datetime-local is deprecated: it shows the viewer's local time; use datetime-utc.
-  type?:
-    | 'text'
-    | 'email'
-    | 'number'
-    | 'password'
-    | 'search'
-    | 'url'
-    | 'date'
-    | 'datetime-local'
-    | 'datetime-utc'
-    | 'select'
-    | 'textarea'
+  type?: 'text' | 'email' | 'number' | 'password' | 'search' | 'url' | 'date' | 'datetime-utc' | 'select' | 'textarea'
   options?: Array<string | { value: string; label: string }>
   prefix?: ReactNode
   suffix?: ReactNode

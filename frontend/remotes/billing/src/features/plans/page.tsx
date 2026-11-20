@@ -1,5 +1,5 @@
 import type { PlanResponse } from '@suite/api-client/billing'
-import { IdValue, ResourcePage, useListState, useRecordSelection } from '@suite/remote-kit'
+import { ResourcePage, useListState, useRecordSelection } from '@suite/remote-kit'
 import { Button, type DataTableColumn, PermissionGate, StatusBadge, type UrlState } from '@suite/ui'
 import { useState } from 'react'
 import { useEnumFacet, useEnumLabel } from '../../components/facets'
@@ -32,6 +32,8 @@ export function PlansPage({ state }: { state: UrlState }) {
     {
       key: 'code',
       header: t('code'),
+      mobile: 'primary',
+      cardText: (row) => row.code,
       render: (row) => (
         <span className="flex flex-col">
           <span className="text-body-strong text-foreground">{row.name}</span>
@@ -39,11 +41,33 @@ export function PlansPage({ state }: { state: UrlState }) {
         </span>
       ),
     },
-    { key: 'model', header: t('model'), sortable: false, render: (row) => (row.model ? enumLabel(row.model) : '') },
-    { key: 'currency', header: tc('fields.currency'), sortable: false, render: (row) => row.currency },
-    { key: 'status', header: tc('fields.status'), render: (row) => <StatusBadge status={row.status} /> },
-    { key: 'versions', header: t('versions'), sortable: false, render: (row) => row.versions?.length ?? 0 },
-    { key: 'id', header: tc('fields.id'), sortable: false, render: (row) => <IdValue value={row.id} /> },
+    {
+      key: 'model',
+      header: t('model'),
+      sortable: false,
+      mobile: 'secondary',
+      render: (row) => (row.model ? enumLabel(row.model) : ''),
+    },
+    {
+      key: 'currency',
+      header: tc('fields.currency'),
+      sortable: false,
+      mobile: 'secondary',
+      render: (row) => row.currency,
+    },
+    {
+      key: 'status',
+      header: tc('fields.status'),
+      mobile: 'badge',
+      render: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      key: 'versions',
+      header: t('versions'),
+      sortable: false,
+      mobile: 'meta',
+      render: (row) => row.versions?.length ?? 0,
+    },
   ]
   const create = (
     <PermissionGate allowed={canManage}>
@@ -57,7 +81,7 @@ export function PlansPage({ state }: { state: UrlState }) {
     <ResourcePage
       title={t('title')}
       description={t('description')}
-      actions={create}
+      primaryAction={create}
       spec={spec}
       list={list}
       rows={rows}

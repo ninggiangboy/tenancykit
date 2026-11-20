@@ -28,7 +28,7 @@ export function PaymentsPage({ state }: { state: UrlState }) {
     <ResourcePage
       title={t('title')}
       description={t('description')}
-      actions={
+      primaryAction={
         <PermissionGate allowed={can.topUp}>
           <Button icon="plus" onClick={() => setToppingUp(true)}>
             {t('topUp')}

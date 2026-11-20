@@ -3,5 +3,6 @@
   "description": "Các khoản hoàn theo thanh toán.",
   "emptyTitle": "Chưa có hoàn tiền",
   "emptyHint": "Hoàn tiền xuất hiện khi được yêu cầu từ một thanh toán.",
-  "payment": "Thanh toán"
+  "payment": "Thanh toán",
+  "recordType": "Hoàn tiền"
 }

@@ -29,6 +29,8 @@ export function CouponsPage({ state }: { state: UrlState }) {
     {
       key: 'name',
       header: tc('fields.name'),
+      mobile: 'primary',
+      cardText: (row) => row.name,
       render: (row) => (
         <span className="flex flex-col">
           <span className="text-body-strong text-foreground">{row.name}</span>
@@ -38,18 +40,30 @@ export function CouponsPage({ state }: { state: UrlState }) {
         </span>
       ),
     },
-    { key: 'status', header: tc('fields.status'), render: (row) => <StatusBadge status={row.status} /> },
+    {
+      key: 'status',
+      header: tc('fields.status'),
+      mobile: 'badge',
+      render: (row) => <StatusBadge status={row.status} />,
+    },
     {
       key: 'redemptions',
       header: t('redemptions'),
       sortable: false,
+      mobile: 'secondary',
       render: (row) => (
         <span className="tabular-nums">
           {row.redemptionsCount ?? 0}/{row.maxRedemptions ?? t('unlimited')}
         </span>
       ),
     },
-    { key: 'created_at', header: tc('fields.created'), render: (row) => <Timestamp value={row.createdAt} /> },
+    {
+      key: 'created_at',
+      header: tc('fields.created'),
+      mobile: 'meta',
+      cardText: (row) => row.createdAt?.slice(0, 10),
+      render: (row) => <Timestamp value={row.createdAt} />,
+    },
   ]
   const create = (
     <PermissionGate allowed={canManage}>
@@ -63,7 +77,7 @@ export function CouponsPage({ state }: { state: UrlState }) {
     <ResourcePage
       title={t('title')}
       description={t('description')}
-      actions={create}
+      primaryAction={create}
       spec={spec}
       list={list}
       rows={rows}

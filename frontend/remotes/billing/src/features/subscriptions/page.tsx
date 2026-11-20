@@ -28,6 +28,8 @@ export function SubscriptionsPage({ state }: { state: UrlState }) {
     {
       key: 'plan_code',
       header: tc('fields.plan'),
+      mobile: 'primary',
+      cardText: (row) => row.planCode,
       render: (row) => (
         <span className="flex flex-col">
           <span className="text-body-strong text-foreground">{row.planCode}</span>
@@ -35,15 +37,23 @@ export function SubscriptionsPage({ state }: { state: UrlState }) {
         </span>
       ),
     },
-    { key: 'status', header: tc('fields.status'), render: (row) => <StatusBadge status={row.status} /> },
+    {
+      key: 'status',
+      header: tc('fields.status'),
+      mobile: 'badge',
+      render: (row) => <StatusBadge status={row.status} />,
+    },
     {
       key: 'customer_id',
       header: tc('fields.customer'),
+      mobile: 'secondary',
       render: (row) => <CustomerCell id={row.customerId} names={names} />,
     },
     {
       key: 'current_period_end',
       header: t('nextRenewal'),
+      mobile: 'meta',
+      cardText: (row) => row.currentPeriodEnd?.slice(0, 10),
       render: (row) => <Timestamp value={row.currentPeriodEnd} />,
     },
   ]
@@ -59,7 +69,7 @@ export function SubscriptionsPage({ state }: { state: UrlState }) {
     <ResourcePage
       title={t('title')}
       description={t('description')}
-      actions={create}
+      primaryAction={create}
       spec={spec}
       list={list}
       rows={rows}

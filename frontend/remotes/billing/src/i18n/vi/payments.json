@@ -17,5 +17,6 @@
   "checkoutTitle": "Đã tạo trang thanh toán",
   "checkoutHint": "Gửi liên kết này cho khách hoặc mở để thanh toán.",
   "openCheckout": "Mở trang thanh toán",
-  "overRefundable": "Vượt quá số tiền còn được hoàn"
+  "overRefundable": "Vượt quá số tiền còn được hoàn",
+  "recordType": "Thanh toán"
 }

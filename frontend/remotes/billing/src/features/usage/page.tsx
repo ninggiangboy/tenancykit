@@ -26,6 +26,10 @@ export function UsagePage({ state }: { state: UrlState }) {
           <Button variant="outline" icon="send" onClick={() => setDialog('batch')}>
             {t('batch')}
           </Button>
+        </PermissionGate>
+      }
+      primaryAction={
+        <PermissionGate allowed={canRecord}>
           <Button icon="plus" onClick={() => setDialog('one')}>
             {t('record')}
           </Button>

@@ -1,6 +1,6 @@
 import type { CouponResponse } from '@suite/api-client/billing'
-import { ConfirmDialog, DetailRow, DetailRows, IdValue, Maybe, RecordSheet, Timestamp } from '@suite/remote-kit'
-import { Button, Checkbox, PermissionGate, StatusBadge } from '@suite/ui'
+import { ConfirmDialog, DetailRow, DetailRows, Maybe, RecordSheet, Timestamp } from '@suite/remote-kit'
+import { Button, Checkbox, CopyId, PermissionGate, StatusBadge } from '@suite/ui'
 import { useId, useState } from 'react'
 import { useT } from '../../../i18n'
 import { useCanManageCoupons, useDeactivateCoupon } from '../hooks/use-coupons'
@@ -33,9 +33,9 @@ export function CouponSheet({ coupon, onClose, onPrev, onNext }: CouponSheetProp
         description={<CouponBenefit coupon={coupon} />}
         onPrev={onPrev}
         onNext={onNext}
-        footer={
+        actions={
           <PermissionGate allowed={canManage && coupon.status !== 'DEACTIVATED'}>
-            <Button variant="destructive" size="sm" icon="ban" onClick={() => setDeactivating(true)}>
+            <Button variant="danger" icon="ban" onClick={() => setDeactivating(true)}>
               {t('deactivate')}
             </Button>
           </PermissionGate>
@@ -60,7 +60,7 @@ export function CouponSheet({ coupon, onClose, onPrev, onNext }: CouponSheetProp
               <Timestamp value={coupon.createdAt} />
             </DetailRow>
             <DetailRow label={tc('fields.id')}>
-              <IdValue value={coupon.id} />
+              <CopyId value={coupon.id ?? ''} />
             </DetailRow>
           </DetailRows>
           <CouponCodes coupon={coupon} canManage={canManage} />

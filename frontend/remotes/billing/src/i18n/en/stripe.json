@@ -47,5 +47,7 @@
   "connectionTitle": "Connection",
   "resolvedBadge": "Resolved",
   "urlPlaceholder": "https://app.example.com/billing/return",
-  "secretMissing": "No webhook signing secret is set, so Stripe events cannot be verified. Add it from the Stripe dashboard."
+  "secretMissing": "No webhook signing secret is set, so Stripe events cannot be verified. Add it from the Stripe dashboard.",
+  "startOnboarding": "Start onboarding",
+  "enterKeys": "Enter API keys"
 }

@@ -25,5 +25,7 @@
   "viewVoid": "Đã huỷ",
   "issued": "Ngày phát hành (UTC)",
   "charge": "Khoản phí",
-  "chargeHint": "Các khoản phí chưa lập hoá đơn hiện ở đây."
+  "chargeHint": "Các khoản phí chưa lập hoá đơn hiện ở đây.",
+  "recordType": "Hoá đơn",
+  "noPayments": "Chưa có thanh toán. Ghi nhận khi khách chuyển khoản."
 }

@@ -2,7 +2,6 @@ import type { ChargeResponse } from '@suite/api-client/billing'
 import {
   DetailRow,
   DetailRows,
-  IdValue,
   Maybe,
   RecordSheet,
   ResourcePage,
@@ -10,7 +9,16 @@ import {
   useListState,
   useRecordSelection,
 } from '@suite/remote-kit'
-import { Alert, Button, type DataTableColumn, Money, PermissionGate, StatusBadge, type UrlState } from '@suite/ui'
+import {
+  Alert,
+  Button,
+  CopyId,
+  type DataTableColumn,
+  Money,
+  PermissionGate,
+  StatusBadge,
+  type UrlState,
+} from '@suite/ui'
 import { useState } from 'react'
 import { useEnumFacet } from '../../components/facets'
 import { useT } from '../../i18n'
@@ -54,20 +62,27 @@ export function ChargesPage({ state }: { state: UrlState }) {
       header: tc('fields.amount'),
       align: 'end',
       sortable: false,
+      mobile: 'primary',
+      cardText: (row) => <Money minor={row.amount?.amount ?? 0} currency={row.amount?.currency} />,
       render: (row) => <ChargeAmount charge={row} />,
     },
-    { key: 'status', header: tc('fields.status'), render: (row) => <StatusBadge status={row.status} /> },
+    {
+      key: 'status',
+      header: tc('fields.status'),
+      mobile: 'badge',
+      render: (row) => <StatusBadge status={row.status} />,
+    },
     {
       key: 'reference',
       header: tc('fields.reference'),
       sortable: false,
+      mobile: 'secondary',
       render: (row) => (
         <span className="font-mono text-code">
           <Maybe value={row.reference} />
         </span>
       ),
     },
-    { key: 'id', header: tc('fields.id'), sortable: false, render: (row) => <IdValue value={row.id} /> },
   ]
   const create = (
     <PermissionGate allowed={canCreate}>
@@ -81,7 +96,7 @@ export function ChargesPage({ state }: { state: UrlState }) {
     <ResourcePage
       title={t('title')}
       description={t('description')}
-      actions={create}
+      primaryAction={create}
       spec={spec}
       list={list}
       rows={rows}
@@ -102,8 +117,13 @@ export function ChargesPage({ state }: { state: UrlState }) {
           onClose={record.close}
           onPrev={record.prev}
           onNext={record.next}
-          eyebrow={t('title')}
+          eyebrow={
+            <>
+              {t('recordType')} · <CopyId value={selected.id ?? ''} />
+            </>
+          }
           title={<Money minor={selected.amount?.amount ?? 0} currency={selected.amount?.currency} />}
+          figure
           description={<StatusBadge status={selected.status} />}
         >
           <div className="flex flex-col gap-5">
@@ -125,7 +145,7 @@ export function ChargesPage({ state }: { state: UrlState }) {
                 <Maybe value={selected.usageRef} />
               </DetailRow>
               <DetailRow label={tc('fields.id')}>
-                <IdValue value={selected.id} />
+                <CopyId value={selected.id ?? ''} />
               </DetailRow>
             </DetailRows>
             {selected.discounts && selected.discounts.length > 0 && (

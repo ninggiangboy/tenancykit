@@ -1,5 +1,6 @@
 import type { InvoiceResponse } from '@suite/api-client/billing'
-import { ResourcePage, useListState, useRecordSelection } from '@suite/remote-kit'
+import { invoicesOptions } from '@suite/api-client/billing/query'
+import { asListQuery, ResourcePage, useApi, useListState, useRecordSelection, useViewCounts } from '@suite/remote-kit'
 import { Button, PermissionGate, type UrlState } from '@suite/ui'
 import { useState } from 'react'
 import { useCustomerNames } from '../../components/lookups'
@@ -23,12 +24,17 @@ export function InvoicesPage({ state }: { state: UrlState }) {
   const columns = useInvoiceColumns(names)
   const can = useInvoicePermissions()
   const [creating, setCreating] = useState(false)
+  const { billing } = useApi()
+  const viewCounts = useViewCounts(spec.views, (params) =>
+    invoicesOptions({ client: billing, throwOnError: true, query: asListQuery(params) }),
+  )
 
   return (
     <ResourcePage
       title={t('title')}
       description={t('description')}
-      actions={
+      viewCounts={viewCounts}
+      primaryAction={
         <PermissionGate allowed={can.create}>
           <Button icon="plus" onClick={() => setCreating(true)}>
             {t('create')}

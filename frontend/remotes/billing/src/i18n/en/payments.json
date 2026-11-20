@@ -17,5 +17,6 @@
   "checkoutTitle": "Checkout created",
   "checkoutHint": "Send this link to the customer, or open it to pay.",
   "openCheckout": "Open checkout",
-  "overRefundable": "More than the refundable amount"
+  "overRefundable": "More than the refundable amount",
+  "recordType": "Payment"
 }

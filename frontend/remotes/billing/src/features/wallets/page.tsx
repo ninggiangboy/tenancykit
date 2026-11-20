@@ -2,14 +2,13 @@ import type { WalletResponse } from '@suite/api-client/billing'
 import {
   DetailRow,
   DetailRows,
-  IdValue,
   RecordSheet,
   ResourcePage,
   Timestamp,
   useListState,
   useRecordSelection,
 } from '@suite/remote-kit'
-import { Button, type DataTableColumn, Money, PermissionGate, StatusBadge, type UrlState } from '@suite/ui'
+import { Button, CopyId, type DataTableColumn, Money, PermissionGate, StatusBadge, type UrlState } from '@suite/ui'
 import { useState } from 'react'
 import { useEnumFacet, useEnumLabel } from '../../components/facets'
 import { CustomerCell, useCustomerNames } from '../../components/lookups'
@@ -53,30 +52,52 @@ export function WalletsPage({ state }: { state: UrlState }) {
 
   const columns: DataTableColumn<WalletResponse>[] = [
     {
-      key: 'customer_id',
-      header: tc('fields.customer'),
-      sortable: false,
-      render: (row) => <CustomerCell id={row.customerId} names={names} />,
-    },
-    {
       key: 'balance',
       header: tc('fields.balance'),
       align: 'end',
-      render: (row) => <Amount value={row.balance} currency={row.currency} />,
+      mobile: 'primary',
+      cardText: (row) => <Amount value={row.balance} currency={row.currency} />,
+      render: (row) => (
+        <span className="font-semibold tabular-nums">
+          <Amount value={row.balance} currency={row.currency} />
+        </span>
+      ),
+    },
+    {
+      key: 'customer_id',
+      header: tc('fields.customer'),
+      sortable: false,
+      mobile: 'secondary',
+      render: (row) => <CustomerCell id={row.customerId} names={names} />,
     },
     {
       key: 'available',
       header: tc('fields.available'),
       align: 'end',
       sortable: false,
+      mobile: 'secondary',
       render: (row) => <Amount value={row.available} currency={row.currency} />,
     },
     {
       key: 'mode',
       header: tc('fields.mode'),
+      mobile: 'secondary',
       render: (row) => <StatusBadge tone="neutral">{row.mode ? enumLabel(row.mode) : ''}</StatusBadge>,
     },
-    { key: 'created_at', header: tc('fields.created'), render: (row) => <Timestamp value={row.createdAt} /> },
+    {
+      key: 'currency',
+      header: tc('fields.currency'),
+      sortable: false,
+      mobile: 'hidden',
+      render: (row) => row.currency,
+    },
+    {
+      key: 'created_at',
+      header: tc('fields.created'),
+      mobile: 'meta',
+      cardText: (row) => row.createdAt?.slice(0, 10),
+      render: (row) => <Timestamp value={row.createdAt} />,
+    },
   ]
   const create = (
     <PermissionGate allowed={can.open}>
@@ -90,7 +111,7 @@ export function WalletsPage({ state }: { state: UrlState }) {
     <ResourcePage
       title={t('title')}
       description={t('description')}
-      actions={create}
+      primaryAction={create}
       spec={spec}
       list={list}
       rows={rows}
@@ -132,7 +153,7 @@ export function WalletsPage({ state }: { state: UrlState }) {
                 <Timestamp value={selected.createdAt} />
               </DetailRow>
               <DetailRow label={tc('fields.id')}>
-                <IdValue value={selected.id} />
+                <CopyId value={selected.id ?? ''} />
               </DetailRow>
             </DetailRows>
             <Ledger wallet={selected} canReverse={can.reverse} />

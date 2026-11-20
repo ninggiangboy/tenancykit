@@ -4,7 +4,6 @@ import {
   DetailRow,
   DetailRows,
   ErrorPanel,
-  IdValue,
   Page,
   RecordSheet,
   Timestamp,
@@ -13,6 +12,7 @@ import {
 import {
   Button,
   Combobox,
+  CopyId,
   DataTable,
   type DataTableColumn,
   EmptyState,
@@ -49,21 +49,35 @@ export function RedemptionsPage({ state }: { state: UrlState }) {
     {
       key: 'coupon',
       header: t('coupon'),
+      mobile: 'primary',
       render: (row) => <span className="text-body-strong text-foreground">{row.couponName}</span>,
     },
-    { key: 'status', header: tc('fields.status'), render: (row) => <StatusBadge status={row.status} /> },
     {
-      key: 'applications',
-      header: t('applications'),
-      render: (row) => <span className="tabular-nums">{uses(row)}</span>,
+      key: 'status',
+      header: tc('fields.status'),
+      mobile: 'badge',
+      render: (row) => <StatusBadge status={row.status} />,
     },
     {
       key: 'discount_total',
       header: t('discountTotal'),
       align: 'end',
+      mobile: 'secondary',
       render: (row) => <Money minor={row.discountTotal ?? 0} currency={row.currency} />,
     },
-    { key: 'redeemed_at', header: tc('fields.created'), render: (row) => <Timestamp value={row.redeemedAt} /> },
+    {
+      key: 'applications',
+      header: t('applications'),
+      mobile: 'secondary',
+      render: (row) => <span className="tabular-nums">{uses(row)}</span>,
+    },
+    {
+      key: 'redeemed_at',
+      header: tc('fields.created'),
+      mobile: 'meta',
+      cardText: (row) => row.redeemedAt?.slice(0, 10),
+      render: (row) => <Timestamp value={row.redeemedAt} />,
+    },
   ]
 
   return (
@@ -75,6 +89,10 @@ export function RedemptionsPage({ state }: { state: UrlState }) {
           <Button variant="outline" icon="ticket" onClick={() => setDialog('redeem')}>
             {t('redeem')}
           </Button>
+        </PermissionGate>
+      }
+      primaryAction={
+        <PermissionGate allowed={can.redeem && walletId !== ''}>
           <Button icon="plus" onClick={() => setDialog('attach')}>
             {t('attach')}
           </Button>
@@ -115,9 +133,9 @@ export function RedemptionsPage({ state }: { state: UrlState }) {
           eyebrow={t('title')}
           title={selected.couponName ?? ''}
           description={<StatusBadge status={selected.status} />}
-          footer={
+          actions={
             <PermissionGate allowed={can.revoke && selected.status !== 'REVOKED'}>
-              <Button variant="destructive" size="sm" icon="ban" onClick={() => setDialog('revoke')}>
+              <Button variant="danger" icon="ban" onClick={() => setDialog('revoke')}>
                 {t('revoke')}
               </Button>
             </PermissionGate>
@@ -129,13 +147,13 @@ export function RedemptionsPage({ state }: { state: UrlState }) {
               <Money minor={selected.discountTotal ?? 0} currency={selected.currency} />
             </DetailRow>
             <DetailRow label={tc('fields.customer')}>
-              <IdValue value={selected.customerId} />
+              <CopyId value={selected.customerId ?? ''} />
             </DetailRow>
             <DetailRow label={tc('fields.created')}>
               <Timestamp value={selected.redeemedAt} />
             </DetailRow>
             <DetailRow label={tc('fields.id')}>
-              <IdValue value={selected.id} />
+              <CopyId value={selected.id ?? ''} />
             </DetailRow>
           </DetailRows>
         </RecordSheet>

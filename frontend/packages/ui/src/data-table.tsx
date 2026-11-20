@@ -23,7 +23,7 @@ export interface DataTableColumn<Row> {
   sort?: 'asc' | 'desc'
   render?: (row: Row) => React.ReactNode
   /** Where the column goes in the phone card list; `hidden` also leaves the table below 1024px. */
-  mobile?: MobileRole
+  mobile: MobileRole
   /** Plain text for the card when `render` returns a two-line cell. */
   cardText?: (row: Row) => React.ReactNode
   /** Shown only in the card list, for a value the table already shows as the second line of another cell (a code, an email). */

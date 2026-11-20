@@ -5,7 +5,6 @@ import {
   asListQuery,
   DetailRow,
   DetailRows,
-  IdValue,
   Maybe,
   RecordSheet,
   ResourcePage,
@@ -15,7 +14,7 @@ import {
   useRecordSelection,
 } from '@suite/remote-kit'
 import { usePermission } from '@suite/shell-sdk/react'
-import { type DataTableColumn, Money, StatusBadge, type UrlState } from '@suite/ui'
+import { CopyId, type DataTableColumn, Money, StatusBadge, type UrlState } from '@suite/ui'
 import { useQuery } from '@tanstack/react-query'
 import { useEnumFacet } from '../../components/facets'
 import { useT } from '../../i18n'
@@ -45,12 +44,40 @@ export function RefundsPage({ state }: { state: UrlState }) {
       key: 'amount',
       header: tc('fields.amount'),
       align: 'end',
-      render: (row) => <Money minor={row.amount?.amount ?? 0} currency={row.amount?.currency} />,
+      mobile: 'primary',
+      cardText: (row) => <Money minor={row.amount?.amount ?? 0} currency={row.amount?.currency} />,
+      render: (row) => (
+        <span className="font-semibold tabular-nums">
+          <Money minor={row.amount?.amount ?? 0} currency={row.amount?.currency} />
+        </span>
+      ),
     },
-    { key: 'status', header: tc('fields.status'), render: (row) => <StatusBadge status={row.status} /> },
-    { key: 'reason', header: tc('fields.reason'), sortable: false, render: (row) => <Maybe value={row.reason} /> },
-    { key: 'payment_id', header: t('payment'), render: (row) => <IdValue value={row.paymentId} /> },
-    { key: 'created_at', header: tc('fields.created'), render: (row) => <Timestamp value={row.createdAt} /> },
+    {
+      key: 'status',
+      header: tc('fields.status'),
+      mobile: 'badge',
+      render: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      key: 'reason',
+      header: tc('fields.reason'),
+      sortable: false,
+      mobile: 'secondary',
+      render: (row) => <Maybe value={row.reason} />,
+    },
+    {
+      key: 'payment_id',
+      header: t('payment'),
+      mobile: 'hidden',
+      render: (row) => <CopyId value={row.paymentId ?? ''} />,
+    },
+    {
+      key: 'created_at',
+      header: tc('fields.created'),
+      mobile: 'meta',
+      cardText: (row) => row.createdAt?.slice(0, 10),
+      render: (row) => <Timestamp value={row.createdAt} />,
+    },
   ]
 
   return (
@@ -76,13 +103,23 @@ export function RefundsPage({ state }: { state: UrlState }) {
           onClose={record.close}
           onPrev={record.prev}
           onNext={record.next}
-          eyebrow={t('title')}
+          eyebrow={
+            <>
+              {t('recordType')} · <CopyId value={selected.id ?? ''} />
+            </>
+          }
           title={<Money minor={selected.amount?.amount ?? 0} currency={selected.amount?.currency} />}
-          description={<StatusBadge status={selected.status} />}
+          figure
+          description={
+            <>
+              <StatusBadge status={selected.status} />
+              <Timestamp value={selected.createdAt} />
+            </>
+          }
         >
           <DetailRows>
             <DetailRow label={t('payment')}>
-              <IdValue value={selected.paymentId} />
+              <CopyId value={selected.paymentId ?? ''} />
             </DetailRow>
             <DetailRow label={tc('fields.reason')}>
               <Maybe value={selected.reason} />
@@ -94,7 +131,7 @@ export function RefundsPage({ state }: { state: UrlState }) {
               <Timestamp value={selected.completedAt} />
             </DetailRow>
             <DetailRow label={tc('fields.id')}>
-              <IdValue value={selected.id} />
+              <CopyId value={selected.id ?? ''} />
             </DetailRow>
           </DetailRows>
         </RecordSheet>

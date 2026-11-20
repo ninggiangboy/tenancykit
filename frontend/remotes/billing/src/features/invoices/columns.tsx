@@ -11,20 +11,45 @@ export function useInvoiceColumns(names: Map<string, CustomerName>): DataTableCo
     {
       key: 'total',
       header: tc('fields.amount'),
+      mobile: 'primary',
+      cardText: (row) => <Money minor={row.total?.amount ?? 0} currency={row.total?.currency} />,
       render: (row) => (
-        <span className="flex flex-col">
+        <span className="font-semibold tabular-nums">
           <Money minor={row.total?.amount ?? 0} currency={row.total?.currency} />
-          <span className="font-mono text-caption text-muted-foreground">{row.number}</span>
         </span>
       ),
     },
-    { key: 'status', header: tc('fields.status'), render: (row) => <StatusBadge status={row.status} /> },
+    {
+      key: 'status',
+      header: tc('fields.status'),
+      mobile: 'badge',
+      render: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      key: 'number',
+      header: tc('fields.number'),
+      sortable: false,
+      mobile: 'secondary',
+      cardText: (row) => row.number,
+      render: (row) => <span className="font-mono text-caption text-muted-foreground">{row.number}</span>,
+    },
     {
       key: 'customer_id',
       header: tc('fields.customer'),
       sortable: false,
+      mobile: 'secondary',
+      cardText: (row) => {
+        const customer = row.customerId ? names.get(row.customerId) : undefined
+        return customer?.displayName ?? customer?.email ?? row.customerId ?? ''
+      },
       render: (row) => <CustomerCell id={row.customerId} names={names} />,
     },
-    { key: 'created_at', header: t('issued'), render: (row) => <Timestamp value={row.issuedAt} /> },
+    {
+      key: 'created_at',
+      header: t('issued'),
+      mobile: 'meta',
+      cardText: (row) => row.issuedAt?.slice(0, 10),
+      render: (row) => <Timestamp value={row.issuedAt} />,
+    },
   ]
 }

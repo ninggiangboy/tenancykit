@@ -75,7 +75,7 @@ export function EstimatePanel() {
           optional
           useOptions={useAnyWallet}
         />
-        <FormField control={form.control} name="at" label={t('at')} type="datetime-local" optional />
+        <FormField control={form.control} name="at" label={t('at')} type="datetime-utc" optional />
         <FormField control={form.control} name="metric" label={t('metric')} mono optional />
         <FormField control={form.control} name="quantity" label={t('quantity')} inputMode="decimal" optional />
       </PanelForm>

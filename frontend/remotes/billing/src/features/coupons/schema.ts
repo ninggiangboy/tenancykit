@@ -1,15 +1,16 @@
 import type { CreateCouponRequest } from '@suite/api-client/billing'
 import { rules } from '@suite/remote-kit'
+import { parseUtcInput } from '@suite/ui'
 import { z } from 'zod'
 import { toMinor } from '../../components/money'
 
 export const BENEFITS = ['PERCENT_OFF', 'AMOUNT_OFF', 'WALLET_CREDIT'] as const
 
 const optionalDate = () =>
-  z
-    .string()
-    .optional()
-    .transform((value) => (value ? new Date(value).toISOString() : undefined))
+  rules
+    .optionalText()
+    .refine((value) => !value || parseUtcInput(value) !== null, { message: 'errors.utcFormat' })
+    .transform((value) => (value ? (parseUtcInput(value) as string) : undefined))
 
 export const createCouponSchema = z
   .object({

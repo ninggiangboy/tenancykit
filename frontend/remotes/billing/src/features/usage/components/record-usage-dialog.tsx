@@ -1,4 +1,5 @@
 import { FormDialog, FormEntityPicker, FormField, rules, useZodForm } from '@suite/remote-kit'
+import { parseUtcInput } from '@suite/ui'
 import { z } from 'zod'
 import { useCustomerOptions } from '../../../components/lookups'
 import { useT } from '../../../i18n'
@@ -12,10 +13,10 @@ const schema = z.object({
     .trim()
     .regex(/^\d+(\.\d+)?$/, { message: 'form.invalid' }),
   unit: rules.optionalText(),
-  occurredAt: z
-    .string()
-    .optional()
-    .transform((value) => (value ? new Date(value).toISOString() : undefined)),
+  occurredAt: rules
+    .optionalText()
+    .refine((value) => !value || parseUtcInput(value) !== null, { message: 'errors.utcFormat' })
+    .transform((value) => (value ? (parseUtcInput(value) as string) : undefined)),
   resourceRef: rules.optionalText(),
 })
 
@@ -62,7 +63,7 @@ export function RecordUsageDialog({ open, onClose }: { open: boolean; onClose: (
         mono
       />
       <FormField control={form.control} name="unit" label={t('unit')} mono optional />
-      <FormField control={form.control} name="occurredAt" label={t('occurredAt')} type="datetime-local" optional />
+      <FormField control={form.control} name="occurredAt" label={t('occurredAt')} type="datetime-utc" optional />
       <FormField control={form.control} name="resourceRef" label={t('resourceRef')} mono optional />
     </FormDialog>
   )

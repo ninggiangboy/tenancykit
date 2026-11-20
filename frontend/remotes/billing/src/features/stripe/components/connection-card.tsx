@@ -19,12 +19,19 @@ export function ConnectChoices({
       icon: 'external' as const,
       title: t('connectOnboarding'),
       hint: t('connectOnboardingHint'),
+      action: t('startOnboarding'),
     },
-    { id: 'keys' as const, icon: 'key' as const, title: t('connectKeys'), hint: t('connectKeysHint') },
+    {
+      id: 'keys' as const,
+      icon: 'key' as const,
+      title: t('connectKeys'),
+      hint: t('connectKeysHint'),
+      action: t('enterKeys'),
+    },
   ]
   return (
     <Card title={t('connectTitle')} description={t('connectIntro')}>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2">
         {choices.map((choice) => (
           <div key={choice.id} className="flex flex-col gap-3 rounded-lg border border-border p-4">
             <span className="flex items-center gap-2 text-body-strong text-foreground">
@@ -35,10 +42,10 @@ export function ConnectChoices({
             <PermissionGate allowed={canManage}>
               <Button
                 variant={choice.id === 'onboarding' ? 'default' : 'outline'}
-                size="sm"
+                className="self-start"
                 onClick={() => onChoose(choice.id)}
               >
-                {choice.title}
+                {choice.action}
               </Button>
             </PermissionGate>
           </div>

@@ -81,7 +81,7 @@ export function CreateCouponDialog({ open, onClose }: { open: boolean; onClose: 
         min={1}
         optional
       />
-      <FormField control={form.control} name="redeemBy" label={t('redeemBy')} type="datetime-local" optional />
+      <FormField control={form.control} name="redeemBy" label={t('redeemBy')} type="datetime-utc" optional />
       <div className="self-end pb-1">
         <FormSwitch control={form.control} name="stackable" label={t('stackable')} />
       </div>

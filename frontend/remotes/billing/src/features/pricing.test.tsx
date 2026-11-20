@@ -75,7 +75,7 @@ describe('pricing plans', () => {
     const actor = userEvent.setup()
     renderPage((state) => <PlansPage state={state} />, { permissions: allBillingPermissions })
     expect(await screen.findByText('Growth')).toBeInTheDocument()
-    await actor.click(screen.getByRole('button', { name: 'Create plan' }))
+    await actor.click((await screen.findAllByRole('button', { name: 'Create plan' }))[0] as HTMLElement)
     await actor.type(screen.getByLabelText('Plan code'), 'STARTER')
     await actor.type(screen.getByLabelText('Name'), 'Starter')
     // A subscription plan needs its fixed price before the form submits.
@@ -177,7 +177,7 @@ describe('coupons', () => {
     const actor = userEvent.setup()
     renderPage((state) => <CouponsPage state={state} />, { permissions: allBillingPermissions })
     expect(await screen.findByText('Launch')).toBeInTheDocument()
-    await actor.click(screen.getByRole('button', { name: 'Create coupon' }))
+    await actor.click((await screen.findAllByRole('button', { name: 'Create coupon' }))[0] as HTMLElement)
     await actor.type(screen.getByLabelText('Name'), 'Launch')
     const percent = screen.getByLabelText('Percent')
     await actor.clear(percent)

@@ -14,5 +14,6 @@
   "created": "Đã tạo khoản tính",
   "gross": "Trước giảm giá",
   "confirmHint": "Ví bị trừ tiền ngay; khoản phí được đảo qua sổ cái của ví chứ không xoá.",
-  "failureReason": "Lý do thất bại"
+  "failureReason": "Lý do thất bại",
+  "recordType": "Khoản phí"
 }

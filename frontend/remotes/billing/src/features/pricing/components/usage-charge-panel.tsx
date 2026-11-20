@@ -89,8 +89,8 @@ export function UsageChargePanel() {
           min={1}
           optional
         />
-        <FormField control={form.control} name="from" label={t('from')} type="datetime-local" optional />
-        <FormField control={form.control} name="to" label={t('to')} type="datetime-local" optional />
+        <FormField control={form.control} name="from" label={t('from')} type="datetime-utc" optional />
+        <FormField control={form.control} name="to" label={t('to')} type="datetime-utc" optional />
       </PanelForm>
       <ConfirmDialog
         open={staged !== null}

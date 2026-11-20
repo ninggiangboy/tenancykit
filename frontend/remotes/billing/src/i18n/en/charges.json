@@ -14,5 +14,6 @@
   "created": "Charge created",
   "gross": "Before discounts",
   "confirmHint": "The wallet is debited at once; a charge is reversed from the wallet ledger, not deleted.",
-  "failureReason": "Failure reason"
+  "failureReason": "Failure reason",
+  "recordType": "Charge"
 }

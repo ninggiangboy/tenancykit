@@ -26,7 +26,7 @@ export function PanelForm<Input extends FieldValues, Output>({
       <form
         id={id}
         noValidate
-        className="grid gap-3 sm:grid-cols-2"
+        className="grid gap-3 md:grid-cols-2"
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
       >
         {children}

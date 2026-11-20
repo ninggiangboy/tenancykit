@@ -1,6 +1,6 @@
 import type { PaymentResponse } from '@suite/api-client/billing'
-import { DetailRow, DetailRows, IdValue, RecordSheet, Section, Timestamp } from '@suite/remote-kit'
-import { Button, Money, PermissionGate, Skeleton, StatusBadge } from '@suite/ui'
+import { DetailRow, DetailRows, RecordSheet, Section, Timestamp } from '@suite/remote-kit'
+import { Button, CopyId, Money, PermissionGate, Skeleton, StatusBadge } from '@suite/ui'
 import { useState } from 'react'
 import { CustomerCell, type CustomerName } from '../../../components/lookups'
 import { useT } from '../../../i18n'
@@ -30,14 +30,24 @@ export function PaymentSheet({ payment, names, onClose, onPrev, onNext }: Paymen
       <RecordSheet
         open
         onClose={onClose}
-        eyebrow={t('title')}
+        eyebrow={
+          <>
+            {t('recordType')} · <CopyId value={payment.id ?? ''} />
+          </>
+        }
         title={<Money minor={payment.amount?.amount ?? 0} currency={currency} />}
-        description={<StatusBadge status={payment.status} />}
+        figure
+        description={
+          <>
+            <StatusBadge status={payment.status} />
+            <Timestamp value={payment.createdAt} />
+          </>
+        }
         onPrev={onPrev}
         onNext={onNext}
-        footer={
+        actions={
           <PermissionGate allowed={can.refund && payment.status === 'SUCCEEDED' && refundable > 0}>
-            <Button variant="destructive" size="sm" icon="undo" onClick={() => setRefunding(true)}>
+            <Button variant="danger" icon="undo" onClick={() => setRefunding(true)}>
               {t('refund')}
             </Button>
           </PermissionGate>
@@ -52,13 +62,13 @@ export function PaymentSheet({ payment, names, onClose, onPrev, onNext }: Paymen
               <CustomerCell id={payment.customerId} names={names} />
             </DetailRow>
             <DetailRow label={tc('fields.wallet')}>
-              <IdValue value={payment.walletId} />
+              <CopyId value={payment.walletId ?? ''} />
             </DetailRow>
             <DetailRow label={tc('fields.created')}>
               <Timestamp value={payment.createdAt} />
             </DetailRow>
             <DetailRow label={tc('fields.id')}>
-              <IdValue value={payment.id} />
+              <CopyId value={payment.id ?? ''} />
             </DetailRow>
           </DetailRows>
           <Section title={t('refund')}>

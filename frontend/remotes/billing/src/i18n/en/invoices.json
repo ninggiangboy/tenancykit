@@ -25,5 +25,7 @@
   "viewVoid": "Void",
   "issued": "Issued (UTC)",
   "charge": "Charge",
-  "chargeHint": "Charges that are not invoiced yet show here."
+  "chargeHint": "Charges that are not invoiced yet show here.",
+  "recordType": "Invoice",
+  "noPayments": "No payments yet. Record one when the customer pays by bank transfer."
 }

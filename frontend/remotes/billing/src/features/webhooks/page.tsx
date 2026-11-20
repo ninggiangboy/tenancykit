@@ -3,7 +3,6 @@ import {
   ConfirmDialog,
   DetailRow,
   DetailRows,
-  IdValue,
   RecordSheet,
   ResourcePage,
   SecretDialog,
@@ -11,7 +10,7 @@ import {
   useListState,
   useRecordSelection,
 } from '@suite/remote-kit'
-import { Button, type DataTableColumn, PermissionGate, StatusBadge, type UrlState } from '@suite/ui'
+import { Button, CopyId, type DataTableColumn, PermissionGate, StatusBadge, type UrlState } from '@suite/ui'
 import { useState } from 'react'
 import { useEnumFacet } from '../../components/facets'
 import { useT } from '../../i18n'
@@ -57,6 +56,8 @@ export function WebhooksPage({ state }: { state: UrlState }) {
       key: 'url',
       header: t('url'),
       sortable: false,
+      mobile: 'primary',
+      cardText: (row) => row.url,
       render: (row) => (
         <span className="flex min-w-0 flex-col">
           <span className="truncate font-mono text-code text-foreground">{row.url}</span>
@@ -64,14 +65,26 @@ export function WebhooksPage({ state }: { state: UrlState }) {
         </span>
       ),
     },
-    { key: 'status', header: tc('fields.status'), render: (row) => <StatusBadge status={row.status} /> },
+    {
+      key: 'status',
+      header: tc('fields.status'),
+      mobile: 'badge',
+      render: (row) => <StatusBadge status={row.status} />,
+    },
     {
       key: 'event_types',
       header: t('eventTypes'),
       sortable: false,
+      mobile: 'secondary',
       render: (row) => <EventTypes types={row.eventTypes} />,
     },
-    { key: 'created_at', header: tc('fields.created'), render: (row) => <Timestamp value={row.createdAt} /> },
+    {
+      key: 'created_at',
+      header: tc('fields.created'),
+      mobile: 'meta',
+      cardText: (row) => row.createdAt?.slice(0, 10),
+      render: (row) => <Timestamp value={row.createdAt} />,
+    },
   ]
   const create = (
     <PermissionGate allowed={canManage}>
@@ -85,7 +98,7 @@ export function WebhooksPage({ state }: { state: UrlState }) {
     <ResourcePage
       title={t('title')}
       description={t('description')}
-      actions={create}
+      primaryAction={create}
       spec={spec}
       list={list}
       rows={rows}
@@ -109,14 +122,13 @@ export function WebhooksPage({ state }: { state: UrlState }) {
           eyebrow={t('title')}
           title={<span className="break-all font-mono text-body-strong">{selected.url}</span>}
           description={selected.description}
-          footer={
+          actions={
             <PermissionGate allowed={canManage}>
-              <Button variant="outline" size="sm" icon="key" onClick={() => setDialog('rotate')}>
+              <Button variant="outline" icon="key" onClick={() => setDialog('rotate')}>
                 {t('rotate')}
               </Button>
               <Button
                 variant="outline"
-                size="sm"
                 icon={selected.status === 'ACTIVE' ? 'ban' : 'check-circle'}
                 loading={setStatus.isPending}
                 onClick={() =>
@@ -145,7 +157,7 @@ export function WebhooksPage({ state }: { state: UrlState }) {
                 <Timestamp value={selected.createdAt} />
               </DetailRow>
               <DetailRow label={tc('fields.id')}>
-                <IdValue value={selected.id} />
+                <CopyId value={selected.id ?? ''} />
               </DetailRow>
             </DetailRows>
             <Deliveries endpoint={selected} canManage={canManage} />

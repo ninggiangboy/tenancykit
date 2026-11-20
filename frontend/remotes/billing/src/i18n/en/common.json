@@ -166,5 +166,7 @@
   "enum.WORKLOAD_BASED": "Workload based",
   "enum.EVENT_BASED": "Event based",
   "enum.SUBSCRIPTION": "Subscription",
-  "enum.HYBRID": "Hybrid"
+  "enum.HYBRID": "Hybrid",
+  "actions.more": "More actions",
+  "fields.number": "Number"
 }

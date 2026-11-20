@@ -2,7 +2,6 @@ import type { ReservationResponse } from '@suite/api-client/billing'
 import {
   DetailRow,
   DetailRows,
-  IdValue,
   Maybe,
   RecordSheet,
   ResourcePage,
@@ -10,7 +9,7 @@ import {
   useListState,
   useRecordSelection,
 } from '@suite/remote-kit'
-import { Button, type DataTableColumn, Money, PermissionGate, StatusBadge, type UrlState } from '@suite/ui'
+import { Button, CopyId, type DataTableColumn, Money, PermissionGate, StatusBadge, type UrlState } from '@suite/ui'
 import { useState } from 'react'
 import { useEnumFacet } from '../../components/facets'
 import { useT } from '../../i18n'
@@ -38,6 +37,8 @@ export function ReservationsPage({ state }: { state: UrlState }) {
     {
       key: 'amount',
       header: tc('fields.amount'),
+      mobile: 'primary',
+      cardText: (row) => <Money minor={row.amount?.amount ?? 0} currency={row.amount?.currency} />,
       render: (row) => (
         <span className="flex flex-col">
           <Money minor={row.amount?.amount ?? 0} currency={row.amount?.currency} />
@@ -45,14 +46,27 @@ export function ReservationsPage({ state }: { state: UrlState }) {
         </span>
       ),
     },
-    { key: 'status', header: tc('fields.status'), render: (row) => <StatusBadge status={row.status} /> },
+    {
+      key: 'status',
+      header: tc('fields.status'),
+      mobile: 'badge',
+      render: (row) => <StatusBadge status={row.status} />,
+    },
     {
       key: 'wallet_id',
       header: tc('fields.wallet'),
       sortable: false,
-      render: (row) => <IdValue value={row.walletId} />,
+      mobile: 'hidden',
+      render: (row) => <CopyId value={row.walletId ?? ''} />,
     },
-    { key: 'expires_at', header: t('expires'), sortable: false, render: (row) => <Timestamp value={row.expiresAt} /> },
+    {
+      key: 'expires_at',
+      header: t('expires'),
+      sortable: false,
+      mobile: 'meta',
+      cardText: (row) => row.expiresAt?.slice(0, 10),
+      render: (row) => <Timestamp value={row.expiresAt} />,
+    },
   ]
   const create = (
     <PermissionGate allowed={canManage}>
@@ -66,7 +80,7 @@ export function ReservationsPage({ state }: { state: UrlState }) {
     <ResourcePage
       title={t('title')}
       description={t('description')}
-      actions={create}
+      primaryAction={create}
       spec={spec}
       list={list}
       rows={rows}
@@ -91,12 +105,12 @@ export function ReservationsPage({ state }: { state: UrlState }) {
             eyebrow={t('title')}
             title={<Money minor={selected.amount?.amount ?? 0} currency={selected.amount?.currency} />}
             description={<StatusBadge status={selected.status} />}
-            footer={
+            actions={
               <PermissionGate allowed={canManage && selected.status === 'HELD'}>
-                <Button variant="outline" size="sm" icon="check" onClick={() => setDialog('capture')}>
+                <Button variant="outline" icon="check" onClick={() => setDialog('capture')}>
                   {t('capture')}
                 </Button>
-                <Button variant="destructive" size="sm" icon="undo" onClick={() => setDialog('release')}>
+                <Button variant="danger" icon="undo" onClick={() => setDialog('release')}>
                   {t('release')}
                 </Button>
               </PermissionGate>
@@ -110,7 +124,7 @@ export function ReservationsPage({ state }: { state: UrlState }) {
                 />
               </DetailRow>
               <DetailRow label={tc('fields.wallet')}>
-                <IdValue value={selected.walletId} />
+                <CopyId value={selected.walletId ?? ''} />
               </DetailRow>
               <DetailRow label={tc('fields.reference')}>
                 <Maybe value={selected.reference} />
@@ -119,7 +133,7 @@ export function ReservationsPage({ state }: { state: UrlState }) {
                 <Timestamp value={selected.expiresAt} />
               </DetailRow>
               <DetailRow label={tc('fields.id')}>
-                <IdValue value={selected.id} />
+                <CopyId value={selected.id ?? ''} />
               </DetailRow>
             </DetailRows>
           </RecordSheet>

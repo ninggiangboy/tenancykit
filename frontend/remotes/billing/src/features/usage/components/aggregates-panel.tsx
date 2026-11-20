@@ -1,6 +1,6 @@
 import type { TotalResponse } from '@suite/api-client/billing'
 import { ErrorPanel, FormEntityPicker, FormField, rules, useZodForm } from '@suite/remote-kit'
-import { Button, Card, ChartFrame, DataTable, EmptyState } from '@suite/ui'
+import { Button, Card, ChartFrame, DataTable, EmptyState, formatUtcInput, parseUtcInput } from '@suite/ui'
 import { useId } from 'react'
 import { Bar, BarChart, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, XAxis, YAxis } from 'recharts'
 import { z } from 'zod'
@@ -8,18 +8,18 @@ import { useCustomerOptions } from '../../../components/lookups'
 import { useT } from '../../../i18n'
 import { useAggregates } from '../hooks'
 
+const utcInstant = () =>
+  rules
+    .text()
+    .refine((value) => parseUtcInput(value) !== null, { message: 'errors.utcFormat' })
+    .transform((value) => parseUtcInput(value) as string)
+
 const schema = z.object({
   customerId: rules.id(),
   metric: rules.optionalText(),
-  from: rules.text().transform((value) => new Date(value).toISOString()),
-  to: rules.text().transform((value) => new Date(value).toISOString()),
+  from: utcInstant(),
+  to: utcInstant(),
 })
-
-/** `datetime-local` wants local time without a zone. */
-function localInput(date: Date): string {
-  const offset = date.getTimezoneOffset() * 60_000
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16)
-}
 
 export function AggregatesPanel() {
   const t = useT('usage')
@@ -29,8 +29,8 @@ export function AggregatesPanel() {
   const form = useZodForm(schema, {
     customerId: '',
     metric: '',
-    from: localInput(new Date(now.getTime() - 30 * 24 * 3600_000)),
-    to: localInput(now),
+    from: formatUtcInput(new Date(now.getTime() - 30 * 24 * 3600_000)),
+    to: formatUtcInput(now),
   })
   const run = useAggregates()
   const totals = run.data ?? []
@@ -41,7 +41,7 @@ export function AggregatesPanel() {
         <form
           id={formId}
           noValidate
-          className="grid gap-3 sm:grid-cols-2"
+          className="grid gap-3 md:grid-cols-2"
           onSubmit={(event) => void form.handleSubmit((values) => run.mutate(values))(event)}
         >
           <FormEntityPicker
@@ -51,8 +51,8 @@ export function AggregatesPanel() {
             useOptions={useCustomerOptions}
           />
           <FormField control={form.control} name="metric" label={t('metric')} mono optional />
-          <FormField control={form.control} name="from" label={t('from')} type="datetime-local" />
-          <FormField control={form.control} name="to" label={t('to')} type="datetime-local" />
+          <FormField control={form.control} name="from" label={t('from')} type="datetime-utc" />
+          <FormField control={form.control} name="to" label={t('to')} type="datetime-utc" />
         </form>
         <div className="mt-4 flex justify-end">
           <Button type="submit" form={formId} loading={run.isPending}>
@@ -95,10 +95,10 @@ function Totals({ totals }: { totals: TotalResponse[] }) {
       <div className="mt-4">
         <DataTable
           columns={[
-            { key: 'metric', header: t('metric'), mono: true },
-            { key: 'quantity', header: t('quantity'), align: 'end' },
-            { key: 'unit', header: t('unit') },
-            { key: 'events', header: t('events'), align: 'end' },
+            { key: 'metric', header: t('metric'), mono: true, mobile: 'primary' },
+            { key: 'quantity', header: t('quantity'), align: 'end', mobile: 'secondary' },
+            { key: 'unit', header: t('unit'), mobile: 'secondary' },
+            { key: 'events', header: t('events'), align: 'end', mobile: 'meta' },
           ]}
           rows={data}
           rowKey={(row) => row.metric}

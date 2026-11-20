@@ -15,9 +15,9 @@ const rows: Invoice[] = [
 ]
 
 const columns: DataTableColumn<Invoice>[] = [
-  { key: 'id', header: 'Invoice', render: (row) => row.id },
-  { key: 'total', header: 'Total', align: 'end', sortable: true, render: (row) => row.total },
-  { key: 'status', header: 'Status', render: (row) => row.status },
+  { key: 'id', header: 'Invoice', mobile: 'primary', render: (row) => row.id },
+  { key: 'total', header: 'Total', mobile: 'meta', align: 'end', sortable: true, render: (row) => row.total },
+  { key: 'status', header: 'Status', mobile: 'badge', render: (row) => row.status },
 ]
 
 describe('DataTable', () => {

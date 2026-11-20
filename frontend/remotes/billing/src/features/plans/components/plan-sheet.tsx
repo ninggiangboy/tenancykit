@@ -1,6 +1,6 @@
 import type { PlanResponse, RuleDto } from '@suite/api-client/billing'
-import { DetailRow, DetailRows, IdValue, RecordSheet, Section, Timestamp } from '@suite/remote-kit'
-import { Button, PermissionGate, StatusBadge } from '@suite/ui'
+import { DetailRow, DetailRows, RecordSheet, Section, Timestamp } from '@suite/remote-kit'
+import { Button, CopyId, PermissionGate, StatusBadge } from '@suite/ui'
 import { useState } from 'react'
 import { useEnumLabel } from '../../../components/facets'
 import { useT } from '../../../i18n'
@@ -44,12 +44,12 @@ export function PlanSheet({ plan, onClose, onPrev, onNext }: PlanSheetProps) {
         description={<span className="font-mono">{plan.code}</span>}
         onPrev={onPrev}
         onNext={onNext}
-        footer={
+        actions={
           <PermissionGate allowed={canManage && !retired}>
-            <Button variant="outline" size="sm" icon="plus" onClick={() => setDialog('publish')}>
+            <Button variant="outline" icon="plus" onClick={() => setDialog('publish')}>
               {t('publish')}
             </Button>
-            <Button variant="destructive" size="sm" icon="ban" onClick={() => setDialog('retire')}>
+            <Button variant="danger" icon="ban" onClick={() => setDialog('retire')}>
               {t('retire')}
             </Button>
           </PermissionGate>
@@ -66,7 +66,7 @@ export function PlanSheet({ plan, onClose, onPrev, onNext }: PlanSheetProps) {
               <Timestamp value={plan.createdAt} />
             </DetailRow>
             <DetailRow label={tc('fields.id')}>
-              <IdValue value={plan.id} />
+              <CopyId value={plan.id ?? ''} />
             </DetailRow>
           </DetailRows>
           <Section title={t('versions')}>
