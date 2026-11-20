@@ -49,7 +49,13 @@ export function CopyId({ value, children, mono = true, onCopy, className }: Copy
       <Icon
         name={copied ? 'check' : 'copy'}
         size={12}
-        className={cn('shrink-0 text-muted-foreground', copied && 'text-success')}
+        className={cn(
+          'shrink-0 text-muted-foreground transition-[opacity,width,margin] duration-[120ms]',
+          'w-0 -ml-1.5 opacity-0 group-hover:ml-0 group-hover:w-3.5 group-hover:opacity-100',
+          'group-focus-visible:ml-0 group-focus-visible:w-3.5 group-focus-visible:opacity-100',
+          '[@media(hover:none)]:ml-0 [@media(hover:none)]:w-3.5 [@media(hover:none)]:opacity-100',
+          copied && 'ml-0 w-3.5 text-success opacity-100',
+        )}
       />
     </button>
   )

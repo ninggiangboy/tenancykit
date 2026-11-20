@@ -14,8 +14,8 @@ export interface TabsProps {
   value?: string
   defaultValue?: string
   onChange?: (id: string) => void
-  /** Segmented views of one list, or a line of sections of one record. */
-  variant?: 'segmented' | 'line'
+  /** Saved views of one list, or segmented views, or a line of sections of one record. */
+  variant?: 'tiles' | 'segmented' | 'line'
   label?: string
   className?: string
 }
@@ -35,6 +35,8 @@ export function Tabs({ items, value, defaultValue, onChange, variant = 'segmente
           'inline-flex items-center gap-1',
           variant === 'segmented' && 'self-start rounded-lg border border-border bg-muted p-0.5',
           variant === 'line' && 'border-b border-border',
+          variant === 'tiles' &&
+            'grid w-full gap-3 [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))] max-md:flex max-md:gap-2 max-md:overflow-x-auto',
         )}
       >
         {items.map((item) => (
@@ -51,12 +53,22 @@ export function Tabs({ items, value, defaultValue, onChange, variant = 'segmente
               variant === 'segmented' && 'data-[state=active]:bg-background data-[state=active]:shadow-sm',
               variant === 'line' &&
                 '-mb-px rounded-none border-b-2 border-transparent px-2 data-[state=active]:border-foreground',
+              variant === 'tiles' &&
+                'h-auto flex-col items-start gap-0.5 rounded-lg bg-card px-3.5 py-3 text-small text-muted-foreground shadow-[0_0_0_1px_var(--border)] data-[state=active]:text-primary data-[state=active]:shadow-[0_0_0_2px_var(--primary)] max-md:h-9 max-md:flex-row max-md:items-center max-md:gap-1.5 max-md:rounded-full max-md:px-3.5 max-md:data-[state=active]:bg-app-accent-soft max-md:data-[state=active]:shadow-none',
             )}
           >
             {item.icon && <Icon name={item.icon} size={14} />}
             {item.label}
             {item.count !== undefined && (
-              <span className="rounded-full bg-secondary px-1.5 text-caption text-muted-foreground">{item.count}</span>
+              <span
+                className={cn(
+                  'rounded-full bg-secondary px-1.5 text-caption text-muted-foreground',
+                  variant === 'tiles' &&
+                    'rounded-none bg-transparent p-0 text-figure text-foreground tabular-nums max-md:text-small max-md:font-semibold',
+                )}
+              >
+                {variant === 'tiles' ? item.count.toLocaleString('en-US') : item.count}
+              </span>
             )}
           </TabsPrimitive.Trigger>
         ))}

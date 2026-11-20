@@ -1,9 +1,10 @@
 import { cn } from './cn'
+import { Icon, type IconName } from './icon'
 
 export type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger'
 
 /**
- * How a suite enum shows up. An unmapped value keeps its word, humanized, with a neutral dot, so a new server value is
+ * How a suite enum shows up. An unmapped value keeps its word, humanized, in a neutral pill, so a new server value is
  * never invisible.
  */
 const tones: Record<string, Tone> = {
@@ -22,6 +23,11 @@ const tones: Record<string, Tone> = {
   REFUNDED: 'neutral',
   CANCELED: 'neutral',
   EXPIRED: 'danger',
+  UNCOLLECTIBLE: 'danger',
+  RETRYING: 'warning',
+  WAITING: 'warning',
+  COMPLETED: 'success',
+  ENDED: 'neutral',
   // access and platform
   ACTIVE: 'success',
   ENABLED: 'success',
@@ -41,37 +47,54 @@ const tones: Record<string, Tone> = {
   NO: 'neutral',
 }
 
-const toneClass: Record<Tone, string> = {
-  neutral: 'bg-muted-foreground',
-  info: 'bg-info',
-  success: 'bg-success',
-  warning: 'bg-warning',
-  danger: 'bg-destructive',
+const pillClass: Record<Tone, string> = {
+  neutral: 'bg-neutral-soft text-muted-foreground',
+  info: 'bg-info-soft text-info',
+  success: 'bg-success-soft text-success',
+  warning: 'bg-warning-soft text-warning',
+  danger: 'bg-destructive-soft text-destructive',
+}
+
+/** The icon says the tone without colour, so the pill still reads for a person who cannot tell the tints apart. */
+const toneIcon: Partial<Record<Tone, IconName>> = {
+  info: 'clock',
+  success: 'check',
+  warning: 'alert',
+  danger: 'x-circle',
 }
 
 export interface StatusBadgeProps {
   /** A suite enum value such as `PAID`; its tone comes from the map. */
   status?: string
   tone?: Tone
-  variant?: 'outline' | 'plain'
+  /** `plain` is muted text with no pill and no icon. */
+  variant?: 'pill' | 'plain'
   children?: React.ReactNode
   className?: string
 }
 
-/** A coloured dot and a word, in an outlined pill. Never a block of colour. */
-export function StatusBadge({ status, tone, variant = 'outline', children, className }: StatusBadgeProps) {
+/** A tinted pill with an icon and a word. Never colour alone. */
+export function StatusBadge({ status, tone, variant = 'pill', children, className }: StatusBadgeProps) {
   const resolved = tone ?? (status ? (tones[status] ?? 'neutral') : 'neutral')
   const word = children ?? (status ? humanize(status) : '')
+  const icon = toneIcon[resolved]
+  if (variant === 'plain') {
+    return (
+      <span className={cn('text-small text-muted-foreground', className)} data-tone={resolved}>
+        {word}
+      </span>
+    )
+  }
   return (
     <span
       className={cn(
-        'inline-flex h-5 items-center gap-1.5 rounded-full px-2 text-caption text-foreground',
-        variant === 'outline' ? 'border border-border bg-background' : 'bg-muted',
+        'inline-flex h-[22px] items-center gap-1 rounded-md px-2 text-caption font-semibold',
+        pillClass[resolved],
         className,
       )}
       data-tone={resolved}
     >
-      <span aria-hidden className={cn('size-1.5 rounded-full', toneClass[resolved])} />
+      {icon && <Icon name={icon} size={12} strokeWidth={2.5} aria-hidden />}
       {word}
     </span>
   )

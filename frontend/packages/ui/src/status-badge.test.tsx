@@ -14,13 +14,26 @@ describe('StatusBadge', () => {
     expect(screen.getByText('Waiting for something').closest('[data-tone]')).toHaveAttribute('data-tone', 'neutral')
   })
 
+  it('tints the pill with the tone and shows its icon', () => {
+    const { container } = render(<StatusBadge status="PAID" />)
+    const badge = screen.getByText('Paid').closest('[data-tone]')
+    expect(badge).toHaveClass('bg-success-soft')
+    expect(container.querySelector('svg')).not.toBeNull()
+  })
+
+  it('has no icon for a neutral tone', () => {
+    const { container } = render(<StatusBadge status="DRAFT" />)
+    expect(container.querySelector('svg')).toBeNull()
+  })
+
   it('takes an explicit tone and its own children', () => {
-    render(
+    const { container } = render(
       <StatusBadge tone="danger" variant="plain">
         Expiring
       </StatusBadge>,
     )
     expect(screen.getByText('Expiring').closest('[data-tone]')).toHaveAttribute('data-tone', 'danger')
+    expect(container.querySelector('svg')).toBeNull()
   })
 
   it('does not touch prose that is already a sentence', () => {

@@ -3,13 +3,32 @@ import { cn } from './cn'
 import { Icon, type IconName } from './icon'
 import { useUiMessages } from './messages'
 
+const utcInputProps = {
+  inputMode: 'numeric',
+  placeholder: 'YYYY-MM-DD HH:mm',
+  pattern: '\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}',
+  autoComplete: 'off',
+} as const
+
 export interface FieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'prefix'> {
   label: ReactNode
   hideLabel?: boolean
   hint?: ReactNode
   error?: ReactNode
   optional?: boolean
-  type?: 'text' | 'email' | 'number' | 'password' | 'search' | 'url' | 'date' | 'datetime-local' | 'select' | 'textarea'
+  // datetime-local is deprecated: it shows the viewer's local time; use datetime-utc.
+  type?:
+    | 'text'
+    | 'email'
+    | 'number'
+    | 'password'
+    | 'search'
+    | 'url'
+    | 'date'
+    | 'datetime-local'
+    | 'datetime-utc'
+    | 'select'
+    | 'textarea'
   options?: Array<string | { value: string; label: string }>
   prefix?: ReactNode
   suffix?: ReactNode
@@ -50,7 +69,8 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
     'w-full rounded-md border bg-background text-body text-foreground shadow-xs placeholder:text-muted-foreground',
     'focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring-halo',
     'disabled:cursor-not-allowed disabled:opacity-50',
-    size === 'sm' ? 'h-7 px-2' : 'h-8 px-2.5',
+    size === 'sm' ? 'h-(--size-control-sm) px-2.5' : 'h-(--size-control-md) px-3',
+    'max-md:text-base',
     mono && 'font-mono text-code',
     error ? 'border-destructive' : 'border-input',
     prefix && 'pl-7',
@@ -103,10 +123,11 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
           <input
             ref={ref}
             id={controlId}
-            type={type}
+            type={type === 'datetime-utc' ? 'text' : type}
             aria-describedby={describedBy}
             aria-invalid={error ? true : undefined}
             className={shared}
+            {...(type === 'datetime-utc' ? utcInputProps : {})}
             {...props}
           />
         )}

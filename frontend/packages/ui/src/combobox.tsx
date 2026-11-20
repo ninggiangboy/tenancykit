@@ -94,7 +94,7 @@ export function Combobox({
           aria-invalid={error ? true : undefined}
           aria-describedby={noteId}
           className={cn(
-            'flex h-8 w-full items-center gap-2 rounded-md border bg-background px-2.5 text-left text-body shadow-xs',
+            'flex h-(--size-control-md) w-full items-center gap-2 rounded-md border bg-background px-2.5 text-left text-body shadow-xs max-md:text-base',
             'focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring-halo',
             'disabled:cursor-not-allowed disabled:opacity-50',
             error ? 'border-destructive' : 'border-input',
@@ -124,7 +124,7 @@ export function Combobox({
                     onSearch?.(next)
                   }}
                   placeholder={t('action.search')}
-                  className="h-7 w-full bg-transparent text-small outline-none placeholder:text-muted-foreground"
+                  className="h-(--size-control-sm) w-full bg-transparent text-small outline-none placeholder:text-muted-foreground"
                 />
                 {loading && <Icon name="loader" size={14} className="animate-spin text-muted-foreground" />}
               </div>
