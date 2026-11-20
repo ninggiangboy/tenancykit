@@ -34,6 +34,20 @@ export interface CommandItem {
   onSelect: () => void
 }
 
+/** One screen of a remote; `to` is relative to the remote's basepath, for example `/customers`. */
+export interface NavItem {
+  id: string
+  label: string
+  to: string
+}
+
+/** A titled group of a remote's screens; the shell lists them under the app in its sidebar. */
+export interface NavSection {
+  id: string
+  label?: string
+  items: NavItem[]
+}
+
 /**
  * What a shell gives a remote. The remote never imports the shell, the auth library or another remote: this object and
  * `@suite/ui` are the whole seam.
@@ -53,6 +67,12 @@ export interface ShellContext {
   navigate: (to: string) => void
   /** Registers palette items; returns the removal. A remote calls it on mount and removes on unmount. */
   registerCommands: (items: CommandItem[]) => () => void
+  /**
+   * Hands the shell the remote's screens for its sidebar and breadcrumb; returns the removal. Optional on both sides:
+   * a shell without it leaves the remote to render its own section nav, and a remote that never calls it shows none in
+   * the sidebar. Adding it did not change the SDK major.
+   */
+  registerNavigation?: (sections: NavSection[]) => () => void
 }
 
 /** What a remote module must export from its `./app` entry. */

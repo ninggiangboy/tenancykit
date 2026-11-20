@@ -14,6 +14,7 @@
     "@fontsource-variable/inter": "catalog:",
     "@fontsource/be-vietnam-pro": "catalog:",
     "@suite/api-client": "workspace:*",
+    "@suite/remote-kit": "workspace:*",
     "@suite/shell-sdk": "workspace:*",
     "@suite/ui": "workspace:*",
     "@tanstack/react-query": "catalog:",
@@ -21,8 +22,10 @@
     "i18next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "react-hook-form": "catalog:",
     "react-i18next": "catalog:",
-    "recharts": "catalog:"
+    "recharts": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@suite/build-config": "workspace:*",
