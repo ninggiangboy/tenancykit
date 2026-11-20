@@ -1,7 +1,10 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog'
+import { useRef } from 'react'
 import { cn } from './cn'
 import { Icon } from './icon'
 import { useUiMessages } from './messages'
+import { useDragDismiss } from './use-drag-dismiss'
+import { PHONE_QUERY, useMedia } from './use-media'
 
 export interface SheetProps {
   open: boolean
@@ -11,6 +14,12 @@ export interface SheetProps {
   description?: React.ReactNode
   children?: React.ReactNode
   footer?: React.ReactNode
+  /** The primary action, up to one outline action, then a "…" menu; docked at the bottom on phones. */
+  actions?: React.ReactNode
+  /** The title is the record's key figure, such as the amount. */
+  figure?: boolean
+  /** `auto` is a side sheet from 768px up and a bottom sheet below it. */
+  placement?: 'auto' | 'side' | 'bottom'
   onPrev?: () => void
   onNext?: () => void
   modal?: boolean
@@ -21,7 +30,7 @@ export interface SheetProps {
 
 /**
  * Peek, do not navigate: the record opens beside the list, keeps its own URL, and steps to the previous and next record
- * without losing the filters underneath.
+ * without losing the filters underneath. On phones it rises from the bottom and follows a drag down.
  */
 export function Sheet({
   open,
@@ -31,18 +40,33 @@ export function Sheet({
   description,
   children,
   footer,
+  actions,
+  figure,
+  placement = 'auto',
   onPrev,
   onNext,
-  modal = false,
+  modal = true,
   contained,
   onInteractOutside,
 }: SheetProps) {
   const t = useUiMessages()
+  const phone = useMedia(PHONE_QUERY)
+  const panel = useRef<HTMLDivElement>(null)
+  const bottom = placement === 'bottom' || (placement === 'auto' && phone)
+  const drag = useDragDismiss(panel, onClose, bottom)
+  const iconButton = cn(
+    'flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground',
+    bottom ? 'size-11' : 'size-8',
+  )
+
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(next) => (next ? undefined : onClose())} modal={modal}>
       <DialogPrimitive.Portal container={contained ? document.body : undefined}>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay/40 data-[state=open]:animate-in" />
+        {modal && (
+          <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay backdrop-blur-[2px] data-[state=open]:animate-in" />
+        )}
         <DialogPrimitive.Content
+          ref={panel}
           onInteractOutside={onInteractOutside}
           // Focus lands on the panel itself, not on the first button (the "next record" arrow), so a keyboard user
           // starts at the top of the record and Esc still closes it.
@@ -52,49 +76,56 @@ export function Sheet({
           }}
           tabIndex={-1}
           className={cn(
-            'fixed inset-y-2 right-2 z-50 flex w-[calc(100%-1rem)] max-w-[460px] flex-col rounded-xl border border-border bg-popover text-popover-foreground shadow-lg outline-none',
+            'flex flex-col bg-popover text-popover-foreground outline-none',
+            bottom
+              ? 'fixed inset-x-0 bottom-0 z-50 h-[88dvh] rounded-t-[20px] pb-[env(safe-area-inset-bottom)] shadow-xl'
+              : 'fixed inset-y-2 right-2 z-50 w-[calc(100%-1rem)] max-w-[460px] rounded-xl border border-border shadow-lg',
           )}
         >
-          <header className="flex flex-col gap-1 border-b border-border p-4">
+          {bottom && (
+            <span
+              aria-hidden
+              className="mx-auto mt-2 h-[5px] w-10 shrink-0 touch-none rounded-full bg-input"
+              {...drag}
+            />
+          )}
+          <header className={cn('flex flex-col gap-1 border-b border-border p-4', bottom && 'touch-none')} {...drag}>
             <div className="flex items-center justify-between gap-2">
-              {eyebrow ? <span className="text-caption text-muted-foreground">{eyebrow}</span> : <span />}
+              {eyebrow ? <span className="text-small text-muted-foreground">{eyebrow}</span> : <span />}
               <div className="flex items-center gap-1">
-                {onPrev && (
-                  <button
-                    type="button"
-                    onClick={onPrev}
-                    aria-label={t('action.previous')}
-                    className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-                  >
+                {!bottom && onPrev && (
+                  <button type="button" onClick={onPrev} aria-label={t('action.previous')} className={iconButton}>
                     <Icon name="chevron-left" size={14} />
                   </button>
                 )}
-                {onNext && (
-                  <button
-                    type="button"
-                    onClick={onNext}
-                    aria-label={t('action.next')}
-                    className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-                  >
+                {!bottom && onNext && (
+                  <button type="button" onClick={onNext} aria-label={t('action.next')} className={iconButton}>
                     <Icon name="chevron-right" size={14} />
                   </button>
                 )}
-                <DialogPrimitive.Close
-                  aria-label={t('action.close')}
-                  className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-                >
+                <DialogPrimitive.Close aria-label={t('action.close')} className={iconButton}>
                   <Icon name="x" size={14} />
                 </DialogPrimitive.Close>
               </div>
             </div>
-            <DialogPrimitive.Title className="text-heading text-foreground">{title}</DialogPrimitive.Title>
+            <DialogPrimitive.Title className={cn('text-heading text-foreground', figure && 'text-metric tabular-nums')}>
+              {title}
+            </DialogPrimitive.Title>
             {description && (
-              <DialogPrimitive.Description className="text-small text-muted-foreground">
+              <DialogPrimitive.Description className="flex flex-wrap items-center gap-2 text-small text-muted-foreground">
                 {description}
               </DialogPrimitive.Description>
             )}
+            {actions && !bottom && <div className="mt-2 flex flex-wrap gap-2">{actions}</div>}
           </header>
-          <div className="flex-1 overflow-auto p-4">{children}</div>
+          <div className={cn('flex flex-1 flex-col gap-6 overflow-y-auto overscroll-contain', bottom ? 'p-4' : 'p-5')}>
+            {children}
+          </div>
+          {actions && bottom && (
+            <div className="flex gap-2 border-t border-border bg-popover px-4 py-3 [&_button]:h-11 [&_button]:flex-1 [&_button]:text-[15px] [&_button[aria-label]]:w-11 [&_button[aria-label]]:flex-none">
+              {actions}
+            </div>
+          )}
           {footer && <footer className="flex justify-end gap-2 border-t border-border p-3">{footer}</footer>}
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>

@@ -3,6 +3,8 @@ import { useEffect, useRef } from 'react'
 import { cn } from './cn'
 import { Icon } from './icon'
 import { useUiMessages } from './messages'
+import { useDragDismiss } from './use-drag-dismiss'
+import { PHONE_QUERY, useMedia } from './use-media'
 
 export interface DialogProps {
   open: boolean
@@ -34,6 +36,9 @@ export function Dialog({
   size = 'md',
 }: DialogProps) {
   const t = useUiMessages()
+  const phone = useMedia(PHONE_QUERY)
+  const panel = useRef<HTMLDivElement>(null)
+  const drag = useDragDismiss(panel, onClose, phone)
   // Radix restores focus to a Trigger; this dialog is opened by a caller's own button, so it remembers the element
   // that had focus when it opened and hands focus back to it on close.
   const opener = useRef<HTMLElement | null>(null)
@@ -48,6 +53,7 @@ export function Dialog({
       <DialogPrimitive.Portal container={contained ? document.body : undefined}>
         <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay data-[state=open]:animate-in" />
         <DialogPrimitive.Content
+          ref={panel}
           role={role}
           onCloseAutoFocus={(event) => {
             event.preventDefault()
@@ -55,10 +61,17 @@ export function Dialog({
           }}
           className={cn(
             'fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-popover p-5 text-popover-foreground shadow-xl',
-            size === 'lg' ? 'max-w-2xl' : 'max-w-md',
+            size === 'lg' ? 'max-w-[640px]' : 'max-w-[520px]',
+            'max-md:inset-x-0 max-md:bottom-0 max-md:top-auto max-md:left-0 max-md:w-full max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0',
+            'max-md:rounded-b-none max-md:rounded-t-[20px] max-md:max-h-[88dvh] max-md:pt-7 max-md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]',
           )}
         >
-          <div className="flex items-start justify-between gap-3">
+          <span
+            aria-hidden
+            className="md:hidden absolute top-2 left-1/2 -ml-5 h-[5px] w-10 rounded-full bg-input touch-none"
+            {...drag}
+          />
+          <div className="flex items-start justify-between gap-3" {...drag}>
             <div className="flex flex-col gap-1">
               <DialogPrimitive.Title className="text-heading text-foreground">{title}</DialogPrimitive.Title>
               {description && (
@@ -75,7 +88,11 @@ export function Dialog({
             </DialogPrimitive.Close>
           </div>
           {children && <div className="-mx-1 mt-4 min-h-0 overflow-auto px-1">{children}</div>}
-          {footer && <div className="mt-5 flex justify-end gap-2">{footer}</div>}
+          {footer && (
+            <div className="mt-5 flex justify-end gap-2 max-md:flex-col-reverse max-md:[&_button]:h-11 max-md:[&_button]:w-full">
+              {footer}
+            </div>
+          )}
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

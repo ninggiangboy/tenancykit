@@ -59,7 +59,7 @@ export function FormDialog<Input extends FieldValues, Output>({
       <form
         id={formId}
         noValidate
-        className={size === 'lg' ? 'grid gap-3 sm:grid-cols-2' : 'flex flex-col gap-3'}
+        className={size === 'lg' ? 'grid gap-3 md:grid-cols-2' : 'flex flex-col gap-3'}
         onSubmit={(event) => void form.handleSubmit(onSubmit)(event)}
       >
         {children}
