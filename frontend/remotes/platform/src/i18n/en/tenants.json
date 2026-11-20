@@ -18,5 +18,8 @@
   "appDisabled": "{{app}} disabled for {{tenant}}",
   "emptyTitle": "No tenants yet",
   "emptyHint": "Create the first tenant to give a team its console.",
-  "noApps": "No apps are enabled for this tenant."
+  "noApps": "No apps are enabled for this tenant.",
+  "search": "Search by tenant code",
+  "codeHint": "Lower-case letters, digits and dashes; it becomes the tenant host.",
+  "hostnamePlaceholder": "acme.example.com"
 }

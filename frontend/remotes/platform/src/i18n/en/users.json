@@ -22,5 +22,8 @@
   "granted": "Permission granted",
   "revoked": "Permission revoked",
   "emptyTitle": "No users yet",
-  "emptyHint": "Create a user to let someone sign in."
+  "emptyHint": "Create a user to let someone sign in.",
+  "search": "Search by display name",
+  "tenantHint": "Leave empty for a platform user.",
+  "statusUpdated": "Status updated"
 }

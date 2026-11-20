@@ -24,5 +24,8 @@
   "disabled": "Đã tắt hệ thống",
   "emptyTitle": "Chưa có hệ thống tenant",
   "emptyHint": "Tạo hệ thống tenant và phát hành thông tin xác thực đầu tiên.",
-  "emptyCredentials": "Hệ thống này chưa có thông tin xác thực."
+  "emptyCredentials": "Hệ thống này chưa có thông tin xác thực.",
+  "search": "Tìm theo tên hệ thống",
+  "scopesHint": "Các quyền mà credential này được dùng.",
+  "overlapHint": "Thời gian secret cũ còn dùng được, tính bằng phút."
 }

@@ -37,9 +37,9 @@ describe('roles page', () => {
     renderPage((state) => <RolesPage state={state} />, { permissions: allPlatformPermissions })
 
     await actor.click(await screen.findByText('Billing operator'))
-    const permissions = await screen.findByLabelText('Permissions')
-    await actor.clear(permissions)
-    await actor.type(permissions, 'billing:invoice:read\nbilling:invoice:manage')
+    await actor.click(await screen.findByLabelText('Add permission'))
+    await actor.type(await screen.findByPlaceholderText('Search'), 'billing:invoice:manage')
+    await actor.click(await screen.findByRole('option', { name: 'billing:invoice:manage' }))
     await actor.click(screen.getByRole('button', { name: /Save/ }))
 
     await waitFor(() => expect(body).toBeTruthy())

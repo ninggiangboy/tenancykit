@@ -14,5 +14,9 @@
   "disabled": "Remote disabled",
   "activated": "{{name}} now serves {{version}}",
   "versionCount": "{{count}} versions",
-  "audiences": "Audiences"
+  "audiences": "Audiences",
+  "search": "Search by remote name",
+  "viewAll": "All",
+  "viewEnabled": "Enabled",
+  "viewDisabled": "Disabled"
 }

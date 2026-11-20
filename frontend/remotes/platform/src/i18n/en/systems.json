@@ -24,5 +24,8 @@
   "disabled": "System disabled",
   "emptyTitle": "No tenant systems yet",
   "emptyHint": "Create a Tenant System and issue its first credential.",
-  "emptyCredentials": "This system has no credentials."
+  "emptyCredentials": "This system has no credentials.",
+  "search": "Search by system name",
+  "scopesHint": "The permissions this credential may use.",
+  "overlapHint": "How long the old secret keeps working, in minutes."
 }

@@ -1,1 +1,4 @@
 @import "@suite/ui/styles/theme.css";
+
+/* Tailwind's automatic scan stops at the project root, so the shared kit's utilities are named here. */
+@source "../../../packages/remote-kit/src/**/*.{ts,tsx}";

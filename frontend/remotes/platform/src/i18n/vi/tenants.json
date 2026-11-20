@@ -18,5 +18,8 @@
   "appDisabled": "Đã tắt {{app}} cho {{tenant}}",
   "emptyTitle": "Chưa có tenant",
   "emptyHint": "Tạo tenant đầu tiên để cấp console cho một nhóm.",
-  "noApps": "Tenant này chưa bật ứng dụng nào."
+  "noApps": "Tenant này chưa bật ứng dụng nào.",
+  "search": "Tìm theo mã tenant",
+  "codeHint": "Chữ thường, số và dấu gạch ngang; mã này thành host của tenant.",
+  "hostnamePlaceholder": "acme.example.com"
 }

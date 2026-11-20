@@ -7,11 +7,10 @@
   "name": "Tên vai trò",
   "renameTitle": "Đổi tên vai trò",
   "permissionsTitle": "Quyền",
-  "permissionsDescription": "Chọn các mã quyền vai trò cấp, rồi lưu.",
+  "permissionsDescription": "Thêm hoặc bỏ mã quyền rồi lưu.",
   "editing": "Đã đổi {{count}}",
   "assignTitle": "Gán vai trò",
-  "assignHint": "Nhập id của một người dùng trong cùng phạm vi.",
-  "userId": "ID người dùng",
+  "assignHint": "Chọn một người dùng trong phạm vi của vai trò này.",
   "assign": "Gán",
   "unassign": "Bỏ gán",
   "assignUser": "Gán người dùng",
@@ -25,5 +24,6 @@
   "emptyTitle": "Chưa có vai trò",
   "emptyHint": "Tạo vai trò và chọn các quyền nó cấp.",
   "permissionCount": "{{count}} quyền",
-  "codesHint": "Mỗi dòng một mã quyền."
+  "search": "Tìm theo tên vai trò",
+  "userPicker": "Người dùng"
 }

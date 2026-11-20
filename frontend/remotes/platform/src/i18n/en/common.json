@@ -100,5 +100,19 @@
   "language.vi": "Vietnamese",
   "nav.sections": "Sections",
   "state.notFound": "That page does not exist",
-  "state.notFoundHint": "Go back to a section above."
+  "state.notFoundHint": "Go back to a section above.",
+  "nav.organization": "Organization",
+  "nav.integrations": "Integrations",
+  "status.ACTIVE": "Active",
+  "status.DEACTIVATED": "Deactivated",
+  "status.DISABLED": "Disabled",
+  "status.REVOKED": "Revoked",
+  "scope.PLATFORM": "Platform",
+  "scope.TENANT": "Tenant",
+  "fields.domains": "Domains",
+  "fields.tenantCode": "Tenant",
+  "permissions.add": "Add permission",
+  "permissions.none": "No permissions yet.",
+  "permissions.remove": "Remove {{code}}",
+  "permissions.count": "{{count}} permissions"
 }

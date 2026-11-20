@@ -1,10 +1,11 @@
+import { RemoteProvider } from '@suite/remote-kit'
 import type { Locale, ShellContext } from '@suite/shell-sdk'
 import { ShellProvider } from '@suite/shell-sdk/react'
 import { type SearchRecord, type UrlState, urlState } from '@suite/ui'
 import { createBrowserHistory } from '@tanstack/react-router'
 import { type RenderResult, render } from '@testing-library/react'
 import { type ReactNode, useState } from 'react'
-import { RemoteProvider } from './lib/runtime'
+import { createI18n } from './i18n'
 
 export function shellContext(options: { permissions?: string[]; locale?: Locale } = {}): ShellContext {
   return {
@@ -46,7 +47,7 @@ export function renderPage(
   const ctx = shellContext(options)
   const result = render(
     <ShellProvider ctx={ctx}>
-      <RemoteProvider ctx={ctx} resolveBaseUrl={() => 'http://console.test/platform'}>
+      <RemoteProvider ctx={ctx} createI18n={createI18n} resolveBaseUrl={() => 'http://console.test/platform'}>
         <Harness initial={options.search ?? {}}>{page}</Harness>
       </RemoteProvider>
     </ShellProvider>,

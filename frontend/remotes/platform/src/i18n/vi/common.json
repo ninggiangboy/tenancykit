@@ -100,5 +100,19 @@
   "language.vi": "Tiếng Việt",
   "nav.sections": "Mục",
   "state.notFound": "Trang này không tồn tại",
-  "state.notFoundHint": "Quay lại một mục ở trên."
+  "state.notFoundHint": "Quay lại một mục ở trên.",
+  "nav.organization": "Tổ chức",
+  "nav.integrations": "Tích hợp",
+  "status.ACTIVE": "Đang hoạt động",
+  "status.DEACTIVATED": "Đã ngừng",
+  "status.DISABLED": "Đã tắt",
+  "status.REVOKED": "Đã thu hồi",
+  "scope.PLATFORM": "Nền tảng",
+  "scope.TENANT": "Tenant",
+  "fields.domains": "Tên miền",
+  "fields.tenantCode": "Tenant",
+  "permissions.add": "Thêm quyền",
+  "permissions.none": "Chưa có quyền nào.",
+  "permissions.remove": "Bỏ {{code}}",
+  "permissions.count": "{{count}} quyền"
 }

@@ -7,11 +7,10 @@
   "name": "Role name",
   "renameTitle": "Rename role",
   "permissionsTitle": "Permissions",
-  "permissionsDescription": "Check the codes the role grants, then save.",
+  "permissionsDescription": "Add or remove codes, then save.",
   "editing": "{{count}} changed",
   "assignTitle": "Assign a role",
-  "assignHint": "Enter the id of a user in this scope.",
-  "userId": "User ID",
+  "assignHint": "Pick a user in this role's scope.",
   "assign": "Assign",
   "unassign": "Unassign",
   "assignUser": "Assign user",
@@ -25,5 +24,6 @@
   "emptyTitle": "No roles yet",
   "emptyHint": "Create a role and choose the permissions it grants.",
   "permissionCount": "{{count}} permissions",
-  "codesHint": "One permission code per line."
+  "search": "Search by role name",
+  "userPicker": "User"
 }

@@ -14,5 +14,9 @@
   "disabled": "Đã tắt remote",
   "activated": "{{name}} đang phục vụ {{version}}",
   "versionCount": "{{count}} phiên bản",
-  "audiences": "Đối tượng"
+  "audiences": "Đối tượng",
+  "search": "Tìm theo tên remote",
+  "viewAll": "Tất cả",
+  "viewEnabled": "Đang bật",
+  "viewDisabled": "Đang tắt"
 }

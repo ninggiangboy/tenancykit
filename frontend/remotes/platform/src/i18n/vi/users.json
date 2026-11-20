@@ -22,5 +22,8 @@
   "granted": "Đã cấp quyền",
   "revoked": "Đã thu quyền",
   "emptyTitle": "Chưa có người dùng",
-  "emptyHint": "Tạo người dùng để ai đó đăng nhập."
+  "emptyHint": "Tạo người dùng để ai đó đăng nhập.",
+  "search": "Tìm theo tên hiển thị",
+  "tenantHint": "Để trống nếu là người dùng nền tảng.",
+  "statusUpdated": "Đã cập nhật trạng thái"
 }
