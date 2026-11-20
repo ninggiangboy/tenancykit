@@ -1,5 +1,6 @@
 {
   "title": "Roles",
+  "recordType": "Role",
   "description": "Permission sets a tenant or platform administrator can assign.",
   "create": "Create role",
   "createTitle": "Create role",

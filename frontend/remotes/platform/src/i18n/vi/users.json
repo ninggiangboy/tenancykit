@@ -1,5 +1,6 @@
 {
   "title": "Người dùng",
+  "recordType": "Người dùng",
   "description": "Những người đăng nhập console này, ở phạm vi nền tảng hoặc tenant.",
   "create": "Tạo người dùng",
   "createTitle": "Tạo người dùng",

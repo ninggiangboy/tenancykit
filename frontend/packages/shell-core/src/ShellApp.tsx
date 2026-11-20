@@ -19,7 +19,7 @@ import { Home, NotFound } from './frame/home'
 import { Palette } from './frame/palette'
 import { RemoteHost } from './frame/remote-host'
 import { Sidebar } from './frame/sidebar'
-import { createShellI18n } from './i18n'
+import { createShellI18n, type ShellMessageKey } from './i18n'
 import type { RemoteLoader } from './remote-loader.types'
 import { applyTheme, preferredLocale, preferredTheme, saveLocale, saveTheme } from './theme'
 
@@ -65,7 +65,7 @@ export function ShellApp({
   const [navigation, setNavigationState] = useState<Record<string, NavSection[]>>({})
   const [toasts, , dismissToast] = useToasts()
   const i18n = useMemo(() => createShellI18n(locale), [locale])
-  const t = useCallback((key: string) => String(i18n.t(key)), [i18n])
+  const t = useCallback((key: ShellMessageKey) => String(i18n.t(key)), [i18n])
   const queryClient = useMemo(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }), [])
 
   useEffect(() => {

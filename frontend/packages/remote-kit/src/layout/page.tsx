@@ -58,8 +58,9 @@ export function Section({
 }
 
 /** For a page the caller may not read: the backend would answer 403, so the screen says so before asking. */
-export function Forbidden({ bare }: { bare?: boolean }) {
+export function Forbidden({ bare, permission }: { bare?: boolean; permission?: string }) {
   const t = useKitT()
-  const state = <ErrorState forbidden title={t('state.forbidden')} description={t('state.errorHint')} />
+  const description = permission ? t('state.forbiddenHint', { permission }) : t('state.forbiddenHintGeneric')
+  const state = <ErrorState forbidden title={t('state.forbidden')} description={description} />
   return bare ? state : <div className="p-6">{state}</div>
 }

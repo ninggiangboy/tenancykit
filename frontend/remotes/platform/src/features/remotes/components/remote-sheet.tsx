@@ -24,7 +24,7 @@ export function RemoteSheet({ remote, state, canManage, onClose, onPrev, onNext 
     <RecordSheet
       open
       onClose={onClose}
-      eyebrow={t('title')}
+      eyebrow={t('recordType')}
       title={remote.title ?? remote.name ?? ''}
       description={<span className="font-mono">{remote.name}</span>}
       onPrev={onPrev}

@@ -25,7 +25,7 @@ export function SystemSheet({ system, onClose, onPrev, onNext }: SystemSheetProp
       <RecordSheet
         open
         onClose={onClose}
-        eyebrow={t('title')}
+        eyebrow={t('recordType')}
         title={system.name ?? ''}
         description={system.purpose}
         onPrev={onPrev}

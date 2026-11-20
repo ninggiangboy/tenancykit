@@ -97,7 +97,7 @@ export function createRemoteRouter(ctx: ShellContext, screens: Screen[], section
         if (!allowed(shell, screen)) {
           return (
             <Page title={t(screen.label)}>
-              <Forbidden bare />
+              <Forbidden bare permission={screen.permission} />
             </Page>
           )
         }

@@ -1,6 +1,6 @@
 import type { TenantResponse } from '@suite/api-client/platform'
 import { errorMessage, Section, useKitT } from '@suite/remote-kit'
-import { Alert, AppMark, humanize, PermissionGate, Skeleton, StatusBadge, Switch } from '@suite/ui'
+import { Alert, AppMark, humanize, PermissionGate, Skeleton, Switch } from '@suite/ui'
 import { useState } from 'react'
 import { useT } from '../../../i18n'
 import { useSetTenantApp, useTenantApps } from '../hooks/use-tenants'
@@ -8,7 +8,6 @@ import { useSetTenantApp, useTenantApps } from '../hooks/use-tenants'
 /** The tenant's app entitlements; a switch flips at once and settles when the server answers. */
 export function TenantApps({ tenant, canManage }: { tenant: TenantResponse; canManage: boolean }) {
   const t = useT('tenants')
-  const tc = useT('common')
   const tk = useKitT()
   const query = useTenantApps(tenant.id)
   const [pending, setPending] = useState<Record<string, boolean>>({})
@@ -58,9 +57,6 @@ export function TenantApps({ tenant, canManage }: { tenant: TenantResponse; canM
                       }}
                     />
                   </PermissionGate>
-                  <StatusBadge tone={enabled ? 'success' : 'neutral'}>
-                    {enabled ? tc('state.on') : tc('state.off')}
-                  </StatusBadge>
                 </span>
               </li>
             )

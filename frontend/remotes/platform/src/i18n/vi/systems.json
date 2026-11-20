@@ -1,5 +1,6 @@
 {
   "title": "Hệ thống tenant",
+  "recordType": "Hệ thống tenant",
   "description": "Các hệ thống gọi bộ ứng dụng thay cho tenant này, và thông tin xác thực của chúng.",
   "create": "Tạo hệ thống",
   "createTitle": "Tạo hệ thống",

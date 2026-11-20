@@ -2,6 +2,7 @@ import type { Locale, NavSection, ShellContext, Theme } from '@suite/shell-sdk'
 import { createContext, useContext } from 'react'
 import type { CommandRegistry } from '../commands'
 import type { ConsoleRemote, MeResponse } from '../contracts'
+import type { ShellMessageKey } from '../i18n'
 import type { RemoteLoader } from '../remote-loader.types'
 
 /** Everything the frame's parts read: who is signed in, which remotes exist, what each registered as its screens. */
@@ -23,7 +24,7 @@ export interface Frame {
   onLocale: (locale: Locale) => void
   onSignOut?: () => void
   onOpenPalette: () => void
-  t: (key: string) => string
+  t: (key: ShellMessageKey) => string
 }
 
 export const FrameContext = createContext<Frame | null>(null)

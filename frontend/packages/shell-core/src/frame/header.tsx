@@ -20,10 +20,6 @@ export function Header() {
         <Icon name="panel-left" size={14} />
       </button>
       <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-small">
-        <Link to="/" className="text-muted-foreground hover:text-foreground max-sm:hidden">
-          {definition.title}
-        </Link>
-        <Icon name="chevron-right" size={12} className="shrink-0 text-muted-foreground max-sm:hidden" />
         {place.remote ? (
           <>
             <Link

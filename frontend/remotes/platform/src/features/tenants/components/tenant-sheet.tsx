@@ -27,7 +27,7 @@ export function TenantSheet({ tenant, onClose, onPrev, onNext }: TenantSheetProp
       <RecordSheet
         open
         onClose={onClose}
-        eyebrow={t('title')}
+        eyebrow={t('recordType')}
         title={tenant.name ?? tenant.code ?? ''}
         description={<span className="font-mono">{tenant.code}</span>}
         onPrev={onPrev}

@@ -1,5 +1,6 @@
 {
   "title": "UI remote",
+  "recordType": "UI remote",
   "description": "Mọi remote console do CI đăng ký, kèm các phiên bản. Kích hoạt một phiên bản là điều đưa bản triển khai lên sống.",
   "enable": "Bật remote",
   "disable": "Tắt remote",

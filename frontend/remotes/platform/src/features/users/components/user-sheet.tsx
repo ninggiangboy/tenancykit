@@ -28,7 +28,7 @@ export function UserSheet({ user, tenantCode, onClose, onPrev, onNext }: UserShe
       <RecordSheet
         open
         onClose={onClose}
-        eyebrow={t('title')}
+        eyebrow={t('recordType')}
         title={user.displayName ?? ''}
         description={user.email}
         onPrev={onPrev}

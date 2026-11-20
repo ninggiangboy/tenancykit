@@ -1,5 +1,6 @@
 {
   "title": "UI remotes",
+  "recordType": "UI remote",
   "description": "Every console remote CI registered, with its versions. Activating a version is what makes a deploy live.",
   "enable": "Enable remote",
   "disable": "Disable remote",

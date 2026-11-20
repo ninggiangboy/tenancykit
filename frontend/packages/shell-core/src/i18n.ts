@@ -35,6 +35,8 @@ const en = {
   'shell.remoteFailed': 'This app could not load',
   'shell.remoteFailedHint': 'The console refused it or it failed to start. Retry, or tell an administrator.',
   'shell.callback': 'Signing you in',
+  'shell.open': 'Open',
+  'shell.sections': 'Screens',
 } as const
 
 export type ShellMessageKey = keyof typeof en
@@ -72,6 +74,8 @@ const vi: Record<ShellMessageKey, string> = {
   'shell.remoteFailed': 'Không tải được ứng dụng này',
   'shell.remoteFailedHint': 'Console đã từ chối hoặc ứng dụng lỗi khi khởi động. Thử lại hoặc báo quản trị viên.',
   'shell.callback': 'Đang đăng nhập',
+  'shell.open': 'Mở',
+  'shell.sections': 'Màn hình',
 }
 
 export const shellResources = {

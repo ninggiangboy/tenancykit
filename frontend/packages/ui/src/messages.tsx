@@ -34,7 +34,7 @@ export const en = {
   'unsaved.count': '{count} unsaved changes',
   'empty.title': 'Nothing here yet',
   'error.title': 'That did not work',
-  'error.hint': 'The request failed. Nothing changed.',
+  'error.hint': 'Retry. If it keeps failing, reload the page.',
   'error.forbidden': 'You do not have permission to do this.',
 } as const
 
@@ -70,7 +70,7 @@ export const vi: Record<UiMessageKey, string> = {
   'unsaved.count': '{count} thay đổi chưa lưu',
   'empty.title': 'Chưa có gì ở đây',
   'error.title': 'Không thực hiện được',
-  'error.hint': 'Yêu cầu thất bại. Không có gì thay đổi.',
+  'error.hint': 'Hãy thử lại. Nếu vẫn lỗi, tải lại trang.',
   'error.forbidden': 'Bạn không có quyền làm việc này.',
 }
 

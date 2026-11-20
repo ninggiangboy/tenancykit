@@ -1,5 +1,6 @@
 {
   "title": "Tenant",
+  "recordType": "Tenant",
   "description": "Mọi tenant trong bộ ứng dụng, kèm ứng dụng và tên miền của nó.",
   "create": "Tạo tenant",
   "createTitle": "Tạo tenant",

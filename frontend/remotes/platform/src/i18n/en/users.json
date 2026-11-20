@@ -1,5 +1,6 @@
 {
   "title": "Users",
+  "recordType": "User",
   "description": "The people who sign in to this console, at platform or tenant scope.",
   "create": "Create user",
   "createTitle": "Create user",

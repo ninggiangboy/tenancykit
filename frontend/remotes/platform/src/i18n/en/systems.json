@@ -1,5 +1,6 @@
 {
   "title": "Tenant systems",
+  "recordType": "Tenant system",
   "description": "The systems that call the suite on behalf of this tenant, and their credentials.",
   "create": "Create system",
   "createTitle": "Create system",

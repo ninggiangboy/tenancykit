@@ -1,5 +1,6 @@
 {
   "title": "Tenants",
+  "recordType": "Tenant",
   "description": "Every tenant in the suite, with its apps and domains.",
   "create": "Create tenant",
   "createTitle": "Create tenant",

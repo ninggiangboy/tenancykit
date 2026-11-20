@@ -1,5 +1,6 @@
 {
   "title": "Vai trò",
+  "recordType": "Vai trò",
   "description": "Tập quyền mà quản trị viên tenant hoặc nền tảng có thể gán.",
   "create": "Tạo vai trò",
   "createTitle": "Tạo vai trò",

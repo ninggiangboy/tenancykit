@@ -28,7 +28,7 @@ export function RoleSheet({ role, tenantCode, onClose, onPrev, onNext }: RoleShe
       <RecordSheet
         open
         onClose={onClose}
-        eyebrow={t('title')}
+        eyebrow={t('recordType')}
         title={role.name ?? ''}
         description={role.scope === 'TENANT' && tenantCode ? `${scope} · ${tenantCode}` : scope}
         onPrev={onPrev}
