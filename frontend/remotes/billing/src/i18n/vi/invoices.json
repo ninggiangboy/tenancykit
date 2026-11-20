@@ -4,7 +4,6 @@
   "create": "Tạo hoá đơn",
   "createTitle": "Tạo hoá đơn",
   "createHint": "Hoá đơn được tạo từ một khoản tính tiền.",
-  "chargeId": "ID khoản tính",
   "void": "Vô hiệu hoá hoá đơn",
   "voidReason": "Lý do vô hiệu",
   "uncollectible": "Đánh dấu khó đòi",
@@ -18,5 +17,13 @@
   "emptyHint": "Hoá đơn xuất hiện khi một khoản tính được xuất hoá đơn.",
   "voided": "Đã vô hiệu hoá hoá đơn",
   "uncollectibleDone": "Đã đánh dấu khó đòi",
-  "paid": "Đã ghi nhận thanh toán"
+  "paid": "Đã ghi nhận thanh toán",
+  "search": "Tìm theo số hoá đơn",
+  "viewAll": "Tất cả",
+  "viewOpen": "Chưa thanh toán",
+  "viewPaid": "Đã thanh toán",
+  "viewVoid": "Đã huỷ",
+  "issued": "Ngày phát hành (UTC)",
+  "charge": "Khoản phí",
+  "chargeHint": "Các khoản phí chưa lập hoá đơn hiện ở đây."
 }

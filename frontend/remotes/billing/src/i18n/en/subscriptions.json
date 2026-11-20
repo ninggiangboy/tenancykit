@@ -4,8 +4,6 @@
   "create": "Create subscription",
   "createTitle": "Create subscription",
   "createHint": "Pick a wallet and a pricing plan.",
-  "walletId": "Wallet ID",
-  "planId": "Plan ID",
   "cancel": "Cancel subscription",
   "history": "History",
   "cycle": "Cycle",
@@ -13,5 +11,6 @@
   "periods": "Periods charged",
   "emptyTitle": "No subscriptions yet",
   "emptyHint": "Subscribe a wallet to a pricing plan.",
-  "canceled": "Subscription cancelled"
+  "canceled": "Subscription cancelled",
+  "customerHint": "Narrows the wallets to this customer's."
 }

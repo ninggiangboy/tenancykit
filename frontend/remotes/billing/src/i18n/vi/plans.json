@@ -20,5 +20,16 @@
   "emptyHint": "Tạo gói, rồi phát hành phiên bản đầu tiên.",
   "created": "Đã tạo gói",
   "versionPublished": "Đã phát hành phiên bản",
-  "retired": "Đã ngừng gói"
+  "retired": "Đã ngừng gói",
+  "search": "Tìm theo mã gói",
+  "unit": "Đơn vị",
+  "increment": "Bước tính tiền",
+  "executionFee": "Phí mỗi lần chạy",
+  "fixedPrice": "Giá cố định",
+  "componentModel": "Thành phần theo mức dùng",
+  "priceHint": "Tính bằng đơn vị nhỏ nhất của tiền tệ (xu); giữ chính xác phần lẻ.",
+  "metricHint": "Chỉ số mức dùng mà giá này đếm, ví dụ api_calls.",
+  "unitHint": "Một đơn vị là gì, ví dụ call hoặc minute.",
+  "ruleSummaryFixed": "{{price}} mỗi {{cycle}}",
+  "modelHint": "Cách tính giá; mọi phiên bản của gói dùng chung."
 }

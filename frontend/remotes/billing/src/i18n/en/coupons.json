@@ -9,7 +9,6 @@
   "benefit": "Benefit",
   "percent": "Percent",
   "amountOff": "Amount off",
-  "credit": "Credit",
   "stackable": "Stackable",
   "maxRedemptions": "Maximum redemptions",
   "redeemBy": "Redeem by (UTC)",
@@ -23,5 +22,17 @@
   "deactivated": "Coupon deactivated",
   "codeAdded": "Code added",
   "revokeRedemptions": "Revoke redemptions",
-  "basisPointsHint": "Basis points: 1000 is 10%."
+  "percentHint": "For example 10 for 10% off.",
+  "benefit.PERCENT_OFF": "Percent off",
+  "benefit.AMOUNT_OFF": "Amount off",
+  "benefit.WALLET_CREDIT": "Wallet credit",
+  "maxPerCustomer": "Per customer",
+  "codeHint": "A code customers type; you can add more later.",
+  "codeMax": "Code redemptions",
+  "limitsHint": "Leave empty for no limit.",
+  "redemptions": "Redemptions",
+  "revokeHint": "Also take back the discount already granted.",
+  "codeDeactivated": "Code deactivated",
+  "deactivateCode": "Deactivate code",
+  "unlimited": "∞"
 }

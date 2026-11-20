@@ -18,5 +18,9 @@
   "updated": "Endpoint updated",
   "rotated": "Secret rotated",
   "emptyDeliveries": "This endpoint has no deliveries.",
-  "delivery": "Delivery"
+  "delivery": "Delivery",
+  "eventTypesHint": "The events this endpoint receives; pick from the list or type one.",
+  "statusCode": "Last answer",
+  "resent": "Delivery queued again",
+  "urlPlaceholder": "https://example.com/hooks/billing"
 }

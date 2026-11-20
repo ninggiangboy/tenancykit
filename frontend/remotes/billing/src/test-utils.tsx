@@ -1,10 +1,11 @@
+import { RemoteProvider } from '@suite/remote-kit'
 import type { Locale, ShellContext } from '@suite/shell-sdk'
 import { ShellProvider } from '@suite/shell-sdk/react'
 import { type SearchRecord, type UrlState, urlState } from '@suite/ui'
 import { createBrowserHistory } from '@tanstack/react-router'
 import { type RenderResult, render } from '@testing-library/react'
 import { type ReactNode, useState } from 'react'
-import { RemoteProvider } from './lib/runtime'
+import { createI18n } from './i18n'
 
 export function shellContext(options: { permissions?: string[]; locale?: Locale } = {}): ShellContext {
   return {
@@ -46,7 +47,7 @@ export function renderPage(
   const ctx = shellContext(options)
   const result = render(
     <ShellProvider ctx={ctx}>
-      <RemoteProvider ctx={ctx} resolveBaseUrl={() => 'http://console.test'}>
+      <RemoteProvider ctx={ctx} createI18n={createI18n} resolveBaseUrl={() => 'http://console.test'}>
         <Harness initial={options.search ?? {}}>{page}</Harness>
       </RemoteProvider>
     </ShellProvider>,
@@ -83,3 +84,20 @@ export const allBillingPermissions = [
   'billing:stripe:manage',
   'billing:portal-settings:manage',
 ]
+
+export const ids = {
+  customer: '00000000-0000-4000-8000-0000000000c1',
+  wallet: '00000000-0000-4000-8000-0000000000a1',
+  plan: '00000000-0000-4000-8000-0000000000b1',
+  coupon: '00000000-0000-4000-8000-0000000000d1',
+  charge: '00000000-0000-4000-8000-0000000000e1',
+}
+
+type Actor = ReturnType<typeof import('@testing-library/user-event').default.setup>
+
+/** Opens the combobox with this label and picks the option whose text matches. */
+export async function pick(actor: Actor, label: string, option: string | RegExp): Promise<void> {
+  const { screen } = await import('@testing-library/react')
+  await actor.click(await screen.findByLabelText(label))
+  await actor.click(await screen.findByRole('option', { name: option }))
+}

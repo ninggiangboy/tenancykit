@@ -47,7 +47,7 @@ const event = {
   id: 'ev1',
   stripeEventId: 'evt_1',
   type: 'invoice.paid',
-  status: 'PROCESSED',
+  status: 'DEAD',
   attempts: 1,
   receivedAt: '2026-11-17T09:00:00Z',
 }
@@ -74,8 +74,10 @@ describe('webhooks', () => {
     expect(await screen.findByText('https://example.com/hooks')).toBeInTheDocument()
     await actor.click(screen.getByRole('button', { name: 'Create endpoint' }))
     await actor.type(screen.getByLabelText('Endpoint URL'), 'https://example.com/hooks')
+    await actor.click(screen.getByLabelText('Event types'))
+    await actor.click(await screen.findByRole('option', { name: 'invoice.paid' }))
     await actor.click(within(lastDialog()).getByRole('button', { name: 'Create' }))
-    await waitFor(() => expect(body).toMatchObject({ url: 'https://example.com/hooks' }))
+    await waitFor(() => expect(body).toMatchObject({ url: 'https://example.com/hooks', eventTypes: ['invoice.paid'] }))
     expect(await screen.findByText('whsec_once')).toBeInTheDocument()
   })
 
@@ -132,6 +134,19 @@ describe('stripe', () => {
     const dialog = await screen.findByRole('alertdialog')
     await actor.click(within(dialog).getByRole('button', { name: 'Retry event' }))
     await waitFor(() => expect(retried).toBe(true))
+  })
+
+  it('offers only the two ways to connect while the tenant is not connected', async () => {
+    server.use(
+      http.get('http://console.test/api/v1/stripe/configuration', () =>
+        HttpResponse.json({ title: 'Not Found', status: 404 }, { status: 404 }),
+      ),
+    )
+    renderPage(() => <StripePage />, { permissions: allBillingPermissions })
+    expect(await screen.findByText('Connect a Stripe account')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Stripe onboarding' }).length).toBeGreaterThan(0)
+    expect(screen.queryByRole('button', { name: 'Disconnect' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Reconcile' })).not.toBeInTheDocument()
   })
 
   it('renders in Vietnamese', async () => {

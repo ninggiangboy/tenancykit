@@ -1,201 +1,135 @@
-import { permissions } from '@suite/api-client'
-import { attach, redeemByCode, revoke } from '@suite/api-client/billing'
-import { redemptionsOfWalletOptions } from '@suite/api-client/billing/query'
-import { usePermission } from '@suite/shell-sdk/react'
-import { Button, DataTable, Field, Money, PermissionGate, StatusBadge, type UrlState } from '@suite/ui'
-import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-import { useT } from '../../i18n'
+import type { RedemptionResponse } from '@suite/api-client/billing'
 import {
   ConfirmDialog,
   DetailRow,
   DetailRows,
-  FormDialog,
+  ErrorPanel,
   IdValue,
-  PageHeader,
+  Page,
   RecordSheet,
   Timestamp,
-} from '../../lib/page'
-import { useAction, useApi, useToast } from '../../lib/runtime'
+  useRecordSelection,
+} from '@suite/remote-kit'
+import {
+  Button,
+  Combobox,
+  DataTable,
+  type DataTableColumn,
+  EmptyState,
+  Money,
+  PermissionGate,
+  StatusBadge,
+  type UrlState,
+} from '@suite/ui'
+import { useState } from 'react'
+import { useWalletOptions } from '../../components/lookups'
+import { useT } from '../../i18n'
+import { AttachCouponDialog, RedeemCodeDialog } from './components/redemption-dialogs'
+import { useRedemptionPermissions, useRevokeRedemption, useWalletRedemptions } from './hooks'
 
+const keyOf = (row: RedemptionResponse) => row.id ?? ''
+
+/** Redemptions belong to a wallet, so the screen starts by picking one; the choice lives in the URL. */
 export function RedemptionsPage({ state }: { state: UrlState }) {
   const t = useT('redemptions')
   const tc = useT('common')
-  const toast = useToast()
-  const { billing } = useApi()
-  const canRead = usePermission(permissions.billing.redemptionsOfWallet)
-  const canManage = usePermission(permissions.billing.revoke)
-  const canRedeem = usePermission(permissions.billing.redeemByCode)
-  const [walletId, setWalletId] = useState(state.get('wallet') ?? '')
-  const activeWallet = state.get('wallet') ?? ''
-  const openId = state.get('open')
-
-  const query = useQuery({
-    ...redemptionsOfWalletOptions({
-      client: billing,
-      throwOnError: true,
-      path: { walletId: activeWallet },
-    }),
-    enabled: canRead && activeWallet !== '',
-  })
+  const walletId = state.get('wallet') ?? ''
+  const [search, setSearch] = useState('')
+  const wallets = useWalletOptions(search)
+  const query = useWalletRedemptions(walletId)
   const rows = query.data?.data ?? []
-  const selected = rows.find((row) => row.id === openId)
-  const selectedIndex = rows.findIndex((row) => row.id === openId)
+  const record = useRecordSelection(state, rows, keyOf)
+  const can = useRedemptionPermissions()
+  const [dialog, setDialog] = useState<'redeem' | 'attach' | 'revoke' | null>(null)
+  const revoke = useRevokeRedemption(() => setDialog(null))
+  const selected = record.selected
+  const uses = (row: RedemptionResponse) => `${row.applicationsUsed ?? 0}/${row.maxApplications ?? t('unlimited')}`
 
-  const [redeemOpen, setRedeemOpen] = useState(false)
-  const [attachOpen, setAttachOpen] = useState(false)
-  const [value, setValue] = useState('')
-  const [revokeOpen, setRevokeOpen] = useState(false)
-
-  const doRedeem = useAction(
-    (vars: { walletId: string; value: string }) =>
-      redeemByCode({
-        client: billing,
-        throwOnError: true,
-        path: { walletId: vars.walletId },
-        headers: { 'Idempotency-Key': globalThis.crypto.randomUUID() },
-        body: vars.value.startsWith('coupon:') ? { couponId: vars.value.slice(7) } : { code: vars.value },
-      }),
+  const columns: DataTableColumn<RedemptionResponse>[] = [
     {
-      onSuccess: () => {
-        setRedeemOpen(false)
-        setValue('')
-        toast({ title: t('redeemed'), tone: 'success' })
-      },
+      key: 'coupon',
+      header: t('coupon'),
+      render: (row) => <span className="text-body-strong text-foreground">{row.couponName}</span>,
     },
-  )
-
-  const doAttach = useAction(
-    (vars: { walletId: string; couponId: string }) =>
-      attach({
-        client: billing,
-        throwOnError: true,
-        path: { walletId: vars.walletId },
-        headers: { 'Idempotency-Key': globalThis.crypto.randomUUID() },
-        body: { couponId: vars.couponId },
-      }),
+    { key: 'status', header: tc('fields.status'), render: (row) => <StatusBadge status={row.status} /> },
     {
-      onSuccess: () => {
-        setAttachOpen(false)
-        setValue('')
-        toast({ title: t('attached'), tone: 'success' })
-      },
+      key: 'applications',
+      header: t('applications'),
+      render: (row) => <span className="tabular-nums">{uses(row)}</span>,
     },
-  )
-
-  const doRevoke = useAction(
-    (vars: { id: string }) => revoke({ client: billing, throwOnError: true, path: { id: vars.id } }),
     {
-      onSuccess: () => {
-        setRevokeOpen(false)
-        toast({ title: t('revoked'), tone: 'success' })
-      },
+      key: 'discount_total',
+      header: t('discountTotal'),
+      align: 'end',
+      render: (row) => <Money minor={row.discountTotal ?? 0} currency={row.currency} />,
     },
-  )
+    { key: 'redeemed_at', header: tc('fields.created'), render: (row) => <Timestamp value={row.redeemedAt} /> },
+  ]
 
   return (
-    <div className="flex flex-col">
-      <PageHeader title={t('title')} description={t('description')}>
-        <PermissionGate allowed={canRedeem && activeWallet !== ''}>
-          <Button variant="outline" icon="ticket" onClick={() => setRedeemOpen(true)}>
+    <Page
+      title={t('title')}
+      description={t('description')}
+      actions={
+        <PermissionGate allowed={can.redeem && walletId !== ''}>
+          <Button variant="outline" icon="ticket" onClick={() => setDialog('redeem')}>
             {t('redeem')}
           </Button>
-        </PermissionGate>
-        <PermissionGate allowed={canRedeem && activeWallet !== ''}>
-          <Button icon="plus" onClick={() => setAttachOpen(true)}>
+          <Button icon="plus" onClick={() => setDialog('attach')}>
             {t('attach')}
           </Button>
         </PermissionGate>
-      </PageHeader>
-      <div className="flex flex-col gap-3 px-6 pb-8">
-        <div className="flex items-end gap-2">
-          <Field
-            label={t('walletId')}
-            value={walletId}
-            onChange={(event) => setWalletId(event.target.value)}
-            mono
-            className="w-96"
-          />
-          <Button onClick={() => state.set({ wallet: walletId.trim() || null, open: null })}>
-            {tc('actions.search')}
-          </Button>
-        </div>
-        {activeWallet === '' ? (
-          <p className="text-small text-muted-foreground">{t('empty')}</p>
-        ) : (
-          <DataTable
-            columns={[
-              {
-                key: 'coupon',
-                header: tc('fields.name'),
-                render: (row) => (
-                  <span className="flex flex-col">
-                    <span className="text-body-strong text-foreground">{row.couponName}</span>
-                    <span className="font-mono text-caption text-muted-foreground">{row.couponId}</span>
-                  </span>
-                ),
-              },
-              { key: 'status', header: tc('fields.status'), render: (row) => <StatusBadge status={row.status} /> },
-              {
-                key: 'applications',
-                header: t('applications'),
-                render: (row) => <span>{`${row.applicationsUsed ?? 0}/${row.maxApplications ?? '∞'}`}</span>,
-              },
-              {
-                key: 'discount_total',
-                header: t('discountTotal'),
-                render: (row) => <Money minor={row.discountTotal ?? 0} currency={row.currency} />,
-              },
-              {
-                key: 'redeemed_at',
-                header: tc('fields.created'),
-                render: (row) => <Timestamp value={row.redeemedAt} />,
-              },
-            ]}
-            rows={rows}
-            rowKey={(row) => row.id ?? ''}
-            loading={query.isLoading}
-            onRowOpen={(row) => state.set({ open: row.id ?? null })}
-            empty={<p className="p-4 text-small text-muted-foreground">{t('emptyTitle')}</p>}
-          />
-        )}
+      }
+    >
+      <div className="max-w-md">
+        <Combobox
+          label={t('walletPicker')}
+          value={walletId || null}
+          onChange={(value) => state.set({ wallet: value, open: null })}
+          options={wallets.options}
+          loading={wallets.loading}
+          onSearch={setSearch}
+        />
       </div>
-
+      {walletId === '' ? (
+        <EmptyState icon="wallet" title={t('empty')} />
+      ) : query.error ? (
+        <ErrorPanel error={query.error} onRetry={() => void query.refetch()} />
+      ) : (
+        <DataTable
+          columns={columns}
+          rows={rows}
+          rowKey={keyOf}
+          loading={query.isLoading}
+          onRowOpen={(row) => record.open(keyOf(row))}
+          caption={t('title')}
+          empty={<EmptyState icon="ticket" title={t('emptyTitle')} description={t('emptyHint')} />}
+        />
+      )}
       {selected && (
         <RecordSheet
-          state={state}
-          open={Boolean(openId)}
+          open
+          onClose={record.close}
+          onPrev={record.prev}
+          onNext={record.next}
           eyebrow={t('title')}
           title={selected.couponName ?? ''}
-          description={selected.status}
-          onPrev={selectedIndex > 0 ? () => state.set({ open: rows[selectedIndex - 1]?.id ?? null }) : undefined}
-          onNext={
-            selectedIndex < rows.length - 1 ? () => state.set({ open: rows[selectedIndex + 1]?.id ?? null }) : undefined
-          }
+          description={<StatusBadge status={selected.status} />}
           footer={
-            <PermissionGate allowed={canManage && selected.status !== 'REVOKED'}>
-              <Button variant="destructive" size="sm" icon="ban" onClick={() => setRevokeOpen(true)}>
+            <PermissionGate allowed={can.revoke && selected.status !== 'REVOKED'}>
+              <Button variant="destructive" size="sm" icon="ban" onClick={() => setDialog('revoke')}>
                 {t('revoke')}
               </Button>
             </PermissionGate>
           }
         >
           <DetailRows>
-            <DetailRow label={tc('fields.name')}>{selected.couponName}</DetailRow>
-            <DetailRow label={tc('fields.wallet')}>
-              <IdValue value={selected.walletId} />
+            <DetailRow label={t('applications')}>{uses(selected)}</DetailRow>
+            <DetailRow label={t('discountTotal')}>
+              <Money minor={selected.discountTotal ?? 0} currency={selected.currency} />
             </DetailRow>
             <DetailRow label={tc('fields.customer')}>
               <IdValue value={selected.customerId} />
-            </DetailRow>
-            <DetailRow label={tc('fields.status')}>
-              <StatusBadge status={selected.status} />
-            </DetailRow>
-            <DetailRow label={t('applications')}>
-              {`${selected.applicationsUsed ?? 0}/${selected.maxApplications ?? '∞'}`}
-            </DetailRow>
-            <DetailRow label={t('discountTotal')}>
-              <Money minor={selected.discountTotal ?? 0} currency={selected.currency} />
             </DetailRow>
             <DetailRow label={tc('fields.created')}>
               <Timestamp value={selected.redeemedAt} />
@@ -206,53 +140,24 @@ export function RedemptionsPage({ state }: { state: UrlState }) {
           </DetailRows>
         </RecordSheet>
       )}
-
-      <FormDialog
-        open={redeemOpen}
-        onClose={() => setRedeemOpen(false)}
-        title={t('redeem')}
-        submitLabel={t('redeem')}
-        busy={doRedeem.isPending}
-        onSubmit={() => doRedeem.mutate({ walletId: activeWallet, value })}
-      >
-        <Field
-          label={t('redeem')}
-          value={value}
-          onChange={(event) => setValue(event.target.value)}
-          mono
-          hint={t('redeemHint')}
-        />
-      </FormDialog>
-
-      <FormDialog
-        open={attachOpen}
-        onClose={() => setAttachOpen(false)}
-        title={t('attach')}
-        submitLabel={t('attach')}
-        busy={doAttach.isPending}
-        onSubmit={() => doAttach.mutate({ walletId: activeWallet, couponId: value.trim() })}
-      >
-        <Field label={t('couponId')} value={value} onChange={(event) => setValue(event.target.value)} mono required />
-      </FormDialog>
-
+      <RedeemCodeDialog walletId={walletId} open={dialog === 'redeem'} onClose={() => setDialog(null)} />
+      <AttachCouponDialog walletId={walletId} open={dialog === 'attach'} onClose={() => setDialog(null)} />
       <ConfirmDialog
-        open={revokeOpen}
-        onClose={() => setRevokeOpen(false)}
+        open={dialog === 'revoke'}
+        onClose={() => setDialog(null)}
         title={tc('confirm.revokeRedemption')}
         description={tc('confirm.revokeRedemptionHint')}
         confirmLabel={t('revoke')}
-        busy={doRevoke.isPending}
-        onConfirm={() => {
-          if (selected?.id) doRevoke.mutate({ id: selected.id })
-        }}
+        busy={revoke.isPending}
+        onConfirm={() => revoke.mutate(selected?.id ?? '')}
         impact={[
-          { label: tc('fields.name'), value: selected?.couponName ?? '' },
+          { label: t('coupon'), value: selected?.couponName ?? '' },
           {
             label: t('discountTotal'),
             value: <Money minor={selected?.discountTotal ?? 0} currency={selected?.currency} />,
           },
         ]}
       />
-    </div>
+    </Page>
   )
 }

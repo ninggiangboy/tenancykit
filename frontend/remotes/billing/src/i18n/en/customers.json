@@ -12,5 +12,8 @@
   "emptyHint": "Create a customer to open a wallet and raise invoices.",
   "created": "Customer created",
   "updated": "Customer updated",
-  "deactivated": "Customer deactivated"
+  "deactivated": "Customer deactivated",
+  "search": "Search by display name",
+  "identityHint": "Link the customer to a Tenant System user so the system can bill them.",
+  "editTitle": "Edit customer"
 }

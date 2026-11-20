@@ -20,5 +20,16 @@
   "emptyHint": "Create a plan, then publish its first version.",
   "created": "Plan created",
   "versionPublished": "Version published",
-  "retired": "Plan retired"
+  "retired": "Plan retired",
+  "search": "Search by plan code",
+  "unit": "Unit",
+  "increment": "Billing increment",
+  "executionFee": "Execution fee",
+  "fixedPrice": "Fixed price",
+  "componentModel": "Usage component",
+  "priceHint": "In minor units of the plan currency (cents); fractions are kept exactly.",
+  "metricHint": "The usage metric this price counts, for example api_calls.",
+  "unitHint": "What one unit is, for example call or minute.",
+  "ruleSummaryFixed": "{{price}} per {{cycle}}",
+  "modelHint": "How the price is computed; every version of the plan uses it."
 }

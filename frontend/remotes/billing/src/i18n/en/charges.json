@@ -4,7 +4,6 @@
   "create": "Create charge",
   "createTitle": "Create charge",
   "createHint": "A charge debits the wallet at once.",
-  "walletId": "Wallet ID",
   "amount": "Amount",
   "currency": "Currency",
   "reference": "Reference",
@@ -12,5 +11,8 @@
   "discounts": "Discounts",
   "emptyTitle": "No charges yet",
   "emptyHint": "Charges appear here once money is taken from a wallet.",
-  "created": "Charge created"
+  "created": "Charge created",
+  "gross": "Before discounts",
+  "confirmHint": "The wallet is debited at once; a charge is reversed from the wallet ledger, not deleted.",
+  "failureReason": "Failure reason"
 }

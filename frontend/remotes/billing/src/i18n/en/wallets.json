@@ -4,7 +4,6 @@
   "create": "Open wallet",
   "createTitle": "Open wallet",
   "createHint": "A wallet belongs to one customer and one currency.",
-  "customerId": "Customer ID",
   "currency": "Currency",
   "mode": "Mode",
   "creditLimit": "Credit limit",
@@ -17,5 +16,8 @@
   "emptyHint": "Open a wallet for a customer.",
   "created": "Wallet created",
   "reversed": "Entry reversed",
-  "emptyLedger": "This wallet has no ledger entries."
+  "emptyLedger": "This wallet has no ledger entries.",
+  "creditLimitHint": "How far a postpaid wallet may go below zero.",
+  "modeHint": "Prepaid spends a balance; postpaid is billed afterwards up to its credit limit.",
+  "reverseHint": "Writes a reversing entry; the original stays in the ledger."
 }

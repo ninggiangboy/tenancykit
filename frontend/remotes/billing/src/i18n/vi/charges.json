@@ -4,7 +4,6 @@
   "create": "Tạo khoản tính",
   "createTitle": "Tạo khoản tính",
   "createHint": "Khoản tính trừ ví ngay.",
-  "walletId": "ID ví",
   "amount": "Số tiền",
   "currency": "Tiền tệ",
   "reference": "Tham chiếu",
@@ -12,5 +11,8 @@
   "discounts": "Giảm giá",
   "emptyTitle": "Chưa có khoản tính",
   "emptyHint": "Khoản tính xuất hiện khi tiền được lấy từ ví.",
-  "created": "Đã tạo khoản tính"
+  "created": "Đã tạo khoản tính",
+  "gross": "Trước giảm giá",
+  "confirmHint": "Ví bị trừ tiền ngay; khoản phí được đảo qua sổ cái của ví chứ không xoá.",
+  "failureReason": "Lý do thất bại"
 }

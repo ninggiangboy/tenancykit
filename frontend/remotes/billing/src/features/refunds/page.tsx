@@ -1,110 +1,92 @@
 import { permissions } from '@suite/api-client'
+import type { RefundResponse } from '@suite/api-client/billing'
 import { refunds1Options } from '@suite/api-client/billing/query'
-import { usePermission } from '@suite/shell-sdk/react'
-import { Money, StatusBadge, type UrlState } from '@suite/ui'
-import { useQuery } from '@tanstack/react-query'
-import { useT } from '../../i18n'
 import {
   asListQuery,
   DetailRow,
   DetailRows,
   IdValue,
-  type ListSpec,
+  Maybe,
   RecordSheet,
   ResourcePage,
   Timestamp,
+  useApi,
   useListState,
-} from '../../lib/page'
-import { useApi } from '../../lib/runtime'
+  useRecordSelection,
+} from '@suite/remote-kit'
+import { usePermission } from '@suite/shell-sdk/react'
+import { type DataTableColumn, Money, StatusBadge, type UrlState } from '@suite/ui'
+import { useQuery } from '@tanstack/react-query'
+import { useEnumFacet } from '../../components/facets'
+import { useT } from '../../i18n'
 
-const spec: ListSpec = {
-  sortable: ['amount', 'created_at', 'id'],
-  facets: [
-    {
-      key: 'status',
-      label: 'Status',
-      field: 'status',
-      options: [
-        { value: 'PENDING', label: 'Pending' },
-        { value: 'SUCCEEDED', label: 'Succeeded' },
-        { value: 'FAILED', label: 'Failed' },
-      ],
-    },
-  ],
-}
+const keyOf = (row: RefundResponse) => row.id ?? ''
 
+/** Read-only: a refund is requested from its payment, so this screen lists and explains them. */
 export function RefundsPage({ state }: { state: UrlState }) {
   const t = useT('refunds')
   const tc = useT('common')
   const { billing } = useApi()
-  const canRead = usePermission(permissions.billing.refunds_1)
+  const spec = {
+    sortable: ['amount', 'created_at', 'id'],
+    facets: [useEnumFacet('status', 'status', ['PENDING', 'SUCCEEDED', 'FAILED'])],
+  }
   const list = useListState(state, spec)
-
   const query = useQuery({
-    ...refunds1Options({
-      client: billing,
-      throwOnError: true,
-      query: asListQuery<Record<string, string>>(list.params),
-    }),
-    enabled: canRead,
+    ...refunds1Options({ client: billing, throwOnError: true, query: asListQuery(list.params) }),
+    enabled: usePermission(permissions.billing.refunds_1),
   })
   const rows = query.data?.data ?? []
-  const openId = state.get('open')
-  const selected = rows.find((row) => row.id === openId)
-  const selectedIndex = rows.findIndex((row) => row.id === openId)
+  const record = useRecordSelection(state, rows, keyOf)
+  const selected = record.selected
+
+  const columns: DataTableColumn<RefundResponse>[] = [
+    {
+      key: 'amount',
+      header: tc('fields.amount'),
+      align: 'end',
+      render: (row) => <Money minor={row.amount?.amount ?? 0} currency={row.amount?.currency} />,
+    },
+    { key: 'status', header: tc('fields.status'), render: (row) => <StatusBadge status={row.status} /> },
+    { key: 'reason', header: tc('fields.reason'), sortable: false, render: (row) => <Maybe value={row.reason} /> },
+    { key: 'payment_id', header: t('payment'), render: (row) => <IdValue value={row.paymentId} /> },
+    { key: 'created_at', header: tc('fields.created'), render: (row) => <Timestamp value={row.createdAt} /> },
+  ]
 
   return (
-    <>
-      <ResourcePage
-        title={t('title')}
-        description={t('description')}
-        state={state}
-        spec={spec}
-        rows={rows}
-        page={query.data?.page}
-        loading={query.isLoading}
-        error={query.error}
-        refetch={() => void query.refetch()}
-        rowKey={(row) => row.id ?? ''}
-        caption={t('title')}
-        emptyTitle={t('emptyTitle')}
-        emptyHint={t('emptyHint')}
-        columns={[
-          {
-            key: 'amount',
-            header: tc('fields.amount'),
-            render: (row) => <Money minor={row.amount?.amount ?? 0} currency={row.amount?.currency} />,
-          },
-          { key: 'status', header: tc('fields.status'), render: (row) => <StatusBadge status={row.status} /> },
-          { key: 'payment_id', header: t('payment'), render: (row) => <IdValue value={row.paymentId} /> },
-          { key: 'created_at', header: tc('fields.created'), render: (row) => <Timestamp value={row.createdAt} /> },
-          { key: 'id', header: tc('fields.id'), sortable: false, render: (row) => <IdValue value={row.id} /> },
-        ]}
-      />
-
+    <ResourcePage
+      title={t('title')}
+      description={t('description')}
+      spec={spec}
+      list={list}
+      rows={rows}
+      page={query.data?.page}
+      loading={query.isLoading}
+      error={query.error}
+      refetch={() => void query.refetch()}
+      columns={columns}
+      rowKey={keyOf}
+      onRowOpen={(row) => record.open(keyOf(row))}
+      emptyTitle={t('emptyTitle')}
+      emptyHint={t('emptyHint')}
+    >
       {selected && (
         <RecordSheet
-          state={state}
-          open={Boolean(openId)}
+          open
+          onClose={record.close}
+          onPrev={record.prev}
+          onNext={record.next}
           eyebrow={t('title')}
           title={<Money minor={selected.amount?.amount ?? 0} currency={selected.amount?.currency} />}
-          description={selected.reason}
-          onPrev={selectedIndex > 0 ? () => state.set({ open: rows[selectedIndex - 1]?.id ?? null }) : undefined}
-          onNext={
-            selectedIndex < rows.length - 1 ? () => state.set({ open: rows[selectedIndex + 1]?.id ?? null }) : undefined
-          }
+          description={<StatusBadge status={selected.status} />}
         >
           <DetailRows>
-            <DetailRow label={tc('fields.amount')}>
-              <Money minor={selected.amount?.amount ?? 0} currency={selected.amount?.currency} />
-            </DetailRow>
-            <DetailRow label={tc('fields.status')}>
-              <StatusBadge status={selected.status} />
-            </DetailRow>
             <DetailRow label={t('payment')}>
               <IdValue value={selected.paymentId} />
             </DetailRow>
-            <DetailRow label={tc('fields.reason')}>{selected.reason ?? tc('state.none')}</DetailRow>
+            <DetailRow label={tc('fields.reason')}>
+              <Maybe value={selected.reason} />
+            </DetailRow>
             <DetailRow label={tc('fields.created')}>
               <Timestamp value={selected.createdAt} />
             </DetailRow>
@@ -117,6 +99,6 @@ export function RefundsPage({ state }: { state: UrlState }) {
           </DetailRows>
         </RecordSheet>
       )}
-    </>
+    </ResourcePage>
   )
 }

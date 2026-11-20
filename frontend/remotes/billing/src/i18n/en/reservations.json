@@ -4,7 +4,6 @@
   "create": "Create reservation",
   "createTitle": "Create reservation",
   "createHint": "The amount is held until it is captured or released.",
-  "walletId": "Wallet ID",
   "amount": "Amount",
   "currency": "Currency",
   "reference": "Reference",
@@ -17,5 +16,8 @@
   "created": "Reservation created",
   "captured": "Reservation captured",
   "released": "Reservation released",
-  "ttl": "TTL seconds"
+  "ttl": "Hold for (seconds)",
+  "ttlHint": "Leave empty for the default hold time.",
+  "captureHint": "Charge up to the held amount; the rest is released.",
+  "overHeld": "More than the held amount"
 }

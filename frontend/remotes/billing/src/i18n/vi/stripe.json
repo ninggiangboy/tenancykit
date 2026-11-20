@@ -1,6 +1,6 @@
 {
   "title": "Stripe",
-  "description": "Kết nối Stripe của tenant, sự kiện và sự cố.",
+  "description": "Kết nối tài khoản Stripe của tenant, theo dõi sự kiện và xử lý sự cố.",
   "connect": "Kết nối Stripe",
   "connectHint": "Mở liên kết onboarding, rồi làm mới kết nối.",
   "direct": "Kết nối bằng khoá",
@@ -28,7 +28,7 @@
   "mismatches": "Sai lệch",
   "returnUrls": "URL trả về",
   "replaceUrls": "Thay URL trả về",
-  "urlsHint": "Mỗi dòng một URL.",
+  "urlsHint": "Nơi Stripe được đưa khách quay lại sau khi thanh toán. URL chính xác, chỉ https.",
   "connected": "Đã kết nối Stripe",
   "disconnected": "Đã ngắt Stripe",
   "refreshed": "Đã làm mới trạng thái",
@@ -36,5 +36,16 @@
   "resolved": "Đã xử lý sự cố",
   "retried": "Đã thử lại sự kiện",
   "saved": "Đã lưu",
-  "notConnected": "Tenant này chưa kết nối Stripe."
+  "notConnected": "Tenant này chưa kết nối Stripe.",
+  "connectTitle": "Kết nối tài khoản Stripe",
+  "connectIntro": "Thanh toán thẻ và nạp tiền đi qua tài khoản Stripe riêng của tenant. Chọn cách kết nối.",
+  "connectOnboarding": "Đăng ký qua Stripe",
+  "connectOnboardingHint": "Stripe lo phần đăng ký và xác minh; tenant quay lại đây khi xong.",
+  "connectKeys": "Dùng API key riêng",
+  "connectKeysHint": "Cho tài khoản tenant đang dùng; secret key chỉ gửi một lần và không hiện lại.",
+  "openOnboarding": "Mở trang đăng ký",
+  "connectionTitle": "Kết nối",
+  "resolvedBadge": "Đã xử lý",
+  "urlPlaceholder": "https://app.example.com/billing/return",
+  "secretMissing": "Chưa đặt webhook signing secret nên không xác minh được sự kiện Stripe. Hãy thêm nó từ dashboard Stripe."
 }

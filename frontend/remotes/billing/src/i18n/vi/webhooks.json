@@ -18,5 +18,9 @@
   "updated": "Đã cập nhật endpoint",
   "rotated": "Đã xoay vòng secret",
   "emptyDeliveries": "Endpoint này chưa có lượt giao.",
-  "delivery": "Lượt giao"
+  "delivery": "Lượt giao",
+  "eventTypesHint": "Các sự kiện endpoint này nhận; chọn trong danh sách hoặc tự nhập.",
+  "statusCode": "Phản hồi gần nhất",
+  "resent": "Đã xếp lại hàng gửi",
+  "urlPlaceholder": "https://example.com/hooks/billing"
 }

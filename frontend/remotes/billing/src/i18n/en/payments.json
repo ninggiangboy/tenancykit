@@ -7,11 +7,15 @@
   "refundable": "Remaining refundable",
   "topUp": "Top up",
   "topUpTitle": "Create top-up",
-  "walletId": "Wallet ID",
   "created": "Payment created",
   "emptyTitle": "No payments yet",
   "emptyHint": "A payment appears when a customer pays an invoice or tops up a wallet.",
   "refunded": "Refund requested",
   "remaining": "Remaining refundable",
-  "minorUnits": "Minor units, as the API stores them."
+  "amountHint": "In {{currency}}; at most what is still refundable.",
+  "topUpHint": "Creates a checkout the customer pays; the wallet is credited when the payment succeeds.",
+  "checkoutTitle": "Checkout created",
+  "checkoutHint": "Send this link to the customer, or open it to pay.",
+  "openCheckout": "Open checkout",
+  "overRefundable": "More than the refundable amount"
 }

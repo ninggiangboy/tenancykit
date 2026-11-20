@@ -4,7 +4,6 @@
   "create": "Mở ví",
   "createTitle": "Mở ví",
   "createHint": "Mỗi ví thuộc một khách hàng và một loại tiền.",
-  "customerId": "ID khách hàng",
   "currency": "Tiền tệ",
   "mode": "Chế độ",
   "creditLimit": "Hạn mức tín dụng",
@@ -17,5 +16,8 @@
   "emptyHint": "Mở ví cho một khách hàng.",
   "created": "Đã mở ví",
   "reversed": "Đã đảo bút toán",
-  "emptyLedger": "Ví này chưa có bút toán nào."
+  "emptyLedger": "Ví này chưa có bút toán nào.",
+  "creditLimitHint": "Ví trả sau được âm tối đa bao nhiêu.",
+  "modeHint": "Trả trước tiêu số dư; trả sau được tính tiền sau, tối đa đến hạn mức tín dụng.",
+  "reverseHint": "Ghi một bút toán đảo; bút toán gốc vẫn ở trong sổ."
 }

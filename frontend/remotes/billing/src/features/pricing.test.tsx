@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { allBillingPermissions, renderPage } from '../test-utils'
+import { allBillingPermissions, ids, pick, renderPage } from '../test-utils'
 import { CouponsPage } from './coupons/page'
 import { PlansPage } from './plans/page'
 import { PricingPage } from './pricing/page'
@@ -18,17 +18,23 @@ const plan = {
   id: 'plan1',
   code: 'GROWTH',
   name: 'Growth',
-  model: 'FLAT',
+  model: 'EVENT_BASED',
   currency: 'USD',
   status: 'ACTIVE',
   createdAt: '2026-11-17T09:00:00Z',
-  versions: [{ version: 1, billingCycle: 'MONTHLY', rule: { model: 'FLAT', metric: 'seats', unitPrice: '500' } }],
+  versions: [
+    {
+      version: 1,
+      billingCycle: 'MONTHLY',
+      rule: { model: 'EVENT_BASED', metric: 'seats', unit: 'seat', unitPrice: '500' },
+    },
+  ],
 }
 
 const coupon = {
   id: 'cp1',
   name: 'Launch',
-  benefitType: 'PERCENT',
+  benefitType: 'PERCENT_OFF',
   percentBasisPoints: 1000,
   currency: 'USD',
   status: 'ACTIVE',
@@ -72,9 +78,19 @@ describe('pricing plans', () => {
     await actor.click(screen.getByRole('button', { name: 'Create plan' }))
     await actor.type(screen.getByLabelText('Plan code'), 'STARTER')
     await actor.type(screen.getByLabelText('Name'), 'Starter')
+    // A subscription plan needs its fixed price before the form submits.
+    await actor.click(within(lastDialog()).getByRole('button', { name: 'Create' }))
+    expect(await screen.findByText('Required')).toBeInTheDocument()
+    expect(body).toBeUndefined()
+    await actor.type(screen.getByLabelText('Fixed price'), '1900')
     await actor.click(within(lastDialog()).getByRole('button', { name: 'Create' }))
     await waitFor(() =>
-      expect(body).toMatchObject({ code: 'STARTER', name: 'Starter', version: { billingCycle: 'MONTHLY' } }),
+      expect(body).toMatchObject({
+        code: 'STARTER',
+        name: 'Starter',
+        model: 'SUBSCRIPTION',
+        version: { billingCycle: 'MONTHLY', rule: { model: 'SUBSCRIPTION', fixedPrice: '1900' } },
+      }),
     )
   })
 
@@ -98,29 +114,40 @@ describe('pricing plans', () => {
     await actor.type(unitPrice, '750')
     const dialog = unitPrice.closest('[role="dialog"]') as HTMLElement
     await actor.click(within(dialog).getByRole('button', { name: 'Publish version' }))
-    await waitFor(() => expect(body).toMatchObject({ rule: { unitPrice: '750' } }))
+    await waitFor(() =>
+      expect(body).toMatchObject({
+        billingCycle: 'MONTHLY',
+        rule: { model: 'EVENT_BASED', metric: 'seats', unit: 'seat', unitPrice: '750' },
+      }),
+    )
   })
 })
 
 describe('pricing check', () => {
   it('renders the server estimate', async () => {
+    let body: unknown
     server.use(
-      http.post('http://console.test/api/v1/pricing/estimates', () =>
-        HttpResponse.json({
+      http.get('http://console.test/api/v1/pricing-plans', () =>
+        HttpResponse.json({ data: [{ ...plan, id: ids.plan }] }),
+      ),
+      http.post('http://console.test/api/v1/pricing/estimates', async ({ request }) => {
+        body = await request.json()
+        return HttpResponse.json({
           planId: 'plan1',
           planVersion: 1,
           amount: { amount: 2500, currency: 'USD' },
           grossAmount: { amount: 2500, currency: 'USD' },
           discounts: [],
           lines: [{ description: 'Seats', metric: 'seats', quantity: '5', amount: '25.00' }],
-        }),
-      ),
+        })
+      }),
     )
     const actor = userEvent.setup()
     renderPage((state) => <PricingPage state={state} />, { permissions: allBillingPermissions })
-    await actor.type(screen.getByLabelText('Plan ID'), 'plan1')
+    await pick(actor, 'Pricing plan', /Growth/)
     await actor.click(screen.getByRole('button', { name: 'Estimate' }))
     expect((await screen.findAllByText('25.00 USD')).length).toBeGreaterThan(0)
+    expect(body).toMatchObject({ planId: ids.plan, usage: [] })
   })
 })
 
@@ -152,8 +179,13 @@ describe('coupons', () => {
     expect(await screen.findByText('Launch')).toBeInTheDocument()
     await actor.click(screen.getByRole('button', { name: 'Create coupon' }))
     await actor.type(screen.getByLabelText('Name'), 'Launch')
+    const percent = screen.getByLabelText('Percent')
+    await actor.clear(percent)
+    await actor.type(percent, '15')
     await actor.click(within(lastDialog()).getByRole('button', { name: 'Create' }))
-    await waitFor(() => expect(couponBody).toMatchObject({ name: 'Launch' }))
+    await waitFor(() =>
+      expect(couponBody).toMatchObject({ name: 'Launch', benefit: { type: 'PERCENT_OFF', basisPoints: 1500 } }),
+    )
 
     await actor.click(screen.getByText('Launch'))
     expect(await screen.findByText('LAUNCH')).toBeInTheDocument()
@@ -167,7 +199,13 @@ describe('redemptions', () => {
   it('lists a wallet redemption and revokes it', async () => {
     let revoked: string | null = null
     server.use(
-      http.get('http://console.test/api/v1/wallets/w1/coupon-redemptions', () =>
+      http.get('http://console.test/api/v1/wallets', () =>
+        HttpResponse.json({ data: [{ id: ids.wallet, customerId: 'c1', currency: 'USD', mode: 'PREPAID' }] }),
+      ),
+      http.get('http://console.test/api/v1/customers', () =>
+        HttpResponse.json({ data: [{ id: 'c1', displayName: 'Ana' }] }),
+      ),
+      http.get(`http://console.test/api/v1/wallets/${ids.wallet}/coupon-redemptions`, () =>
         HttpResponse.json({ data: [redemption], page: { limit: 50, offset: 0, total: 1 } }),
       ),
       http.post('http://console.test/api/v1/coupon-redemptions/red1/revoke', () => {
@@ -177,8 +215,7 @@ describe('redemptions', () => {
     )
     const actor = userEvent.setup()
     renderPage((state) => <RedemptionsPage state={state} />, { permissions: allBillingPermissions })
-    await actor.type(screen.getByLabelText('Wallet ID'), 'w1')
-    await actor.click(screen.getByRole('button', { name: 'Search' }))
+    await pick(actor, 'Wallet', /Ana · USD/)
     await actor.click(await screen.findByText('Launch'))
     await actor.click(await screen.findByRole('button', { name: 'Revoke redemption' }))
     const dialog = await screen.findByRole('alertdialog')

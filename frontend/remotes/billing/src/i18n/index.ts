@@ -1,6 +1,6 @@
+import { createRemoteI18n, type Translate, useNamespace } from '@suite/remote-kit'
 import type { Locale } from '@suite/shell-sdk'
-import i18next, { type i18n } from 'i18next'
-import { useTranslation } from 'react-i18next'
+import type { i18n } from 'i18next'
 import chargesEn from './en/charges.json'
 import commonEn from './en/common.json'
 import couponsEn from './en/coupons.json'
@@ -75,38 +75,14 @@ export const resources = {
 } as const
 
 export type Namespace = keyof (typeof resources)['en']
+export type { Translate }
 
-const namespaces = Object.keys(resources.en) as Namespace[]
-
-/**
- * One instance per remote, created from the shell's locale. A missing key throws while tests run, so a page rendered
- * in both languages cannot quietly ship a raw key.
- */
-export function createRemoteI18n(locale: Locale): i18n {
-  const instance = i18next.createInstance()
-  const test = import.meta.env.MODE === 'test'
-  void instance.init({
-    lng: locale,
-    fallbackLng: 'en',
-    ns: namespaces,
-    defaultNS: 'common',
-    resources,
-    interpolation: { escapeValue: false },
-    initAsync: false,
-    saveMissing: test,
-    missingKeyHandler: test
-      ? (languages: readonly string[], namespace: string, key: string) => {
-          throw new Error(`missing i18n key "${namespace}:${key}" for ${languages.join(',')}`)
-        }
-      : undefined,
-  })
-  return instance
+/** This remote's catalogs plus the kit's, for the shell's locale. */
+export function createI18n(locale: Locale): i18n {
+  return createRemoteI18n(locale, resources)
 }
-
-export type Translate = (key: string, values?: Record<string, unknown>) => string
 
 /** The translator of one feature namespace. */
 export function useT(namespace: Namespace): Translate {
-  const { t } = useTranslation(namespace)
-  return t as unknown as Translate
+  return useNamespace(namespace)
 }

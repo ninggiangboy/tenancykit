@@ -1,7 +1,6 @@
 {
   "title": "Redemptions",
   "description": "Coupon redemptions per wallet.",
-  "walletId": "Wallet ID",
   "emptyTitle": "No redemptions",
   "emptyHint": "A wallet shows its redemptions once a code is redeemed.",
   "revoke": "Revoke redemption",
@@ -13,6 +12,10 @@
   "revoked": "Redemption revoked",
   "redeemed": "Code redeemed",
   "attached": "Coupon attached",
-  "couponId": "Coupon ID",
-  "redeemHint": "A promotion code, or coupon:<id>."
+  "redeemHint": "The code the customer typed.",
+  "walletPicker": "Wallet",
+  "redeemCode": "Promotion code",
+  "attachHint": "Grants the coupon to the wallet without a code.",
+  "coupon": "Coupon",
+  "unlimited": "∞"
 }

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { allBillingPermissions, renderPage } from '../test-utils'
+import { allBillingPermissions, ids, pick, renderPage } from '../test-utils'
 import { CustomersPage } from './customers/page'
 import { InvoicesPage } from './invoices/page'
 import { PaymentsPage } from './payments/page'
@@ -104,10 +104,13 @@ describe('payments', () => {
     renderPage((state) => <PaymentsPage state={state} />, { permissions: allBillingPermissions })
     await actor.click(await screen.findByText('10.00 USD'))
     await actor.click(await screen.findByRole('button', { name: 'Refund' }))
-    expect(await screen.findByLabelText('Refund amount')).toHaveValue(1000)
+    const amount = await screen.findByLabelText('Refund amount')
+    expect(amount).toHaveValue('10.00')
+    await actor.clear(amount)
+    await actor.type(amount, '4.50')
     const refundButtons = await screen.findAllByRole('button', { name: 'Refund' })
     await actor.click(refundButtons[refundButtons.length - 1] as HTMLElement)
-    await waitFor(() => expect(body).toMatchObject({ amount: 1000, currency: 'USD' }))
+    await waitFor(() => expect(body).toMatchObject({ amount: 450, currency: 'USD' }))
   })
 
   it('hides top-up without the create permission', async () => {
@@ -166,6 +169,15 @@ describe('subscriptions', () => {
       http.get('http://console.test/api/v1/subscriptions', () =>
         HttpResponse.json({ data: [subscription], page: { limit: 50, offset: 0, total: 1 } }),
       ),
+      http.get('http://console.test/api/v1/customers', () =>
+        HttpResponse.json({ data: [{ ...customer, id: ids.customer }] }),
+      ),
+      http.get('http://console.test/api/v1/wallets', () =>
+        HttpResponse.json({ data: [{ id: ids.wallet, customerId: ids.customer, currency: 'USD', mode: 'PREPAID' }] }),
+      ),
+      http.get('http://console.test/api/v1/pricing-plans', () =>
+        HttpResponse.json({ data: [{ id: ids.plan, code: 'GROWTH', name: 'Growth', status: 'ACTIVE' }] }),
+      ),
       http.post('http://console.test/api/v1/subscriptions', async ({ request }) => {
         body = await request.json()
         return HttpResponse.json(subscription, { status: 201 })
@@ -175,10 +187,10 @@ describe('subscriptions', () => {
     renderPage((state) => <SubscriptionsPage state={state} />, { permissions: allBillingPermissions })
     expect(await screen.findByText('GROWTH')).toBeInTheDocument()
     await actor.click(screen.getByRole('button', { name: 'Create subscription' }))
-    await actor.type(screen.getByLabelText('Wallet ID'), 'w1')
-    await actor.type(screen.getByLabelText('Plan ID'), 'plan1')
+    await pick(actor, 'Wallet', /Ana · USD/)
+    await pick(actor, 'Pricing plan', /Growth/)
     await actor.click(screen.getByRole('button', { name: 'Create' }))
-    await waitFor(() => expect(body).toEqual({ walletId: 'w1', planId: 'plan1' }))
+    await waitFor(() => expect(body).toEqual({ walletId: ids.wallet, planId: ids.plan }))
   })
 
   it('renders in Vietnamese', async () => {

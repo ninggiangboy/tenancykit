@@ -4,7 +4,6 @@
   "create": "Tạo đặt trước",
   "createTitle": "Tạo đặt trước",
   "createHint": "Số tiền được giữ cho đến khi giữ hoặc giải phóng.",
-  "walletId": "ID ví",
   "amount": "Số tiền",
   "currency": "Tiền tệ",
   "reference": "Tham chiếu",
@@ -17,5 +16,8 @@
   "created": "Đã tạo đặt trước",
   "captured": "Đã giữ tiền",
   "released": "Đã giải phóng",
-  "ttl": "TTL giây"
+  "ttl": "Giữ trong (giây)",
+  "ttlHint": "Để trống để dùng thời gian giữ mặc định.",
+  "captureHint": "Thu tối đa bằng số đang giữ; phần còn lại được nhả.",
+  "overHeld": "Vượt quá số tiền đang giữ"
 }

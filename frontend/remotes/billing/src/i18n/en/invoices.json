@@ -4,7 +4,6 @@
   "create": "Create invoice",
   "createTitle": "Create invoice",
   "createHint": "An invoice is raised from a charge.",
-  "chargeId": "Charge ID",
   "void": "Void invoice",
   "voidReason": "Void reason",
   "uncollectible": "Mark uncollectible",
@@ -18,5 +17,13 @@
   "emptyHint": "Invoices appear when a charge is invoiced.",
   "voided": "Invoice voided",
   "uncollectibleDone": "Invoice marked uncollectible",
-  "paid": "Payment recorded"
+  "paid": "Payment recorded",
+  "search": "Search by invoice number",
+  "viewAll": "All",
+  "viewOpen": "Open",
+  "viewPaid": "Paid",
+  "viewVoid": "Void",
+  "issued": "Issued (UTC)",
+  "charge": "Charge",
+  "chargeHint": "Charges that are not invoiced yet show here."
 }

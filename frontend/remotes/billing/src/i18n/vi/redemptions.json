@@ -1,7 +1,6 @@
 {
   "title": "Lượt đổi",
   "description": "Lượt đổi mã giảm giá theo ví.",
-  "walletId": "ID ví",
   "emptyTitle": "Không có lượt đổi",
   "emptyHint": "Ví hiện lượt đổi khi một code được dùng.",
   "revoke": "Thu hồi lượt đổi",
@@ -13,6 +12,10 @@
   "revoked": "Đã thu hồi lượt đổi",
   "redeemed": "Đã đổi code",
   "attached": "Đã gắn mã giảm giá",
-  "couponId": "ID mã giảm giá",
-  "redeemHint": "Mã khuyến mãi, hoặc coupon:<id>."
+  "redeemHint": "Mã khách hàng đã nhập.",
+  "walletPicker": "Ví",
+  "redeemCode": "Mã khuyến mãi",
+  "attachHint": "Gắn coupon cho ví mà không cần mã.",
+  "coupon": "Coupon",
+  "unlimited": "∞"
 }

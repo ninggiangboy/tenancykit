@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { allBillingPermissions, renderPage } from '../test-utils'
+import { allBillingPermissions, ids, pick, renderPage } from '../test-utils'
 import { ChargesPage } from './charges/page'
 import { ReservationsPage } from './reservations/page'
 import { UsagePage } from './usage/page'
@@ -69,12 +69,15 @@ describe('wallets', () => {
     )
     const actor = userEvent.setup()
     renderPage((state) => <WalletsPage state={state} />, { permissions: allBillingPermissions })
-    await actor.click(await screen.findByText('10.00 USD'))
+    await actor.click((await screen.findAllByText('10.00 USD'))[0] as HTMLElement)
     expect(await screen.findByText('CHARGE')).toBeInTheDocument()
     await actor.click(await screen.findByRole('button', { name: 'Reverse entry' }))
     const dialog = await screen.findByRole('alertdialog')
+    // A reversal needs a reason before it can be confirmed.
+    expect(within(dialog).getByRole('button', { name: 'Reverse entry' })).toBeDisabled()
+    await actor.type(within(dialog).getByLabelText('Reason'), 'duplicate')
     await actor.click(within(dialog).getByRole('button', { name: 'Reverse entry' }))
-    await waitFor(() => expect(body).toEqual({ reason: '' }))
+    await waitFor(() => expect(body).toEqual({ reason: 'duplicate' }))
   })
 
   it('hides opening a wallet without the permission', async () => {
@@ -118,6 +121,15 @@ describe('charges', () => {
       http.get('http://console.test/api/v1/charges', () =>
         HttpResponse.json({ data: [charge], page: { limit: 50, offset: 0, total: 1 } }),
       ),
+      http.get('http://console.test/api/v1/wallets', () =>
+        HttpResponse.json({ data: [{ ...wallet, id: ids.wallet, customerId: ids.customer }] }),
+      ),
+      http.get(`http://console.test/api/v1/wallets/${ids.wallet}`, () =>
+        HttpResponse.json({ ...wallet, id: ids.wallet }),
+      ),
+      http.get('http://console.test/api/v1/customers', () =>
+        HttpResponse.json({ data: [{ id: ids.customer, displayName: 'Ana' }] }),
+      ),
       http.post('http://console.test/api/v1/charges', async ({ request }) => {
         body = await request.json()
         return HttpResponse.json(charge, { status: 201 })
@@ -127,11 +139,11 @@ describe('charges', () => {
     renderPage((state) => <ChargesPage state={state} />, { permissions: allBillingPermissions })
     expect(await screen.findByText('4.00 USD')).toBeInTheDocument()
     await actor.click(screen.getByRole('button', { name: 'Create charge' }))
-    await actor.type(screen.getByLabelText('Wallet ID'), 'w1')
-    await actor.type(screen.getByLabelText('Amount'), '400')
+    await pick(actor, 'Wallet', /Ana · USD/)
+    await actor.type(screen.getByLabelText('Amount'), '4')
     const dialogs = screen.getAllByRole('dialog')
     await actor.click(within(dialogs[dialogs.length - 1] as HTMLElement).getByRole('button', { name: 'Create' }))
-    await waitFor(() => expect(body).toMatchObject({ walletId: 'w1', amount: 400 }))
+    await waitFor(() => expect(body).toMatchObject({ walletId: ids.wallet, amount: 400, currency: 'USD' }))
   })
 })
 
@@ -154,6 +166,9 @@ describe('usage', () => {
           page: { limit: 50, offset: 0, total: 1 },
         }),
       ),
+      http.get('http://console.test/api/v1/customers', () =>
+        HttpResponse.json({ data: [{ id: ids.customer, displayName: 'Ana' }] }),
+      ),
       http.post('http://console.test/api/v1/usage-events', async ({ request }) => {
         body = await request.json()
         return HttpResponse.json({ event: { id: 'ev2', metric: 'api_calls' }, replayed: false }, { status: 201 })
@@ -163,18 +178,21 @@ describe('usage', () => {
     renderPage((state) => <UsagePage state={state} />, { permissions: allBillingPermissions })
     expect(await screen.findByText('seats')).toBeInTheDocument()
     await actor.click(screen.getByRole('button', { name: 'Record usage' }))
-    await actor.type(screen.getByLabelText('Customer ID'), 'c1')
+    await pick(actor, 'Customer', /Ana/)
     await actor.type(screen.getByLabelText('Metric'), 'api_calls')
     await actor.type(screen.getByLabelText('Quantity'), '1')
     const dialogs = screen.getAllByRole('dialog')
     await actor.click(within(dialogs[dialogs.length - 1] as HTMLElement).getByRole('button', { name: 'Record usage' }))
-    await waitFor(() => expect(body).toMatchObject({ customerId: 'c1', metric: 'api_calls', quantity: '1' }))
+    await waitFor(() => expect(body).toMatchObject({ customerId: ids.customer, metric: 'api_calls', quantity: '1' }))
   })
 
   it('shows aggregates from the server', async () => {
     server.use(
       http.get('http://console.test/api/v1/usage-events', () =>
         HttpResponse.json({ data: [], page: { limit: 50, offset: 0, total: 0 } }),
+      ),
+      http.get('http://console.test/api/v1/customers', () =>
+        HttpResponse.json({ data: [{ id: ids.customer, displayName: 'Ana' }] }),
       ),
       http.get('http://console.test/api/v1/usage-aggregates', () =>
         HttpResponse.json([{ metric: 'seats', unit: 'seat', quantity: '12', events: 3 }]),
@@ -183,11 +201,9 @@ describe('usage', () => {
     const actor = userEvent.setup()
     renderPage((state) => <UsagePage state={state} />, { permissions: allBillingPermissions })
     await actor.click(await screen.findByRole('tab', { name: 'Aggregates' }))
-    await actor.type(screen.getByLabelText('Customer ID'), 'c1')
-    const fields = screen.getAllByLabelText(/From|To|Occurred/)
-    await actor.type(fields[0] as HTMLElement, '2026-11-01T00:00')
-    await actor.type(fields[1] as HTMLElement, '2026-11-30T00:00')
-    await actor.click(screen.getByRole('button', { name: 'Aggregates' }))
+    // The period starts as the last 30 days; only the customer is needed.
+    await pick(actor, 'Customer', /Ana/)
+    await actor.click(screen.getByRole('button', { name: 'Show totals' }))
     expect((await screen.findAllByText('12')).length).toBeGreaterThan(0)
   })
 })

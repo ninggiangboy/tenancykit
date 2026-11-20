@@ -7,11 +7,15 @@
   "refundable": "Còn có thể hoàn",
   "topUp": "Nạp tiền",
   "topUpTitle": "Tạo nạp tiền",
-  "walletId": "ID ví",
   "created": "Đã tạo thanh toán",
   "emptyTitle": "Chưa có thanh toán",
   "emptyHint": "Thanh toán xuất hiện khi khách trả hoá đơn hoặc nạp ví.",
   "refunded": "Đã yêu cầu hoàn tiền",
   "remaining": "Còn có thể hoàn",
-  "minorUnits": "Đơn vị nhỏ nhất, như API lưu."
+  "amountHint": "Tính bằng {{currency}}; tối đa số còn được hoàn.",
+  "topUpHint": "Tạo trang thanh toán cho khách; ví được cộng tiền khi thanh toán thành công.",
+  "checkoutTitle": "Đã tạo trang thanh toán",
+  "checkoutHint": "Gửi liên kết này cho khách hoặc mở để thanh toán.",
+  "openCheckout": "Mở trang thanh toán",
+  "overRefundable": "Vượt quá số tiền còn được hoàn"
 }

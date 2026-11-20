@@ -9,7 +9,6 @@
   "benefit": "Ưu đãi",
   "percent": "Phần trăm",
   "amountOff": "Giảm số tiền",
-  "credit": "Tín dụng",
   "stackable": "Cộng dồn",
   "maxRedemptions": "Số lượt tối đa",
   "redeemBy": "Đổi trước (UTC)",
@@ -23,5 +22,17 @@
   "deactivated": "Đã ngừng mã giảm giá",
   "codeAdded": "Đã thêm code",
   "revokeRedemptions": "Thu hồi lượt đổi",
-  "basisPointsHint": "Điểm cơ sở: 1000 là 10%."
+  "percentHint": "Ví dụ 10 nghĩa là giảm 10%.",
+  "benefit.PERCENT_OFF": "Giảm theo phần trăm",
+  "benefit.AMOUNT_OFF": "Giảm số tiền",
+  "benefit.WALLET_CREDIT": "Cộng tiền vào ví",
+  "maxPerCustomer": "Mỗi khách hàng",
+  "codeHint": "Mã khách hàng nhập; có thể thêm mã khác sau.",
+  "codeMax": "Số lần dùng mã",
+  "limitsHint": "Để trống nếu không giới hạn.",
+  "redemptions": "Lượt dùng",
+  "revokeHint": "Thu hồi luôn phần giảm giá đã cấp.",
+  "codeDeactivated": "Đã tắt mã",
+  "deactivateCode": "Tắt mã",
+  "unlimited": "∞"
 }

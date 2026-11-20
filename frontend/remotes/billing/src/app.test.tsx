@@ -1,3 +1,4 @@
+import { createRemoteRouter, RemoteProvider } from '@suite/remote-kit'
 import type { ShellContext } from '@suite/shell-sdk'
 import { ShellProvider } from '@suite/shell-sdk/react'
 import { createMemoryHistory, RouterProvider } from '@tanstack/react-router'
@@ -5,8 +6,8 @@ import { render, screen } from '@testing-library/react'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { RemoteProvider } from './lib/runtime'
-import { createRemoteRouter } from './routes'
+import { createI18n } from './i18n'
+import { screens, sections } from './routes'
 
 const server = setupServer(
   http.get('http://console.test/api/v1/customers', () =>
@@ -40,8 +41,8 @@ describe('billing remote', () => {
   it('mounts on the shell history and opens the customers section', async () => {
     render(
       <ShellProvider ctx={context}>
-        <RemoteProvider ctx={context} resolveBaseUrl={() => 'http://console.test'}>
-          <RouterProvider router={createRemoteRouter(context)} />
+        <RemoteProvider ctx={context} createI18n={createI18n} resolveBaseUrl={() => 'http://console.test'}>
+          <RouterProvider router={createRemoteRouter(context, screens, sections)} />
         </RemoteProvider>
       </ShellProvider>,
     )

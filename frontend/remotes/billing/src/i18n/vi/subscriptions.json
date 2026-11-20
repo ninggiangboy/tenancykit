@@ -4,8 +4,6 @@
   "create": "Tạo đăng ký",
   "createTitle": "Tạo đăng ký",
   "createHint": "Chọn một ví và một gói giá.",
-  "walletId": "ID ví",
-  "planId": "ID gói",
   "cancel": "Huỷ đăng ký",
   "history": "Lịch sử",
   "cycle": "Chu kỳ",
@@ -13,5 +11,6 @@
   "periods": "Số kỳ đã tính",
   "emptyTitle": "Chưa có đăng ký",
   "emptyHint": "Đăng ký một ví vào gói giá.",
-  "canceled": "Đã huỷ đăng ký"
+  "canceled": "Đã huỷ đăng ký",
+  "customerHint": "Chỉ hiện các ví của khách hàng này."
 }

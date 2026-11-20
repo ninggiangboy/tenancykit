@@ -1,6 +1,6 @@
 {
   "title": "Stripe",
-  "description": "The tenant's Stripe connection, events and incidents.",
+  "description": "Connect the tenant's Stripe account, watch its events and fix incidents.",
   "connect": "Connect Stripe",
   "connectHint": "Open the onboarding link, then refresh the connection.",
   "direct": "Connect with keys",
@@ -28,7 +28,7 @@
   "mismatches": "Mismatches",
   "returnUrls": "Return URLs",
   "replaceUrls": "Replace return URLs",
-  "urlsHint": "One URL per line.",
+  "urlsHint": "Where Stripe may send a customer back after checkout. Exact URLs, https only.",
   "connected": "Stripe connected",
   "disconnected": "Stripe disconnected",
   "refreshed": "Status refreshed",
@@ -36,5 +36,16 @@
   "resolved": "Incident resolved",
   "retried": "Event retried",
   "saved": "Saved",
-  "notConnected": "Stripe is not connected for this tenant yet."
+  "notConnected": "Stripe is not connected for this tenant yet.",
+  "connectTitle": "Connect a Stripe account",
+  "connectIntro": "Card payments and top-ups go through the tenant's own Stripe account. Choose how to connect it.",
+  "connectOnboarding": "Stripe onboarding",
+  "connectOnboardingHint": "Stripe hosts the sign-up and verification; the tenant returns here when done.",
+  "connectKeys": "Your own API keys",
+  "connectKeysHint": "For an account the tenant already runs; the secret key is sent once and never shown again.",
+  "openOnboarding": "Open onboarding",
+  "connectionTitle": "Connection",
+  "resolvedBadge": "Resolved",
+  "urlPlaceholder": "https://app.example.com/billing/return",
+  "secretMissing": "No webhook signing secret is set, so Stripe events cannot be verified. Add it from the Stripe dashboard."
 }
