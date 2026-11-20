@@ -210,4 +210,14 @@ describe('the shell frame', () => {
 
     await waitFor(() => expect(document.documentElement.dataset.density).toBe('compact'))
   })
+
+  it('greets the person and shows one launcher card per app', async () => {
+    mount()
+
+    expect(await screen.findByText('Hello, Ada')).toBeInTheDocument()
+    expect(screen.getByText('Invoices')).toBeInTheDocument()
+    const cards = document.querySelectorAll('li[data-app]')
+    expect(cards).toHaveLength(2)
+    expect(document.querySelector('li[data-app="billing"]')).not.toBeNull()
+  })
 })

@@ -78,7 +78,11 @@ export function ShellApp({
   const [navigation, setNavigationState] = useState<Record<string, NavSection[]>>({})
   const [toasts, , dismissToast] = useToasts()
   const i18n = useMemo(() => createShellI18n(locale), [locale])
-  const t = useCallback((key: ShellMessageKey) => String(i18n.t(key)), [i18n])
+  const t = useCallback(
+    (key: ShellMessageKey, values?: Record<string, unknown>) =>
+      String(i18n.t(key as string, values as Record<string, unknown>)),
+    [i18n],
+  )
   const queryClient = useMemo(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }), [])
 
   useEffect(() => {

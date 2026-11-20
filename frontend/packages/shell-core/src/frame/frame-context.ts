@@ -31,7 +31,7 @@ export interface Frame {
   onLocale: (locale: Locale) => void
   onSignOut?: () => void
   onOpenPalette: () => void
-  t: (key: ShellMessageKey) => string
+  t: (key: ShellMessageKey, values?: Record<string, unknown>) => string
 }
 
 export const FrameContext = createContext<Frame | null>(null)

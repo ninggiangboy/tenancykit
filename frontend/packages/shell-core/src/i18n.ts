@@ -42,6 +42,20 @@ const en = {
   'shell.callback': 'Signing you in',
   'shell.open': 'Open',
   'shell.sections': 'Screens',
+  'shell.greeting': 'Hello, {{name}}',
+  'shell.appsEnabled': '{{count}} apps enabled',
+  'apps.billing.purpose': 'Invoices, payments, wallets and usage',
+  'apps.billing.description':
+    'Charge customers, issue invoices, take card payments through Stripe and meter usage against wallets.',
+  'apps.billing.invoices': 'Invoices',
+  'apps.billing.payments': 'Payments',
+  'apps.billing.customers': 'Customers',
+  'apps.billing.usage': 'Usage',
+  'apps.platform.purpose': 'Users, roles and access',
+  'apps.platform.description': 'Invite staff, assign roles and choose which apps and domains are in use.',
+  'apps.platform.users': 'Users',
+  'apps.platform.roles': 'Roles',
+  'apps.platform.tenants': 'Tenants',
 } as const
 
 export type ShellMessageKey = keyof typeof en
@@ -86,6 +100,20 @@ const vi: Record<ShellMessageKey, string> = {
   'shell.callback': 'Đang đăng nhập',
   'shell.open': 'Mở',
   'shell.sections': 'Màn hình',
+  'shell.greeting': 'Xin chào, {{name}}',
+  'shell.appsEnabled': '{{count}} ứng dụng đang bật',
+  'apps.billing.purpose': 'Hoá đơn, thanh toán, ví và mức sử dụng',
+  'apps.billing.description':
+    'Thu tiền khách hàng, xuất hoá đơn, nhận thanh toán thẻ qua Stripe và tính mức sử dụng trên ví.',
+  'apps.billing.invoices': 'Hoá đơn',
+  'apps.billing.payments': 'Thanh toán',
+  'apps.billing.customers': 'Khách hàng',
+  'apps.billing.usage': 'Mức sử dụng',
+  'apps.platform.purpose': 'Người dùng, vai trò và quyền truy cập',
+  'apps.platform.description': 'Mời nhân viên, gán vai trò và chọn ứng dụng, tên miền được dùng.',
+  'apps.platform.users': 'Người dùng',
+  'apps.platform.roles': 'Vai trò',
+  'apps.platform.tenants': 'Tenant',
 }
 
 export const shellResources = {
