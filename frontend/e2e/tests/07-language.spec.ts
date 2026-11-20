@@ -1,4 +1,4 @@
-import { expect, openRemote, selectActiveRow, signIn, test } from '../support/fixtures'
+import { expect, openRemote, signIn, test } from '../support/fixtures'
 import { provisionTenantFixture, waitForBilling } from '../support/stack'
 
 /**
@@ -20,13 +20,11 @@ test('the shell, both remotes and the design system switch to Vietnamese and kee
 
   await openRemote(page, tenant.host, 'billing', 'customers')
   await expect(page.getByRole('heading', { name: 'Khách hàng', level: 1 })).toBeVisible()
+  // A design-system string, not a remote's: the sort control names itself in Vietnamese.
+  await expect(page.getByRole('button', { name: 'Sắp xếp theo Khách hàng' })).toBeVisible()
 
   await openRemote(page, tenant.host, 'platform', 'users')
   await expect(page.getByRole('heading', { name: 'Người dùng', level: 1 })).toBeVisible()
-
-  // A design-system string, not a remote's: selecting a row says it in Vietnamese.
-  await expect(page.getByRole('row').nth(1)).toBeVisible()
-  await selectActiveRow(page, 'Đã chọn 1')
 
   await page.reload()
   await expect(page.locator('aside nav').first()).toHaveAttribute('aria-label', 'Ứng dụng')

@@ -70,7 +70,7 @@ test('every Platform and Billing screen works against the backends', async ({ br
   const sheet = page.getByRole('dialog')
   await expect(sheet.getByRole('heading', { name: `E2E ${tenant.code}` })).toBeVisible()
   await expect(sheet.getByRole('heading', { name: 'App entitlements' })).toBeVisible()
-  await expect(sheet.locator('li').filter({ hasText: 'Billing' })).toContainText('On')
+  await expect(sheet.locator('li').filter({ hasText: 'Billing' }).getByRole('switch')).toBeChecked()
   await page.keyboard.press('Escape')
 
   const tenantContext = await browser.newContext()

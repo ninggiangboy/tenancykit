@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import AxeBuilder from '@axe-core/playwright'
 import { repoRoot } from '../support/env'
-import { env, expect, openRemote, selectActiveRow, signIn, test } from '../support/fixtures'
+import { env, expect, openRemote, signIn, test } from '../support/fixtures'
 import { provisionTenantFixture, seedBilling, waitForBilling } from '../support/stack'
 
 const tokens = JSON.parse(
@@ -36,6 +36,15 @@ const tokenMatches = async (
 ): Promise<[string, string]> => [
   await resolvedColor(page, `var(--${name})`),
   await resolvedColor(page, tokenValue(name, theme)),
+]
+
+/** Inside Billing, `--primary` resolves to the app's accent, which is what the primary action must paint. */
+const appAccentMatches = async (
+  page: import('@playwright/test').Page,
+  theme: 'light' | 'dark',
+): Promise<[string, string]> => [
+  await resolvedColor(page, 'var(--primary)'),
+  await resolvedColor(page, tokenValue('app-billing', theme)),
 ]
 
 const serious = async (page: import('@playwright/test').Page): Promise<string[]> => {
@@ -91,10 +100,10 @@ test('the keyboard, URL state, tokens and accessibility rules hold on the invoic
   const sheet = page.getByRole('dialog')
   await expect(sheet).toBeVisible()
   await expect.poll(async () => page.url()).toContain('open=')
-  await expect(sheet.getByRole('heading', { name: seeded.invoiceNumber })).toBeVisible()
+  await expect(sheet.getByText(seeded.invoiceNumber)).toBeVisible()
   const deepLink = page.url()
   await page.reload()
-  await expect(page.getByRole('dialog').getByRole('heading', { name: seeded.invoiceNumber })).toBeVisible()
+  await expect(page.getByRole('dialog').getByText(seeded.invoiceNumber)).toBeVisible()
   expect(page.url()).toBe(deepLink)
 
   // A remote dialog stacks above the shell's sheet, and closing it returns focus to its opener.
@@ -114,22 +123,31 @@ test('the keyboard, URL state, tokens and accessibility rules hold on the invoic
   await page.keyboard.press('Escape')
   await expect(page.getByRole('dialog')).toBeHidden()
 
-  // x selects the active row and the BulkBar appears; Esc clears nothing but closes layers, so the bar stays.
-  await selectActiveRow(page)
+  // x selects nothing: a list shows a checkbox column only when it has a real bulk action.
+  await expect(page.locator('table input[type="checkbox"]')).toHaveCount(0)
 
-  // The token variables the shell loads equal tokens.json, in the light theme and then in the dark one.
-  for (const name of ['background', 'foreground', 'primary', 'border']) {
+  // The token variables the shell loads equal tokens.json, in the light theme and then in the dark one; primary is the
+  // app accent inside Billing, so it is compared with the app-billing token instead.
+  for (const name of ['background', 'foreground', 'border']) {
     const [actual, expected] = await tokenMatches(page, name, 'light')
     expect(actual, `${name} in light`).toBe(expected)
+  }
+  {
+    const [actual, expected] = await appAccentMatches(page, 'light')
+    expect(actual, 'primary in light').toBe(expected)
   }
   expect(await serious(page)).toEqual([])
 
   await page.getByRole('button', { name: 'Theme' }).click()
   await page.getByRole('menuitem', { name: 'Dark' }).click()
   await expect(page.locator('html')).toHaveClass(/dark/)
-  for (const name of ['background', 'foreground', 'primary', 'border']) {
+  for (const name of ['background', 'foreground', 'border']) {
     const [actual, expected] = await tokenMatches(page, name, 'dark')
     expect(actual, `${name} in dark`).toBe(expected)
+  }
+  {
+    const [actual, expected] = await appAccentMatches(page, 'dark')
+    expect(actual, 'primary in dark').toBe(expected)
   }
   expect(await serious(page)).toEqual([])
 })
@@ -153,7 +171,7 @@ test('the same rules hold on the role page in the Platform Shell', async ({ page
   await expect(page).toHaveURL(/q=Tenant/)
   await page.getByRole('heading', { name: 'Roles', level: 1 }).click()
 
-  // A facet is in the URL, and the table's keyboard selects a row into the BulkBar.
+  // A facet is in the URL; no list offers selection without a real bulk action.
   await page.getByRole('button', { name: 'Scope' }).click()
   await page.getByRole('checkbox', { name: 'Tenant' }).click()
   await expect(page).toHaveURL(/f_scope=TENANT/)
@@ -161,7 +179,7 @@ test('the same rules hold on the role page in the Platform Shell', async ({ page
   // The popover closes on Escape and Radix hands focus back; the keys only land once it is gone.
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.getByRole('row').nth(1)).toBeVisible()
-  await selectActiveRow(page)
+  await expect(page.locator('table input[type="checkbox"]')).toHaveCount(0)
 
   expect(await serious(page)).toEqual([])
   expect(tenant.code).not.toBe('')

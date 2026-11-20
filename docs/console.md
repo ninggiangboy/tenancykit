@@ -63,9 +63,10 @@ and the static server's CSP is `script-src 'self'`.
 
 ## The design system
 
-The console follows the Suite Console design system, the project owner's artifact (version `1794921831-f0e0`,
-pin recorded in the plan). A snapshot of its `README.md`, `tokens.json` and component API is kept in
-`plans/261117-1456-suite-console/reports/design-system/`; the samples stay in the artifact.
+The console follows the Suite Console design system, **v4** (artifact version `1795165481-3dca`, tokens
+`version` 4), the project owner's artifact. A snapshot of the earlier version's `README.md`, `tokens.json` and
+component API is kept in `plans/261117-1456-suite-console/reports/design-system/`; the full v4 copy the console was
+ported from is in `plans/261120-1329-console-ds-v4/reference/design-system-v4/`.
 
 It is ported, not bundled: the artifact ships a React 18 plain-JavaScript bundle, while the console is React 19,
 TypeScript and federated. `@suite/ui` keeps the token names, values, component names and props and rebuilds the
@@ -79,8 +80,16 @@ tests, and review the visual changes in the artifact's previews in light and dar
 
 The rules every screen follows — keyboard first, peek instead of navigate, undo over confirm, optimistic switches,
 never a dead end, the unsaved bar, copyable identifiers, money in minor units, UTC times, state in the URL, sentence
-case, monochrome first — come from the design system and are the acceptance criteria of the plan. `@suite/ui` is not a
-shared runtime singleton: each remote bundles what it imports, and the shell owns the CSS variables.
+case, one accent per app, two densities, and the phone and tablet layouts — come from the design system and are the
+acceptance criteria of the plan. `@suite/ui` is not a shared runtime singleton: each remote bundles what it imports,
+and the shell owns the CSS variables.
+
+The shell writes `data-app` and `data-density` on `<html>`, because Radix portals sheets, dialogs and menus into
+`<body>`, outside the frame; an attribute or variable set on the frame's `div` would not reach them. The app-scope
+block in `packages/ui/src/styles/theme.css` re-declares the accent aliases (`--primary` and the others) inside
+`[data-app]` because a custom property resolves where it is declared, so setting `--app-accent` alone changes nothing
+below it. Density swaps the control, row and page sizes through their variables; the phone breakpoint raises every
+control to the touch target.
 
 ## The UI remote registry
 
@@ -173,7 +182,11 @@ Each test provisions its own tenant with its own host, through the Platform API,
 The suite proves: an independent deploy with no shell change, the entitlement removing a menu, the operator disabling
 a remote and rolling back, every screen against the real backends, a missing permission (control absent, `403` from
 the API), a rejected entry path, the Vietnamese catalogs, the keyboard and URL rules, the token values, stacking and
-accessibility, and the extension trace. CI runs it in the `suite` workflow on the same stack as the suite smoke.
+accessibility, and the extension trace. `10-visual.spec.ts` captures every Platform and Billing screen and both homes
+in twelve combinations (1280, 900 and 390 wide; light and dark; comfortable and compact), checks that no phone screen
+scrolls sideways and runs axe for contrast and target size; `11-mobile.spec.ts` walks the phone flows: the drawer, the
+card list, a bottom sheet dragged closed, Back, the floating action and the density switch. CI runs it in the `suite`
+workflow on the same stack as the suite smoke.
 
 ## Limits
 
