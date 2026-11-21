@@ -4,6 +4,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { repoRoot } from '../support/env'
 import { env, expect, openRemote, signIn, test } from '../support/fixtures'
 import { provisionTenantFixture, seedBilling, waitForBilling } from '../support/stack'
+import { motionIdle } from '../support/visual'
 
 const tokens = JSON.parse(
   readFileSync(resolve(repoRoot, 'plans/261117-1456-suite-console/reports/design-system/tokens.json'), 'utf8'),
@@ -48,6 +49,7 @@ const appAccentMatches = async (
 ]
 
 const serious = async (page: import('@playwright/test').Page): Promise<string[]> => {
+  await motionIdle(page)
   const results = await new AxeBuilder({ page }).analyze()
   return results.violations
     .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
@@ -163,6 +165,8 @@ test('the same rules hold on the role page in the Platform Shell', async ({ page
   await page.keyboard.press('ControlOrMeta+k')
   await expect(page.getByRole('dialog')).toBeVisible()
   await page.keyboard.press('Escape')
+  // The palette leaves with an animation; the search key is a field key until it has gone.
+  await expect(page.getByRole('dialog')).toBeHidden()
 
   await page.keyboard.press('/')
   const search = page.getByRole('textbox', { name: 'Search by role name' })

@@ -41,8 +41,14 @@ test('the phone flows work by touch', async ({ page }) => {
 
   const sheet = page.getByRole('dialog')
   await expect(sheet).toBeVisible()
+  // The sheet rises into place, so its bottom edge is read once it has arrived.
+  await expect
+    .poll(async () => {
+      const box = await sheet.boundingBox()
+      return Math.round((box?.y ?? 0) + (box?.height ?? 0))
+    })
+    .toBe(844)
   const sheetBox = await sheet.boundingBox()
-  expect(Math.round((sheetBox?.y ?? 0) + (sheetBox?.height ?? 0))).toBe(844)
   expect(sheetBox?.height ?? 0).toBeGreaterThanOrEqual(700)
 
   // Dragging the handle down closes it.
@@ -78,8 +84,12 @@ test('the phone flows work by touch', async ({ page }) => {
 
   const form = page.getByRole('dialog')
   await expect(form).toBeVisible()
-  const formBox = await form.boundingBox()
-  expect(Math.round((formBox?.y ?? 0) + (formBox?.height ?? 0))).toBe(844)
+  await expect
+    .poll(async () => {
+      const box = await form.boundingBox()
+      return Math.round((box?.y ?? 0) + (box?.height ?? 0))
+    })
+    .toBe(844)
   const submit = form.getByRole('button', { name: 'Create', exact: true })
   const submitBox = await submit.boundingBox()
   expect(submitBox?.width ?? 0).toBeGreaterThanOrEqual(300)

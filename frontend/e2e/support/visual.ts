@@ -39,8 +39,26 @@ export async function capture(page: Page, name: string): Promise<void> {
   await expect(page.getByText('That did not work')).toHaveCount(0)
 }
 
+/**
+ * Waits until nothing finite is animating: an overlay that is still leaving keeps `aria-hidden` on the page behind it,
+ * and a button that is still fading in reads as low contrast, so an accessibility scan waits for the motion to end.
+ */
+export async function motionIdle(page: Page): Promise<void> {
+  await page
+    .waitForFunction(
+      () =>
+        document
+          .getAnimations()
+          .every((animation) => animation.effect?.getTiming().iterations === Number.POSITIVE_INFINITY),
+      undefined,
+      { timeout: 5_000 },
+    )
+    .catch(() => undefined)
+}
+
 /** The contrast and touch-target rules only; returns the violation ids with their first target. */
 export async function axeLook(page: Page): Promise<string[]> {
+  await motionIdle(page)
   const results = await new AxeBuilder({ page }).withRules(['color-contrast', 'target-size']).analyze()
   return results.violations.map(
     (violation) => `${violation.id}: ${violation.nodes[0]?.target?.join(' ') ?? 'unknown target'}`,
