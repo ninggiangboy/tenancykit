@@ -59,7 +59,7 @@ export function PermissionEditor({ value, onChange, readOnly }: PermissionEditor
                 {codes.map((code) => (
                   <li
                     key={code}
-                    className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-caption text-foreground"
+                    className="inline-flex items-center gap-1 rounded-md border border-border bg-muted pl-2 font-mono text-caption text-foreground"
                   >
                     {code}
                     {!readOnly && (
@@ -67,7 +67,7 @@ export function PermissionEditor({ value, onChange, readOnly }: PermissionEditor
                         type="button"
                         aria-label={tc('permissions.remove', { code })}
                         onClick={() => onChange?.(value.filter((entry) => entry !== code))}
-                        className="rounded text-muted-foreground hover:text-foreground"
+                        className="motion-colors flex size-7 items-center justify-center rounded text-muted-foreground hover:text-foreground max-md:size-(--size-touch-target)"
                       >
                         <Icon name="x" size={12} />
                       </button>

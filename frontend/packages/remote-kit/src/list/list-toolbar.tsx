@@ -18,7 +18,7 @@ export function ListToolbar({ spec, list }: { spec: ListSpec; list: ListState })
   return (
     <div className="flex flex-wrap items-center gap-2">
       {spec.searchField && (
-        <div className="relative">
+        <div className="relative max-md:w-full">
           <Icon
             name="search"
             size={14}
@@ -30,9 +30,9 @@ export function ListToolbar({ spec, list }: { spec: ListSpec; list: ListState })
             onChange={(event) => list.setQ(event.target.value)}
             placeholder={searchLabel}
             aria-label={searchLabel}
-            className="h-7 w-64 max-w-full rounded-md border border-input bg-background pl-7 pr-8 text-small shadow-xs focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring-halo"
+            className="motion-colors h-(--size-control-sm) w-64 max-w-full rounded-md border border-input bg-background pl-7 pr-8 text-small shadow-xs focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring-halo max-md:w-full max-md:text-[16px]"
           />
-          <Kbd keys={['/']} className="absolute right-1.5 top-1/2 -translate-y-1/2" />
+          <Kbd keys={['/']} className="absolute right-1.5 top-1/2 -translate-y-1/2 max-md:hidden" />
         </div>
       )}
       {facets.map((facet) => (

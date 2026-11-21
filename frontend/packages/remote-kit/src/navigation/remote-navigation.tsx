@@ -57,7 +57,7 @@ function LocalNav({ ctx, sections }: { ctx: ShellContext; sections: NavSection[]
                   ctx.navigate(href)
                 }}
                 className={cn(
-                  'rounded-md px-2 py-1 text-small text-muted-foreground hover:bg-accent hover:text-foreground',
+                  'motion-colors inline-flex h-(--size-control-sm) items-center rounded-md px-2 text-small text-muted-foreground hover:bg-accent hover:text-foreground',
                   active && 'bg-accent text-foreground',
                 )}
               >

@@ -1,4 +1,4 @@
-import { ErrorState } from '@suite/ui'
+import { cn, ErrorState } from '@suite/ui'
 import type { ReactNode } from 'react'
 import { useKitT } from '../i18n/create-remote-i18n'
 
@@ -33,9 +33,11 @@ export function Page({ children, primaryAction, ...header }: PageHeaderProps & {
   return (
     <div className="flex flex-col">
       <PageHeader {...header} primaryAction={primaryAction} />
-      <div className="flex flex-col gap-(--page-gap) px-(--page-pad) pb-8">{children}</div>
+      <div className={cn('flex flex-col gap-(--page-gap) px-(--page-pad) pb-8', primaryAction && 'max-md:pb-24')}>
+        {children}
+      </div>
       {primaryAction && (
-        <div className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-20 md:hidden [&_button]:h-13 [&_button]:rounded-2xl [&_button]:px-5 [&_button]:text-[15px] [&_button]:shadow-lg">
+        <div className="fixed right-4 bottom-[calc(16px+env(safe-area-inset-bottom))] z-20 animate-rise-in md:hidden [&_button]:h-13 [&_button]:rounded-2xl [&_button]:px-5 [&_button]:text-[15px] [&_button]:shadow-lg">
           {primaryAction}
         </div>
       )}

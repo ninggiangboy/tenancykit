@@ -33,11 +33,12 @@ export function Sidebar() {
     return () => document.removeEventListener('keydown', listener)
   }, [drawerOpen, onToggleDrawer])
 
-  const itemClass = (active: boolean) =>
+  // Only the screen that is open is highlighted: the app row names the app the screens belong to, it is not a second selection.
+  const itemClass = (active: boolean, appRow = false) =>
     cn(
-      'flex h-9 items-center gap-2.5 rounded-md px-2.5 text-body text-sidebar-foreground hover:bg-sidebar-accent',
+      'motion-colors flex h-9 items-center gap-2.5 rounded-md px-2.5 text-body text-sidebar-foreground hover:bg-sidebar-accent',
       'max-md:h-(--size-touch-target) max-md:text-[15px]',
-      active && 'bg-app-accent-soft font-semibold text-primary',
+      active && !appRow && 'bg-app-accent-soft font-semibold text-primary',
       rail && 'justify-center px-0',
     )
 
@@ -48,7 +49,7 @@ export function Sidebar() {
         to="/r/$remote/$"
         params={{ remote: remote.name, _splat: '' }}
         aria-current={active ? 'page' : undefined}
-        className={itemClass(active)}
+        className={itemClass(active, true)}
       >
         <AppMark app={remote.appCode} size="sm" />
         {!rail && <span className="truncate font-semibold">{remote.title}</span>}
@@ -59,18 +60,26 @@ export function Sidebar() {
 
   return (
     <>
-      {phone && drawerOpen && (
-        // biome-ignore lint/a11y/noStaticElementInteractions: the scrim is the drawer's backdrop.
-        // biome-ignore lint/a11y/useKeyWithClickEvents: Escape closes the drawer from anywhere.
-        <div className="fixed inset-0 z-40 bg-overlay" onClick={onToggleDrawer} />
+      {phone && (
+        <div
+          aria-hidden
+          className={cn(
+            'fixed inset-0 z-40 bg-overlay transition-opacity duration-(--duration-slow) ease-out',
+            drawerOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
+          )}
+          onClick={onToggleDrawer}
+        />
       )}
       <aside
+        // A closed drawer is only moved off screen; inert keeps it out of the tab order and the accessibility tree.
+        inert={phone && !drawerOpen}
         className={cn(
           'flex shrink-0 flex-col gap-3 overflow-y-auto',
           phone
             ? cn(
-                'fixed inset-y-0 left-0 z-50 w-(--size-drawer-width) bg-sidebar p-3 shadow-xl transition-transform duration-[260ms]',
-                drawerOpen ? 'translate-x-0' : '-translate-x-full',
+                'fixed inset-y-0 left-0 z-50 w-(--size-drawer-width) bg-sidebar p-3 transition-[transform,box-shadow] duration-(--duration-slow) ease-out',
+                // The shadow belongs to the open drawer; on a closed one it would bleed in from the left edge.
+                drawerOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full',
               )
             : cn('sticky top-0 h-dvh', rail ? 'w-(--size-sidebar-width-icon) p-1.5' : 'w-60 p-2'),
         )}
@@ -165,18 +174,18 @@ export function Sidebar() {
               type="button"
               onClick={onSignOut}
               aria-label={t('shell.signOut')}
-              className="rounded-md p-1 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+              className="motion-colors flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground max-md:size-(--size-touch-target)"
             >
               <Icon name="log-out" size={14} />
             </button>
           )}
         </div>
-        {rail && (
+        {rail && !tablet && (
           <button
             type="button"
             onClick={frame.onToggleSidebar}
             aria-label={t('shell.toggleSidebar')}
-            className="self-center rounded-md p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+            className="motion-colors flex size-8 items-center justify-center self-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
           >
             <Icon name="panel-left" size={14} />
           </button>

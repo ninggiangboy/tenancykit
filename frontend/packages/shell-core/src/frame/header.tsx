@@ -54,7 +54,7 @@ export function Header() {
         type="button"
         onClick={onToggleDrawer}
         aria-label={t('shell.openNavigation')}
-        className="flex size-(--size-touch-target) items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
+        className="motion-colors flex size-(--size-touch-target) items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
       >
         <Icon name="panel-left" size={18} />
       </button>
@@ -62,7 +62,7 @@ export function Header() {
         type="button"
         onClick={onToggleSidebar}
         aria-label={t('shell.toggleSidebar')}
-        className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground max-md:hidden"
+        className="motion-colors flex size-(--size-control-sm) items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground max-lg:hidden"
       >
         <Icon name="panel-left" size={14} />
       </button>
@@ -77,7 +77,9 @@ export function Header() {
               to="/r/$remote/$"
               params={{ remote: place.remote.name, _splat: '' }}
               className={
-                place.item ? 'truncate text-muted-foreground hover:text-foreground' : 'truncate text-body-strong'
+                place.item
+                  ? 'motion-colors -mx-1.5 inline-flex h-7 items-center truncate rounded-md px-1.5 text-muted-foreground hover:text-foreground'
+                  : 'inline-flex h-7 items-center truncate text-body-strong'
               }
             >
               {place.remote.title}
@@ -105,7 +107,7 @@ export function Header() {
         <button
           type="button"
           onClick={onOpenPalette}
-          className="inline-flex h-7 items-center gap-2 rounded-md border border-input bg-background px-2 text-small text-muted-foreground shadow-xs hover:bg-accent max-md:hidden"
+          className="motion-colors inline-flex h-(--size-control-sm) items-center gap-2 rounded-md border border-input bg-background px-2 text-small text-muted-foreground shadow-xs hover:bg-accent max-md:hidden"
         >
           <Icon name="search" size={14} />
           {/* `max-sm:hidden`, not `hidden sm:inline`: a remote's stylesheet loads later and its own `.hidden` would win. */}
@@ -116,7 +118,7 @@ export function Header() {
           type="button"
           onClick={onOpenPalette}
           aria-label={t('shell.search')}
-          className="flex size-(--size-touch-target) items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
+          className="motion-colors flex size-(--size-touch-target) items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground md:hidden"
         >
           <Icon name="search" size={18} />
         </button>
@@ -132,7 +134,7 @@ export function Header() {
               <button
                 type="button"
                 aria-label={t('shell.theme')}
-                className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+                className="motion-colors flex size-(--size-control-sm) items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 <Icon name="sparkle" size={14} />
               </button>
@@ -150,7 +152,7 @@ export function Header() {
               <button
                 type="button"
                 aria-label={`${t('shell.language')}: ${locale.toUpperCase()}`}
-                className="rounded-md px-1.5 py-1 text-caption text-muted-foreground hover:bg-accent hover:text-foreground"
+                className="motion-colors flex h-(--size-control-sm) min-w-8 items-center justify-center rounded-md px-1.5 text-caption text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 {locale.toUpperCase()}
               </button>
@@ -164,9 +166,11 @@ export function Header() {
             <button
               type="button"
               aria-label={t('shell.user')}
-              className="flex size-[28px] items-center justify-center rounded-full bg-secondary text-caption"
+              className="motion-colors flex size-(--size-control-sm) items-center justify-center rounded-full hover:bg-accent max-md:size-(--size-touch-target)"
             >
-              {me.displayName.slice(0, 1).toUpperCase()}
+              <span className="flex size-7 items-center justify-center rounded-full bg-secondary text-caption">
+                {me.displayName.slice(0, 1).toUpperCase()}
+              </span>
             </button>
           }
         />
