@@ -4,6 +4,7 @@ import { type ReactNode, useId, useState } from 'react'
 import { cn } from './cn'
 import { Icon } from './icon'
 import { useUiMessages } from './messages'
+import { POPPER_MOTION } from './motion'
 
 export interface ComboboxOption {
   value: string
@@ -94,7 +95,7 @@ export function Combobox({
           aria-invalid={error ? true : undefined}
           aria-describedby={noteId}
           className={cn(
-            'flex h-(--size-control-md) w-full items-center gap-2 rounded-md border bg-background px-2.5 text-left text-body shadow-xs max-md:text-base',
+            'motion-colors flex h-(--size-control-md) w-full items-center gap-2 rounded-md border bg-background px-2.5 text-left text-body shadow-xs max-md:text-[16px]',
             'focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring-halo',
             'disabled:cursor-not-allowed disabled:opacity-50',
             error ? 'border-destructive' : 'border-input',
@@ -112,7 +113,10 @@ export function Combobox({
           <Popover.Content
             align="start"
             sideOffset={4}
-            className="z-[60] w-[var(--radix-popover-trigger-width)] min-w-64 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md"
+            className={cn(
+              'z-[60] w-[var(--radix-popover-trigger-width)] min-w-64 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md',
+              POPPER_MOTION,
+            )}
           >
             <Command shouldFilter={!onSearch} label={typeof label === 'string' ? label : undefined}>
               <div className="flex items-center gap-1.5 border-b border-border px-1.5 pb-1.5">
@@ -124,7 +128,7 @@ export function Combobox({
                     onSearch?.(next)
                   }}
                   placeholder={t('action.search')}
-                  className="h-(--size-control-sm) w-full bg-transparent text-small outline-none placeholder:text-muted-foreground"
+                  className="h-(--size-control-sm) w-full bg-transparent text-small outline-none placeholder:text-muted-foreground max-md:text-[16px]"
                 />
                 {loading && <Icon name="loader" size={14} className="animate-spin text-muted-foreground" />}
               </div>
@@ -136,7 +140,7 @@ export function Combobox({
                   <Command.Item
                     value="__clear__"
                     onSelect={() => pick(null)}
-                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-small text-muted-foreground data-[selected=true]:bg-accent"
+                    className="flex min-h-8 cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-small max-md:min-h-(--size-touch-target) text-muted-foreground data-[selected=true]:bg-accent"
                   >
                     <Icon name="x" size={14} />
                     {t('action.clear')}
@@ -146,7 +150,7 @@ export function Combobox({
                   <Command.Item
                     value={`__typed__ ${typed}`}
                     onSelect={() => pick(typed)}
-                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-small data-[selected=true]:bg-accent"
+                    className="flex min-h-8 cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-small max-md:min-h-(--size-touch-target) data-[selected=true]:bg-accent"
                   >
                     <Icon name="plus" size={14} className="shrink-0 text-muted-foreground" />
                     <span className="truncate">{t('combobox.use', { value: typed })}</span>
@@ -157,7 +161,7 @@ export function Combobox({
                     key={option.value}
                     value={`${option.label} ${option.hint ?? ''} ${option.value}`}
                     onSelect={() => pick(option.value, option)}
-                    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-small data-[selected=true]:bg-accent"
+                    className="flex min-h-8 cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-small max-md:min-h-(--size-touch-target) data-[selected=true]:bg-accent"
                   >
                     <Icon
                       name="check"

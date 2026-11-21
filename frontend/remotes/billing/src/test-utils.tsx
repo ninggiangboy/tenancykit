@@ -101,3 +101,9 @@ export async function pick(actor: Actor, label: string, option: string | RegExp)
   await actor.click(await screen.findByLabelText(label))
   await actor.click(await screen.findByRole('option', { name: option }))
 }
+
+/** A `Money` amount reads as one string, though its currency code is its own element: match the money element. */
+export const moneyText =
+  (text: string) =>
+  (_: string, element: Element | null): boolean =>
+    element?.hasAttribute('data-currency') === true && element.textContent === text

@@ -77,7 +77,7 @@
   :root,
   [data-density] {
     --size-control-md: var(--size-touch-target);
-    --size-control-sm: 36px;
+    --size-control-sm: var(--size-touch-target);
     --page-pad: var(--space-4);
     --page-gap: var(--space-4);
   }
@@ -153,6 +153,125 @@
   --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
 }
 
+/*
+ * Spacing is in pixels. The document's root font is 14px, so Tailwind's default `0.25rem` step would be 3.5px and every
+ * `h-11` would be 38.5px instead of the 44px touch target. The design system's space scale is a 4px step.
+ */
+@theme {
+  --spacing: 4px;
+}
+
+/*
+ * Motion. Overlays enter on ease-out and leave on ease-in; data never animates. The `*-out` animations keep their last
+ * frame so a Radix part stays mounted until the leave has played, and reduced motion zeroes all durations below.
+ */
+@theme {
+  --animate-fade-in: fade-in var(--duration-slow) var(--ease-out);
+  --animate-fade-out: fade-out var(--duration-base) var(--ease-in) forwards;
+  --animate-pop-in: pop-in var(--duration-base) var(--ease-out);
+  --animate-pop-out: pop-out var(--duration-fast) var(--ease-in) forwards;
+  --animate-zoom-in: zoom-in var(--duration-slow) var(--ease-out);
+  --animate-zoom-out: zoom-out var(--duration-base) var(--ease-in) forwards;
+  --animate-slide-in-right: slide-in-right var(--duration-slow) var(--ease-out);
+  --animate-slide-out-right: slide-out-right var(--duration-base) var(--ease-in) forwards;
+  --animate-slide-in-up: slide-in-up var(--duration-slow) var(--ease-out);
+  --animate-slide-out-down: slide-out-down var(--duration-base) var(--ease-in) forwards;
+  --animate-drop-in: drop-in var(--duration-base) var(--ease-out);
+  --animate-drop-out: drop-out var(--duration-fast) var(--ease-in) forwards;
+  --animate-rise-in: rise-in var(--duration-base) var(--ease-out);
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+  @keyframes pop-out {
+    to {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+  @keyframes zoom-in {
+    from {
+      opacity: 0;
+      transform: scale(0.97) translateY(4px);
+    }
+  }
+  @keyframes zoom-out {
+    to {
+      opacity: 0;
+      transform: scale(0.97) translateY(4px);
+    }
+  }
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+  }
+  @keyframes slide-out-right {
+    to {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+  }
+  @keyframes slide-in-up {
+    from {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes slide-out-down {
+    to {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes drop-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.98);
+    }
+  }
+  @keyframes drop-out {
+    to {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.98);
+    }
+  }
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -100% 0;
+    }
+  }
+}
+
+/** Hover, press and focus: colour, border, ring and opacity change over the fast duration, never instantly. */
+@utility motion-colors {
+  transition-property: color, background-color, border-color, box-shadow, opacity, text-decoration-color;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-out);
+}
+
 @theme {
   --text-metric: 28px;
   --text-metric--line-height: 34px;
@@ -200,6 +319,9 @@
     font-size: 14px;
     line-height: 20px;
     letter-spacing: -0.006em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-optical-sizing: auto;
   }
 
   :focus-visible {

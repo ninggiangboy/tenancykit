@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { allBillingPermissions, ids, pick, renderPage } from '../test-utils'
+import { allBillingPermissions, ids, moneyText, pick, renderPage } from '../test-utils'
 import { ChargesPage } from './charges/page'
 import { ReservationsPage } from './reservations/page'
 import { UsagePage } from './usage/page'
@@ -69,7 +69,7 @@ describe('wallets', () => {
     )
     const actor = userEvent.setup()
     renderPage((state) => <WalletsPage state={state} />, { permissions: allBillingPermissions })
-    await actor.click((await screen.findAllByText('10.00 USD'))[0] as HTMLElement)
+    await actor.click((await screen.findAllByText(moneyText('10.00 USD')))[0] as HTMLElement)
     expect(await screen.findByText('CHARGE')).toBeInTheDocument()
     await actor.click(await screen.findByRole('button', { name: 'Reverse entry' }))
     const dialog = await screen.findByRole('alertdialog')
@@ -106,7 +106,7 @@ describe('reservations', () => {
     )
     const actor = userEvent.setup()
     renderPage((state) => <ReservationsPage state={state} />, { permissions: allBillingPermissions })
-    await actor.click(await screen.findByText('8.00 USD'))
+    await actor.click(await screen.findByText(moneyText('8.00 USD')))
     await actor.click(await screen.findByRole('button', { name: 'Capture' }))
     const dialogs = screen.getAllByRole('dialog')
     await actor.click(within(dialogs[dialogs.length - 1] as HTMLElement).getByRole('button', { name: 'Capture' }))
@@ -137,7 +137,7 @@ describe('charges', () => {
     )
     const actor = userEvent.setup()
     renderPage((state) => <ChargesPage state={state} />, { permissions: allBillingPermissions })
-    expect(await screen.findByText('4.00 USD')).toBeInTheDocument()
+    expect(await screen.findByText(moneyText('4.00 USD'))).toBeInTheDocument()
     await actor.click((await screen.findAllByRole('button', { name: 'Create charge' }))[0] as HTMLElement)
     await pick(actor, 'Wallet', /Ana · USD/)
     await actor.type(screen.getByLabelText('Amount'), '4')

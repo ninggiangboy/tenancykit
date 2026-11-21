@@ -9,6 +9,8 @@ export interface Toast {
   description?: React.ReactNode
   tone?: 'success' | 'danger' | 'info'
   duration?: number
+  /** Set while the toast plays its leave animation; the hook removes it a moment later. */
+  closing?: boolean
   action?: { label: string; icon?: IconName; onClick: () => void }
 }
 
@@ -37,7 +39,8 @@ export function Toaster({ toasts, onDismiss, contained }: ToasterProps) {
     <div
       aria-live="polite"
       className={cn(
-        'pointer-events-none fixed bottom-4 right-4 z-50 flex w-80 flex-col gap-2',
+        // On a phone the bottom edge belongs to the floating action and the bulk bar, so toasts come in under the top bar.
+        'pointer-events-none fixed bottom-4 right-4 z-50 flex w-80 flex-col gap-2 max-md:inset-x-3 max-md:top-16 max-md:bottom-auto max-md:w-auto',
         contained && 'absolute',
       )}
     >
@@ -45,7 +48,11 @@ export function Toaster({ toasts, onDismiss, contained }: ToasterProps) {
         <div
           key={toast.id}
           role="status"
-          className="pointer-events-auto flex items-start gap-2.5 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg"
+          data-state={toast.closing ? 'closed' : 'open'}
+          className={cn(
+            'pointer-events-auto flex items-start gap-2.5 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg',
+            'data-[state=closed]:pointer-events-none data-[state=closed]:animate-fade-out data-[state=open]:animate-rise-in',
+          )}
         >
           <Icon
             name={toneIcon[toast.tone ?? 'info']}
@@ -63,7 +70,7 @@ export function Toaster({ toasts, onDismiss, contained }: ToasterProps) {
                 toast.action?.onClick()
                 onDismiss(toast.id)
               }}
-              className="rounded-md px-1.5 py-0.5 text-small font-medium text-brand hover:bg-accent"
+              className="motion-colors flex min-h-7 items-center rounded-md px-2 text-small font-medium text-brand hover:bg-accent max-md:min-h-(--size-touch-target)"
             >
               {toast.action.icon && <Icon name={toast.action.icon} size={12} className="mr-1 inline" />}
               {toast.action.label}
@@ -73,7 +80,7 @@ export function Toaster({ toasts, onDismiss, contained }: ToasterProps) {
             type="button"
             aria-label={t('action.close')}
             onClick={() => onDismiss(toast.id)}
-            className="rounded-md p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="motion-colors flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground max-md:size-(--size-touch-target)"
           >
             <Icon name="x" size={12} />
           </button>
@@ -83,9 +90,13 @@ export function Toaster({ toasts, onDismiss, contained }: ToasterProps) {
   )
 }
 
+/** The toast's leave animation, `--duration-base`. */
+const LEAVE_MS = 180
+
 /**
  * [toasts, push, dismiss]. Keeps the last three, and each leaves after its duration (six seconds by default). The timer
- * is cleared when the caller dismisses early, so a closed toast never comes back.
+ * is cleared when the caller dismisses early, so a closed toast never comes back. A dismissed toast stays for the leave
+ * animation, marked `closing`, and is removed once it has played.
  */
 export function useToasts(duration = 6000): [Toast[], (toast: Omit<Toast, 'id'>) => number, (id: number) => void] {
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -98,7 +109,14 @@ export function useToasts(duration = 6000): [Toast[], (toast: Omit<Toast, 'id'>)
       clearTimeout(timer)
       timers.current.delete(id)
     }
-    setToasts((current) => current.filter((toast) => toast.id !== id))
+    setToasts((current) => current.map((toast) => (toast.id === id ? { ...toast, closing: true } : toast)))
+    timers.current.set(
+      -id,
+      setTimeout(() => {
+        timers.current.delete(-id)
+        setToasts((current) => current.filter((toast) => toast.id !== id))
+      }, LEAVE_MS),
+    )
   }, [])
 
   const push = useCallback(

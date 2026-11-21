@@ -4,6 +4,7 @@ import { Checkbox } from './checkbox'
 import { cn } from './cn'
 import { Icon } from './icon'
 import { useUiMessages } from './messages'
+import { PHONE_ROW, POPPER_MOTION } from './motion'
 
 export interface FacetOption {
   value: string
@@ -53,7 +54,7 @@ export function FacetedFilter({
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger
         className={cn(
-          'inline-flex h-7 items-center gap-1 rounded-md border border-dashed border-input px-2 text-small text-foreground hover:bg-accent',
+          'motion-colors inline-flex h-(--size-control-sm) items-center gap-1 rounded-md border border-dashed border-input px-2 text-small text-foreground hover:bg-accent max-md:h-(--size-touch-target) max-md:px-3',
           values.length > 0 && 'border-solid bg-selection',
         )}
       >
@@ -65,7 +66,10 @@ export function FacetedFilter({
         <Popover.Content
           align="start"
           sideOffset={4}
-          className="z-30 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-md"
+          className={cn(
+            'z-30 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-md',
+            POPPER_MOTION,
+          )}
         >
           <div className="mb-1 flex items-center gap-1 border-b border-border pb-1.5">
             <Icon name="search" size={14} className="text-muted-foreground" />
@@ -74,7 +78,7 @@ export function FacetedFilter({
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t('action.search')}
               aria-label={t('action.search')}
-              className="h-6 w-full bg-transparent text-small outline-none placeholder:text-muted-foreground"
+              className="h-(--size-control-sm) w-full bg-transparent text-small outline-none placeholder:text-muted-foreground max-md:text-[16px]"
             />
           </div>
           <ul className="max-h-64 overflow-auto">
@@ -85,7 +89,12 @@ export function FacetedFilter({
               const checked = values.includes(option.value)
               return (
                 <li key={option.value}>
-                  <div className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1.5 text-small hover:bg-accent">
+                  <div
+                    className={cn(
+                      'motion-colors flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1.5 text-small hover:bg-accent',
+                      PHONE_ROW,
+                    )}
+                  >
                     <Checkbox
                       checked={checked}
                       onCheckedChange={() =>
@@ -107,7 +116,10 @@ export function FacetedFilter({
             <button
               type="button"
               onClick={() => commit([])}
-              className="mt-1 w-full rounded-md py-1 text-center text-small text-muted-foreground hover:bg-accent hover:text-foreground"
+              className={cn(
+                'motion-colors mt-1 w-full rounded-md py-1 text-center text-small text-muted-foreground hover:bg-accent hover:text-foreground',
+                PHONE_ROW,
+              )}
             >
               {t('action.clear')}
             </button>

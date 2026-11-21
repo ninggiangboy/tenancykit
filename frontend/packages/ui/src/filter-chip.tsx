@@ -30,7 +30,7 @@ export function FilterChip({ field, label, op = 'eq', value, display, onRemove, 
     <span
       title={`filter[${field}][${op === 'like' ? 'contains' : op}]=${value}`}
       className={cn(
-        'inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background pl-2 pr-1 text-small text-foreground',
+        'inline-flex h-(--size-control-sm) items-center gap-1 rounded-md border border-border bg-background pl-2 pr-1 text-small text-foreground max-md:h-(--size-touch-target)',
         className,
       )}
     >
@@ -42,7 +42,7 @@ export function FilterChip({ field, label, op = 'eq', value, display, onRemove, 
           type="button"
           onClick={onRemove}
           aria-label={`Remove the ${label ?? field} filter`}
-          className="ml-0.5 inline-flex size-5 items-center justify-center rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+          className="motion-colors ml-0.5 inline-flex size-6 items-center justify-center rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground max-md:size-(--size-touch-target)"
         >
           <Icon name="x" size={12} />
         </button>

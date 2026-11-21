@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { allBillingPermissions, ids, pick, renderPage } from '../test-utils'
+import { allBillingPermissions, ids, moneyText, pick, renderPage } from '../test-utils'
 import { CouponsPage } from './coupons/page'
 import { PlansPage } from './plans/page'
 import { PricingPage } from './pricing/page'
@@ -146,7 +146,7 @@ describe('pricing check', () => {
     renderPage((state) => <PricingPage state={state} />, { permissions: allBillingPermissions })
     await pick(actor, 'Pricing plan', /Growth/)
     await actor.click(screen.getByRole('button', { name: 'Estimate' }))
-    expect((await screen.findAllByText('25.00 USD')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText(moneyText('25.00 USD'))).length).toBeGreaterThan(0)
     expect(body).toMatchObject({ planId: ids.plan, usage: [] })
   })
 })

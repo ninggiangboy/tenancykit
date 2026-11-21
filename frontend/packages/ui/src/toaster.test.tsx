@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act, useState } from 'react'
 import { describe, expect, it } from 'vitest'
@@ -57,7 +57,9 @@ describe('Toaster', () => {
     expect(screen.getByText('Billing enabled for acme')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Close' }))
-    expect(screen.queryByText('Billing enabled for acme')).not.toBeInTheDocument()
+    // The toast plays its leave animation first, then goes.
+    expect(screen.getByRole('status')).toHaveAttribute('data-state', 'closed')
+    await waitFor(() => expect(screen.queryByText('Billing enabled for acme')).not.toBeInTheDocument())
   })
 
   it('runs the Undo action and closes the toast', async () => {
@@ -67,7 +69,7 @@ describe('Toaster', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Undo' }))
 
     expect(undone).toBe(1)
-    expect(screen.queryByText('Filter removed')).not.toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByText('Filter removed')).not.toBeInTheDocument())
   })
 
   it('keeps the last three toasts', async () => {

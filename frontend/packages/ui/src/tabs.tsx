@@ -36,7 +36,7 @@ export function Tabs({ items, value, defaultValue, onChange, variant = 'segmente
           variant === 'segmented' && 'self-start rounded-lg border border-border bg-muted p-0.5',
           variant === 'line' && 'border-b border-border',
           variant === 'tiles' &&
-            'grid w-full gap-3 [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))] max-md:flex max-md:gap-2 max-md:overflow-x-auto',
+            'grid w-full gap-3 [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))] max-md:-m-0.5 max-md:flex max-md:gap-2 max-md:overflow-x-auto max-md:p-0.5',
         )}
       >
         {items.map((item) => (
@@ -47,14 +47,14 @@ export function Tabs({ items, value, defaultValue, onChange, variant = 'segmente
             // an id that does not exist is an invalid reference.
             aria-controls={undefined}
             className={cn(
-              'inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-body-strong text-muted-foreground transition-colors duration-[120ms]',
+              'motion-colors inline-flex h-(--size-control-sm) items-center gap-1.5 rounded-md px-2.5 text-body-strong text-muted-foreground',
               'hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               'data-[state=active]:text-foreground',
               variant === 'segmented' && 'data-[state=active]:bg-background data-[state=active]:shadow-sm',
               variant === 'line' &&
                 '-mb-px rounded-none border-b-2 border-transparent px-2 data-[state=active]:border-foreground',
               variant === 'tiles' &&
-                'h-auto flex-col items-start gap-0.5 rounded-lg bg-card px-3.5 py-3 text-small text-muted-foreground shadow-[0_0_0_1px_var(--border)] data-[state=active]:text-primary data-[state=active]:shadow-[0_0_0_2px_var(--primary)] max-md:h-9 max-md:flex-row max-md:items-center max-md:gap-1.5 max-md:rounded-full max-md:px-3.5 max-md:data-[state=active]:bg-app-accent-soft max-md:data-[state=active]:shadow-none',
+                'h-auto flex-col items-start gap-0.5 rounded-lg bg-card px-3.5 py-3 text-small text-muted-foreground shadow-[0_0_0_1px_var(--border)] data-[state=active]:text-primary data-[state=active]:shadow-[0_0_0_2px_var(--primary)] max-md:h-(--size-touch-target) max-md:flex-row max-md:items-center max-md:gap-1.5 max-md:rounded-full max-md:px-3.5 max-md:data-[state=active]:bg-app-accent-soft max-md:data-[state=active]:shadow-none',
             )}
           >
             {item.icon && <Icon name={item.icon} size={14} />}

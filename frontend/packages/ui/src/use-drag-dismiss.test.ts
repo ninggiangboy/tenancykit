@@ -38,7 +38,12 @@ describe('useDragDismiss', () => {
   it('closes after a drag past a quarter of the panel height', () => {
     const onClose = vi.fn()
     render(createElement(Panel, { onClose }))
-    drag(panel(), 100, 400)
+    const element = panel()
+    drag(element, 100, 400)
+    // The panel carries itself off screen first, then the caller closes it.
+    expect(element.style.transform).toBe('translateY(100%)')
+    expect(onClose).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(200)
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
@@ -50,13 +55,16 @@ describe('useDragDismiss', () => {
     vi.advanceTimersByTime(1000)
     fireEvent.pointerMove(element, { clientY: 200, pointerId: 1 })
     fireEvent.pointerUp(element, { clientY: 200, pointerId: 1 })
+    vi.advanceTimersByTime(500)
     expect(onClose).not.toHaveBeenCalled()
+    expect(element.style.transform).toBe('')
   })
 
   it('does nothing while disabled', () => {
     const onClose = vi.fn()
     render(createElement(Panel, { onClose, enabled: false }))
     drag(panel(), 100, 400)
+    vi.advanceTimersByTime(500)
     expect(onClose).not.toHaveBeenCalled()
   })
 })

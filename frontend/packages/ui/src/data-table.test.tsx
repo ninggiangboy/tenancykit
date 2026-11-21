@@ -53,6 +53,16 @@ describe('DataTable', () => {
     expect(screen.getByText('Nothing here yet')).toBeInTheDocument()
   })
 
+  it('keeps the column names over an empty table, and drops them on a phone where there is no table', () => {
+    const { rerender } = render(<DataTable columns={columns} rows={[]} layout="table" />)
+    expect(screen.getAllByRole('columnheader').length).toBeGreaterThan(0)
+    expect(screen.getByText('Nothing here yet')).toBeInTheDocument()
+
+    rerender(<DataTable columns={columns} rows={[]} layout="cards" />)
+    expect(screen.queryByRole('columnheader')).not.toBeInTheDocument()
+    expect(screen.getByText('Nothing here yet')).toBeInTheDocument()
+  })
+
   it('keeps the layout while loading and shows the skeleton only after a moment', async () => {
     const { rerender } = render(<DataTable columns={columns} rows={[]} loading />)
     expect(screen.queryByText('Nothing here yet')).not.toBeInTheDocument()

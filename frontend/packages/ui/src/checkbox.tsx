@@ -21,7 +21,9 @@ export const Checkbox = forwardRef<ElementRef<typeof CheckboxPrimitive.Root>, Ch
         id={id}
         checked={indeterminate ? 'indeterminate' : props.checked}
         className={cn(
-          'mt-0.5 box-border size-4 shrink-0 rounded-sm border border-input bg-background shadow-xs',
+          'motion-colors relative mt-0.5 box-border size-4 shrink-0 rounded-sm border border-input bg-background shadow-xs',
+          // On a phone the 16px box is still a 44px target.
+          "before:absolute before:-inset-3.5 before:content-[''] md:before:hidden",
           'data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground',
           'data-[state=indeterminate]:border-primary data-[state=indeterminate]:bg-primary data-[state=indeterminate]:text-primary-foreground',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',

@@ -98,6 +98,8 @@ export function DataTable<Row>({
   const showSkeleton = useDelayed(loading === true, 150)
   const cards = layout === 'cards' || (layout === 'auto' && phone)
   const cardRows = cards && !loading && rows.length > 0
+  // On a phone an empty list has no columns to name: only the empty state.
+  const bare = cards && !loading && rows.length === 0
   const tableColumns = columns.filter((column) => !column.cardOnly)
 
   const select = useCallback(
@@ -193,7 +195,7 @@ export function DataTable<Row>({
             onActivate={activate}
             onRowOpen={onRowOpen}
           />
-        ) : (
+        ) : bare ? null : (
           <table className="w-full border-collapse text-body" aria-busy={loading || undefined}>
             {caption && <caption className="sr-only">{caption}</caption>}
             <thead>
@@ -224,7 +226,7 @@ export function DataTable<Row>({
                       <button
                         type="button"
                         onClick={() => onSort(column.key, column.sort === 'asc' ? 'desc' : 'asc')}
-                        className="inline-flex items-center gap-1 hover:text-foreground"
+                        className="motion-colors -mx-1.5 inline-flex h-7 items-center gap-1 rounded-md px-1.5 hover:bg-accent hover:text-foreground max-md:h-(--size-touch-target)"
                         aria-label={t('table.sort', { column: String(column.header) })}
                       >
                         {column.header}
@@ -271,7 +273,7 @@ export function DataTable<Row>({
                       data-state={isActive ? 'active' : isSelected ? 'selected' : undefined}
                       aria-selected={selectable ? isSelected : undefined}
                       className={cn(
-                        'group border-b border-border last:border-0 transition-colors duration-[120ms]',
+                        'motion-colors group border-b border-border last:border-0',
                         isActive
                           ? 'bg-selection shadow-[inset_2px_0_0_var(--primary)]'
                           : isSelected
@@ -323,8 +325,9 @@ export function DataTable<Row>({
             </tbody>
           </table>
         )}
+        {/* Inside the frame, under the header, so the columns stay named and the empty state is part of the list. */}
+        {!loading && rows.length === 0 && (empty ?? <EmptyState title={t('table.empty')} />)}
       </div>
-      {!loading && rows.length === 0 && (empty ?? <EmptyState title={t('table.empty')} />)}
       {footer && (
         <div className="flex items-center justify-between px-1 py-2 text-small text-muted-foreground">{footer}</div>
       )}
@@ -384,7 +387,7 @@ function CardList<Row>({
             tabIndex={0}
             aria-selected={selectable ? isSelected : undefined}
             className={cn(
-              'grid min-h-16 cursor-pointer items-center gap-x-3 gap-y-0.5 border-b border-border px-4 py-2.5 last:border-0 active:bg-accent',
+              'grid min-h-16 cursor-pointer items-center gap-x-3 gap-y-0.5 border-b border-border px-4 py-2.5 last:border-0 active:bg-accent motion-colors',
               showCheck ? 'grid-cols-[auto_minmax(0,1fr)_auto]' : 'grid-cols-[minmax(0,1fr)_auto]',
             )}
             onClick={(event) => {

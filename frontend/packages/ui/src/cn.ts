@@ -5,7 +5,17 @@ import { extendTailwindMerge } from 'tailwind-merge'
  * The type scale `theme.css` defines (`--text-<name>`). Without it tailwind-merge reads `text-body-strong` as a text
  * colour and drops the colour next to it, so a primary button lost `text-primary-foreground` and its label.
  */
-export const TYPE_SCALE = ['metric', 'title', 'heading', 'body', 'body-strong', 'small', 'caption', 'code'] as const
+export const TYPE_SCALE = [
+  'metric',
+  'title',
+  'figure',
+  'heading',
+  'body',
+  'body-strong',
+  'small',
+  'caption',
+  'code',
+] as const
 
 const merge = extendTailwindMerge({
   extend: { theme: { text: [...TYPE_SCALE] } },

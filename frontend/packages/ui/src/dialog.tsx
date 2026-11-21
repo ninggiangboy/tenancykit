@@ -38,7 +38,8 @@ export function Dialog({
   const t = useUiMessages()
   const phone = useMedia(PHONE_QUERY)
   const panel = useRef<HTMLDivElement>(null)
-  const drag = useDragDismiss(panel, onClose, phone)
+  const scrim = useRef<HTMLDivElement>(null)
+  const drag = useDragDismiss(panel, onClose, phone, scrim)
   // Radix restores focus to a Trigger; this dialog is opened by a caller's own button, so it remembers the element
   // that had focus when it opened and hands focus back to it on close.
   const opener = useRef<HTMLElement | null>(null)
@@ -51,7 +52,10 @@ export function Dialog({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(next) => (next ? undefined : onClose())}>
       <DialogPrimitive.Portal container={contained ? document.body : undefined}>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay data-[state=open]:animate-in" />
+        <DialogPrimitive.Overlay
+          ref={scrim}
+          className="fixed inset-0 z-40 bg-overlay data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in"
+        />
         <DialogPrimitive.Content
           ref={panel}
           role={role}
@@ -60,7 +64,10 @@ export function Dialog({
             opener.current?.focus()
           }}
           className={cn(
-            'fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-popover p-5 text-popover-foreground shadow-xl',
+            phone
+              ? 'data-[state=closed]:animate-slide-out-down data-[state=open]:animate-slide-in-up'
+              : 'data-[state=closed]:animate-zoom-out data-[state=open]:animate-zoom-in',
+            'fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-32px)] w-[calc(100%-32px)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-popover p-5 text-popover-foreground shadow-xl',
             size === 'lg' ? 'max-w-[640px]' : 'max-w-[520px]',
             'max-md:inset-x-0 max-md:bottom-0 max-md:top-auto max-md:left-0 max-md:w-full max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0',
             'max-md:rounded-b-none max-md:rounded-t-[20px] max-md:max-h-[88dvh] max-md:pt-7 max-md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]',
@@ -82,7 +89,7 @@ export function Dialog({
             </div>
             <DialogPrimitive.Close
               aria-label={t('action.close')}
-              className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+              className="motion-colors -mr-1.5 -mt-1.5 flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground max-md:size-(--size-touch-target)"
             >
               <Icon name="x" size={14} />
             </DialogPrimitive.Close>

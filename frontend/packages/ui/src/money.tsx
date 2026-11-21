@@ -30,7 +30,7 @@ export interface MoneyProps {
 
 /**
  * An amount in minor units, with the currency's own decimals and its code, in one place: `12,500.00 USD`,
- * `3,200,000 VND`. Never a float, never a symbol without its code.
+ * `3,200,000 VND`. Never a float, never a symbol without its code. The code is the quieter second part.
  */
 export function Money({ minor, currency = 'USD', locale = 'en', signed, className }: MoneyProps) {
   const decimals = currencyDecimals(currency)
@@ -43,7 +43,7 @@ export function Money({ minor, currency = 'USD', locale = 'en', signed, classNam
   return (
     <span className={cn('tabular-nums', className)} data-currency={currency}>
       {sign}
-      {formatted} {currency.toUpperCase()}
+      {formatted} <span className="font-normal text-muted-foreground">{currency.toUpperCase()}</span>
     </span>
   )
 }

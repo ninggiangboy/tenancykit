@@ -19,7 +19,7 @@ export function UnsavedBar({ count, saving, onDiscard, onSave, className }: Unsa
   return (
     <section
       className={cn(
-        'fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-xl border border-border bg-popover px-3 py-2 shadow-lg',
+        'fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 animate-rise-in items-center gap-3 rounded-xl border border-border bg-popover px-3 py-2 shadow-lg',
         className,
       )}
     >

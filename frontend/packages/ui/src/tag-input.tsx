@@ -41,14 +41,14 @@ export function TagInput({ label, hint, error, value, onChange, suggestions = []
           {value.map((entry) => (
             <li
               key={entry}
-              className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-caption text-foreground"
+              className="inline-flex items-center gap-1 rounded-md border border-border bg-muted pl-2 font-mono text-caption text-foreground"
             >
               {entry}
               <button
                 type="button"
                 aria-label={`${t('action.remove')} ${entry}`}
                 onClick={() => onChange(value.filter((item) => item !== entry))}
-                className="rounded text-muted-foreground hover:text-foreground"
+                className="motion-colors flex size-7 items-center justify-center rounded text-muted-foreground hover:text-foreground max-md:size-(--size-touch-target)"
               >
                 <Icon name="x" size={12} />
               </button>

@@ -1,6 +1,8 @@
 import * as TooltipPrimitive from '@radix-ui/react-tooltip'
+import { cn } from './cn'
 import { Kbd } from './kbd'
 import type { KeyName } from './keys'
+import { TOOLTIP_MOTION } from './motion'
 
 export interface TooltipProps {
   content: React.ReactNode
@@ -19,7 +21,10 @@ export function Tooltip({ content, shortcut, children, defaultOpen }: TooltipPro
         <TooltipPrimitive.Portal>
           <TooltipPrimitive.Content
             sideOffset={6}
-            className="z-50 flex items-center gap-1.5 rounded-md bg-primary px-2 py-1 text-caption text-primary-foreground shadow-md"
+            className={cn(
+              'z-50 flex items-center gap-1.5 rounded-md bg-primary px-2 py-1 text-caption text-primary-foreground shadow-md',
+              TOOLTIP_MOTION,
+            )}
           >
             {content}
             {shortcut && (

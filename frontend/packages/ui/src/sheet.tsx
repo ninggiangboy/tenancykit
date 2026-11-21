@@ -53,9 +53,10 @@ export function Sheet({
   const phone = useMedia(PHONE_QUERY)
   const panel = useRef<HTMLDivElement>(null)
   const bottom = placement === 'bottom' || (placement === 'auto' && phone)
-  const drag = useDragDismiss(panel, onClose, bottom)
+  const scrim = useRef<HTMLDivElement>(null)
+  const drag = useDragDismiss(panel, onClose, bottom, scrim)
   const iconButton = cn(
-    'flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground',
+    'motion-colors flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground',
     bottom ? 'size-11' : 'size-8',
   )
 
@@ -63,7 +64,10 @@ export function Sheet({
     <DialogPrimitive.Root open={open} onOpenChange={(next) => (next ? undefined : onClose())} modal={modal}>
       <DialogPrimitive.Portal container={contained ? document.body : undefined}>
         {modal && (
-          <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay backdrop-blur-[2px] data-[state=open]:animate-in" />
+          <DialogPrimitive.Overlay
+            ref={scrim}
+            className="fixed inset-0 z-40 bg-overlay backdrop-blur-[2px] data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in"
+          />
         )}
         <DialogPrimitive.Content
           ref={panel}
@@ -78,8 +82,8 @@ export function Sheet({
           className={cn(
             'flex flex-col bg-popover text-popover-foreground outline-none',
             bottom
-              ? 'fixed inset-x-0 bottom-0 z-50 h-[88dvh] rounded-t-[20px] pb-[env(safe-area-inset-bottom)] shadow-xl'
-              : 'fixed inset-y-2 right-2 z-50 w-[calc(100%-1rem)] max-w-[460px] rounded-xl border border-border shadow-lg',
+              ? 'fixed inset-x-0 bottom-0 z-50 h-[88dvh] rounded-t-[20px] pb-[env(safe-area-inset-bottom)] shadow-xl data-[state=closed]:animate-slide-out-down data-[state=open]:animate-slide-in-up'
+              : 'fixed inset-y-2 right-2 z-50 w-[calc(100%-16px)] max-w-[460px] rounded-xl border border-border shadow-lg data-[state=closed]:animate-slide-out-right data-[state=open]:animate-slide-in-right',
           )}
         >
           {bottom && (

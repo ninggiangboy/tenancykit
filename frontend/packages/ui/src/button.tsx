@@ -6,7 +6,7 @@ import { Kbd } from './kbd'
 import type { KeyName } from './keys'
 
 const button = cva(
-  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors duration-[120ms] disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium motion-colors disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {

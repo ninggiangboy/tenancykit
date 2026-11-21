@@ -53,9 +53,9 @@ export function CommandPalette({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(next) => (next ? undefined : onClose())}>
       <DialogPrimitive.Portal container={contained ? document.body : undefined}>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
         <DialogPrimitive.Content
-          className="fixed left-1/2 top-24 z-50 w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-popover p-0 text-popover-foreground shadow-xl"
+          className="fixed left-1/2 top-24 z-50 w-[calc(100%-16px)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-popover p-0 text-popover-foreground shadow-xl data-[state=closed]:animate-drop-out data-[state=open]:animate-drop-in max-md:top-16"
           aria-label={placeholder ?? t('palette.placeholder')}
         >
           <DialogPrimitive.Title className="sr-only">{placeholder ?? t('palette.placeholder')}</DialogPrimitive.Title>
@@ -69,7 +69,7 @@ export function CommandPalette({
               <Command.Input
                 ref={inputRef}
                 placeholder={placeholder ?? t('palette.placeholder')}
-                className="h-10 w-full bg-transparent text-body outline-none placeholder:text-muted-foreground"
+                className="h-10 w-full bg-transparent text-body outline-none placeholder:text-muted-foreground max-md:h-(--size-touch-target) max-md:text-[16px]"
               />
               {scope}
               <Kbd keys={['esc']} />
@@ -93,7 +93,7 @@ export function CommandPalette({
                         onClose()
                       }}
                       className={cn(
-                        'flex cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1.5 text-small outline-none',
+                        'motion-colors flex min-h-8 cursor-pointer select-none items-center gap-2 rounded-md px-2 py-1.5 text-small outline-none max-md:min-h-(--size-touch-target)',
                         'data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground',
                       )}
                     >

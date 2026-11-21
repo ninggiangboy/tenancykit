@@ -14,7 +14,11 @@ export function Skeleton({
   return (
     <span
       aria-hidden
-      className={cn('block animate-pulse rounded-sm bg-muted', circle && 'rounded-full', className)}
+      className={cn(
+        'block animate-shimmer rounded-sm bg-[linear-gradient(90deg,var(--muted)_0%,var(--accent)_50%,var(--muted)_100%)] bg-[length:200%_100%]',
+        circle && 'rounded-full',
+        className,
+      )}
       style={{ width: width ?? '100%', height }}
     />
   )

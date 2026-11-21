@@ -54,11 +54,11 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
   const controlId = id ?? generated
   const describedBy = hint || error ? `${controlId}-note` : undefined
   const shared = cn(
-    'w-full rounded-md border bg-background text-body text-foreground shadow-xs placeholder:text-muted-foreground',
+    'motion-colors w-full rounded-md border bg-background text-body text-foreground shadow-xs placeholder:text-muted-foreground',
     'focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring-halo',
     'disabled:cursor-not-allowed disabled:opacity-50',
     size === 'sm' ? 'h-(--size-control-sm) px-2.5' : 'h-(--size-control-md) px-3',
-    'max-md:text-base',
+    'max-md:text-[16px]',
     mono && 'font-mono text-code',
     error ? 'border-destructive' : 'border-input',
     prefix && 'pl-7',

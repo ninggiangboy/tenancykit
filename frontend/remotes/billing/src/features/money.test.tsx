@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { HttpResponse, http } from 'msw'
 import { setupServer } from 'msw/node'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { allBillingPermissions, ids, pick, renderPage } from '../test-utils'
+import { allBillingPermissions, ids, moneyText, pick, renderPage } from '../test-utils'
 import { CustomersPage } from './customers/page'
 import { InvoicesPage } from './invoices/page'
 import { PaymentsPage } from './payments/page'
@@ -102,7 +102,7 @@ describe('payments', () => {
     )
     const actor = userEvent.setup()
     renderPage((state) => <PaymentsPage state={state} />, { permissions: allBillingPermissions })
-    await actor.click(await screen.findByText('10.00 USD'))
+    await actor.click(await screen.findByText(moneyText('10.00 USD')))
     await actor.click(await screen.findByRole('button', { name: 'Refund' }))
     const amount = await screen.findByLabelText('Refund amount')
     expect(amount).toHaveValue('10.00')
@@ -140,7 +140,7 @@ describe('invoices', () => {
     )
     const actor = userEvent.setup()
     renderPage((state) => <InvoicesPage state={state} />, { permissions: allBillingPermissions })
-    await actor.click(await screen.findByText('25.00 USD'))
+    await actor.click(await screen.findByText(moneyText('25.00 USD')))
     await actor.click(await screen.findByRole('button', { name: 'Void invoice' }))
     const dialog = await screen.findByRole('alertdialog')
     await actor.click(within(dialog).getByRole('button', { name: 'Void invoice' }))
@@ -156,7 +156,7 @@ describe('invoices', () => {
     )
     const actor = userEvent.setup()
     renderPage((state) => <InvoicesPage state={state} />, { permissions: ['billing:invoice:read'] })
-    await actor.click(await screen.findByText('25.00 USD'))
+    await actor.click(await screen.findByText(moneyText('25.00 USD')))
     expect(await screen.findByText('Items')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Void invoice' })).not.toBeInTheDocument()
   })
