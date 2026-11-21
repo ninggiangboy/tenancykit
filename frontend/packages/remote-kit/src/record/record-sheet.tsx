@@ -19,6 +19,9 @@ export interface RecordSheetProps {
 /**
  * A record beside its list. A click on the scrim closes it, but a click inside a child dialog opened from the sheet
  * does not: that dialog is the surface the person is working on.
+ *
+ * A screen keeps the sheet mounted while `open` is false (it renders from `useRecordSelection().shown`), because
+ * the leave animation can play only on a sheet that is still in the document.
  */
 export function RecordSheet({ open, onClose, ...props }: RecordSheetProps) {
   return (

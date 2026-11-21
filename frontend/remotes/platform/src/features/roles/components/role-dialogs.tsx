@@ -23,7 +23,7 @@ export function CreateRoleDialog({ open, onClose }: { open: boolean; onClose: ()
       title={t('createTitle')}
       description={t('createHint')}
       submitLabel={t('create')}
-      busy={create.isPending}
+      action={create}
       form={form}
       onSubmit={(values) => create.mutate(values)}
     >
@@ -51,7 +51,7 @@ export function RenameRoleDialog({ role, open, onClose }: { role: RoleResponse; 
       onClose={onClose}
       title={t('renameTitle')}
       submitLabel={tc('actions.save')}
-      busy={rename.isPending}
+      action={rename}
       form={form}
       onSubmit={(values) => rename.mutate({ role, name: values.name })}
     >

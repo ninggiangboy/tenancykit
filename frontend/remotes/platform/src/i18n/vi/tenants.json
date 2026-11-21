@@ -17,6 +17,7 @@
   "domainAdded": "Đã thêm tên miền",
   "appEnabled": "Đã bật {{app}} cho {{tenant}}",
   "appDisabled": "Đã tắt {{app}} cho {{tenant}}",
+  "appFailed": "Không đổi được {{app}}: {{message}}",
   "emptyTitle": "Chưa có tenant",
   "emptyHint": "Tạo tenant đầu tiên để cấp console cho một nhóm.",
   "noApps": "Tenant này chưa bật ứng dụng nào.",

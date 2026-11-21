@@ -1,6 +1,7 @@
 import { Button, Dialog, DialogImpact, Field } from '@suite/ui'
 import { type ReactNode, useEffect, useState } from 'react'
 import { useKitT } from '../i18n/create-remote-i18n'
+import { type DialogAction, useDialogAction } from './dialog-action'
 
 export interface ConfirmDialogProps {
   open: boolean
@@ -9,7 +10,8 @@ export interface ConfirmDialogProps {
   description?: ReactNode
   impact?: Array<{ label: ReactNode; value: ReactNode }>
   confirmLabel: string
-  busy?: boolean
+  /** The mutation Confirm runs: its progress shows on the button and its failure inside the dialog. */
+  action?: DialogAction
   destructive?: boolean
   /** A code the person retypes; Confirm stays disabled until it matches. */
   typed?: { label: string; expected: string }
@@ -27,7 +29,7 @@ export function ConfirmDialog({
   description,
   impact,
   confirmLabel,
-  busy,
+  action,
   destructive = true,
   typed,
   children,
@@ -35,6 +37,7 @@ export function ConfirmDialog({
   onConfirm,
 }: ConfirmDialogProps) {
   const t = useKitT()
+  const { busy, failure } = useDialogAction(open, action)
   const [typedValue, setTypedValue] = useState('')
   useEffect(() => {
     if (!open) setTypedValue('')
@@ -50,12 +53,11 @@ export function ConfirmDialog({
       role="alertdialog"
       footer={
         <>
-          <Button variant="outline" size="sm" onClick={onClose} disabled={busy}>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
             {t('actions.cancel')}
           </Button>
           <Button
             variant={destructive ? 'destructive' : 'default'}
-            size="sm"
             loading={busy}
             disabled={mismatch || confirmDisabled}
             onClick={onConfirm}
@@ -65,7 +67,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      {(impact?.length || children || typed) && (
+      {(impact?.length || children || typed || failure) && (
         <div className="flex flex-col gap-3">
           {impact && impact.length > 0 && <DialogImpact items={impact} />}
           {children}
@@ -78,6 +80,7 @@ export function ConfirmDialog({
               mono
             />
           )}
+          {failure}
         </div>
       )}
     </Dialog>

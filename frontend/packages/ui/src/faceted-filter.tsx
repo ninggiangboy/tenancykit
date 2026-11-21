@@ -67,7 +67,7 @@ export function FacetedFilter({
           align="start"
           sideOffset={4}
           className={cn(
-            'z-30 w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-md',
+            'z-(--z-popper) w-64 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-md',
             POPPER_MOTION,
           )}
         >
@@ -89,9 +89,10 @@ export function FacetedFilter({
               const checked = values.includes(option.value)
               return (
                 <li key={option.value}>
-                  <div
+                  {/* biome-ignore lint/a11y/noLabelWithoutControl: the Radix checkbox inside is the control; the whole row is its label. */}
+                  <label
                     className={cn(
-                      'motion-colors flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1.5 text-small hover:bg-accent',
+                      'motion-colors flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1.5 text-small hover:bg-accent has-[:focus-visible]:bg-accent',
                       PHONE_ROW,
                     )}
                   >
@@ -107,7 +108,7 @@ export function FacetedFilter({
                     {option.count !== undefined && (
                       <span className="text-caption text-muted-foreground">{option.count}</span>
                     )}
-                  </div>
+                  </label>
                 </li>
               )
             })}

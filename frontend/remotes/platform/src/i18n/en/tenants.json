@@ -17,6 +17,7 @@
   "domainAdded": "Domain added",
   "appEnabled": "{{app}} enabled for {{tenant}}",
   "appDisabled": "{{app}} disabled for {{tenant}}",
+  "appFailed": "Could not change {{app}}: {{message}}",
   "emptyTitle": "No tenants yet",
   "emptyHint": "Create the first tenant to give a team its console.",
   "noApps": "No apps are enabled for this tenant.",

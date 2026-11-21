@@ -46,17 +46,20 @@ export function InvoicesPage({ state }: { state: UrlState }) {
       rows={rows}
       page={query.data?.page}
       loading={query.isLoading}
+      refreshing={query.isFetching && !query.isLoading}
       error={query.error}
       refetch={() => void query.refetch()}
       columns={columns}
+      stickyHeader={false}
       rowKey={keyOf}
       onRowOpen={(row) => record.open(keyOf(row))}
       emptyTitle={t('emptyTitle')}
       emptyHint={t('emptyHint')}
     >
-      {record.selected && (
+      {record.shown && (
         <InvoiceSheet
-          invoice={record.selected}
+          open={record.isOpen}
+          invoice={record.shown}
           names={names}
           onClose={record.close}
           onPrev={record.prev}

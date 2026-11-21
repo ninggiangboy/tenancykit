@@ -37,7 +37,7 @@ export function Page({ children, primaryAction, ...header }: PageHeaderProps & {
         {children}
       </div>
       {primaryAction && (
-        <div className="fixed right-4 bottom-[calc(16px+env(safe-area-inset-bottom))] z-20 animate-rise-in md:hidden [&_button]:h-13 [&_button]:rounded-2xl [&_button]:px-5 [&_button]:text-[15px] [&_button]:shadow-lg">
+        <div className="fixed right-4 bottom-[calc(16px+env(safe-area-inset-bottom))] z-(--z-bar) animate-rise-in md:hidden [&_button]:h-13 [&_button]:rounded-2xl [&_button]:px-5 [&_button]:text-[15px] [&_button]:shadow-lg">
           {primaryAction}
         </div>
       )}

@@ -20,7 +20,7 @@ export function RenameUserDialog({ user, open, onClose }: { user: UserResponse; 
       onClose={onClose}
       title={t('renameTitle')}
       submitLabel={tc('actions.save')}
-      busy={rename.isPending}
+      action={rename}
       form={form}
       onSubmit={(values) => rename.mutate({ user, name: values.displayName })}
     >

@@ -1,15 +1,16 @@
 import { etag, permissions } from '@suite/api-client'
 import { addDomain, create1, deactivate, rename, set } from '@suite/api-client/platform'
-import { appsOptions, list1Options } from '@suite/api-client/platform/query'
-import { asListQuery, type ListState, useAction, useApi } from '@suite/remote-kit'
+import { appsOptions, appsQueryKey, list1Options } from '@suite/api-client/platform/query'
+import { asListQuery, errorMessage, type ListState, useAction, useApi } from '@suite/remote-kit'
 import { usePermission } from '@suite/shell-sdk/react'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useT } from '../../../i18n'
 
 export function useTenantList(list: ListState) {
   const { platform } = useApi()
   return useQuery({
     ...list1Options({ client: platform, throwOnError: true, query: asListQuery(list.params) }),
+    placeholderData: keepPreviousData,
     enabled: usePermission(permissions.platform.list_1),
   })
 }
@@ -96,8 +97,11 @@ export function useSetTenantApp(tenant: { id?: string; code?: string }, onSettle
         headers: { 'If-Match': etag(vars.version) },
       }),
     {
+      // A toggle moves only this tenant's list of apps, so no other list on screen reloads.
+      invalidate: [appsQueryKey({ client: platform, path: { tenantId: tenant.id ?? '' } })],
       onSuccess: (_result, vars) => onSettled(vars.appCode),
       onError: (_error, vars) => onSettled(vars.appCode),
+      errorTitle: (error, vars) => t('appFailed', { app: vars.appLabel, message: errorMessage(error) }),
       successToast: (_result, vars) =>
         t(vars.enabled ? 'appEnabled' : 'appDisabled', { app: vars.appLabel, tenant: tenant.code ?? '' }),
     },

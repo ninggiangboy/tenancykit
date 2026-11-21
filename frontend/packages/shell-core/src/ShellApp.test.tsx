@@ -206,7 +206,7 @@ describe('the shell frame', () => {
     await appLink(/Billing/)
 
     await userEvent.click(screen.getByRole('button', { name: 'Account' }))
-    await userEvent.click(await screen.findByRole('menuitem', { name: 'Compact' }))
+    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'Compact' }))
 
     await waitFor(() => expect(document.documentElement.dataset.density).toBe('compact'))
   })

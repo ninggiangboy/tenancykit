@@ -10,12 +10,13 @@ import { RenameUserDialog } from './rename-user-dialog'
 export interface UserSheetProps {
   user: UserResponse
   tenantCode?: string
+  open: boolean
   onClose: () => void
   onPrev?: () => void
   onNext?: () => void
 }
 
-export function UserSheet({ user, tenantCode, onClose, onPrev, onNext }: UserSheetProps) {
+export function UserSheet({ user, tenantCode, open, onClose, onPrev, onNext }: UserSheetProps) {
   const t = useT('users')
   const tc = useT('common')
   const can = useUserPermissions()
@@ -26,7 +27,7 @@ export function UserSheet({ user, tenantCode, onClose, onPrev, onNext }: UserShe
   return (
     <>
       <RecordSheet
-        open
+        open={open}
         onClose={onClose}
         eyebrow={t('recordType')}
         title={user.displayName ?? ''}
@@ -35,7 +36,7 @@ export function UserSheet({ user, tenantCode, onClose, onPrev, onNext }: UserShe
         onNext={onNext}
         actions={
           <PermissionGate allowed={can.manage}>
-            <Button variant="outline" icon="settings" onClick={() => setRenaming(true)}>
+            <Button variant="outline" icon="pencil" onClick={() => setRenaming(true)}>
               {tc('actions.rename')}
             </Button>
             <Button

@@ -42,7 +42,7 @@ export function RedemptionsPage({ state }: { state: UrlState }) {
   const can = useRedemptionPermissions()
   const [dialog, setDialog] = useState<'redeem' | 'attach' | 'revoke' | null>(null)
   const revoke = useRevokeRedemption(() => setDialog(null))
-  const selected = record.selected
+  const selected = record.shown
   const uses = (row: RedemptionResponse) => `${row.applicationsUsed ?? 0}/${row.maxApplications ?? t('unlimited')}`
 
   const columns: DataTableColumn<RedemptionResponse>[] = [
@@ -119,6 +119,7 @@ export function RedemptionsPage({ state }: { state: UrlState }) {
           rows={rows}
           rowKey={keyOf}
           loading={query.isLoading}
+          refreshing={query.isFetching && !query.isLoading}
           onRowOpen={(row) => record.open(keyOf(row))}
           caption={t('title')}
           empty={<EmptyState icon="ticket" title={t('emptyTitle')} description={t('emptyHint')} />}
@@ -126,7 +127,7 @@ export function RedemptionsPage({ state }: { state: UrlState }) {
       )}
       {selected && (
         <RecordSheet
-          open
+          open={record.isOpen}
           onClose={record.close}
           onPrev={record.prev}
           onNext={record.next}
@@ -166,7 +167,7 @@ export function RedemptionsPage({ state }: { state: UrlState }) {
         title={tc('confirm.revokeRedemption')}
         description={tc('confirm.revokeRedemptionHint')}
         confirmLabel={t('revoke')}
-        busy={revoke.isPending}
+        action={revoke}
         onConfirm={() => revoke.mutate(selected?.id ?? '')}
         impact={[
           { label: t('coupon'), value: selected?.couponName ?? '' },

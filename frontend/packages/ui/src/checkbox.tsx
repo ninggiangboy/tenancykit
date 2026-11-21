@@ -33,7 +33,7 @@ export const Checkbox = forwardRef<ElementRef<typeof CheckboxPrimitive.Root>, Ch
         {...props}
       >
         <CheckboxPrimitive.Indicator className="flex items-center justify-center">
-          <Icon name={indeterminate ? 'x' : 'check'} size={12} strokeWidth={3} />
+          <Icon name={indeterminate ? 'minus' : 'check'} size={12} strokeWidth={3} />
         </CheckboxPrimitive.Indicator>
       </CheckboxPrimitive.Root>
       {(label || description) && (

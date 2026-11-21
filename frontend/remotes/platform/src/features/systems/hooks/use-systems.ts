@@ -4,13 +4,14 @@ import { create2, createCredential, revoke, rotate, update } from '@suite/api-cl
 import { list2Options, listCredentialsOptions } from '@suite/api-client/platform/query'
 import { asListQuery, type ListState, useAction, useApi } from '@suite/remote-kit'
 import { usePermission } from '@suite/shell-sdk/react'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useT } from '../../../i18n'
 
 export function useSystemList(list: ListState) {
   const { platform } = useApi()
   return useQuery({
     ...list2Options({ client: platform, throwOnError: true, query: asListQuery(list.params) }),
+    placeholderData: keepPreviousData,
     enabled: usePermission(permissions.platform.list_2),
   })
 }

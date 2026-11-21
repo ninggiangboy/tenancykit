@@ -36,7 +36,7 @@ export function CreateChargeDialog({ open, onClose }: { open: boolean; onClose: 
       title={t('createTitle')}
       description={t('createHint')}
       submitLabel={tc('actions.create')}
-      busy={create.isPending}
+      action={create}
       form={form}
       onSubmit={(values) => create.mutate({ ...values, amount: toMinor(values.amount, values.currency) })}
     >

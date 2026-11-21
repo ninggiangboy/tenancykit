@@ -86,7 +86,7 @@ export function ReservePanel() {
         description={t('confirmReserveHint')}
         confirmLabel={t('reserveRun')}
         destructive={false}
-        busy={run.isPending}
+        action={run}
         onConfirm={() => staged && run.mutate(staged)}
         impact={[
           {

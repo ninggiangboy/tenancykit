@@ -40,6 +40,7 @@ export function PaymentsPage({ state }: { state: UrlState }) {
       rows={rows}
       page={query.data?.page}
       loading={query.isLoading}
+      refreshing={query.isFetching && !query.isLoading}
       error={query.error}
       refetch={() => void query.refetch()}
       columns={columns}
@@ -48,9 +49,10 @@ export function PaymentsPage({ state }: { state: UrlState }) {
       emptyTitle={t('emptyTitle')}
       emptyHint={t('emptyHint')}
     >
-      {record.selected && (
+      {record.shown && (
         <PaymentSheet
-          payment={record.selected}
+          open={record.isOpen}
+          payment={record.shown}
           names={names}
           onClose={record.close}
           onPrev={record.prev}

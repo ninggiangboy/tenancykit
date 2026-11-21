@@ -3,13 +3,14 @@ import { capture, release, reserve } from '@suite/api-client/billing'
 import { reservationsOptions } from '@suite/api-client/billing/query'
 import { asListQuery, idempotencyKey, type ListState, useAction, useApi } from '@suite/remote-kit'
 import { usePermission } from '@suite/shell-sdk/react'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useT } from '../../i18n'
 
 export function useReservationList(list: ListState) {
   const { billing } = useApi()
   return useQuery({
     ...reservationsOptions({ client: billing, throwOnError: true, query: asListQuery(list.params) }),
+    placeholderData: keepPreviousData,
     enabled: usePermission(permissions.billing.reservations),
   })
 }

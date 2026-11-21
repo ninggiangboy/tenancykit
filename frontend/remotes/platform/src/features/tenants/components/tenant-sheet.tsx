@@ -9,12 +9,13 @@ import { TenantApps } from './tenant-apps'
 
 export interface TenantSheetProps {
   tenant: TenantResponse
+  open: boolean
   onClose: () => void
   onPrev?: () => void
   onNext?: () => void
 }
 
-export function TenantSheet({ tenant, onClose, onPrev, onNext }: TenantSheetProps) {
+export function TenantSheet({ tenant, open, onClose, onPrev, onNext }: TenantSheetProps) {
   const t = useT('tenants')
   const tc = useT('common')
   const can = useTenantPermissions()
@@ -25,7 +26,7 @@ export function TenantSheet({ tenant, onClose, onPrev, onNext }: TenantSheetProp
   return (
     <>
       <RecordSheet
-        open
+        open={open}
         onClose={onClose}
         eyebrow={t('recordType')}
         title={tenant.name ?? tenant.code ?? ''}
@@ -42,7 +43,7 @@ export function TenantSheet({ tenant, onClose, onPrev, onNext }: TenantSheetProp
             <PermissionGate allowed={can.rename}>
               <DropdownMenu
                 align="end"
-                items={[{ label: tc('actions.rename'), icon: 'settings', onSelect: () => setDialog('rename') }]}
+                items={[{ label: tc('actions.rename'), icon: 'pencil', onSelect: () => setDialog('rename') }]}
                 trigger={
                   <Button variant="outline" iconOnly icon="more">
                     {tc('actions.more')}

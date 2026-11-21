@@ -11,6 +11,7 @@ export function useCustomerList(list: ListState) {
   const { billing } = useApi()
   return useQuery({
     ...list1Options({ client: billing, throwOnError: true, query: asListQuery(list.params) }),
+    placeholderData: keepPreviousData,
     enabled: usePermission(permissions.billing.list_1),
   })
 }

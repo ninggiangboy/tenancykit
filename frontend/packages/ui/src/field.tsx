@@ -85,7 +85,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
             id={controlId}
             aria-describedby={describedBy}
             aria-invalid={error ? true : undefined}
-            className={shared}
+            className={cn(shared, 'appearance-none pr-8')}
             {...(props as object)}
           >
             {options.map((option) => {
@@ -118,6 +118,11 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
             {...(type === 'datetime-utc' ? utcInputProps : {})}
             {...props}
           />
+        )}
+        {type === 'select' && (
+          <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-muted-foreground">
+            <Icon name="chevrons-up-down" size={14} />
+          </span>
         )}
         {suffix && <span className="absolute inset-y-0 right-2 flex items-center text-muted-foreground">{suffix}</span>}
       </div>

@@ -53,9 +53,9 @@ export function CommandPalette({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(next) => (next ? undefined : onClose())}>
       <DialogPrimitive.Portal container={contained ? document.body : undefined}>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-overlay data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-(--z-scrim) bg-overlay data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in" />
         <DialogPrimitive.Content
-          className="fixed left-1/2 top-24 z-50 w-[calc(100%-16px)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-popover p-0 text-popover-foreground shadow-xl data-[state=closed]:animate-drop-out data-[state=open]:animate-drop-in max-md:top-16"
+          className="fixed left-1/2 top-24 z-(--z-modal) w-[calc(100%-16px)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-popover p-0 text-popover-foreground shadow-xl data-[state=closed]:animate-drop-out data-[state=open]:animate-drop-in max-md:top-16"
           aria-label={placeholder ?? t('palette.placeholder')}
         >
           <DialogPrimitive.Title className="sr-only">{placeholder ?? t('palette.placeholder')}</DialogPrimitive.Title>
@@ -118,6 +118,9 @@ const FIELD_SELECTOR = 'input, textarea, select, [contenteditable="true"]'
 
 /** Binds a shortcut such as `mod+k` or `/`; keys typed in a field are left alone unless `allowInFields`. */
 export function useHotkey(combo: string, handler: (event: KeyboardEvent) => void, allowInFields = false): void {
+  // The listener stays for as long as the combo does; a caller's new arrow every render does not move it.
+  const latest = useRef(handler)
+  latest.current = handler
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!allowInFields && (event.target as HTMLElement | null)?.closest?.(FIELD_SELECTOR)) {
@@ -125,10 +128,10 @@ export function useHotkey(combo: string, handler: (event: KeyboardEvent) => void
       }
       if (matchesHotkey(combo, event)) {
         event.preventDefault()
-        handler(event)
+        latest.current(event)
       }
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [combo, handler, allowInFields])
+  }, [combo, allowInFields])
 }

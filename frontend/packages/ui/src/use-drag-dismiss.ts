@@ -1,4 +1,5 @@
 import { type PointerEvent as ReactPointerEvent, useEffect, useRef } from 'react'
+import { LEAVE_MS } from './motion'
 
 export interface DragDismissHandlers {
   onPointerDown: (event: ReactPointerEvent<HTMLElement>) => void
@@ -12,9 +13,6 @@ interface Drag {
   t: number
   dy: number
 }
-
-/** The slide off the screen and the spring back; the same as `--duration-base`. */
-const LEAVE_MS = 180
 
 /**
  * Drag the handle or the head of a bottom sheet down to close it: past a quarter of its height, or a flick of more

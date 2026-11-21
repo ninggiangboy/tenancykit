@@ -207,10 +207,10 @@ function FrameLayout() {
   }, [appCode])
 
   return (
-    <div className="flex min-h-dvh bg-sidebar text-foreground">
+    <div className="flex min-h-dvh bg-sidebar text-foreground md:h-dvh md:overflow-hidden">
       <Sidebar />
-      {/* Positive `md:` classes only: a remote's stylesheet loads later and defines `p-2` and `rounded-xl` itself, so a base class overridden by `max-md:` would lose to it. */}
-      <div className="flex min-w-0 flex-1 flex-col md:pt-2 md:pr-2 md:pb-2">
+      {/* Positive `md:` classes only: a remote's stylesheet loads later and defines `p-2` and `rounded-xl` itself, so a base class overridden by `max-md:` would lose to it. From 768px up the frame is the viewport and only `main` scrolls; phones scroll the document so the browser can collapse its address bar. */}
+      <div className="flex min-w-0 flex-1 flex-col md:min-h-0 md:pt-2 md:pr-2 md:pb-2">
         <Header />
         <main className="relative min-h-0 flex-1 overflow-auto bg-background md:rounded-xl md:border md:border-border">
           <Outlet />

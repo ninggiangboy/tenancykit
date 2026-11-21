@@ -38,7 +38,7 @@ export function ReserveDialog({ open, onClose }: { open: boolean; onClose: () =>
       title={t('createTitle')}
       description={t('createHint')}
       submitLabel={tc('actions.create')}
-      busy={reserve.isPending}
+      action={reserve}
       form={form}
       onSubmit={(values) => reserve.mutate({ ...values, amount: toMinor(values.amount, values.currency) })}
     >
@@ -88,7 +88,7 @@ export function CaptureDialog({ reservation, open, onClose }: Props) {
       title={t('capture')}
       description={t('captureHint')}
       submitLabel={t('capture')}
-      busy={captureIt.isPending}
+      action={captureIt}
       form={form}
       onSubmit={(values) => {
         const minor = toMinor(values.amount, currency)
@@ -124,7 +124,7 @@ export function ReleaseDialog({ reservation, open, onClose }: Props) {
       title={tc('confirm.releaseReservation')}
       description={tc('confirm.releaseReservationHint')}
       confirmLabel={t('release')}
-      busy={releaseIt.isPending}
+      action={releaseIt}
       onConfirm={() => releaseIt.mutate(reservation.id ?? '')}
       impact={[
         {

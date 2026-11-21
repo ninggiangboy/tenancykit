@@ -15,7 +15,7 @@ import {
 } from '@suite/remote-kit'
 import { usePermission } from '@suite/shell-sdk/react'
 import { CopyId, type DataTableColumn, Money, StatusBadge, type UrlState } from '@suite/ui'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useEnumFacet } from '../../components/facets'
 import { useT } from '../../i18n'
 
@@ -33,11 +33,12 @@ export function RefundsPage({ state }: { state: UrlState }) {
   const list = useListState(state, spec)
   const query = useQuery({
     ...refunds1Options({ client: billing, throwOnError: true, query: asListQuery(list.params) }),
+    placeholderData: keepPreviousData,
     enabled: usePermission(permissions.billing.refunds_1),
   })
   const rows = query.data?.data ?? []
   const record = useRecordSelection(state, rows, keyOf)
-  const selected = record.selected
+  const selected = record.shown
 
   const columns: DataTableColumn<RefundResponse>[] = [
     {
@@ -89,6 +90,7 @@ export function RefundsPage({ state }: { state: UrlState }) {
       rows={rows}
       page={query.data?.page}
       loading={query.isLoading}
+      refreshing={query.isFetching && !query.isLoading}
       error={query.error}
       refetch={() => void query.refetch()}
       columns={columns}
@@ -99,7 +101,7 @@ export function RefundsPage({ state }: { state: UrlState }) {
     >
       {selected && (
         <RecordSheet
-          open
+          open={record.isOpen}
           onClose={record.close}
           onPrev={record.prev}
           onNext={record.next}

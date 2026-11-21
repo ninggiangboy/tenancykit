@@ -54,7 +54,7 @@ export function Dialog({
       <DialogPrimitive.Portal container={contained ? document.body : undefined}>
         <DialogPrimitive.Overlay
           ref={scrim}
-          className="fixed inset-0 z-40 bg-overlay data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in"
+          className="fixed inset-0 z-(--z-scrim) bg-overlay data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in"
         />
         <DialogPrimitive.Content
           ref={panel}
@@ -67,7 +67,7 @@ export function Dialog({
             phone
               ? 'data-[state=closed]:animate-slide-out-down data-[state=open]:animate-slide-in-up'
               : 'data-[state=closed]:animate-zoom-out data-[state=open]:animate-zoom-in',
-            'fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-32px)] w-[calc(100%-32px)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-popover p-5 text-popover-foreground shadow-xl',
+            'fixed left-1/2 top-1/2 z-(--z-modal) flex max-h-[calc(100dvh-32px)] w-[calc(100%-32px)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-xl border border-border bg-popover p-5 text-popover-foreground shadow-xl',
             size === 'lg' ? 'max-w-[640px]' : 'max-w-[520px]',
             'max-md:inset-x-0 max-md:bottom-0 max-md:top-auto max-md:left-0 max-md:w-full max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0',
             'max-md:rounded-b-none max-md:rounded-t-[20px] max-md:max-h-[88dvh] max-md:pt-7 max-md:pb-[calc(1.25rem+env(safe-area-inset-bottom))]',

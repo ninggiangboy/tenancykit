@@ -27,6 +27,18 @@ export const en = {
   'table.selectRow': 'Select this row',
   'table.empty': 'Nothing here yet',
   'table.sort': 'Sort by {column}',
+  'table.actions': 'Actions',
+  'filter.remove': 'Remove the {field} filter',
+  'filter.op.eq': 'is',
+  'filter.op.neq': 'is not',
+  'filter.op.gt': 'more than',
+  'filter.op.gte': 'at least',
+  'filter.op.lt': 'less than',
+  'filter.op.lte': 'at most',
+  'filter.op.in': 'is any of',
+  'filter.op.nin': 'is none of',
+  'filter.op.like': 'matches',
+  'filter.op.is_null': 'is empty',
   'palette.placeholder': 'Search or jump to',
   'palette.empty': 'No match',
   'palette.groups': 'Suggestions',
@@ -63,6 +75,18 @@ export const vi: Record<UiMessageKey, string> = {
   'table.selectRow': 'Chọn dòng này',
   'table.empty': 'Chưa có gì ở đây',
   'table.sort': 'Sắp xếp theo {column}',
+  'table.actions': 'Thao tác',
+  'filter.remove': 'Bỏ bộ lọc {field}',
+  'filter.op.eq': 'là',
+  'filter.op.neq': 'không phải',
+  'filter.op.gt': 'lớn hơn',
+  'filter.op.gte': 'ít nhất',
+  'filter.op.lt': 'nhỏ hơn',
+  'filter.op.lte': 'nhiều nhất',
+  'filter.op.in': 'là một trong',
+  'filter.op.nin': 'không là một trong',
+  'filter.op.like': 'chứa',
+  'filter.op.is_null': 'để trống',
   'palette.placeholder': 'Tìm hoặc mở nhanh',
   'palette.empty': 'Không khớp',
   'palette.groups': 'Gợi ý',
@@ -81,6 +105,7 @@ export const catalogs: Record<Locale, Record<UiMessageKey, string>> = { en, vi }
 export type Translate = (key: UiMessageKey, values?: Record<string, string | number>) => string
 
 const MessagesContext = createContext<Translate | null>(null)
+const LocaleContext = createContext<Locale>('en')
 
 export function UiMessagesProvider({
   locale,
@@ -97,7 +122,16 @@ export function UiMessagesProvider({
     return (key, values) => interpolate(catalog[key] ?? en[key] ?? key, values)
   }, [locale, messages])
 
-  return <MessagesContext.Provider value={translate}>{children}</MessagesContext.Provider>
+  return (
+    <LocaleContext.Provider value={locale}>
+      <MessagesContext.Provider value={translate}>{children}</MessagesContext.Provider>
+    </LocaleContext.Provider>
+  )
+}
+
+/** The language the console is shown in; English outside a provider. Numbers and dates format with it. */
+export function useUiLocale(): Locale {
+  return useContext(LocaleContext)
 }
 
 /** Falls back to English, so a component mounted outside a provider still has words. */

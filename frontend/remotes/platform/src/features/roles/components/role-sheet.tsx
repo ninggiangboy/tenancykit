@@ -11,12 +11,13 @@ import { RolePermissions } from './role-permissions'
 export interface RoleSheetProps {
   role: RoleResponse
   tenantCode?: string
+  open: boolean
   onClose: () => void
   onPrev?: () => void
   onNext?: () => void
 }
 
-export function RoleSheet({ role, tenantCode, onClose, onPrev, onNext }: RoleSheetProps) {
+export function RoleSheet({ role, tenantCode, open, onClose, onPrev, onNext }: RoleSheetProps) {
   const t = useT('roles')
   const tc = useT('common')
   const canManage = useCanManageRoles()
@@ -26,7 +27,7 @@ export function RoleSheet({ role, tenantCode, onClose, onPrev, onNext }: RoleShe
   return (
     <>
       <RecordSheet
-        open
+        open={open}
         onClose={onClose}
         eyebrow={t('recordType')}
         title={role.name ?? ''}
@@ -35,7 +36,7 @@ export function RoleSheet({ role, tenantCode, onClose, onPrev, onNext }: RoleShe
         onNext={onNext}
         actions={
           <PermissionGate allowed={canManage && !role.system}>
-            <Button variant="outline" icon="settings" onClick={() => setRenaming(true)}>
+            <Button variant="outline" icon="pencil" onClick={() => setRenaming(true)}>
               {tc('actions.rename')}
             </Button>
           </PermissionGate>

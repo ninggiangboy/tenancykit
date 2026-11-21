@@ -1,6 +1,6 @@
 import type { CouponResponse } from '@suite/api-client/billing'
-import { FormField, Section, useZodForm } from '@suite/remote-kit'
-import { Button, PermissionGate, Skeleton, StatusBadge } from '@suite/ui'
+import { FormField, QueryState, Section, useZodForm } from '@suite/remote-kit'
+import { Button, PermissionGate, StatusBadge } from '@suite/ui'
 import { useT } from '../../../i18n'
 import { useAddCode, useCouponCodes, useDeactivateCode } from '../hooks/use-coupons'
 import { addCodeSchema } from '../schema'
@@ -12,38 +12,40 @@ export function CouponCodes({ coupon, canManage }: { coupon: CouponResponse; can
   const deactivate = useDeactivateCode()
   const form = useZodForm(addCodeSchema, { code: '', maxRedemptions: '' })
   const add = useAddCode(coupon.id ?? '', () => form.reset())
-  const rows = codes.data?.data ?? []
 
   return (
     <Section title={t('codes')}>
-      {codes.isLoading ? (
-        <Skeleton width="100%" height={40} />
-      ) : rows.length === 0 ? (
-        <p className="text-small text-muted-foreground">{tc('state.none')}</p>
-      ) : (
-        <ul className="divide-y divide-border rounded-lg border border-border">
-          {rows.map((entry) => (
-            <li key={entry.id} className="flex items-center justify-between gap-2 px-3 py-2 text-small">
-              <span className="flex items-center gap-2">
-                <span className="font-mono text-code">{entry.code}</span>
-                <StatusBadge tone={entry.active ? 'success' : 'neutral'}>
-                  {entry.active ? tc('state.on') : tc('state.off')}
-                </StatusBadge>
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="text-caption tabular-nums text-muted-foreground">
-                  {entry.redeemedCount ?? 0}/{entry.maxRedemptions ?? t('unlimited')}
+      <QueryState
+        query={codes}
+        skeletonHeight={40}
+        isEmpty={(data) => (data.data ?? []).length === 0}
+        empty={<p className="text-small text-muted-foreground">{tc('state.none')}</p>}
+      >
+        {(data) => (
+          <ul className="divide-y divide-border rounded-lg border border-border">
+            {(data.data ?? []).map((entry) => (
+              <li key={entry.id} className="flex items-center justify-between gap-2 px-3 py-2 text-small">
+                <span className="flex items-center gap-2">
+                  <span className="font-mono text-code">{entry.code}</span>
+                  <StatusBadge tone={entry.active ? 'success' : 'neutral'}>
+                    {entry.active ? tc('state.on') : tc('state.off')}
+                  </StatusBadge>
                 </span>
-                <PermissionGate allowed={canManage && entry.active === true}>
-                  <Button variant="ghost" size="sm" onClick={() => entry.id && deactivate.mutate(entry.id)}>
-                    {t('deactivateCode')}
-                  </Button>
-                </PermissionGate>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+                <span className="flex items-center gap-2">
+                  <span className="text-caption tabular-nums text-muted-foreground">
+                    {entry.redeemedCount ?? 0}/{entry.maxRedemptions ?? t('unlimited')}
+                  </span>
+                  <PermissionGate allowed={canManage && entry.active === true}>
+                    <Button variant="ghost" size="sm" onClick={() => entry.id && deactivate.mutate(entry.id)}>
+                      {t('deactivateCode')}
+                    </Button>
+                  </PermissionGate>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </QueryState>
       <PermissionGate allowed={canManage && coupon.status !== 'DEACTIVATED'}>
         <form
           noValidate

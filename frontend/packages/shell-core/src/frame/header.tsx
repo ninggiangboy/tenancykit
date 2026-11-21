@@ -2,6 +2,9 @@ import { AppMark, DropdownMenu, Icon, Kbd, type MenuItem, PHONE_QUERY, useMedia 
 import { Link, useLocation } from '@tanstack/react-router'
 import { currentPlace, useFrame } from './frame-context'
 
+/** The icon of the theme the person chose; System shows the monitor, not the look it resolves to. */
+const THEME_ICON = { light: 'sun', dark: 'moon', system: 'monitor' } as const
+
 /** The breadcrumb (shell, app, screen), search and the account menus; on phones a 56px top bar with a nav button. */
 export function Header() {
   const frame = useFrame()
@@ -9,6 +12,7 @@ export function Header() {
     definition,
     me,
     density,
+    theme,
     onToggleSidebar,
     onToggleDrawer,
     onOpenPalette,
@@ -27,29 +31,21 @@ export function Header() {
   const accountItems: MenuItem[] = [
     { heading: me.email },
     { heading: t('shell.density') },
-    {
-      label: t('shell.comfortable'),
-      icon: density === 'comfortable' ? 'check' : undefined,
-      onSelect: () => onDensity('comfortable'),
-    },
-    {
-      label: t('shell.compact'),
-      icon: density === 'compact' ? 'check' : undefined,
-      onSelect: () => onDensity('compact'),
-    },
+    { label: t('shell.comfortable'), checked: density === 'comfortable', onSelect: () => onDensity('comfortable') },
+    { label: t('shell.compact'), checked: density === 'compact', onSelect: () => onDensity('compact') },
     { separator: true },
     ...(phone
       ? ([
           { heading: t('shell.language') },
-          { label: t('shell.english'), onSelect: () => onLocale('en') },
-          { label: t('shell.vietnamese'), onSelect: () => onLocale('vi') },
+          { label: t('shell.english'), checked: locale === 'en', onSelect: () => onLocale('en') },
+          { label: t('shell.vietnamese'), checked: locale === 'vi', onSelect: () => onLocale('vi') },
         ] satisfies MenuItem[])
       : []),
     ...(onSignOut ? ([{ label: t('shell.signOut'), icon: 'log-out', onSelect: onSignOut }] satisfies MenuItem[]) : []),
   ]
 
   return (
-    <div className="flex h-13 items-center gap-2 px-2 max-md:sticky max-md:top-0 max-md:z-[5] max-md:h-[56px] max-md:border-b max-md:border-border max-md:bg-background">
+    <div className="flex h-13 items-center gap-2 px-2 max-md:sticky max-md:top-0 max-md:z-(--z-sticky) max-md:h-[56px] max-md:border-b max-md:border-border max-md:bg-background">
       <button
         type="button"
         onClick={onToggleDrawer}
@@ -70,7 +66,7 @@ export function Header() {
         {place.remote && <AppMark app={place.remote.appCode} size="sm" />}
         <span className="truncate text-[17px] font-semibold">{pageLabel}</span>
       </span>
-      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1 text-small max-md:hidden">
+      <nav aria-label={t('shell.breadcrumb')} className="flex min-w-0 items-center gap-1 text-small max-md:hidden">
         {place.remote ? (
           <>
             <Link
@@ -126,9 +122,14 @@ export function Header() {
           <DropdownMenu
             label={t('shell.theme')}
             items={[
-              { label: t('shell.light'), icon: 'sparkle', onSelect: () => onTheme('light') },
-              { label: t('shell.dark'), icon: 'ring', onSelect: () => onTheme('dark') },
-              { label: t('shell.system'), icon: 'settings', onSelect: () => onTheme('system') },
+              { label: t('shell.light'), icon: 'sun', checked: theme === 'light', onSelect: () => onTheme('light') },
+              { label: t('shell.dark'), icon: 'moon', checked: theme === 'dark', onSelect: () => onTheme('dark') },
+              {
+                label: t('shell.system'),
+                icon: 'monitor',
+                checked: theme === 'system',
+                onSelect: () => onTheme('system'),
+              },
             ]}
             trigger={
               <button
@@ -136,7 +137,7 @@ export function Header() {
                 aria-label={t('shell.theme')}
                 className="motion-colors flex size-(--size-control-sm) items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
               >
-                <Icon name="sparkle" size={14} />
+                <Icon name={THEME_ICON[theme]} size={14} />
               </button>
             }
           />
@@ -145,8 +146,8 @@ export function Header() {
           <DropdownMenu
             label={t('shell.language')}
             items={[
-              { label: t('shell.english'), onSelect: () => onLocale('en') },
-              { label: t('shell.vietnamese'), onSelect: () => onLocale('vi') },
+              { label: t('shell.english'), checked: locale === 'en', onSelect: () => onLocale('en') },
+              { label: t('shell.vietnamese'), checked: locale === 'vi', onSelect: () => onLocale('vi') },
             ]}
             trigger={
               <button

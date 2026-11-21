@@ -40,6 +40,7 @@ export function CustomersPage({ state }: { state: UrlState }) {
       rows={rows}
       page={query.data?.page}
       loading={query.isLoading}
+      refreshing={query.isFetching && !query.isLoading}
       error={query.error}
       refetch={() => void query.refetch()}
       columns={columns}
@@ -49,8 +50,14 @@ export function CustomersPage({ state }: { state: UrlState }) {
       emptyHint={t('emptyHint')}
       emptyAction={create}
     >
-      {record.selected && (
-        <CustomerSheet customer={record.selected} onClose={record.close} onPrev={record.prev} onNext={record.next} />
+      {record.shown && (
+        <CustomerSheet
+          open={record.isOpen}
+          customer={record.shown}
+          onClose={record.close}
+          onPrev={record.prev}
+          onNext={record.next}
+        />
       )}
       <CreateCustomerDialog open={creating} onClose={() => setCreating(false)} />
     </ResourcePage>

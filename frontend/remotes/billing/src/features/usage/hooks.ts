@@ -4,13 +4,14 @@ import { aggregates, recordBatch, recordOne } from '@suite/api-client/billing'
 import { historyOptions } from '@suite/api-client/billing/query'
 import { asListQuery, type ListState, useAction, useApi } from '@suite/remote-kit'
 import { usePermission } from '@suite/shell-sdk/react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import { useT } from '../../i18n'
 
 export function useUsageHistory(list: ListState) {
   const { billing } = useApi()
   return useQuery({
     ...historyOptions({ client: billing, throwOnError: true, query: asListQuery(list.params) }),
+    placeholderData: keepPreviousData,
     enabled: usePermission(permissions.billing.history),
   })
 }

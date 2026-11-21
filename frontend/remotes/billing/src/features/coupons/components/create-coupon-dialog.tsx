@@ -33,7 +33,7 @@ export function CreateCouponDialog({ open, onClose }: { open: boolean; onClose: 
       title={t('createTitle')}
       description={t('createHint')}
       submitLabel={tc('actions.create')}
-      busy={create.isPending}
+      action={create}
       form={form}
       size="lg"
       onSubmit={(values) => create.mutate(toCouponRequest(values))}

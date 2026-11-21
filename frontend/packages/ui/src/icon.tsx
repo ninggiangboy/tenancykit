@@ -34,6 +34,7 @@ import {
   Inbox,
   Info,
   KeyRound,
+  Layers,
   LayoutDashboard,
   LayoutGrid,
   LifeBuoy,
@@ -41,9 +42,14 @@ import {
   LogOut,
   type LucideIcon,
   Mail,
+  Minus,
+  Monitor,
+  Moon,
   MoreHorizontal,
   MousePointer,
   PanelLeft,
+  Pencil,
+  Plug,
   Plus,
   Receipt,
   RefreshCw,
@@ -53,7 +59,7 @@ import {
   Settings,
   Shield,
   SlidersHorizontal,
-  Sparkles,
+  Sun,
   Ticket,
   Trash2,
   TriangleAlert,
@@ -132,7 +138,13 @@ export type IconName =
   | 'filter'
   | 'user'
   | 'command'
-  | 'sparkle'
+  | 'pencil'
+  | 'sun'
+  | 'moon'
+  | 'monitor'
+  | 'minus'
+  | 'layers'
+  | 'plug'
 
 const glyphs: Record<IconName, LucideIcon> = {
   plus: Plus,
@@ -198,7 +210,13 @@ const glyphs: Record<IconName, LucideIcon> = {
   filter: Filter,
   user: User,
   command: Command,
-  sparkle: Sparkles,
+  pencil: Pencil,
+  sun: Sun,
+  moon: Moon,
+  monitor: Monitor,
+  minus: Minus,
+  layers: Layers,
+  plug: Plug,
 }
 
 export interface IconProps {

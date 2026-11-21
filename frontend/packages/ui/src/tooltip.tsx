@@ -22,7 +22,7 @@ export function Tooltip({ content, shortcut, children, defaultOpen }: TooltipPro
           <TooltipPrimitive.Content
             sideOffset={6}
             className={cn(
-              'z-50 flex items-center gap-1.5 rounded-md bg-primary px-2 py-1 text-caption text-primary-foreground shadow-md',
+              'z-(--z-popper) flex items-center gap-1.5 rounded-md bg-primary px-2 py-1 text-caption text-primary-foreground shadow-md',
               TOOLTIP_MOTION,
             )}
           >

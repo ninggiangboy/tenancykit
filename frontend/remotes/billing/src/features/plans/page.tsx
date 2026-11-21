@@ -87,6 +87,7 @@ export function PlansPage({ state }: { state: UrlState }) {
       rows={rows}
       page={query.data?.page}
       loading={query.isLoading}
+      refreshing={query.isFetching && !query.isLoading}
       error={query.error}
       refetch={() => void query.refetch()}
       columns={columns}
@@ -96,8 +97,14 @@ export function PlansPage({ state }: { state: UrlState }) {
       emptyHint={t('emptyHint')}
       emptyAction={create}
     >
-      {record.selected && (
-        <PlanSheet plan={record.selected} onClose={record.close} onPrev={record.prev} onNext={record.next} />
+      {record.shown && (
+        <PlanSheet
+          open={record.isOpen}
+          plan={record.shown}
+          onClose={record.close}
+          onPrev={record.prev}
+          onNext={record.next}
+        />
       )}
       <CreatePlanDialog open={creating} onClose={() => setCreating(false)} />
     </ResourcePage>

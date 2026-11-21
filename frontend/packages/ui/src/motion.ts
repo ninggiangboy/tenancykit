@@ -8,3 +8,6 @@ export const TOOLTIP_MOTION =
 
 /** The full 44px touch target on a phone, for a control whose drawn size is smaller. */
 export const PHONE_ROW = 'max-md:min-h-(--size-touch-target)'
+
+/** How long an overlay's leave animation plays, in milliseconds: the same as `--duration-base`. */
+export const LEAVE_MS = 180

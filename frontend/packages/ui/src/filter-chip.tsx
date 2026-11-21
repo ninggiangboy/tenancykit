@@ -1,5 +1,6 @@
 import { cn } from './cn'
 import { Icon } from './icon'
+import { useUiMessages } from './messages'
 
 export interface FilterChipProps {
   field: string
@@ -11,21 +12,9 @@ export interface FilterChipProps {
   className?: string
 }
 
-const opLabel: Record<NonNullable<FilterChipProps['op']>, string> = {
-  eq: 'is',
-  neq: 'is not',
-  gt: 'more than',
-  gte: 'at least',
-  lt: 'less than',
-  lte: 'at most',
-  in: 'is any of',
-  nin: 'is none of',
-  like: 'matches',
-  is_null: 'is empty',
-}
-
 /** One applied predicate of the list-query contract; its tooltip carries the wire syntax. */
 export function FilterChip({ field, label, op = 'eq', value, display, onRemove, className }: FilterChipProps) {
+  const t = useUiMessages()
   return (
     <span
       title={`filter[${field}][${op === 'like' ? 'contains' : op}]=${value}`}
@@ -35,13 +24,13 @@ export function FilterChip({ field, label, op = 'eq', value, display, onRemove, 
       )}
     >
       <span className="text-muted-foreground">{label ?? field}</span>
-      <span className="text-muted-foreground">{opLabel[op]}</span>
+      <span className="text-muted-foreground">{t(`filter.op.${op}`)}</span>
       <span className="max-w-48 truncate font-medium">{display ?? value}</span>
       {onRemove && (
         <button
           type="button"
           onClick={onRemove}
-          aria-label={`Remove the ${label ?? field} filter`}
+          aria-label={t('filter.remove', { field: label ?? field })}
           className="motion-colors ml-0.5 inline-flex size-6 items-center justify-center rounded-sm text-muted-foreground hover:bg-accent hover:text-foreground max-md:size-(--size-touch-target)"
         >
           <Icon name="x" size={12} />

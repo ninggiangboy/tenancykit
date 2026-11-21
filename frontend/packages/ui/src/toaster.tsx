@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { cn } from './cn'
 import { Icon, type IconName } from './icon'
 import { useUiMessages } from './messages'
+import { LEAVE_MS } from './motion'
 
 export interface Toast {
   id: number
@@ -40,7 +41,7 @@ export function Toaster({ toasts, onDismiss, contained }: ToasterProps) {
       aria-live="polite"
       className={cn(
         // On a phone the bottom edge belongs to the floating action and the bulk bar, so toasts come in under the top bar.
-        'pointer-events-none fixed bottom-4 right-4 z-50 flex w-80 flex-col gap-2 max-md:inset-x-3 max-md:top-16 max-md:bottom-auto max-md:w-auto',
+        'pointer-events-none fixed bottom-4 right-4 z-(--z-toast) flex w-80 flex-col gap-2 max-md:inset-x-3 max-md:top-16 max-md:bottom-auto max-md:w-auto',
         contained && 'absolute',
       )}
     >
@@ -89,9 +90,6 @@ export function Toaster({ toasts, onDismiss, contained }: ToasterProps) {
     </div>
   )
 }
-
-/** The toast's leave animation, `--duration-base`. */
-const LEAVE_MS = 180
 
 /**
  * [toasts, push, dismiss]. Keeps the last three, and each leaves after its duration (six seconds by default). The timer

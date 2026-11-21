@@ -1,13 +1,17 @@
-import type { UrlState } from '@suite/ui'
+import { type UrlState, usePresence } from '@suite/ui'
 
 /**
  * The record the URL opens (`?open=<id>`) among the rows on screen, with its neighbours, so a sheet can step through
  * the page without closing.
+ *
+ * `shown` is the record to draw: it is `selected` while a record is open and stays for the leave animation after it
+ * closes, so a screen renders its sheet from `shown` and passes `isOpen` as the sheet's `open`.
  */
 export function useRecordSelection<Row>(state: UrlState, rows: Row[], keyOf: (row: Row) => string | undefined) {
   const openId = state.get('open')
   const index = openId ? rows.findIndex((row) => keyOf(row) === openId) : -1
   const selected = index >= 0 ? rows[index] : undefined
+  const { shown } = usePresence(selected)
   const keyAt = (at: number) => {
     const row = rows[at]
     return row ? (keyOf(row) ?? null) : null
@@ -15,6 +19,8 @@ export function useRecordSelection<Row>(state: UrlState, rows: Row[], keyOf: (ro
   return {
     openId,
     selected,
+    shown,
+    isOpen: selected !== undefined,
     open: (id: string) => state.set({ open: id }),
     close: () => state.set({ open: null }),
     prev: index > 0 ? () => state.set({ open: keyAt(index - 1) }) : undefined,

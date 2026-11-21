@@ -50,7 +50,14 @@ export interface DataTableProps<Row> {
   layout?: 'auto' | 'table' | 'cards'
   /** Shows the selection control in the card list before any row is selected. */
   selecting?: boolean
+  /**
+   * Column titles stay at the top of the scrolling page from 768px up. A table that cannot fit at 768px scrolls
+   * sideways and must opt out, because a sideways scroller is a scroll container for `position: sticky`.
+   */
+  stickyHeader?: boolean
   loading?: boolean
+  /** Rows are on screen and a refetch is running: a thin bar runs along the top of the table, the rows stay as they are. */
+  refreshing?: boolean
   empty?: React.ReactNode
   footer?: React.ReactNode
   caption?: string
@@ -78,7 +85,9 @@ export function DataTable<Row>({
   density = 'comfortable',
   layout = 'auto',
   selecting,
+  stickyHeader = true,
   loading,
+  refreshing,
   empty,
   footer,
   caption,
@@ -96,11 +105,16 @@ export function DataTable<Row>({
   const active = activeKey ?? internalActive
   const bodyRef = useRef<HTMLTableSectionElement>(null)
   const showSkeleton = useDelayed(loading === true, 150)
+  const showProgress = useDelayed(refreshing === true, 150)
   const cards = layout === 'cards' || (layout === 'auto' && phone)
   const cardRows = cards && !loading && rows.length > 0
   // On a phone an empty list has no columns to name: only the empty state.
   const bare = cards && !loading && rows.length === 0
   const tableColumns = columns.filter((column) => !column.cardOnly)
+  // The shadow draws the border under the titles: a collapsed border does not travel with a sticky cell.
+  const headCell = stickyHeader
+    ? 'md:sticky md:top-0 md:z-(--z-sticky) md:bg-card md:shadow-[0_1px_0_var(--border)] first:md:rounded-tl-lg last:md:rounded-tr-lg'
+    : undefined
 
   const select = useCallback(
     (keys: string[]) => {
@@ -163,6 +177,7 @@ export function DataTable<Row>({
         const row = rows.find((entry) => keyOf(entry) === active)
         if (row) {
           event.preventDefault()
+          bodyRef.current?.querySelector<HTMLElement>('tr[data-state="active"]')?.focus()
           onRowOpen?.(row)
         }
       } else if (key === 'x' && active && selectable) {
@@ -173,15 +188,28 @@ export function DataTable<Row>({
     [rows, active, selectable, onRowOpen, keyOf, toggleRow, move],
   )
 
+  // One listener for the table's life: it calls whichever handler the last render made.
+  const latestKeyDown = useRef(onKeyDown)
+  latestKeyDown.current = onKeyDown
   useEffect(() => {
-    const listener = (event: globalThis.KeyboardEvent) => onKeyDown(event)
+    const listener = (event: globalThis.KeyboardEvent) => latestKeyDown.current(event)
     document.addEventListener('keydown', listener)
     return () => document.removeEventListener('keydown', listener)
-  }, [onKeyDown])
+  }, [])
 
   return (
     <div className={cn('flex flex-col', className)}>
-      <div className="overflow-x-auto rounded-lg border border-border bg-card">
+      <div
+        className={cn(
+          'relative rounded-lg border border-border bg-card',
+          stickyHeader ? 'overflow-x-auto md:overflow-x-clip' : 'overflow-x-auto',
+        )}
+      >
+        {showProgress && (
+          <div aria-hidden className="absolute inset-x-0 top-0 z-(--z-bar) h-0.5 overflow-hidden rounded-t-lg">
+            <div className="h-full w-1/3 animate-progress bg-primary motion-reduce:w-full motion-reduce:animate-none" />
+          </div>
+        )}
         {cardRows ? (
           <CardList
             rows={rows}
@@ -196,12 +224,12 @@ export function DataTable<Row>({
             onRowOpen={onRowOpen}
           />
         ) : bare ? null : (
-          <table className="w-full border-collapse text-body" aria-busy={loading || undefined}>
+          <table className="w-full border-collapse text-body" aria-busy={loading || showProgress || undefined}>
             {caption && <caption className="sr-only">{caption}</caption>}
             <thead>
               <tr className="border-b border-border text-left">
                 {selectable && (
-                  <th scope="col" className="w-9 px-3 py-2">
+                  <th scope="col" className={cn('w-9 px-3 py-2', headCell)}>
                     <Checkbox
                       aria-label={t('table.selectAll')}
                       checked={rows.length > 0 && selection.length === rows.length}
@@ -218,6 +246,7 @@ export function DataTable<Row>({
                     aria-sort={column.sort === 'asc' ? 'ascending' : column.sort === 'desc' ? 'descending' : undefined}
                     className={cn(
                       'h-10 px-3 text-[12.5px] font-medium text-muted-foreground',
+                      headCell,
                       column.align === 'end' ? 'text-right' : 'text-left',
                       column.mobile === 'hidden' && 'max-lg:hidden',
                     )}
@@ -242,7 +271,7 @@ export function DataTable<Row>({
                     )}
                   </th>
                 ))}
-                {rowActions && <th scope="col" className="w-10" aria-label="Actions" />}
+                {rowActions && <th scope="col" className={cn('w-10', headCell)} aria-label={t('table.actions')} />}
               </tr>
             </thead>
             <tbody ref={bodyRef}>
@@ -270,10 +299,12 @@ export function DataTable<Row>({
                   return (
                     <tr
                       key={key}
+                      // Focusable by a click, not by Tab: a sheet opened from the row hands focus back to it on close.
+                      tabIndex={onRowOpen ? -1 : undefined}
                       data-state={isActive ? 'active' : isSelected ? 'selected' : undefined}
                       aria-selected={selectable ? isSelected : undefined}
                       className={cn(
-                        'motion-colors group border-b border-border last:border-0',
+                        'motion-colors group border-b border-border outline-none last:border-0',
                         isActive
                           ? 'bg-selection shadow-[inset_2px_0_0_var(--primary)]'
                           : isSelected

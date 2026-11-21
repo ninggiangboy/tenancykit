@@ -24,7 +24,7 @@ export function SubscribeDialog({ open, onClose }: { open: boolean; onClose: () 
       title={t('createTitle')}
       description={t('createHint')}
       submitLabel={tc('actions.create')}
-      busy={subscribe.isPending}
+      action={subscribe}
       form={form}
       onSubmit={(values) => subscribe.mutate({ walletId: values.walletId, planId: values.planId })}
     >

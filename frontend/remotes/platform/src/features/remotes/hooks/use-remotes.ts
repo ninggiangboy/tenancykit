@@ -1,10 +1,10 @@
 import { etag, permissions } from '@suite/api-client'
 import type { RemoteResponse, StateRequest } from '@suite/api-client/platform'
 import { setState } from '@suite/api-client/platform'
-import { listRemotesOptions } from '@suite/api-client/platform/query'
-import { asListQuery, type ListState, useAction, useApi, useToast } from '@suite/remote-kit'
+import { listRemotesOptions, listRemotesQueryKey } from '@suite/api-client/platform/query'
+import { asListQuery, errorMessage, type ListState, useAction, useApi, useToast } from '@suite/remote-kit'
 import { usePermission } from '@suite/shell-sdk/react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useT } from '../../../i18n'
 
@@ -12,6 +12,7 @@ export function useRemoteList(list: ListState) {
   const { platform } = useApi()
   return useQuery({
     ...listRemotesOptions({ client: platform, throwOnError: true, query: asListQuery(list.params) }),
+    placeholderData: keepPreviousData,
     enabled: usePermission(permissions.platform.listRemotes),
   })
 }
@@ -50,6 +51,10 @@ export function useRemoteState() {
   }
 
   const mutation = useAction(({ remote, body }: StateChange) => write(remote.name ?? '', body, remote.version ?? 0), {
+    // A switch or an activation moves only the list of remotes.
+    invalidate: [listRemotesQueryKey({ client: platform })],
+    errorTitle: (error, { remote }) =>
+      t('changeFailed', { name: remote.title ?? remote.name ?? '', message: errorMessage(error) }),
     onSuccess: (result, { remote, body }) => {
       const name = remote.name ?? ''
       settle(name)
@@ -87,6 +92,7 @@ export function useRemoteState() {
   return {
     isPending: mutation.isPending,
     busyName: mutation.isPending ? mutation.variables?.remote.name : undefined,
+    busyVersion: mutation.isPending ? mutation.variables?.body.activeVersion : undefined,
     enabledOf: (remote: RemoteResponse) => pending[remote.name ?? ''] ?? remote.enabled ?? false,
     toggle: (remote: RemoteResponse, enabled: boolean) => {
       setPending((current) => ({ ...current, [remote.name ?? '']: enabled }))

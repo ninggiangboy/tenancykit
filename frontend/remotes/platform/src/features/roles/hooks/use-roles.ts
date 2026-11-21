@@ -4,13 +4,14 @@ import { assign, create3, rename1, replacePermissions, unassign } from '@suite/a
 import { list3Options } from '@suite/api-client/platform/query'
 import { asListQuery, type ListState, useAction, useApi, useToast } from '@suite/remote-kit'
 import { usePermission } from '@suite/shell-sdk/react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useT } from '../../../i18n'
 
 export function useRoleList(list: ListState) {
   const { platform } = useApi()
   return useQuery({
     ...list3Options({ client: platform, throwOnError: true, query: asListQuery(list.params) }),
+    placeholderData: keepPreviousData,
     enabled: usePermission(permissions.platform.list_3),
   })
 }

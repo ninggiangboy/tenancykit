@@ -1,6 +1,6 @@
 import type { PaymentResponse } from '@suite/api-client/billing'
-import { DetailRow, DetailRows, RecordSheet, Section, Timestamp } from '@suite/remote-kit'
-import { Button, CopyId, Money, PermissionGate, Skeleton, StatusBadge } from '@suite/ui'
+import { DetailRow, DetailRows, QueryState, RecordSheet, Section, Timestamp } from '@suite/remote-kit'
+import { Button, CopyId, Money, PermissionGate, StatusBadge } from '@suite/ui'
 import { useState } from 'react'
 import { CustomerCell, type CustomerName } from '../../../components/lookups'
 import { useT } from '../../../i18n'
@@ -10,12 +10,13 @@ import { RefundDialog } from './refund-dialog'
 export interface PaymentSheetProps {
   payment: PaymentResponse
   names: Map<string, CustomerName>
+  open: boolean
   onClose: () => void
   onPrev?: () => void
   onNext?: () => void
 }
 
-export function PaymentSheet({ payment, names, onClose, onPrev, onNext }: PaymentSheetProps) {
+export function PaymentSheet({ payment, names, open, onClose, onPrev, onNext }: PaymentSheetProps) {
   const t = useT('payments')
   const tc = useT('common')
   const can = usePaymentPermissions()
@@ -23,12 +24,11 @@ export function PaymentSheet({ payment, names, onClose, onPrev, onNext }: Paymen
   const [refunding, setRefunding] = useState(false)
   const currency = payment.amount?.currency
   const refundable = (payment.amount?.amount ?? 0) - (payment.refunded?.amount ?? 0)
-  const refunds = detail.data?.refunds ?? []
 
   return (
     <>
       <RecordSheet
-        open
+        open={open}
         onClose={onClose}
         eyebrow={
           <>
@@ -72,23 +72,26 @@ export function PaymentSheet({ payment, names, onClose, onPrev, onNext }: Paymen
             </DetailRow>
           </DetailRows>
           <Section title={t('refund')}>
-            {detail.isLoading ? (
-              <Skeleton width="100%" height={40} />
-            ) : refunds.length === 0 ? (
-              <p className="text-small text-muted-foreground">{tc('state.none')}</p>
-            ) : (
-              <ul className="divide-y divide-border rounded-lg border border-border">
-                {refunds.map((entry) => (
-                  <li key={entry.id} className="flex items-center justify-between gap-2 px-3 py-2 text-small">
-                    <span className="flex items-center gap-2">
-                      <StatusBadge status={entry.status} />
-                      <Money minor={entry.amount?.amount ?? 0} currency={entry.amount?.currency} />
-                    </span>
-                    <span className="truncate text-muted-foreground">{entry.reason}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <QueryState
+              query={detail}
+              skeletonHeight={40}
+              isEmpty={(data) => (data.refunds ?? []).length === 0}
+              empty={<p className="text-small text-muted-foreground">{tc('state.none')}</p>}
+            >
+              {(data) => (
+                <ul className="divide-y divide-border rounded-lg border border-border">
+                  {(data.refunds ?? []).map((entry) => (
+                    <li key={entry.id} className="flex items-center justify-between gap-2 px-3 py-2 text-small">
+                      <span className="flex items-center gap-2">
+                        <StatusBadge status={entry.status} />
+                        <Money minor={entry.amount?.amount ?? 0} currency={entry.amount?.currency} />
+                      </span>
+                      <span className="truncate text-muted-foreground">{entry.reason}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </QueryState>
           </Section>
         </div>
       </RecordSheet>

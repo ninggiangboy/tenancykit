@@ -42,6 +42,7 @@ export function RolesPage({ state }: { state: UrlState }) {
       rows={rows}
       page={query.data?.page}
       loading={query.isLoading}
+      refreshing={query.isFetching && !query.isLoading}
       error={query.error}
       refetch={() => void query.refetch()}
       columns={columns}
@@ -51,10 +52,11 @@ export function RolesPage({ state }: { state: UrlState }) {
       emptyHint={t('emptyHint')}
       emptyAction={create}
     >
-      {record.selected && (
+      {record.shown && (
         <RoleSheet
-          role={record.selected}
-          tenantCode={tenantCodes.get(record.selected.tenantId ?? '')}
+          open={record.isOpen}
+          role={record.shown}
+          tenantCode={tenantCodes.get(record.shown.tenantId ?? '')}
           onClose={record.close}
           onPrev={record.prev}
           onNext={record.next}

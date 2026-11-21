@@ -120,7 +120,7 @@ function IssueCredentialDialog({ system, open, onClose, onSecret }: SecretProps)
       title={t('createCredential')}
       description={t('credentialsDescription')}
       submitLabel={tc('actions.create')}
-      busy={issue.isPending}
+      action={issue}
       form={form}
       onSubmit={(values) => issue.mutate(values)}
     >
@@ -149,7 +149,7 @@ function RotateCredentialDialog({ system, open, onClose, onSecret }: SecretProps
       title={t('rotate')}
       description={tc('confirm.rotateCredentialHint')}
       submitLabel={t('rotate')}
-      busy={rotate.isPending}
+      action={rotate}
       form={form}
       onSubmit={(values) => rotate.mutate(values.overlapMinutes ?? 0)}
     >
@@ -184,7 +184,7 @@ function RevokeCredentialDialog({
       title={tc('confirm.revokeCredential')}
       description={tc('confirm.revokeCredentialHint')}
       confirmLabel={t('revoke')}
-      busy={revoke.isPending}
+      action={revoke}
       onConfirm={() => revoke.mutate(credential?.id ?? '')}
       impact={[
         { label: tc('fields.system'), value: system.name ?? '' },

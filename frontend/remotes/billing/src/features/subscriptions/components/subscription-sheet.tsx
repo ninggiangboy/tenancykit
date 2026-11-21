@@ -1,6 +1,15 @@
 import type { SubscriptionResponse } from '@suite/api-client/billing'
-import { ConfirmDialog, DetailRow, DetailRows, Maybe, RecordSheet, Section, Timestamp } from '@suite/remote-kit'
-import { Button, CopyId, Money, PermissionGate, Skeleton, StatusBadge } from '@suite/ui'
+import {
+  ConfirmDialog,
+  DetailRow,
+  DetailRows,
+  Maybe,
+  QueryState,
+  RecordSheet,
+  Section,
+  Timestamp,
+} from '@suite/remote-kit'
+import { Button, CopyId, Money, PermissionGate, StatusBadge } from '@suite/ui'
 import { useState } from 'react'
 import { useEnumLabel } from '../../../components/facets'
 import { CustomerCell, type CustomerName } from '../../../components/lookups'
@@ -10,12 +19,13 @@ import { useCancelSubscription, useCanManageSubscriptions, useSubscription } fro
 export interface SubscriptionSheetProps {
   subscription: SubscriptionResponse
   names: Map<string, CustomerName>
+  open: boolean
   onClose: () => void
   onPrev?: () => void
   onNext?: () => void
 }
 
-export function SubscriptionSheet({ subscription, names, onClose, onPrev, onNext }: SubscriptionSheetProps) {
+export function SubscriptionSheet({ subscription, names, open, onClose, onPrev, onNext }: SubscriptionSheetProps) {
   const t = useT('subscriptions')
   const tc = useT('common')
   const enumLabel = useEnumLabel()
@@ -23,12 +33,11 @@ export function SubscriptionSheet({ subscription, names, onClose, onPrev, onNext
   const detail = useSubscription(subscription.id)
   const [canceling, setCanceling] = useState(false)
   const cancel = useCancelSubscription(() => setCanceling(false))
-  const history = detail.data?.history ?? []
 
   return (
     <>
       <RecordSheet
-        open
+        open={open}
         onClose={onClose}
         eyebrow={t('title')}
         title={subscription.planCode ?? ''}
@@ -69,25 +78,28 @@ export function SubscriptionSheet({ subscription, names, onClose, onPrev, onNext
             </DetailRow>
           </DetailRows>
           <Section title={t('history')}>
-            {detail.isLoading ? (
-              <Skeleton width="100%" height={40} />
-            ) : history.length === 0 ? (
-              <p className="text-small text-muted-foreground">{tc('state.none')}</p>
-            ) : (
-              <ul className="divide-y divide-border rounded-lg border border-border">
-                {history.map((entry) => (
-                  <li key={entry.id} className="flex items-center justify-between gap-2 px-3 py-2 text-small">
-                    <span className="flex flex-col">
-                      <span className="text-foreground">{entry.type}</span>
-                      <span className="text-caption text-muted-foreground">
-                        <Timestamp value={entry.occurredAt} />
+            <QueryState
+              query={detail}
+              skeletonHeight={40}
+              isEmpty={(data) => (data.history ?? []).length === 0}
+              empty={<p className="text-small text-muted-foreground">{tc('state.none')}</p>}
+            >
+              {(data) => (
+                <ul className="divide-y divide-border rounded-lg border border-border">
+                  {(data.history ?? []).map((entry) => (
+                    <li key={entry.id} className="flex items-center justify-between gap-2 px-3 py-2 text-small">
+                      <span className="flex flex-col">
+                        <span className="text-foreground">{entry.type}</span>
+                        <span className="text-caption text-muted-foreground">
+                          <Timestamp value={entry.occurredAt} />
+                        </span>
                       </span>
-                    </span>
-                    <Money minor={entry.amount?.amount ?? 0} currency={entry.amount?.currency} />
-                  </li>
-                ))}
-              </ul>
-            )}
+                      <Money minor={entry.amount?.amount ?? 0} currency={entry.amount?.currency} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </QueryState>
           </Section>
         </div>
       </RecordSheet>
@@ -97,7 +109,7 @@ export function SubscriptionSheet({ subscription, names, onClose, onPrev, onNext
         title={tc('confirm.cancelSubscription')}
         description={tc('confirm.cancelSubscriptionHint')}
         confirmLabel={t('cancel')}
-        busy={cancel.isPending}
+        action={cancel}
         onConfirm={() => cancel.mutate(subscription.id ?? '')}
         impact={[
           { label: tc('fields.plan'), value: subscription.planCode ?? '' },

@@ -40,6 +40,7 @@ export function SystemsPage({ state }: { state: UrlState }) {
       rows={rows}
       page={query.data?.page}
       loading={query.isLoading}
+      refreshing={query.isFetching && !query.isLoading}
       error={query.error}
       refetch={() => void query.refetch()}
       columns={columns}
@@ -49,8 +50,14 @@ export function SystemsPage({ state }: { state: UrlState }) {
       emptyHint={t('emptyHint')}
       emptyAction={create}
     >
-      {record.selected && (
-        <SystemSheet system={record.selected} onClose={record.close} onPrev={record.prev} onNext={record.next} />
+      {record.shown && (
+        <SystemSheet
+          open={record.isOpen}
+          system={record.shown}
+          onClose={record.close}
+          onPrev={record.prev}
+          onNext={record.next}
+        />
       )}
       <CreateSystemDialog open={creating} onClose={() => setCreating(false)} />
     </ResourcePage>

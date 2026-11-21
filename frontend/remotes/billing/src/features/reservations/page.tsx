@@ -9,7 +9,16 @@ import {
   useListState,
   useRecordSelection,
 } from '@suite/remote-kit'
-import { Button, CopyId, type DataTableColumn, Money, PermissionGate, StatusBadge, type UrlState } from '@suite/ui'
+import {
+  Button,
+  CopyId,
+  type DataTableColumn,
+  Money,
+  PermissionGate,
+  StatusBadge,
+  shortenIds,
+  type UrlState,
+} from '@suite/ui'
 import { useState } from 'react'
 import { useEnumFacet } from '../../components/facets'
 import { useT } from '../../i18n'
@@ -31,7 +40,7 @@ export function ReservationsPage({ state }: { state: UrlState }) {
   const record = useRecordSelection(state, rows, keyOf)
   const canManage = useCanManageReservations()
   const [dialog, setDialog] = useState<'reserve' | 'capture' | 'release' | null>(null)
-  const selected = record.selected
+  const selected = record.shown
 
   const columns: DataTableColumn<ReservationResponse>[] = [
     {
@@ -42,7 +51,9 @@ export function ReservationsPage({ state }: { state: UrlState }) {
       render: (row) => (
         <span className="flex flex-col">
           <Money minor={row.amount?.amount ?? 0} currency={row.amount?.currency} />
-          <span className="font-mono text-caption text-muted-foreground">{row.reference}</span>
+          <span className="font-mono text-caption text-muted-foreground" title={row.reference}>
+            {shortenIds(row.reference)}
+          </span>
         </span>
       ),
     },
@@ -57,7 +68,7 @@ export function ReservationsPage({ state }: { state: UrlState }) {
       header: tc('fields.wallet'),
       sortable: false,
       mobile: 'hidden',
-      render: (row) => <CopyId value={row.walletId ?? ''} />,
+      render: (row) => <CopyId value={row.walletId ?? ''}>{shortenIds(row.walletId)}</CopyId>,
     },
     {
       key: 'expires_at',
@@ -86,6 +97,7 @@ export function ReservationsPage({ state }: { state: UrlState }) {
       rows={rows}
       page={query.data?.page}
       loading={query.isLoading}
+      refreshing={query.isFetching && !query.isLoading}
       error={query.error}
       refetch={() => void query.refetch()}
       columns={columns}
@@ -98,7 +110,7 @@ export function ReservationsPage({ state }: { state: UrlState }) {
       {selected && (
         <>
           <RecordSheet
-            open
+            open={record.isOpen}
             onClose={record.close}
             onPrev={record.prev}
             onNext={record.next}

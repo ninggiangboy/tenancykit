@@ -9,12 +9,13 @@ import { CouponCodes } from './coupon-codes'
 
 export interface CouponSheetProps {
   coupon: CouponResponse
+  open: boolean
   onClose: () => void
   onPrev?: () => void
   onNext?: () => void
 }
 
-export function CouponSheet({ coupon, onClose, onPrev, onNext }: CouponSheetProps) {
+export function CouponSheet({ coupon, open, onClose, onPrev, onNext }: CouponSheetProps) {
   const t = useT('coupons')
   const tc = useT('common')
   const canManage = useCanManageCoupons()
@@ -26,7 +27,7 @@ export function CouponSheet({ coupon, onClose, onPrev, onNext }: CouponSheetProp
   return (
     <>
       <RecordSheet
-        open
+        open={open}
         onClose={onClose}
         eyebrow={t('title')}
         title={coupon.name ?? ''}
@@ -72,7 +73,7 @@ export function CouponSheet({ coupon, onClose, onPrev, onNext }: CouponSheetProp
         title={t('deactivate')}
         description={tc('confirm.irreversible')}
         confirmLabel={t('deactivate')}
-        busy={deactivate.isPending}
+        action={deactivate}
         onConfirm={() => deactivate.mutate({ id: coupon.id ?? '', revokeRedemptions: revoke })}
         impact={[
           { label: tc('fields.name'), value: coupon.name ?? '' },

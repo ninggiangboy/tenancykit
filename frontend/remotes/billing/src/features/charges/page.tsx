@@ -17,6 +17,7 @@ import {
   Money,
   PermissionGate,
   StatusBadge,
+  shortenIds,
   type UrlState,
 } from '@suite/ui'
 import { useState } from 'react'
@@ -54,7 +55,7 @@ export function ChargesPage({ state }: { state: UrlState }) {
   const record = useRecordSelection(state, rows, keyOf)
   const canCreate = useCanCreateCharges()
   const [creating, setCreating] = useState(false)
-  const selected = record.selected
+  const selected = record.shown
 
   const columns: DataTableColumn<ChargeResponse>[] = [
     {
@@ -78,8 +79,8 @@ export function ChargesPage({ state }: { state: UrlState }) {
       sortable: false,
       mobile: 'secondary',
       render: (row) => (
-        <span className="font-mono text-code">
-          <Maybe value={row.reference} />
+        <span className="font-mono text-code" title={row.reference}>
+          <Maybe value={row.reference ? shortenIds(row.reference) : row.reference} />
         </span>
       ),
     },
@@ -102,6 +103,7 @@ export function ChargesPage({ state }: { state: UrlState }) {
       rows={rows}
       page={query.data?.page}
       loading={query.isLoading}
+      refreshing={query.isFetching && !query.isLoading}
       error={query.error}
       refetch={() => void query.refetch()}
       columns={columns}
@@ -113,7 +115,7 @@ export function ChargesPage({ state }: { state: UrlState }) {
     >
       {selected && (
         <RecordSheet
-          open
+          open={record.isOpen}
           onClose={record.close}
           onPrev={record.prev}
           onNext={record.next}

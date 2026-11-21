@@ -34,7 +34,7 @@ export function RefundDialog({
       title={t('refundTitle')}
       description={tc('confirm.refundHint')}
       submitLabel={t('refund')}
-      busy={refund.isPending}
+      action={refund}
       form={form}
       onSubmit={(values) => {
         const minor = toMinor(values.amount, currency)

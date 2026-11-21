@@ -47,7 +47,7 @@ export function StripeDialogs({
         title={t('connectOnboarding')}
         description={t('connectOnboardingHint')}
         submitLabel={t('connect')}
-        busy={actions.start.isPending}
+        action={actions.start}
         form={onboarding}
         onSubmit={(values) =>
           actions.start.mutate(values, {
@@ -67,7 +67,7 @@ export function StripeDialogs({
         title={t('connectKeys')}
         description={t('directHint')}
         submitLabel={tc('actions.save')}
-        busy={actions.direct.isPending}
+        action={actions.direct}
         form={keys}
         onSubmit={(values) => actions.direct.mutate(values, { onSuccess: done(() => keys.reset()) })}
       >
@@ -103,7 +103,7 @@ export function StripeDialogs({
         onClose={onClose}
         title={t('webhookSecret')}
         submitLabel={tc('actions.save')}
-        busy={actions.webhookSecret.isPending}
+        action={actions.webhookSecret}
         form={secret}
         onSubmit={(values) =>
           actions.webhookSecret.mutate(values.webhookSecret, { onSuccess: done(() => secret.reset()) })
@@ -125,7 +125,7 @@ export function StripeDialogs({
         title={tc('confirm.disconnectStripe')}
         description={tc('confirm.disconnectStripeHint')}
         confirmLabel={t('disconnect')}
-        busy={actions.disconnect.isPending}
+        action={actions.disconnect}
         typed={{ label: tc('confirm.typeToConfirm', { value: 'disconnect' }), expected: 'disconnect' }}
         onConfirm={() => actions.disconnect.mutate(undefined, { onSuccess: onClose })}
         impact={[{ label: t('accountId'), value: <CopyId value={accountId ?? ''} /> }]}

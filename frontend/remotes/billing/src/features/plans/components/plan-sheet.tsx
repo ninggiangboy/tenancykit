@@ -20,12 +20,13 @@ function RuleSummary({ rule, currency }: { rule?: RuleDto; currency?: string }) 
 
 export interface PlanSheetProps {
   plan: PlanResponse
+  open: boolean
   onClose: () => void
   onPrev?: () => void
   onNext?: () => void
 }
 
-export function PlanSheet({ plan, onClose, onPrev, onNext }: PlanSheetProps) {
+export function PlanSheet({ plan, open, onClose, onPrev, onNext }: PlanSheetProps) {
   const t = useT('plans')
   const tc = useT('common')
   const enumLabel = useEnumLabel()
@@ -37,7 +38,7 @@ export function PlanSheet({ plan, onClose, onPrev, onNext }: PlanSheetProps) {
   return (
     <>
       <RecordSheet
-        open
+        open={open}
         onClose={onClose}
         eyebrow={t('title')}
         title={plan.name ?? ''}

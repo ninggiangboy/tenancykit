@@ -14,6 +14,7 @@
   "enabled": "Remote enabled",
   "disabled": "Remote disabled",
   "activated": "{{name}} now serves {{version}}",
+  "changeFailed": "Could not change {{name}}: {{message}}",
   "versionCount": "{{count}} versions",
   "audiences": "Audiences",
   "search": "Search by remote name",

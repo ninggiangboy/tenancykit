@@ -31,10 +31,22 @@ export function AssignUser({ roleId }: { roleId: string }) {
         onSearch={setQuery}
       />
       <div className="flex gap-2">
-        <Button icon="plus" disabled={!userId} loading={assign.isPending} onClick={() => run(true)}>
+        <Button
+          icon="plus"
+          disabled={!userId || assign.isPending}
+          loading={assign.isPending && assign.variables?.assign === true}
+          onClick={() => run(true)}
+        >
           {t('assignUser')}
         </Button>
-        <Button size="sm" variant="outline" icon="x" disabled={!userId || assign.isPending} onClick={() => run(false)}>
+        <Button
+          size="sm"
+          variant="outline"
+          icon="x"
+          disabled={!userId || assign.isPending}
+          loading={assign.isPending && assign.variables?.assign === false}
+          onClick={() => run(false)}
+        >
           {t('unassignUser')}
         </Button>
       </div>

@@ -26,7 +26,7 @@ export function RenameTenantDialog({ tenant, open, onClose }: Props) {
       onClose={onClose}
       title={tc('actions.rename')}
       submitLabel={tc('actions.save')}
-      busy={rename.isPending}
+      action={rename}
       form={form}
       onSubmit={(values) => rename.mutate({ id: tenant.id ?? '', version: tenant.version ?? 0, name: values.name })}
     >
@@ -49,7 +49,7 @@ export function AddDomainDialog({ tenant, open, onClose }: Props) {
       onClose={onClose}
       title={t('domainTitle')}
       submitLabel={tc('actions.addDomain')}
-      busy={add.isPending}
+      action={add}
       form={form}
       onSubmit={(values) => add.mutate({ id: tenant.id ?? '', hostname: values.hostname })}
     >
@@ -77,7 +77,7 @@ export function DeactivateTenantDialog({ tenant, open, onClose }: Props) {
       title={tc('confirm.deactivateTenant')}
       description={tc('confirm.deactivateTenantHint')}
       confirmLabel={tc('actions.deactivate')}
-      busy={deactivate.isPending}
+      action={deactivate}
       typed={{ label: tc('confirm.typeCode'), expected: tenant.code ?? '' }}
       impact={[
         { label: tc('fields.tenant'), value: tenant.code ?? '' },

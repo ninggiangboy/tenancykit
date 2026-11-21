@@ -32,7 +32,13 @@ export function DirectPermissions({ user }: { user: UserResponse }) {
         placeholder="billing:invoice:read"
       />
       <div className="flex gap-2">
-        <Button size="sm" icon="check" disabled={!code} loading={setPermission.isPending} onClick={() => run(true)}>
+        <Button
+          size="sm"
+          icon="check"
+          disabled={!code}
+          loading={setPermission.isPending && setPermission.variables?.grant === true}
+          onClick={() => run(true)}
+        >
           {t('grant')}
         </Button>
         <Button
@@ -40,6 +46,7 @@ export function DirectPermissions({ user }: { user: UserResponse }) {
           variant="outline"
           icon="x"
           disabled={!code || setPermission.isPending}
+          loading={setPermission.isPending && setPermission.variables?.grant === false}
           onClick={() => run(false)}
         >
           {t('revoke')}

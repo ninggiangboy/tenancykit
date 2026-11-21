@@ -1,5 +1,5 @@
 import type { TenantResponse } from '@suite/api-client/platform'
-import { errorMessage, Section, useKitT } from '@suite/remote-kit'
+import { errorMessage, ListRow, RowList, Section, useKitT } from '@suite/remote-kit'
 import { Alert, AppMark, humanize, PermissionGate, Skeleton, Switch } from '@suite/ui'
 import { useState } from 'react'
 import { useT } from '../../../i18n'
@@ -31,21 +31,18 @@ export function TenantApps({ tenant, canManage }: { tenant: TenantResponse; canM
       ) : apps.length === 0 ? (
         <p className="text-small text-muted-foreground">{t('noApps')}</p>
       ) : (
-        <ul className="divide-y divide-border rounded-lg border border-border">
+        <RowList>
           {apps.map((app) => {
             const appCode = app.appCode ?? ''
             const appLabel = humanize(appCode.toUpperCase())
             const enabled = pending[appCode] ?? app.enabled ?? false
             return (
-              <li key={appCode} className="flex items-center justify-between gap-3 px-3 py-2">
-                <span className="flex min-w-0 items-center gap-2">
-                  <AppMark app={appCode} size="sm" />
-                  <span className="flex min-w-0 flex-col">
-                    <span className="truncate text-body-strong text-foreground">{appLabel}</span>
-                    <span className="truncate font-mono text-caption text-muted-foreground">{appCode}</span>
-                  </span>
-                </span>
-                <span className="flex shrink-0 items-center gap-3">
+              <ListRow
+                key={appCode}
+                lead={<AppMark app={appCode} size="sm" />}
+                title={<span className="text-body-strong">{appLabel}</span>}
+                meta={<span className="font-mono">{appCode}</span>}
+                trailing={
                   <PermissionGate allowed={canManage}>
                     <Switch
                       aria-label={appLabel}
@@ -57,11 +54,11 @@ export function TenantApps({ tenant, canManage }: { tenant: TenantResponse; canM
                       }}
                     />
                   </PermissionGate>
-                </span>
-              </li>
+                }
+              />
             )
           })}
-        </ul>
+        </RowList>
       )}
     </Section>
   )

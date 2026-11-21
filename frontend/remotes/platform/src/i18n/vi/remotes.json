@@ -14,6 +14,7 @@
   "enabled": "Đã bật remote",
   "disabled": "Đã tắt remote",
   "activated": "{{name}} đang phục vụ {{version}}",
+  "changeFailed": "Không đổi được {{name}}: {{message}}",
   "versionCount": "{{count}} phiên bản",
   "audiences": "Đối tượng",
   "search": "Tìm theo tên remote",

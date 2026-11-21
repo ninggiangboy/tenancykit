@@ -42,7 +42,7 @@ export function OpenWalletDialog({ open, onClose }: { open: boolean; onClose: ()
       title={t('createTitle')}
       description={t('createHint')}
       submitLabel={tc('actions.create')}
-      busy={openWallet.isPending}
+      action={openWallet}
       form={form}
       onSubmit={(values) =>
         openWallet.mutate({

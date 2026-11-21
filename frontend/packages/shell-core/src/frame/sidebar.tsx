@@ -64,7 +64,7 @@ export function Sidebar() {
         <div
           aria-hidden
           className={cn(
-            'fixed inset-0 z-40 bg-overlay transition-opacity duration-(--duration-slow) ease-out',
+            'fixed inset-0 z-(--z-scrim) bg-overlay transition-opacity duration-(--duration-slow) ease-out',
             drawerOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
           )}
           onClick={onToggleDrawer}
@@ -74,17 +74,17 @@ export function Sidebar() {
         // A closed drawer is only moved off screen; inert keeps it out of the tab order and the accessibility tree.
         inert={phone && !drawerOpen}
         className={cn(
-          'flex shrink-0 flex-col gap-3 overflow-y-auto',
+          'flex shrink-0 flex-col gap-3 overflow-hidden',
           phone
             ? cn(
-                'fixed inset-y-0 left-0 z-50 w-(--size-drawer-width) bg-sidebar p-3 transition-[transform,box-shadow] duration-(--duration-slow) ease-out',
+                'fixed inset-y-0 left-0 z-(--z-modal) w-(--size-drawer-width) bg-sidebar p-3 transition-[transform,box-shadow] duration-(--duration-slow) ease-out',
                 // The shadow belongs to the open drawer; on a closed one it would bleed in from the left edge.
                 drawerOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full',
               )
             : cn('sticky top-0 h-dvh', rail ? 'w-(--size-sidebar-width-icon) p-1.5' : 'w-60 p-2'),
         )}
       >
-        <div className={cn('flex items-center gap-2 px-1 py-1.5', rail && 'justify-center px-0')}>
+        <div className={cn('flex shrink-0 items-center gap-2 px-1 py-1.5', rail && 'justify-center px-0')}>
           <span className="flex size-[28px] shrink-0 items-center justify-center rounded-md bg-foreground text-caption font-semibold text-background">
             {definition.audience === 'PLATFORM' ? (
               <Icon name="shield" size={14} />
@@ -104,7 +104,7 @@ export function Sidebar() {
           )}
         </div>
 
-        <nav aria-label={t('shell.remotes')} className="flex flex-col gap-0.5">
+        <nav aria-label={t('shell.remotes')} className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
           {openRemote ? (
             <>
               <ul className="flex flex-col gap-0.5">{appLink(openRemote)}</ul>
@@ -150,16 +150,20 @@ export function Sidebar() {
               <ul className="flex flex-col gap-0.5">{remotes.map(appLink)}</ul>
             </>
           )}
+
+          {openRemote && otherRemotes.length > 0 && (
+            <div className="mt-auto pt-3">
+              <div className="flex flex-col gap-0.5 border-t border-sidebar-border pt-2">
+                {!rail && (
+                  <span className="px-2.5 pb-1 text-caption text-muted-foreground">{t('shell.otherApps')}</span>
+                )}
+                <ul className="flex flex-col gap-0.5">{otherRemotes.map(appLink)}</ul>
+              </div>
+            </div>
+          )}
         </nav>
 
-        {openRemote && otherRemotes.length > 0 && (
-          <div className="mt-auto flex flex-col gap-0.5 border-t border-sidebar-border pt-2">
-            {!rail && <span className="px-2.5 pb-1 text-caption text-muted-foreground">{t('shell.otherApps')}</span>}
-            <ul className="flex flex-col gap-0.5">{otherRemotes.map(appLink)}</ul>
-          </div>
-        )}
-
-        <div className={cn('mt-auto flex items-center gap-2 rounded-md px-2 py-1.5', rail && 'justify-center px-0')}>
+        <div className={cn('flex shrink-0 items-center gap-2 rounded-md px-2 py-1.5', rail && 'justify-center px-0')}>
           <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-caption">
             {me.displayName.slice(0, 1).toUpperCase()}
           </span>
@@ -185,7 +189,7 @@ export function Sidebar() {
             type="button"
             onClick={frame.onToggleSidebar}
             aria-label={t('shell.toggleSidebar')}
-            className="motion-colors flex size-8 items-center justify-center self-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+            className="motion-colors flex size-8 shrink-0 items-center justify-center self-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
           >
             <Icon name="panel-left" size={14} />
           </button>

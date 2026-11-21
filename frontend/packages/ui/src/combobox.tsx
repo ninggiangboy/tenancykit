@@ -114,7 +114,7 @@ export function Combobox({
             align="start"
             sideOffset={4}
             className={cn(
-              'z-[60] w-[var(--radix-popover-trigger-width)] min-w-64 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md',
+              'z-(--z-popper) w-[var(--radix-popover-trigger-width)] min-w-64 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md',
               POPPER_MOTION,
             )}
           >

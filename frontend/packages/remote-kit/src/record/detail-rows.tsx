@@ -6,10 +6,13 @@ export function DetailRows({ children }: { children: ReactNode }) {
   return <dl className="divide-y divide-border rounded-lg border border-border">{children}</dl>
 }
 
-/** One label and value; a long value wraps under the label instead of squeezing it. */
+/**
+ * One label and value on a shared baseline, so a badge, an id and plain text sit on one line; a long value wraps
+ * under the label instead of squeezing it, and every row is at least 40px.
+ */
 export function DetailRow({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
-    <div className="grid grid-cols-[minmax(7rem,40%)_1fr] items-start gap-3 px-3 py-2 text-small">
+    <div className="grid min-h-10 grid-cols-[minmax(7rem,40%)_1fr] items-baseline gap-3 px-3 py-2 text-small">
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="min-w-0 break-words text-right text-body-strong text-foreground">{children}</dd>
     </div>

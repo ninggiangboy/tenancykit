@@ -48,7 +48,7 @@ export function WalletsPage({ state }: { state: UrlState }) {
   const names = useCustomerNames(rows.map((row) => row.customerId))
   const can = useWalletPermissions()
   const [opening, setOpening] = useState(false)
-  const selected = record.selected
+  const selected = record.shown
 
   const columns: DataTableColumn<WalletResponse>[] = [
     {
@@ -117,9 +117,11 @@ export function WalletsPage({ state }: { state: UrlState }) {
       rows={rows}
       page={query.data?.page}
       loading={query.isLoading}
+      refreshing={query.isFetching && !query.isLoading}
       error={query.error}
       refetch={() => void query.refetch()}
       columns={columns}
+      stickyHeader={false}
       rowKey={keyOf}
       onRowOpen={(row) => record.open(keyOf(row))}
       emptyTitle={t('emptyTitle')}
@@ -128,7 +130,7 @@ export function WalletsPage({ state }: { state: UrlState }) {
     >
       {selected && (
         <RecordSheet
-          open
+          open={record.isOpen}
           onClose={record.close}
           onPrev={record.prev}
           onNext={record.next}

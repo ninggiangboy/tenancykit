@@ -1,6 +1,7 @@
 import * as TabsPrimitive from '@radix-ui/react-tabs'
 import { cn } from './cn'
 import { Icon, type IconName } from './icon'
+import { useUiLocale } from './messages'
 
 export interface TabItem {
   id: string
@@ -22,6 +23,7 @@ export interface TabsProps {
 
 /** Arrow keys move between tabs, as the design system's keyboard rule expects. */
 export function Tabs({ items, value, defaultValue, onChange, variant = 'segmented', label, className }: TabsProps) {
+  const numberLocale = useUiLocale() === 'vi' ? 'vi-VN' : 'en-US'
   return (
     <TabsPrimitive.Root
       value={value}
@@ -67,7 +69,7 @@ export function Tabs({ items, value, defaultValue, onChange, variant = 'segmente
                     'rounded-none bg-transparent p-0 text-figure text-foreground tabular-nums max-md:text-small max-md:font-semibold',
                 )}
               >
-                {variant === 'tiles' ? item.count.toLocaleString('en-US') : item.count}
+                {variant === 'tiles' ? item.count.toLocaleString(numberLocale) : item.count}
               </span>
             )}
           </TabsPrimitive.Trigger>

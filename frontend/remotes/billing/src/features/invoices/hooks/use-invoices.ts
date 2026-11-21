@@ -11,6 +11,7 @@ export function useInvoiceList(list: ListState) {
   const { billing } = useApi()
   return useQuery({
     ...invoicesOptions({ client: billing, throwOnError: true, query: asListQuery(list.params) }),
+    placeholderData: keepPreviousData,
     enabled: usePermission(permissions.billing.invoices),
   })
 }

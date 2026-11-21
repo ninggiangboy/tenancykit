@@ -35,6 +35,7 @@ export function RemotesPage({ state }: { state: UrlState }) {
       rows={rows}
       page={query.data?.page}
       loading={query.isLoading}
+      refreshing={query.isFetching && !query.isLoading}
       error={query.error}
       refetch={() => void query.refetch()}
       columns={columns}
@@ -43,9 +44,10 @@ export function RemotesPage({ state }: { state: UrlState }) {
       emptyTitle={t('emptyTitle')}
       emptyHint={t('emptyHint')}
     >
-      {record.selected && (
+      {record.shown && (
         <RemoteSheet
-          remote={record.selected}
+          open={record.isOpen}
+          remote={record.shown}
           state={remoteState}
           canManage={canManage}
           onClose={record.close}

@@ -49,7 +49,7 @@ export function WebhooksPage({ state }: { state: UrlState }) {
   }
   const rotate = useRotateSecret(showSecret)
   const setStatus = useSetEndpointStatus()
-  const selected = record.selected
+  const selected = record.shown
 
   const columns: DataTableColumn<EndpointResponse>[] = [
     {
@@ -104,9 +104,11 @@ export function WebhooksPage({ state }: { state: UrlState }) {
       rows={rows}
       page={query.data?.page}
       loading={query.isLoading}
+      refreshing={query.isFetching && !query.isLoading}
       error={query.error}
       refetch={() => void query.refetch()}
       columns={columns}
+      stickyHeader={false}
       rowKey={keyOf}
       onRowOpen={(row) => record.open(keyOf(row))}
       emptyTitle={t('emptyTitle')}
@@ -115,7 +117,7 @@ export function WebhooksPage({ state }: { state: UrlState }) {
     >
       {selected && (
         <RecordSheet
-          open
+          open={record.isOpen}
           onClose={record.close}
           onPrev={record.prev}
           onNext={record.next}
@@ -171,7 +173,7 @@ export function WebhooksPage({ state }: { state: UrlState }) {
         title={tc('confirm.rotateSecret')}
         description={tc('confirm.rotateSecretHint')}
         confirmLabel={t('rotate')}
-        busy={rotate.isPending}
+        action={rotate}
         onConfirm={() => rotate.mutate(selected?.id ?? '')}
         impact={[{ label: t('url'), value: <span className="break-all font-mono">{selected?.url}</span> }]}
       />

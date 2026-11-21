@@ -15,9 +15,13 @@ export interface ResourceListProps<Row> {
   rows: Row[]
   page?: PageInfo | null
   loading?: boolean
+  /** A refetch is running over rows that are already on screen; the table shows a thin bar, not a skeleton. */
+  refreshing?: boolean
   error?: unknown
   refetch?: () => void
   columns: DataTableColumn<Row>[]
+  /** `false` for a table that cannot fit at 768px and scrolls sideways, which cannot also keep its titles in view. */
+  stickyHeader?: boolean
   rowKey: (row: Row) => string
   onRowOpen?: (row: Row) => void
   /** Actions for the selected rows. A list without them shows no selection at all. */
@@ -38,9 +42,11 @@ export function ResourceList<Row>({
   rows,
   page,
   loading,
+  refreshing,
   error,
   refetch,
   columns,
+  stickyHeader,
   rowKey,
   onRowOpen,
   bulkActions,
@@ -75,9 +81,11 @@ export function ResourceList<Row>({
       ) : (
         <DataTable
           columns={sortedColumns}
+          stickyHeader={stickyHeader}
           rows={rows}
           rowKey={rowKey}
           loading={loading}
+          refreshing={refreshing}
           onSort={list.setSort}
           onRowOpen={onRowOpen}
           selectable={Boolean(bulkActions)}

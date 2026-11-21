@@ -42,7 +42,7 @@ export function RecordUsageDialog({ open, onClose }: { open: boolean; onClose: (
       title={t('recordTitle')}
       description={t('recordHint')}
       submitLabel={t('record')}
-      busy={record.isPending}
+      action={record}
       form={form}
       size="lg"
       onSubmit={(values) => record.mutate(values)}

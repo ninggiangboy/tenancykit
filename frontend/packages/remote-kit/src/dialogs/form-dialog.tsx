@@ -2,6 +2,7 @@ import { Button, Dialog } from '@suite/ui'
 import { type ReactNode, useId } from 'react'
 import type { FieldValues, UseFormReturn } from 'react-hook-form'
 import { useKitT } from '../i18n/create-remote-i18n'
+import { type DialogAction, useDialogAction } from './dialog-action'
 
 export interface FormDialogProps<Input extends FieldValues, Output> {
   open: boolean
@@ -9,7 +10,8 @@ export interface FormDialogProps<Input extends FieldValues, Output> {
   title: ReactNode
   description?: ReactNode
   submitLabel: string
-  busy?: boolean
+  /** The mutation the form submits to: its progress shows on the button and its failure inside the dialog. */
+  action?: DialogAction
   form: UseFormReturn<Input, unknown, Output>
   onSubmit: (values: Output) => void
   size?: 'md' | 'lg'
@@ -26,7 +28,7 @@ export function FormDialog<Input extends FieldValues, Output>({
   title,
   description,
   submitLabel,
-  busy,
+  action,
   form,
   onSubmit,
   size,
@@ -34,6 +36,7 @@ export function FormDialog<Input extends FieldValues, Output>({
 }: FormDialogProps<Input, Output>) {
   const t = useKitT()
   const formId = useId()
+  const { busy, failure } = useDialogAction(open, action)
   const close = () => {
     onClose()
     form.reset()
@@ -47,10 +50,10 @@ export function FormDialog<Input extends FieldValues, Output>({
       size={size}
       footer={
         <>
-          <Button variant="outline" size="sm" onClick={close} disabled={busy}>
+          <Button variant="outline" onClick={close} disabled={busy}>
             {t('actions.cancel')}
           </Button>
-          <Button size="sm" type="submit" form={formId} loading={busy}>
+          <Button type="submit" form={formId} loading={busy}>
             {submitLabel}
           </Button>
         </>
@@ -64,6 +67,7 @@ export function FormDialog<Input extends FieldValues, Output>({
       >
         {children}
       </form>
+      {failure && <div className="mt-3">{failure}</div>}
     </Dialog>
   )
 }

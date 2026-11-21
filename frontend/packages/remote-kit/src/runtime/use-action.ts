@@ -8,9 +8,14 @@ export interface ActionOptions<TVars, TResult> {
   onError?: (error: unknown, vars: TVars) => void
   /** A toast title on success; omitted means the caller reports success itself or the change speaks for itself. */
   successToast?: string | ((result: TResult, vars: TVars) => string)
+  /** The failure toast's title where the server's sentence alone does not say what was being done. */
+  errorTitle?: (error: unknown, vars: TVars) => string
   /** What to refetch after the write; every query by default, because a write can move any list on screen. */
   invalidate?: QueryKey[]
 }
+
+/** A failure stays long enough to read the server's sentence; a success is gone in the default six seconds. */
+export const ERROR_TOAST_MS = 10_000
 
 /**
  * One write: it refetches what is on screen, reports the server's failure as a toast, and lets the caller close a
@@ -38,7 +43,11 @@ export function useAction<TVars, TResult>(
     },
     onError: (error, vars) => {
       options.onError?.(error, vars)
-      toast({ title: errorMessage(error, t('state.requestFailed')), tone: 'danger' })
+      toast({
+        title: options.errorTitle?.(error, vars) ?? errorMessage(error, t('state.requestFailed')),
+        tone: 'danger',
+        duration: ERROR_TOAST_MS,
+      })
     },
   })
 }

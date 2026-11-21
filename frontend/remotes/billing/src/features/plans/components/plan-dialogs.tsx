@@ -36,7 +36,7 @@ export function CreatePlanDialog({ open, onClose }: { open: boolean; onClose: ()
       title={t('createTitle')}
       description={t('createHint')}
       submitLabel={tc('actions.create')}
-      busy={create.isPending}
+      action={create}
       form={form}
       size="lg"
       onSubmit={(values) =>
@@ -96,7 +96,7 @@ export function PublishVersionDialog({ plan, open, onClose }: Props) {
       title={t('publish')}
       description={t('createHint')}
       submitLabel={t('publish')}
-      busy={publish.isPending}
+      action={publish}
       form={form}
       size="lg"
       onSubmit={(values) => publish.mutate({ id: plan.id ?? '', body: toVersion(model, values) })}
@@ -117,7 +117,7 @@ export function RetirePlanDialog({ plan, open, onClose }: Props) {
       title={tc('confirm.retirePlan')}
       description={tc('confirm.retirePlanHint')}
       confirmLabel={t('retire')}
-      busy={retire.isPending}
+      action={retire}
       onConfirm={() => retire.mutate(plan.id ?? '')}
       impact={[
         { label: tc('fields.plan'), value: plan.name ?? '' },

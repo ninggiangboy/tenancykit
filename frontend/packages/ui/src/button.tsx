@@ -57,24 +57,43 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   ref,
 ) {
   const label = iconOnly && typeof children === 'string' ? children : undefined
+  const iconSize = size === 'sm' ? 14 : 16
+  // With no icon to swap, the spinner goes over the label, which keeps its room: the button never changes width.
+  const covering = loading === true && !icon && !iconOnly
+  const content = (
+    <>
+      {loading && !covering ? (
+        <Icon name="loader" size={iconSize} className="animate-spin" />
+      ) : (
+        icon && <Icon name={icon} size={iconSize} />
+      )}
+      {iconOnly ? <span className="sr-only">{children}</span> : children}
+      {iconEnd && (covering || !loading) && <Icon name={iconEnd} size={iconSize} />}
+      {shortcut && <Kbd keys={shortcut} className="ml-1" />}
+    </>
+  )
   return (
     <button
       ref={ref}
       type={props.type ?? 'button'}
-      className={cn(button({ variant, size, iconOnly }), className)}
+      className={cn(
+        button({ variant, size, iconOnly }),
+        covering && 'relative',
+        // Waiting is not disabled: the button keeps its full colour and shows the spinner.
+        loading && 'disabled:opacity-100',
+        className,
+      )}
       disabled={disabled || loading}
       aria-label={props['aria-label'] ?? label}
       aria-busy={loading || undefined}
       {...props}
     >
-      {loading ? (
-        <Icon name="loader" size={size === 'sm' ? 14 : 16} className="animate-spin" />
-      ) : (
-        icon && <Icon name={icon} size={size === 'sm' ? 14 : 16} />
+      {covering && (
+        <span aria-hidden className="absolute inset-0 flex items-center justify-center">
+          <Icon name="loader" size={iconSize} className="animate-spin" />
+        </span>
       )}
-      {iconOnly ? <span className="sr-only">{children}</span> : children}
-      {iconEnd && !loading && <Icon name={iconEnd} size={size === 'sm' ? 14 : 16} />}
-      {shortcut && <Kbd keys={shortcut} className="ml-1" />}
+      {covering ? <span className="invisible contents">{content}</span> : content}
     </button>
   )
 })

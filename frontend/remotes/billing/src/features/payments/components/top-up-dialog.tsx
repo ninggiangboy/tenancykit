@@ -36,7 +36,7 @@ export function TopUpDialog({ open, onClose }: { open: boolean; onClose: () => v
         title={t('topUpTitle')}
         description={t('topUpHint')}
         submitLabel={t('topUp')}
-        busy={topUp.isPending}
+        action={topUp}
         form={form}
         onSubmit={(values) =>
           topUp.mutate({

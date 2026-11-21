@@ -1,6 +1,6 @@
 import type { InvoiceResponse } from '@suite/api-client/billing'
-import { DetailRow, DetailRows, RecordSheet, Section, Timestamp } from '@suite/remote-kit'
-import { Button, CopyId, Money, PermissionGate, Skeleton, StatusBadge } from '@suite/ui'
+import { DetailRow, DetailRows, ListRow, QueryState, RecordSheet, RowList, Section, Timestamp } from '@suite/remote-kit'
+import { Button, CopyId, Money, PermissionGate, StatusBadge } from '@suite/ui'
 import { useState } from 'react'
 import { CustomerCell, type CustomerName } from '../../../components/lookups'
 import { useT } from '../../../i18n'
@@ -10,25 +10,24 @@ import { type InvoiceAction, InvoiceActionDialog } from './invoice-dialogs'
 export interface InvoiceSheetProps {
   invoice: InvoiceResponse
   names: Map<string, CustomerName>
+  open: boolean
   onClose: () => void
   onPrev?: () => void
   onNext?: () => void
 }
 
-export function InvoiceSheet({ invoice, names, onClose, onPrev, onNext }: InvoiceSheetProps) {
+export function InvoiceSheet({ invoice, names, open, onClose, onPrev, onNext }: InvoiceSheetProps) {
   const t = useT('invoices')
   const tc = useT('common')
   const can = useInvoicePermissions()
   const detail = useInvoice(invoice.id)
   const [action, setAction] = useState<InvoiceAction | null>(null)
-  const open = invoice.status === 'OPEN'
-  const items = detail.data?.items ?? []
-  const payments = detail.data?.payments ?? []
+  const unpaid = invoice.status === 'OPEN'
 
   return (
     <>
       <RecordSheet
-        open
+        open={open}
         onClose={onClose}
         eyebrow={
           <>
@@ -46,7 +45,7 @@ export function InvoiceSheet({ invoice, names, onClose, onPrev, onNext }: Invoic
         onPrev={onPrev}
         onNext={onNext}
         actions={
-          open ? (
+          unpaid ? (
             <>
               <PermissionGate allowed={can.pay}>
                 <Button icon="credit-card" onClick={() => setAction('pay')}>
@@ -89,40 +88,46 @@ export function InvoiceSheet({ invoice, names, onClose, onPrev, onNext }: Invoic
             </DetailRow>
           </DetailRows>
           <Section title={t('items')}>
-            {detail.isLoading ? (
-              <Skeleton width="100%" height={40} />
-            ) : items.length === 0 ? (
-              <p className="text-small text-muted-foreground">{tc('state.none')}</p>
-            ) : (
-              <ul className="divide-y divide-border rounded-lg border border-border">
-                {items.map((item) => (
-                  <li key={item.id} className="flex items-center justify-between gap-2 px-3 py-2 text-small">
-                    <span className="flex min-w-0 flex-col">
-                      <span className="truncate text-foreground">{item.description}</span>
-                      <span className="text-caption text-muted-foreground">{item.source}</span>
-                    </span>
-                    <Money minor={item.amount?.amount ?? 0} currency={item.amount?.currency} />
-                  </li>
-                ))}
-              </ul>
-            )}
+            <QueryState
+              query={detail}
+              skeletonHeight={40}
+              isEmpty={(data) => (data.items ?? []).length === 0}
+              empty={<p className="text-small text-muted-foreground">{tc('state.none')}</p>}
+            >
+              {(data) => (
+                <RowList>
+                  {(data.items ?? []).map((item) => (
+                    <ListRow
+                      key={item.id}
+                      title={item.description}
+                      meta={item.source}
+                      trailing={<Money minor={item.amount?.amount ?? 0} currency={item.amount?.currency} />}
+                    />
+                  ))}
+                </RowList>
+              )}
+            </QueryState>
           </Section>
           <Section title={t('payments')}>
-            {payments.length === 0 ? (
-              <p className="text-small text-muted-foreground">{t('noPayments')}</p>
-            ) : (
-              <ul className="divide-y divide-border rounded-lg border border-border">
-                {payments.map((entry) => (
-                  <li key={entry.paymentId} className="flex items-center justify-between gap-2 px-3 py-2 text-small">
-                    <span className="flex items-center gap-2">
-                      <StatusBadge status={entry.status} />
-                      <Money minor={entry.amount?.amount ?? 0} currency={entry.amount?.currency} />
-                    </span>
-                    <CopyId value={entry.paymentId ?? ''} />
-                  </li>
-                ))}
-              </ul>
-            )}
+            <QueryState
+              query={detail}
+              skeletonHeight={40}
+              isEmpty={(data) => (data.payments ?? []).length === 0}
+              empty={<p className="text-small text-muted-foreground">{t('noPayments')}</p>}
+            >
+              {(data) => (
+                <RowList>
+                  {(data.payments ?? []).map((entry) => (
+                    <ListRow
+                      key={entry.paymentId}
+                      lead={<StatusBadge status={entry.status} />}
+                      title={<Money minor={entry.amount?.amount ?? 0} currency={entry.amount?.currency} />}
+                      trailing={<CopyId value={entry.paymentId ?? ''} />}
+                    />
+                  ))}
+                </RowList>
+              )}
+            </QueryState>
           </Section>
         </div>
       </RecordSheet>

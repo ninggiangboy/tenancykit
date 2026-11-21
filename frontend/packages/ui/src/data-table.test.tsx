@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { DataTable, type DataTableColumn } from './data-table'
@@ -21,6 +21,35 @@ const columns: DataTableColumn<Invoice>[] = [
 ]
 
 describe('DataTable', () => {
+  it('registers its keyboard listener once however often it renders, and still answers with the latest rows', async () => {
+    const add = vi.spyOn(document, 'addEventListener')
+    const onRowOpen = vi.fn()
+    const { rerender } = render(<DataTable columns={columns} rows={rows} onRowOpen={onRowOpen} />)
+    for (let renders = 0; renders < 10; renders++) {
+      rerender(<DataTable columns={columns} rows={[...rows]} onRowOpen={onRowOpen} />)
+    }
+    expect(add.mock.calls.filter(([type]) => type === 'keydown')).toHaveLength(1)
+
+    await userEvent.keyboard('j')
+    await userEvent.keyboard('{Enter}')
+    expect(onRowOpen).toHaveBeenCalledWith(rows[0])
+  })
+
+  it('puts a bar on the table while it refreshes over rows that stay', () => {
+    vi.useFakeTimers()
+    const { container, rerender } = render(<DataTable columns={columns} rows={rows} />)
+    expect(container.querySelector('.animate-progress')).toBeNull()
+    rerender(<DataTable columns={columns} rows={rows} refreshing />)
+    expect(container.querySelector('.animate-progress')).toBeNull()
+    act(() => vi.advanceTimersByTime(200))
+    expect(container.querySelector('.animate-progress')).not.toBeNull()
+    expect(screen.getByRole('table')).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByText('INV-1')).toBeInTheDocument()
+    rerender(<DataTable columns={columns} rows={rows} />)
+    expect(container.querySelector('.animate-progress')).toBeNull()
+    vi.useRealTimers()
+  })
+
   it('renders a row per record and sorts only on a sortable column', async () => {
     const onSort = vi.fn()
     render(<DataTable columns={columns} rows={rows} onSort={onSort} />)

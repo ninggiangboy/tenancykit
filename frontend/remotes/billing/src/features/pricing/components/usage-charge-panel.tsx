@@ -98,7 +98,7 @@ export function UsageChargePanel() {
         title={t('confirmCharge')}
         description={t('confirmChargeHint')}
         confirmLabel={t('chargeRun')}
-        busy={run.isPending}
+        action={run}
         onConfirm={() => staged && run.mutate(staged)}
         impact={[
           { label: t('from'), value: <Timestamp value={staged?.from} /> },

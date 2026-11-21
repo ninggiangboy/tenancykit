@@ -30,7 +30,7 @@ export function UsageEvents({ state }: { state: UrlState }) {
   const rows = query.data?.data ?? []
   const record = useRecordSelection(state, rows, keyOf)
   const names = useCustomerNames(rows.map((row) => row.customerId))
-  const selected = record.selected
+  const selected = record.shown
 
   const columns: DataTableColumn<UsageEventResponse>[] = [
     {
@@ -77,9 +77,11 @@ export function UsageEvents({ state }: { state: UrlState }) {
         rows={rows}
         page={query.data?.page}
         loading={query.isLoading}
+        refreshing={query.isFetching && !query.isLoading}
         error={query.error}
         refetch={() => void query.refetch()}
         columns={columns}
+        stickyHeader={false}
         rowKey={keyOf}
         onRowOpen={(row) => record.open(keyOf(row))}
         emptyTitle={t('emptyTitle')}
@@ -87,7 +89,7 @@ export function UsageEvents({ state }: { state: UrlState }) {
       />
       {selected && (
         <RecordSheet
-          open
+          open={record.isOpen}
           onClose={record.close}
           onPrev={record.prev}
           onNext={record.next}

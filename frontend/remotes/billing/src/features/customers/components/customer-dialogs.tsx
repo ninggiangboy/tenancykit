@@ -25,7 +25,7 @@ export function CreateCustomerDialog({ open, onClose }: { open: boolean; onClose
       title={t('createTitle')}
       description={t('createHint')}
       submitLabel={tc('actions.create')}
-      busy={create.isPending}
+      action={create}
       form={form}
       onSubmit={(values) => create.mutate(values)}
     >
@@ -66,7 +66,7 @@ export function EditCustomerDialog({ customer, open, onClose }: Props) {
       onClose={onClose}
       title={t('editTitle')}
       submitLabel={tc('actions.save')}
-      busy={update.isPending}
+      action={update}
       form={form}
       onSubmit={(values) => update.mutate({ id: customer.id ?? '', ...values })}
     >
@@ -87,7 +87,7 @@ export function DeactivateCustomerDialog({ customer, open, onClose }: Props) {
       title={tc('confirm.deactivateCustomer')}
       description={tc('confirm.deactivateCustomerHint')}
       confirmLabel={t('deactivate')}
-      busy={deactivate.isPending}
+      action={deactivate}
       onConfirm={() => deactivate.mutate(customer.id ?? '')}
       impact={[
         { label: tc('fields.customer'), value: customer.displayName ?? '' },

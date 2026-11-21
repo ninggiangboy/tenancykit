@@ -27,7 +27,7 @@ export function CreateInvoiceDialog({ open, onClose }: { open: boolean; onClose:
       title={t('createTitle')}
       description={t('createHint')}
       submitLabel={tc('actions.create')}
-      busy={create.isPending}
+      action={create}
       form={form}
       onSubmit={(values) => create.mutate(values.chargeId)}
     >
@@ -80,7 +80,7 @@ export function InvoiceActionDialog({
         title={tc('confirm.voidInvoice')}
         description={tc('confirm.voidInvoiceHint')}
         confirmLabel={t('void')}
-        busy={voidIt.isPending}
+        action={voidIt}
         impact={impact}
         onConfirm={() => voidIt.mutate({ id, reason: reason.trim() || undefined })}
       >
@@ -92,7 +92,7 @@ export function InvoiceActionDialog({
         title={tc('confirm.uncollectible')}
         description={tc('confirm.uncollectibleHint')}
         confirmLabel={t('uncollectible')}
-        busy={writeOff.isPending}
+        action={writeOff}
         impact={impact}
         onConfirm={() => writeOff.mutate(id)}
       />
@@ -102,7 +102,7 @@ export function InvoiceActionDialog({
         title={t('payTitle')}
         confirmLabel={t('pay')}
         destructive={false}
-        busy={record.isPending}
+        action={record}
         impact={impact}
         onConfirm={() => record.mutate(id)}
       />

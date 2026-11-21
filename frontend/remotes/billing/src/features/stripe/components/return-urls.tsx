@@ -1,3 +1,4 @@
+import { ErrorPanel } from '@suite/remote-kit'
 import { Button, Card, PermissionGate, Skeleton, TagInput } from '@suite/ui'
 import { useEffect, useState } from 'react'
 import { useT } from '../../../i18n'
@@ -35,7 +36,9 @@ export function ReturnUrls({ canManage, actions }: { canManage: boolean; actions
         </PermissionGate>
       }
     >
-      {query.isLoading ? (
+      {query.isError ? (
+        <ErrorPanel error={query.error} onRetry={() => void query.refetch()} />
+      ) : query.isLoading ? (
         <Skeleton width="100%" height={40} />
       ) : (
         <TagInput

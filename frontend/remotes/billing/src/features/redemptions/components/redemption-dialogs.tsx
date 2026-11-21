@@ -25,7 +25,7 @@ export function RedeemCodeDialog({ walletId, open, onClose }: Props) {
       onClose={onClose}
       title={t('redeem')}
       submitLabel={t('redeem')}
-      busy={redeem.isPending}
+      action={redeem}
       form={form}
       onSubmit={(values) => redeem.mutate(values.code)}
     >
@@ -48,7 +48,7 @@ export function AttachCouponDialog({ walletId, open, onClose }: Props) {
       title={t('attach')}
       description={t('attachHint')}
       submitLabel={t('attach')}
-      busy={attach.isPending}
+      action={attach}
       form={form}
       onSubmit={(values) => attach.mutate(values.couponId)}
     >

@@ -21,7 +21,7 @@ export function CreateSystemDialog({ open, onClose }: { open: boolean; onClose: 
       title={t('createTitle')}
       description={t('createHint')}
       submitLabel={t('create')}
-      busy={create.isPending}
+      action={create}
       form={form}
       onSubmit={(values) => create.mutate(values)}
     >
@@ -52,7 +52,7 @@ export function RenameSystemDialog({ system, open, onClose }: Props) {
       onClose={onClose}
       title={t('renameTitle')}
       submitLabel={tc('actions.save')}
-      busy={update.isPending}
+      action={update}
       form={form}
       onSubmit={(values) => update.mutate({ id: system.id ?? '', action: 'RENAME', name: values.name })}
     >
@@ -72,7 +72,7 @@ export function DisableSystemDialog({ system, open, onClose }: Props) {
       title={tc('confirm.disableSystem')}
       description={tc('confirm.disableSystemHint')}
       confirmLabel={t('disable')}
-      busy={update.isPending}
+      action={update}
       onConfirm={() => update.mutate({ id: system.id ?? '', action: 'DISABLE' })}
       impact={[
         { label: tc('fields.name'), value: system.name ?? '' },

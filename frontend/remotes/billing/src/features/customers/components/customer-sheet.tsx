@@ -8,12 +8,13 @@ import { DeactivateCustomerDialog, EditCustomerDialog } from './customer-dialogs
 
 export interface CustomerSheetProps {
   customer: CustomerResponse
+  open: boolean
   onClose: () => void
   onPrev?: () => void
   onNext?: () => void
 }
 
-export function CustomerSheet({ customer, onClose, onPrev, onNext }: CustomerSheetProps) {
+export function CustomerSheet({ customer, open, onClose, onPrev, onNext }: CustomerSheetProps) {
   const t = useT('customers')
   const tc = useT('common')
   const canWrite = useCanWriteCustomers()
@@ -23,7 +24,7 @@ export function CustomerSheet({ customer, onClose, onPrev, onNext }: CustomerShe
   return (
     <>
       <RecordSheet
-        open
+        open={open}
         onClose={onClose}
         eyebrow={t('title')}
         title={customer.displayName ?? ''}
@@ -32,7 +33,7 @@ export function CustomerSheet({ customer, onClose, onPrev, onNext }: CustomerShe
         onNext={onNext}
         actions={
           <PermissionGate allowed={canWrite}>
-            <Button variant="outline" icon="settings" onClick={() => setDialog('edit')}>
+            <Button variant="outline" icon="pencil" onClick={() => setDialog('edit')}>
               {tc('actions.edit')}
             </Button>
             {customer.status !== 'DEACTIVATED' && (

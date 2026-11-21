@@ -10,6 +10,14 @@
   --link: var(--brand);
   --page-pad: var(--space-8);
   --page-gap: var(--space-5);
+
+  /* One layer scale. A popup opened from a surface must be above it, and a toast above everything. */
+  --z-sticky: 5;
+  --z-bar: 20;
+  --z-scrim: 40;
+  --z-modal: 50;
+  --z-popper: 60;
+  --z-toast: 70;
 }
 [data-app] {
   --link: var(--app-accent);
@@ -180,6 +188,7 @@
   --animate-drop-out: drop-out var(--duration-fast) var(--ease-in) forwards;
   --animate-rise-in: rise-in var(--duration-base) var(--ease-out);
   --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+  --animate-progress: progress 1.1s var(--ease-out) infinite;
 
   @keyframes fade-in {
     from {
@@ -255,12 +264,20 @@
       transform: translateY(8px);
     }
   }
-  @keyframes shimmer {
+  @keyframes progress {
     from {
-      background-position: 100% 0;
+      transform: translateX(-100%);
     }
     to {
-      background-position: -100% 0;
+      transform: translateX(300%);
+    }
+  }
+  @keyframes shimmer {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
     }
   }
 }

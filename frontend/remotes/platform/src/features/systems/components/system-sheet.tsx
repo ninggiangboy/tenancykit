@@ -9,12 +9,13 @@ import { DisableSystemDialog, RenameSystemDialog } from './system-dialogs'
 
 export interface SystemSheetProps {
   system: SystemResponse
+  open: boolean
   onClose: () => void
   onPrev?: () => void
   onNext?: () => void
 }
 
-export function SystemSheet({ system, onClose, onPrev, onNext }: SystemSheetProps) {
+export function SystemSheet({ system, open, onClose, onPrev, onNext }: SystemSheetProps) {
   const t = useT('systems')
   const tc = useT('common')
   const can = useSystemPermissions()
@@ -23,7 +24,7 @@ export function SystemSheet({ system, onClose, onPrev, onNext }: SystemSheetProp
   return (
     <>
       <RecordSheet
-        open
+        open={open}
         onClose={onClose}
         eyebrow={t('recordType')}
         title={system.name ?? ''}
@@ -33,7 +34,7 @@ export function SystemSheet({ system, onClose, onPrev, onNext }: SystemSheetProp
         actions={
           <>
             <PermissionGate allowed={can.rename}>
-              <Button variant="outline" icon="settings" onClick={() => setDialog('rename')}>
+              <Button variant="outline" icon="pencil" onClick={() => setDialog('rename')}>
                 {tc('actions.rename')}
               </Button>
             </PermissionGate>

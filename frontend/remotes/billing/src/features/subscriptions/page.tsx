@@ -75,6 +75,7 @@ export function SubscriptionsPage({ state }: { state: UrlState }) {
       rows={rows}
       page={query.data?.page}
       loading={query.isLoading}
+      refreshing={query.isFetching && !query.isLoading}
       error={query.error}
       refetch={() => void query.refetch()}
       columns={columns}
@@ -84,9 +85,10 @@ export function SubscriptionsPage({ state }: { state: UrlState }) {
       emptyHint={t('emptyHint')}
       emptyAction={create}
     >
-      {record.selected && (
+      {record.shown && (
         <SubscriptionSheet
-          subscription={record.selected}
+          open={record.isOpen}
+          subscription={record.shown}
           names={names}
           onClose={record.close}
           onPrev={record.prev}

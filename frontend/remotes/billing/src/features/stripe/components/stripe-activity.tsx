@@ -49,7 +49,7 @@ export function StripeEvents({ canManage, actions }: { canManage: boolean; actio
         description={tc('confirm.retryEventHint')}
         confirmLabel={t('retry')}
         destructive={false}
-        busy={actions.retry.isPending}
+        action={actions.retry}
         onConfirm={() => target?.id && actions.retry.mutate(target.id, { onSuccess: () => setTarget(null) })}
         impact={[{ label: t('events'), value: <span className="font-mono">{target?.stripeEventId}</span> }]}
       />
@@ -100,7 +100,7 @@ export function StripeIncidents({ canManage, actions }: { canManage: boolean; ac
         title={t('resolve')}
         confirmLabel={t('resolve')}
         destructive={false}
-        busy={actions.resolve.isPending}
+        action={actions.resolve}
         onConfirm={() => target?.id && actions.resolve.mutate(target.id, { onSuccess: () => setTarget(null) })}
         impact={[{ label: t('incidents'), value: target?.kind ?? '' }]}
       />

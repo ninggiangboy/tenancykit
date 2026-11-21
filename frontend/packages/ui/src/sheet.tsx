@@ -1,5 +1,5 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { cn } from './cn'
 import { Icon } from './icon'
 import { useUiMessages } from './messages'
@@ -55,6 +55,14 @@ export function Sheet({
   const bottom = placement === 'bottom' || (placement === 'auto' && phone)
   const scrim = useRef<HTMLDivElement>(null)
   const drag = useDragDismiss(panel, onClose, bottom, scrim)
+  // Radix restores focus to a Trigger; a record sheet is opened by a click on a row, so it remembers what had focus
+  // when it opened and hands focus back to it on close.
+  const opener = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    if (open) {
+      opener.current = document.activeElement as HTMLElement | null
+    }
+  }, [open])
   const iconButton = cn(
     'motion-colors flex items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground',
     bottom ? 'size-11' : 'size-8',
@@ -66,7 +74,7 @@ export function Sheet({
         {modal && (
           <DialogPrimitive.Overlay
             ref={scrim}
-            className="fixed inset-0 z-40 bg-overlay backdrop-blur-[2px] data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in"
+            className="fixed inset-0 z-(--z-scrim) bg-overlay data-[state=closed]:animate-fade-out data-[state=open]:animate-fade-in"
           />
         )}
         <DialogPrimitive.Content
@@ -78,12 +86,16 @@ export function Sheet({
             event.preventDefault()
             ;(event.currentTarget as HTMLElement | null)?.focus()
           }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault()
+            opener.current?.focus()
+          }}
           tabIndex={-1}
           className={cn(
             'flex flex-col bg-popover text-popover-foreground outline-none',
             bottom
-              ? 'fixed inset-x-0 bottom-0 z-50 h-[88dvh] rounded-t-[20px] pb-[env(safe-area-inset-bottom)] shadow-xl data-[state=closed]:animate-slide-out-down data-[state=open]:animate-slide-in-up'
-              : 'fixed inset-y-2 right-2 z-50 w-[calc(100%-16px)] max-w-[460px] rounded-xl border border-border shadow-lg data-[state=closed]:animate-slide-out-right data-[state=open]:animate-slide-in-right',
+              ? 'fixed inset-x-0 bottom-0 z-(--z-modal) h-[88dvh] rounded-t-[20px] pb-[env(safe-area-inset-bottom)] shadow-xl data-[state=closed]:animate-slide-out-down data-[state=open]:animate-slide-in-up'
+              : 'fixed inset-y-2 right-2 z-(--z-modal) w-[calc(100%-16px)] max-w-[460px] rounded-xl border border-border shadow-lg data-[state=closed]:animate-slide-out-right data-[state=open]:animate-slide-in-right',
           )}
         >
           {bottom && (

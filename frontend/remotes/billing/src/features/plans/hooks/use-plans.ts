@@ -4,13 +4,14 @@ import { createPlan, publishVersion, retire } from '@suite/api-client/billing'
 import { listPlansOptions } from '@suite/api-client/billing/query'
 import { asListQuery, type ListState, useAction, useApi } from '@suite/remote-kit'
 import { usePermission } from '@suite/shell-sdk/react'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useT } from '../../../i18n'
 
 export function usePlanList(list: ListState) {
   const { billing } = useApi()
   return useQuery({
     ...listPlansOptions({ client: billing, throwOnError: true, query: asListQuery(list.params) }),
+    placeholderData: keepPreviousData,
     enabled: usePermission(permissions.billing.listPlans),
   })
 }

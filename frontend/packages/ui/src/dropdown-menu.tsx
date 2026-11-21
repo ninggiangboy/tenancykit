@@ -12,6 +12,8 @@ export interface MenuItem {
   onSelect?: () => void
   danger?: boolean
   disabled?: boolean
+  /** The current choice of a group of exclusive ones: a trailing check, `role=menuitemradio` and `aria-checked`. */
+  checked?: boolean
   separator?: boolean
   heading?: React.ReactNode
 }
@@ -44,7 +46,7 @@ export function DropdownMenu({ items, trigger, label, align = 'end', defaultOpen
           align={align}
           sideOffset={4}
           className={cn(
-            'z-30 min-w-44 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md',
+            'z-(--z-popper) min-w-44 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-md',
             POPPER_MOTION,
           )}
         >
@@ -61,6 +63,7 @@ export function DropdownMenu({ items, trigger, label, align = 'end', defaultOpen
                 key={key}
                 disabled={item.disabled}
                 onSelect={item.onSelect}
+                {...(item.checked === undefined ? {} : { role: 'menuitemradio', 'aria-checked': item.checked })}
                 className={cn(
                   'motion-colors flex cursor-pointer select-none items-center gap-1.5 rounded-md px-2 py-1.5 text-small outline-none',
                   PHONE_ROW,
@@ -72,6 +75,7 @@ export function DropdownMenu({ items, trigger, label, align = 'end', defaultOpen
                 {item.icon && <Icon name={item.icon} size={14} className="text-muted-foreground" />}
                 <span className="flex-1">{item.label}</span>
                 {item.shortcut && <Kbd keys={item.shortcut} />}
+                {item.checked && <Icon name="check" size={14} className="text-foreground" />}
               </DropdownPrimitive.Item>
             )
           })}

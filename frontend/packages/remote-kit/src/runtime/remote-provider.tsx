@@ -10,6 +10,8 @@ export interface ToastInput {
   title: ReactNode
   description?: ReactNode
   tone?: 'success' | 'danger' | 'info'
+  /** How long it stays, in milliseconds; the default is six seconds. */
+  duration?: number
   action?: { label: string; onClick: () => void }
 }
 

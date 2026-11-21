@@ -4,11 +4,13 @@ import { useRef } from 'react'
 import { useKitT } from '../i18n/create-remote-i18n'
 import type { ListSpec } from './list-spec'
 import type { ListState } from './use-list-state'
+import { useSearchDraft } from './use-search-draft'
 
 /** One line: the search box, the facet filters, the active chips and Clear. */
 export function ListToolbar({ spec, list }: { spec: ListSpec; list: ListState }) {
   const t = useKitT()
   const searchRef = useRef<HTMLInputElement>(null)
+  const search = useSearchDraft(list.q, list.setQ)
   useHotkey('/', () => searchRef.current?.focus())
   const facets = spec.facets ?? []
   const searchLabel = spec.searchPlaceholder ?? t('actions.search')
@@ -26,8 +28,14 @@ export function ListToolbar({ spec, list }: { spec: ListSpec; list: ListState })
           />
           <input
             ref={searchRef}
-            value={list.q}
-            onChange={(event) => list.setQ(event.target.value)}
+            value={search.draft}
+            onChange={(event) => search.onChange(event.target.value)}
+            onFocus={search.onFocus}
+            onBlur={search.onBlur}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') search.submit()
+              else if (event.key === 'Escape') search.clear()
+            }}
             placeholder={searchLabel}
             aria-label={searchLabel}
             className="motion-colors h-(--size-control-sm) w-64 max-w-full rounded-md border border-input bg-background pl-7 pr-8 text-small shadow-xs focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring-halo max-md:w-full max-md:text-[16px]"
