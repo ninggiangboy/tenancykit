@@ -105,6 +105,9 @@ An update may pin the version with `If-Match`; the rule is the same for every su
   was. There is no 428 Precondition Required.
 - **Comparison is strong, per RFC 9110.** `*` passes, a comma-separated list passes when any entry matches, a weak
   tag (`W/"3"`) never matches, and a malformed header is a 400.
+- **Version 0 is a row that does not exist.** A list reports `version: 0` for something never saved, so a precondition
+  of `"0"` (alone or in a list) may create it. Any other tag on a missing row is 412 without a current `ETag`, and
+  once the row exists `"0"` is stale like any other old version.
 - **A mismatch is 412, a business conflict is 409.** The 412 response carries the current `ETag` so a caller can
   retry without a separate GET.
 - **The check runs after the row lock and before any mutation.** A no-op change — renaming to the same name, setting

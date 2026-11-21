@@ -73,9 +73,18 @@ class ExpectedVersionTest {
     }
 
     @Test
-    void anAbsentRowMayOnlyBeCreatedWithoutAPrecondition() {
+    void anAbsentRowMayBeCreatedWithoutAPreconditionOrWithVersionZero() {
         ExpectedVersion.any().checkAbsent();
+        ExpectedVersion.fromIfMatch("\"0\"").checkAbsent();
+        ExpectedVersion.fromIfMatch("\"0\", \"5\"").checkAbsent();
+    }
+
+    @Test
+    void anAbsentRowRejectsAnyOtherTagWithNoCurrentVersion() {
         assertThatThrownBy(() -> ExpectedVersion.fromIfMatch("\"1\"").checkAbsent())
+                .isInstanceOf(PreconditionFailedException.class)
+                .satisfies(e -> assertThat(((PreconditionFailedException) e).currentVersion()).isNull());
+        assertThatThrownBy(() -> ExpectedVersion.fromIfMatch("W/\"0\"").checkAbsent())
                 .isInstanceOf(PreconditionFailedException.class)
                 .satisfies(e -> assertThat(((PreconditionFailedException) e).currentVersion()).isNull());
     }

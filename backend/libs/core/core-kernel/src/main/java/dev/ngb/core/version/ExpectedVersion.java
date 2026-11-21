@@ -11,6 +11,9 @@ import java.util.Set;
  * matches. {@code *} and a missing header accept whatever the resource holds. Anything else that is not a strong
  * entity tag is malformed and answers 400 through the {@link IllegalArgumentException} the error handlers already
  * map.
+ *
+ * <p>Version 0 stands for a row that does not exist yet: a list endpoint reports it for something never saved, so a
+ * client that echoes it back is asking to create that row.
  */
 public final class ExpectedVersion {
 
@@ -59,12 +62,13 @@ public final class ExpectedVersion {
     }
 
     /**
-     * For an aggregate that does not exist yet: only a missing header or {@code *} may create it.
+     * For an aggregate that does not exist yet: a missing header, {@code *} or a list holding {@code "0"} (the version a
+     * list reports for a row that does not exist) may create it. Any other tag names a row that is not there.
      *
      * @throws PreconditionFailedException with no current version, because there is no row to compare against
      */
     public void checkAbsent() {
-        if (!any) {
+        if (!any && !accepted.contains(0L)) {
             throw new PreconditionFailedException(null);
         }
     }

@@ -118,7 +118,7 @@ class ConditionalUpdateHttpIntegrationTest {
     }
 
     @Test
-    void entitlementSetFollowsTheConditionalMatrixAndAnAbsentRowRejectsATag() throws Exception {
+    void entitlementSetFollowsTheConditionalMatrixAndVersionZeroCreatesAnAbsentRow() throws Exception {
         Tenant tenant = newTenant();
         MvcResult created = mvc.perform(update(platformHost(), "/api/v1/tenants/" + tenant.id().value() + "/apps/billing",
                         "PUT", "{\"enabled\":true}", null))
@@ -129,12 +129,28 @@ class ConditionalUpdateHttpIntegrationTest {
         assertMatrix(platformHost(), "/api/v1/tenants/" + tenant.id().value() + "/apps/billing", "PUT",
                 "{\"enabled\":false}", 1);
 
-        // A tag on an entitlement that does not exist yet has nothing to compare against.
+        // Version 0 is what the list reports for an app the tenant never changed, so it may create the row once.
         Tenant other = newTenant();
-        MvcResult absent = mvc.perform(update(platformHost(), "/api/v1/tenants/" + other.id().value() + "/apps/billing",
+        String otherPath = "/api/v1/tenants/" + other.id().value() + "/apps/billing";
+        MvcResult first = mvc.perform(update(platformHost(), otherPath, "PUT", "{\"enabled\":true}", "\"0\""))
+                .andReturn();
+        assertThat(first.getResponse().getStatus()).isEqualTo(200);
+        assertThat(first.getResponse().getHeader("ETag")).isEqualTo("\"1\"");
+        assertThat(first.getResponse().getContentAsString()).contains("\"enabled\":true");
+
+        // The row exists now, so the same precondition is stale and the answer carries the current tag.
+        MvcResult second = mvc.perform(update(platformHost(), otherPath, "PUT", "{\"enabled\":true}", "\"0\""))
+                .andReturn();
+        assertThat(second.getResponse().getStatus()).isEqualTo(412);
+        assertThat(second.getResponse().getHeader("ETag")).isEqualTo("\"1\"");
+
+        // Any other tag on an entitlement that does not exist has nothing to compare against.
+        Tenant untouched = newTenant();
+        MvcResult absent = mvc.perform(update(platformHost(), "/api/v1/tenants/" + untouched.id().value() + "/apps/billing",
                         "PUT", "{\"enabled\":true}", "\"3\""))
                 .andReturn();
         assertThat(absent.getResponse().getStatus()).isEqualTo(412);
+        assertThat(absent.getResponse().getHeader("ETag")).isNull();
     }
 
     /**
