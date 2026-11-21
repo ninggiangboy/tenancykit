@@ -1,6 +1,7 @@
 import { env } from '../support/env'
 import { expect, openRemote, signIn, test } from '../support/fixtures'
 import { watchConsole } from '../support/health'
+import { seedBillingRich } from '../support/seed-rich'
 import { provisionTenantFixture, seedBilling, waitForBilling } from '../support/stack'
 import { applyLook, axeLook, capture, DENSITIES, THEMES, VIEWPORTS } from '../support/visual'
 
@@ -44,6 +45,7 @@ test('every screen holds in every look', async ({ browser }) => {
   const tenant = await provisionTenantFixture({ billing: true, platform: true, prefix: 'e2e-visual' })
   await waitForBilling(tenant.host, tenant.token)
   await seedBilling(tenant)
+  await seedBillingRich(tenant)
 
   const platformContext = await browser.newContext()
   const platformPage = await platformContext.newPage()

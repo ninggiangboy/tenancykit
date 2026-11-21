@@ -294,3 +294,161 @@ export function writeReport(findings: Finding[]): string {
   writeFileSync(path, lines.join('\n'))
   return path
 }
+
+/** What a rule found on one screen; a test collects them and fails with all of them at once. */
+export interface Fault {
+  screen: string
+  detail: string
+}
+
+/** Prints a table of the faults so a failing run names every screen at once, not the first. */
+export function describeFaults(faults: Fault[]): string {
+  return faults.map((fault) => `${fault.screen}: ${fault.detail}`).join('\n')
+}
+
+/**
+ * True when the element is what a person would hit at its own centre, so nothing is drawn over it. A layer that sits
+ * under another one fails here even though it is visible in the DOM.
+ */
+export async function isOnTop(page: Page, selector: string): Promise<boolean> {
+  return page.evaluate((query) => {
+    const elements = [...document.querySelectorAll(query)]
+    const element = elements.at(-1)
+    if (!element) return false
+    const rect = element.getBoundingClientRect()
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
+    return hit !== null && element.contains(hit)
+  }, selector)
+}
+
+/** The screen names of both remotes that show a table of records, with the app that owns each. */
+export const LIST_SCREENS: Array<{ app: 'platform' | 'billing'; section: string }> = [
+  ...['tenants', 'users', 'roles', 'systems', 'remotes'].map((section) => ({ app: 'platform' as const, section })),
+  ...[
+    'customers',
+    'invoices',
+    'charges',
+    'payments',
+    'refunds',
+    'subscriptions',
+    'plans',
+    'coupons',
+    'redemptions',
+    'wallets',
+    'reservations',
+    'usage',
+    'webhooks',
+  ].map((section) => ({ app: 'billing' as const, section })),
+]
+
+/** Drags the open bottom sheet's grab handle down, the way a thumb closes it. */
+export async function dragSheetDown(page: Page, distance = 400): Promise<void> {
+  const handle = page.getByRole('dialog').first().locator('.touch-none').first()
+  const box = await handle.boundingBox()
+  if (!box) throw new Error('the sheet has no grab handle')
+  const x = box.x + box.width / 2
+  const y = box.y + box.height / 2
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  await page.mouse.move(x, y + distance, { steps: 10 })
+  await page.mouse.up()
+}
+
+export interface LeaveSample {
+  /** Milliseconds since the close was asked for. */
+  at: number
+  present: boolean
+  state: string | null
+  opacity: number
+  /** The panel is off its resting place or fading: something is playing. */
+  moving: boolean
+}
+
+export type CloseHow = 'button' | 'escape' | 'scrim'
+
+/**
+ * Closes the open record sheet from inside the page and samples it every frame for half a second. The close and the
+ * sampling start in one task, so the first sample is the frame right after the request, not after a round trip.
+ */
+export async function closeAndSample(page: Page, how: CloseHow): Promise<LeaveSample[]> {
+  return page.evaluate(async (mode) => {
+    const panel = () => document.querySelector('[role=dialog]') as HTMLElement | null
+    const start = performance.now()
+    const samples: LeaveSample[] = []
+    const sample = () => {
+      const element = panel()
+      const style = element ? getComputedStyle(element) : null
+      samples.push({
+        at: performance.now() - start,
+        present: element !== null,
+        state: element?.getAttribute('data-state') ?? null,
+        opacity: style ? Number(style.opacity) : 0,
+        moving: style ? Number(style.opacity) < 1 || style.transform !== 'none' : false,
+      })
+    }
+    if (mode === 'button') {
+      ;(panel()?.querySelector('button[aria-label="Close"]') as HTMLElement | null)?.click()
+    } else if (mode === 'escape') {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    } else {
+      const scrim = document.querySelector('[data-state=open].bg-overlay') as HTMLElement | null
+      scrim?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' }))
+      scrim?.click()
+    }
+    await new Promise<void>((resolve) => {
+      const tick = () => {
+        sample()
+        if (performance.now() - start < 500) requestAnimationFrame(tick)
+        else resolve()
+      }
+      requestAnimationFrame(tick)
+    })
+    return samples
+  }, how)
+}
+
+export interface FrameStats {
+  frames: number
+  worstFrameMs: number
+  framesOver33ms: number
+  framesOver50ms: number
+  longTasks: number
+}
+
+/**
+ * Samples every animation frame and every long task while `action` runs, and returns how the page held up. Headless
+ * Chromium has no GPU, so it under-reports what a real screen would show; the numbers are for before-and-after
+ * comparison and for catching a frame that is far too long, not a claim about how the page feels.
+ */
+export async function frameStats(page: Page, action: () => Promise<void>): Promise<FrameStats> {
+  await page.evaluate(() => {
+    const state = { deltas: [] as number[], longTasks: 0, running: true }
+    ;(window as unknown as { __frames: typeof state }).__frames = state
+    let last = performance.now()
+    const tick = (now: number) => {
+      state.deltas.push(now - last)
+      last = now
+      if (state.running) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+    new PerformanceObserver((list) => {
+      state.longTasks += list.getEntries().length
+    }).observe({ entryTypes: ['longtask'] })
+  })
+  await action()
+  await page.waitForTimeout(100)
+  return page.evaluate(() => {
+    const state = (window as unknown as { __frames: { deltas: number[]; longTasks: number; running: boolean } })
+      .__frames
+    state.running = false
+    // The first delta is measured from the moment of installing, not from a frame.
+    const deltas = state.deltas.slice(1)
+    return {
+      frames: deltas.length,
+      worstFrameMs: Math.round(Math.max(0, ...deltas) * 10) / 10,
+      framesOver33ms: deltas.filter((delta) => delta > 33.5).length,
+      framesOver50ms: deltas.filter((delta) => delta > 50).length,
+      longTasks: state.longTasks,
+    }
+  })
+}

@@ -13,7 +13,7 @@ test('the shell, both remotes and the design system switch to Vietnamese and kee
 
   await signIn(page, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
   await page.getByRole('button', { name: 'Language' }).click()
-  await page.getByRole('menuitem', { name: 'Vietnamese' }).click()
+  await page.getByRole('menuitemradio', { name: 'Vietnamese' }).click()
 
   await expect(page.locator('aside nav').first()).toHaveAttribute('aria-label', 'Ứng dụng')
   await expect(page.getByRole('button', { name: /Ngôn ngữ/ })).toBeVisible()

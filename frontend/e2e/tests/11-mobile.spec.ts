@@ -1,3 +1,4 @@
+import { dragSheetDown } from '../support/audit'
 import { expect, openRemote, signIn, test } from '../support/fixtures'
 import { watchConsole } from '../support/health'
 import { provisionTenantFixture, seedBilling, waitForBilling } from '../support/stack'
@@ -21,6 +22,8 @@ test('the phone flows work by touch', async ({ page }) => {
   const health = watchConsole(page, { allowStatus: allowStripe404 })
 
   await signIn(page, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
+  // The drawer closes on a route change, and the shell settles its first route a moment after the frame paints.
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 
   // The drawer opens over the page, a link navigates, and the drawer puts itself away.
   const drawer = page.locator('aside').first()
@@ -52,15 +55,7 @@ test('the phone flows work by touch', async ({ page }) => {
   expect(sheetBox?.height ?? 0).toBeGreaterThanOrEqual(700)
 
   // Dragging the handle down closes it.
-  const handle = sheet.locator('.touch-none').first()
-  const handleBox = await handle.boundingBox()
-  if (!handleBox) throw new Error('the sheet has no grab handle')
-  const x = handleBox.x + handleBox.width / 2
-  const y = handleBox.y + handleBox.height / 2
-  await page.mouse.move(x, y)
-  await page.mouse.down()
-  await page.mouse.move(x, y + 400, { steps: 10 })
-  await page.mouse.up()
+  await dragSheetDown(page)
   await expect(sheet).toBeHidden()
 
   // Back closes the record too.
@@ -97,7 +92,7 @@ test('the phone flows work by touch', async ({ page }) => {
 
   // Density is a choice in the account menu, and it lands on `<html>`.
   await page.getByRole('button', { name: 'Account' }).click()
-  await page.getByRole('menuitem', { name: 'Compact' }).click()
+  await page.getByRole('menuitemradio', { name: 'Compact' }).click()
   await expect.poll(() => page.evaluate(() => document.documentElement.dataset.density)).toBe('compact')
 
   await health.expectClean()

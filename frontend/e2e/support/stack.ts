@@ -25,11 +25,19 @@ export interface TenantFixture {
   token: string
 }
 
-let platformToken: Promise<string> | null = null
+let platformToken: { value: Promise<string>; at: number } | null = null
+
+/** A Keycloak access token lives five minutes and a full run is longer, so the cached one is replaced after three. */
+const TOKEN_MAX_AGE_MS = 3 * 60_000
 
 export function platformAdminToken(): Promise<string> {
-  platformToken ??= accountToken(keycloakUsername('platform', env.platformAdmin.email), env.platformAdmin.password)
-  return platformToken
+  if (!platformToken || Date.now() - platformToken.at > TOKEN_MAX_AGE_MS) {
+    platformToken = {
+      value: accountToken(keycloakUsername('platform', env.platformAdmin.email), env.platformAdmin.password),
+      at: Date.now(),
+    }
+  }
+  return platformToken.value
 }
 
 /**
@@ -176,12 +184,12 @@ const BILLING_SCOPES = [
 ]
 
 /** A Tenant System credential for the tenant-admin account, so a fixture can seed Billing without the browser. */
-export async function tenantSystem(fixture: TenantFixture): Promise<TenantSystem> {
+export async function tenantSystem(fixture: TenantFixture, options: { name?: string } = {}): Promise<TenantSystem> {
   const created = await call<{ id: string }>('/platform/api/v1/tenant-systems', {
     method: 'POST',
     token: fixture.token,
     host: fixture.host,
-    body: { name: 'e2e' },
+    body: { name: options.name ?? 'e2e' },
   })
   const systemId = requireOk(created, 'creating the tenant system').id
 
@@ -214,7 +222,13 @@ export async function tenantSystem(fixture: TenantFixture): Promise<TenantSystem
   return { token: token.access_token, systemId }
 }
 
-async function until200(path: string, token: string, host: string, what: string, timeoutMs = 30_000): Promise<void> {
+export async function until200(
+  path: string,
+  token: string,
+  host: string,
+  what: string,
+  timeoutMs = 30_000,
+): Promise<void> {
   const deadline = Date.now() + timeoutMs
   let last = 0
   while (Date.now() < deadline) {

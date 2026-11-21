@@ -13,6 +13,7 @@ import {
 import { env } from '../support/env'
 import { rawExpect as expect, openRemote, signIn, rawTest as test } from '../support/fixtures'
 import { watchConsole } from '../support/health'
+import { seedBillingRich } from '../support/seed-rich'
 import { provisionTenantFixture, seedBilling, type TenantFixture, waitForBilling } from '../support/stack'
 import { applyLook, VIEWPORTS } from '../support/visual'
 
@@ -23,7 +24,8 @@ import { applyLook, VIEWPORTS } from '../support/visual'
  * under `test-results/audit/` (or `AUDIT_DIR`), and fails when any finding other than the harness's own notes is left. Set
  * `AUDIT_STRICT=0` to collect the report without failing, for example while reviewing a new screen.
  *
- * What the audit can reach depends on the data the fixture seeded: a list with no rows has no sheet to open.
+ * What the audit can reach depends on the data the fixture seeded: a list with no rows has no sheet to open. The
+ * fixture seeds every Billing list except payments and refunds (see `support/seed-rich.ts`).
  */
 
 const PLATFORM_SCREENS: Array<[string, string]> = [
@@ -234,7 +236,8 @@ async function exerciseSheet(
     : page.locator('tbody tr').first()
   if ((await row.count()) === 0) return
   const open = async () => {
-    await row.click()
+    // The first cell: a later one may hold a copy button, which keeps its own click.
+    await (options.phone ? row : row.locator('td').first()).click()
     await page.getByRole('dialog').first().waitFor({ timeout: 8_000 })
   }
 
@@ -288,7 +291,7 @@ async function exercisePageActions(
   reopen: () => Promise<void>,
 ) {
   const head = page.locator('h1').first().locator('xpath=ancestor::header[1]')
-  const fab = page.locator('div.fixed.right-4.z-20')
+  const fab = page.locator('div.fixed.right-4.animate-rise-in')
   const skip = /export|download|sign out|open navigation|search/i
   const names = [...new Set([...(await buttonNames(head, skip)), ...(await buttonNames(fab, skip))])]
   for (const name of names) {
@@ -393,6 +396,10 @@ test.describe
       tenant = await provisionTenantFixture({ billing: true, platform: true, prefix: 'e2e-audit' })
       await waitForBilling(tenant.host, tenant.token)
       await seedBilling(tenant)
+      // Enough in every list to open a sheet on each screen; payments and refunds need Stripe and stay empty.
+      const rich = await seedBillingRich(tenant)
+      console.log(`audit seed: ${JSON.stringify({ ...rich, notes: undefined })}`)
+      for (const note of rich.notes) console.log(`audit seed note: ${note}`)
     })
 
     for (const look of LOOKS) {

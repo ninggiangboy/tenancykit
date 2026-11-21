@@ -70,5 +70,5 @@ export async function selectActiveRow(page: Page, label = '1 selected'): Promise
 /** Switches the shell's language through the header menu, as a person does. */
 export async function switchLanguage(page: Page, language: 'English' | 'Vietnamese'): Promise<void> {
   await page.getByRole('button', { name: 'Language' }).click()
-  await page.getByRole('menuitem', { name: language }).click()
+  await page.getByRole('menuitemradio', { name: language }).click()
 }

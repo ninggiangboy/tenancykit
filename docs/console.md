@@ -104,6 +104,72 @@ holds the part mounted until they finish. `motion-colors` is the hover, press an
 follows the finger while dragged, the scrim fades with it, and a release that closes carries it off screen before the
 caller's `onClose` runs. Data never animates, and reduced motion zeroes every duration.
 
+A leave animation can only play on something that is still in the document, so what appears and disappears with data
+stays mounted for it. `usePresence` (`@suite/ui`) holds the last value for `LEAVE_MS` (180ms, the `--duration-base`
+every leave shares) after it goes; `useRecordSelection` returns it as `shown`, with `isOpen`, and a screen renders its
+sheet from `shown` and passes `isOpen` as the sheet's `open`. `BulkBar` and `UnsavedBar` use it the same way and keep
+their last count while they leave. A sheet remembers what had focus when it opened and returns it there on close, so a
+table row is focusable by a click (not by Tab) for that. The sheet's scrim does not blur: a full-viewport blur is
+re-rasterised under every frame of the slide.
+
+## The frame and its scrolling
+
+From 768px up the frame is exactly the viewport (`md:h-dvh md:overflow-hidden` on `FrameLayout`): the top bar and the
+sidebar stay where they are and only `main` scrolls. The sidebar's navigation (the open app's screens and "Other apps")
+is its one scrolling region, so the account row and the sign-out button are always in view. A table's column titles
+stay under the top of `main` (`position: sticky` on the header cells). Phones keep scrolling the document, because
+mobile browsers collapse their address bar only for document scrolling, with the 56px top bar sticky. Shell code uses
+positive `md:` classes only: a remote's stylesheet loads later and defines the same utilities, so a base class
+overridden by `max-md:` would lose to it.
+
+Sticky titles have one cost. A sideways scroller is a scroll container for `position: sticky`, so a table cannot both
+scroll sideways and keep its titles. `DataTable` clips at `md` and up (`overflow-x-clip`) and keeps `overflow-x-auto`
+below it; a screen whose table does not fit at 768, 900 or 1024px passes `stickyHeader={false}` and scrolls sideways
+instead. Invoices, wallets, usage events and webhooks do today; the interaction audit fails a table that is wider than
+its frame while its titles are sticky.
+
+## Layers
+
+One scale in `packages/ui/src/styles/theme.css` decides which surface is above which, and components use it as
+`z-(--z-<name>)`:
+
+| Token | Value | What sits there |
+|---|---|---|
+| `--z-sticky` | 5 | table column titles, the phone's top bar |
+| `--z-bar` | 20 | the floating action, the bulk bar, the unsaved bar, the refresh bar of a table |
+| `--z-scrim` | 40 | the scrim of a sheet, a dialog, the palette and the drawer |
+| `--z-modal` | 50 | the sheet, the dialog, the palette, the open drawer |
+| `--z-popper` | 60 | menus, popovers, comboboxes and tooltips |
+| `--z-toast` | 70 | toasts |
+
+The rule: a popup opened from a surface is above it, and a toast is above everything. A menu opened from a sheet and a
+failure toast raised while a sheet is open must both be reachable; equal values fall back to DOM order, which is why a
+class outside the scale is a bug.
+
+## States
+
+Every write shows what state it is in, and every read has three outcomes.
+
+- **In progress.** A button with `loading` and no icon keeps its label in place under the spinner, so it never changes
+  width and never dims; with an icon, the spinner replaces the icon. A `Switch` with `busy` keeps its colour and shows a
+  spinner on its knob; the control is disabled only to refuse a second toggle. A toggle refetches only its own list
+  (`useAction` takes `invalidate`), not every query on screen.
+- **Failed.** The server's sentence appears where the person is looking, and the toast stays as the second channel (an
+  error toast lasts ten seconds, a success toast six). `FormDialog` and `ConfirmDialog` take `action`, the mutation they
+  drive, and show its failure above their buttons, clear it when they open and close, and put the button in its loading
+  state. A switch that fails goes back to the server's state and the toast names the app and the sentence.
+- **A read inside a sheet or a tab** is loading, failed (the server's sentence and Retry) or empty, and a failure never
+  looks like empty: `QueryState` in `remote-kit` renders all three, and keeps the last data under an alert when a
+  refetch fails. A failed list shows the server's sentence under "Could not load this." through `ErrorPanel`.
+- **A list that refreshes** keeps its rows (the list hooks pass `placeholderData: keepPreviousData`, so a filter or a page
+  change never blanks the table), and after 150ms a 2px bar runs along the top of the table and the table is
+  `aria-busy`. A skeleton is only for a first load with nothing to show.
+
+A search box sends its text 250ms after the last key (`useSearchDraft`); Enter and leaving the box send it at once, and
+a change from outside (Clear, a chip, Back) replaces the text unless the person is typing. A facet option toggles from
+its whole row. Rows of a record sheet are `RowList` and `ListRow` (a lead, a title, a meta line, a trailing figure and
+an action, in columns of fixed width), every row at least 56px, so a button and a badge sit in the same place.
+
 ## The UI remote registry
 
 Platform owns the registry: `ui_remotes` (name, app code, title, navigation order, audiences, enabled flag and active
@@ -199,7 +265,10 @@ accessibility, and the extension trace. `10-visual.spec.ts` captures every Platf
 in twelve combinations (1280, 900 and 390 wide; light and dark; comfortable and compact), checks that no phone screen
 scrolls sideways and runs axe for contrast and target size; `11-mobile.spec.ts` walks the phone flows: the drawer, the
 card list, a bottom sheet dragged closed, Back, the floating action and the density switch. `12-screen-audit.spec.ts`
-walks every screen in five looks, opens what each one opens (the record sheet and its buttons, the page actions, the
+walks every screen in five looks, on a tenant seeded by `support/seed-rich.ts` (seven customers and wallets in four
+currencies, invoices open, void and uncollectible, seven plans of every model, subscriptions, coupons with redemptions,
+reservations, usage and webhook endpoints; payments and refunds stay empty because Billing creates them only from
+Stripe's answers), opens what each one opens (the record sheet and its buttons, the page actions, the
 filter popovers, the tabs, the row menu) and forces a slow and a failing response on each list. It measures control
 heights, tap targets, input size on phones, a second highlighted nav item, a fixed button over content, motion on every
 overlay, focus return, and the amount, id and message-key rules, and writes `report.md` and `findings.json` next to its
@@ -208,6 +277,18 @@ new screen or component that ships a small target, a silent overlay or a second 
 `AUDIT_STRICT=0` collects the report without failing. CI runs the suite in the `suite`
 workflow on the same stack as the suite smoke.
 
+`12-screen-audit.spec.ts` measures what a screen looks like and how an overlay opens; it never closes one, never asks
+which of two layers is on top and never makes a request fail inside a sheet, so it reported nothing while the faults
+below existed. `13-interaction-audit.spec.ts` proves what a person does with the console, one `describe` a rule: the
+frame scrolls inside the viewport under sticky titles and a table that cannot fit says so; a menu opened from a sheet and
+a toast are on top; every sheet leaves with its animation on Close, Escape, a click on the scrim and a drag, and gives
+focus back; a saving switch and button keep their colour and size; a failed save, a failed detail and a failed list say
+why; a refreshing list shows its bar; a typed word sends at most two requests; a facet row toggles from its text; the
+first entitlement of a tenant succeeds; icons say what they do and rows line up; and no accessible name is left in
+English in Vietnamese. Each test prints the screens it covered and fails when it covered none, and a rule without a
+test is not a rule. It also samples frame times in headless Chromium (`frameStats`); that has no GPU, so the numbers
+catch a frame far too long and are not a claim about how the console feels on a real machine.
+
 ## Limits
 
 - v1 has one real remote per shell (`remote-platform` is mounted in both), so multi-remote composition on one screen
@@ -215,6 +296,8 @@ workflow on the same stack as the suite smoke.
 - A list screen shows `/`, j and k, Enter, x and Esc where it has a search field; `payments` has no text column to
   search, so its toolbar has no search box.
 - API error messages stay in the language the API returns; the screens translate only their own text.
+- The backend answers a failed write with `detail` only, not a list of fields, so a failed form shows that one
+  sentence above its buttons and not a mark on the field that caused it.
 - The manifest is hash-verified; chunk bodies rely on the same-origin entry path, immutable version directories and
   the CSP, as recorded in the plan.
 - Production asset publishing (S3 or CloudFront) and the ECS deployment of `frontend/` are out of scope; the compose

@@ -141,7 +141,7 @@ test('the keyboard, URL state, tokens and accessibility rules hold on the invoic
   expect(await serious(page)).toEqual([])
 
   await page.getByRole('button', { name: 'Theme' }).click()
-  await page.getByRole('menuitem', { name: 'Dark' }).click()
+  await page.getByRole('menuitemradio', { name: 'Dark' }).click()
   await expect(page.locator('html')).toHaveClass(/dark/)
   for (const name of ['background', 'foreground', 'border']) {
     const [actual, expected] = await tokenMatches(page, name, 'dark')
