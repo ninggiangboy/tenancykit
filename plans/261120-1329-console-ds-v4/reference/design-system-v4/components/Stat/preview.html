@@ -1,0 +1,16 @@
+<!-- @dsCard group="Data" height=190 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Stat preview</title></head>
+<body>
+<div id="root" class="sc-demo sc-demo--grid"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h(S.Stat, { label: 'Collected this month', icon: 'wallet', value: '48,210.00', unit: 'USD', spark: [21, 24, 22, 28, 31, 30, 35, 39, 37, 42, 46, 48], delta: '+12.4%', deltaTone: 'success', caption: 'vs October' }),
+    h(S.Stat, { label: 'Open invoices', icon: 'receipt', value: '37', spark: [52, 48, 50, 44, 41, 45, 40, 38, 39, 37], delta: '\u22125', deltaTone: 'success', caption: 'since last week' }),
+    h(S.Stat, { label: 'Webhook failures', icon: 'webhook', value: '3', unit: 'of 12,904', delta: '+2', deltaTone: 'danger', caption: 'last 24 h' })
+  ));
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+<!-- @dsCard group="Data" height=72 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Kbd preview</title></head>
+<body>
+<div id="root" class="sc-demo"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h(S.Kbd, { keys: ['mod', 'k'] }), h(S.Kbd, { keys: ['/'] }), h(S.Kbd, { keys: ['j'] }), h(S.Kbd, { keys: ['k'] }), h(S.Kbd, { keys: ['shift', 'x'] }), h(S.Kbd, { keys: ['esc'] })
+  ));
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!-- @dsCard group="Navigation" height=250 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Tabs preview</title></head>
+<body>
+<div id="root" class="sc-demo sc-demo--col" data-app="billing"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  var views = [{ id: 'all', label: 'All', count: 1284 }, { id: 'open', label: 'Open', count: 37 }, { id: 'past', label: 'Past due', count: 4 }, { id: 'paid', label: 'Paid', count: 1235 }, { id: 'void', label: 'Void', count: 8 }];
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h(S.Tabs, { label: 'Invoice views', variant: 'tiles', defaultValue: 'open', items: views }),
+    h('div', null, h(S.Tabs, { label: 'Invoice views', defaultValue: 'open', items: views })),
+    h(S.Tabs, { label: 'Sections', variant: 'line', defaultValue: 'items', items: [{ id: 'overview', label: 'Overview' }, { id: 'items', label: 'Items', count: 3 }, { id: 'payments', label: 'Payments' }, { id: 'events', label: 'Events' }] })
+  ));
+</script>
+</body>
+</html>

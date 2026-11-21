@@ -1,0 +1,23 @@
+<!-- @dsCard group="Overlays" height=260 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>DropdownMenu preview</title></head>
+<body>
+<div id="root" class="sc-demo sc-demo--col"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h('div', { style: { display: 'flex', justifyContent: 'flex-end', paddingRight: 180 } },
+      h(S.DropdownMenu, { defaultOpen: true, items: [
+        { heading: 'INV-2026-00412' },
+        { label: 'Open', icon: 'external', shortcut: ['enter'] },
+        { label: 'Copy number', icon: 'copy', shortcut: ['c'] },
+        { label: 'Send payment link', icon: 'mail' },
+        { separator: true },
+        { label: 'Write off', icon: 'ban' },
+        { label: 'Void invoice', icon: 'trash', danger: true }
+      ] }))
+  ));
+</script>
+</body>
+</html>

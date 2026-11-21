@@ -1,0 +1,120 @@
+<!-- @dsCard group="Samples" height=844 width=390 page subtitle="The Invoices screen on a phone: top bar, saved-view pills, the card list and a floating main action. Tap a card for the bottom sheet" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Invoices on a phone</title>
+<style>html, body, #root { height: 100%; } .sc-inset { position: relative; } .sc-hide-phone { display: none; } .sc-fab, .sc-shell > .sc-sidebar, .sc-drawer-scrim { position: absolute !important; } .sc-shell { position: relative; height: 100%; overflow: hidden; }</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  function stop(e) { e.preventDefault(); }
+  /* groups: [{label, items: [[label, icon, current, meta]]}] */
+  function Sidebar(p) {
+    return h('aside', { className: 'sc-sidebar' },
+      h('button', { type: 'button', className: 'sc-switcher' },
+        h('span', { className: 'sc-switcher__avatar' }, 'A'),
+        h('span', { className: 'sc-switcher__text' }, h('span', null, 'Acme Retail'), h('span', null, 'acme.suite.example')),
+        h(S.Icon, { name: 'chevrons-up-down' })),
+      p.app && h('div', { className: 'sc-navgroup' }, h('a', { href: '#', onClick: stop, className: 'sc-navitem', style: { fontWeight: 600 } }, h(S.AppMark, { app: p.app, size: 'sm' }), h('span', { className: 'sc-navitem__text' }, S.AppMark.apps[p.app][1]))),
+      (p.groups || []).map(function (g) {
+        return h('nav', { key: g.label, className: 'sc-navgroup', 'aria-label': g.label },
+          h('div', { className: 'sc-navgroup__label' }, g.label),
+          g.items.map(function (it) {
+            return h('a', { key: it[0], href: '#', onClick: stop, className: 'sc-navitem', 'aria-current': it[2] ? 'page' : undefined },
+              h(S.Icon, { name: it[1] }), h('span', { className: 'sc-navitem__text' }, it[0]), it[3] != null && h('span', { className: 'sc-navitem__meta' }, it[3]));
+          }));
+      }),
+      h('nav', { className: 'sc-navgroup', 'aria-label': 'Other apps', style: { marginTop: 'auto', borderTop: '1px solid var(--sidebar-border)', paddingTop: 10 } },
+        h('div', { className: 'sc-navgroup__label' }, 'Other apps'),
+        (p.others || ['platform']).map(function (a) { return h('a', { key: a, href: '#', onClick: stop, className: 'sc-navitem' }, h(S.AppMark, { app: a, size: 'sm' }), h('span', { className: 'sc-navitem__text' }, S.AppMark.apps[a][1])); })),
+      h('div', { className: 'sc-sidebar__foot' },
+        h('button', { type: 'button', className: 'sc-switcher' }, h('span', { className: 'sc-avatar' }, 'LT'),
+          h('span', { className: 'sc-switcher__text' }, h('span', null, 'Linh Tran'), h('span', null, 'Finance operator')),
+          h(S.Icon, { name: 'chevrons-up-down' }))));
+  }
+  function Header(p) {
+    return h('header', { className: 'sc-header' },
+      h(S.Tooltip, { content: 'Toggle sidebar', shortcut: ['mod', 'b'] }, h(S.Button, { variant: 'ghost', size: 'sm', iconOnly: true, icon: 'panel-left' }, 'Toggle sidebar')),
+      h('span', { className: 'sc-sep' }),
+      h('nav', { className: 'sc-crumbs', 'aria-label': 'Breadcrumb' }, p.crumbs.map(function (c, i) {
+        var last = i === p.crumbs.length - 1;
+        return h(React.Fragment, { key: i }, i > 0 && h(S.Icon, { name: 'chevron-right', size: 14 }), last ? h('span', { 'aria-current': 'page' }, c) : h('a', { href: '#', onClick: stop }, c));
+      })),
+      h('div', { className: 'sc-header__end' },
+        h('button', { type: 'button', className: 'sc-searchbtn' }, h(S.Icon, { name: 'search', size: 14 }), 'Search or jump to…', h(S.Kbd, { keys: ['mod', 'k'] })),
+        h(S.DropdownMenu, { align: 'end', trigger: h('button', { type: 'button', className: 'sc-avatar', style: { border: 0, cursor: 'pointer' }, 'aria-label': 'Account' }, 'LT'),
+          items: [{ heading: 'Density' }, { label: 'Comfortable', icon: 'check' }, { label: 'Compact' }, { separator: true }, { heading: 'Theme' }, { label: 'System', icon: 'check' }, { label: 'Light' }, { label: 'Dark' }, { separator: true }, { label: 'Sign out', icon: 'log-out' }] })));
+  }
+  var BILLING_NAV = function (cur) {
+    return [
+      { label: 'Money', items: [['Customers', 'users', cur === 'Customers'], ['Invoices', 'file', cur === 'Invoices', '37'], ['Payments', 'credit-card', cur === 'Payments'], ['Refunds', 'undo', false], ['Subscriptions', 'repeat', false]] },
+      { label: 'Pricing', items: [['Pricing plans', 'ticket', false], ['Coupons', 'gift', false]] },
+      { label: 'Wallets and usage', items: [['Wallets', 'wallet', false], ['Usage', 'sliders', false]] },
+      { label: 'Integrations', items: [['Webhooks', 'webhook', false, '3']] }
+    ];
+  };
+  var INVOICES = [
+    ['INV-2026-00412', 'Lumen Coffee', 'ap@lumen.example', 'OPEN', 1250000, 'USD', '2026-11-16 09:12'],
+    ['INV-2026-00411', 'Northwind Labs', 'billing@northwind.example', 'PAST_DUE', 864000, 'USD', '2026-11-01 00:00'],
+    ['INV-2026-00410', 'Bánh Mì 37', 'chu@banhmi37.example', 'OPEN', 3200000, 'VND', '2026-11-01 00:00'],
+    ['INV-2026-00408', 'Orbit Dental', 'office@orbit.example', 'PAID', 412000, 'USD', '2026-11-01 00:00'],
+    ['INV-2026-00403', 'Kestrel Freight', 'ar@kestrel.example', 'UNCOLLECTIBLE', 532500, 'USD', '2026-10-01 00:00'],
+    ['INV-2026-00398', 'Công ty Hoàng Phát', 'ketoan@hoangphat.example', 'PAID', 18500000, 'VND', '2026-10-01 00:00'],
+    ['INV-2026-00391', 'Fieldnote Studio', 'hello@fieldnote.example', 'VOID', 129900, 'EUR', '2026-10-01 00:00']
+  ].map(function (r) { return { id: r[0], customer: r[1], email: r[2], status: r[3], total: r[4], ccy: r[5], created: r[6] }; });
+  var INVOICE_COLUMNS = [
+    { key: 'total', header: 'Amount', align: 'end', sortable: true, sort: 'desc', width: 150, mobile: 'primary', render: function (r) { return h('span', { className: 'sc-amount' }, h(S.Money, { minor: r.total, currency: r.ccy })); } },
+    { key: 'status', header: 'Status', width: 140, mobile: 'badge', render: function (r) { return h(S.StatusBadge, { status: r.status }); } },
+    { key: 'id', header: 'Invoice', width: 160, mobile: 'secondary', render: function (r) { return h('span', { className: 'sc-num' }, r.id); }, cardText: function (r) { return r.id; } },
+    { key: 'customer', header: 'Customer', mobile: 'secondary', cardText: function (r) { return r.customer; }, render: function (r) { return h('div', { className: 'sc-cell-2' }, h('span', null, r.customer), h('span', null, r.email)); } },
+    { key: 'created', header: 'Issued (UTC)', sortable: true, mobile: 'meta', cardText: function (r) { return r.created.slice(5, 10); }, render: function (r) { return h('span', { className: 'sc-muted sc-num' }, r.created); } }
+  ];
+  function InvoicePeek(p) {
+    var r = p.row;
+    return h(S.Sheet, { contained: true, placement: p.placement, open: p.open, onClose: p.onClose, onPrev: p.onPrev, onNext: p.onNext, figure: true,
+      eyebrow: ['Invoice · ', h(S.CopyId, { key: 'c', value: r.id })],
+      title: h(S.Money, { minor: r.total, currency: r.ccy }),
+      description: [h(S.StatusBadge, { key: 's', status: r.status }), h('span', { key: 't' }, 'Due 2026-11-30 · ' + r.customer)],
+      actions: [h(S.Button, { key: 'a', icon: 'credit-card' }, 'Record payment'), h(S.Button, { key: 'b', variant: 'outline', icon: 'mail', className: 'sc-hide-phone' }, 'Send link'),
+        h(S.DropdownMenu, { key: 'c', align: 'end', trigger: h(S.Button, { variant: 'outline', iconOnly: true, icon: 'more' }, 'More actions'), items: [{ label: 'Send link', icon: 'mail' }, { label: 'Mark uncollectible', icon: 'ban' }, { separator: true }, { label: 'Void invoice', icon: 'trash', danger: true }] })] },
+      h('section', null, h('h3', { className: 'sc-section-title' }, 'Details'),
+        h('dl', { className: 'sc-dl' },
+          h('dt', null, 'Customer'), h('dd', null, h('a', { className: 'sc-link', href: '#', onClick: stop }, r.customer)),
+          h('dt', null, 'Email'), h('dd', null, r.email),
+          h('dt', null, 'Issued (UTC)'), h('dd', { className: 'sc-num' }, r.created),
+          h('dt', null, 'Invoice ID'), h('dd', null, h(S.CopyId, { value: '01a1f40e-df9f-715c-9ae9-977d0a21bc44' })))),
+      h('section', null, h('h3', { className: 'sc-section-title' }, 'Items'),
+        h('div', { className: 'sc-lines' },
+          h('div', null, h('span', null, 'Growth plan · November'), h(S.Money, { minor: Math.round(r.total * 0.96), currency: r.ccy })),
+          h('div', null, h('span', null, 'API usage · 50,000 calls'), h(S.Money, { minor: r.total - Math.round(r.total * 0.96), currency: r.ccy })),
+          h('div', null, h('span', null, 'Total'), h(S.Money, { minor: r.total, currency: r.ccy })))),
+      h('section', null, h('h3', { className: 'sc-section-title' }, 'Payments'),
+        h(S.EmptyState, { title: 'No payments yet', description: 'Record one when the customer pays by bank transfer, or send a payment link.' })));
+  }
+  function App() {
+    var view = React.useState('open');
+    var peek = React.useState(false);
+    var drawer = React.useState(false);
+    var cur = INVOICES[0];
+    return h('div', { className: 'sc-shell', 'data-app': 'billing', 'data-drawer': drawer[0] ? 'open' : undefined },
+      h(Sidebar, { app: 'billing', groups: BILLING_NAV('Invoices'), others: ['platform', 'customer'] }),
+      h('div', { className: 'sc-drawer-scrim', onClick: function () { drawer[1](false); } }),
+      h('div', { className: 'sc-inset' },
+        h('div', { className: 'sc-topbar' },
+          h(S.Button, { variant: 'ghost', iconOnly: true, icon: 'panel-left', onClick: function () { drawer[1](true); } }, 'Open navigation'),
+          h('span', { className: 'sc-topbar__title' }, h(S.AppMark, { app: 'billing', size: 'sm' }), 'Invoices'),
+          h(S.Button, { variant: 'ghost', iconOnly: true, icon: 'search' }, 'Search'),
+          h('span', { className: 'sc-avatar', style: { marginRight: 6 } }, 'LT')),
+        h('main', { className: 'sc-page' },
+          h(S.Tabs, { label: 'Invoice views', variant: 'tiles', value: view[0], onChange: view[1], items: [{ id: 'all', label: 'All', count: 1284 }, { id: 'open', label: 'Open', count: 37 }, { id: 'past', label: 'Past due', count: 4 }, { id: 'paid', label: 'Paid', count: 1235 }] }),
+          h('div', { className: 'sc-toolbar' },
+            h(S.Field, { label: 'Search invoices', hideLabel: true, icon: 'search', placeholder: 'Number, customer or email' })),
+          h(S.DataTable, { caption: 'Invoices', rows: INVOICES, columns: INVOICE_COLUMNS, onRowOpen: function () { peek[1](true); } })),
+        h(S.Button, { icon: 'plus', className: 'sc-fab' }, 'Create invoice'),
+        h(InvoicePeek, { row: cur, placement: 'bottom', open: peek[0], onClose: function () { peek[1](false); } })));
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
+</body>
+</html>

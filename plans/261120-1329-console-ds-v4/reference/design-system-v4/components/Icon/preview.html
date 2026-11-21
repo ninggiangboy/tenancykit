@@ -1,0 +1,14 @@
+<!-- @dsCard group="Identity" height=150 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Icon preview</title></head>
+<body>
+<div id="root" class="sc-demo"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    S.Icon.names.map(function (n) { return h(S.Tooltip, { key: n, content: n }, h('span', { tabIndex: 0, style: { display: 'inline-grid', placeItems: 'center', width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border)' } }, h(S.Icon, { name: n }))); })
+  ));
+</script>
+</body>
+</html>

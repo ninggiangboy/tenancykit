@@ -91,6 +91,19 @@ block in `packages/ui/src/styles/theme.css` re-declares the accent aliases (`--p
 below it. Density swaps the control, row and page sizes through their variables; the phone breakpoint raises every
 control to the touch target.
 
+Two rules keep sizes honest. The document's root font is 14px, so `theme.css` sets Tailwind's `--spacing` to `4px`:
+without it `h-11` would be 38.5px and every touch target a little short. A control's height still comes from
+`--size-control-sm`, `--size-control-md` or `--size-touch-target`, not from a spacing class. And `cn()` must know every
+`text-<name>` size `theme.css` defines (`TYPE_SCALE`; a test compares the two), or tailwind-merge reads the size as a
+colour and drops one of them.
+
+Motion follows the design system's three durations. Overlays enter on `ease-out` and leave on `ease-in`: `theme.css`
+defines the keyframes as `animate-*` utilities (`fade`, `pop`, `zoom`, `slide-in-right`, `slide-in-up`, `drop`, `rise`)
+and a component picks them with Radix's `data-[state=open|closed]`; the leave animations keep their last frame so Radix
+holds the part mounted until they finish. `motion-colors` is the hover, press and focus transition. A bottom sheet
+follows the finger while dragged, the scrim fades with it, and a release that closes carries it off screen before the
+caller's `onClose` runs. Data never animates, and reduced motion zeroes every duration.
+
 ## The UI remote registry
 
 Platform owns the registry: `ui_remotes` (name, app code, title, navigation order, audiences, enabled flag and active
@@ -185,7 +198,14 @@ the API), a rejected entry path, the Vietnamese catalogs, the keyboard and URL r
 accessibility, and the extension trace. `10-visual.spec.ts` captures every Platform and Billing screen and both homes
 in twelve combinations (1280, 900 and 390 wide; light and dark; comfortable and compact), checks that no phone screen
 scrolls sideways and runs axe for contrast and target size; `11-mobile.spec.ts` walks the phone flows: the drawer, the
-card list, a bottom sheet dragged closed, Back, the floating action and the density switch. CI runs it in the `suite`
+card list, a bottom sheet dragged closed, Back, the floating action and the density switch. `12-screen-audit.spec.ts`
+walks every screen in five looks, opens what each one opens (the record sheet and its buttons, the page actions, the
+filter popovers, the tabs, the row menu) and forces a slow and a failing response on each list. It measures control
+heights, tap targets, input size on phones, a second highlighted nav item, a fixed button over content, motion on every
+overlay, focus return, and the amount, id and message-key rules, and writes `report.md` and `findings.json` next to its
+captures in `frontend/e2e/test-results/audit/` (set `AUDIT_DIR` to put them elsewhere). It fails on any finding, so a
+new screen or component that ships a small target, a silent overlay or a second highlighted nav item breaks the build;
+`AUDIT_STRICT=0` collects the report without failing. CI runs the suite in the `suite`
 workflow on the same stack as the suite smoke.
 
 ## Limits

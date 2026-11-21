@@ -1,0 +1,22 @@
+<!-- @dsCard group="Feedback" height=230 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Toaster preview</title><style>html, body, #root { height: 100%; }</style></head>
+<body>
+<div id="root" class=""></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  function Demo() {
+    var t = S.useToasts(60000);
+    React.useEffect(function () {
+      t[1]({ title: 'Booking enabled for acme', description: 'Staff see it at their next sign-in.', action: { label: 'Undo', icon: 'undo', onClick: function () {} } });
+      t[1]({ tone: 'danger', title: 'Could not rotate the secret', description: 'Platform returned 503. Nothing changed; try again.', action: { label: 'Retry', onClick: function () {} } });
+    }, []);
+    return h('div', { className: 'sc-stage' },
+      h('div', { className: 'sc-demo' }, h(S.Button, { variant: 'outline', onClick: function () { t[1]({ title: 'Copied INV-2026-00412', tone: 'info' }); } }, 'Show a toast')),
+      h(S.Toaster, { contained: true, toasts: t[0], onDismiss: t[2] }));
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body>
+</html>

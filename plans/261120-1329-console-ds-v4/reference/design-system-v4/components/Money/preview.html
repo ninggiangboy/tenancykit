@@ -1,0 +1,16 @@
+<!-- @dsCard group="Data" height=96 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Money preview</title></head>
+<body>
+<div id="root" class="sc-demo sc-demo--col"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h('div', { className: 'sc-demo', style: { padding: 0 } },
+      h(S.Money, { minor: 4821000, currency: 'USD' }), h(S.Money, { minor: 2500000, currency: 'VND' }), h(S.Money, { minor: 129900, currency: 'EUR' }),
+      h(S.Money, { minor: -15000, currency: 'USD', signed: true }), h(S.Money, { minor: 20000, currency: 'USD', signed: true }))
+  ));
+</script>
+</body>
+</html>

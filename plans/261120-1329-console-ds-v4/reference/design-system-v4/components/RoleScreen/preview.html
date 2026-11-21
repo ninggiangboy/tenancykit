@@ -1,0 +1,110 @@
+<!-- @dsCard group="Samples" height=860 width=1280 page subtitle="Role editor with unsaved-changes bar" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Role permissions</title>
+<style>html, body, #root { height: 100%; } .sc-shell { height: 100%; } .sc-inset { height: calc(100% - 16px); }</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  function stop(e) { e.preventDefault(); }
+  function Sidebar(p) {
+    return h('aside', { className: 'sc-sidebar' },
+      h('button', { type: 'button', className: 'sc-switcher' },
+        h('span', { className: 'sc-switcher__avatar' }, p.platform ? h(S.Icon, { name: 'shield', size: 14 }) : 'A'),
+        h('span', { className: 'sc-switcher__text' }, h('span', null, p.platform ? 'Suite platform' : 'Acme Retail'), h('span', null, p.platform ? 'platform.suite.example' : 'acme.suite.example')),
+        h(S.Icon, { name: 'chevrons-up-down' })),
+      (p.groups || []).map(function (g) {
+        return h('nav', { key: g.label, className: 'sc-navgroup', 'aria-label': g.label },
+          h('div', { className: 'sc-navgroup__label' }, g.app && h(S.AppMark, { app: g.app, size: 'sm' }), g.label),
+          g.items.map(function (it) {
+            return h('a', { key: it[0], href: '#', onClick: stop, className: 'sc-navitem', 'aria-current': it[2] ? 'page' : undefined },
+              it[3] === 'app' ? h(S.AppMark, { app: it[4], size: 'sm', withName: true }) : [it[3] && h(S.Icon, { key: 'i', name: it[3] }), it[0]],
+              it[1] != null && h('span', { className: 'sc-navitem__meta' }, it[1]));
+          }));
+      }),
+      h('div', { className: 'sc-sidebar__foot' },
+        h('button', { type: 'button', className: 'sc-switcher' }, h('span', { className: 'sc-avatar' }, 'LT'),
+          h('span', { className: 'sc-switcher__text' }, h('span', null, 'Linh Tran'), h('span', { style: { fontFamily: 'var(--font-sans)' } }, p.platform ? 'Platform operator' : 'Finance operator')),
+          h(S.Icon, { name: 'chevrons-up-down' }))));
+  }
+  function cxs() { return Array.prototype.filter.call(arguments, Boolean).join(' '); }
+  function Header(p) {
+    return h('header', { className: 'sc-header' },
+      h(S.Tooltip, { content: 'Toggle sidebar', shortcut: ['mod', 'b'] }, h(S.Button, { variant: 'ghost', size: 'sm', iconOnly: true, icon: 'panel-left' }, 'Toggle sidebar')),
+      h('span', { className: 'sc-sep' }),
+      h('nav', { className: 'sc-crumbs', 'aria-label': 'Breadcrumb' }, p.crumbs.map(function (c, i) {
+        var last = i === p.crumbs.length - 1;
+        return h(React.Fragment, { key: i }, i > 0 && h(S.Icon, { name: 'chevron-right', size: 14 }), last ? h('span', { 'aria-current': 'page' }, c) : h('a', { href: '#', onClick: stop }, c));
+      })),
+      h('div', { className: 'sc-header__end' },
+        p.platform && h('span', { className: 'sc-scope-pill' }, 'Platform scope'),
+        h('button', { type: 'button', className: 'sc-searchbtn', onClick: p.onSearch }, h(S.Icon, { name: 'search', size: 14 }), 'Search or jump to…', h(S.Kbd, { keys: ['mod', 'k'] })),
+        h(S.Tooltip, { content: 'Notifications' }, h(S.Button, { variant: 'ghost', size: 'sm', iconOnly: true, icon: 'bell' }, 'Notifications'))));
+  }
+  var TENANT_GROUPS = function (current) {
+    return [
+      { label: 'Billing', app: 'billing', items: [['Overview', null, current === 'Overview', 'layout-dashboard'], ['Wallets', null, false, 'wallet'], ['Charges', null, false, 'credit-card'], ['Invoices', '37', current === 'Invoices', 'receipt'], ['Subscriptions', null, false, 'repeat'], ['Coupons', null, false, 'ticket'], ['Webhooks', '3', false, 'webhook']] },
+      { label: 'Apps', items: [['Customer', null, false, 'app', 'customer'], ['Mailroom', null, false, 'app', 'mailroom'], ['Loyalty', null, false, 'app', 'loyalty'], ['Workflow', null, false, 'app', 'workflow']] },
+      { label: 'Access', items: [['Users', '38', current === 'Users', 'users'], ['Roles', '6', current === 'Roles', 'shield']] }
+    ];
+  };
+
+
+  var catalog = [
+    ['billing', [['billing:invoice:read', 'See invoices and their payment history'], ['billing:invoice:manage', 'Void an invoice or write it off'], ['billing:payment:create', 'Start a checkout for an open invoice'], ['billing:wallet:read', 'See wallet balances and the ledger'], ['billing:billing-session:create', 'Open the customer portal for a customer'], ['billing:webhook:manage', 'Add endpoints and rotate signing secrets']]],
+    ['customer', [['customer:customer:read', 'See customers, orders and the 360 profile'], ['customer:customer:export', 'Download customers as CSV'], ['customer:customer:erase', 'Erase a customer and their personal data']]],
+    ['mailroom', [['mailroom:campaign:read', 'See campaigns and delivery results'], ['mailroom:campaign:send', 'Schedule and send a campaign']]]
+  ];
+  var saved = ['billing:invoice:read', 'billing:invoice:manage', 'billing:payment:create', 'billing:wallet:read', 'customer:customer:read', 'mailroom:campaign:read'];
+  function App() {
+    var sel = React.useState(saved.concat(['billing:billing-session:create']));
+    var q = React.useState('');
+    function has(c) { return sel[0].indexOf(c) >= 0; }
+    function setMany(codes, v) { sel[1](function (s) { var rest = s.filter(function (c) { return codes.indexOf(c) < 0; }); return v ? rest.concat(codes) : rest; }); }
+    var added = sel[0].filter(function (c) { return saved.indexOf(c) < 0; }), removed = saved.filter(function (c) { return sel[0].indexOf(c) < 0; });
+    var dirty = added.length + removed.length > 0;
+    return h('div', { className: 'sc-shell', 'data-app': 'platform' },
+      h(Sidebar, { groups: TENANT_GROUPS('Roles') }),
+      h('div', { className: 'sc-inset' },
+        h(Header, { crumbs: ['Access', 'Roles', 'Finance operator'] }),
+        h('main', { className: 'sc-page' },
+          h('div', { className: 'sc-pagehead' },
+            h('div', { className: 'sc-pagehead__text' }, h('h1', { className: 'sc-title' }, 'Finance operator'), h('p', { className: 'sc-subtitle' }, '4 users · permissions are enforced by each app from the next token.'))),
+          h('div', { style: { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 300px', gap: 24, alignItems: 'start' } },
+            h('div', { style: { display: 'flex', flexDirection: 'column', gap: 16 } },
+              h(S.Field, { label: 'Filter permissions', hideLabel: true, icon: 'search', placeholder: 'Filter by name or code, e.g. invoice', value: q[0], onChange: function (e) { q[1](e.target.value); } }),
+              catalog.map(function (g) {
+                var perms = g[1].filter(function (x) { var n = q[0].toLowerCase(); return !n || (x[0] + ' ' + x[1]).toLowerCase().indexOf(n) >= 0; });
+                if (!perms.length) return null;
+                var codes = g[1].map(function (x) { return x[0]; }), n = codes.filter(has).length;
+                return h(S.Card, { key: g[0], flush: true,
+                  title: h(S.Checkbox, { label: h(S.AppMark, { app: g[0], withName: true }), checked: n === codes.length, indeterminate: n > 0 && n < codes.length, onChange: function () { setMany(codes, n < codes.length); } }),
+                  action: h('span', { className: 'sc-muted sc-num', style: { fontSize: 13 } }, n + ' of ' + codes.length) },
+                  perms.map(function (x) {
+                    var changed = (saved.indexOf(x[0]) >= 0) !== has(x[0]);
+                    return h('div', { key: x[0], className: 'sc-row', style: { paddingBlock: 12 } },
+                      h(S.Checkbox, { label: x[1], description: h('span', { className: 'sc-mono' }, x[0]), checked: has(x[0]), onChange: function () { setMany([x[0]], !has(x[0])); } }),
+                      changed && h(S.StatusBadge, { tone: 'info', variant: 'plain' }, has(x[0]) ? 'Added' : 'Removed'));
+                  }));
+              })),
+            h('div', { style: { display: 'flex', flexDirection: 'column', gap: 16, position: 'sticky', top: 0 } },
+              h(S.Card, { title: 'Role' },
+                h('div', { style: { display: 'flex', flexDirection: 'column', gap: 16 } },
+                  h(S.Field, { label: 'Name', defaultValue: 'Finance operator' }),
+                  h(S.Field, { label: 'Code', mono: true, readOnly: true, defaultValue: 'finance-operator', hint: 'Set when the role was created.' }))),
+              h(S.Card, { title: 'Who has it', flush: true },
+                [['NT', 'Ngoc Tran', 'Last active today'], ['MH', 'Minh Ho', 'Last active 2 days ago'], ['SP', 'Sam Park', 'Invited, not signed in']].map(function (u) {
+                  return h('div', { key: u[1], className: 'sc-row', style: { paddingBlock: 10 } }, h('span', { className: 'sc-avatar' }, u[0]), h('span', { className: 'sc-row__text' }, h('span', null, u[1]), h('span', null, u[2])));
+                })))),
+          dirty && h('div', { className: 'sc-bulkbar', role: 'region', 'aria-label': 'Unsaved changes', style: { gap: 12 } },
+            h('span', { className: 'sc-bulkbar__count' }, 'Unsaved: ' + [added.length && added.length + ' added', removed.length && removed.length + ' removed'].filter(Boolean).join(', ')),
+            h(S.Button, { variant: 'ghost', size: 'sm', onClick: function () { sel[1](saved.slice()); } }, 'Discard'),
+            h(S.Button, { variant: 'secondary', size: 'sm', shortcut: ['mod', 's'] }, 'Save role')))));
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+
+</script>
+</body>
+</html>

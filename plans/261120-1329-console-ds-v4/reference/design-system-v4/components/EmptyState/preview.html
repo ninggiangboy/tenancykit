@@ -1,0 +1,15 @@
+<!-- @dsCard group="Feedback" height=260 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>EmptyState preview</title></head>
+<body>
+<div id="root" class="sc-demo sc-demo--col"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h(S.Card, null, h(S.EmptyState, { icon: 'webhook', title: 'No webhook endpoints yet', description: 'Add an endpoint to receive invoice.paid, payment.failed and the other Billing events, signed with your secret.' },
+      h(S.Button, { icon: 'plus' }, 'Add endpoint'), h(S.Button, { variant: 'outline', icon: 'external' }, 'Event reference')))
+  ));
+</script>
+</body>
+</html>

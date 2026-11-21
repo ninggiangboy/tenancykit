@@ -1,0 +1,18 @@
+<!-- @dsCard group="Identity" height=170 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>AppMark preview</title></head>
+<body>
+<div id="root" class="sc-demo sc-demo--col"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h('div', { className: 'sc-demo', style: { padding: 0 } }, Object.keys(S.AppMark.apps).map(function (a) { return h(S.AppMark, { key: a, app: a, withName: true }); })),
+    h('div', { className: 'sc-demo', style: { padding: 0 } },
+      h(S.AppMark, { app: 'billing', size: 'sm' }), h(S.AppMark, { app: 'billing' }), h(S.AppMark, { app: 'billing', size: 'lg' }),
+      h('span', { className: 'sc-sep' }),
+      h(S.AppMark, { app: 'billing', tone: 'neutral', withName: true }), h(S.AppMark, { app: 'platform', tone: 'neutral', withName: true }))
+  ));
+</script>
+</body>
+</html>

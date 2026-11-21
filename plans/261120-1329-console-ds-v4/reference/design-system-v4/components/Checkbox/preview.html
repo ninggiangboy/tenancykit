@@ -1,0 +1,16 @@
+<!-- @dsCard group="Forms" height=150 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Checkbox preview</title></head>
+<body>
+<div id="root" class="sc-demo sc-demo--col"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h(S.Checkbox, { label: 'See invoices', description: 'billing:invoice:read', defaultChecked: true }),
+    h(S.Checkbox, { label: 'Void an invoice or write it off', description: 'billing:invoice:manage' }),
+    h(S.Checkbox, { label: 'All Billing permissions', indeterminate: true, readOnly: true })
+  ));
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<!-- @dsCard group="Data" height=330 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>FacetedFilter preview</title></head>
+<body>
+<div id="root" class="sc-demo sc-demo--col"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h('div', { className: 'sc-toolbar' },
+      h(S.FacetedFilter, { label: 'Status', defaultOpen: true, defaultSelected: ['OPEN', 'UNCOLLECTIBLE'], options: [{ value: 'OPEN', label: 'Open', count: 37 }, { value: 'PAID', label: 'Paid', count: 1198 }, { value: 'VOID', label: 'Void', count: 41 }, { value: 'UNCOLLECTIBLE', label: 'Uncollectible', count: 8 }] }),
+      h(S.FacetedFilter, { label: 'Currency', options: [{ value: 'USD', label: 'USD', count: 902 }, { value: 'VND', label: 'VND', count: 311 }, { value: 'EUR', label: 'EUR', count: 71 }] }))
+  ));
+</script>
+</body>
+</html>

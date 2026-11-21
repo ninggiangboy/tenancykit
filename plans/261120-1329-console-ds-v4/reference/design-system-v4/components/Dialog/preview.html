@@ -1,0 +1,26 @@
+<!-- @dsCard group="Overlays" height=440 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Dialog preview</title><style>html, body, #root { height: 100%; }</style></head>
+<body>
+<div id="root" class=""></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  function Demo() {
+    var open = React.useState(true), code = React.useState('');
+    var ok = code[0] === 'acme';
+    return h('div', { className: 'sc-stage' },
+      h('div', { className: 'sc-demo' }, h(S.Button, { variant: 'outline', onClick: function () { open[1](true); } }, 'Disable Mailroom')),
+      h(S.Dialog, { contained: true, open: open[0], onClose: function () { open[1](false); }, role: 'alertdialog', title: 'Disable Mailroom for Acme Retail?',
+        description: 'Acme\u2019s staff and its Tenant System lose access at their next token exchange.',
+        footer: [h(S.Button, { key: 'c', variant: 'outline', onClick: function () { open[1](false); } }, 'Cancel'), h(S.Button, { key: 'd', variant: 'destructive', disabled: !ok }, 'Disable Mailroom')] },
+        h('ul', { className: 'sc-impact' },
+          h('li', null, h(S.Icon, { name: 'key' }), h('span', null, '1 credential loses ', h('span', { className: 'sc-code' }, 'mailroom:*'))),
+          h('li', null, h(S.Icon, { name: 'clock' }), '2 scheduled campaigns are paused, not deleted'),
+          h('li', null, h(S.Icon, { name: 'users' }), '6 users lose the Mailroom section')),
+        h(S.Field, { label: h('span', null, 'Type ', h('span', { className: 'sc-code' }, 'acme'), ' to confirm'), mono: true, value: code[0], onChange: function (e) { code[1](e.target.value); }, autoComplete: 'off' })));
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body>
+</html>

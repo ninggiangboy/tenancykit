@@ -1,0 +1,87 @@
+<!-- @dsCard group="Samples" height=640 width=1280 page subtitle="Overview with the command palette open" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Command palette</title>
+<style>html, body, #root { height: 100%; } .sc-shell { height: 100%; } .sc-inset { height: calc(100% - 16px); }</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  function stop(e) { e.preventDefault(); }
+  function Sidebar(p) {
+    return h('aside', { className: 'sc-sidebar' },
+      h('button', { type: 'button', className: 'sc-switcher' },
+        h('span', { className: 'sc-switcher__avatar' }, p.platform ? h(S.Icon, { name: 'shield', size: 14 }) : 'A'),
+        h('span', { className: 'sc-switcher__text' }, h('span', null, p.platform ? 'Suite platform' : 'Acme Retail'), h('span', null, p.platform ? 'platform.suite.example' : 'acme.suite.example')),
+        h(S.Icon, { name: 'chevrons-up-down' })),
+      (p.groups || []).map(function (g) {
+        return h('nav', { key: g.label, className: 'sc-navgroup', 'aria-label': g.label },
+          h('div', { className: 'sc-navgroup__label' }, g.app && h(S.AppMark, { app: g.app, size: 'sm' }), g.label),
+          g.items.map(function (it) {
+            return h('a', { key: it[0], href: '#', onClick: stop, className: 'sc-navitem', 'aria-current': it[2] ? 'page' : undefined },
+              it[3] === 'app' ? h(S.AppMark, { app: it[4], size: 'sm', withName: true }) : [it[3] && h(S.Icon, { key: 'i', name: it[3] }), it[0]],
+              it[1] != null && h('span', { className: 'sc-navitem__meta' }, it[1]));
+          }));
+      }),
+      h('div', { className: 'sc-sidebar__foot' },
+        h('button', { type: 'button', className: 'sc-switcher' }, h('span', { className: 'sc-avatar' }, 'LT'),
+          h('span', { className: 'sc-switcher__text' }, h('span', null, 'Linh Tran'), h('span', { style: { fontFamily: 'var(--font-sans)' } }, p.platform ? 'Platform operator' : 'Finance operator')),
+          h(S.Icon, { name: 'chevrons-up-down' }))));
+  }
+  function cxs() { return Array.prototype.filter.call(arguments, Boolean).join(' '); }
+  function Header(p) {
+    return h('header', { className: 'sc-header' },
+      h(S.Tooltip, { content: 'Toggle sidebar', shortcut: ['mod', 'b'] }, h(S.Button, { variant: 'ghost', size: 'sm', iconOnly: true, icon: 'panel-left' }, 'Toggle sidebar')),
+      h('span', { className: 'sc-sep' }),
+      h('nav', { className: 'sc-crumbs', 'aria-label': 'Breadcrumb' }, p.crumbs.map(function (c, i) {
+        var last = i === p.crumbs.length - 1;
+        return h(React.Fragment, { key: i }, i > 0 && h(S.Icon, { name: 'chevron-right', size: 14 }), last ? h('span', { 'aria-current': 'page' }, c) : h('a', { href: '#', onClick: stop }, c));
+      })),
+      h('div', { className: 'sc-header__end' },
+        p.platform && h('span', { className: 'sc-scope-pill' }, 'Platform scope'),
+        h('button', { type: 'button', className: 'sc-searchbtn', onClick: p.onSearch }, h(S.Icon, { name: 'search', size: 14 }), 'Search or jump to…', h(S.Kbd, { keys: ['mod', 'k'] })),
+        h(S.Tooltip, { content: 'Notifications' }, h(S.Button, { variant: 'ghost', size: 'sm', iconOnly: true, icon: 'bell' }, 'Notifications'))));
+  }
+  var TENANT_GROUPS = function (current) {
+    return [
+      { label: 'Billing', app: 'billing', items: [['Overview', null, current === 'Overview', 'layout-dashboard'], ['Wallets', null, false, 'wallet'], ['Charges', null, false, 'credit-card'], ['Invoices', '37', current === 'Invoices', 'receipt'], ['Subscriptions', null, false, 'repeat'], ['Coupons', null, false, 'ticket'], ['Webhooks', '3', false, 'webhook']] },
+      { label: 'Apps', items: [['Customer', null, false, 'app', 'customer'], ['Mailroom', null, false, 'app', 'mailroom'], ['Loyalty', null, false, 'app', 'loyalty'], ['Workflow', null, false, 'app', 'workflow']] },
+      { label: 'Access', items: [['Users', '38', current === 'Users', 'users'], ['Roles', '6', current === 'Roles', 'shield']] }
+    ];
+  };
+
+
+  var groups = [
+    { label: 'Records', items: [
+      { label: 'INV-2026-00412', hint: 'Invoice · Lumen Coffee · 12,500.00 USD · Open', icon: 'receipt', meta: 'Billing' },
+      { label: 'INV-2026-00411', hint: 'Invoice · Northwind Labs · 8,640.00 USD · Open', icon: 'receipt', meta: 'Billing' },
+      { label: 'INV-2026-00410', hint: 'Invoice · Bánh Mì 37 · 3,200,000 VND · Open', icon: 'receipt', meta: 'Billing' }] },
+    { label: 'Go to', items: [
+      { label: 'Billing › Invoices', app: 'billing', keywords: 'inv', shortcut: ['g', 'i'] },
+      { label: 'Billing › Invoices › Uncollectible', app: 'billing', keywords: 'inv' }] },
+    { label: 'Actions', items: [
+      { label: 'Invoice a charge', icon: 'plus', keywords: 'inv new' },
+      { label: 'Export invoices to CSV', icon: 'download', keywords: 'inv' }] }
+  ];
+  function App() {
+    var open = React.useState(true);
+    S.useHotkey('mod+k', function () { open[1](true); });
+    return h('div', { className: 'sc-shell', 'data-app': 'billing' },
+      h(Sidebar, { groups: TENANT_GROUPS('Overview') }),
+      h('div', { className: 'sc-inset' },
+        h(Header, { crumbs: ['Billing', 'Overview'], onSearch: function () { open[1](true); } }),
+        h('main', { className: 'sc-page' },
+          h('div', { className: 'sc-pagehead' }, h('div', { className: 'sc-pagehead__text' }, h('h1', { className: 'sc-title' }, 'Overview'), h('p', { className: 'sc-subtitle' }, 'November 2026 to date, all currencies converted to USD at issue.'))),
+          h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 16 } },
+            h(S.Stat, { label: 'Collected', icon: 'wallet', value: '48,210.00', unit: 'USD', delta: '+12.4%', deltaTone: 'success', caption: 'vs October', spark: [21, 24, 22, 28, 31, 30, 35, 39, 37, 42, 46, 48] }),
+            h(S.Stat, { label: 'Open invoices', icon: 'receipt', value: '37', delta: '−5', deltaTone: 'success', caption: 'since last week', spark: [52, 48, 50, 44, 41, 45, 40, 38, 39, 37] }),
+            h(S.Stat, { label: 'Past-due subscriptions', icon: 'repeat', value: '4', delta: '+1', deltaTone: 'danger', caption: 'since Monday', spark: [2, 2, 3, 3, 2, 3, 4] }),
+            h(S.Stat, { label: 'Webhook failures', icon: 'webhook', value: '3', unit: 'of 12,904', delta: '+2', deltaTone: 'danger', caption: 'last 24 h', spark: [0, 0, 1, 0, 0, 1, 3] }))),
+        h(S.CommandPalette, { contained: true, open: open[0], onClose: function () { open[1](false); }, groups: groups, scope: 'acme', defaultQuery: 'inv' })));
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+
+</script>
+</body>
+</html>

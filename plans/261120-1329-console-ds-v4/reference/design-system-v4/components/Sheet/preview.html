@@ -1,0 +1,33 @@
+<!-- @dsCard group="Overlays" height=600 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Sheet preview</title><style>html, body, #root { height: 100%; }</style></head>
+<body>
+<div id="root" data-app="billing"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  function Demo() {
+    var open = React.useState(true);
+    return h('div', { className: 'sc-stage' },
+      h('div', { className: 'sc-demo' }, h(S.Button, { variant: 'outline', onClick: function () { open[1](true); } }, 'Open INV-2026-00412')),
+      h(S.Sheet, { contained: true, placement: 'side', open: open[0], onClose: function () { open[1](false); }, onPrev: function () {}, onNext: function () {},
+        eyebrow: ['Invoice · ', h(S.CopyId, { key: 'c', value: 'INV-2026-00412' })], figure: true,
+        title: h(S.Money, { minor: 1250000, currency: 'USD' }),
+        description: [h(S.StatusBadge, { key: 's', status: 'OPEN' }), h('span', { key: 't' }, 'Due 2026-11-30 · Lumen Coffee')],
+        actions: [h(S.Button, { key: 'a', icon: 'credit-card' }, 'Record payment'), h(S.Button, { key: 'b', variant: 'outline', icon: 'mail' }, 'Send link'),
+          h(S.DropdownMenu, { key: 'c', align: 'end', trigger: h(S.Button, { variant: 'ghost', iconOnly: true, icon: 'more' }, 'More actions'), items: [{ label: 'Mark uncollectible', icon: 'ban' }, { separator: true }, { label: 'Void invoice', icon: 'trash', danger: true }] })] },
+        h('section', null, h('h3', { className: 'sc-section-title' }, 'Details'),
+          h('dl', { className: 'sc-dl' },
+            h('dt', null, 'Customer'), h('dd', null, h('a', { className: 'sc-link', href: '#' }, 'Lumen Coffee')),
+            h('dt', null, 'Wallet'), h('dd', null, 'Postpaid · ', h(S.CopyId, { value: 'wal_0193a7f2' })),
+            h('dt', null, 'Issued (UTC)'), h('dd', { className: 'sc-num' }, '2026-11-16 09:12'))),
+        h('section', null, h('h3', { className: 'sc-section-title' }, 'Items'),
+          h('div', { className: 'sc-lines' },
+            h('div', null, h('span', null, 'Growth plan · November'), h(S.Money, { minor: 1200000, currency: 'USD' })),
+            h('div', null, h('span', null, 'API usage · 50,000 calls'), h(S.Money, { minor: 50000, currency: 'USD' })),
+            h('div', null, h('span', null, 'Total'), h(S.Money, { minor: 1250000, currency: 'USD' }))))));
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body>
+</html>

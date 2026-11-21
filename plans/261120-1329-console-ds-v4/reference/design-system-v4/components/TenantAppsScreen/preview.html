@@ -1,0 +1,119 @@
+<!-- @dsCard group="Samples" height=720 width=1280 page subtitle="Platform scope: switches with Undo, typed confirmation" -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Tenant apps</title>
+<style>html, body, #root { height: 100%; } .sc-shell { height: 100%; } .sc-inset { height: calc(100% - 16px); }</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  function stop(e) { e.preventDefault(); }
+  function Sidebar(p) {
+    return h('aside', { className: 'sc-sidebar' },
+      h('button', { type: 'button', className: 'sc-switcher' },
+        h('span', { className: 'sc-switcher__avatar' }, p.platform ? h(S.Icon, { name: 'shield', size: 14 }) : 'A'),
+        h('span', { className: 'sc-switcher__text' }, h('span', null, p.platform ? 'Suite platform' : 'Acme Retail'), h('span', null, p.platform ? 'platform.suite.example' : 'acme.suite.example')),
+        h(S.Icon, { name: 'chevrons-up-down' })),
+      (p.groups || []).map(function (g) {
+        return h('nav', { key: g.label, className: 'sc-navgroup', 'aria-label': g.label },
+          h('div', { className: 'sc-navgroup__label' }, g.app && h(S.AppMark, { app: g.app, size: 'sm' }), g.label),
+          g.items.map(function (it) {
+            return h('a', { key: it[0], href: '#', onClick: stop, className: 'sc-navitem', 'aria-current': it[2] ? 'page' : undefined },
+              it[3] === 'app' ? h(S.AppMark, { app: it[4], size: 'sm', withName: true }) : [it[3] && h(S.Icon, { key: 'i', name: it[3] }), it[0]],
+              it[1] != null && h('span', { className: 'sc-navitem__meta' }, it[1]));
+          }));
+      }),
+      h('div', { className: 'sc-sidebar__foot' },
+        h('button', { type: 'button', className: 'sc-switcher' }, h('span', { className: 'sc-avatar' }, 'LT'),
+          h('span', { className: 'sc-switcher__text' }, h('span', null, 'Linh Tran'), h('span', { style: { fontFamily: 'var(--font-sans)' } }, p.platform ? 'Platform operator' : 'Finance operator')),
+          h(S.Icon, { name: 'chevrons-up-down' }))));
+  }
+  function cxs() { return Array.prototype.filter.call(arguments, Boolean).join(' '); }
+  function Header(p) {
+    return h('header', { className: 'sc-header' },
+      h(S.Tooltip, { content: 'Toggle sidebar', shortcut: ['mod', 'b'] }, h(S.Button, { variant: 'ghost', size: 'sm', iconOnly: true, icon: 'panel-left' }, 'Toggle sidebar')),
+      h('span', { className: 'sc-sep' }),
+      h('nav', { className: 'sc-crumbs', 'aria-label': 'Breadcrumb' }, p.crumbs.map(function (c, i) {
+        var last = i === p.crumbs.length - 1;
+        return h(React.Fragment, { key: i }, i > 0 && h(S.Icon, { name: 'chevron-right', size: 14 }), last ? h('span', { 'aria-current': 'page' }, c) : h('a', { href: '#', onClick: stop }, c));
+      })),
+      h('div', { className: 'sc-header__end' },
+        p.platform && h('span', { className: 'sc-scope-pill' }, 'Platform scope'),
+        h('button', { type: 'button', className: 'sc-searchbtn', onClick: p.onSearch }, h(S.Icon, { name: 'search', size: 14 }), 'Search or jump to…', h(S.Kbd, { keys: ['mod', 'k'] })),
+        h(S.Tooltip, { content: 'Notifications' }, h(S.Button, { variant: 'ghost', size: 'sm', iconOnly: true, icon: 'bell' }, 'Notifications'))));
+  }
+  var TENANT_GROUPS = function (current) {
+    return [
+      { label: 'Billing', app: 'billing', items: [['Overview', null, current === 'Overview', 'layout-dashboard'], ['Wallets', null, false, 'wallet'], ['Charges', null, false, 'credit-card'], ['Invoices', '37', current === 'Invoices', 'receipt'], ['Subscriptions', null, false, 'repeat'], ['Coupons', null, false, 'ticket'], ['Webhooks', '3', false, 'webhook']] },
+      { label: 'Apps', items: [['Customer', null, false, 'app', 'customer'], ['Mailroom', null, false, 'app', 'mailroom'], ['Loyalty', null, false, 'app', 'loyalty'], ['Workflow', null, false, 'app', 'workflow']] },
+      { label: 'Access', items: [['Users', '38', current === 'Users', 'users'], ['Roles', '6', current === 'Roles', 'shield']] }
+    ];
+  };
+
+
+  var apps = [
+    ['billing', 'Pricing, wallets, invoices, payments and the customer portal.', '14 Aug 2026', 31, true],
+    ['customer', 'Customers, orders, returns and the 360 profile.', '14 Aug 2026', 18, true],
+    ['mailroom', 'Templates, segments and campaigns to Acme’s own customers.', '2 Sep 2026', 22, true],
+    ['loyalty', 'Points program, tiers, rewards and vouchers.', 'just now', 16, true],
+    ['booking', 'Resources, offerings, holds and the waitlist.', null, 24, false],
+    ['survey', 'Versioned forms, links and response analysis.', null, 14, false]
+  ];
+  function App() {
+    var on = React.useState(apps.reduce(function (m, a) { m[a[0]] = a[4]; return m; }, {}));
+    var confirm = React.useState(null), code = React.useState('');
+    var t = S.useToasts(600000);
+    React.useEffect(function () { t[1]({ title: 'Loyalty enabled for acme', description: 'Staff see it at their next sign-in; the credential gains loyalty:*.', action: { label: 'Undo', icon: 'undo', onClick: function () { set('loyalty', false); } } }); }, []);
+    function set(k, v) { on[1](function (m) { var n = Object.assign({}, m); n[k] = v; return n; }); }
+    function toggle(a) {
+      if (on[0][a[0]]) { confirm[1](a); code[1](''); return; }
+      set(a[0], true);
+      t[1]({ title: S.AppMark.apps[a[0]][1] + ' enabled for acme', action: { label: 'Undo', icon: 'undo', onClick: function () { set(a[0], false); } } });
+    }
+    var enabled = apps.filter(function (a) { return on[0][a[0]]; }).length;
+    return h('div', { className: 'sc-shell sc-shell--platform', 'data-app': 'platform' },
+      h(Sidebar, { platform: true, groups: [{ label: 'Platform', items: [['Tenants', '146', true, 'grid'], ['Users', null, false, 'users'], ['Roles', null, false, 'shield'], ['Tenant Systems', null, false, 'settings'], ['Credentials', null, false, 'key'], ['Audit log', null, false, 'clock']] }] }),
+      h('div', { className: 'sc-inset' },
+        h(Header, { platform: true, crumbs: ['Tenants', 'Acme Retail', 'Apps'] }),
+        h('main', { className: 'sc-page' },
+          h('div', { className: 'sc-pagehead' },
+            h('div', { className: 'sc-pagehead__text' },
+              h('h1', { className: 'sc-title' }, 'Acme Retail', h(S.StatusBadge, { status: 'ACTIVE' })),
+              h('p', { className: 'sc-subtitle', style: { display: 'flex', gap: 8, alignItems: 'center' } }, h(S.CopyId, { value: 'acme.suite.example' }), h('span', null, '· since 14 Aug 2026 · 38 users'))),
+            h('div', { className: 'sc-pagehead__actions' }, h(S.Button, { variant: 'outline', icon: 'external' }, 'Open as tenant'), h(S.DropdownMenu, { trigger: h(S.Button, { variant: 'outline', iconOnly: true, icon: 'more' }, 'More actions'), items: [{ label: 'Suspend tenant', icon: 'ban', danger: true }] }))),
+          h(S.Tabs, { variant: 'line', label: 'Tenant sections', defaultValue: 'apps', items: [{ id: 'overview', label: 'Overview' }, { id: 'apps', label: 'Apps', count: enabled }, { id: 'domains', label: 'Domains', count: 2 }, { id: 'systems', label: 'Tenant Systems', count: 1 }, { id: 'users', label: 'Users', count: 38 }, { id: 'audit', label: 'Audit log' }] }),
+          h('div', { style: { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 24, alignItems: 'start' } },
+            h(S.Card, { flush: true, title: 'Apps', description: enabled + ' of 10 apps enabled. Changes apply at the next token exchange.' },
+              apps.map(function (a) {
+                return h('div', { key: a[0], className: 'sc-row' },
+                  h(S.AppMark, { app: a[0], size: 'lg' }),
+                  h('div', { className: 'sc-row__text' },
+                    h('span', { style: { display: 'flex', gap: 8, alignItems: 'center', fontWeight: 500 } }, S.AppMark.apps[a[0]][1], h('span', { className: 'sc-muted sc-num', style: { fontWeight: 400, fontSize: 12 } }, a[3] + ' permissions')),
+                    h('span', null, a[1] + (on[0][a[0]] && a[2] ? ' Enabled ' + a[2] + '.' : ''))),
+                  h(S.Switch, { 'aria-label': 'Enable ' + S.AppMark.apps[a[0]][1], checked: !!on[0][a[0]], onChange: function () { toggle(a); } }));
+              })),
+            h('div', { style: { display: 'flex', flexDirection: 'column', gap: 16 } },
+              h(S.Alert, { tone: 'warning', title: 'Secret expires in 6 days', action: h(S.Button, { size: 'sm', variant: 'outline' }, 'Rotate') }, 'Rotate before 23 Nov 2026 or Acme’s Tenant System stops getting tokens.'),
+              h(S.Card, { title: 'Tenant System credential' },
+                h('dl', { className: 'sc-dl' },
+                  h('dt', null, 'Client ID'), h('dd', null, h(S.CopyId, { value: 'ts_acme_01J9Z4K7' })),
+                  h('dt', null, 'Scopes'), h('dd', { style: { display: 'flex', flexWrap: 'wrap', gap: 4 } }, apps.filter(function (a) { return on[0][a[0]]; }).map(function (a) { return h('span', { key: a[0], className: 'sc-code' }, a[0] + ':*'); })),
+                  h('dt', null, 'Last token'), h('dd', { className: 'sc-num' }, '08:41 UTC today')))))),
+        h(S.Dialog, { contained: true, role: 'alertdialog', open: !!confirm[0], onClose: function () { confirm[1](null); },
+          title: confirm[0] ? 'Disable ' + S.AppMark.apps[confirm[0][0]][1] + ' for Acme Retail?' : '',
+          description: 'Staff and the Tenant System lose access at their next token exchange. Data is kept.',
+          footer: [h(S.Button, { key: 'c', variant: 'outline', onClick: function () { confirm[1](null); } }, 'Cancel'),
+            h(S.Button, { key: 'd', variant: 'destructive', disabled: code[0] !== 'acme', onClick: function () { var a = confirm[0]; set(a[0], false); confirm[1](null); t[1]({ title: S.AppMark.apps[a[0]][1] + ' disabled for acme', action: { label: 'Undo', icon: 'undo', onClick: function () { set(a[0], true); } } }); } }, confirm[0] ? 'Disable ' + S.AppMark.apps[confirm[0][0]][1] : '')] },
+          h('ul', { className: 'sc-impact' },
+            h('li', null, h(S.Icon, { name: 'key' }), h('span', null, '1 credential loses ', h('span', { className: 'sc-code' }, (confirm[0] ? confirm[0][0] : '') + ':*'))),
+            h('li', null, h(S.Icon, { name: 'users' }), '6 users lose this section of the console'),
+            h('li', null, h(S.Icon, { name: 'clock' }), 'Scheduled work is paused, not deleted')),
+          h(S.Field, { label: h('span', null, 'Type ', h('span', { className: 'sc-code' }, 'acme'), ' to confirm'), mono: true, value: code[0], autoComplete: 'off', onChange: function (e) { code[1](e.target.value); } })),
+        h(S.Toaster, { contained: true, toasts: t[0], onDismiss: t[2] })));
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<!-- @dsCard group="Forms" height=160 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Switch preview</title></head>
+<body>
+<div id="root" class="sc-demo sc-demo--col"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h(S.Switch, { label: 'Mailroom', description: 'Templates, segments and campaigns to Acme\u2019s customers.', defaultChecked: true }),
+    h(S.Switch, { label: 'Booking', description: 'Resources, offerings, holds and the waitlist.' }),
+    h(S.Switch, { label: 'Loyalty', description: 'Saving\u2026', defaultChecked: true, busy: true })
+  ));
+</script>
+</body>
+</html>

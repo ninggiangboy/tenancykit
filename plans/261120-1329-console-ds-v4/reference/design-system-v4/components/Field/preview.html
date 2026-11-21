@@ -1,0 +1,19 @@
+<!-- @dsCard group="Forms" height=320 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Field preview</title></head>
+<body>
+<div id="root" class="sc-demo sc-demo--grid"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h(S.Field, { label: 'Tenant code', mono: true, defaultValue: 'acme', suffix: '.suite.example', hint: 'Lowercase letters, digits and hyphens. It becomes the subdomain and cannot change.' }),
+    h(S.Field, { label: 'Postpaid cycle', type: 'select', options: ['Monthly', 'Weekly'], defaultValue: 'Monthly' }),
+    h(S.Field, { label: 'Search customers', icon: 'search', placeholder: 'Name, email or cus_ id' }),
+    h(S.Field, { label: 'Void reason', defaultValue: '', placeholder: 'Shown in the invoice history', error: 'Enter a reason. Voids without one are refused.' }),
+    h(S.Field, { label: 'Webhook URL', optional: true, type: 'url', placeholder: 'https://hooks.acme.example/billing', prefix: 'POST' }),
+    h(S.Field, { label: 'Note to customer', optional: true, type: 'textarea', placeholder: 'Appears on the hosted invoice page' })
+  ));
+</script>
+</body>
+</html>

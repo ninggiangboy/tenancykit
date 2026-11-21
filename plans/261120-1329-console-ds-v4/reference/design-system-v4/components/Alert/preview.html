@@ -1,0 +1,16 @@
+<!-- @dsCard group="Feedback" height=250 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Alert preview</title></head>
+<body>
+<div id="root" class="sc-demo sc-demo--col"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h(S.Alert, { tone: 'info', title: 'The October cycle closed on 1 Nov 2026, 00:00 UTC', action: h(S.Button, { size: 'sm', variant: 'outline' }, 'Cycle runs') }, '212 postpaid wallets were invoiced. Late charges wait for the November period.'),
+    h(S.Alert, { tone: 'warning', title: 'Stripe secret expires in 6 days', action: h(S.Button, { size: 'sm', variant: 'outline' }, 'Rotate') }, 'Rotate it before 23 Nov 2026 or checkout sessions for acme will fail.'),
+    h(S.Alert, { tone: 'danger', title: '3 webhook deliveries are dead', action: h(S.Button, { size: 'sm', variant: 'outline', icon: 'refresh' }, 'Retry all') }, 'https://hooks.acme.example/billing returned 502 after 8 attempts.')
+  ));
+</script>
+</body>
+</html>

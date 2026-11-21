@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Console UI v2 preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* PROPOSED end state for Suite Console DS v2. Hypothetical mockup, not implementation. */
+:root {
+  --bg: oklch(0.985 0.002 286);
+  --panel: oklch(1 0 0);
+  --card: oklch(1 0 0);
+  --fg: oklch(0.21 0.006 286);
+  --muted-fg: oklch(0.5 0.012 286);
+  --subtle: oklch(0.967 0.002 286);
+  --border: oklch(0.925 0.004 286);
+  --input: oklch(0.86 0.005 286);
+  --sidebar: oklch(0.975 0.002 286);
+  --overlay: #09090b40;
+  --success: oklch(0.52 0.13 150); --success-soft: oklch(0.95 0.04 150);
+  --warning: oklch(0.55 0.14 55);  --warning-soft: oklch(0.96 0.05 75);
+  --danger: oklch(0.55 0.21 27);   --danger-soft: oklch(0.96 0.03 25);
+  --info: oklch(0.52 0.18 262);    --info-soft: oklch(0.96 0.03 262);
+  --neutral-soft: oklch(0.955 0.003 286);
+  --shadow-lg: 0 0 0 1px #09090b0d, 0 16px 40px -10px #09090b2e;
+  --shadow-xs: 0 1px 2px #09090b0f;
+  /* density */
+  --row: 52px; --ctl: 36px; --pad-page: 32px; --gap: 16px;
+}
+:root[data-density="compact"] { --row: 40px; --ctl: 30px; --pad-page: 24px; --gap: 12px; }
+:root[data-theme="dark"] {
+  --bg: oklch(0.16 0.004 286); --panel: oklch(0.185 0.005 286); --card: oklch(0.205 0.005 286);
+  --fg: oklch(0.968 0.002 286); --muted-fg: oklch(0.72 0.01 286); --subtle: oklch(0.24 0.005 286);
+  --border: #ffffff17; --input: #ffffff26; --sidebar: oklch(0.145 0.004 286); --overlay: #00000080;
+  --success: oklch(0.78 0.15 150); --success-soft: oklch(0.3 0.06 150);
+  --warning: oklch(0.82 0.14 75);  --warning-soft: oklch(0.32 0.06 65);
+  --danger: oklch(0.72 0.18 24);   --danger-soft: oklch(0.3 0.08 25);
+  --info: oklch(0.75 0.14 262);    --info-soft: oklch(0.3 0.07 262);
+  --neutral-soft: oklch(0.27 0.005 286);
+  --shadow-lg: 0 0 0 1px #ffffff12, 0 16px 40px -8px #000000cc;
+}
+/* per-app accent: one hue per app, chrome stays neutral */
+[data-app="billing"]  { --accent: oklch(0.52 0.22 280); --accent-soft: oklch(0.955 0.03 280); --accent-fg: #fff; }
+[data-app="platform"] { --accent: oklch(0.5 0.13 235);  --accent-soft: oklch(0.955 0.025 235); --accent-fg: #fff; }
+:root[data-theme="dark"] [data-app="billing"]  { --accent: oklch(0.7 0.16 280); --accent-soft: oklch(0.3 0.08 280); --accent-fg: oklch(0.18 0.04 280); }
+:root[data-theme="dark"] [data-app="platform"] { --accent: oklch(0.72 0.12 235); --accent-soft: oklch(0.3 0.06 235); --accent-fg: oklch(0.18 0.04 235); }
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Inter, system-ui, sans-serif; font-size: 14px; color: var(--fg); background: var(--bg); letter-spacing: -0.006em; }
+.wrap { max-width: 1360px; margin: 0 auto; padding: 24px 16px 64px; }
+.note { border: 1px dashed var(--warning); background: var(--warning-soft); color: var(--fg); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; line-height: 1.5; }
+.note b { font-weight: 600; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; align-items: center; }
+.controls span { font-size: 12px; color: var(--muted-fg); margin-right: 4px; }
+.seg { display: inline-flex; background: var(--subtle); border-radius: 8px; padding: 3px; }
+.seg button { border: 0; background: transparent; color: var(--muted-fg); font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--fg); box-shadow: var(--shadow-xs); font-weight: 500; }
+h2.sec { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted-fg); font-weight: 600; margin: 28px 0 10px; }
+
+/* frame */
+.frame { display: grid; grid-template-columns: 240px 1fr; height: 760px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--sidebar); position: relative; }
+.side { padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+.tenant { display: flex; gap: 10px; align-items: center; padding: 6px 8px 14px; }
+.tenant .av { width: 30px; height: 30px; border-radius: 8px; background: var(--fg); color: var(--panel); display: grid; place-items: center; font-weight: 600; }
+.tenant b { display: block; font-weight: 600; font-size: 14px; }
+.tenant small { color: var(--muted-fg); font-size: 12px; }
+.appswitch { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; font-weight: 600; }
+.mark { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; background: var(--accent); color: var(--accent-fg); flex: none; }
+.mark svg { width: 15px; height: 15px; }
+.grp { font-size: 12px; color: var(--muted-fg); font-weight: 500; padding: 14px 10px 4px; }
+.nav { display: flex; gap: 10px; align-items: center; padding: 7px 10px; border-radius: 7px; color: var(--fg); font-size: 14px; }
+.nav svg { width: 16px; height: 16px; color: var(--muted-fg); flex: none; }
+.nav.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.nav.on svg { color: var(--accent); }
+.otherapps { margin-top: auto; border-top: 1px solid var(--border); padding-top: 10px; }
+.otherapps .nav .mark { width: 20px; height: 20px; border-radius: 6px; }
+.otherapps .nav .mark svg { width: 12px; height: 12px; }
+.main { background: var(--panel); margin: 8px 8px 8px 0; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+.top { height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid var(--border); flex: none; }
+.crumb { color: var(--muted-fg); display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.crumb b { color: var(--fg); font-weight: 600; }
+.search { margin-left: auto; display: flex; align-items: center; gap: 8px; height: 32px; width: 260px; border: 1px solid var(--border); border-radius: 8px; padding: 0 10px; color: var(--muted-fg); font-size: 13px; background: var(--subtle); }
+.search kbd { margin-left: auto; font: 500 11px Inter; border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; background: var(--card); }
+.iconbtn { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; color: var(--muted-fg); }
+.me { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); display: grid; place-items: center; font-weight: 600; font-size: 12px; }
+.content { padding: 24px var(--pad-page); overflow: hidden; flex: 1; }
+.ph { display: flex; align-items: flex-start; gap: 12px; }
+.ph h1 { margin: 0; font-size: 24px; line-height: 30px; letter-spacing: -0.025em; font-weight: 700; }
+.ph p { margin: 4px 0 0; color: var(--muted-fg); }
+.ph .acts { margin-left: auto; display: flex; gap: 8px; }
+.btn { height: var(--ctl); padding: 0 14px; border-radius: 8px; border: 1px solid var(--input); background: var(--card); color: var(--fg); font: 500 14px Inter; display: inline-flex; gap: 6px; align-items: center; box-shadow: var(--shadow-xs); white-space: nowrap; }
+.btn svg { width: 15px; height: 15px; }
+.btn.pri { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+.btn.ghost { border-color: transparent; box-shadow: none; background: transparent; }
+.btn.dangertext { color: var(--danger); }
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap); margin: 20px 0; }
+.kpi { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--card); cursor: pointer; }
+.kpi.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.kpi small { color: var(--muted-fg); font-size: 13px; font-weight: 500; }
+.kpi .v { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.kpi.on small { color: var(--accent); }
+.toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+.input { height: var(--ctl); border: 1px solid var(--input); border-radius: 8px; padding: 0 10px; display: flex; align-items: center; gap: 8px; color: var(--muted-fg); background: var(--card); width: 280px; box-shadow: var(--shadow-xs); }
+.input svg { width: 15px; height: 15px; }
+.chip { height: 30px; border: 1px dashed var(--input); border-radius: 999px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; color: var(--muted-fg); font-size: 13px; font-weight: 500; }
+.chip.set { border-style: solid; background: var(--subtle); color: var(--fg); }
+.chip.set em { font-style: normal; color: var(--accent); }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 12px; font-weight: 500; color: var(--muted-fg); padding: 0 12px; height: 36px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 0 12px; height: var(--row); border-bottom: 1px solid var(--border); white-space: nowrap; }
+tr.sel td { background: var(--accent-soft); }
+td.amt { font-weight: 600; font-variant-numeric: tabular-nums; }
+td.amt span { color: var(--muted-fg); font-weight: 400; margin-left: 4px; font-size: 13px; }
+.num { text-align: right; }
+.sub { display: block; color: var(--muted-fg); font-size: 13px; }
+.dt { color: var(--muted-fg); font-variant-numeric: tabular-nums; }
+.badge { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+.badge svg { width: 12px; height: 12px; }
+.b-ok { background: var(--success-soft); color: var(--success); }
+.b-warn { background: var(--warning-soft); color: var(--warning); }
+.b-bad { background: var(--danger-soft); color: var(--danger); }
+.b-info { background: var(--info-soft); color: var(--info); }
+.b-neu { background: var(--neutral-soft); color: var(--muted-fg); }
+.tfoot { display: flex; align-items: center; justify-content: space-between; padding: 12px 4px; color: var(--muted-fg); font-size: 13px; }
+.tfoot .pg { display: flex; gap: 6px; }
+.tfoot .btn { height: 30px; font-size: 13px; }
+/* sheet */
+.scrim { position: absolute; inset: 0; background: var(--overlay); }
+.sheet { position: absolute; top: 8px; right: 8px; bottom: 8px; width: 460px; background: var(--card); border-radius: 12px; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+.sh-h { padding: 18px 20px 16px; border-bottom: 1px solid var(--border); }
+.sh-h .row1 { display: flex; align-items: center; gap: 8px; color: var(--muted-fg); font-size: 13px; }
+.sh-h .row1 .x { margin-left: auto; display: flex; gap: 4px; }
+.sh-h h3 { margin: 10px 0 0; font-size: 28px; letter-spacing: -0.03em; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sh-h h3 span { font-size: 16px; color: var(--muted-fg); font-weight: 500; }
+.sh-h .meta { display: flex; gap: 8px; align-items: center; margin-top: 6px; color: var(--muted-fg); }
+.sh-acts { display: flex; gap: 8px; margin-top: 14px; }
+.sh-b { padding: 4px 20px 20px; overflow: hidden; }
+.sh-b h4 { font-size: 15px; font-weight: 600; margin: 18px 0 8px; }
+.kv { display: grid; grid-template-columns: 130px 1fr; row-gap: 10px; column-gap: 12px; font-size: 14px; }
+.kv dt { color: var(--muted-fg); }
+.kv dd { margin: 0; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.kv dd a { color: var(--accent); text-decoration: none; font-weight: 500; }
+.idc { font-variant-numeric: tabular-nums; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.copy { color: var(--muted-fg); width: 14px; height: 14px; flex: none; }
+.line { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.line:last-child { border-bottom: 0; }
+.empty-inline { color: var(--muted-fg); font-size: 13px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 8px; }
+/* launcher */
+.launch { border: 1px solid var(--border); border-radius: 14px; background: var(--panel); padding: 28px 32px; }
+.launch h1 { margin: 0; font-size: 24px; letter-spacing: -0.025em; }
+.launch p { color: var(--muted-fg); margin: 4px 0 20px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.appcard { border: 1px solid var(--border); border-radius: 12px; padding: 18px; background: var(--card); position: relative; }
+.appcard .hd { display: flex; gap: 12px; align-items: center; }
+.appcard .mark { width: 36px; height: 36px; border-radius: 9px; }
+.appcard .mark svg { width: 19px; height: 19px; }
+.appcard b { font-size: 15px; }
+.appcard .desc { color: var(--muted-fg); font-size: 13px; margin: 10px 0 14px; line-height: 1.45; }
+.appcard .links { display: flex; flex-wrap: wrap; gap: 6px; }
+.appcard .links a { font-size: 13px; color: var(--accent); background: var(--accent-soft); padding: 3px 9px; border-radius: 6px; text-decoration: none; font-weight: 500; }
+.assume { display: inline-block; font-size: 11px; font-weight: 600; color: var(--warning); border: 1px solid var(--warning); border-radius: 4px; padding: 0 5px; margin-left: 6px; vertical-align: middle; }
+/* mobile */
+.phones { display: flex; gap: 24px; flex-wrap: wrap; }
+.phones > div { width: min(375px, 100%); }
+.phone { width: 100%; height: 760px; border: 1px solid var(--border); border-radius: 36px; background: var(--panel); overflow: hidden; position: relative; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; flex: none; }
+.cap { font-size: 12px; line-height: 1.45; color: var(--muted-fg); text-align: center; margin-top: 10px; }
+.m-top { height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border-bottom: 1px solid var(--border); margin-top: 28px; flex: none; }
+.m-top .iconbtn { width: 40px; height: 40px; color: var(--fg); }
+.m-top b { font-size: 16px; font-weight: 600; }
+.m-top .r { margin-left: auto; display: flex; gap: 2px; }
+.m-body { padding: 16px; overflow: hidden; flex: 1; }
+.m-body h1 { margin: 0; font-size: 22px; letter-spacing: -0.025em; }
+.m-tabs { display: flex; gap: 8px; overflow: hidden; margin: 14px 0 12px; }
+.m-tabs span { flex: none; height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--muted-fg); }
+.m-tabs span.on { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+.m-tabs b { font-variant-numeric: tabular-nums; }
+.m-search { height: 44px; border: 1px solid var(--input); border-radius: 10px; display: flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--muted-fg); margin-bottom: 8px; }
+.m-search svg { width: 16px; height: 16px; }
+.m-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 2px; border-bottom: 1px solid var(--border); min-height: 64px; align-content: center; }
+.m-row .a { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 15px; }
+.m-row .a span { color: var(--muted-fg); font-weight: 400; font-size: 13px; }
+.m-row .s { color: var(--muted-fg); font-size: 13px; }
+.m-row .d { color: var(--muted-fg); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+.fab { position: absolute; right: 16px; bottom: 28px; height: 52px; padding: 0 20px; border-radius: 16px; background: var(--accent); color: var(--accent-fg); display: flex; align-items: center; gap: 8px; font-weight: 600; box-shadow: var(--shadow-lg); }
+.fab svg { width: 18px; height: 18px; }
+.m-scrim { position: absolute; inset: 0; background: var(--overlay); }
+.drawer { position: absolute; left: 0; right: 0; bottom: 0; height: 88%; background: var(--card); border-radius: 20px 20px 0 0; box-shadow: var(--shadow-lg); display: flex; flex-direction: column; }
+.grab { width: 40px; height: 5px; border-radius: 3px; background: var(--input); margin: 8px auto 4px; }
+.drawer .sh-h { padding: 8px 16px 14px; }
+.drawer .sh-b { padding: 0 16px; flex: 1; }
+.drawer .kv { grid-template-columns: 110px 1fr; }
+.dock { border-top: 1px solid var(--border); padding: 12px 16px 28px; display: flex; gap: 8px; background: var(--card); }
+.dock .btn { height: 48px; flex: 1; justify-content: center; font-size: 15px; }
+.dock .btn.more { flex: none; width: 48px; padding: 0; }
+.navdrawer { position: absolute; top: 0; bottom: 0; left: 0; width: 300px; background: var(--sidebar); box-shadow: var(--shadow-lg); padding: 40px 12px 16px; display: flex; flex-direction: column; gap: 2px; }
+.navdrawer .nav { min-height: 44px; font-size: 15px; }
+.notes2 { columns: 2; column-gap: 32px; font-size: 13px; line-height: 1.55; color: var(--fg); }
+.notes2 li { margin-bottom: 6px; break-inside: avoid; }
+@media (max-width: 900px) { .frame { grid-template-columns: 1fr; height: auto; } .side { display: none; } .sheet { position: static; width: auto; margin: 8px; } .scrim { display: none; } .kpis { grid-template-columns: repeat(2, 1fr); } .notes2 { columns: 1; } .content { overflow-x: auto; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
+  <symbol id="i-webhook" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2"/><path d="m6 17 3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06"/><path d="m12 6 3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-cash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/></symbol>
+</svg>
+
+<div class="wrap">
+  <div class="note"><b>Bản xem trước của trạng thái đích đề xuất (Suite Console DS v2), không phải code thật.</b> Dữ liệu là mẫu. Những chỗ gắn nhãn <span class="assume">GIẢ ĐỊNH</span> là đề xuất của tôi, bạn chưa xác nhận. Dùng các nút bên dưới để đổi theme, density và app (màu nhấn đổi theo app).</div>
+
+  <div class="controls">
+    <span>Theme</span><div class="seg" data-ctl="theme"><button aria-pressed="true" data-v="light">Light</button><button data-v="dark">Dark</button></div>
+    <span style="margin-left:12px">Density</span><div class="seg" data-ctl="density"><button aria-pressed="true" data-v="comfortable">Comfortable</button><button data-v="compact">Compact</button></div>
+    <span style="margin-left:12px">App</span><div class="seg" data-ctl="app"><button aria-pressed="true" data-v="billing">Billing (tím)</button><button data-v="platform">Platform (xanh)</button></div>
+    <span style="margin-left:12px">Sheet</span><div class="seg" data-ctl="sheet"><button aria-pressed="true" data-v="on">Mở</button><button data-v="off">Đóng</button></div>
+  </div>
+
+  <h2 class="sec">1 · Màn danh sách + sheet chi tiết (Billing › Invoices)</h2>
+  <div class="frame" id="app" data-app="billing">
+    <aside class="side">
+      <div class="tenant"><div class="av">A</div><div><b>Acme</b><small>acme.localhost</small></div></div>
+      <div class="appswitch"><span class="mark"><svg><use href="#i-receipt"/></svg></span><span class="appname">Billing</span></div>
+      <div class="grp">Money</div>
+      <div class="nav"><svg><use href="#i-users"/></svg>Customers</div>
+      <div class="nav on"><svg><use href="#i-file"/></svg>Invoices</div>
+      <div class="nav"><svg><use href="#i-card"/></svg>Payments</div>
+      <div class="nav"><svg><use href="#i-undo"/></svg>Refunds</div>
+      <div class="nav"><svg><use href="#i-repeat"/></svg>Subscriptions</div>
+      <div class="grp">Pricing</div>
+      <div class="nav"><svg><use href="#i-tag"/></svg>Pricing plans</div>
+      <div class="grp">Wallets and usage</div>
+      <div class="nav"><svg><use href="#i-wallet"/></svg>Wallets</div>
+      <div class="nav"><svg><use href="#i-gauge"/></svg>Usage</div>
+      <div class="grp">Integrations</div>
+      <div class="nav"><svg><use href="#i-webhook"/></svg>Webhooks</div>
+      <div class="otherapps">
+        <div class="grp" style="padding-top:2px">Other apps</div>
+        <div class="nav" data-app="platform"><span class="mark"><svg><use href="#i-shield"/></svg></span>Platform</div>
+      </div>
+    </aside>
+    <section class="main">
+      <div class="top">
+        <div class="crumb">Billing <span>›</span> <b>Invoices</b></div>
+        <div class="search"><svg width="15" height="15"><use href="#i-search"/></svg>Search or jump to<kbd>⌘K</kbd></div>
+        <div class="iconbtn"><svg width="17" height="17"><use href="#i-moon"/></svg></div>
+        <div class="me">TA</div>
+      </div>
+      <div class="content">
+        <div class="ph">
+          <div><h1>Invoices</h1><p>Bills issued to customers, with their items and payments.</p></div>
+          <div class="acts"><button class="btn"><svg><use href="#i-dl"/></svg>Export</button><button class="btn pri"><svg><use href="#i-plus"/></svg>Create invoice</button></div>
+        </div>
+        <div class="kpis">
+          <div class="kpi on"><small>All</small><div class="v">128</div></div>
+          <div class="kpi"><small>Open</small><div class="v">23</div></div>
+          <div class="kpi"><small>Past due</small><div class="v">4</div></div>
+          <div class="kpi"><small>Paid</small><div class="v">97</div></div>
+        </div>
+        <div class="toolbar">
+          <div class="input"><svg><use href="#i-search"/></svg>Search by invoice number</div>
+          <span class="chip set">Status <em>Open, Past due</em></span>
+          <span class="chip">+ Customer</span>
+          <span class="chip">+ Issued</span>
+        </div>
+        <table>
+          <thead><tr><th class="num">Amount</th><th></th><th>Status</th><th>Invoice</th><th>Customer</th><th>Issued (UTC)</th></tr></thead>
+          <tbody>
+            <tr class="sel"><td class="amt num">1,240.00</td><td style="padding-left:0;color:var(--muted-fg)">USD</td><td><span class="badge b-info"><svg><use href="#i-clock"/></svg>Open</span></td><td>INV-000142</td><td>Northwind Ltd<span class="sub">billing@northwind.test</span></td><td class="dt">2026-11-19 13:46</td></tr>
+            <tr><td class="amt num">89.00</td><td style="padding-left:0;color:var(--muted-fg)">USD</td><td><span class="badge b-ok"><svg><use href="#i-check"/></svg>Paid</span></td><td>INV-000141</td><td>Globex<span class="sub">ap@globex.test</span></td><td class="dt">2026-11-18 09:12</td></tr>
+            <tr><td class="amt num">3,200,000</td><td style="padding-left:0;color:var(--muted-fg)">VND</td><td><span class="badge b-bad"><svg><use href="#i-alert"/></svg>Past due</span></td><td>INV-000140</td><td>Hanoi Coffee<span class="sub">ketoan@hncoffee.test</span></td><td class="dt">2026-11-02 04:30</td></tr>
+            <tr><td class="amt num">12.00</td><td style="padding-left:0;color:var(--muted-fg)">USD</td><td><span class="badge b-neu">Void</span></td><td>INV-000139</td><td>E2E Customer<span class="sub">e2e@acme.test</span></td><td class="dt">2026-10-30 22:05</td></tr>
+            <tr><td class="amt num">560.50</td><td style="padding-left:0;color:var(--muted-fg)">EUR</td><td><span class="badge b-warn">Uncollectible</span></td><td>INV-000138</td><td>Initech<span class="sub">finance@initech.test</span></td><td class="dt">2026-10-28 15:40</td></tr>
+          </tbody>
+        </table>
+        <div class="tfoot"><span>1–25 of 128</span><div class="pg"><button class="btn">Previous</button><button class="btn">Next</button></div></div>
+      </div>
+      <div class="scrim" id="scrim"></div>
+      <aside class="sheet" id="sheet">
+        <div class="sh-h">
+          <div class="row1">Invoice · INV-000142 <span class="x"><span class="iconbtn"><svg width="16" height="16"><use href="#i-more"/></svg></span><span class="iconbtn"><svg width="16" height="16"><use href="#i-x"/></svg></span></span></div>
+          <h3>1,240.00 <span>USD</span></h3>
+          <div class="meta"><span class="badge b-info"><svg><use href="#i-clock"/></svg>Open</span> Due 2026-12-03 · Northwind Ltd</div>
+          <div class="sh-acts"><button class="btn pri"><svg><use href="#i-cash"/></svg>Record payment</button><button class="btn">Mark uncollectible</button><button class="btn ghost dangertext">Void invoice</button></div>
+        </div>
+        <div class="sh-b">
+          <h4>Details</h4>
+          <dl class="kv">
+            <dt>Customer</dt><dd><a href="#">Northwind Ltd</a></dd>
+            <dt>Wallet</dt><dd><span class="idc">01a1f40e-df34-7ca8-84a8-39ff12ab90c1</span><svg class="copy"><use href="#i-copy"/></svg></dd>
+            <dt>Issued (UTC)</dt><dd>2026-11-19 13:46</dd>
+            <dt>Invoice ID</dt><dd><span class="idc">01a1f40e-df9f-715c-9ae9-977d0a21bc44</span><svg class="copy"><use href="#i-copy"/></svg></dd>
+          </dl>
+          <h4>Items</h4>
+          <div class="line"><span>Pro plan · November<span class="sub">Charge</span></span><b style="font-weight:500">1,200.00 USD</b></div>
+          <div class="line"><span>API usage · 40k calls<span class="sub">Usage</span></span><b style="font-weight:500">40.00 USD</b></div>
+          <h4>Payments</h4>
+          <div class="empty-inline">No payments yet. Record one when the customer pays by bank transfer.</div>
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <h2 class="sec">2 · Trang Home dạng launcher <span class="assume">GIẢ ĐỊNH: mô tả + lối tắt khai báo trong manifest remote</span></h2>
+  <div class="launch">
+    <h1>Good afternoon, Tenant Administrator</h1>
+    <p>Acme · 2 apps enabled</p>
+    <div class="cards">
+      <div class="appcard" data-app="billing"><div class="hd"><span class="mark"><svg><use href="#i-receipt"/></svg></span><div><b>Billing</b><span class="sub">Invoices, payments, wallets and usage</span></div></div>
+        <div class="desc">Charge customers, issue invoices, take card payments through Stripe and meter usage against wallets.</div>
+        <div class="links"><a href="#">Invoices</a><a href="#">Payments</a><a href="#">Customers</a><a href="#">Usage</a></div></div>
+      <div class="appcard" data-app="platform"><div class="hd"><span class="mark"><svg><use href="#i-shield"/></svg></span><div><b>Platform</b><span class="sub">Users, roles and access</span></div></div>
+        <div class="desc">Invite staff, assign roles and manage which apps and domains this tenant uses.</div>
+        <div class="links"><a href="#">Users</a><a href="#">Roles</a></div></div>
+    </div>
+  </div>
+
+  <h2 class="sec">3 · Mobile (375px): list card, bottom sheet kéo được, menu dạng drawer</h2>
+  <div class="phones" data-app="billing">
+    <div>
+      <div class="phone">
+        <div class="m-top"><span class="iconbtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span><span class="mark"><svg><use href="#i-receipt"/></svg></span><b>Invoices</b><span class="r"><span class="iconbtn"><svg width="19" height="19"><use href="#i-search"/></svg></span><span class="me">TA</span></span></div>
+        <div class="m-body">
+          <div class="m-tabs"><span class="on">All <b>128</b></span><span>Open <b>23</b></span><span>Past due <b>4</b></span><span>Paid <b>97</b></span></div>
+          <div class="m-search"><svg><use href="#i-search"/></svg>Search by invoice number</div>
+          <div class="m-row"><div class="a">1,240.00 <span>USD</span></div><div><span class="badge b-info"><svg><use href="#i-clock"/></svg>Open</span></div><div class="s">Northwind Ltd · INV-000142</div><div class="d">19 Nov</div></div>
+          <div class="m-row"><div class="a">89.00 <span>USD</span></div><div><span class="badge b-ok"><svg><use href="#i-check"/></svg>Paid</span></div><div class="s">Globex · INV-000141</div><div class="d">18 Nov</div></div>
+          <div class="m-row"><div class="a">3,200,000 <span>VND</span></div><div><span class="badge b-bad"><svg><use href="#i-alert"/></svg>Past due</span></div><div class="s">Hanoi Coffee · INV-000140</div><div class="d">2 Nov</div></div>
+          <div class="m-row"><div class="a">12.00 <span>USD</span></div><div><span class="badge b-neu">Void</span></div><div class="s">E2E Customer · INV-000139</div><div class="d">30 Oct</div></div>
+          <div class="m-row"><div class="a">560.50 <span>EUR</span></div><div><span class="badge b-warn">Uncollectible</span></div><div class="s">Initech · INV-000138</div><div class="d">28 Oct</div></div>
+          <div class="m-row"><div class="a">45.00 <span>USD</span></div><div><span class="badge b-ok"><svg><use href="#i-check"/></svg>Paid</span></div><div class="s">Umbrella · INV-000137</div><div class="d">27 Oct</div></div>
+        </div>
+        <div class="fab"><svg><use href="#i-plus"/></svg>Create invoice</div>
+      </div>
+      <div class="cap">List card: số tiền + trạng thái ở dòng trên, khách hàng + ngày ở dòng dưới; tabs có số đếm cuộn ngang; action chính là nút nổi</div>
+    </div>
+    <div>
+      <div class="phone">
+        <div class="m-top"><span class="iconbtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span><b>Invoices</b></div>
+        <div class="m-body"><div class="m-row"><div class="a">1,240.00 <span>USD</span></div><div></div><div class="s">Northwind Ltd</div><div></div></div></div>
+        <div class="m-scrim"></div>
+        <div class="drawer">
+          <div class="grab"></div>
+          <div class="sh-h">
+            <div class="row1">Invoice · INV-000142 <span class="x"><span class="iconbtn"><svg width="16" height="16"><use href="#i-x"/></svg></span></span></div>
+            <h3>1,240.00 <span>USD</span></h3>
+            <div class="meta"><span class="badge b-info"><svg><use href="#i-clock"/></svg>Open</span> Due 2026-12-03</div>
+          </div>
+          <div class="sh-b">
+            <dl class="kv">
+              <dt>Customer</dt><dd><a href="#">Northwind Ltd</a></dd>
+              <dt>Issued (UTC)</dt><dd>2026-11-19 13:46</dd>
+              <dt>Invoice ID</dt><dd><span class="idc">01a1f40e-df9f-715c-9ae9-977d0a21bc44</span><svg class="copy"><use href="#i-copy"/></svg></dd>
+            </dl>
+            <h4>Items</h4>
+            <div class="line"><span>Pro plan · November<span class="sub">Charge</span></span><b style="font-weight:500">1,200.00 USD</b></div>
+            <div class="line"><span>API usage · 40k calls<span class="sub">Usage</span></span><b style="font-weight:500">40.00 USD</b></div>
+          </div>
+          <div class="dock"><button class="btn pri"><svg><use href="#i-cash"/></svg>Record payment</button><button class="btn more"><svg><use href="#i-more"/></svg></button></div>
+        </div>
+      </div>
+      <div class="cap">Bottom sheet cao ~88%, vuốt xuống để đóng, nút Back của trình duyệt cũng đóng; action chính dính đáy, action phụ và nguy hiểm nằm trong menu "…"</div>
+    </div>
+    <div>
+      <div class="phone">
+        <div class="m-top"><b style="margin-left:52px">Invoices</b></div>
+        <div class="m-scrim"></div>
+        <div class="navdrawer">
+          <div class="tenant"><div class="av">A</div><div><b>Acme</b><small>acme.localhost</small></div></div>
+          <div class="appswitch"><span class="mark"><svg><use href="#i-receipt"/></svg></span>Billing</div>
+          <div class="grp">Money</div>
+          <div class="nav"><svg><use href="#i-users"/></svg>Customers</div>
+          <div class="nav on"><svg><use href="#i-file"/></svg>Invoices</div>
+          <div class="nav"><svg><use href="#i-card"/></svg>Payments</div>
+          <div class="nav"><svg><use href="#i-repeat"/></svg>Subscriptions</div>
+          <div class="grp">Wallets and usage</div>
+          <div class="nav"><svg><use href="#i-wallet"/></svg>Wallets</div>
+          <div class="nav"><svg><use href="#i-gauge"/></svg>Usage</div>
+          <div class="otherapps"><div class="nav" data-app="platform"><span class="mark"><svg><use href="#i-shield"/></svg></span>Platform</div></div>
+        </div>
+      </div>
+      <div class="cap">Sidebar thành drawer bên trái, mỗi mục cao ≥44px cho ngón tay</div>
+    </div>
+  </div>
+  <p style="font-size:13px;color:var(--muted-fg);margin-top:12px">Tablet (768–1023px) <span class="assume">GIẢ ĐỊNH</span>: sidebar thu thành dải icon 56px; bảng vẫn là bảng nhưng ẩn bớt cột phụ; sheet bên phải rộng 420px. Dialog tạo/sửa trên phone cũng mở dạng bottom sheet cùng kiểu <span class="assume">GIẢ ĐỊNH</span>.</p>
+
+  <h2 class="sec">4 · Những gì thay đổi so với hiện tại</h2>
+  <ul class="notes2">
+    <li><b>Màu theo app:</b> mỗi app có một hue riêng. Nút primary, mục nav đang chọn, link và hàng đang chọn dùng màu của app; khung shell vẫn trung tính. <span class="assume">GIẢ ĐỊNH: bảng màu tĩnh trong DS theo app code, giống bảng glyph, không lưu ở registry</span></li>
+    <li><b>Badge trạng thái:</b> pill có nền nhạt, kèm icon và chữ, thay cho chấm 6px. Vẫn luôn có chữ.</li>
+    <li><b>Bảng:</b> bỏ cột ID và cột checkbox ở bảng không có bulk action (ID chuyển vào sheet). Số tiền đậm, căn phải, mã tiền tệ nhạt. Ngày nhạt và dùng tabular. Có footer phân trang.</li>
+    <li><b>Ô KPI làm saved view</b> thay tabs All/Open/Paid, có kèm số đếm. <span class="assume">GIẢ ĐỊNH: cần API đếm theo trạng thái</span></li>
+    <li><b>Sheet:</b> có scrim mờ nên không còn cắt ngang bảng. Tiêu đề là con số chính. Action đặt ở đầu sheet; hành động nguy hiểm dùng nút chữ đỏ, không còn nút đỏ đặc.</li>
+    <li><b>Sidebar:</b> mọi mục có icon. Mục đang chọn tô màu app. Các app khác nằm ở cuối. Bỏ chữ "Platform" bị lặp.</li>
+    <li><b>Header:</b> breadcrumb không lặp. Avatar dùng màu app. Ở platform scope vẫn giữ pill "Platform scope" nhưng bỏ đường kẻ cam. <span class="assume">GIẢ ĐỊNH</span></li>
+    <li><b>Density:</b> Comfortable có hàng 52px, control 36px. Compact có hàng 40px, control 30px. Lựa chọn lưu theo người dùng.</li>
+  </ul>
+</div>
+<script>
+(function () {
+  var root = document.documentElement, app = document.getElementById('app');
+  document.querySelectorAll('.seg').forEach(function (seg) {
+    seg.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      seg.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      var k = seg.dataset.ctl, v = b.dataset.v;
+      if (k === 'theme') root.dataset.theme = v;
+      if (k === 'density') root.dataset.density = v;
+      if (k === 'app') {
+        app.dataset.app = v;
+        var isB = v === 'billing';
+        app.querySelector('.appswitch .mark use').setAttribute('href', isB ? '#i-receipt' : '#i-shield');
+        app.querySelector('.appname').textContent = isB ? 'Billing' : 'Platform';
+      }
+      if (k === 'sheet') { var on = v === 'on'; document.getElementById('sheet').style.display = on ? '' : 'none'; document.getElementById('scrim').style.display = on ? '' : 'none'; }
+    });
+  });
+})();
+</script>
+</body>
+</html>

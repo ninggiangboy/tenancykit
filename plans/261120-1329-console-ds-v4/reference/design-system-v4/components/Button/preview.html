@@ -1,0 +1,32 @@
+<!-- @dsCard group="Actions" height=200 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Button preview</title></head>
+<body>
+<div id="root" class="sc-demo sc-demo--col"></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  function Row(p) {
+    return h('div', { className: 'sc-demo', 'data-app': p.app, style: { padding: 0 } },
+      h('span', { className: 'sc-muted', style: { width: 92, fontSize: 12.5 } }, p.label),
+      h(S.Button, { icon: 'plus' }, 'Create invoice'),
+      h(S.Button, { variant: 'outline', icon: 'download' }, 'Export'),
+      h(S.Button, { variant: 'ghost', iconEnd: 'chevron-down' }, 'More'),
+      h(S.Button, { variant: 'danger', icon: 'ban' }, 'Void invoice'),
+      h(S.Button, { variant: 'link' }, 'View ledger'));
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h(Row, { label: 'Shell (no app)' }),
+    h(Row, { label: 'Billing', app: 'billing' }),
+    h(Row, { label: 'Platform', app: 'platform' }),
+    h('div', { className: 'sc-demo', 'data-app': 'billing', style: { padding: 0 } },
+      h('span', { className: 'sc-muted', style: { width: 92, fontSize: 12.5 } }, 'States'),
+      h(S.Button, { size: 'sm', variant: 'outline', icon: 'refresh' }, 'Retry delivery'),
+      h(S.Button, { loading: true }, 'Issuing invoice'),
+      h(S.Button, { variant: 'outline', shortcut: ['mod', 'k'], icon: 'search' }, 'Search'),
+      h(S.Tooltip, { content: 'Copy invoice number' }, h(S.Button, { variant: 'outline', iconOnly: true, icon: 'copy' }, 'Copy invoice number')),
+      h(S.Button, { variant: 'destructive', icon: 'trash' }, 'Void 3 invoices'))
+  ));
+</script>
+</body>
+</html>

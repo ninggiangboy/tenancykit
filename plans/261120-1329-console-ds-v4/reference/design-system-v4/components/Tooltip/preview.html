@@ -1,0 +1,16 @@
+<!-- @dsCard group="Overlays" height=110 -->
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Tooltip preview</title></head>
+<body>
+<div id="root" class=""></div>
+<script>
+  var S = window.Suite, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+    h('div', { className: 'sc-demo', style: { paddingTop: 48 } },
+      h(S.Tooltip, { content: 'Toggle sidebar', shortcut: ['mod', 'b'], defaultOpen: true }, h(S.Button, { variant: 'ghost', iconOnly: true, icon: 'panel-left' }, 'Toggle sidebar')),
+      h(S.Tooltip, { content: 'Notifications' }, h(S.Button, { variant: 'ghost', iconOnly: true, icon: 'bell' }, 'Notifications')))
+  ));
+</script>
+</body>
+</html>
