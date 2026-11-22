@@ -80,7 +80,7 @@ class ClickPublisherWireTest {
     private static Path repositoryRoot() {
         Path dir = Path.of("").toAbsolutePath();
         while (dir != null) {
-            if (Files.isDirectory(dir.resolve("contracts")) && Files.isDirectory(dir.resolve("attribution"))) {
+            if (Files.isDirectory(dir.resolve("contracts"))) {
                 return dir;
             }
             dir = dir.getParent();

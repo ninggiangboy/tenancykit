@@ -9,32 +9,42 @@ import java.nio.file.Path;
  */
 public final class RepositoryPaths {
 
+    private static final Path BUILD_ROOT = locateBuildRoot();
     private static final Path ROOT = locateRoot();
 
     private RepositoryPaths() {}
 
-    /** The repository root: the nearest ancestor holding both {@code contracts} and {@code platform}. */
+    /** The repository root: the nearest ancestor of the build root holding {@code contracts}. */
     public static Path repositoryRoot() {
         return ROOT;
     }
 
     /** The platform build root, which holds {@code settings.gradle.kts} and every module directory. */
     public static Path platformRoot() {
-        Path platform = ROOT.resolve("platform");
-        if (!Files.isDirectory(platform)) {
-            throw new IllegalStateException("platform directory not found under " + ROOT);
-        }
-        return platform;
+        return BUILD_ROOT;
     }
 
-    private static Path locateRoot() {
+    /** The Gradle build root: the nearest ancestor holding {@code settings.gradle.kts}. */
+    private static Path locateBuildRoot() {
         Path dir = Path.of("").toAbsolutePath();
         while (dir != null) {
-            if (Files.isDirectory(dir.resolve("contracts")) && Files.isDirectory(dir.resolve("platform"))) {
+            if (Files.isRegularFile(dir.resolve("settings.gradle.kts"))) {
                 return dir;
             }
             dir = dir.getParent();
         }
-        throw new IllegalStateException("repository root not found above " + Path.of("").toAbsolutePath());
+        throw new IllegalStateException("Gradle build root not found above " + Path.of("").toAbsolutePath());
+    }
+
+    /** The repository root: the nearest ancestor of the build root holding {@code contracts}. */
+    private static Path locateRoot() {
+        Path dir = BUILD_ROOT;
+        while (dir != null) {
+            if (Files.isDirectory(dir.resolve("contracts"))) {
+                return dir;
+            }
+            dir = dir.getParent();
+        }
+        throw new IllegalStateException("repository root not found above " + BUILD_ROOT);
     }
 }
