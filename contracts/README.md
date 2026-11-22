@@ -32,6 +32,26 @@ Documents the suite's services share, never code. The only code they share is th
 An app's OpenAPI document and event schemas are the executable owners of its API and event shapes; these files are
 the documents every service reads to agree on them. See [docs/architecture.md](../docs/architecture.md).
 
+In the generated documents (billing, platform, notification, mailroom, survey, attribution, workflow) the words come
+from the code, so change them there and regenerate rather than editing the YAML:
+
+- the name and description of each operation: `@Operation(summary = ..., description = ...)` on the controller method;
+- the name and description of each group: `@Tag(name = ..., description = ...)` on the controller class;
+- the fields of request and response bodies, parameters, headers and bodies that have no schema:
+  `openapi-descriptions.conf` in the service's `apps/app-boot/src/main/resources/`, read by
+  `DescriptionsOpenApiCustomizer` (`backend/libs/core/core-openapi`). A line is `schema Name.field = text`,
+  `field name = text` for a field in any schema, `param name = text` or `param /path name = text`, or `body /path = text`.
+  A path parameter that nobody described is derived from the resource before it, and the paging facts and the
+  `If-Match`, `Idempotency-Key` and `X-Request-Id` headers are described once for every service.
+- the errors: every error is an RFC 9457 `application/problem+json` body (`ProblemDetail`). `ErrorResponsesOpenApiCustomizer`
+  lists `400`, `401`, `403`, `404`, `409` (an `Idempotency-Key`) and `412` (an `If-Match`) from what the operation
+  declares. An error only one operation answers is a line `error METHOD /path status = text` in the same file, or
+  `error METHOD /path status Schema = text` when its body is not a `ProblemDetail`; a line that names no operation
+  fails the contract test.
+
+Give a new endpoint and its new fields their words in the same change. Customer, loyalty and booking are written by
+hand in the YAML itself.
+
 `platform.yaml`'s OpenAPI document includes the console's registry: `/api/v1/ui-remotes`, its versions and the
 `/api/v1/console/remotes` feed. The matching codes are `platform:ui-remote:read`, `platform:ui-remote:manage` (the
 operator) and `platform:ui-remote:register` (the `frontend-ci` service client only).
