@@ -59,6 +59,8 @@ consoles follow.
 3. Move `me` and console remotes; move Notification's inbox and preferences under `/me`; move templates to `/admin/v1`.
 4. Move the snapshot endpoint and every client of it in one change so replica rebuild never breaks.
 5. Regenerate contracts and the frontend client; fix the shells and e2e; run the full local stack.
+6. Turn on `singleCallerPerPath` for Platform and Notification (only `/api/v1/me/**` and `/oauth/token` may keep two
+   callers), then delete the switch so the rule is always on for all 10 documents.
 
 ## Verification
 - `./gradlew test` in `backend/services/platform` and `backend/services/infra/notification`.

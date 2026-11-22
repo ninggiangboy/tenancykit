@@ -33,6 +33,9 @@ Billing, Mailroom, Attribution, Booking, Customer, Loyalty, Workflow and Notific
 2. Notification: no `/system/v1` (no grantable code); `/admin/v1` for templates is phase 7.
 3. Move every suite-token caller to `/system/v1`; keep the tenant-user callers (console remotes) on `/api/v1`.
 4. Bring the stack up (`make up`) and run `make smoke`; any 403 on `/api/v1` from a script means a caller was missed.
+5. When an app's paths are split, turn on `singleCallerPerPath` in its contract test (the rule from phase 3); the app's
+   generated document must then have exactly one caller per path. Do this per app in the same commit that splits it,
+   for the eight apps handled here.
 
 ## Verification
 - `./gradlew test` in each touched service.

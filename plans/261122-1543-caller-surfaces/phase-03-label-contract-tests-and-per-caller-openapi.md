@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Label contract tests and per-caller OpenAPI"
-status: pending
+status: done
 priority: P1
 effort: 2d
 dependencies: [2]
@@ -15,10 +15,14 @@ exists per caller and app.
 
 ## Files to Create / Modify
 - Create: shared test rules in `core-openapi` test fixtures: `CallerLabelRules` (every operation has a non-empty
-  `x-allowed-callers`; every value is one of the seven; `x-public` appears nowhere; **every path has exactly one
-  value**, except the allow-list `/api/v1/me/**` and `/oauth/token`, which may have two)
+  `x-allowed-callers`; every value is one of the seven; `x-public` appears nowhere). It also implements the rule
+  **every path has exactly one value**, except the allow-list `/api/v1/me/**` and `/oauth/token`, but that rule is
+  **off by default in this phase** (a per-app switch, `singleCallerPerPath`): today one path serves two callers, so
+  the rule would fail on most operations. Phase 6 turns it on for the eight apps and phase 7 for Platform and
+  Notification, after which the switch is removed and the rule is always on.
 - Create: `CallerOpenApiSplitter` in `core-openapi` writing `contracts/openapi/<caller>/<app>.yaml` (a path with two
-  values, the two allow-listed ones, appears in both files; empty files are not written)
+  values appears in both files; until phase 6 that means the tenant-system files list the same `/api/v1/...` paths as
+  the tenant-user files, which is expected; empty files are not written)
 - Modify: the contract tests of the 7 generated services (Platform, Billing, Notification, Mailroom, Survey,
   Attribution, Workflow) to call `CallerLabelRules` and the splitter under `-Dopenapi.update=true`
 - Modify (hand-written YAML, an interim state that phase 14 removes): `contracts/openapi/booking.yaml`, `customer.yaml`, `loyalty.yaml` get labels by hand;

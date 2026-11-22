@@ -74,7 +74,11 @@ So `@Callers({TENANT_USER, TENANT_SYSTEM})` on `GET /wallets/{id}` is served at 
 `/system/v1/wallets/{id}`: the annotation lists the callers of the handler, and each caller gets its own route.
 **Invariant: every route (path) has exactly one caller**, so `x-allowed-callers` has one value per path. The only
 allow-listed exceptions, where one path is shared on purpose, are `/api/v1/me/**` (platform-user and tenant-user) and
-`/oauth/token` (tenant-system and internal); a test fails on any other path with two values. Two special forms: `@SelfService` (both person kinds, mounted once at `/api/v1/me`, so
+`/oauth/token` (tenant-system and internal); a test fails on any other path with two values. The test is **switched on
+per app as its prefixes land** (phase 6 for the eight apps, phase 7 for Platform and Notification), because until
+then one path legitimately carries two labels: today `/api/v1/wallets/{id}` is called by both tenant-user and
+tenant-system (64 of Billing's 106 labelled operations), and Platform's `users` and `roles` serve both platform and
+tenant callers (13 of its 33). Two special forms: `@SelfService` (both person kinds, mounted once at `/api/v1/me`, so
 `@RequestMapping("/notifications")` becomes `/api/v1/me/notifications`) and `prefix = NONE` for the standard-path
 exceptions (`/oauth/token`, jwks). Every handler method must resolve to exactly one source or an architecture test
 fails. For a route with a permission code a test checks the declared callers against the catalog in both directions

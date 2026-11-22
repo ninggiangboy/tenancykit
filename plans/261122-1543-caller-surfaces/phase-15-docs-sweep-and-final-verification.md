@@ -36,6 +36,8 @@ Docs describe the system that now exists, no old path survives anywhere, and eve
 - [ ] The label test walks all 10 OpenAPI documents; a count of unlabeled operations is 0; `x-public` appears nowhere.
 - [ ] All 10 documents are generated from code (phase 14 done); none is hand-written. If phase 14 was dropped, the three
       hand-written files are listed as such and their comparison tests pass.
+- [ ] Every path in all 10 documents has exactly one caller, except `/api/v1/me/**` and `/oauth/token`; the
+      `singleCallerPerPath` switch no longer exists.
 - [ ] `/system/v1` accepts only suite tokens; `/api/v1` and `/admin/v1` only Keycloak JWTs; tests cover both directions.
 - [ ] Per-caller OpenAPI files exist; the Billing special case is gone; `make docs` serves seven caller pages.
 - [ ] `make docs-check` passes (matrix equals the contracts).
