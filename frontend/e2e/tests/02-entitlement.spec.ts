@@ -14,7 +14,7 @@ test('the Billing menu follows the tenant entitlement', async ({ browser, page, 
   const withoutBilling = await provisionTenantFixture({ billing: false, prefix: 'e2e-ent' })
   await waitForBilling(withBilling.host, withBilling.token)
 
-  await signIn(page, withBilling.host, `${withBilling.code}:${withBilling.adminEmail}`, withBilling.adminPassword)
+  await signIn(page, withBilling.host, withBilling.adminEmail, withBilling.adminPassword)
   expect(await sidebarApps(page)).toContain('Billing')
   await openRemote(page, withBilling.host, 'billing', 'customers')
   await expect(page.getByRole('heading', { name: 'Customers' })).toBeVisible()
@@ -23,12 +23,7 @@ test('the Billing menu follows the tenant entitlement', async ({ browser, page, 
   const otherContext = await browser.newContext()
   const otherPage = await otherContext.newPage()
   const otherHealth = watchConsole(otherPage)
-  await signIn(
-    otherPage,
-    withoutBilling.host,
-    `${withoutBilling.code}:${withoutBilling.adminEmail}`,
-    withoutBilling.adminPassword,
-  )
+  await signIn(otherPage, withoutBilling.host, withoutBilling.adminEmail, withoutBilling.adminPassword)
   expect(await sidebarApps(otherPage)).not.toContain('Billing')
   await otherHealth.expectClean()
   await otherContext.close()

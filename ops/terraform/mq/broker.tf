@@ -41,6 +41,13 @@ resource "aws_mq_broker" "this" {
     password = var.notification_password
   }
 
+  # Keycloak publishes the mail it renders (a password reset) as one command to mailer.commands. The one-shot task
+  # scopes this user to write on that exchange and nothing else.
+  user {
+    username = "keycloak"
+    password = var.keycloak_password
+  }
+
   # Mailroom consumes platform.events and mailer.events on two queues of its own and publishes one command to
   # mailer.commands. The one-shot task scopes this user to those and to nothing else.
   user {

@@ -83,6 +83,12 @@ variable "notification_password" {
   sensitive   = true
 }
 
+variable "keycloak_password" {
+  description = "Keycloak broker user password."
+  type        = string
+  sensitive   = true
+}
+
 variable "mailroom_password" {
   description = "Mailroom broker user password."
   type        = string

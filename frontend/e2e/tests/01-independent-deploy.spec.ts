@@ -23,7 +23,7 @@ test('a new remote-billing version goes live with no shell build', async ({ brow
   expect(operator).not.toBe('')
 
   // The operator activates the version in Platform Admin, which is what makes a deploy live.
-  await signIn(page, env.platformHost, `platform:${env.platformAdmin.email}`, env.platformAdmin.password)
+  await signIn(page, env.platformHost, env.platformAdmin.email, env.platformAdmin.password)
   await openRemote(page, env.platformHost, 'platform', 'remotes')
   await page
     .getByRole('row')
@@ -38,7 +38,7 @@ test('a new remote-billing version goes live with no shell build', async ({ brow
   const tenantContext = await browser.newContext()
   const tenantPage = await tenantContext.newPage()
   const tenantHealth = watchConsole(tenantPage)
-  await signIn(tenantPage, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
+  await signIn(tenantPage, tenant.host, tenant.adminEmail, tenant.adminPassword)
   expect(await sidebarApps(tenantPage)).toContain('Billing')
   await openRemote(tenantPage, tenant.host, 'billing', 'customers')
   expect(await mountedVersion(tenantPage, 'billing')).toBe(version)

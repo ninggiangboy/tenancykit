@@ -47,7 +47,7 @@ test('a second remote from the same template needs no shell change', async ({ pa
 
     const tenant = await provisionTenantFixture({ billing: true, prefix: 'e2e-ext' })
     await waitForBilling(tenant.host, tenant.token)
-    await signIn(page, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
+    await signIn(page, tenant.host, tenant.adminEmail, tenant.adminPassword)
     await expect.poll(async () => sidebarApps(page), { timeout: 60_000 }).toContain('E2E extra')
     expect(await sidebarApps(page)).toContain('Billing')
     expect(env.platformHost).not.toBe(tenant.host)

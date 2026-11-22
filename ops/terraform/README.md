@@ -163,7 +163,8 @@ billing_repo="$(terraform output -json ecr_repository_urls | jq -r .billing)"
 docker build -f ../../backend/services/billing/apps/app-boot/Dockerfile -t "$billing_repo:$tag" ../..
 docker push "$billing_repo:$tag"
 
-# keycloak, with the realm export baked in; the build context is the repository root
+# keycloak, with the realm export, the tenant username form and the sign-in theme baked in; the build context is the
+# repository root
 keycloak_repo="$(terraform output -json ecr_repository_urls | jq -r .keycloak)"
 docker build -f keycloak/Dockerfile -t "$keycloak_repo:$tag" ../..
 docker push "$keycloak_repo:$tag"

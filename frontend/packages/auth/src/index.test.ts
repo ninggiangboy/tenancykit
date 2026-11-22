@@ -1,6 +1,6 @@
 import type { User } from 'oidc-client-ts'
 import { describe, expect, it, vi } from 'vitest'
-import { CALLBACK_PATH, ConsoleAuth, LOGOUT_PATH, type UserManagerLike } from './index'
+import { CALLBACK_PATH, ConsoleAuth, LOGOUT_PATH, tenantCodeOfHost, type UserManagerLike } from './index'
 
 function user(overrides: Partial<{ expires_at: number; state: unknown }> = {}): User {
   return {
@@ -78,5 +78,22 @@ describe('console auth', () => {
   it('keeps the callback and logout under the console base', () => {
     expect(CALLBACK_PATH).toBe('/console/callback')
     expect(LOGOUT_PATH).toBe('/console/logout')
+  })
+})
+
+describe('tenant of a host', () => {
+  it('is the first label of a subdomain, platform included', () => {
+    expect(tenantCodeOfHost('acme.example.com')).toBe('acme')
+    expect(tenantCodeOfHost('acme.localhost')).toBe('acme')
+    expect(tenantCodeOfHost('platform.example.com')).toBe('platform')
+    expect(tenantCodeOfHost('Acme-Corp.example.com')).toBe('acme-corp')
+  })
+
+  it('is nothing for a bare host, an address or a label that is not a tenant code', () => {
+    expect(tenantCodeOfHost('localhost')).toBeUndefined()
+    expect(tenantCodeOfHost('127.0.0.1')).toBeUndefined()
+    expect(tenantCodeOfHost('a.example.com')).toBeUndefined()
+    expect(tenantCodeOfHost('-acme.example.com')).toBeUndefined()
+    expect(tenantCodeOfHost('')).toBeUndefined()
   })
 })

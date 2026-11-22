@@ -21,7 +21,7 @@ test('the phone flows work by touch', async ({ page }) => {
   const seeded = await seedBilling(tenant)
   const health = watchConsole(page, { allowStatus: allowStripe404 })
 
-  await signIn(page, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
+  await signIn(page, tenant.host, tenant.adminEmail, tenant.adminPassword)
   // The drawer closes on a route change, and the shell settles its first route a moment after the frame paints.
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
 

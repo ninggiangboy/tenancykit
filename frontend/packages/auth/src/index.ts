@@ -36,6 +36,33 @@ export class AuthError extends Error {
   }
 }
 
+/** The format Platform enforces for a tenant code, which is also the first label of the tenant's host. */
+const TENANT_CODE = /^[a-z][a-z0-9-]{1,38}[a-z0-9]$/
+const IPV4 = /^\d+(\.\d+){3}$/
+
+/**
+ * The tenant a host belongs to: its first label, when the host has a subdomain (`acme.example.com`, and
+ * `platform.example.com` for the platform). A bare host such as `localhost` or an IP address names no tenant, and a
+ * sign-in from it takes the full `tenant:email` username, as it always did.
+ */
+export function tenantCodeOfHost(hostname: string): string | undefined {
+  const labels = hostname.toLowerCase().split('.')
+  if (labels.length < 2 || IPV4.test(hostname)) {
+    return undefined
+  }
+  return TENANT_CODE.test(labels[0] ?? '') ? labels[0] : undefined
+}
+
+/** The origin's tenant as the extra sign-in parameter Keycloak's tenant username form reads. */
+function tenantParams(origin: string): Record<string, string> {
+  try {
+    const tenant = tenantCodeOfHost(new URL(origin).hostname)
+    return tenant ? { tenant } : {}
+  } catch {
+    return {}
+  }
+}
+
 /** Refresh this long before expiry, so a request started at the edge never carries a dead token. */
 const REFRESH_MARGIN_MS = 30_000
 
@@ -60,6 +87,8 @@ export class ConsoleAuth {
       response_type: 'code',
       scope: config.scope ?? 'openid profile email',
       automaticSilentRenew: false,
+      // The host already says which tenant this is, so the person types only an email on Keycloak's form.
+      extraQueryParams: tenantParams(origin),
       userStore: new WebStorageStateStore({ store: new InMemoryWebStorage() }),
     })
     return new ConsoleAuth(manager)

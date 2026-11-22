@@ -21,6 +21,7 @@ build and verify it.
 - [Technology](#technology)
 - [Prerequisites](#prerequisites)
 - [Quick start with Docker Compose](#quick-start-with-docker-compose)
+- [Demo data and accounts](#demo-data-and-accounts)
 - [Run services on the host](#run-services-on-the-host)
 - [Addresses and ports](#addresses-and-ports)
 - [Configuration](#configuration)
@@ -291,6 +292,75 @@ Workflow (and SeaweedFS for Survey). Use it before the smoke scripts, which depe
 delivery.
 `make down` stops the stack and keeps the data; `make clean` also deletes the volumes (databases and console assets).
 
+### Demo data and accounts
+
+`make seed` fills a running local stack with a complete demo: four tenants, people with different rights, and data in
+every app, so each screen and each case can be looked at without typing anything in first. It only runs against
+`localhost`, it is safe to run again (it reuses what exists), and it is for development only.
+
+```bash
+make up-all && make console   # the stack and the console, as above
+make seed                     # about two minutes; ONLY=billing,loyalty limits it to some modules
+make demo                     # everything from nothing: wipe, start, publish the console, seed
+```
+
+The seed also activates the registered console remotes, so the console shows Billing and Platform straight away. Its
+modules live in `ops/seed/` (`platform`, `billing`, `customer`, `loyalty`, `booking`, `mailroom`, `survey`,
+`attribution`, `workflow`) and it needs `curl`, `jq`, `ruby` and `uuidgen`.
+
+**Sign in.** On a tenant's own address (or `platform.localhost` for Platform users) type only the email and the password:
+the console names the tenant from the host and Keycloak's form adds it. Every seeded account uses the password
+`Demo-1234`. Change it with `SEED_PASSWORD` before seeding. Keycloak stores the username as `<tenant-code>:<email>`, which is
+what to type only when you open Keycloak directly.
+
+| Where | Address | Accounts (email) |
+|---|---|---|
+| Platform console | <http://platform.localhost:8090/console/> | `root@suite.localhost` (administrator), `support@suite.localhost` (read-only) |
+| Tenant **acme**, Acme Coffee Co. (every app) | <http://acme.localhost:8090/console/> | `admin@acme.localhost`, `manager@acme.localhost`, `viewer@acme.localhost`, `nobody@acme.localhost` |
+| Tenant **globex**, Globex Fitness | <http://globex.localhost:8090/console/> | `admin@globex.localhost`, and `manager@`, `viewer@`, `nobody@` in the same form |
+| Tenant **initech**, empty (billing and customer, no data) | <http://initech.localhost:8090/console/> | `admin@initech.localhost`, and the same three |
+| Tenant **dormant**, deactivated | <http://dormant.localhost:8090/console/> | `admin@dormant.localhost` |
+| Mail the suite sends (Mailpit) | <http://localhost:8025> | none |
+| Keycloak admin | <http://localhost:8081> | `KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME` and `_PASSWORD` in `.env` |
+| RabbitMQ management | <http://localhost:15672> | `RABBITMQ_ADMIN_USER` (default `rabbitmq`) and `RABBITMQ_ADMIN_PASSWORD` in `.env` |
+
+The bootstrap administrator from `.env` (`PLATFORM_BOOTSTRAP_ADMIN_EMAIL`) keeps its own
+password. The roles are the same in every tenant: the **administrator** holds everything, the **manager** everything but
+erasure and ledger reversal, the **viewer** only the `:read` rights, and **nobody** has no role at all.
+
+**What each case is for**
+
+| To look at or test | Where |
+|---|---|
+| Tenant isolation: two companies, nothing shared | sign in to acme and globex; each lists only its own customers, bookings and invoices |
+| Rights: full, all but dangerous, read-only, none | the four acme accounts; `nobody` has no rights and every app answers 403 (verified for Billing and Customer); `viewer` can read but a write answers 403 |
+| An empty tenant | initech |
+| A deactivated tenant | dormant: Keycloak signs in, every API answers 404 |
+| A read-only operator on the platform side | `support@suite.localhost` |
+| Money: wallets in USD, VND, EUR and GBP, prepaid and postpaid; invoices open, void and uncollectible; plans of every model (one with two versions, one retired); subscriptions; coupons with redemptions; reservations held, captured and released; usage; four webhook endpoints | acme, Billing |
+| Customers: 24 customers with custom fields, tags, consent, orders, returns and activities; one erased customer (`C-099`) | acme, Customer; a smaller set in globex |
+| Loyalty: four tiers, promotions (one off), rewards (one sold out), members with points earned, clawed back, spent and redeemed into vouchers (issued, used, voided); a member who owes points (`C-008`); an erased member (`C-016`) | acme, Loyalty |
+| Booking: resources, a closed day and a maintenance block, a group, interval and capacity offerings, sessions, bookings held, confirmed and cancelled, a full session with a waitlist, a weekly series | globex (fitness) and acme |
+| Email: templates, receivers, groups, segments, suppressions, one sent campaign, one scheduled, one draft | acme, Mailroom; the sent campaign's mail is in Mailpit |
+| Surveys: a bilingual NPS survey with a public and personal links, a scored quiz, a draft, a closed one | acme, Survey |
+| Attribution: four campaigns on four channels and models, links (an A/B split, a capped one, a paused one), two weeks of ad cost, real clicks and conversions | acme, Attribution |
+| Workflow: the four sample definitions published and instances in several states; two refund requests waiting for a human, one decided | acme, Workflow |
+
+The tenant's own software is a Tenant System named `demo-backend`; its credential is written to
+`ops/seed/.out/<tenant>.credential.json` (ignored by git), so you can mint a suite token the way the seed does.
+
+**Known limits of the local demo**
+
+- **No payments or refunds.** Billing creates them only from Stripe's answers and the stack has no Stripe account.
+- **No survey responses.** They arrive only through a public link, and `POST /survey/p/l/{token}/open` currently
+  answers 500 on the local stack (`no request scope is bound`).
+- **Workflow instances may sit in `FAILED_STUCK`.** The workflow worker is refused write access to `amq.default` on
+  RabbitMQ and the engine's `http` steps report `credential_missing`, so the dunning, nudge and erasure samples do not
+  finish; they are there to show the retry and dead-letter screens.
+- **Attribution conversions stay `PENDING`**, and `/reports/breakdown` answers 500.
+- The seeded accounts were given a permanent password, so they skip Keycloak's first-sign-in step; the notification
+  inbox may therefore start empty.
+
 Without `make`:
 
 ```bash
@@ -551,6 +621,7 @@ and `PUBLIC_DOMAIN` and an S3 state backend.
 | `make console` | Build and publish the console (`console-build` and `console-publish` separately) |
 | `make dev` | Hot-reload dev servers for every shell and remote |
 | `make e2e` | The Playwright suite against the running stack |
+| `make seed` / `make demo` | Fill the running stack with demo data / wipe, start everything and seed |
 | `make smoke` / `make isolation` | The two verification scripts |
 | `make ps` / `make logs [SERVICE=x]` | Show services / follow logs |
 | `make down` / `make clean` | Stop, keeping data / stop and delete volumes |
@@ -570,6 +641,9 @@ and `PUBLIC_DOMAIN` and an S3 state backend.
   Platform, then enable the app's entitlement for the tenant.
 - **Mail never arrives, or a new tenant never reaches an app.** Both depend on `worker` runtimes, which `make up`
   does not start: run `make up-all`. Locally every email is plain SMTP to Mailpit, at <http://localhost:8025>.
+- **Platform restarts with `Realm does not exist`.** A `KEYCLOAK_REALM` in `.env` that differs from the realm in
+  `ops/keycloak/realm-export.json` (`billing`) sends Platform and the smoke scripts to a realm Keycloak never imported.
+  Remove the line or set it to `billing`.
 - **A worker fails at startup on a master key.** Every `*_SECRETS_MASTER_KEY` must decode to exactly 32 bytes.
 
 ## Where to read next

@@ -141,6 +141,7 @@ module "mq" {
   billing_password       = module.secrets.values["BILLING_RABBITMQ_PASSWORD"]
   mailer_password        = module.secrets.values["MAILER_RABBITMQ_PASSWORD"]
   notification_password  = module.secrets.values["NOTIFICATION_RABBITMQ_PASSWORD"]
+  keycloak_password      = module.secrets.values["KEYCLOAK_RABBITMQ_PASSWORD"]
   mailroom_password         = module.secrets.values["MAILROOM_RABBITMQ_PASSWORD"]
   customer_password              = module.secrets.values["CRM_RABBITMQ_PASSWORD"]
   loyalty_password          = module.secrets.values["LOYALTY_RABBITMQ_PASSWORD"]
@@ -169,6 +170,8 @@ module "keycloak" {
   public_issuer                 = local.keycloak_public_issuer
   db_host                       = module.rds.address
   db_port                       = module.rds.port
+  broker_host                   = module.mq.amqp_host
+  broker_port                   = module.mq.amqp_port
   secret_arns                   = module.secrets.arns
 }
 

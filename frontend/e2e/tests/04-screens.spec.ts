@@ -54,7 +54,7 @@ test('every Platform and Billing screen works against the backends', async ({ br
   await waitForBilling(tenant.host, tenant.token)
   const seeded = await seedBilling(tenant)
 
-  await signIn(page, env.platformHost, `platform:${env.platformAdmin.email}`, env.platformAdmin.password)
+  await signIn(page, env.platformHost, env.platformAdmin.email, env.platformAdmin.password)
   for (const [section, heading] of PLATFORM_PAGES) {
     await openRemote(page, env.platformHost, 'platform', section)
     await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible()
@@ -80,7 +80,7 @@ test('every Platform and Billing screen works against the backends', async ({ br
   const tenantHealth = watchConsole(tenantPage, {
     allowStatus: (status, url) => status === 404 && url.endsWith('/api/v1/stripe/configuration'),
   })
-  await signIn(tenantPage, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
+  await signIn(tenantPage, tenant.host, tenant.adminEmail, tenant.adminPassword)
 
   for (const group of BILLING_GROUPS) {
     for (const [section, heading] of group.pages) {

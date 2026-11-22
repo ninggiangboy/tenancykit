@@ -378,6 +378,7 @@ services:
       BOOKING_BROKER_PASSWORD: ${BOOKING_RABBITMQ_PASSWORD:?set it in .env}
       WORKFLOW_BROKER_PASSWORD: ${WORKFLOW_RABBITMQ_PASSWORD:?set it in .env}
       ATTRIBUTION_BROKER_PASSWORD: ${ATTRIBUTION_RABBITMQ_PASSWORD:?set it in .env}
+      KEYCLOAK_BROKER_PASSWORD: ${KEYCLOAK_RABBITMQ_PASSWORD:?set it in .env}
     entrypoint: ["/bin/sh", "-c"]
     command: ["sh /ops/rabbitmq/declare-users.sh"]
     volumes:
@@ -397,8 +398,12 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  # Keycloak with the suite's tenant username form and sign-in theme, built from the same Dockerfile as the deployed
+  # image. The realm export is still mounted, so editing it needs no rebuild; the provider and theme do.
   keycloak:
-    image: quay.io/keycloak/keycloak:26.8.2
+    build:
+      context: .
+      dockerfile: ops/terraform/keycloak/Dockerfile
     command: ["start-dev", "--import-realm"]
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_BOOTSTRAP_ADMIN_USERNAME:-admin}
@@ -406,6 +411,12 @@ services:
       # Substituted into ops/keycloak/realm-export.json when the realm is imported.
       PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET: ${PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET:?set it in .env}
       SMOKE_CLIENT_SECRET: ${SMOKE_CLIENT_SECRET:?set it in .env}
+      # Keycloak sends the mail it renders (a password reset) as an `email.send` command to mailer, so a realm needs no
+      # SMTP settings. The broker user may write mailer.commands and nothing else; mailer must be running to deliver.
+      KC_SPI_EMAIL_SENDER__SUITE_MAILER__HOST: rabbitmq
+      KC_SPI_EMAIL_SENDER__SUITE_MAILER__PORT: "5672"
+      KC_SPI_EMAIL_SENDER__SUITE_MAILER__USERNAME: keycloak
+      KC_SPI_EMAIL_SENDER__SUITE_MAILER__PASSWORD: ${KEYCLOAK_RABBITMQ_PASSWORD:?set it in .env}
     ports:
       - "8081:8080"
     volumes:

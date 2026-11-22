@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.sun.net.httpserver.HttpExchange;
+import dev.ngb.core.id.TenantId;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,12 +24,14 @@ import org.junit.jupiter.api.Test;
 class KeycloakIdentityProviderTest {
 
     private static final String REALM = "billing";
+    private static final TenantId TENANT = new TenantId(UUID.fromString("0198c1a0-0000-7000-8000-000000000042"));
 
     private HttpServer server;
     private final List<String> requests = new ArrayList<>();
     private boolean userExists;
     private boolean deleteMissing;
     private boolean lookupEmpty;
+    private String createdBody;
 
     @BeforeEach
     void start() throws IOException {
@@ -46,7 +50,7 @@ class KeycloakIdentityProviderTest {
     void aDuplicateUsernameReturnsTheExistingSubject() {
         userExists = true;
 
-        String subject = provider().createUser("acme:ada@example.test", "ada@example.test", "Ada", "change-me");
+        String subject = provider().createUser("acme:ada@example.test", "ada@example.test", "Ada", "change-me", TENANT);
 
         assertThat(subject).isEqualTo("kc-existing");
         assertThat(requests).anyMatch(call -> call.startsWith("GET /admin/realms/" + REALM + "/users"));
@@ -56,9 +60,18 @@ class KeycloakIdentityProviderTest {
     void aNewUsernameReturnsTheCreatedSubject() {
         userExists = false;
 
-        String subject = provider().createUser("acme:ada@example.test", "ada@example.test", "Ada", "change-me");
+        String subject = provider().createUser("acme:ada@example.test", "ada@example.test", "Ada", "change-me", TENANT);
 
         assertThat(subject).isEqualTo("kc-created");
+    }
+
+    @Test
+    void aNewIdentityRecordsTheTenantItBelongsToSoKeycloakCanScopeItsMail() {
+        userExists = false;
+
+        provider().createUser("acme:ada@example.test", "ada@example.test", "Ada", "change-me", TENANT);
+
+        assertThat(createdBody).contains("\"attributes\":{\"tenant_id\":[\"" + TENANT.value() + "\"]}");
     }
 
     @Test
@@ -73,7 +86,7 @@ class KeycloakIdentityProviderTest {
         userExists = true;
         lookupEmpty = true;
 
-        assertThatThrownBy(() -> provider().createUser("acme:ada@example.test", "ada@example.test", "Ada", "change-me"))
+        assertThatThrownBy(() -> provider().createUser("acme:ada@example.test", "ada@example.test", "Ada", "change-me", TENANT))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("taken but returns no user");
     }
@@ -95,6 +108,7 @@ class KeycloakIdentityProviderTest {
             return;
         }
         if (exchange.getRequestMethod().equals("POST")) {
+            createdBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
             if (userExists) {
                 respond(exchange, 409, "{\"error\":\"User exists with same username\"}");
                 return;

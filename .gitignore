@@ -32,3 +32,9 @@ crash.log
 
 playwright-report/
 test-results/
+
+# Demo credentials the local seed keeps between runs
+ops/seed/.out/
+# Copied from the design system into the Keycloak sign-in theme for local previews; the image build does the same.
+ops/keycloak/theme/suite/login/resources/css/tokens.css
+ops/keycloak/.backup/

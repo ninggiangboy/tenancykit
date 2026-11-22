@@ -207,7 +207,8 @@ class ListingQueryTest {
         IdentityProviderPort fakeIdentityProvider() {
             return new IdentityProviderPort() {
                 @Override
-                public String createUser(String username, String email, String displayName, String temporaryPassword) {
+                public String createUser(
+                        String username, String email, String displayName, String temporaryPassword, dev.ngb.core.id.TenantId tenantId) {
                     return "kc-" + username;
                 }
 

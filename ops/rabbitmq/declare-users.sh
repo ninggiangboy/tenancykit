@@ -164,3 +164,13 @@ declare_user attribution \
   '^(attribution\\.platform-events|attribution\\.platform-events\\.dlq|attribution\\.ingest|attribution\\.ingest\\.dlq|suite\\.dlx)$' \
   '^(attribution\\.platform-events|attribution\\.platform-events\\.dlq|attribution\\.ingest|attribution\\.ingest\\.dlq|suite\\.dlx)$' \
   '^(platform\\.events|attribution\\.platform-events|attribution\\.platform-events\\.dlq|attribution\\.ingest|attribution\\.ingest\\.dlq|suite\\.dlx)$'
+
+# Keycloak sends the mail it renders (password reset) by publishing one `email.send` command to mailer.commands, as the
+# suite's other producers do. That is its whole grant: `write` names only that exchange, because a publish checks write
+# on the exchange. It declares nothing and consumes nothing, so `configure` and `read` match no resource name, and a
+# publish to any other exchange is refused. The grant is asserted exactly by `ops/smoke/isolation.sh`.
+declare_user keycloak \
+  "${KEYCLOAK_BROKER_PASSWORD:?set the keycloak broker password}" \
+  '^$' \
+  '^(mailer\\.commands)$' \
+  '^$'

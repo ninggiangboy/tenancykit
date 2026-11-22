@@ -23,10 +23,10 @@ test('the operator disables a remote and rolls back to an older version without 
   const tenantContext = await browser.newContext()
   const tenantPage = await tenantContext.newPage()
   const tenantHealth = watchConsole(tenantPage)
-  await signIn(tenantPage, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
+  await signIn(tenantPage, tenant.host, tenant.adminEmail, tenant.adminPassword)
   expect(await sidebarApps(tenantPage)).toContain('Billing')
 
-  await signIn(page, env.platformHost, `platform:${env.platformAdmin.email}`, env.platformAdmin.password)
+  await signIn(page, env.platformHost, env.platformAdmin.email, env.platformAdmin.password)
   await openRemote(page, env.platformHost, 'platform', 'remotes')
 
   // Off: the switch is optimistic, and the toast confirms the server took it.

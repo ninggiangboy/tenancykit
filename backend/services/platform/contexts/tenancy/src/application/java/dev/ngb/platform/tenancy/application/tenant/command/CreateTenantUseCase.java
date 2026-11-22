@@ -19,6 +19,7 @@ import dev.ngb.platform.tenancy.domain.tenant.TenantCode;
 import dev.ngb.platform.tenancy.domain.tenant.TenantDomain;
 import dev.ngb.platform.tenancy.domain.tenant.TenancyEvents;
 import java.time.Instant;
+import java.util.UUID;
 
 /**
  * Creates a Tenant and its default subdomain in one transaction. Runs at Platform scope.
@@ -30,7 +31,13 @@ public class CreateTenantUseCase {
 
     private static final System.Logger LOG = System.getLogger(CreateTenantUseCase.class.getName());
 
-    public record Command(String code, String name, String actor, String requestId) {}
+    /** @param id the id to create the Tenant with, or {@code null} to have one generated */
+    public record Command(String code, String name, String actor, String requestId, UUID id) {
+
+        public Command(String code, String name, String actor, String requestId) {
+            this(code, name, actor, requestId, null);
+        }
+    }
 
     private record Provisioned(Tenant tenant, TenantDomain domain) {}
 
@@ -65,7 +72,7 @@ public class CreateTenantUseCase {
                 throw new TenantCodeAlreadyUsedException(code.value());
             }
             Instant now = clock.now();
-            Tenant tenant = Tenant.create(new TenantId(ids.newId()), code, command.name(), now);
+            Tenant tenant = Tenant.create(new TenantId(command.id() != null ? command.id() : ids.newId()), code, command.name(), now);
             tenants.add(tenant);
             TenantDomain domain = TenantDomain.forTenant(
                     ids.newId(), tenant.id(), new Hostname(code.value() + "." + baseDomain), DomainKind.TENANT_SUBDOMAIN, now);

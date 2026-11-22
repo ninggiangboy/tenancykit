@@ -165,7 +165,7 @@ require_no_foreign_exchange() {
           # A producer's own exchange is not foreign to it; the caller's declaration is the judge, and only customer, loyalty,
           # booking, attribution and workflow are asserted here.
           case "${user}:${foreign}" in
-            billing:billing.events|survey:survey.events|booking:booking.events|attribution:attribution.events|workflow:workflow.events|mailer:mailer.events|mailer:mailer.commands|notification:mailer.commands|mailroom:mailer.commands|mailroom:mailer.events) ;;
+            billing:billing.events|survey:survey.events|booking:booking.events|attribution:attribution.events|workflow:workflow.events|mailer:mailer.events|mailer:mailer.commands|notification:mailer.commands|mailroom:mailer.commands|mailroom:mailer.events|keycloak:mailer.commands) ;;
             *) fail "the ${user} user's ${part} permission names the foreign exchange ${foreign}: ${granted}" ;;
           esac
           ;;
@@ -175,7 +175,7 @@ require_no_foreign_exchange() {
   echo "refused: the ${user} user names no other app's business exchange in any grant"
 }
 
-for user in platform billing mailer notification mailroom survey booking workflow attribution; do
+for user in platform billing mailer notification mailroom survey booking workflow attribution keycloak; do
   require_no_foreign_exchange "${user}"
 done
 
@@ -195,6 +195,13 @@ require_only booking read '^(platform\.events|booking\.platform-events|booking\.
 require_only attribution configure '^(attribution\.platform-events|attribution\.platform-events\.dlq|attribution\.ingest|attribution\.ingest\.dlq|suite\.dlx)$'
 require_only attribution write '^(attribution\.platform-events|attribution\.platform-events\.dlq|attribution\.ingest|attribution\.ingest\.dlq|suite\.dlx)$'
 require_only attribution read '^(platform\.events|attribution\.platform-events|attribution\.platform-events\.dlq|attribution\.ingest|attribution\.ingest\.dlq|suite\.dlx)$'
+
+# Keycloak publishes the one command it renders and nothing else: `write` is exactly the mailer's command exchange, and it
+# neither declares nor consumes anything, so `configure` and `read` match no resource name. The exact match is the
+# refusal of every other exchange, and the broker user can publish only where its grant says.
+require_only keycloak configure '^$'
+require_only keycloak write '^(mailer\.commands)$'
+require_only keycloak read '^$'
 
 # A positive control, so a script that proved only denials cannot pass while the declaration silently did nothing: each
 # new app's queue must exist once its worker has started, and its own user must be able to read it. The queue is declared

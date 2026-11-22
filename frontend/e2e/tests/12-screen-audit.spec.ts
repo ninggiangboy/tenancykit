@@ -411,12 +411,12 @@ test.describe
         const platformContext = await browser.newContext({ viewport: look.viewport, hasTouch: touch })
         const platformPage = await platformContext.newPage()
         const platformHealth = watchConsole(platformPage)
-        await signIn(platformPage, env.platformHost, `platform:${env.platformAdmin.email}`, env.platformAdmin.password)
+        await signIn(platformPage, env.platformHost, env.platformAdmin.email, env.platformAdmin.password)
 
         const tenantContext = await browser.newContext({ viewport: look.viewport, hasTouch: touch })
         const tenantPage = await tenantContext.newPage()
         const tenantHealth = watchConsole(tenantPage, { allowStatus: allowStripe404 })
-        await signIn(tenantPage, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
+        await signIn(tenantPage, tenant.host, tenant.adminEmail, tenant.adminPassword)
 
         const runs: Array<{
           page: Page
@@ -558,10 +558,10 @@ test.describe
       const look = LOOKS[0] as Look
       const context = await browser.newContext({ viewport: look.viewport })
       const platform = await context.newPage()
-      await signIn(platform, env.platformHost, `platform:${env.platformAdmin.email}`, env.platformAdmin.password)
+      await signIn(platform, env.platformHost, env.platformAdmin.email, env.platformAdmin.password)
       const tenantContext = await browser.newContext({ viewport: look.viewport })
       const page = await tenantContext.newPage()
-      await signIn(page, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
+      await signIn(page, tenant.host, tenant.adminEmail, tenant.adminPassword)
 
       const isData = (url: URL, method: string): boolean =>
         method === 'GET' && url.pathname.includes('/api/v1/') && !/\/(console|me|permissions)(\/|$)/.test(url.pathname)

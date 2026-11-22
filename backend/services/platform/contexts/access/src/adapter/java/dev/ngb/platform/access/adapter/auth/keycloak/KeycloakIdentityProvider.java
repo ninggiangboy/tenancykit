@@ -1,5 +1,6 @@
 package dev.ngb.platform.access.adapter.auth.keycloak;
 
+import dev.ngb.core.id.TenantId;
 import dev.ngb.platform.access.application.auth.port.IdentityProviderPort;
 import java.net.URI;
 import java.util.List;
@@ -25,12 +26,16 @@ public class KeycloakIdentityProvider implements IdentityProviderPort {
         this(new KeycloakAdmin(baseUrl, realm, clientId, clientSecret));
     }
 
+    /** The user attribute Keycloak's mail sender reads to scope a mail to the user's tenant. */
+    static final String TENANT_ID_ATTRIBUTE = "tenant_id";
+
     public KeycloakIdentityProvider(KeycloakAdmin admin) {
         this.admin = admin;
     }
 
     @Override
-    public String createUser(String username, String email, String displayName, String temporaryPassword) {
+    public String createUser(
+            String username, String email, String displayName, String temporaryPassword, TenantId tenantId) {
         ResponseEntity<Void> response;
         try {
             response = admin.http()
@@ -44,6 +49,7 @@ public class KeycloakIdentityProvider implements IdentityProviderPort {
                             "firstName", displayName,
                             "enabled", true,
                             "emailVerified", true,
+                            "attributes", Map.of(TENANT_ID_ATTRIBUTE, List.of(tenantId.value().toString())),
                             "credentials", List.of(Map.of(
                                     "type", "password", "value", temporaryPassword, "temporary", true))))
                     .retrieve()

@@ -11,6 +11,11 @@ locals {
     { name = "KC_PROXY_HEADERS", value = "xforwarded" },
     { name = "KC_BOOTSTRAP_ADMIN_USERNAME", value = "admin" },
     { name = "KC_LOG_LEVEL", value = "INFO" },
+    # The mail Keycloak renders leaves as an `email.send` command to mailer, so no realm holds SMTP settings.
+    { name = "KC_SPI_EMAIL_SENDER__SUITE_MAILER__HOST", value = var.broker_host },
+    { name = "KC_SPI_EMAIL_SENDER__SUITE_MAILER__PORT", value = tostring(var.broker_port) },
+    { name = "KC_SPI_EMAIL_SENDER__SUITE_MAILER__USERNAME", value = "keycloak" },
+    { name = "KC_SPI_EMAIL_SENDER__SUITE_MAILER__TLS", value = "true" },
   ]
 
   container_secrets = [
@@ -19,6 +24,7 @@ locals {
     # The realm export substitutes these two placeholders when it imports.
     { name = "PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET", valueFrom = var.secret_arns["PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET"] },
     { name = "SMOKE_CLIENT_SECRET", valueFrom = var.secret_arns["SMOKE_CLIENT_SECRET"] },
+    { name = "KC_SPI_EMAIL_SENDER__SUITE_MAILER__PASSWORD", valueFrom = var.secret_arns["KEYCLOAK_RABBITMQ_PASSWORD"] },
   ]
 }
 

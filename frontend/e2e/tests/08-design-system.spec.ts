@@ -68,7 +68,7 @@ test('the keyboard, URL state, tokens and accessibility rules hold on the invoic
   await waitForBilling(tenant.host, tenant.token)
   const seeded = await seedBilling(tenant)
 
-  await signIn(page, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
+  await signIn(page, tenant.host, tenant.adminEmail, tenant.adminPassword)
   await openRemote(page, tenant.host, 'billing', 'invoices')
   await expect(page.getByRole('heading', { name: 'Invoices', level: 1 })).toBeVisible()
 
@@ -158,7 +158,7 @@ test('the same rules hold on the role page in the Platform Shell', async ({ page
   test.setTimeout(300_000)
 
   const tenant = await provisionTenantFixture({ platform: true, prefix: 'e2e-ds' })
-  await signIn(page, env.platformHost, `platform:${env.platformAdmin.email}`, env.platformAdmin.password)
+  await signIn(page, env.platformHost, env.platformAdmin.email, env.platformAdmin.password)
   await openRemote(page, env.platformHost, 'platform', 'roles')
   await expect(page.getByRole('heading', { name: 'Roles', level: 1 })).toBeVisible()
 

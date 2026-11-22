@@ -53,7 +53,8 @@ public class CreateUserUseCase {
     public User execute(Actor actor, String requestId, Command command) {
         requireNotWider(command.scope(), actor.scope());
         String subject = createIdentity(
-                command.tenantCode(), command.email(), command.displayName(), command.temporaryPassword());
+                command.tenantCode(), command.tenantId(), command.email(), command.displayName(),
+                command.temporaryPassword());
         try {
             return persist(actor, requestId, command, subject);
         } catch (RuntimeException e) {
@@ -63,8 +64,9 @@ public class CreateUserUseCase {
     }
 
     /** Creates the Keycloak identity outside any transaction and answers its subject. */
-    public String createIdentity(String tenantCode, String email, String displayName, String temporaryPassword) {
-        return identities.createUser(tenantCode + ":" + email, email, displayName, temporaryPassword);
+    public String createIdentity(
+            String tenantCode, TenantId tenantId, String email, String displayName, String temporaryPassword) {
+        return identities.createUser(tenantCode + ":" + email, email, displayName, temporaryPassword, tenantId);
     }
 
     /**

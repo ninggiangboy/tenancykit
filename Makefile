@@ -21,9 +21,11 @@ PLATFORM_URL ?= http://platform.localhost:8090/console/
 # starting it brings up exactly the services the console talks to.
 CONSOLE_SERVICES ?= caddy
 
+comma := ,
+
 .DEFAULT_GOAL := help
 
-.PHONY: help env-check infra gateway run up up-all down clean ps logs frontend-install console-build console-publish console dev e2e smoke isolation
+.PHONY: help env-check infra gateway run up up-all down clean ps logs frontend-install console-build console-publish console dev e2e smoke isolation seed demo
 
 help: ## List the targets
 	@grep -E '^[a-zA-Z0-9_-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-18s %s\n", $$1, $$2}'
@@ -100,3 +102,8 @@ smoke: env-check ## Run the suite smoke test against the running stack
 
 isolation: env-check ## Prove no service reaches another's database or exchange
 	ops/smoke/isolation.sh
+
+seed: env-check ## Fill the running local stack with demo data (tenants, people, every app); safe to run again. ONLY=billing,loyalty limits it
+	ops/seed/seed.sh $(subst $(comma), ,$(ONLY))
+
+demo: clean up-all console seed ## From nothing to a seeded stack: wipe, start everything, publish the console, seed

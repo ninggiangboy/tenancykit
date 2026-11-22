@@ -15,8 +15,9 @@ SES in a deployment, SMTP (Mailpit) locally. It is a separate deployable (`backe
 | The only transport: every app's mail leaves through it | A notification service, a template engine, or a campaign sender: [notification.md](notification.md) and [mailroom.md](mailroom.md) own those decisions |
 
 Who is notified, which event notifies them, the templates and their translations stay outside mailer. Notification
-notifies Platform tenant users and Email notifies a Tenant's own customers: each produces the `email.send` command with
-an already-rendered subject and both bodies, and mailer remains delivery-only. See
+notifies Platform tenant users, Email notifies a Tenant's own customers and Keycloak sends its own mail (a password
+reset): each produces the `email.send` command with an already-rendered subject and both bodies, and mailer remains
+delivery-only. Keycloak's broker user `keycloak` may write `mailer.commands` and nothing else. See
 [overview-and-scope.md](overview-and-scope.md) for the dated reversals.
 
 ## Runtimes

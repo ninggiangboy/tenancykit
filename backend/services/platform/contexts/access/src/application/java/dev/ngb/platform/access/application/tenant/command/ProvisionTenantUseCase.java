@@ -1,6 +1,7 @@
 package dev.ngb.platform.access.application.tenant.command;
 
 import dev.ngb.core.id.TenantId;
+import dev.ngb.core.runtime.IdGenerator;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.ActorType;
@@ -47,10 +48,11 @@ public class ProvisionTenantUseCase {
     private final AccessPublisher publisher;
     private final PermissionCatalog catalog;
     private final UnitOfWork unitOfWork;
+    private final IdGenerator ids;
 
     public ProvisionTenantUseCase(
             TenantProvisioning tenants, CreateUserUseCase createUser, CreateRoleUseCase createRole, AccessRepository access,
-            AccessPublisher publisher, PermissionCatalog catalog, UnitOfWork unitOfWork) {
+            AccessPublisher publisher, PermissionCatalog catalog, UnitOfWork unitOfWork, IdGenerator ids) {
         this.tenants = tenants;
         this.createUser = createUser;
         this.createRole = createRole;
@@ -58,16 +60,20 @@ public class ProvisionTenantUseCase {
         this.publisher = publisher;
         this.catalog = catalog;
         this.unitOfWork = unitOfWork;
+        this.ids = ids;
     }
 
     public Provisioned execute(Command command) {
+        // The id is chosen first because the administrator's Keycloak identity is created before the tenant row exists
+        // and records the tenant it belongs to.
+        TenantId tenantId = new TenantId(ids.newId());
         if (command.adminEmail() == null || command.adminEmail().isBlank()) {
-            return provision(command, null);
+            return provision(command, tenantId, null);
         }
         String subject = createUser.createIdentity(
-                command.code(), command.adminEmail(), ADMIN_DISPLAY_NAME, command.adminTemporaryPassword());
+                command.code(), tenantId, command.adminEmail(), ADMIN_DISPLAY_NAME, command.adminTemporaryPassword());
         try {
-            return provision(command, subject);
+            return provision(command, tenantId, subject);
         } catch (RuntimeException e) {
             compensate(subject, e);
             throw e;
@@ -91,9 +97,9 @@ public class ProvisionTenantUseCase {
         }
     }
 
-    private Provisioned provision(Command command, String adminSubject) {
+    private Provisioned provision(Command command, TenantId tenantId, String adminSubject) {
         return unitOfWork.transactional(() -> {
-            TenantId tenantId = new TenantId(tenants.createTenant(command.code(), command.name()));
+            tenants.createTenant(tenantId.value(), command.code(), command.name());
             var role = createRole.execute(PLATFORM_ACTOR, PROVISIONING_REQUEST_ID, new CreateRoleUseCase.Command(
                     tenantId, PermissionScope.TENANT, ADMIN_DISPLAY_NAME, catalog.codesValidIn(PermissionScope.TENANT)));
             if (adminSubject == null) {

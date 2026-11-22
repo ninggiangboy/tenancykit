@@ -150,8 +150,8 @@ class AccessConfiguration {
     @Bean
     ProvisionTenantUseCase provisionTenantUseCase(
             TenantProvisioning tenants, CreateUserUseCase createUser, CreateRoleUseCase createRole, AccessRepository access,
-            AccessPublisher publisher, PermissionCatalog catalog, UnitOfWork unitOfWork) {
-        return new ProvisionTenantUseCase(tenants, createUser, createRole, access, publisher, catalog, unitOfWork);
+            AccessPublisher publisher, PermissionCatalog catalog, UnitOfWork unitOfWork, IdGenerator ids) {
+        return new ProvisionTenantUseCase(tenants, createUser, createRole, access, publisher, catalog, unitOfWork, ids);
     }
 
     @Bean

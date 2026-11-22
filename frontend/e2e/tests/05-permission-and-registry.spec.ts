@@ -13,7 +13,7 @@ test('a permission the caller lacks hides the control and is refused by the back
   await waitForBilling(tenant.host, tenant.token)
   const seeded = await seedBilling(tenant)
 
-  await signIn(page, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
+  await signIn(page, tenant.host, tenant.adminEmail, tenant.adminPassword)
   await openRemote(page, tenant.host, 'billing', 'invoices')
   await expect(page.getByRole('button', { name: 'Create invoice' })).toBeVisible()
 

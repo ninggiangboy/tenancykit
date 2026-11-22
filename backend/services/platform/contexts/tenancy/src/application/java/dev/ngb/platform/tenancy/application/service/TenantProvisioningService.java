@@ -13,7 +13,7 @@ public class TenantProvisioningService implements TenantProvisioning {
     }
 
     @Override
-    public UUID createTenant(String code, String name) {
-        return createTenant.execute(new CreateTenantUseCase.Command(code, name, "service/platform", "provision")).id().value();
+    public void createTenant(UUID id, String code, String name) {
+        createTenant.execute(new CreateTenantUseCase.Command(code, name, "service/platform", "provision", id));
     }
 }

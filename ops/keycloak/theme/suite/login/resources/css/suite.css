@@ -1,0 +1,604 @@
+/*
+ * The suite's sign-in. Colours, radii, control sizes and shadows are the design system's own tokens: tokens.css is
+ * copied from frontend/packages/ui/src/styles/ when the image is built (see ops/terraform/keycloak/Dockerfile), so a
+ * change to design/tokens.json reaches this page without a second copy. The tokens define light on :root and dark on
+ * `.dark`; suite-theme.js mirrors Keycloak's dark-mode class onto it.
+ */
+
+@font-face {
+  font-family: "Inter Variable";
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/inter-vietnamese-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304,
+    U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+@font-face {
+  font-family: "Inter Variable";
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/inter-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF,
+    U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Inter Variable";
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  --suite-font: "Inter Variable", var(--font-sans);
+  /* Keycloak's own variables, pointed at the design system so the pages this theme does not restyle still follow it. */
+  --pf-v5-global--FontFamily--text: var(--suite-font);
+  --pf-v5-global--FontFamily--heading: var(--suite-font);
+  --pf-v5-global--link--Color: var(--brand);
+  --pf-v5-global--link--Color--hover: var(--brand);
+}
+
+/* The page: the sidebar's quiet surface, with the card lifted off it. */
+html.login-pf,
+.login-pf body {
+  background: var(--sidebar);
+  color: var(--foreground);
+  font-family: var(--suite-font);
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: -0.006em;
+  -webkit-font-smoothing: antialiased;
+}
+.login-pf body {
+  min-height: 100dvh;
+}
+
+.pf-v5-c-login {
+  background: transparent;
+  --pf-v5-c-login__container--PaddingTop: var(--space-10);
+  --pf-v5-c-login__container--PaddingBottom: var(--space-10);
+}
+.pf-v5-c-login__container {
+  grid-template-columns: minmax(0, 400px);
+  justify-content: center;
+  padding-inline: var(--space-4);
+  align-content: center;
+  min-height: 100dvh;
+  row-gap: var(--space-6);
+}
+
+/* The product name above the card, as the sidebar writes a scope: a tile and a name. */
+.pf-v5-c-login__header {
+  display: flex;
+  justify-content: center;
+}
+html body #kc-header-wrapper,
+html body .pf-v5-c-login__header .pf-v5-c-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: auto;
+  width: auto;
+  background: none;
+  /* The stock stylesheet colours the name for its dark backdrop with !important. */
+  color: var(--foreground) !important;
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+html body #kc-header-wrapper::before {
+  content: "T";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* The card. */
+.pf-v5-c-login__main {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  --pf-v5-c-login__main--BoxShadow: var(--shadow-md);
+  --pf-v5-c-login__main--BackgroundColor: var(--card);
+}
+.pf-v5-c-login__main-header {
+  border-top: 0;
+  padding: var(--space-8) var(--space-8) 0;
+  margin: 0;
+}
+.pf-v5-c-login__main-body {
+  padding: var(--space-5) var(--space-8) var(--space-8);
+}
+.pf-v5-c-login__main-header-desc,
+.pf-v5-c-login__main-footer {
+  color: var(--muted-foreground);
+}
+.pf-v5-c-login__main-footer:empty {
+  display: none;
+}
+.pf-v5-c-title,
+#kc-page-title {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+/* Labels and fields. */
+.pf-v5-c-form {
+  --pf-v5-c-form--GridGap: var(--space-4);
+}
+.pf-v5-c-form__label,
+.pf-v5-c-form__label-text {
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+.pf-v5-c-form-control {
+  --pf-v5-c-form-control--Height: var(--size-control-md);
+  --pf-v5-c-form-control--BackgroundColor: var(--background);
+  --pf-v5-c-form-control--Color: var(--foreground);
+  --pf-v5-c-form-control--BorderRadius: var(--radius-md);
+  --pf-v5-c-form-control--BorderColor: var(--input);
+  --pf-v5-c-form-control--BorderWidth: 1px;
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  font-size: 14px;
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+/* The stock control draws its own border and underline with pseudo-elements; the wrapper carries the border now. */
+.pf-v5-c-form-control::before,
+.pf-v5-c-form-control::after {
+  display: none;
+}
+.pf-v5-c-form-control:focus-within {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px var(--ring-halo);
+  outline: none;
+}
+.pf-v5-c-form-control > input,
+.pf-v5-c-form-control > select,
+.pf-v5-c-form-control > textarea,
+.pf-v5-c-form-control input {
+  height: calc(var(--size-control-md) - 2px);
+  padding-inline: var(--space-3);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+}
+.pf-v5-c-form-control input:focus {
+  outline: none;
+}
+.pf-v5-c-form-control input::placeholder {
+  color: var(--muted-foreground);
+}
+.pf-v5-c-form-control[aria-invalid="true"],
+.pf-v5-c-form-control:has(input[aria-invalid="true"]) {
+  border-color: var(--destructive);
+}
+.pf-v5-c-form-control:has(input[aria-invalid="true"]):focus-within {
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--destructive) 28%, transparent);
+}
+.pf-v5-c-helper-text__item.pf-m-error,
+.pf-v5-c-helper-text__item.pf-m-error .pf-v5-c-helper-text__item-text,
+.pf-v5-c-form__helper-text.pf-m-error {
+  color: var(--destructive);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+/* The password's show/hide control is a quiet icon button inside the field, like the console's. */
+.pf-v5-c-input-group {
+  align-items: stretch;
+}
+.pf-v5-c-input-group .pf-v5-c-form-control {
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+.pf-v5-c-input-group .pf-v5-c-button.pf-m-control {
+  height: var(--size-control-md);
+  border: 1px solid var(--input);
+  border-inline-start: 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  background: var(--background);
+  color: var(--muted-foreground);
+  box-shadow: var(--shadow-xs);
+}
+.pf-v5-c-input-group .pf-v5-c-button.pf-m-control::before,
+.pf-v5-c-input-group .pf-v5-c-button.pf-m-control::after {
+  display: none;
+}
+/* The focus ring wraps the field and its button together instead of stopping at the seam. */
+.pf-v5-c-input-group:focus-within {
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 2px var(--ring-halo);
+}
+.pf-v5-c-input-group .pf-v5-c-form-control:focus-within {
+  box-shadow: none;
+}
+.pf-v5-c-input-group:focus-within .pf-v5-c-button.pf-m-control {
+  border-color: var(--ring);
+}
+.pf-v5-c-input-group .pf-v5-c-button.pf-m-control:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* The sign-in button: the design system's default button at its large size. */
+.pf-v5-c-button.pf-m-primary {
+  --pf-v5-c-button--m-primary--BackgroundColor: var(--primary);
+  --pf-v5-c-button--m-primary--Color: var(--primary-foreground);
+  height: var(--size-control-lg);
+  padding-inline: var(--space-5);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-xs);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+.pf-v5-c-button.pf-m-primary:hover,
+.pf-v5-c-button.pf-m-primary:focus {
+  background: color-mix(in oklab, var(--primary) 90%, transparent);
+  color: var(--primary-foreground);
+}
+.pf-v5-c-button.pf-m-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+}
+.pf-v5-c-button.pf-m-primary::after {
+  display: none;
+}
+.pf-v5-c-button.pf-m-secondary {
+  height: var(--size-control-md);
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: var(--shadow-xs);
+  font-weight: 500;
+}
+.pf-v5-c-button.pf-m-secondary::after {
+  display: none;
+}
+.pf-v5-c-button.pf-m-secondary:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.pf-v5-c-button.pf-m-link,
+.pf-v5-c-form a,
+.pf-v5-c-login__main a {
+  color: var(--link, var(--brand));
+}
+
+/* Messages: the design system's soft status colours. */
+.pf-v5-c-alert {
+  --pf-v5-c-alert--BorderRadius: var(--radius-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--muted);
+  color: var(--foreground);
+  box-shadow: none;
+}
+.pf-v5-c-alert::before {
+  display: none;
+}
+.pf-v5-c-alert.pf-m-danger {
+  background: var(--destructive-soft);
+  border-color: color-mix(in oklab, var(--destructive) 25%, transparent);
+  color: var(--destructive);
+}
+.pf-v5-c-alert.pf-m-success {
+  background: var(--success-soft);
+  border-color: color-mix(in oklab, var(--success) 25%, transparent);
+  color: var(--success);
+}
+.pf-v5-c-alert.pf-m-warning {
+  background: var(--warning-soft);
+  border-color: color-mix(in oklab, var(--warning) 25%, transparent);
+  color: var(--warning);
+}
+.pf-v5-c-alert.pf-m-info {
+  background: var(--info-soft);
+  border-color: color-mix(in oklab, var(--info) 25%, transparent);
+  color: var(--info);
+}
+.pf-v5-c-alert__title {
+  font-size: 14px;
+  font-weight: 500;
+  color: inherit;
+}
+
+/* Phones: the card fills the width and the touch targets stay at the design system's minimum. */
+@media (max-width: 480px) {
+  .pf-v5-c-login__container {
+    padding-inline: var(--space-3);
+  }
+  .pf-v5-c-login__main-header {
+    padding: var(--space-6) var(--space-5) 0;
+  }
+  .pf-v5-c-login__main-body {
+    padding: var(--space-4) var(--space-5) var(--space-6);
+  }
+  .pf-v5-c-form-control,
+  .pf-v5-c-input-group .pf-v5-c-button.pf-m-control {
+    min-height: var(--size-touch-target);
+  }
+}
+
+/*
+ * The aside that introduces the suite (template.ftl). It is a left column from 960px up, where the card gives way to a
+ * plain form on the page; below that the card stands alone, as before.
+ */
+.suite-aside {
+  display: none;
+}
+.suite-app {
+  --a: var(--app-accent);
+}
+.suite-app[data-app="billing"] {
+  --a: var(--app-billing);
+  --glyph: url("../img/apps/receipt.svg");
+}
+.suite-app[data-app="customer"] {
+  --a: var(--app-customer);
+  --glyph: url("../img/apps/contact.svg");
+}
+.suite-app[data-app="mailroom"] {
+  --a: var(--app-mailroom);
+  --glyph: url("../img/apps/mail.svg");
+}
+.suite-app[data-app="notification"] {
+  --a: var(--app-notification);
+  --glyph: url("../img/apps/bell.svg");
+}
+.suite-app[data-app="survey"] {
+  --a: var(--app-survey);
+  --glyph: url("../img/apps/clipboard.svg");
+}
+.suite-app[data-app="loyalty"] {
+  --a: var(--app-loyalty);
+  --glyph: url("../img/apps/gift.svg");
+}
+.suite-app[data-app="booking"] {
+  --a: var(--app-booking);
+  --glyph: url("../img/apps/calendar-days.svg");
+}
+.suite-app[data-app="attribution"] {
+  --a: var(--app-attribution);
+  --glyph: url("../img/apps/mouse-pointer.svg");
+}
+.suite-app[data-app="workflow"] {
+  --a: var(--app-workflow);
+  --glyph: url("../img/apps/workflow.svg");
+}
+
+.suite-aside__inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 640px;
+  min-height: 100dvh;
+  margin-inline: auto;
+  padding: var(--space-10) 56px;
+  gap: var(--space-8);
+}
+.suite-aside__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.suite-aside__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 12px;
+  line-height: 16px;
+}
+.suite-aside__copy {
+  margin-top: auto;
+}
+.suite-aside__title {
+  margin: 0;
+  max-width: 16ch;
+  font-size: 36px;
+  line-height: 42px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--foreground);
+}
+.suite-aside__lead {
+  margin: var(--space-3) 0 0;
+  max-width: 44ch;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--muted-foreground);
+}
+.suite-aside__apps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.suite-app {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-xs);
+}
+.suite-app__tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-bottom: var(--space-2);
+  border-radius: 7px;
+  background: var(--a);
+}
+.suite-app__glyph {
+  width: 14px;
+  height: 14px;
+  background: var(--app-accent-foreground);
+  -webkit-mask: var(--glyph) center / contain no-repeat;
+  mask: var(--glyph) center / contain no-repeat;
+}
+.suite-app__name {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--foreground);
+}
+.suite-app__desc {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted-foreground);
+}
+
+@keyframes suite-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .suite-aside__copy,
+  .suite-app {
+    animation: suite-rise var(--duration-slow) var(--ease-out) both;
+  }
+  .suite-app:nth-child(1) { animation-delay: 80ms; }
+  .suite-app:nth-child(2) { animation-delay: 120ms; }
+  .suite-app:nth-child(3) { animation-delay: 160ms; }
+  .suite-app:nth-child(4) { animation-delay: 200ms; }
+  .suite-app:nth-child(5) { animation-delay: 240ms; }
+  .suite-app:nth-child(6) { animation-delay: 280ms; }
+  .suite-app:nth-child(7) { animation-delay: 320ms; }
+  .suite-app:nth-child(8) { animation-delay: 360ms; }
+  .suite-app:nth-child(9) { animation-delay: 400ms; }
+}
+
+@media (min-width: 960px) {
+  html.login-pf,
+  .login-pf body {
+    background: var(--background);
+  }
+  .pf-v5-c-login {
+    display: grid;
+    grid-template-columns: minmax(0, 11fr) minmax(0, 9fr);
+    min-height: 100dvh;
+    padding: 0;
+  }
+  .suite-aside {
+    position: relative;
+    display: flex;
+    overflow: hidden;
+    background: var(--sidebar);
+    border-inline-end: 1px solid var(--border);
+  }
+  /* A wash of the brand colour in the corner keeps the panel from reading as an empty grey slab. */
+  .suite-aside::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(60% 45% at 0% 0%, color-mix(in oklab, var(--brand) 10%, transparent), transparent 70%),
+      radial-gradient(50% 40% at 100% 100%, color-mix(in oklab, var(--app-billing) 8%, transparent), transparent 70%);
+    pointer-events: none;
+  }
+  /* The name moves into the aside, and the card gives way to a plain form on the page. */
+  .pf-v5-c-login__header {
+    display: none;
+  }
+  .pf-v5-c-login__container {
+    grid-template-columns: minmax(0, 360px);
+    padding-inline: var(--space-8);
+  }
+  .pf-v5-c-login__main {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+    --pf-v5-c-login__main--BoxShadow: none;
+    --pf-v5-c-login__main--BackgroundColor: transparent;
+  }
+  .pf-v5-c-login__main-header {
+    padding: 0;
+  }
+  .pf-v5-c-login__main-body {
+    padding: var(--space-6) 0 0;
+  }
+}
+@media (min-width: 960px) and (max-width: 1180px) {
+  .suite-aside__inner {
+    padding-inline: var(--space-8);
+  }
+  .suite-aside__title {
+    font-size: 30px;
+    line-height: 36px;
+  }
+  /* Two columns of one-line rows: the nine apps stay on screen at a laptop's height. */
+  .suite-aside__apps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+  .suite-app {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+  }
+  .suite-app__tile {
+    grid-row: 1;
+    margin-bottom: 0;
+  }
+  .suite-app__desc {
+    display: none;
+  }
+}

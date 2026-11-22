@@ -47,10 +47,10 @@ test.describe('interaction audit', () => {
 
     platformContext = await browser.newContext({ viewport: DESKTOP })
     platform = await platformContext.newPage()
-    await signIn(platform, env.platformHost, `platform:${env.platformAdmin.email}`, env.platformAdmin.password)
+    await signIn(platform, env.platformHost, env.platformAdmin.email, env.platformAdmin.password)
     tenantContext = await browser.newContext({ viewport: DESKTOP })
     billing = await tenantContext.newPage()
-    await signIn(billing, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
+    await signIn(billing, tenant.host, tenant.adminEmail, tenant.adminPassword)
   })
 
   test.afterAll(async () => {

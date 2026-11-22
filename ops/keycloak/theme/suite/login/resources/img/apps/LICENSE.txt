@@ -1,0 +1,2 @@
+Icons copied from lucide-static 1.74.0, the icon set the design system uses (lucide-react).
+Lucide is ISC licensed: https://github.com/lucide-icons/lucide/blob/main/LICENSE

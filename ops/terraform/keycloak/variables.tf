@@ -93,6 +93,16 @@ variable "db_port" {
   type        = number
 }
 
+variable "broker_host" {
+  description = "Amazon MQ AMQPS host the mailer sender publishes to."
+  type        = string
+}
+
+variable "broker_port" {
+  description = "Amazon MQ AMQPS port."
+  type        = number
+}
+
 variable "secret_arns" {
   description = "Secret ARNs the container injects."
   type        = map(string)

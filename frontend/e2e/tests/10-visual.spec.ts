@@ -50,12 +50,12 @@ test('every screen holds in every look', async ({ browser }) => {
   const platformContext = await browser.newContext()
   const platformPage = await platformContext.newPage()
   watchConsole(platformPage)
-  await signIn(platformPage, env.platformHost, `platform:${env.platformAdmin.email}`, env.platformAdmin.password)
+  await signIn(platformPage, env.platformHost, env.platformAdmin.email, env.platformAdmin.password)
 
   const tenantContext = await browser.newContext()
   const tenantPage = await tenantContext.newPage()
   watchConsole(tenantPage, { allowStatus: allowStripe404 })
-  await signIn(tenantPage, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
+  await signIn(tenantPage, tenant.host, tenant.adminEmail, tenant.adminPassword)
 
   for (const [viewportName, viewport] of Object.entries(VIEWPORTS)) {
     await platformPage.setViewportSize(viewport)

@@ -11,7 +11,7 @@ test('the shell, both remotes and the design system switch to Vietnamese and kee
   const tenant = await provisionTenantFixture({ billing: true, platform: true, prefix: 'e2e-lang' })
   await waitForBilling(tenant.host, tenant.token)
 
-  await signIn(page, tenant.host, `${tenant.code}:${tenant.adminEmail}`, tenant.adminPassword)
+  await signIn(page, tenant.host, tenant.adminEmail, tenant.adminPassword)
   await page.getByRole('button', { name: 'Language' }).click()
   await page.getByRole('menuitemradio', { name: 'Vietnamese' }).click()
 

@@ -9,9 +9,9 @@ export async function waitForShell(page: Page): Promise<void> {
 /**
  * Signs in the way a person does: the shell sends an unauthenticated visitor to Keycloak, and the callback brings the
  * session back. A reload later goes through Keycloak's own session silently, which is what the console's in-memory
- * tokens cost.
+ * tokens cost. The person types an email: the console names the tenant from the host and Keycloak's form adds it.
  */
-export async function signIn(page: Page, host: string, username: string, password: string): Promise<void> {
+export async function signIn(page: Page, host: string, email: string, password: string): Promise<void> {
   await page.goto(env.consoleUrl(host))
   // The shell either resolves the Keycloak session on its own or sends the browser to the sign-in form; both can
   // happen a moment after the first document, so neither the URL nor a single locator decides.
@@ -22,7 +22,7 @@ export async function signIn(page: Page, host: string, username: string, passwor
     frame.waitFor({ state: 'visible', timeout: 30_000 }).catch(() => undefined),
   ])
   if (await form.isVisible()) {
-    await form.fill(username)
+    await form.fill(email)
     await page.locator('#password').fill(password)
     await page.locator('#kc-login').click()
     // The callback page is not the shell yet: the boot finishes on `/console/`, so wait for that rather than for the

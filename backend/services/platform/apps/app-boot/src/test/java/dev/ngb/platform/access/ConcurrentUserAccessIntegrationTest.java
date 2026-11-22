@@ -189,7 +189,8 @@ class ConcurrentUserAccessIntegrationTest {
         dev.ngb.platform.access.application.auth.port.IdentityProviderPort fakeIdentityProvider() {
             return new dev.ngb.platform.access.application.auth.port.IdentityProviderPort() {
                 @Override
-                public String createUser(String username, String email, String displayName, String temporaryPassword) {
+                public String createUser(
+                        String username, String email, String displayName, String temporaryPassword, dev.ngb.core.id.TenantId tenantId) {
                     return "kc-" + username;
                 }
 

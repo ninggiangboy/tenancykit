@@ -168,7 +168,8 @@ class BootstrapAdminRepairIntegrationTest {
         private final List<String> created = new CopyOnWriteArrayList<>();
 
         @Override
-        public String createUser(String username, String email, String displayName, String temporaryPassword) {
+        public String createUser(
+                        String username, String email, String displayName, String temporaryPassword, dev.ngb.core.id.TenantId tenantId) {
             created.add(username);
             return "kc-" + username;
         }

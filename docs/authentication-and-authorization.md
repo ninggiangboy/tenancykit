@@ -13,13 +13,64 @@ Keycloak is the shared Identity Provider for the whole suite.
 - A user's identity is distinguished per Tenant. Email is never the sole identifier across the suite, and the same
   email may exist in several Tenants under independent identities.
 
-Keycloak is configured to allow duplicate emails. Usernames are unique within a realm, so the login identifier is the
-Tenant-scoped username `{tenant-code}:{email}`, built from the hostname; Platform users use the reserved code
-`platform`. The realm is defined by `ops/keycloak/realm-export.json`.
+Keycloak is configured to allow duplicate emails. Usernames are unique within a realm, so the stored identifier is the
+Tenant-scoped username `{tenant-code}:{email}`; Platform users use the reserved code `platform`. The realm is defined
+by `ops/keycloak/realm-export.json`.
+
+A person never types that prefix. The console takes the tenant from its host (the first label: `acme.example.com` is
+`acme`, `platform.example.com` is `platform`) and adds `tenant=<code>` to the authorization request. The realm's
+browser flow, `suite-browser`, uses the Tenant Username Password Form, a Keycloak provider built from
+`ops/keycloak/provider/`, which looks the person up as `<tenant>:<typed email>`. The sign-in page, from the `suite`
+login theme in `ops/keycloak/theme/`, says which host it is signing in to and asks for an email. Whatever the person
+types is always prefixed, so `other:email` typed at one tenant's host finds no one, and an email shared by two tenants
+reaches only the host's own identity. The tenant is a request parameter a visitor could change, which is harmless: it
+selects which identity to check a password for, and the apps still require the token's `tenant_code` to match the host.
+
+The sign-in theme follows the design system: the image build copies `frontend/packages/ui/src/styles/tokens.css` into
+it, so colours, radii, control sizes and dark mode come from `design/tokens.json`, and the page uses the console's
+Inter font. From 960px up the page has an aside that introduces the suite and its nine apps, each in its design-system
+accent; below that it is the card alone. The aside makes the theme carry its own copy of `template.ftl` (the keycloak.v2
+frame plus the aside), so check it against the stock template on every Keycloak upgrade, as with `login.ftl`.
+
+Without a tenant parameter (a visit straight to Keycloak, the `suite-smoke` client, a bare host such as `localhost`) the
+form is the stock one and takes the full `tenant:email` username. A `tenant` that is not a well-formed tenant code is
+treated as absent. Both are built into the Keycloak image by `ops/terraform/keycloak/Dockerfile`, which Compose builds
+too. The realm import runs only when the realm does not exist, so an existing realm needs the same change by hand: in the
+admin console, duplicate the browser flow under Authentication, replace its Username Password Form with the Tenant
+Username Password Form, bind the copy as the browser flow, and set the realm's login theme to `suite`. Until then the old form keeps working and still
+takes the full username.
 
 Platform creates the Keycloak identity when it creates a user, and removes it again if storing the user fails. A new
 identity has a temporary password that Keycloak refuses to hand out from a direct grant until it is changed; a user
 signs in through the normal flow and is then active.
+
+## Forgetting a password
+
+The sign-in page links to the realm's reset-credentials flow, `suite-reset-credentials` (`resetPasswordAllowed` is on).
+Its first step is the Tenant Choose User step from the same provider: the person types only the email, and the user
+looked up is `<tenant>:<typed email>`, from the same `tenant` parameter the sign-in used. An email with no account, or a
+tenant that does not exist, gets the same "you should receive an email" answer as a known one and sends nothing, so the
+page does not say who has an account. The link in the mail is valid for 15 minutes
+(`actionTokenGeneratedByUserLifespan.reset-credentials` in the realm), and the flow also resets a one-time code when the
+person has one.
+
+The realm holds no SMTP settings. The mail Keycloak renders leaves through the provider's email sender, which publishes
+an `email.send` command to `mailer.commands` as the broker user `keycloak`, so [mailer](mailer.md) stays the only
+service that calls AWS and every reset appears in its per-tenant delivery ledger. The sender needs the tenant's id, which
+Keycloak does not otherwise know, so Platform writes it on every identity as the admin-only attribute `tenant_id` when it
+creates the identity (a new Tenant's id is chosen before its administrator's identity is created). A user without one
+cannot be mailed: Keycloak logs `has no tenant_id attribute` and still shows the neutral answer. Identities created
+before the attribute existed are filled in by `ops/keycloak/backfill-tenant-id.sh`, which reads `code,id` pairs from
+standard input, changes nothing unless `APPLY=1`, and writes each user's previous representation to a backup directory
+first.
+
+The sender is configured on the server, not the realm, with `KC_SPI_EMAIL_SENDER__SUITE_MAILER__<NAME>` variables
+(`HOST`, `PORT`, `USERNAME`, `PASSWORD`, `VHOST`, `TLS`, `EXCHANGE`, `ROUTING_KEY`, `FROM_KEY`); Compose and the
+Terraform task set the first four, and Terraform turns `TLS` on for Amazon MQ. A failed publish is an error Keycloak
+logs (`failedToSendPwdResetEmail`) while the person still sees the neutral answer. Mailer has to be running for a mail
+to be delivered. As with the browser flow, the realm import runs only when the realm does not exist, so an existing
+realm needs the reset flow added and bound by hand, the `tenant_id` attribute declared in its user profile, and the
+sender's variables set.
 
 ## The console's sign-in
 
