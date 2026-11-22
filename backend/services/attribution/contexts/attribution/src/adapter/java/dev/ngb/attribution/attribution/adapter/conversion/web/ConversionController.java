@@ -15,6 +15,8 @@ import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -36,6 +38,10 @@ import org.springframework.web.bind.annotation.RestController;
  * {@code 200} on a replay of the same key and body; a forged click token is stored unattributed rather than rejected,
  * because the Tenant's flow must not fail. Reading a conversion shows its chain and credits.
  */
+@Tag(
+        name = "Conversions",
+        description =
+                "The postback a tenant's order flow calls and the read side of conversions with their credits.")
 @RestController
 @RequestMapping("/api/v1/conversions")
 public class ConversionController {
@@ -56,6 +62,15 @@ public class ConversionController {
         this.unitOfWork = unitOfWork;
     }
 
+    @Operation(
+            summary = "Record a conversion",
+            description =
+                    "The postback a tenant's own order flow calls when a goal (`goalKey`) was reached, with the `clickId` "
+                    + "or `visitorId`, the `value`, `currency` and `occurredAt`. It answers `201` the first time and `200` "
+                    + "on a replay of the same `Idempotency-Key` and body. A forged or foreign click token is stored as "
+                    + "`UNATTRIBUTED` rather than rejected, because the tenant's order flow must not fail when its own "
+                    + "reporting is imperfect; a request with neither a click nor a visitor is `400`. Requires "
+                    + "`attribution:conversion:write`.")
     @PostMapping
     @RequiresPermission(AttributionPermissions.CONVERSION_WRITE)
     ResponseEntity<ConversionResponse> create(
@@ -74,6 +89,11 @@ public class ConversionController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link ConversionListing}. */
+    @Operation(
+            summary = "List conversions",
+            description =
+                    "Pages through the tenant's conversions with their credits, with the list-query contract's filtering, "
+                    + "sorting and paging. Requires `attribution:report:read`.")
     @GetMapping
     @Listing(ConversionListing.class)
     @RequiresPermission(AttributionPermissions.REPORT_READ)
@@ -81,6 +101,11 @@ public class ConversionController {
         return queries.list(query).map(ConversionResponse::ofView);
     }
 
+    @Operation(
+            summary = "Get a conversion",
+            description =
+                    "Returns one conversion with its chain of touches and the credit each campaign received. An unknown "
+                    + "id answers `404`. Requires `attribution:report:read`.")
     @GetMapping("/{id}")
     @RequiresPermission(AttributionPermissions.REPORT_READ)
     ConversionResponse get(@PathVariable UUID id) {

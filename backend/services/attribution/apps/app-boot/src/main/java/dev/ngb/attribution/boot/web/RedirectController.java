@@ -18,6 +18,8 @@ import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.core.visitor.DeviceClass;
 import dev.ngb.core.visitor.UserAgentClassifier;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -45,6 +47,11 @@ import org.springframework.web.bind.annotation.RestController;
  * {@code 404}; expired and cap-reached answer {@code 410}; a protected link answers {@code 401} and takes its password
  * by {@code POST}. Nothing here logs the address, the user agent, the token, the destination's query or a password.
  */
+@Tag(
+        name = "Link redirects",
+        description =
+                "The public redirect of a tracked link: records a click and answers 302, with refusals that reveal "
+                + "little.")
 @RestController
 public class RedirectController {
 
@@ -107,6 +114,14 @@ public class RedirectController {
         }
     }
 
+    @Operation(
+            summary = "Follow a tracked link",
+            description =
+                    "The public redirect of a tracked link. It resolves the link `slug`, applies its rules and answers "
+                    + "`302` to the destination with a signed click id appended, recording one click; `e` names the entry "
+                    + "point. Refusals reveal as little as possible: an unknown, archived, paused or not-entitled link "
+                    + "answers `404`, an expired or capped link `410`, and a password-protected link `401`, which takes its "
+                    + "password by `POST`. Measurement never fails or slows the redirect. Public: no suite token is needed.")
     @PublicEndpoint
     @RequestMapping(path = "/go/{slug}", method = RequestMethod.GET)
     public void redirect(
@@ -118,6 +133,11 @@ public class RedirectController {
     }
 
     /** Answered like {@code GET} without recording a click, so a link preview's probe spends nothing. */
+    @Operation(
+            summary = "Probe a tracked link",
+            description =
+                    "Answers like `GET /go/{slug}` without recording a click, so a link preview's probe spends nothing, "
+                    + "including a capped link's budget. Public: no suite token is needed.")
     @PublicEndpoint
     @RequestMapping(path = "/go/{slug}", method = RequestMethod.HEAD)
     public void head(
@@ -129,6 +149,11 @@ public class RedirectController {
     }
 
     /** The unlock: a protected link answers {@code 302} on a correct password and {@code 403} otherwise. */
+    @Operation(
+            summary = "Unlock a password-protected link",
+            description =
+                    "Takes the link's `password` as JSON and answers `302` to the destination, with the click recorded, "
+                    + "when it is right, and `403` otherwise. Public: no suite token is needed.")
     @PublicEndpoint
     @PostMapping(path = "/go/{slug}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public void unlock(

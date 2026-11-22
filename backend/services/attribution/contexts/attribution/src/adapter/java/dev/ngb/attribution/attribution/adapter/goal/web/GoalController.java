@@ -15,6 +15,8 @@ import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -30,6 +32,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** A tenant's goals: the conversion keys its site and its backend report, edited under {@code If-Match}. */
+@Tag(
+        name = "Goals",
+        description =
+                "The conversion keys a tenant's site and backend report.")
 @RestController
 @RequestMapping("/api/v1/goals")
 public class GoalController {
@@ -47,6 +53,11 @@ public class GoalController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link GoalListing}. */
+    @Operation(
+            summary = "List goals",
+            description =
+                    "Pages through the tenant's goals, with the list-query contract's filtering, sorting and paging. "
+                    + "Requires `attribution:goal:read`.")
     @GetMapping
     @Listing(GoalListing.class)
     @RequiresPermission(AttributionPermissions.GOAL_READ)
@@ -54,6 +65,12 @@ public class GoalController {
         return queries.list(query).map(GoalResponse::ofView);
     }
 
+    @Operation(
+            summary = "Create a goal",
+            description =
+                    "Creates a goal: a conversion `key` the tenant's site and backend both report, a name, and an "
+                    + "optional default value and currency. Two goals in one tenant cannot share a key. Answers `201`. "
+                    + "Requires `attribution:goal:manage`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(AttributionPermissions.GOAL_MANAGE)
@@ -62,6 +79,11 @@ public class GoalController {
                 request.key(), request.name(), decimal(request.defaultValue()), request.currency())));
     }
 
+    @Operation(
+            summary = "Get a goal",
+            description =
+                    "Returns one goal; its version is also the response's `ETag`. An unknown id answers `404`. Requires "
+                    + "`attribution:goal:read`.")
     @GetMapping("/{id}")
     @RequiresPermission(AttributionPermissions.GOAL_READ)
     ResponseEntity<GoalResponse> get(@PathVariable UUID id) {
@@ -69,6 +91,11 @@ public class GoalController {
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(goal.version())).body(GoalResponse.ofView(goal));
     }
 
+    @Operation(
+            summary = "Edit a goal",
+            description =
+                    "Changes the goal's name, default value and currency. Pass the current `ETag` in `If-Match`; a stale "
+                    + "version is refused with `412`. Requires `attribution:goal:manage`.")
     @PatchMapping("/{id}")
     @ConditionalUpdate
     @RequiresPermission(AttributionPermissions.GOAL_MANAGE)

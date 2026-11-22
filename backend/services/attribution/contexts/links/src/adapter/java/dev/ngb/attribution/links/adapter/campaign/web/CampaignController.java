@@ -16,6 +16,8 @@ import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -35,6 +37,10 @@ import org.springframework.web.bind.annotation.RestController;
  * A tenant's campaigns. An update is guarded by {@code If-Match}, so a concurrent edit answers 412 with the current tag
  * rather than silently overwriting the other one; a change of the model or the window is what starts a recompute.
  */
+@Tag(
+        name = "Campaigns",
+        description =
+                "A tenant's campaigns, their attribution model and window.")
 @RestController
 @RequestMapping("/api/v1/campaigns")
 class CampaignController {
@@ -56,6 +62,11 @@ class CampaignController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link CampaignListing}. */
+    @Operation(
+            summary = "List campaigns",
+            description =
+                    "Pages through the tenant's campaigns, with the list-query contract's filtering, sorting and paging. "
+                    + "Requires `attribution:campaign:read`.")
     @GetMapping
     @Listing(CampaignListing.class)
     @RequiresPermission(AttributionPermissions.CAMPAIGN_READ)
@@ -63,6 +74,12 @@ class CampaignController {
         return queries.list(query).map(CampaignResponse::of);
     }
 
+    @Operation(
+            summary = "Create a campaign",
+            description =
+                    "Creates a campaign with a name, a channel, an attribution model, a window in days, a currency and "
+                    + "optional start and end dates. The `slug` can be omitted; one is derived from the name, and a "
+                    + "collision falls back to a generated one. Answers `201`. Requires `attribution:campaign:manage`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(AttributionPermissions.CAMPAIGN_MANAGE)
@@ -78,6 +95,11 @@ class CampaignController {
                 request.endsOn())));
     }
 
+    @Operation(
+            summary = "Get a campaign",
+            description =
+                    "Returns one campaign; its version is also the response's `ETag`. An unknown id answers `404`. "
+                    + "Requires `attribution:campaign:read`.")
     @GetMapping("/{id}")
     @RequiresPermission(AttributionPermissions.CAMPAIGN_READ)
     ResponseEntity<CampaignResponse> get(@PathVariable UUID id) {
@@ -85,6 +107,13 @@ class CampaignController {
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(view.version())).body(CampaignResponse.of(view));
     }
 
+    @Operation(
+            summary = "Edit a campaign",
+            description =
+                    "Changes the campaign's properties. A change of the attribution model or the window is stored at once "
+                    + "and starts a recompute of its conversions. The currency is fixed once spend or a conversion exists. "
+                    + "Pass the current `ETag` in `If-Match`; a stale version is refused with `412`. Requires "
+                    + "`attribution:campaign:manage`.")
     @PatchMapping("/{id}")
     @ConditionalUpdate
     @RequiresPermission(AttributionPermissions.CAMPAIGN_MANAGE)
@@ -107,6 +136,10 @@ class CampaignController {
                 .body(CampaignResponse.of(campaign));
     }
 
+    @Operation(
+            summary = "Archive a campaign",
+            description =
+                    "Archives the campaign. Archiving is terminal. Answers `204`. Requires `attribution:campaign:manage`.")
     @PostMapping("/{id}/archive")
     @RequiresPermission(AttributionPermissions.CAMPAIGN_MANAGE)
     @ResponseStatus(HttpStatus.NO_CONTENT)

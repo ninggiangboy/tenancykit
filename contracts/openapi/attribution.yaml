@@ -8,25 +8,75 @@ info:
 servers:
 - url: /attribution
   description: "Any tenant hostname: <tenant-code>.<base-domain>/attribution"
+tags:
+- name: Link redirects
+  description: "The public redirect of a tracked link: records a click and answers\
+    \ 302, with refusals that reveal little."
+- name: Campaign spend
+  description: "A campaign's advertising cost: set manual days, bulk set, delete a\
+    \ manual day and read the rows."
+- name: Conversions
+  description: The postback a tenant's order flow calls and the read side of conversions
+    with their credits.
+- name: Data subjects
+  description: Erasing one visitor's collected data.
+- name: Campaigns
+  description: "A tenant's campaigns, their attribution model and window."
+- name: Health check
+  description: "Answers the caller's tenant identity, proving the token, tenant scope\
+    \ and permission check are wired."
+- name: Attribution settings
+  description: "The click parameter, the origins allowed to collect and the default\
+    \ attribution window."
+- name: Link statistics
+  description: A link's click totals and last thirty days.
+- name: Reports
+  description: "Time series, breakdowns, funnel, cohorts and cost reports, each as\
+    \ JSON or CSV."
+- name: Goals
+  description: The conversion keys a tenant's site and backend report.
+- name: Tracked links
+  description: "Create, edit, pause, resume and archive tracked links, mint personal\
+    \ links in bulk and fetch a QR code."
+- name: Page-view collection
+  description: The public endpoint a tenant's page snippet posts page views to. Anything
+    unacceptable answers 204 without storing.
 paths:
   /api/v1/settings:
     get:
       tags:
-      - settings-controller
+      - Attribution settings
+      summary: Get the tenant's attribution settings
+      description: "Returns the click parameter name, the origins allowed to post\
+        \ to the collection endpoint and the default attribution window in days. Reading\
+        \ needs `attribution:settings:manage`, the same code as changing them, because\
+        \ the three values decide how the tenant's links behave and who may post to\
+        \ its collection endpoint."
       operationId: get
       responses:
         "200":
-          description: OK
+          description: The tenant's attribution settings.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/SettingsView"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:settings:manage
     put:
       tags:
-      - settings-controller
+      - Attribution settings
+      summary: Replace the tenant's attribution settings
+      description: "Stores `click_param`, `allowed_origins` and `default_window_days`.\
+        \ Each origin must be an absolute `https` origin (or `http://localhost` for\
+        \ development); a wildcard, a path or a bare host answers `400`, because a\
+        \ collection endpoint that accepted a wildcard would let any page post another\
+        \ visitor's events. Requires `attribution:settings:manage`."
       operationId: put
       requestBody:
+        description: The settings to store.
         content:
           application/json:
             schema:
@@ -34,31 +84,44 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: The tenant's attribution settings.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/SettingsView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:settings:manage
   /api/v1/campaigns/{campaignId}/spend/{day}:
     put:
       tags:
-      - spend-controller
+      - Campaign spend
+      summary: Set a campaign's spend for one day
+      description: "Sets the manual advertising cost of the campaign on `day`, with\
+        \ optional impressions and clicks. A currency the campaign does not use is\
+        \ refused. Requires `attribution:spend:manage`."
       operationId: set
       parameters:
       - name: campaignId
         in: path
+        description: The id of the campaign.
         required: true
         schema:
           type: string
           format: uuid
       - name: day
         in: path
+        description: "The day, as `YYYY-MM-DD`."
         required: true
         schema:
           type: string
           format: date
       requestBody:
+        description: The cost of one day.
         content:
           application/json:
             schema:
@@ -66,25 +129,38 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: The cost of one day.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/SpendResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:spend:manage
     delete:
       tags:
-      - spend-controller
+      - Campaign spend
+      summary: Delete a campaign's manual spend for one day
+      description: "Deletes only the manual cost of the campaign on `day`, leaving\
+        \ any imported row in place. Answers `204`. Requires `attribution:spend:manage`."
       operationId: delete
       parameters:
       - name: campaignId
         in: path
+        description: The id of the campaign.
         required: true
         schema:
           type: string
           format: uuid
       - name: day
         in: path
+        description: "The day, as `YYYY-MM-DD`."
         required: true
         schema:
           type: string
@@ -92,98 +168,190 @@ paths:
       responses:
         "204":
           description: No Content
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:spend:manage
   /t/v1/events:
     post:
       tags:
-      - collect-controller
+      - Page-view collection
+      summary: Collect page views from a tenant's site
+      description: "The public endpoint a tenant's page snippet posts a batch of page\
+        \ views, a session and a `consent` flag to. Everything not acceptable (a bad\
+        \ signature, a foreign origin, an oversize body, a batch over the limit, a\
+        \ rate refusal) answers the same `204` without storing anything, so a probe\
+        \ learns nothing. With `consent=false` the server drops the visitor and session\
+        \ ids, so no identifier reaches a row. An event is stored only when its click\
+        \ id is a token this app signed. Public: no suite token is needed."
       operationId: collect
       requestBody:
+        description: A batch of page views from a tenant's page.
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/EventBatch"
       responses:
-        "200":
-          description: OK
+        "204":
+          description: "Always, whether or not the batch was stored, so a probe learns\
+            \ nothing."
       x-public: true
   /go/{slug}:
     get:
       tags:
-      - redirect-controller
+      - Link redirects
+      summary: Follow a tracked link
+      description: "The public redirect of a tracked link. It resolves the link `slug`,\
+        \ applies its rules and answers `302` to the destination with a signed click\
+        \ id appended, recording one click; `e` names the entry point. Refusals reveal\
+        \ as little as possible: an unknown, archived, paused or not-entitled link\
+        \ answers `404`, an expired or capped link `410`, and a password-protected\
+        \ link `401`, which takes its password by `POST`. Measurement never fails\
+        \ or slows the redirect. Public: no suite token is needed."
       operationId: redirect
       parameters:
       - name: slug
         in: path
+        description: "The slug of the tracked link, the last part of its public URL."
         required: true
         schema:
           type: string
       - name: e
         in: query
+        description: "The entry point that sent the visitor, recorded with the click."
         required: false
         schema:
           type: string
       responses:
-        "200":
-          description: OK
+        "302":
+          description: "Redirects to the destination with the signed click id appended,\
+            \ and records one click."
+        "401":
+          description: "The link is protected by a password, which is given by `POST`\
+            \ to the same URL."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "404":
+          description: "The link does not exist, is archived or paused, or the tenant\
+            \ is not entitled to the app. All of them answer the same."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "410":
+          description: The link has expired or reached its click cap.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-public: true
     post:
       tags:
-      - redirect-controller
+      - Link redirects
+      summary: Unlock a password-protected link
+      description: "Takes the link's `password` as JSON and answers `302` to the destination,\
+        \ with the click recorded, when it is right, and `403` otherwise. Public:\
+        \ no suite token is needed."
       operationId: unlock
       parameters:
       - name: slug
         in: path
+        description: "The slug of the tracked link, the last part of its public URL."
         required: true
         schema:
           type: string
       - name: e
         in: query
+        description: "The entry point that sent the visitor, recorded with the click."
         required: false
         schema:
           type: string
       requestBody:
+        description: The password of a protected link.
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/UnlockRequest"
       responses:
-        "200":
-          description: OK
+        "302":
+          description: "The password is right: redirects to the destination and records\
+            \ the click."
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: The password is wrong.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "404":
+          description: "The link does not exist, is archived or paused, or the tenant\
+            \ is not entitled to the app. All of them answer the same."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "410":
+          description: The link has expired or reached its click cap.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-public: true
     head:
       tags:
-      - redirect-controller
+      - Link redirects
+      summary: Probe a tracked link
+      description: "Answers like `GET /go/{slug}` without recording a click, so a\
+        \ link preview's probe spends nothing, including a capped link's budget. Public:\
+        \ no suite token is needed."
       operationId: head
       parameters:
       - name: slug
         in: path
+        description: "The slug of the tracked link, the last part of its public URL."
         required: true
         schema:
           type: string
       - name: e
         in: query
+        description: "The entry point that sent the visitor, recorded with the click."
         required: false
         schema:
           type: string
       responses:
-        "200":
-          description: OK
+        "302":
+          description: Redirects like `GET` without recording a click.
+        "404":
+          description: "The link does not exist, is archived or paused, or the tenant\
+            \ is not entitled to the app. All of them answer the same."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "410":
+          description: The link has expired or reached its click cap.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-public: true
   /api/v1/links:
     get:
       tags:
-      - link-controller
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+      - Tracked links
+      summary: List links
+      description: |-
+        Pages through the tenant's tracked links, with the list-query contract's filtering, sorting and paging. Requires `attribution:link:read`.
+
+        **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
       operationId: list
       parameters:
       - name: "filter[campaign_id][eq]"
@@ -665,7 +833,8 @@ paths:
           - cursor
       responses:
         "200":
-          description: OK
+          description: "A page of link response rows, with the paging facts when the\
+            \ request asked for them."
           content:
             '*/*':
               schema:
@@ -673,12 +842,28 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:link:read
     post:
       tags:
-      - link-controller
+      - Tracked links
+      summary: Create a tracked link
+      description: "Creates a link under a campaign with one or more destinations,\
+        \ UTM parameters, an optional expiry, click cap and password. Every destination\
+        \ is validated at save: one that points at the suite or a private address\
+        \ is refused, because that check is what stops a link becoming a phishing\
+        \ relay. The password is stored as a hash and never returned. The link's public\
+        \ URL works at once. Answers `201`. Requires `attribution:link:manage`."
       operationId: create
       requestBody:
+        description: "The link to create, or its new properties."
         content:
           application/json:
             schema:
@@ -686,20 +871,29 @@ paths:
         required: true
       responses:
         "201":
-          description: Created
+          description: A tracked link.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/LinkResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:link:manage
   /api/v1/links/{id}/resume:
     post:
       tags:
-      - link-controller
+      - Tracked links
+      summary: Resume a link
+      description: Makes a paused link redirect again. Answers `204`. Requires `attribution:link:manage`.
       operationId: resume
       parameters:
       - name: id
         in: path
+        description: The id of the link.
         required: true
         schema:
           type: string
@@ -707,15 +901,27 @@ paths:
       responses:
         "204":
           description: No Content
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:link:manage
   /api/v1/links/{id}/pause:
     post:
       tags:
-      - link-controller
+      - Tracked links
+      summary: Pause a link
+      description: Stops the link redirecting at once; only an active link redirects.
+        Answers `204`. Requires `attribution:link:manage`.
       operationId: pause
       parameters:
       - name: id
         in: path
+        description: The id of the link.
         required: true
         schema:
           type: string
@@ -723,15 +929,27 @@ paths:
       responses:
         "204":
           description: No Content
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:link:manage
   /api/v1/links/{id}/archive:
     post:
       tags:
-      - link-controller
+      - Tracked links
+      summary: Archive a link
+      description: Archives the link so it no longer redirects. Answers `204`. Requires
+        `attribution:link:manage`.
       operationId: archive
       parameters:
       - name: id
         in: path
+        description: The id of the link.
         required: true
         schema:
           type: string
@@ -739,19 +957,37 @@ paths:
       responses:
         "204":
           description: No Content
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:link:manage
   /api/v1/links/bulk:
     post:
       tags:
-      - link-controller
+      - Tracked links
+      summary: Create personal links in bulk
+      description: "Mints one personal link per row against a shared destination and\
+        \ UTM, in one transaction: every row produces a link or none does. A replay\
+        \ of the same `Idempotency-Key` with the same body returns the links already\
+        \ created; the same key with a different body is refused. Answers `201`. Requires\
+        \ `attribution:link:manage`."
       operationId: bulk
       parameters:
       - name: Idempotency-Key
         in: header
+        description: "A key the caller chooses so a retry is safe: the same key with\
+          \ the same body answers the first result instead of acting twice, and the\
+          \ same key with a different body is a conflict."
         required: false
         schema:
           type: string
       requestBody:
+        description: "The personal links to mint, one per row."
         content:
           application/json:
             schema:
@@ -766,21 +1002,24 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PersonalLink"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/IdempotencyConflict"
       x-required-permission: attribution:link:manage
   /api/v1/goals:
     get:
       tags:
-      - goal-controller
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+      - Goals
+      summary: List goals
+      description: |-
+        Pages through the tenant's goals, with the list-query contract's filtering, sorting and paging. Requires `attribution:goal:read`.
+
+        **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
       operationId: list_1
       parameters:
       - name: "filter[created_at][eq]"
@@ -1149,7 +1388,8 @@ paths:
           - cursor
       responses:
         "200":
-          description: OK
+          description: "A page of goal response rows, with the paging facts when the\
+            \ request asked for them."
           content:
             '*/*':
               schema:
@@ -1157,12 +1397,25 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:goal:read
     post:
       tags:
-      - goal-controller
+      - Goals
+      summary: Create a goal
+      description: "Creates a goal: a conversion `key` the tenant's site and backend\
+        \ both report, a name, and an optional default value and currency. Two goals\
+        \ in one tenant cannot share a key. Answers `201`. Requires `attribution:goal:manage`."
       operationId: create_1
       requestBody:
+        description: "The goal to create, or its new properties."
         content:
           application/json:
             schema:
@@ -1170,18 +1423,30 @@ paths:
         required: true
       responses:
         "201":
-          description: Created
+          description: A goal.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/GoalResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:goal:manage
   /api/v1/data-subjects/erasure:
     post:
       tags:
-      - data-subject-controller
+      - Data subjects
+      summary: Erase a visitor's collected data
+      description: "Erases one visitor's (`visitor_id`) collected rows: page events,\
+        \ sessions, bindings and the clicks only that visitor was bound to, and answers\
+        \ how many of each were removed. Rollups hold aggregates only, so a report's\
+        \ totals stay and the person does not. Requires `attribution:data:erase`."
       operationId: erase
       requestBody:
+        description: The visitor to erase.
         content:
           application/json:
             schema:
@@ -1189,26 +1454,27 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: How many rows of each kind were removed.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ErasureView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:data:erase
   /api/v1/conversions:
     get:
       tags:
-      - conversion-controller
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+      - Conversions
+      summary: List conversions
+      description: |-
+        Pages through the tenant's conversions with their credits, with the list-query contract's filtering, sorting and paging. Requires `attribution:report:read`.
+
+        **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
       operationId: list_2
       parameters:
       - name: "filter[click_id][eq]"
@@ -1628,7 +1894,8 @@ paths:
           - cursor
       responses:
         "200":
-          description: OK
+          description: "A page of conversion response rows, with the paging facts\
+            \ when the request asked for them."
           content:
             '*/*':
               schema:
@@ -1636,18 +1903,38 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
     post:
       tags:
-      - conversion-controller
+      - Conversions
+      summary: Record a conversion
+      description: "The postback a tenant's own order flow calls when a goal (`goalKey`)\
+        \ was reached, with the `clickId` or `visitorId`, the `value`, `currency`\
+        \ and `occurredAt`. It answers `201` the first time and `200` on a replay\
+        \ of the same `Idempotency-Key` and body. A forged or foreign click token\
+        \ is stored as `UNATTRIBUTED` rather than rejected, because the tenant's order\
+        \ flow must not fail when its own reporting is imperfect; a request with neither\
+        \ a click nor a visitor is `400`. Requires `attribution:conversion:write`."
       operationId: create_2
       parameters:
       - name: Idempotency-Key
         in: header
+        description: "A key the caller chooses so a retry is safe: the same key with\
+          \ the same body answers the first result instead of acting twice, and the\
+          \ same key with a different body is a conflict."
         required: false
         schema:
           type: string
       requestBody:
+        description: The conversion to record.
         content:
           application/json:
             schema:
@@ -1655,26 +1942,36 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: "The same `Idempotency-Key` and body were seen before, so the\
+            \ first conversion is returned."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ConversionResponse"
+        "201":
+          description: The conversion was recorded.
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ConversionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/IdempotencyConflict"
       x-required-permission: attribution:conversion:write
   /api/v1/campaigns:
     get:
       tags:
-      - campaign-controller
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+      - Campaigns
+      summary: List campaigns
+      description: |-
+        Pages through the tenant's campaigns, with the list-query contract's filtering, sorting and paging. Requires `attribution:campaign:read`.
+
+        **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
       operationId: list_3
       parameters:
       - name: "filter[attribution_model][eq]"
@@ -2053,7 +2350,8 @@ paths:
           - cursor
       responses:
         "200":
-          description: OK
+          description: "A page of campaign response rows, with the paging facts when\
+            \ the request asked for them."
           content:
             '*/*':
               schema:
@@ -2061,12 +2359,26 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:campaign:read
     post:
       tags:
-      - campaign-controller
+      - Campaigns
+      summary: Create a campaign
+      description: "Creates a campaign with a name, a channel, an attribution model,\
+        \ a window in days, a currency and optional start and end dates. The `slug`\
+        \ can be omitted; one is derived from the name, and a collision falls back\
+        \ to a generated one. Answers `201`. Requires `attribution:campaign:manage`."
       operationId: create_3
       requestBody:
+        description: "The campaign to create, or its new properties."
         content:
           application/json:
             schema:
@@ -2074,20 +2386,30 @@ paths:
         required: true
       responses:
         "201":
-          description: Created
+          description: A campaign.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CampaignResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:campaign:manage
   /api/v1/campaigns/{id}/archive:
     post:
       tags:
-      - campaign-controller
+      - Campaigns
+      summary: Archive a campaign
+      description: Archives the campaign. Archiving is terminal. Answers `204`. Requires
+        `attribution:campaign:manage`.
       operationId: archive_1
       parameters:
       - name: id
         in: path
+        description: The id of the campaign.
         required: true
         schema:
           type: string
@@ -2095,27 +2417,41 @@ paths:
       responses:
         "204":
           description: No Content
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:campaign:manage
   /api/v1/campaigns/{campaignId}/spend:
     get:
       tags:
-      - spend-controller
+      - Campaign spend
+      summary: List a campaign's spend
+      description: "Returns the campaign's cost rows with their source, so a double\
+        \ entry of a manual and an imported row is visible. Requires `attribution:spend:read`."
       operationId: list_4
       parameters:
       - name: campaignId
         in: path
+        description: The id of the campaign.
         required: true
         schema:
           type: string
           format: uuid
       - name: from
         in: query
+        description: "The first day to return, as `YYYY-MM-DD`."
         required: false
         schema:
           type: string
           format: date
       - name: to
         in: query
+        description: "The last day to return, as `YYYY-MM-DD`."
         required: false
         schema:
           type: string
@@ -2129,19 +2465,32 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/SpendView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:spend:read
     post:
       tags:
-      - spend-controller
+      - Campaign spend
+      summary: Set a campaign's spend for several days
+      description: Sets the manual cost for up to 366 days of the campaign in one
+        transaction. Requires `attribution:spend:manage`.
       operationId: bulk_1
       parameters:
       - name: campaignId
         in: path
+        description: The id of the campaign.
         required: true
         schema:
           type: string
           format: uuid
       requestBody:
+        description: "The personal links to mint, one per row."
         content:
           application/json:
             schema:
@@ -2156,44 +2505,74 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/SpendResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:spend:manage
   /api/v1/links/{id}:
     get:
       tags:
-      - link-controller
+      - Tracked links
+      summary: Get a link
+      description: Returns one link with its public URL; its version is also the response's
+        `ETag`. The password is never returned. An unknown id answers `404`. Requires
+        `attribution:link:read`.
       operationId: get_1
       parameters:
       - name: id
         in: path
+        description: The id of the link.
         required: true
         schema:
           type: string
           format: uuid
       responses:
         "200":
-          description: OK
+          description: A tracked link.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/LinkResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:link:read
     patch:
       tags:
-      - link-controller
+      - Tracked links
+      summary: Edit a link
+      description: "Changes the link's destinations, limits and metadata. A blank\
+        \ `password` keeps the stored hash, so a caller that never knew the password\
+        \ can still edit the link. Pass the current `ETag` in `If-Match`; a stale\
+        \ version is refused with `412`. Requires `attribution:link:manage`."
       operationId: update
       parameters:
       - name: id
         in: path
+        description: The id of the link.
         required: true
         schema:
           type: string
           format: uuid
       - name: If-Match
         in: header
+        description: The `ETag` of the version the caller last read. The change is
+          refused with `412` when the resource has moved on since.
         required: false
         schema:
           type: string
       requestBody:
+        description: "The link to create, or its new properties."
         content:
           application/json:
             schema:
@@ -2201,49 +2580,79 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: A tracked link.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/LinkResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: attribution:link:manage
   /api/v1/goals/{id}:
     get:
       tags:
-      - goal-controller
+      - Goals
+      summary: Get a goal
+      description: Returns one goal; its version is also the response's `ETag`. An
+        unknown id answers `404`. Requires `attribution:goal:read`.
       operationId: get_2
       parameters:
       - name: id
         in: path
+        description: The id of the goal.
         required: true
         schema:
           type: string
           format: uuid
       responses:
         "200":
-          description: OK
+          description: A goal.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/GoalResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:goal:read
     patch:
       tags:
-      - goal-controller
+      - Goals
+      summary: Edit a goal
+      description: "Changes the goal's name, default value and currency. Pass the\
+        \ current `ETag` in `If-Match`; a stale version is refused with `412`. Requires\
+        \ `attribution:goal:manage`."
       operationId: update_1
       parameters:
       - name: id
         in: path
+        description: The id of the goal.
         required: true
         schema:
           type: string
           format: uuid
       - name: If-Match
         in: header
+        description: The `ETag` of the version the caller last read. The change is
+          refused with `412` when the resource has moved on since.
         required: false
         schema:
           type: string
       requestBody:
+        description: "The goal to create, or its new properties."
         content:
           application/json:
             schema:
@@ -2251,49 +2660,80 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: A goal.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/GoalResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: attribution:goal:manage
   /api/v1/campaigns/{id}:
     get:
       tags:
-      - campaign-controller
+      - Campaigns
+      summary: Get a campaign
+      description: Returns one campaign; its version is also the response's `ETag`.
+        An unknown id answers `404`. Requires `attribution:campaign:read`.
       operationId: get_3
       parameters:
       - name: id
         in: path
+        description: The id of the campaign.
         required: true
         schema:
           type: string
           format: uuid
       responses:
         "200":
-          description: OK
+          description: A campaign.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CampaignResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:campaign:read
     patch:
       tags:
-      - campaign-controller
+      - Campaigns
+      summary: Edit a campaign
+      description: Changes the campaign's properties. A change of the attribution
+        model or the window is stored at once and starts a recompute of its conversions.
+        The currency is fixed once spend or a conversion exists. Pass the current
+        `ETag` in `If-Match`; a stale version is refused with `412`. Requires `attribution:campaign:manage`.
       operationId: update_2
       parameters:
       - name: id
         in: path
+        description: The id of the campaign.
         required: true
         schema:
           type: string
           format: uuid
       - name: If-Match
         in: header
+        description: The `ETag` of the version the caller last read. The change is
+          refused with `412` when the resource has moved on since.
         required: false
         schema:
           type: string
       requestBody:
+        description: "The campaign to create, or its new properties."
         content:
           application/json:
             schema:
@@ -2301,81 +2741,113 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: A campaign.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CampaignResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: attribution:campaign:manage
   /api/v1/reports/timeseries:
     get:
       tags:
-      - report-controller
+      - Reports
+      summary: Get a time series
+      description: "Returns the chosen `metrics` (clicks, page views, sessions, visitor\
+        \ days, conversions, credited value) per `granularity` (`hour` or `day`) over\
+        \ the `from`/`to` range. Narrow it with `link_id`, `campaign_id`, `destination_id`,\
+        \ `goal_id`, `entry`, `device` and `country`; `include` adds bot or suspect\
+        \ traffic that the default leaves out. Answers `text/csv` instead of JSON\
+        \ when the request asks for it with `Accept` or with the `.csv` path. Requires\
+        \ `attribution:report:read`."
       operationId: timeseries
       parameters:
       - name: from
         in: query
+        description: "The start of the range, inclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: to
         in: query
+        description: "The end of the range, exclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: granularity
         in: query
+        description: "The size of each point of a time series: `hour` or `day`."
         required: false
         schema:
           type: string
       - name: metrics
         in: query
+        description: "A comma-separated list of metrics: `clicks`, `page_views`, `sessions`,\
+          \ `visitor_days`, `conversions` or `credited_value`."
         required: false
         schema:
           type: string
       - name: include
         in: query
+        description: "A comma-separated list of the traffic classes to add to the\
+          \ default: `bot` or `suspect`."
         required: false
         schema:
           type: string
       - name: link_id
         in: query
+        description: Only traffic of this link.
         required: false
         schema:
           type: string
           format: uuid
       - name: campaign_id
         in: query
+        description: Only traffic of this campaign.
         required: false
         schema:
           type: string
           format: uuid
       - name: destination_id
         in: query
+        description: Only traffic that went to this destination.
         required: false
         schema:
           type: string
           format: uuid
       - name: goal_id
         in: query
+        description: Only conversions of this goal.
         required: false
         schema:
           type: string
           format: uuid
       - name: entry
         in: query
+        description: Only traffic that came in through this entry point.
         required: false
         schema:
           type: string
       - name: device
         in: query
+        description: Only traffic from this device class.
         required: false
         schema:
           type: string
       - name: country
         in: query
+        description: Only traffic from this country.
         required: false
         schema:
           type: string
@@ -2389,76 +2861,104 @@ paths:
             text/csv:
               schema:
                 type: object
+        "400":
+          description: "A parameter is not valid, or a CSV export would exceed 100,000\
+            \ rows. Narrow the range."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
   /api/v1/reports/timeseries.csv:
     get:
       tags:
-      - report-controller
+      - Reports
+      summary: Export a time series as CSV
+      description: "The same report as the JSON one, always as `text/csv`; an export\
+        \ is capped at 100,000 rows and a larger answer is `400`. Requires `attribution:report:read`."
       operationId: timeseriesCsv
       parameters:
       - name: from
         in: query
+        description: "The start of the range, inclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: to
         in: query
+        description: "The end of the range, exclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: granularity
         in: query
+        description: "The size of each point of a time series: `hour` or `day`."
         required: false
         schema:
           type: string
       - name: metrics
         in: query
+        description: "A comma-separated list of metrics: `clicks`, `page_views`, `sessions`,\
+          \ `visitor_days`, `conversions` or `credited_value`."
         required: false
         schema:
           type: string
       - name: include
         in: query
+        description: "A comma-separated list of the traffic classes to add to the\
+          \ default: `bot` or `suspect`."
         required: false
         schema:
           type: string
       - name: link_id
         in: query
+        description: Only traffic of this link.
         required: false
         schema:
           type: string
           format: uuid
       - name: campaign_id
         in: query
+        description: Only traffic of this campaign.
         required: false
         schema:
           type: string
           format: uuid
       - name: destination_id
         in: query
+        description: Only traffic that went to this destination.
         required: false
         schema:
           type: string
           format: uuid
       - name: goal_id
         in: query
+        description: Only conversions of this goal.
         required: false
         schema:
           type: string
           format: uuid
       - name: entry
         in: query
+        description: Only traffic that came in through this entry point.
         required: false
         schema:
           type: string
       - name: device
         in: query
+        description: Only traffic from this device class.
         required: false
         schema:
           type: string
       - name: country
         in: query
+        description: Only traffic from this country.
         required: false
         schema:
           type: string
@@ -2469,45 +2969,68 @@ paths:
             text/csv:
               schema:
                 $ref: "#/components/schemas/StreamingResponseBody"
+        "400":
+          description: "A parameter is not valid, or the export would exceed 100,000\
+            \ rows. Narrow the range."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
   /api/v1/reports/funnel:
     get:
       tags:
-      - report-controller
+      - Reports
+      summary: Get the conversion funnel
+      description: "Returns how many clicks became sessions, page views and conversions\
+        \ over the `from`/`to` range, narrowed by `campaign_id`, `link_id` and `goal_id`.\
+        \ Answers `text/csv` instead of JSON when the request asks for it with `Accept`\
+        \ or with the `.csv` path. Requires `attribution:report:read`."
       operationId: funnel
       parameters:
       - name: from
         in: query
+        description: "The start of the range, inclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: to
         in: query
+        description: "The end of the range, exclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: campaign_id
         in: query
+        description: Only traffic of this campaign.
         required: false
         schema:
           type: string
           format: uuid
       - name: link_id
         in: query
+        description: Only traffic of this link.
         required: false
         schema:
           type: string
           format: uuid
       - name: goal_id
         in: query
+        description: Only conversions of this goal.
         required: false
         schema:
           type: string
           format: uuid
       - name: include
         in: query
+        description: "A comma-separated list of the traffic classes to add to the\
+          \ default: `bot` or `suspect`."
         required: false
         schema:
           type: string
@@ -2521,45 +3044,66 @@ paths:
             text/csv:
               schema:
                 type: object
+        "400":
+          description: "A parameter is not valid, or a CSV export would exceed 100,000\
+            \ rows. Narrow the range."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
   /api/v1/reports/funnel.csv:
     get:
       tags:
-      - report-controller
+      - Reports
+      summary: Export the funnel as CSV
+      description: "The same report as the JSON one, always as `text/csv`; an export\
+        \ is capped at 100,000 rows and a larger answer is `400`. Requires `attribution:report:read`."
       operationId: funnelCsv
       parameters:
       - name: from
         in: query
+        description: "The start of the range, inclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: to
         in: query
+        description: "The end of the range, exclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: campaign_id
         in: query
+        description: Only traffic of this campaign.
         required: false
         schema:
           type: string
           format: uuid
       - name: link_id
         in: query
+        description: Only traffic of this link.
         required: false
         schema:
           type: string
           format: uuid
       - name: goal_id
         in: query
+        description: Only conversions of this goal.
         required: false
         schema:
           type: string
           format: uuid
       - name: include
         in: query
+        description: "A comma-separated list of the traffic classes to add to the\
+          \ default: `bot` or `suspect`."
         required: false
         schema:
           type: string
@@ -2570,33 +3114,53 @@ paths:
             text/csv:
               schema:
                 $ref: "#/components/schemas/StreamingResponseBody"
+        "400":
+          description: "A parameter is not valid, or the export would exceed 100,000\
+            \ rows. Narrow the range."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
   /api/v1/reports/costs:
     get:
       tags:
-      - report-controller
+      - Reports
+      summary: Get the cost report
+      description: "Returns advertising spend over the `from`/`to` range, optionally\
+        \ for one `campaign_id` and grouped by `group_by`, set against what the same\
+        \ campaigns earned. Answers `text/csv` instead of JSON when the request asks\
+        \ for it with `Accept` or with the `.csv` path. Requires `attribution:report:read`."
       operationId: costs
       parameters:
       - name: from
         in: query
+        description: "The start of the range, inclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: to
         in: query
+        description: "The end of the range, exclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: campaign_id
         in: query
+        description: Only traffic of this campaign.
         required: false
         schema:
           type: string
           format: uuid
       - name: group_by
         in: query
+        description: What to group the costs by.
         required: false
         schema:
           type: string
@@ -2610,33 +3174,51 @@ paths:
             text/csv:
               schema:
                 type: object
+        "400":
+          description: "A parameter is not valid, or a CSV export would exceed 100,000\
+            \ rows. Narrow the range."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
   /api/v1/reports/costs.csv:
     get:
       tags:
-      - report-controller
+      - Reports
+      summary: Export the cost report as CSV
+      description: "The same report as the JSON one, always as `text/csv`; an export\
+        \ is capped at 100,000 rows and a larger answer is `400`. Requires `attribution:report:read`."
       operationId: costsCsv
       parameters:
       - name: from
         in: query
+        description: "The start of the range, inclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: to
         in: query
+        description: "The end of the range, exclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: campaign_id
         in: query
+        description: Only traffic of this campaign.
         required: false
         schema:
           type: string
           format: uuid
       - name: group_by
         in: query
+        description: What to group the costs by.
         required: false
         schema:
           type: string
@@ -2647,38 +3229,60 @@ paths:
             text/csv:
               schema:
                 $ref: "#/components/schemas/StreamingResponseBody"
+        "400":
+          description: "A parameter is not valid, or the export would exceed 100,000\
+            \ rows. Narrow the range."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
   /api/v1/reports/cohorts:
     get:
       tags:
-      - report-controller
+      - Reports
+      summary: Get cohorts
+      description: Groups visitors by the week of their first click and reports how
+        they converted over the following `periods` (default 12). `cohort` can only
+        be `week`. Answers `text/csv` instead of JSON when the request asks for it
+        with `Accept` or with the `.csv` path. Requires `attribution:report:read`.
       operationId: cohorts
       parameters:
       - name: from
         in: query
+        description: "The start of the range, inclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: to
         in: query
+        description: "The end of the range, exclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: campaign_id
         in: query
+        description: Only traffic of this campaign.
         required: false
         schema:
           type: string
           format: uuid
       - name: cohort
         in: query
+        description: The cohort size. Only `week` is supported.
         required: false
         schema:
           type: string
       - name: periods
         in: query
+        description: How many periods after the first click to report. Defaults to
+          12.
         required: false
         schema:
           type: integer
@@ -2694,38 +3298,58 @@ paths:
             text/csv:
               schema:
                 type: object
+        "400":
+          description: "A parameter is not valid (`cohort` can only be `week`), or\
+            \ a CSV export would exceed 100,000 rows. Narrow the range."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
   /api/v1/reports/cohorts.csv:
     get:
       tags:
-      - report-controller
+      - Reports
+      summary: Export cohorts as CSV
+      description: "The same report as the JSON one, always as `text/csv`; an export\
+        \ is capped at 100,000 rows and a larger answer is `400`. Requires `attribution:report:read`."
       operationId: cohortsCsv
       parameters:
       - name: from
         in: query
+        description: "The start of the range, inclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: to
         in: query
+        description: "The end of the range, exclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: campaign_id
         in: query
+        description: Only traffic of this campaign.
         required: false
         schema:
           type: string
           format: uuid
       - name: cohort
         in: query
+        description: The cohort size. Only `week` is supported.
         required: false
         schema:
           type: string
       - name: periods
         in: query
+        description: How many periods after the first click to report. Defaults to
+          12.
         required: false
         schema:
           type: integer
@@ -2738,86 +3362,121 @@ paths:
             text/csv:
               schema:
                 $ref: "#/components/schemas/StreamingResponseBody"
+        "400":
+          description: "A parameter is not valid (`cohort` can only be `week`), or\
+            \ the export would exceed 100,000 rows. Narrow the range."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
   /api/v1/reports/breakdown:
     get:
       tags:
-      - report-controller
+      - Reports
+      summary: Get a breakdown
+      description: "Splits the chosen `metrics` by one `dimension`: link, campaign,\
+        \ entry, device, country, referrer, destination or goal. Narrow it with `link_id`,\
+        \ `campaign_id`, `destination_id`, `goal_id`, `entry`, `device` and `country`;\
+        \ `include` adds bot or suspect traffic that the default leaves out. Also\
+        \ filters by `referrer`. Answers `text/csv` instead of JSON when the request\
+        \ asks for it with `Accept` or with the `.csv` path. Requires `attribution:report:read`."
       operationId: breakdown
       parameters:
       - name: dimension
         in: query
+        description: "What to split the report by: `link`, `campaign`, `entry`, `device`,\
+          \ `country`, `referrer`, `destination` or `goal`."
         required: true
         schema:
           type: string
       - name: from
         in: query
+        description: "The start of the range, inclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: to
         in: query
+        description: "The end of the range, exclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: granularity
         in: query
+        description: "The size of each point of a time series: `hour` or `day`."
         required: false
         schema:
           type: string
       - name: metrics
         in: query
+        description: "A comma-separated list of metrics: `clicks`, `page_views`, `sessions`,\
+          \ `visitor_days`, `conversions` or `credited_value`."
         required: false
         schema:
           type: string
       - name: include
         in: query
+        description: "A comma-separated list of the traffic classes to add to the\
+          \ default: `bot` or `suspect`."
         required: false
         schema:
           type: string
       - name: link_id
         in: query
+        description: Only traffic of this link.
         required: false
         schema:
           type: string
           format: uuid
       - name: campaign_id
         in: query
+        description: Only traffic of this campaign.
         required: false
         schema:
           type: string
           format: uuid
       - name: destination_id
         in: query
+        description: Only traffic that went to this destination.
         required: false
         schema:
           type: string
           format: uuid
       - name: goal_id
         in: query
+        description: Only conversions of this goal.
         required: false
         schema:
           type: string
           format: uuid
       - name: entry
         in: query
+        description: Only traffic that came in through this entry point.
         required: false
         schema:
           type: string
       - name: device
         in: query
+        description: Only traffic from this device class.
         required: false
         schema:
           type: string
       - name: country
         in: query
+        description: Only traffic from this country.
         required: false
         schema:
           type: string
       - name: referrer
         in: query
+        description: Only traffic from this referrer.
         required: false
         schema:
           type: string
@@ -2831,86 +3490,117 @@ paths:
             text/csv:
               schema:
                 type: object
+        "400":
+          description: "A parameter is not valid, or a CSV export would exceed 100,000\
+            \ rows. Narrow the range."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
   /api/v1/reports/breakdown.csv:
     get:
       tags:
-      - report-controller
+      - Reports
+      summary: Export a breakdown as CSV
+      description: "The same report as the JSON one, always as `text/csv`; an export\
+        \ is capped at 100,000 rows and a larger answer is `400`. Requires `attribution:report:read`."
       operationId: breakdownCsv
       parameters:
       - name: dimension
         in: query
+        description: "What to split the report by: `link`, `campaign`, `entry`, `device`,\
+          \ `country`, `referrer`, `destination` or `goal`."
         required: true
         schema:
           type: string
       - name: from
         in: query
+        description: "The start of the range, inclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: to
         in: query
+        description: "The end of the range, exclusive."
         required: false
         schema:
           type: string
           format: date-time
       - name: granularity
         in: query
+        description: "The size of each point of a time series: `hour` or `day`."
         required: false
         schema:
           type: string
       - name: metrics
         in: query
+        description: "A comma-separated list of metrics: `clicks`, `page_views`, `sessions`,\
+          \ `visitor_days`, `conversions` or `credited_value`."
         required: false
         schema:
           type: string
       - name: include
         in: query
+        description: "A comma-separated list of the traffic classes to add to the\
+          \ default: `bot` or `suspect`."
         required: false
         schema:
           type: string
       - name: link_id
         in: query
+        description: Only traffic of this link.
         required: false
         schema:
           type: string
           format: uuid
       - name: campaign_id
         in: query
+        description: Only traffic of this campaign.
         required: false
         schema:
           type: string
           format: uuid
       - name: destination_id
         in: query
+        description: Only traffic that went to this destination.
         required: false
         schema:
           type: string
           format: uuid
       - name: goal_id
         in: query
+        description: Only conversions of this goal.
         required: false
         schema:
           type: string
           format: uuid
       - name: entry
         in: query
+        description: Only traffic that came in through this entry point.
         required: false
         schema:
           type: string
       - name: device
         in: query
+        description: Only traffic from this device class.
         required: false
         schema:
           type: string
       - name: country
         in: query
+        description: Only traffic from this country.
         required: false
         schema:
           type: string
       - name: referrer
         in: query
+        description: Only traffic from this referrer.
         required: false
         schema:
           type: string
@@ -2921,11 +3611,27 @@ paths:
             text/csv:
               schema:
                 $ref: "#/components/schemas/StreamingResponseBody"
+        "400":
+          description: "A parameter is not valid, or the export would exceed 100,000\
+            \ rows. Narrow the range."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
   /api/v1/ping:
     get:
       tags:
-      - ping-controller
+      - Health check
+      summary: Check the caller's tenant
+      description: "Answers the caller's own tenant identity and nothing else. It\
+        \ proves that the suite token, the tenant scope and the permission check are\
+        \ wired; a platform-scope caller is refused even when it holds the code. Requires\
+        \ `attribution:link:read`."
       operationId: ping
       responses:
         "200":
@@ -2935,47 +3641,71 @@ paths:
               schema:
                 type: object
                 additionalProperties: {}
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:link:read
   /api/v1/links/{id}/stats:
     get:
       tags:
-      - link-stats-controller
+      - Link statistics
+      summary: Get a link's statistics
+      description: "Returns the link's click total, its clicks per day for the last\
+        \ thirty days, the bot clicks the default leaves out, and its status and click\
+        \ cap. The numbers come from rollups, so `dataThrough` says how fresh they\
+        \ are. Requires `attribution:link:read`."
       operationId: stats
       parameters:
       - name: id
         in: path
+        description: The id of the link.
         required: true
         schema:
           type: string
           format: uuid
       responses:
         "200":
-          description: OK
+          description: A link's click statistics.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/LinkStatsView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:link:read
   /api/v1/links/{id}/qr:
     get:
       tags:
-      - link-controller
+      - Tracked links
+      summary: Get a link's QR code
+      description: "Returns a QR code of the link's public URL as `png` (the default)\
+        \ or `svg`, `size` pixels wide (default 256). Requires `attribution:link:read`."
       operationId: qr
       parameters:
       - name: id
         in: path
+        description: The id of the link.
         required: true
         schema:
           type: string
           format: uuid
       - name: format
         in: query
+        description: "The image format: `png` (the default) or `svg`."
         required: false
         schema:
           type: string
           default: png
       - name: size
         in: query
+        description: The width and height of the image in pixels. Defaults to 256.
         required: false
         schema:
           type: integer
@@ -2989,569 +3719,896 @@ paths:
               schema:
                 type: string
                 format: byte
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:link:read
   /api/v1/conversions/{id}:
     get:
       tags:
-      - conversion-controller
+      - Conversions
+      summary: Get a conversion
+      description: Returns one conversion with its chain of touches and the credit
+        each campaign received. An unknown id answers `404`. Requires `attribution:report:read`.
       operationId: get_4
       parameters:
       - name: id
         in: path
+        description: The id of the conversion.
         required: true
         schema:
           type: string
           format: uuid
       responses:
         "200":
-          description: OK
+          description: A conversion with its chain and credits.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ConversionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:report:read
 components:
   schemas:
     SettingsRequest:
       type: object
+      description: The settings to store.
       properties:
         click_param:
           type: string
+          description: The name of the query parameter that carries the click id.
         allowed_origins:
           type: array
+          description: "The origins allowed to post to the collection endpoint. Each\
+            \ is an absolute `https` origin, or `http://localhost`; wildcards are\
+            \ refused."
           items:
             type: string
         default_window_days:
           type: integer
           format: int32
+          description: "The attribution window applied when a campaign does not set\
+            \ its own, in days."
     SettingsView:
       type: object
+      description: The tenant's attribution settings.
       properties:
         clickParam:
           type: string
+          description: The name of the query parameter that carries the click id.
         allowedOrigins:
           type: array
+          description: The origins allowed to post to the collection endpoint.
           items:
             type: string
         defaultWindowDays:
           type: integer
           format: int32
+          description: The default attribution window in days.
     SpendRequest:
       type: object
+      description: The cost of one day.
       properties:
         amount:
           type: string
+          description: "The cost as a decimal string, in major units of the campaign's\
+            \ currency."
         currency:
           type: string
+          description: "The currency, which must be the campaign's."
         impressions:
           type: integer
           format: int64
+          description: "The number of impressions, or null."
         clicks:
           type: integer
           format: int64
+          description: "The number of paid clicks, or null."
     SpendResponse:
       type: object
+      description: The cost of one day.
       properties:
         id:
           type: string
           format: uuid
+          description: The id.
         campaignId:
           type: string
           format: uuid
+          description: The id of the campaign.
         day:
           type: string
           format: date
+          description: The day.
         source:
           type: string
+          description: "Where the row came from: `MANUAL`, `GOOGLE_ADS` or `META_ADS`."
         amount:
           type: number
+          description: "The amount, in major units of the currency."
         currency:
           type: string
+          description: The ISO 4217 currency code of the amounts.
         impressions:
           type: integer
           format: int64
+          description: "The number of impressions, when known."
         clicks:
           type: integer
           format: int64
+          description: The number of clicks.
     EventBatch:
       type: object
+      description: A batch of page views from a tenant's page.
       properties:
         events:
           type: array
+          description: The page views.
           items:
             $ref: "#/components/schemas/RawEvent"
         consent:
           type: boolean
+          description: Whether the visitor consented to identifiers. With `false`
+            the server drops the visitor and session ids.
     RawEvent:
       type: object
+      description: One collected page view.
       properties:
         eventId:
           type: string
+          description: "An id for the event, unique to this page view."
         clickId:
           type: string
+          description: The signed click token a redirect appended to the destination
+            URL.
         visitorId:
           type: string
+          description: "The pseudonymous id of the visitor, created by the page snippet."
         sessionId:
           type: string
+          description: The id of the visitor's session.
         path:
           type: string
+          description: The path of the page that was viewed.
         occurredAt:
           type: string
+          description: "When the page was viewed, as an ISO-8601 instant."
     UnlockRequest:
       type: object
+      description: The password of a protected link.
       properties:
         password:
           type: string
+          description: The password the link's owner chose.
     DestinationRequest:
       type: object
+      description: One place a link can send a visitor.
       properties:
         url:
           type: string
+          description: The destination URL. One that points at the suite or a private
+            address is refused.
         weight:
           type: integer
           format: int32
+          description: "How often the destination is chosen among the ones that match,\
+            \ from 1 to 1000."
         devices:
           type: array
+          description: The device classes the destination is for. Empty means any.
           items:
             type: string
         countries:
           type: array
+          description: The countries the destination is for. Empty means any.
           items:
             type: string
         fallback:
           type: boolean
+          description: Whether this is the one destination used when no rule matches.
     LinkRequest:
       type: object
+      description: "The link to create, or its new properties."
       properties:
         campaignId:
           type: string
           format: uuid
+          description: The campaign the link belongs to.
         slug:
           type: string
+          description: The slug of the public URL.
         externalRef:
           type: string
+          description: The tenant's own reference for the recipient.
         expiresAt:
           type: string
           format: date-time
+          description: "When the link stops redirecting, or null."
         maxClicks:
           type: integer
           format: int64
+          description: "The most clicks the link redirects, or null for no cap."
         password:
           type: string
+          description: "A password visitors must give before they are redirected.\
+            \ On update, a blank value keeps the stored one."
         utm:
           type: object
           additionalProperties:
             type: string
+          description: "The UTM parameters appended to the destination, by name, such\
+            \ as `utm_source`."
         destinations:
           type: array
+          description: "Where the link sends visitors, with the rules that choose\
+            \ among them."
           items:
             $ref: "#/components/schemas/DestinationRequest"
     DestinationView:
       type: object
+      description: One destination of a link.
       properties:
         id:
           type: string
           format: uuid
+          description: The id.
         url:
           type: string
+          description: The URL.
         position:
           type: integer
           format: int32
+          description: The order the destination was given in.
         weight:
           type: integer
           format: int32
+          description: How often the destination is chosen among the ones that match.
         fallback:
           type: boolean
+          description: Whether this is the destination used when no rule matches.
         devices:
           type: array
+          description: The device classes the destination is for. Empty means any.
           items:
             type: string
         countries:
           type: array
+          description: The countries the destination is for. Empty means any.
           items:
             type: string
     LinkResponse:
       type: object
+      description: A tracked link.
       properties:
         id:
           type: string
           format: uuid
+          description: The id.
         campaignId:
           type: string
           format: uuid
+          description: The id of the campaign.
         slug:
           type: string
+          description: "The short, URL-safe name."
         kind:
           type: string
+          description: '`STANDARD` or `PERSONAL`.'
         externalRef:
           type: string
+          description: The tenant's own reference for the recipient.
         status:
           type: string
+          description: "`ACTIVE`, `PAUSED` or `ARCHIVED`. Only an active link redirects."
         url:
           type: string
+          description: The public URL to share.
         expiresAt:
           type: string
           format: date-time
+          description: "When the link stops redirecting, or null."
         maxClicks:
           type: integer
           format: int64
+          description: "The most clicks the link redirects, or null for no cap."
         hasPassword:
           type: boolean
+          description: Whether the link is protected by a password. The password itself
+            is never returned.
         utm:
           type: object
           additionalProperties:
             type: string
+          description: "The UTM parameters appended to the destination, by name, such\
+            \ as `utm_source`."
         destinations:
           type: array
+          description: Where the link sends visitors.
           items:
             $ref: "#/components/schemas/DestinationView"
         version:
           type: integer
           format: int64
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
         createdAt:
           type: string
           format: date-time
+          description: When the record was created.
         updatedAt:
           type: string
           format: date-time
+          description: When the record was last changed.
     BulkLinkRow:
       type: object
+      description: One personal link to mint.
       properties:
         externalRef:
           type: string
+          description: The tenant's own reference for the recipient.
     BulkRequest:
       type: object
+      description: "The personal links to mint, one per row."
       properties:
         campaignId:
           type: string
           format: uuid
+          description: The campaign the links belong to.
         destination:
           type: string
+          description: The destination URL every link shares.
         utm:
           type: object
           additionalProperties:
             type: string
+          description: The UTM parameters every link shares.
         expiresAt:
           type: string
           format: date-time
+          description: "When the links stop redirecting, or null."
         rows:
           type: array
+          description: One row per link.
           items:
             $ref: "#/components/schemas/BulkLinkRow"
     PersonalLink:
       type: object
+      description: A personal link that was minted.
       properties:
         id:
           type: string
           format: uuid
+          description: The link's id.
         slug:
           type: string
+          description: The link's slug.
         url:
           type: string
+          description: The public URL to give to the recipient.
         externalRef:
           type: string
+          description: The tenant's own reference for the recipient.
     GoalRequest:
       type: object
+      description: "The goal to create, or its new properties."
       properties:
         key:
           type: string
+          description: The conversion key the tenant's site and backend both report.
+            It cannot change.
         name:
           type: string
+          description: The display name.
         defaultValue:
           type: string
+          description: "The value a conversion has when it reports none, as a decimal\
+            \ string."
         currency:
           type: string
+          description: The ISO 4217 currency code of the amounts.
     GoalResponse:
       type: object
+      description: A goal.
       properties:
         id:
           type: string
           format: uuid
+          description: The id.
         key:
           type: string
+          description: The conversion key the tenant's site and backend both report.
         name:
           type: string
+          description: The display name.
         defaultValue:
           type: string
+          description: "The value a conversion has when it reports none, as a decimal\
+            \ string, or null."
         currency:
           type: string
+          description: The ISO 4217 currency code of the amounts.
         status:
           type: string
+          description: '`ACTIVE` or `ARCHIVED`.'
     ErasureRequest:
       type: object
+      description: The visitor to erase.
       properties:
         visitor_id:
           type: string
+          description: The id of the visitor whose collected data is removed.
     ErasureView:
       type: object
+      description: How many rows of each kind were removed.
       properties:
         page_events:
           type: integer
           format: int32
+          description: The number of page events removed.
         sessions:
           type: integer
           format: int32
+          description: The number of sessions removed.
         bindings:
           type: integer
           format: int32
+          description: The number of visitor-to-click bindings removed.
         clicks:
           type: integer
           format: int32
+          description: The number of clicks removed that only this visitor was bound
+            to.
         conversions:
           type: integer
           format: int32
+          description: The number of conversions detached from the visitor.
     ConversionRequest:
       type: object
+      description: The conversion to record.
       properties:
         goalKey:
           type: string
+          description: The key of the goal that was reached.
         clickId:
           type: string
+          description: The click token of the visit that led to the conversion. Give
+            this or `visitorId`.
         visitorId:
           type: string
+          description: The visitor who converted. Give this or `clickId`.
         value:
           type: string
+          description: The value of the conversion as a decimal string.
         currency:
           type: string
+          description: The ISO 4217 currency code of the amounts.
         occurredAt:
           type: string
           format: date-time
+          description: When it happened.
     ChainTouchResponse:
       type: object
+      description: One click in a conversion's chain.
       properties:
         clickId:
           type: string
+          description: The signed click token a redirect appended to the destination
+            URL.
         linkId:
           type: string
+          description: The id of the link.
         campaignId:
           type: string
+          description: The id of the campaign.
         at:
           type: string
           format: date-time
+          description: When the click happened.
     ConversionResponse:
       type: object
+      description: A conversion with its chain and credits.
       properties:
         id:
           type: string
           format: uuid
+          description: The id.
         goalId:
           type: string
           format: uuid
+          description: The id of the goal.
         value:
           type: string
+          description: The value of the conversion as a decimal string.
         currency:
           type: string
+          description: The ISO 4217 currency code of the amounts.
         occurredAt:
           type: string
           format: date-time
+          description: When it happened.
         source:
           type: string
+          description: The source of the conversion.
         creditStatus:
           type: string
+          description: "`PENDING`, `COMPUTED` or `UNATTRIBUTED`."
         owningCampaignId:
           type: string
           format: uuid
+          description: "The campaign that received the main credit, or null."
         touchChain:
           type: array
+          description: "The clicks that led to the conversion, in order."
           items:
             $ref: "#/components/schemas/ChainTouchResponse"
         credits:
           type: array
+          description: The credit each click received.
           items:
             $ref: "#/components/schemas/CreditResponse"
     CreditResponse:
       type: object
+      description: The credit one click received.
       properties:
         clickId:
           type: string
+          description: The click that received credit.
         credit:
           type: string
+          description: "The share of the conversion's value, as a decimal string."
     CampaignRequest:
       type: object
+      description: "The campaign to create, or its new properties."
       properties:
         name:
           type: string
+          description: The display name.
         slug:
           type: string
+          description: "The short, URL-safe name."
         channel:
           type: string
+          description: The marketing channel the campaign runs on.
         attributionModel:
           type: string
+          description: "How a conversion's credit is shared among the touches of its\
+            \ chain: `FIRST`, `LAST` or `LINEAR`."
         windowDays:
           type: integer
           format: int32
+          description: How many days before a conversion a click can still earn credit.
         currency:
           type: string
+          description: The currency of the campaign's spend and conversions. It is
+            fixed once spend or a conversion exists.
         startsOn:
           type: string
           format: date
+          description: "The first day of the campaign, or null."
         endsOn:
           type: string
           format: date
+          description: "The last day of the campaign, or null."
     CampaignResponse:
       type: object
+      description: A campaign.
       properties:
         id:
           type: string
           format: uuid
+          description: The id.
         name:
           type: string
+          description: The display name.
         slug:
           type: string
+          description: "The short, URL-safe name."
         channel:
           type: string
+          description: The marketing channel.
         status:
           type: string
+          description: '`ACTIVE` or `ARCHIVED`.'
         attributionModel:
           type: string
+          description: "`FIRST`, `LAST` or `LINEAR`."
         windowDays:
           type: integer
           format: int32
+          description: How many days before a conversion a click can still earn credit.
         currency:
           type: string
+          description: The ISO 4217 currency code of the amounts.
         startsOn:
           type: string
           format: date
+          description: "The first day of the campaign, or null."
         endsOn:
           type: string
           format: date
+          description: "The last day of the campaign, or null."
         version:
           type: integer
           format: int64
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
         createdAt:
           type: string
           format: date-time
+          description: When the record was created.
         updatedAt:
           type: string
           format: date-time
+          description: When the record was last changed.
     StreamingResponseBody: {}
     PageInfo:
       type: object
+      description: "The paging facts of a list answer, present when the request asked\
+        \ for them with `page_info`."
       properties:
         limit:
           type: integer
           format: int32
+          description: The page size that was applied.
         offset:
           type:
           - integer
           - "null"
           format: int32
+          description: "The number of rows that were skipped, or null when a cursor\
+            \ positioned the page."
         total:
           type:
           - integer
           - "null"
           format: int64
+          description: "The number of rows that match the filter, or null when the\
+            \ request asked only for the cursor."
         next_cursor:
           type:
           - string
           - "null"
+          description: "The cursor of the following page, or null on the last page.\
+            \ Pass it as `cursor` with the same filter and sort."
     PageLinkResponse:
       type: object
+      description: "A page of link response rows, with the paging facts when the request\
+        \ asked for them."
       properties:
         data:
           type: array
+          description: The rows of this page.
           items:
             $ref: "#/components/schemas/LinkResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
     DailyCount:
       type: object
+      description: The clicks of one day.
       properties:
         day:
           type: string
           format: date
+          description: The day.
         clicks:
           type: integer
           format: int64
+          description: The clicks on that day.
     LinkStatsView:
       type: object
+      description: A link's click statistics.
       properties:
         linkId:
           type: string
           format: uuid
+          description: The id of the link.
         status:
           type: string
+          description: "`ACTIVE`, `PAUSED` or `ARCHIVED`."
         maxClicks:
           type: integer
           format: int64
+          description: "The link's click cap, or null."
         clicks:
           type: integer
           format: int64
+          description: The total clicks recorded.
         last30Days:
           type: array
+          description: The clicks per day over the last thirty days.
           items:
             $ref: "#/components/schemas/DailyCount"
         botClicksExcluded:
           type: integer
           format: int64
+          description: How many bot clicks the default left out.
         dataThrough:
           type: string
           format: date-time
+          description: The time the rollups are current to.
     PageGoalResponse:
       type: object
+      description: "A page of goal response rows, with the paging facts when the request\
+        \ asked for them."
       properties:
         data:
           type: array
+          description: The rows of this page.
           items:
             $ref: "#/components/schemas/GoalResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
     PageConversionResponse:
       type: object
+      description: "A page of conversion response rows, with the paging facts when\
+        \ the request asked for them."
       properties:
         data:
           type: array
+          description: The rows of this page.
           items:
             $ref: "#/components/schemas/ConversionResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
     PageCampaignResponse:
       type: object
+      description: "A page of campaign response rows, with the paging facts when the\
+        \ request asked for them."
       properties:
         data:
           type: array
+          description: The rows of this page.
           items:
             $ref: "#/components/schemas/CampaignResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
     SpendView:
       type: object
+      description: One cost row of a campaign.
       properties:
         id:
           type: string
           format: uuid
+          description: The id.
         campaignId:
           type: string
           format: uuid
+          description: The id of the campaign.
         day:
           type: string
           format: date
+          description: The day.
         source:
           type: string
+          description: "Where the row came from: `MANUAL`, `GOOGLE_ADS` or `META_ADS`."
         connectionId:
           type: string
           format: uuid
+          description: "The ad connection an imported row came from, or null for a\
+            \ manual one."
         amount:
           type: number
+          description: "The amount, in major units of the currency."
         currency:
           type: string
+          description: The ISO 4217 currency code of the amounts.
         impressions:
           type: integer
           format: int64
+          description: "The number of impressions, when known."
         clicks:
           type: integer
           format: int64
+          description: The number of clicks.
         updatedAt:
           type: string
           format: date-time
+          description: When the record was last changed.
+    ProblemDetail:
+      type: object
+      description: "The body of every error: an RFC 9457 problem."
+      properties:
+        type:
+          type: string
+          description: A URI reference that identifies the kind of problem. It is
+            `about:blank` when the status says it all.
+        title:
+          type: string
+          description: "A short, human-readable summary of the kind of problem. It\
+            \ is the status's reason phrase unless a more specific one applies."
+        status:
+          type: integer
+          format: int32
+          description: The HTTP status of the response.
+        detail:
+          type: string
+          description: A sentence that explains this occurrence.
+        instance:
+          type: string
+          description: "A URI reference that identifies this occurrence, when there\
+            \ is one."
+  responses:
+    BadRequest:
+      description: "The request is malformed: a body, query parameter or header is\
+        \ missing, unknown, or not valid for its type."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Unauthenticated:
+      description: The request carries no valid token.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Forbidden:
+      description: "The token does not carry the permission this operation requires,\
+        \ or the tenant has not enabled the app."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotEntitled:
+      description: "The tenant has not enabled this app, or the caller may not act\
+        \ here."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotFound:
+      description: Nothing with that id exists for this tenant. A resource of another
+        tenant answers the same.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    IdempotencyConflict:
+      description: "The `Idempotency-Key` was already used with a different body,\
+        \ or the request clashes with the current state of the data."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    PreconditionFailed:
+      description: The `If-Match` tag does not match the resource's current version.
+        The response carries the current `ETag`; read the resource again and retry.
+      headers:
+        ETag:
+          description: The current version of the resource.
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
   securitySchemes:
     oidc:
       type: http

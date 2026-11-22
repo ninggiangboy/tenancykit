@@ -7,6 +7,8 @@ import dev.ngb.attribution.links.application.settings.query.SettingsView;
 import dev.ngb.attribution.shared.AttributionPermissions;
 import dev.ngb.core.runtime.UnitOfWork;
 import dev.ngb.core.security.RequiresPermission;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -21,6 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
  * how the tenant's links behave and who may post to its collection endpoint; a caller that may see them is one that may
  * change them.
  */
+@Tag(
+        name = "Attribution settings",
+        description =
+                "The click parameter, the origins allowed to collect and the default attribution window.")
 @RestController
 @RequestMapping("/api/v1/settings")
 public class SettingsController {
@@ -41,12 +47,26 @@ public class SettingsController {
         this.attribution = attribution;
     }
 
+    @Operation(
+            summary = "Get the tenant's attribution settings",
+            description =
+                    "Returns the click parameter name, the origins allowed to post to the collection endpoint and the "
+                    + "default attribution window in days. Reading needs `attribution:settings:manage`, the same code as "
+                    + "changing them, because the three values decide how the tenant's links behave and who may post to its "
+                    + "collection endpoint.")
     @GetMapping
     @RequiresPermission(AttributionPermissions.SETTINGS_MANAGE)
     SettingsView get() {
         return load();
     }
 
+    @Operation(
+            summary = "Replace the tenant's attribution settings",
+            description =
+                    "Stores `click_param`, `allowed_origins` and `default_window_days`. Each origin must be an absolute "
+                    + "`https` origin (or `http://localhost` for development); a wildcard, a path or a bare host answers "
+                    + "`400`, because a collection endpoint that accepted a wildcard would let any page post another "
+                    + "visitor's events. Requires `attribution:settings:manage`.")
     @PutMapping
     @RequiresPermission(AttributionPermissions.SETTINGS_MANAGE)
     SettingsView put(@RequestBody SettingsRequest request) {

@@ -8,6 +8,8 @@ import dev.ngb.attribution.spend.application.entry.query.SpendQueries;
 import dev.ngb.attribution.spend.application.entry.query.SpendView;
 import dev.ngb.attribution.spend.domain.entry.SpendEntry;
 import dev.ngb.core.security.RequiresPermission;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -29,6 +31,10 @@ import org.springframework.web.bind.annotation.RestController;
  * A campaign's advertising cost: one manual day, a bulk set, a delete that removes only the manual row, and the rows
  * with their source so a double entry is visible.
  */
+@Tag(
+        name = "Campaign spend",
+        description =
+                "A campaign's advertising cost: set manual days, bulk set, delete a manual day and read the rows.")
 @RestController
 @RequestMapping("/api/v1/campaigns/{campaignId}/spend")
 public class SpendController {
@@ -49,6 +55,11 @@ public class SpendController {
         this.queries = queries;
     }
 
+    @Operation(
+            summary = "Set a campaign's spend for one day",
+            description =
+                    "Sets the manual advertising cost of the campaign on `day`, with optional impressions and clicks. A "
+                    + "currency the campaign does not use is refused. Requires `attribution:spend:manage`.")
     @PutMapping("/{day}")
     @RequiresPermission(AttributionPermissions.SPEND_MANAGE)
     SpendResponse set(
@@ -60,6 +71,11 @@ public class SpendController {
                 request.clicks())));
     }
 
+    @Operation(
+            summary = "Set a campaign's spend for several days",
+            description =
+                    "Sets the manual cost for up to 366 days of the campaign in one transaction. Requires "
+                    + "`attribution:spend:manage`.")
     @PostMapping
     @RequiresPermission(AttributionPermissions.SPEND_MANAGE)
     List<SpendResponse> bulk(@PathVariable UUID campaignId, @RequestBody BulkRequest request) {
@@ -75,6 +91,11 @@ public class SpendController {
                 .stream().map(SpendResponse::of).toList();
     }
 
+    @Operation(
+            summary = "Delete a campaign's manual spend for one day",
+            description =
+                    "Deletes only the manual cost of the campaign on `day`, leaving any imported row in place. Answers "
+                    + "`204`. Requires `attribution:spend:manage`.")
     @DeleteMapping("/{day}")
     @RequiresPermission(AttributionPermissions.SPEND_MANAGE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -84,6 +105,11 @@ public class SpendController {
         delete.execute(campaignId, day);
     }
 
+    @Operation(
+            summary = "List a campaign's spend",
+            description =
+                    "Returns the campaign's cost rows with their source, so a double entry of a manual and an imported "
+                    + "row is visible. Requires `attribution:spend:read`.")
     @GetMapping
     @RequiresPermission(AttributionPermissions.SPEND_READ)
     List<SpendView> list(

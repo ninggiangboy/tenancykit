@@ -7,6 +7,8 @@ import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.core.visitor.UserAgentClassifier;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -27,6 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
  * identifier reaches a row even if a client sent one. The snippet is what asks the visitor; the server is what makes the
  * answer true.
  */
+@Tag(
+        name = "Page-view collection",
+        description =
+                "The public endpoint a tenant's page snippet posts page views to. Anything unacceptable answers 204 "
+                + "without storing.")
 @RestController
 public class CollectController {
 
@@ -64,6 +71,15 @@ public class CollectController {
         this.clock = clock;
     }
 
+    @Operation(
+            summary = "Collect page views from a tenant's site",
+            description =
+                    "The public endpoint a tenant's page snippet posts a batch of page views, a session and a `consent` "
+                    + "flag to. Everything not acceptable (a bad signature, a foreign origin, an oversize body, a batch "
+                    + "over the limit, a rate refusal) answers the same `204` without storing anything, so a probe learns "
+                    + "nothing. With `consent=false` the server drops the visitor and session ids, so no identifier reaches "
+                    + "a row. An event is stored only when its click id is a token this app signed. Public: no suite token "
+                    + "is needed.")
     @PostMapping(path = "/t/v1/events", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PublicEndpoint
     void collect(
