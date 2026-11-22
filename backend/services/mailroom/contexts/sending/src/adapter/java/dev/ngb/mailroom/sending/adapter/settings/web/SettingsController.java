@@ -5,6 +5,8 @@ import dev.ngb.mailroom.sending.application.email.port.EmailSettingsView;
 import dev.ngb.mailroom.sending.application.settings.command.SaveEmailSettingsUseCase;
 import dev.ngb.mailroom.sending.application.settings.service.SettingsReader;
 import dev.ngb.mailroom.shared.MailroomPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,6 +14,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** The tenant's default sender, reply-to, body retention and campaign publish rate. */
+@Tag(
+        name = "Mail settings",
+        description =
+                "The tenant's default sender, reply-to, body retention and campaign publish rate.")
 @RestController
 @RequestMapping("/api/v1/settings")
 class SettingsController {
@@ -24,12 +30,23 @@ class SettingsController {
         this.save = save;
     }
 
+    @Operation(
+            summary = "Get the tenant's mail settings",
+            description =
+                    "Returns the tenant's default sender, reply-to, body retention in days and campaign publish rate per "
+                    + "minute, with the settings' version. Requires `mailroom:email:read`.")
     @GetMapping
     @RequiresPermission(MailroomPermissions.EMAIL_READ)
     SettingsResponse current() {
         return SettingsResponse.of(settings.current());
     }
 
+    @Operation(
+            summary = "Replace the tenant's mail settings",
+            description =
+                    "Stores the default sender (`fromKey`, `fromName`), `replyTo`, `bodyRetentionDays` and "
+                    + "`campaignPublishPerMinute`, each bounded as the schema states. The publish rate is the tenant's "
+                    + "total across all its campaigns. Requires `mailroom:settings:manage`.")
     @PutMapping
     @RequiresPermission(MailroomPermissions.SETTINGS_MANAGE)
     SettingsResponse save(@RequestBody SettingsRequest request) {

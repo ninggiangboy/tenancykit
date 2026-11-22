@@ -11,6 +11,8 @@ import dev.ngb.mailroom.audience.application.suppression.command.AddSuppressionU
 import dev.ngb.mailroom.audience.application.suppression.command.DeleteSuppressionUseCase;
 import dev.ngb.mailroom.audience.domain.suppression.SuppressionScope;
 import dev.ngb.mailroom.shared.MailroomPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,10 @@ import org.springframework.web.bind.annotation.RestController;
  * Suppressions. Removing one is the Tenant's explicit statement that the customer consented again; it is the only
  * action that re-subscribes an address.
  */
+@Tag(
+        name = "Suppressions",
+        description =
+                "Addresses the tenant must not mail. Removing one is the only action that re-subscribes an address.")
 @RestController
 @RequestMapping("/api/v1/suppressions")
 class SuppressionController {
@@ -43,6 +49,11 @@ class SuppressionController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link SuppressionListing}. */
+    @Operation(
+            summary = "List suppressions",
+            description =
+                    "Pages through the addresses the tenant must not mail, with the list-query contract's filtering, "
+                    + "sorting and paging. Requires `mailroom:receiver:read`.")
     @GetMapping
     @Listing(SuppressionListing.class)
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
@@ -50,6 +61,11 @@ class SuppressionController {
         return queries.suppressions(query).map(SuppressionResponse::of);
     }
 
+    @Operation(
+            summary = "Suppress an address",
+            description =
+                    "Blocks an `email` address on the tenant's instruction. A suppression with scope `ALL` stops "
+                    + "transactional mail too. Requires `mailroom:receiver:manage`.")
     @PostMapping
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
     SuppressionResponse add(@RequestBody SuppressionRequest request) {
@@ -58,6 +74,12 @@ class SuppressionController {
         return new SuppressionResponse(request.email().trim().toLowerCase(java.util.Locale.ROOT), scope.name(), "MANUAL", null);
     }
 
+    @Operation(
+            summary = "Remove a suppression",
+            description =
+                    "Removes the suppression of `email` and, when the address is a known receiver, subscribes it again. "
+                    + "This is the tenant's explicit statement that the customer consented again, and the only action that "
+                    + "re-subscribes an address. Answers `204`. Requires `mailroom:receiver:manage`.")
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)

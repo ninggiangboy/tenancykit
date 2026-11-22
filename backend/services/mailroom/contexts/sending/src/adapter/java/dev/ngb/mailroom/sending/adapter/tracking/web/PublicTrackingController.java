@@ -4,6 +4,8 @@ import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.mailroom.sending.application.tracking.command.RecordClickUseCase;
 import dev.ngb.mailroom.sending.application.tracking.command.RecordOpenUseCase;
 import dev.ngb.mailroom.sending.application.tracking.command.UnsubscribeUseCase;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.net.URI;
 import java.util.Base64;
 import java.util.Optional;
@@ -27,6 +29,11 @@ import org.springframework.web.bind.annotation.RestController;
  * link arrives as {@code /t/...}; the ALB cannot strip a prefix, so the same link arrives as {@code /mailroom/t/...}.
  * Serving both is what keeps a pixel, a click and an unsubscribe working in either runtime.
  */
+@Tag(
+        name = "Public tracking",
+        description =
+                "Unauthenticated endpoints a recipient's mail client hits: open pixel, tracked link and one-click "
+                + "unsubscribe.")
 @RestController
 @RequestMapping({"/t", "/mailroom/t"})
 class PublicTrackingController {
@@ -69,6 +76,12 @@ class PublicTrackingController {
     }
 
     /** Accepts {@code {token}} or {@code {token}.gif}; the GIF is returned whatever the token says. */
+    @Operation(
+            summary = "Record an email open",
+            description =
+                    "The tracking pixel a recipient's mail client loads. It always answers the same transparent GIF, "
+                    + "whatever the token says, so a bad token is indistinguishable from a good one. A valid token records "
+                    + "an open, at most sixty a minute per email. Public: no suite token is needed.")
     @GetMapping("/o/{token}")
     @PublicEndpoint
     ResponseEntity<byte[]> open(@PathVariable String token) {
@@ -79,6 +92,12 @@ class PublicTrackingController {
                 .body(PIXEL);
     }
 
+    @Operation(
+            summary = "Follow a tracked link",
+            description =
+                    "Redirects to the URL recorded when the email was rendered and records the click; it never reads a "
+                    + "URL from the request, so it cannot be used as an open redirect. A token whose link was purged shows "
+                    + "a \"link expired\" page. Public: no suite token is needed.")
     @GetMapping("/c/{token}")
     @PublicEndpoint
     ResponseEntity<?> click(@PathVariable String token) {
@@ -100,6 +119,11 @@ class PublicTrackingController {
                 .body(EXPIRED_PAGE);
     }
 
+    @Operation(
+            summary = "Show the unsubscribe page",
+            description =
+                    "The page a recipient opens from the unsubscribe link: it asks the recipient to confirm. It changes "
+                    + "nothing itself. Public: no suite token is needed.")
     @GetMapping("/u/{token}")
     @PublicEndpoint
     ResponseEntity<String> unsubscribePage(@PathVariable String token) {
@@ -109,6 +133,11 @@ class PublicTrackingController {
                 .body(UNSUBSCRIBE_PAGE);
     }
 
+    @Operation(
+            summary = "Unsubscribe a recipient",
+            description =
+                    "The one-click unsubscribe of RFC 8058. It adds a marketing suppression and flips the receiver's "
+                    + "status, idempotently, and never stops transactional mail. Public: no suite token is needed.")
     @PostMapping("/u/{token}")
     @PublicEndpoint
     ResponseEntity<String> unsubscribe(@PathVariable String token) {

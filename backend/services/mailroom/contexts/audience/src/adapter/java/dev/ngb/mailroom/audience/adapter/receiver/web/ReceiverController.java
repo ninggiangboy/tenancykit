@@ -16,6 +16,8 @@ import dev.ngb.mailroom.audience.application.receiver.command.UpdateReceiverUseC
 import dev.ngb.mailroom.audience.application.receiver.command.UpsertReceiverUseCase;
 import dev.ngb.mailroom.audience.domain.receiver.Receiver;
 import dev.ngb.mailroom.shared.MailroomPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** A tenant's own customers. The address is the identity; deleting a receiver is an erasure, not a soft delete. */
+@Tag(
+        name = "Receivers",
+        description =
+                "A tenant's own customers by email address. Deleting a receiver is an erasure, not a soft delete.")
 @RestController
 @RequestMapping("/api/v1/receivers")
 class ReceiverController {
@@ -60,6 +66,11 @@ class ReceiverController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link ReceiverListing}. */
+    @Operation(
+            summary = "List receivers",
+            description =
+                    "Pages through the tenant's receivers, with the list-query contract's filtering, sorting and paging. "
+                    + "Requires `mailroom:receiver:read`.")
     @GetMapping
     @Listing(ReceiverListing.class)
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
@@ -67,6 +78,12 @@ class ReceiverController {
         return queries.receivers(query).map(ReceiverResponse::of);
     }
 
+    @Operation(
+            summary = "Create or update a receiver by email",
+            description =
+                    "Upserts a receiver by `email`, the identity of a receiver. A second call with the same address "
+                    + "updates the names and attributes and never re-subscribes the address; removing the suppression is "
+                    + "the only way to do that. Requires `mailroom:receiver:manage`.")
     @PutMapping
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
     ReceiverResponse upsert(@RequestBody ReceiverRequest request) {
@@ -75,6 +92,11 @@ class ReceiverController {
         return ReceiverResponse.of(receiver);
     }
 
+    @Operation(
+            summary = "Get a receiver",
+            description =
+                    "Returns one receiver; its version is also the response's `ETag`. An unknown id answers `404`. "
+                    + "Requires `mailroom:receiver:read`.")
     @GetMapping("/{id}")
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
     ResponseEntity<ReceiverResponse> get(@PathVariable UUID id) {
@@ -84,6 +106,12 @@ class ReceiverController {
                 .body(ReceiverResponse.of(view));
     }
 
+    @Operation(
+            summary = "Change a receiver's names and attributes",
+            description =
+                    "Changes the names and attributes of a receiver by id; the properties that are present replace the "
+                    + "stored ones. The address and the consent status are not editable here. Pass the current `ETag` in "
+                    + "`If-Match`; a stale version is refused. Requires `mailroom:receiver:manage`.")
     @PatchMapping("/{id}")
     @ConditionalUpdate
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
@@ -100,6 +128,13 @@ class ReceiverController {
                 .body(ReceiverResponse.of(receiver));
     }
 
+    @Operation(
+            summary = "Erase a receiver",
+            description =
+                    "Erases the receiver and its memberships, as a customer's deletion request requires. The suppression "
+                    + "row is kept on purpose, so an address that is deleted and imported again is still not mailed. Pass "
+                    + "the current `ETag` in `If-Match`; a stale version is refused. Answers `204`. Requires "
+                    + "`mailroom:receiver:manage`.")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
@@ -109,6 +144,12 @@ class ReceiverController {
         delete.execute(id, ExpectedVersion.fromIfMatch(ifMatch));
     }
 
+    @Operation(
+            summary = "Upsert receivers in bulk",
+            description =
+                    "Upserts up to 1,000 receivers in one call and reports a result per item by `index`. One bad address "
+                    + "is an error for its own item, not for the call, so an import does not lose the rows around a typo. "
+                    + "Requires `mailroom:receiver:manage`.")
     @PostMapping("/bulk")
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
     List<BulkResult> bulk(@RequestBody BulkRequest request) {

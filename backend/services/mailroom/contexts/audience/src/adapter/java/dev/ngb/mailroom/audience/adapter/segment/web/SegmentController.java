@@ -16,6 +16,8 @@ import dev.ngb.mailroom.audience.application.segment.query.SegmentQueries;
 import dev.ngb.mailroom.audience.application.segment.query.SegmentView;
 import dev.ngb.mailroom.audience.domain.segment.Segment;
 import dev.ngb.mailroom.shared.MailroomPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +37,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Saved filters over receiver attributes. The filter language is closed; the operator set is the contract. */
+@Tag(
+        name = "Segments",
+        description =
+                "Saved filters over receiver attributes, with a preview of the audience they match.")
 @RestController
 @RequestMapping("/api/v1/segments")
 class SegmentController {
@@ -59,6 +65,11 @@ class SegmentController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link SegmentListing}. */
+    @Operation(
+            summary = "List segments",
+            description =
+                    "Pages through the tenant's saved segments, with the list-query contract's filtering, sorting and "
+                    + "paging. Requires `mailroom:receiver:read`.")
     @GetMapping
     @Listing(SegmentListing.class)
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
@@ -66,6 +77,11 @@ class SegmentController {
         return queries.list(query).map(SegmentResponse::of);
     }
 
+    @Operation(
+            summary = "Create a segment",
+            description =
+                    "Saves a named filter over receiver attributes. The filter language is closed and the filter is "
+                    + "validated before it is stored. Answers `201`. Requires `mailroom:receiver:manage`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
@@ -73,6 +89,11 @@ class SegmentController {
         return SegmentResponse.of(create.execute(request.name(), request.filter()));
     }
 
+    @Operation(
+            summary = "Get a segment",
+            description =
+                    "Returns one segment with its filter; its version is also the response's `ETag`. An unknown id "
+                    + "answers `404`. Requires `mailroom:receiver:read`.")
     @GetMapping("/{id}")
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
     ResponseEntity<SegmentResponse> get(@PathVariable UUID id) {
@@ -80,6 +101,11 @@ class SegmentController {
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(view.version())).body(SegmentResponse.of(view));
     }
 
+    @Operation(
+            summary = "Replace a segment",
+            description =
+                    "Replaces the segment's name and filter; the new filter is validated first. Pass the current `ETag` "
+                    + "in `If-Match`; a stale version is refused. Requires `mailroom:receiver:manage`.")
     @PutMapping("/{id}")
     @ConditionalUpdate
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
@@ -94,6 +120,12 @@ class SegmentController {
                 .body(SegmentResponse.of(segment));
     }
 
+    @Operation(
+            summary = "Delete a segment",
+            description =
+                    "Deletes the saved segment. A campaign that already snapshotted it keeps its recipients. Pass the "
+                    + "current `ETag` in `If-Match`; a stale version is refused. Answers `204`. Requires "
+                    + "`mailroom:receiver:manage`.")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
@@ -103,6 +135,11 @@ class SegmentController {
         delete.execute(id, ExpectedVersion.fromIfMatch(ifMatch));
     }
 
+    @Operation(
+            summary = "Preview a segment's audience",
+            description =
+                    "Answers how many receivers the segment matches now, with a sample, without loading the whole "
+                    + "audience. Requires `mailroom:receiver:read`.")
     @PostMapping("/{id}/preview")
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
     PreviewSegmentUseCase.Preview preview(@PathVariable UUID id) {

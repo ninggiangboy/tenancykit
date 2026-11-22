@@ -18,6 +18,8 @@ import dev.ngb.mailroom.audience.application.group.command.ManageMembersUseCase;
 import dev.ngb.mailroom.audience.application.group.command.UpdateGroupUseCase;
 import dev.ngb.mailroom.audience.domain.group.ReceiverGroup;
 import dev.ngb.mailroom.shared.MailroomPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +38,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Static groups and their membership. */
+@Tag(
+        name = "Receiver groups",
+        description =
+                "Static groups of receivers and their membership.")
 @RestController
 @RequestMapping("/api/v1/groups")
 class GroupController {
@@ -60,6 +66,11 @@ class GroupController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link GroupListing}. */
+    @Operation(
+            summary = "List receiver groups",
+            description =
+                    "Pages through the tenant's static receiver groups, with the list-query contract's filtering, sorting "
+                    + "and paging. Requires `mailroom:receiver:read`.")
     @GetMapping
     @Listing(GroupListing.class)
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
@@ -67,6 +78,11 @@ class GroupController {
         return queries.groups(query).map(GroupResponse::of);
     }
 
+    @Operation(
+            summary = "Create a receiver group",
+            description =
+                    "Creates an empty static group with a name. Add receivers to it with `POST "
+                    + "/api/v1/groups/{id}/members`. Answers `201`. Requires `mailroom:receiver:manage`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
@@ -74,6 +90,11 @@ class GroupController {
         return GroupResponse.of(create.execute(request.name()));
     }
 
+    @Operation(
+            summary = "Get a receiver group",
+            description =
+                    "Returns one group; its version is also the response's `ETag`. An unknown id answers `404`. Requires "
+                    + "`mailroom:receiver:read`.")
     @GetMapping("/{id}")
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
     ResponseEntity<GroupResponse> get(@PathVariable UUID id) {
@@ -81,6 +102,11 @@ class GroupController {
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(view.version())).body(GroupResponse.of(view));
     }
 
+    @Operation(
+            summary = "Rename a receiver group",
+            description =
+                    "Changes the group's name. Pass the current `ETag` in `If-Match`; a stale version is refused. "
+                    + "Requires `mailroom:receiver:manage`.")
     @PutMapping("/{id}")
     @ConditionalUpdate
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
@@ -94,6 +120,11 @@ class GroupController {
                 .body(GroupResponse.of(group));
     }
 
+    @Operation(
+            summary = "Delete a receiver group",
+            description =
+                    "Deletes the group and its memberships; the receivers themselves stay. Pass the current `ETag` in "
+                    + "`If-Match`; a stale version is refused. Answers `204`. Requires `mailroom:receiver:manage`.")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
@@ -104,6 +135,11 @@ class GroupController {
     }
 
     /** The group is fixed by the path; filter, sort and paging follow the list-query contract. */
+    @Operation(
+            summary = "List the members of a receiver group",
+            description =
+                    "Pages through the receivers in the group named by the path, with the list-query contract's "
+                    + "filtering, sorting and paging. Requires `mailroom:receiver:read`.")
     @GetMapping("/{id}/members")
     @Listing(ReceiverListing.class)
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
@@ -111,12 +147,22 @@ class GroupController {
         return queries.members(id, query).map(MemberResponse::of);
     }
 
+    @Operation(
+            summary = "Add receivers to a group",
+            description =
+                    "Adds up to 1,000 receivers, named by `receiverIds`, to the group. A receiver that belongs to another "
+                    + "tenant is refused. Answers how many memberships changed. Requires `mailroom:receiver:manage`.")
     @PostMapping("/{id}/members")
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
     MemberChange addMembers(@PathVariable UUID id, @RequestBody MemberIds request) {
         return new MemberChange(members.add(id, request.receiverIds()));
     }
 
+    @Operation(
+            summary = "Remove receivers from a group",
+            description =
+                    "Removes up to 1,000 receivers, named by `receiverIds`, from the group; the receivers themselves "
+                    + "stay. Answers how many memberships changed. Requires `mailroom:receiver:manage`.")
     @DeleteMapping("/{id}/members")
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
     MemberChange removeMembers(@PathVariable UUID id, @RequestBody MemberIds request) {

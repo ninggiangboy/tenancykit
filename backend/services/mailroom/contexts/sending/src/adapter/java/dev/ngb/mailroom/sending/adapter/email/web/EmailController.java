@@ -13,6 +13,8 @@ import dev.ngb.mailroom.sending.application.email.service.BatchSender;
 import dev.ngb.mailroom.sending.domain.email.Email;
 import dev.ngb.mailroom.shared.EmailKind;
 import dev.ngb.mailroom.shared.MailroomPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +32,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Sending one email or a batch, and reading the ledger. */
+@Tag(
+        name = "Emails",
+        description =
+                "Sending one email or a batch, and reading the email ledger.")
 @RestController
 @RequestMapping("/api/v1/emails")
 class EmailController {
@@ -44,6 +50,14 @@ class EmailController {
         this.queries = queries;
     }
 
+    @Operation(
+            summary = "Send one email",
+            description =
+                    "Renders one email for one recipient from a template (`templateKey` and `variables`) or from an "
+                    + "inline `subject`, `html` and `text`, records it and queues it for delivery. A suppressed address is "
+                    + "stored as `SKIPPED` and a failed render as `FAILED` with the reason; neither is sent. Send an "
+                    + "`Idempotency-Key` so a retried call returns the same email. Answers `201`. Requires "
+                    + "`mailroom:email:send`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(MailroomPermissions.EMAIL_SEND)
@@ -54,6 +68,12 @@ class EmailController {
         return EmailResponse.of(email);
     }
 
+    @Operation(
+            summary = "Send emails in a batch",
+            description =
+                    "Sends a list of `items`, each shaped like a single send, and reports a result per item by `index`: "
+                    + "the email id and its status, or the reason that item was refused. One bad item does not fail the "
+                    + "others. Requires `mailroom:email:send`.")
     @PostMapping("/batch")
     @RequiresPermission(MailroomPermissions.EMAIL_SEND)
     List<BatchResultResponse> batch(@RequestBody BatchRequest request) {
@@ -78,6 +98,11 @@ class EmailController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link EmailListing}. */
+    @Operation(
+            summary = "List emails",
+            description =
+                    "Pages through the tenant's email ledger, with the list-query contract's filtering, sorting and "
+                    + "paging. Requires `mailroom:email:read`.")
     @GetMapping
     @Listing(EmailListing.class)
     @RequiresPermission(MailroomPermissions.EMAIL_READ)
@@ -85,6 +110,12 @@ class EmailController {
         return queries.list(query).map(EmailResponse::of);
     }
 
+    @Operation(
+            summary = "Get an email",
+            description =
+                    "Returns one email from the ledger with its status and delivery outcome. After the tenant's retention "
+                    + "the rendered body is purged and the email reads `bodyPurged: true`. An unknown id answers `404`. "
+                    + "Requires `mailroom:email:read`.")
     @GetMapping("/{id}")
     @RequiresPermission(MailroomPermissions.EMAIL_READ)
     EmailResponse get(@PathVariable UUID id) {

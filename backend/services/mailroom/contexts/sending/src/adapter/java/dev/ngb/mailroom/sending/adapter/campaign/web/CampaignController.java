@@ -21,6 +21,8 @@ import dev.ngb.mailroom.sending.application.campaign.query.CampaignView;
 import dev.ngb.mailroom.sending.domain.campaign.Campaign;
 import dev.ngb.mailroom.sending.domain.campaign.CampaignTargetType;
 import dev.ngb.mailroom.shared.MailroomPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +40,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Campaigns and their state machine. */
+@Tag(
+        name = "Campaigns",
+        description =
+                "Bulk email campaigns and their state machine: draft, schedule, send, pause, resume, cancel, test and "
+                + "statistics.")
 @RestController
 @RequestMapping("/api/v1/campaigns")
 class CampaignController {
@@ -71,6 +78,11 @@ class CampaignController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link CampaignListing}. */
+    @Operation(
+            summary = "List campaigns",
+            description =
+                    "Pages through the tenant's campaigns, with the list-query contract's filtering, sorting and paging. "
+                    + "Requires `mailroom:campaign:read`.")
     @GetMapping
     @Listing(CampaignListing.class)
     @RequiresPermission(MailroomPermissions.CAMPAIGN_READ)
@@ -78,6 +90,12 @@ class CampaignController {
         return queries.list(query).map(CampaignResponse::of);
     }
 
+    @Operation(
+            summary = "Create a campaign",
+            description =
+                    "Creates a campaign in `DRAFT` that targets a group or segment (`targetType`, `targetId`) with the "
+                    + "template `templateKey` and the sender `fromKey`; it pins the template revision it will send. Answers "
+                    + "`201`. Requires `mailroom:campaign:manage`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
@@ -90,6 +108,11 @@ class CampaignController {
                 request.fromKey())));
     }
 
+    @Operation(
+            summary = "Get a campaign",
+            description =
+                    "Returns one campaign with its state; its version is also the response's `ETag`. An unknown id "
+                    + "answers `404`. Requires `mailroom:campaign:read`.")
     @GetMapping("/{id}")
     @RequiresPermission(MailroomPermissions.CAMPAIGN_READ)
     ResponseEntity<CampaignResponse> get(@PathVariable UUID id) {
@@ -97,6 +120,11 @@ class CampaignController {
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(view.version())).body(CampaignResponse.of(view));
     }
 
+    @Operation(
+            summary = "Edit a draft campaign",
+            description =
+                    "Edits a campaign that is still in `DRAFT` and re-pins the template revision it will send. Pass the "
+                    + "current `ETag` in `If-Match`; a stale version is refused. Requires `mailroom:campaign:manage`.")
     @PutMapping("/{id}")
     @ConditionalUpdate
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
@@ -118,6 +146,12 @@ class CampaignController {
                 .body(CampaignResponse.of(campaign));
     }
 
+    @Operation(
+            summary = "Schedule a campaign",
+            description =
+                    "Schedules a `DRAFT` campaign to start at `scheduledAt`, which must be in the future. When the time "
+                    + "comes the campaign enters `SENDING` and its audience is snapshotted once. Pass the current `ETag` in "
+                    + "`If-Match`; a stale version is refused. Requires `mailroom:campaign:manage`.")
     @PostMapping("/{id}/schedule")
     @ConditionalUpdate
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
@@ -131,36 +165,66 @@ class CampaignController {
                 .body(CampaignResponse.of(campaign));
     }
 
+    @Operation(
+            summary = "Send a campaign now",
+            description =
+                    "Starts the campaign immediately: it enters `SENDING` and its audience is snapshotted once. "
+                    + "Recipients are then published at the tenant's campaign rate. Requires `mailroom:campaign:manage`.")
     @PostMapping("/{id}/send")
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
     CampaignResponse send(@PathVariable UUID id) {
         return CampaignResponse.of(start.execute(id, ExpectedVersion.any()));
     }
 
+    @Operation(
+            summary = "Pause a campaign",
+            description =
+                    "Pauses a sending campaign so no further recipients are published. A campaign in a state that cannot "
+                    + "be paused answers `409`. Requires `mailroom:campaign:manage`.")
     @PostMapping("/{id}/pause")
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
     CampaignResponse pause(@PathVariable UUID id) {
         return CampaignResponse.of(change.execute(id, ChangeCampaignStateUseCase.Action.PAUSE));
     }
 
+    @Operation(
+            summary = "Resume a campaign",
+            description =
+                    "Resumes a paused campaign. A campaign in a state that cannot be resumed answers `409`. Requires "
+                    + "`mailroom:campaign:manage`.")
     @PostMapping("/{id}/resume")
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
     CampaignResponse resume(@PathVariable UUID id) {
         return CampaignResponse.of(change.execute(id, ChangeCampaignStateUseCase.Action.RESUME));
     }
 
+    @Operation(
+            summary = "Cancel a campaign",
+            description =
+                    "Cancels the campaign so it sends no more. A campaign in a state that cannot be cancelled answers "
+                    + "`409`. Requires `mailroom:campaign:manage`.")
     @PostMapping("/{id}/cancel")
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
     CampaignResponse cancel(@PathVariable UUID id) {
         return CampaignResponse.of(change.execute(id, ChangeCampaignStateUseCase.Action.CANCEL));
     }
 
+    @Operation(
+            summary = "Send a campaign test",
+            description =
+                    "Sends a sample of the campaign to up to five explicit `addresses` as transactional mail. A test send "
+                    + "stores no campaign or receiver id, so it never counts in the campaign's statistics and never touches "
+                    + "its snapshot. Requires `mailroom:campaign:manage`.")
     @PostMapping("/{id}/test")
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
     List<TestCampaignUseCase.Result> test(@PathVariable UUID id, @RequestBody TestRequest request) {
         return test.execute(id, request.addresses());
     }
 
+    @Operation(
+            summary = "Get a campaign's statistics",
+            description =
+                    "Returns the campaign's delivery and engagement counts. Requires `mailroom:campaign:read`.")
     @GetMapping("/{id}/stats")
     @RequiresPermission(MailroomPermissions.CAMPAIGN_READ)
     CampaignStatsView stats(@PathVariable UUID id) {
