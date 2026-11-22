@@ -5,6 +5,8 @@ import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.workflow.runtime.application.runtime.query.InstanceQueries;
 import dev.ngb.workflow.runtime.application.runtime.query.InstanceView;
 import dev.ngb.workflow.shared.WorkflowPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
@@ -19,6 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
  * What a Tenant's flows did and are doing: the instances it started, their state and the timeline of each. No endpoint
  * returns the trigger input or a secret; the timeline carries redacted requests and responses only.
  */
+@Tag(
+        name = "Workflow instances",
+        description =
+                "What a tenant's flows did and are doing: the instances started and their state.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -30,6 +36,12 @@ public class InstanceHistoryController {
         this.instances = instances;
     }
 
+    @Operation(
+            summary = "List workflow instances",
+            description =
+                    "Returns the instances the tenant's flows started, narrowed by `status`, `definition` code and "
+                    + "`correlationKey`, paged with `limit` (default 50) and `offset`. No answer carries the trigger input "
+                    + "or a secret. Requires `workflow:instance:read`.")
     @GetMapping("/instances")
     @RequiresPermission(WorkflowPermissions.INSTANCE_READ)
     public List<InstanceView> list(
@@ -41,6 +53,11 @@ public class InstanceHistoryController {
         return instances.list(status, definitionCode, correlationKey, limit, offset);
     }
 
+    @Operation(
+            summary = "Get a workflow instance",
+            description =
+                    "Returns one instance with its state and, when it failed, the reason. An unknown id answers `404`. "
+                    + "Requires `workflow:instance:read`.")
     @GetMapping("/instances/{id}")
     @RequiresPermission(WorkflowPermissions.INSTANCE_READ)
     public ResponseEntity<InstanceView> get(@PathVariable String id) {

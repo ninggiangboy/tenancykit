@@ -9,6 +9,8 @@ import dev.ngb.workflow.connections.application.connection.query.ConnectionQueri
 import dev.ngb.workflow.connections.application.connection.query.ConnectionView;
 import dev.ngb.workflow.connections.domain.connection.Connection;
 import dev.ngb.workflow.shared.WorkflowPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,10 @@ import org.springframework.web.bind.annotation.RestController;
  * The connections a Tenant may call. A secret goes in and never comes out: every response names the key id that wrote
  * the envelope instead.
  */
+@Tag(
+        name = "Connections",
+        description =
+                "The connections a workflow step may call. A secret goes in and never comes out.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -83,6 +89,13 @@ public class ConnectionController {
         this.queries = queries;
     }
 
+    @Operation(
+            summary = "Create a connection",
+            description =
+                    "Registers a connection a workflow step may call: a name, a `kind`, the one `allowedHost` it may "
+                    + "reach, optional `headers` and a `secret`. The secret goes in as plaintext, is stored as an encrypted "
+                    + "envelope and is never returned; every response names the key id that wrote the envelope instead. "
+                    + "Requires `workflow:connection:manage`.")
     @PostMapping("/connections")
     @RequiresPermission(WorkflowPermissions.CONNECTION_MANAGE)
     public ResponseEntity<ConnectionResponse> create(@RequestBody ConnectionRequest request) {
@@ -93,12 +106,21 @@ public class ConnectionController {
                 .body(ConnectionResponse.of(created));
     }
 
+    @Operation(
+            summary = "List connections",
+            description =
+                    "Returns the tenant's connections without their secrets. Requires `workflow:connection:manage`.")
     @GetMapping("/connections")
     @RequiresPermission(WorkflowPermissions.CONNECTION_MANAGE)
     public List<ConnectionResponse> list() {
         return queries.all().stream().map(ConnectionResponse::ofView).toList();
     }
 
+    @Operation(
+            summary = "Get a connection",
+            description =
+                    "Returns one connection without its secret; its version is also the response's `ETag`. An unknown id "
+                    + "answers `404`. Requires `workflow:connection:manage`.")
     @GetMapping("/connections/{id}")
     @RequiresPermission(WorkflowPermissions.CONNECTION_MANAGE)
     public ResponseEntity<ConnectionResponse> get(@PathVariable String id) {
@@ -108,6 +130,12 @@ public class ConnectionController {
                 .body(ConnectionResponse.ofView(view));
     }
 
+    @Operation(
+            summary = "Update a connection",
+            description =
+                    "Replaces the connection's name, kind, allowed host and headers, and its secret when one is sent. "
+                    + "Pass the current `ETag` in `If-Match`; a stale version is refused with `412`. Requires "
+                    + "`workflow:connection:manage`.")
     @PutMapping("/connections/{id}")
     @ConditionalUpdate
     @RequiresPermission(WorkflowPermissions.CONNECTION_MANAGE)

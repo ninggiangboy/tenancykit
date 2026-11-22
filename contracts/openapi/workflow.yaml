@@ -8,47 +8,103 @@ info:
 servers:
 - url: "/workflow"
   description: "Any tenant hostname: <tenant-code>.<base-domain>/workflow"
+tags:
+- name: "Workflow instances"
+  description: "What a tenant's flows did and are doing: the instances started and\
+    \ their state."
+- name: "Webhook deliveries"
+  description: "The history of attempts to deliver an event to an endpoint, and resending\
+    \ one that finished. A delivery that exhausted its attempts is DEAD and stays\
+    \ visible so it can be resent."
+- name: "Platform credential"
+  description: "The tenant's write-only credential for calling Platform, and its status."
+- name: "Workflow definitions"
+  description: "Create a definition, edit its draft, publish immutable versions, retire\
+    \ it and simulate the draft."
+- name: "Connections"
+  description: "The connections a workflow step may call. A secret goes in and never\
+    \ comes out."
+- name: "Manual start"
+  description: "Starts a workflow instance from a manual call."
+- name: "Task groups"
+  description: "The named lists a human task may be assigned to."
+- name: "Event hooks"
+  description: "The public hook a tenant registers in a source app. The trigger's\
+    \ secret proves the delivery."
+- name: "Webhook endpoints"
+  description: "Where a tenant wants its events delivered and which event types. The\
+    \ signing secret is returned only when an endpoint is created or its secret rotated,\
+    \ never again."
+- name: "Triggers"
+  description: "The ways a tenant starts a workflow: signed events from apps or external\
+    \ systems, and schedules."
+- name: "Human tasks"
+  description: "The human-task inbox: read, claim, complete and reassign tasks."
+- name: "Instance operations"
+  description: "What an operator does with an instance that stopped: retry, replay,\
+    \ cancel and read its timeline."
 paths:
   /api/v1/webhook-endpoints/{id}:
     get:
       tags:
-      - "endpoint-controller"
+      - "Webhook endpoints"
+      summary: "Get a webhook endpoint"
+      description: "Returns one endpoint; its version is also the response's `ETag`.\
+        \ The secret is not returned. An unknown id answers `404`. Requires `workflow:webhook:manage`."
       operationId: "getEndpoint"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the webhook endpoint."
         required: true
         schema:
           type: "string"
       responses:
         "200":
-          description: "OK"
+          description: "A webhook endpoint. The signing secret is not part of it."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/EndpointResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:webhook:manage"
     put:
       tags:
-      - "endpoint-controller"
+      - "Webhook endpoints"
+      summary: "Update a webhook endpoint"
+      description: "Changes only the fields that are present: url, description, subscribed\
+        \ event types or `status`. Setting `status` to `DISABLED` pauses delivery\
+        \ without losing queued events. Pass the current `ETag` in `If-Match`; a stale\
+        \ version is refused with `412`. Requires `workflow:webhook:manage`."
       operationId: "updateEndpoint"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the webhook endpoint."
         required: true
         schema:
           type: "string"
       - name: "If-Match"
         in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
         required: false
         schema:
           type: "string"
       - name: "X-Request-Id"
         in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: "string"
       requestBody:
+        description: "The fields to change. A field that is left out keeps its value."
         content:
           application/json:
             schema:
@@ -56,76 +112,124 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "A webhook endpoint. The signing secret is not part of it."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/EndpointResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:webhook:manage"
     delete:
       tags:
-      - "endpoint-controller"
+      - "Webhook endpoints"
+      summary: "Delete a webhook endpoint"
+      description: "Deletes the endpoint: it stops receiving and leaves every list,\
+        \ while its delivery history stays readable. Pass the current `ETag` in `If-Match`;\
+        \ a stale version is refused with `412`. Requires `workflow:webhook:manage`."
       operationId: "deleteEndpoint"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the webhook endpoint."
         required: true
         schema:
           type: "string"
       - name: "If-Match"
         in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
         required: false
         schema:
           type: "string"
       - name: "X-Request-Id"
         in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: "string"
       responses:
-        "200":
-          description: "OK"
+        "204":
+          description: "The endpoint was deleted. Its delivery history stays readable."
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:webhook:manage"
   /api/v1/triggers/{id}:
     get:
       tags:
-      - "trigger-controller"
+      - "Triggers"
+      summary: "Get a trigger"
+      description: "Returns one trigger without its secret; its version is also the\
+        \ response's `ETag`. An unknown id answers `404`. Requires `workflow:trigger:manage`."
       operationId: "getTrigger"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the trigger."
         required: true
         schema:
           type: "string"
       responses:
         "200":
-          description: "OK"
+          description: "A way a definition starts. The signing secret is not part\
+            \ of it."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/TriggerResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:trigger:manage"
     put:
       tags:
-      - "trigger-controller"
+      - "Triggers"
+      summary: "Update or disable a trigger"
+      description: "Changes the trigger's name, event type, filter, correlation or\
+        \ input, or disables it with `enabled=false`. Pass the current `ETag` in `If-Match`;\
+        \ a stale version is refused with `412`. Requires `workflow:trigger:manage`."
       operationId: "updateTrigger"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the trigger."
         required: true
         schema:
           type: "string"
       - name: "If-Match"
         in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
         required: false
         schema:
           type: "string"
       - name: "X-Request-Id"
         in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: "string"
       requestBody:
+        description: "The fields to change. A field that is left out keeps its value."
         content:
           application/json:
             schema:
@@ -133,29 +237,49 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "A way a definition starts. The signing secret is not part\
+            \ of it."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/TriggerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:trigger:manage"
   /api/v1/task-groups/{code}:
     put:
       tags:
-      - "task-group-controller"
+      - "Task groups"
+      summary: "Update a task group"
+      description: "Replaces the group's name and members. A member disabled later\
+        \ keeps the group membership but loses access to the tasks, because every\
+        \ action re-reads the user's state. Pass the current `ETag` in `If-Match`;\
+        \ a stale version is refused with `412`. Requires `workflow:task:manage`."
       operationId: "update"
       parameters:
       - name: "code"
         in: "path"
+        description: "The code of the task group."
         required: true
         schema:
           type: "string"
       - name: "If-Match"
         in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
         required: false
         schema:
           type: "string"
       requestBody:
+        description: "The task group to store."
         content:
           application/json:
             schema:
@@ -163,44 +287,80 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "A named list a task may be assigned to."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/GroupResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:task:manage"
     delete:
       tags:
-      - "task-group-controller"
+      - "Task groups"
+      summary: "Delete a task group"
+      description: "Deletes the group. A workflow node that is assigned to it fails\
+        \ with a readable reason rather than creating a task nobody can see. Answers\
+        \ `204`. Requires `workflow:task:manage`."
       operationId: "delete"
       parameters:
       - name: "code"
         in: "path"
+        description: "The code of the task group."
         required: true
         schema:
           type: "string"
       responses:
         "204":
           description: "No Content"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:task:manage"
   /api/v1/platform-credential:
     get:
       tags:
-      - "platform-credential-controller"
+      - "Platform credential"
+      summary: "Get the Platform credential's status"
+      description: "Returns the credential's `clientId`, the key id that wrote its\
+        \ envelope, when it was last updated and whether Platform still accepts it.\
+        \ The secret is never returned. Requires `workflow:connection:manage`."
       operationId: "status"
       responses:
         "200":
-          description: "OK"
+          description: "The Platform credential's status. The secret is never part\
+            \ of it."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CredentialResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:connection:manage"
     put:
       tags:
-      - "platform-credential-controller"
+      - "Platform credential"
+      summary: "Register the tenant's Platform credential"
+      description: "Stores the API credential (`clientId` and `secret`) workflow uses\
+        \ to call Platform for the tenant. The secret is write-only: it is encrypted\
+        \ on the way in and never read back. Answers the credential's status and the\
+        \ key id that wrote it. Requires `workflow:connection:manage`."
       operationId: "register"
       requestBody:
+        description: "The credential to store."
         content:
           application/json:
             schema:
@@ -208,34 +368,52 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "The Platform credential's status. The secret is never part\
+            \ of it."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CredentialResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:connection:manage"
   /api/v1/definitions/{id}/draft:
     put:
       tags:
-      - "definition-controller"
+      - "Workflow definitions"
+      summary: "Replace a definition's draft"
+      description: "Replaces the whole draft `graph`. A structurally wrong draft is\
+        \ stored as sent and its problems are returned, because a draft is what an\
+        \ author is still writing; only publish refuses one. Pass the current `ETag`\
+        \ in `If-Match`; a stale version is refused with `412`. Requires `workflow:definition:manage`."
       operationId: "putDraft"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the definition."
         required: true
         schema:
           type: "string"
       - name: "If-Match"
         in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
         required: false
         schema:
           type: "string"
       - name: "X-Request-Id"
         in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: "string"
       requestBody:
+        description: "The draft graph, replacing the stored one."
         content:
           application/json:
             schema:
@@ -243,47 +421,75 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "The definition with the problems found in its draft."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/DraftResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:definition:manage"
   /api/v1/connections/{id}:
     get:
       tags:
-      - "connection-controller"
+      - "Connections"
+      summary: "Get a connection"
+      description: "Returns one connection without its secret; its version is also\
+        \ the response's `ETag`. An unknown id answers `404`. Requires `workflow:connection:manage`."
       operationId: "get"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the connection."
         required: true
         schema:
           type: "string"
       responses:
         "200":
-          description: "OK"
+          description: "A connection. The secret is never part of it."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ConnectionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:connection:manage"
     put:
       tags:
-      - "connection-controller"
+      - "Connections"
+      summary: "Update a connection"
+      description: "Replaces the connection's name, kind, allowed host and headers,\
+        \ and its secret when one is sent. Pass the current `ETag` in `If-Match`;\
+        \ a stale version is refused with `412`. Requires `workflow:connection:manage`."
       operationId: "update_1"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the connection."
         required: true
         schema:
           type: "string"
       - name: "If-Match"
         in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
         required: false
         schema:
           type: "string"
       requestBody:
+        description: "The connection to store."
         content:
           application/json:
             schema:
@@ -291,24 +497,45 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "A connection. The secret is never part of it."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ConnectionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:connection:manage"
   /hooks/{triggerId}:
     post:
       tags:
-      - "hook-controller"
+      - "Event hooks"
+      summary: "Receive a signed event hook"
+      description: "The public hook a tenant registers in a source app. The trigger's\
+        \ secret signs the delivery, so no suite token is needed, and the tenant comes\
+        \ from the host. A new event starts every matching trigger and is answered\
+        \ with how many started; a duplicate event id is answered as accepted and\
+        \ starts nothing. A bad signature, a stale timestamp, an unknown trigger and\
+        \ a tampered body all answer the same `401`."
       operationId: "receive"
       parameters:
       - name: "triggerId"
         in: "path"
+        description: "The id of the trigger the delivery is for. The trigger's secret\
+          \ signs the delivery."
         required: true
         schema:
           type: "string"
       requestBody:
+        description: "The event as the source app sent it, byte for byte. The signature\
+          \ in the headers covers exactly these bytes."
         content:
           application/json:
             schema:
@@ -316,18 +543,28 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "The receipt of a delivered event."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ReceiptResponse"
+        "401":
+          description: "The signature is wrong, the timestamp is stale, the trigger\
+            \ is unknown, or the body was tampered with. All of them answer the same."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-public: true
   /api/v1/webhook-endpoints:
     get:
       tags:
-      - "endpoint-controller"
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+      - "Webhook endpoints"
+      summary: "List webhook endpoints"
+      description: "Pages through the tenant's webhook endpoints, with the list-query\
+        \ contract's filtering, sorting and paging. Requires `workflow:webhook:manage`.\n\
+        \n**Filtering, sorting and paging** follow the list-query contract. Conditions\
+        \ in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
         \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
         \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
         \ and `nin` do not match rows where the field is null. Send `limit` with either\
@@ -719,7 +956,8 @@ paths:
           - "cursor"
       responses:
         "200":
-          description: "OK"
+          description: "A page of endpoint response rows, with the paging facts when\
+            \ the request asked for them."
           content:
             '*/*':
               schema:
@@ -727,18 +965,35 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:webhook:manage"
     post:
       tags:
-      - "endpoint-controller"
+      - "Webhook endpoints"
+      summary: "Create a webhook endpoint"
+      description: "Registers an HTTPS endpoint that subscribes to a subset of workflow's\
+        \ four event types. The signing secret is returned once, in this response,\
+        \ and never again. A url that is not https or does not resolve to a public\
+        \ address, or an unknown event type, answers `422`. Answers `201`. Requires\
+        \ `workflow:webhook:manage`."
       operationId: "createEndpoint"
       parameters:
       - name: "X-Request-Id"
         in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: "string"
       requestBody:
+        description: "The endpoint to register."
         content:
           application/json:
             schema:
@@ -746,72 +1001,114 @@ paths:
         required: true
       responses:
         "201":
-          description: "Created"
+          description: "An endpoint with its signing secret, shown once."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/EndpointWithSecretResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          description: "The url is not https or does not resolve to a public address,\
+            \ or an event type is not known."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "workflow:webhook:manage"
   /api/v1/webhook-endpoints/{id}/rotate-secret:
     post:
       tags:
-      - "endpoint-controller"
+      - "Webhook endpoints"
+      summary: "Rotate a webhook endpoint's secret"
+      description: "Replaces the endpoint's signing secret and returns the new one\
+        \ once, never again. Requires `workflow:webhook:manage`."
       operationId: "rotateSecret"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the webhook endpoint."
         required: true
         schema:
           type: "string"
       - name: "X-Request-Id"
         in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: "string"
       responses:
         "200":
-          description: "OK"
+          description: "An endpoint with its signing secret, shown once."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/EndpointWithSecretResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:webhook:manage"
   /api/v1/webhook-deliveries/{id}/retry:
     post:
       tags:
-      - "delivery-controller"
+      - "Webhook deliveries"
+      summary: "Retry a webhook delivery"
+      description: "Queues a fresh delivery of the same stored event to the same endpoint,\
+        \ with a new attempt budget, and answers `202`: sending happens asynchronously.\
+        \ The original keeps its history. Only a finished delivery can be retried;\
+        \ one still being attempted is already on its way. Requires `workflow:webhook:manage`."
       operationId: "retry"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the webhook delivery."
         required: true
         schema:
           type: "string"
       - name: "X-Request-Id"
         in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: "string"
       responses:
         "202":
-          description: "Accepted"
+          description: "One delivery of an event to an endpoint."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/DeliveryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:webhook:manage"
   /api/v1/triggers:
     get:
       tags:
-      - "trigger-controller"
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+      - "Triggers"
+      summary: "List triggers"
+      description: "Pages through the tenant's triggers, with the list-query contract's\
+        \ filtering, sorting and paging. Requires `workflow:trigger:manage`.\n\n**Filtering,\
+        \ sorting and paging** follow the list-query contract. Conditions in `filter[field][op]`\
+        \ are combined with AND. For OR, use `filter[or][i][field][op]`: predicates\
+        \ sharing the index `i` are AND-ed and the branches are OR-ed (at most 10\
+        \ branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin`\
+        \ do not match rows where the field is null. Send `limit` with either `offset`\
+        \ (at most 10000) or the `cursor` taken from a previous page, never both.\
+        \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
+        \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
         \ rows; omit it for the rows alone."
       operationId: "listTriggers"
@@ -1149,7 +1446,8 @@ paths:
           - "cursor"
       responses:
         "200":
-          description: "OK"
+          description: "A page of trigger response rows, with the paging facts when\
+            \ the request asked for them."
           content:
             '*/*':
               schema:
@@ -1157,48 +1455,81 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:trigger:manage"
     post:
       tags:
-      - "trigger-controller"
+      - "Triggers"
+      summary: "Create a trigger"
+      description: "Creates a way to start a workflow: a `kind` (`APP` for a suite\
+        \ app's signed webhook, `EXTERNAL` for an outside system's signed webhook,\
+        \ or `SCHEDULE` for a cron schedule), its `source` and `eventType`, the definition\
+        \ to start, an optional `filter`, `correlation` and `input`. A signed trigger's\
+        \ secret is in this response and never again. A schedule trigger's first tick\
+        \ is after now, so one created while the worker was down does not fire every\
+        \ missed tick. Requires `workflow:trigger:manage`."
       operationId: "createTrigger"
       parameters:
       - name: "X-Request-Id"
         in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: "string"
       requestBody:
+        description: "The trigger to create."
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/CreateTriggerRequest"
         required: true
       responses:
-        "200":
-          description: "OK"
+        "201":
+          description: "A trigger with its signing secret, shown once."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/TriggerWithSecretResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:trigger:manage"
   /api/v1/tasks/{id}/reassign:
     post:
       tags:
-      - "task-controller"
+      - "Human tasks"
+      summary: "Reassign a task"
+      description: "Moves an open task to another `user` or `group`; the new group's\
+        \ members are copied onto it. Pass the current `ETag` in `If-Match`; a stale\
+        \ version is refused with `412`. Requires `workflow:task:complete`."
       operationId: "reassign"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the task."
         required: true
         schema:
           type: "string"
       - name: "If-Match"
         in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
         required: false
         schema:
           type: "string"
       requestBody:
+        description: "Who to move the task to. Give a user or a group."
         content:
           application/json:
             schema:
@@ -1206,29 +1537,51 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "One human task: what it asks, who it is for, when it is due\
+            \ and what was decided."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/TaskView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:task:complete"
   /api/v1/tasks/{id}/complete:
     post:
       tags:
-      - "task-controller"
+      - "Human tasks"
+      summary: "Complete a task"
+      description: "Completes the task with one of its declared `decision` values\
+        \ and an `output` that matches its form; the workflow resumes in the same\
+        \ transaction. A person acts on their own task; a Tenant System acts on any\
+        \ task of its tenant and must name the person it speaks for in `completedBy`,\
+        \ which is recorded as stated. Pass the current `ETag` in `If-Match`; a stale\
+        \ version is refused with `412`. Requires `workflow:task:complete`."
       operationId: "complete"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the task."
         required: true
         schema:
           type: "string"
       - name: "If-Match"
         in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
         required: false
         schema:
           type: "string"
       requestBody:
+        description: "How to complete the task."
         content:
           application/json:
             schema:
@@ -1236,40 +1589,76 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "One human task: what it asks, who it is for, when it is due\
+            \ and what was decided."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/TaskView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:task:complete"
   /api/v1/tasks/{id}/claim:
     post:
       tags:
-      - "task-controller"
+      - "Human tasks"
+      summary: "Claim a task"
+      description: "A person takes an open task. Claiming a task that is already claimed\
+        \ is a conflict, and a Tenant System may not claim at all. Pass the current\
+        \ `ETag` in `If-Match`; a stale version is refused with `412`. Requires `workflow:task:complete`."
       operationId: "claim"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the task."
         required: true
         schema:
           type: "string"
       - name: "If-Match"
         in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
         required: false
         schema:
           type: "string"
       responses:
         "200":
-          description: "OK"
+          description: "One human task: what it asks, who it is for, when it is due\
+            \ and what was decided."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/TaskView"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: "The task is already claimed."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:task:complete"
   /api/v1/task-groups:
     get:
       tags:
-      - "task-group-controller"
+      - "Task groups"
+      summary: "List task groups"
+      description: "Returns the named lists a task may be assigned to, with their\
+        \ members. Requires `workflow:task:read`."
       operationId: "list"
       responses:
         "200":
@@ -1280,12 +1669,20 @@ paths:
                 type: "array"
                 items:
                   $ref: "#/components/schemas/GroupResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:task:read"
     post:
       tags:
-      - "task-group-controller"
+      - "Task groups"
+      summary: "Create a task group"
+      description: "Creates a group with a `code`, a name and its `members`. Members\
+        \ must be active users when they are added. Answers `201`. Requires `workflow:task:manage`."
       operationId: "create"
       requestBody:
+        description: "The task group to store."
         content:
           application/json:
             schema:
@@ -1293,35 +1690,51 @@ paths:
         required: true
       responses:
         "201":
-          description: "Created"
+          description: "A named list a task may be assigned to."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/GroupResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:task:manage"
   /api/v1/instances:
     get:
       tags:
-      - "instance-history-controller"
+      - "Workflow instances"
+      summary: "List workflow instances"
+      description: "Returns the instances the tenant's flows started, narrowed by\
+        \ `status`, `definition` code and `correlationKey`, paged with `limit` (default\
+        \ 50) and `offset`. No answer carries the trigger input or a secret. Requires\
+        \ `workflow:instance:read`."
       operationId: "list_1"
       parameters:
       - name: "status"
         in: "query"
+        description: "Only instances in this status: `RUNNING`, `WAITING`, `COMPLETED`,\
+          \ `FAILED`, `FAILED_STUCK`, `CANCELLED`, `COMPENSATING` or `COMPENSATION_FAILED`."
         required: false
         schema:
           type: "string"
       - name: "definition"
         in: "query"
+        description: "Only instances of the definition with this code."
         required: false
         schema:
           type: "string"
       - name: "correlationKey"
         in: "query"
+        description: "Only instances with this correlation key."
         required: false
         schema:
           type: "string"
       - name: "limit"
         in: "query"
+        description: "The page size. Defaults to 50."
         required: false
         schema:
           type: "integer"
@@ -1329,6 +1742,7 @@ paths:
           default: 50
       - name: "offset"
         in: "query"
+        description: "The number of rows to skip. Defaults to 0."
         required: false
         schema:
           type: "integer"
@@ -1343,23 +1757,41 @@ paths:
                 type: "array"
                 items:
                   $ref: "#/components/schemas/InstanceView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:instance:read"
     post:
       tags:
-      - "instance-controller"
+      - "Manual start"
+      summary: "Start a workflow manually"
+      description: "Starts an instance of `definition` from its newest published version,\
+        \ with `input` and an optional `correlationKey`. The tenant comes from the\
+        \ request, so a caller can never start another tenant's workflow. A repeated\
+        \ call with the same `Idempotency-Key` returns the first instance; the same\
+        \ key with another body answers `409`. Answers `201`. Requires `workflow:instance:manage`."
       operationId: "startInstance"
       parameters:
       - name: "X-Request-Id"
         in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: "string"
       - name: "Idempotency-Key"
         in: "header"
+        description: "A key the caller chooses so a retry is safe: the same key with\
+          \ the same body answers the first result instead of acting twice, and the\
+          \ same key with a different body is a conflict."
         required: false
         schema:
           type: "string"
       requestBody:
+        description: "The instance to start."
         content:
           application/json:
             schema:
@@ -1367,86 +1799,139 @@ paths:
         required: true
       responses:
         "201":
-          description: "Created"
+          description: "The instance that was started."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/StartedInstanceResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/IdempotencyConflict"
       x-required-permission: "workflow:instance:manage"
   /api/v1/instances/{id}/retry:
     post:
       tags:
-      - "instance-operations-controller"
+      - "Instance operations"
+      summary: "Retry a failed instance"
+      description: "Retries an instance that dead-lettered: the failed step becomes\
+        \ ready again with the same id and attempt, so it sends the same idempotency\
+        \ key, and the instance goes back to `RUNNING` with no failure reason. `nodeId`\
+        \ names the step when needed. Requires `workflow:instance:manage`."
       operationId: "retry_1"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the instance."
         required: true
         schema:
           type: "string"
       requestBody:
+        description: "Which step to retry."
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/RetryRequest"
       responses:
         "200":
-          description: "OK"
+          description: "The instance after an operation."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/InstanceStateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:instance:manage"
   /api/v1/instances/{id}/replay:
     post:
       tags:
-      - "instance-operations-controller"
+      - "Instance operations"
+      summary: "Replay a finished instance"
+      description: "Starts a new instance from the same input and the same pinned\
+        \ version, and records the instance it was replayed from. The old instance\
+        \ stays as it was, so the pair is the comparison. Requires `workflow:instance:manage`."
       operationId: "replay"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the instance."
         required: true
         schema:
           type: "string"
       responses:
-        "200":
-          description: "OK"
+        "201":
+          description: "The instance after an operation."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/InstanceStateResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:instance:manage"
   /api/v1/instances/{id}/cancel:
     post:
       tags:
-      - "instance-operations-controller"
+      - "Instance operations"
+      summary: "Cancel an instance"
+      description: "Cancels an instance an operator no longer wants: its live steps\
+        \ are cancelled, no timer or event can resume it, its open tasks are cancelled\
+        \ and it finishes `CANCELLED`. With `compensate=true` the completed steps\
+        \ are rolled back first. Requires `workflow:instance:manage`."
       operationId: "cancel"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the instance."
         required: true
         schema:
           type: "string"
       - name: "compensate"
         in: "query"
+        description: "`true` to roll back the steps that already completed before\
+          \ cancelling. Defaults to `false`."
         required: false
         schema:
           type: "boolean"
           default: false
       responses:
         "200":
-          description: "OK"
+          description: "The instance after an operation."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/InstanceStateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:instance:manage"
   /api/v1/definitions:
     get:
       tags:
-      - "definition-controller"
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+      - "Workflow definitions"
+      summary: "List workflow definitions"
+      description: "Pages through the tenant's definitions, with the list-query contract's\
+        \ filtering, sorting and paging. Requires `workflow:definition:read`.\n\n\
+        **Filtering, sorting and paging** follow the list-query contract. Conditions\
+        \ in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
         \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
         \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
         \ and `nin` do not match rows where the field is null. Send `limit` with either\
@@ -1791,7 +2276,8 @@ paths:
           - "cursor"
       responses:
         "200":
-          description: "OK"
+          description: "A page of definition response rows, with the paging facts\
+            \ when the request asked for them."
           content:
             '*/*':
               schema:
@@ -1799,117 +2285,194 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:definition:read"
     post:
       tags:
-      - "definition-controller"
+      - "Workflow definitions"
+      summary: "Create a workflow definition"
+      description: "Creates a definition with a `code` and a name and an empty draft;\
+        \ the graph arrives through the draft endpoint. Requires `workflow:definition:manage`."
       operationId: "createDefinition"
       parameters:
       - name: "X-Request-Id"
         in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: "string"
       requestBody:
+        description: "The definition to create. It starts with an empty draft."
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/CreateDefinitionRequest"
         required: true
       responses:
-        "200":
-          description: "OK"
+        "201":
+          description: "A workflow definition."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/DefinitionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:definition:manage"
   /api/v1/definitions/{id}/simulate:
     post:
       tags:
-      - "definition-controller"
+      - "Workflow definitions"
+      summary: "Simulate a draft"
+      description: "Walks the draft over a sample `input` and canned step outputs\
+        \ (`steps`) and reports the path, the decisions and the variables. It calls\
+        \ nothing out and writes nothing. Requires `workflow:definition:read`."
       operationId: "simulateDefinition"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the definition."
         required: true
         schema:
           type: "string"
       requestBody:
+        description: "The sample to walk the draft with."
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/SimulateRequest"
       responses:
         "200":
-          description: "OK"
+          description: "What a simulated walk did. Nothing was called or stored."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/SimulationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:definition:read"
   /api/v1/definitions/{id}/retire:
     post:
       tags:
-      - "definition-controller"
+      - "Workflow definitions"
+      summary: "Retire a definition"
+      description: "Stops new instances from starting. The published versions and\
+        \ the instances pinned to them are untouched and keep running. Pass the current\
+        \ `ETag` in `If-Match`; a stale version is refused with `412`. Requires `workflow:definition:manage`."
       operationId: "retireDefinition"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the definition."
         required: true
         schema:
           type: "string"
       - name: "If-Match"
         in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
         required: false
         schema:
           type: "string"
       - name: "X-Request-Id"
         in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: "string"
       responses:
         "200":
-          description: "OK"
+          description: "A workflow definition."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/DefinitionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:definition:manage"
   /api/v1/definitions/{id}/publish:
     post:
       tags:
-      - "definition-controller"
+      - "Workflow definitions"
+      summary: "Publish a definition"
+      description: "Freezes the draft into the next immutable version number. An invalid\
+        \ draft answers `422` with every problem by pointer. Pass the current `ETag`\
+        \ in `If-Match`; a stale version is refused with `412`. Requires `workflow:definition:manage`."
       operationId: "publishDefinition"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the definition."
         required: true
         schema:
           type: "string"
       - name: "If-Match"
         in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
         required: false
         schema:
           type: "string"
       - name: "X-Request-Id"
         in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: "string"
       responses:
-        "200":
-          description: "OK"
+        "201":
+          description: "One immutable published version of a definition."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/VersionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: "The draft is invalid. The answer lists every problem by pointer."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "workflow:definition:manage"
   /api/v1/connections:
     get:
       tags:
-      - "connection-controller"
+      - "Connections"
+      summary: "List connections"
+      description: "Returns the tenant's connections without their secrets. Requires\
+        \ `workflow:connection:manage`."
       operationId: "list_2"
       responses:
         "200":
@@ -1920,37 +2483,59 @@ paths:
                 type: "array"
                 items:
                   $ref: "#/components/schemas/ConnectionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:connection:manage"
     post:
       tags:
-      - "connection-controller"
+      - "Connections"
+      summary: "Create a connection"
+      description: "Registers a connection a workflow step may call: a name, a `kind`,\
+        \ the one `allowedHost` it may reach, optional `headers` and a `secret`. The\
+        \ secret goes in as plaintext, is stored as an encrypted envelope and is never\
+        \ returned; every response names the key id that wrote the envelope instead.\
+        \ Requires `workflow:connection:manage`."
       operationId: "create_1"
       requestBody:
+        description: "The connection to store."
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/ConnectionRequest"
         required: true
       responses:
-        "200":
-          description: "OK"
+        "201":
+          description: "A connection. The secret is never part of it."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ConnectionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:connection:manage"
   /api/v1/webhook-deliveries:
     get:
       tags:
-      - "delivery-controller"
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+      - "Webhook deliveries"
+      summary: "List webhook deliveries"
+      description: "Lists the attempts workflow made to report an event to an endpoint,\
+        \ with the list-query contract's filtering, sorting and paging. A delivery\
+        \ that exhausted its attempts is `DEAD` and stays visible here so it can be\
+        \ retried. Requires `workflow:webhook:manage`.\n\n**Filtering, sorting and\
+        \ paging** follow the list-query contract. Conditions in `filter[field][op]`\
+        \ are combined with AND. For OR, use `filter[or][i][field][op]`: predicates\
+        \ sharing the index `i` are AND-ed and the branches are OR-ed (at most 10\
+        \ branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin`\
+        \ do not match rows where the field is null. Send `limit` with either `offset`\
+        \ (at most 10000) or the `cursor` taken from a previous page, never both.\
+        \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
+        \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
         \ rows; omit it for the rows alone."
       operationId: "listDeliveries"
@@ -2472,7 +3057,8 @@ paths:
           - "cursor"
       responses:
         "200":
-          description: "OK"
+          description: "A page of delivery response rows, with the paging facts when\
+            \ the request asked for them."
           content:
             '*/*':
               schema:
@@ -2480,15 +3066,29 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:webhook:manage"
   /api/v1/tasks:
     get:
       tags:
-      - "task-controller"
+      - "Human tasks"
+      summary: "List the caller's tasks"
+      description: "Returns the human tasks the caller may see: those that name the\
+        \ caller and those assigned to a group the caller belongs to, optionally narrowed\
+        \ by `status`. Requires `workflow:task:read`."
       operationId: "inbox"
       parameters:
       - name: "status"
         in: "query"
+        description: "Only tasks in this status: `OPEN`, `CLAIMED`, `COMPLETED`, `CANCELLED`,\
+          \ `ESCALATED` or `EXPIRED`."
         required: false
         schema:
           type: "string"
@@ -2501,53 +3101,90 @@ paths:
                 type: "array"
                 items:
                   $ref: "#/components/schemas/TaskView"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:task:read"
   /api/v1/tasks/{id}:
     get:
       tags:
-      - "task-controller"
+      - "Human tasks"
+      summary: "Get a task"
+      description: "Returns one task with its form and decisions. A task the caller\
+        \ may not see answers `404`, because a `403` would confirm that it exists.\
+        \ Requires `workflow:task:read`."
       operationId: "get_1"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the task."
         required: true
         schema:
           type: "string"
       responses:
         "200":
-          description: "OK"
+          description: "One human task: what it asks, who it is for, when it is due\
+            \ and what was decided."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/TaskView"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "The task does not exist, or the caller may not see it. Both\
+            \ answer the same, because a `403` would confirm that it exists."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "workflow:task:read"
   /api/v1/instances/{id}:
     get:
       tags:
-      - "instance-history-controller"
+      - "Workflow instances"
+      summary: "Get a workflow instance"
+      description: "Returns one instance with its state and, when it failed, the reason.\
+        \ An unknown id answers `404`. Requires `workflow:instance:read`."
       operationId: "get_2"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the instance."
         required: true
         schema:
           type: "string"
       responses:
         "200":
-          description: "OK"
+          description: "One instance of a workflow. The trigger input is never part\
+            \ of it."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/InstanceView"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:instance:read"
   /api/v1/instances/{id}/steps:
     get:
       tags:
-      - "instance-operations-controller"
+      - "Instance operations"
+      summary: "List an instance's steps"
+      description: "Returns the recorded timeline of the instance, one entry per step\
+        \ run. Requests and responses are redacted: a step's request never leaves\
+        \ this API. Requires `workflow:instance:read`."
       operationId: "steps"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the instance."
         required: true
         schema:
           type: "string"
@@ -2560,34 +3197,53 @@ paths:
                 type: "array"
                 items:
                   $ref: "#/components/schemas/StepRunView"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:instance:read"
   /api/v1/definitions/{id}:
     get:
       tags:
-      - "definition-controller"
+      - "Workflow definitions"
+      summary: "Get a workflow definition"
+      description: "Returns one definition; its version is also the response's `ETag`.\
+        \ An unknown id answers `404`. Requires `workflow:definition:read`."
       operationId: "getDefinition"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the definition."
         required: true
         schema:
           type: "string"
       responses:
         "200":
-          description: "OK"
+          description: "A workflow definition."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/DefinitionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:definition:read"
   /api/v1/definitions/{id}/versions:
     get:
       tags:
-      - "definition-controller"
+      - "Workflow definitions"
+      summary: "List a definition's versions"
+      description: "Returns the definition's published versions. Requires `workflow:definition:read`."
       operationId: "listVersions"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the definition."
         required: true
         schema:
           type: "string"
@@ -2600,613 +3256,989 @@ paths:
                 type: "array"
                 items:
                   $ref: "#/components/schemas/VersionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:definition:read"
   /api/v1/definitions/{id}/versions/{version}:
     get:
       tags:
-      - "definition-controller"
+      - "Workflow definitions"
+      summary: "Get a published version"
+      description: "Returns published version `version` of the definition with its\
+        \ graph. A published version never changes. An unknown definition or version\
+        \ answers `404`. Requires `workflow:definition:read`."
       operationId: "getVersion"
       parameters:
       - name: "id"
         in: "path"
+        description: "The id of the definition."
         required: true
         schema:
           type: "string"
       - name: "version"
         in: "path"
+        description: "The number of the published version, starting at 1."
         required: true
         schema:
           type: "integer"
           format: "int32"
       responses:
         "200":
-          description: "OK"
+          description: "One immutable published version of a definition."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/VersionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:definition:read"
 components:
   schemas:
     UpdateEndpointRequest:
       type: "object"
+      description: "The fields to change. A field that is left out keeps its value."
       properties:
         url:
           type: "string"
+          description: "The HTTPS URL events are posted to. It must resolve to a public\
+            \ address."
         description:
           type: "string"
+          description: "A note about the endpoint."
         eventTypes:
           type: "array"
+          description: "The event types the endpoint subscribes to."
           items:
             type: "string"
         status:
           type: "string"
+          description: "`ACTIVE`, or `DISABLED` to pause delivery without losing queued\
+            \ events."
     EndpointResponse:
       type: "object"
+      description: "A webhook endpoint. The signing secret is not part of it."
       properties:
         id:
           type: "string"
+          description: "The id."
         url:
           type: "string"
+          description: "The HTTPS URL events are posted to. It must resolve to a public\
+            \ address."
         description:
           type: "string"
+          description: "A note about the endpoint."
         eventTypes:
           type: "array"
+          description: "The event types the endpoint subscribes to."
           items:
             type: "string"
         status:
           type: "string"
+          description: "`ACTIVE` or `DISABLED`."
         keyId:
           type: "string"
+          description: "The id of the key the secret was written under. The secret\
+            \ itself is never returned."
         createdAt:
           type: "string"
           format: "date-time"
+          description: "When the record was created."
         updatedAt:
           type: "string"
           format: "date-time"
+          description: "When the record was last changed."
         secretRotatedAt:
           type: "string"
           format: "date-time"
+          description: "When the signing secret was last rotated, or null."
     UpdateTriggerRequest:
       type: "object"
+      description: "The fields to change. A field that is left out keeps its value."
       properties:
         name:
           type: "string"
+          description: "The display name."
         eventType:
           type: "string"
-        filter: {}
-        correlation: {}
-        input: {}
+          description: "The one event type that starts the workflow, or null for every\
+            \ type of the source."
+        filter:
+          description: "An expression over the event envelope that decides whether\
+            \ the trigger fires, or null to accept every event."
+        correlation:
+          description: "An expression for the instance's correlation key, or null."
+        input:
+          description: "An expression for the instance's input."
         enabled:
           type: "boolean"
+          description: "`false` disables the trigger."
     TriggerResponse:
       type: "object"
+      description: "A way a definition starts. The signing secret is not part of it."
       properties:
         id:
           type: "string"
+          description: "The id."
         name:
           type: "string"
+          description: "The display name."
         kind:
           type: "string"
+          description: "`APP`, `EXTERNAL` or `SCHEDULE`."
         source:
           type: "string"
+          description: "The app code of a suite webhook, the source name of an external\
+            \ one, or the kind's own name."
         eventType:
           type: "string"
+          description: "The one event type that starts the workflow, or null for every\
+            \ type of the source."
         definitionId:
           type: "string"
-        filter: {}
-        correlation: {}
-        input: {}
+          description: "The id of the workflow definition."
+        filter:
+          description: "An expression over the event envelope that decides whether\
+            \ the trigger fires, or null to accept every event."
+        correlation:
+          description: "An expression for the instance's correlation key, or null."
+        input:
+          description: "An expression for the instance's input, or null."
         enabled:
           type: "boolean"
+          description: "Whether the trigger is active."
         createdAt:
           type: "string"
           format: "date-time"
+          description: "When the record was created."
         updatedAt:
           type: "string"
           format: "date-time"
+          description: "When the record was last changed."
     GroupRequest:
       type: "object"
+      description: "The task group to store."
       properties:
         code:
           type: "string"
+          description: "The code, unique per tenant. It cannot change."
         name:
           type: "string"
+          description: "The display name."
         members:
           type: "array"
+          description: "The ids of the members. Each must be an active user."
           items:
             type: "string"
             format: "uuid"
           uniqueItems: true
     GroupResponse:
       type: "object"
+      description: "A named list a task may be assigned to."
       properties:
         code:
           type: "string"
+          description: "The code, unique per tenant. It cannot change."
         name:
           type: "string"
+          description: "The display name."
         members:
           type: "array"
+          description: "The ids of the members."
           items:
             type: "string"
         version:
           type: "integer"
           format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
     RegisterRequest:
       type: "object"
+      description: "The credential to store."
       properties:
         clientId:
           type: "string"
+          description: "The client id of the Platform credential."
         secret:
           type: "string"
+          description: "The secret. It is write-only: it is encrypted on the way in\
+            \ and never returned."
     CredentialResponse:
       type: "object"
+      description: "The Platform credential's status. The secret is never part of\
+        \ it."
       properties:
         clientId:
           type: "string"
+          description: "The client id of the Platform credential."
         status:
           type: "string"
+          description: "`ACTIVE`, or `INVALID` when Platform no longer accepts it."
         keyId:
           type: "string"
+          description: "The id of the key the secret was written under. The secret\
+            \ itself is never returned."
         updatedAt:
           type: "string"
           format: "date-time"
+          description: "When the record was last changed."
     DraftRequest:
       type: "object"
+      description: "The draft graph, replacing the stored one."
       properties:
-        graph: {}
+        graph:
+          description: "The workflow graph: its nodes, edges and settings."
     DefinitionResponse:
       type: "object"
+      description: "A workflow definition."
       properties:
         id:
           type: "string"
+          description: "The id."
         code:
           type: "string"
+          description: "The code, unique per tenant. It cannot change."
         name:
           type: "string"
+          description: "The display name."
         status:
           type: "string"
+          description: "`DRAFT`, `PUBLISHED` or `RETIRED`."
         latestVersion:
           type: "integer"
           format: "int32"
+          description: "The number of the newest published version, or 0 before the\
+            \ first publish."
         createdAt:
           type: "string"
           format: "date-time"
+          description: "When the record was created."
         updatedAt:
           type: "string"
           format: "date-time"
+          description: "When the record was last changed."
     DraftResponse:
       type: "object"
+      description: "The definition with the problems found in its draft."
       properties:
         definition:
           $ref: "#/components/schemas/DefinitionResponse"
+          description: "The definition."
         problems:
           type: "array"
+          description: "The structural problems of the draft. A draft with problems\
+            \ is still stored; only publish refuses it."
           items:
             $ref: "#/components/schemas/ProblemResponse"
     ProblemResponse:
       type: "object"
+      description: "One problem in a draft."
       properties:
         pointer:
           type: "string"
+          description: "The JSON pointer to the offending member of the graph."
         code:
           type: "string"
+          description: "The kind of problem."
         message:
           type: "string"
+          description: "What is wrong."
     ConnectionRequest:
       type: "object"
+      description: "The connection to store."
       properties:
         name:
           type: "string"
+          description: "The display name."
         kind:
           type: "string"
+          description: "How the connection authenticates: `BEARER`, `BASIC`, `API_KEY`,\
+            \ `HMAC` or `NONE`."
         allowedHost:
           type: "string"
+          description: "The one host a step may reach with this connection."
         secret:
           type: "string"
+          description: "The secret. It is write-only: it is encrypted on the way in\
+            \ and never returned."
         headers:
           type: "object"
           additionalProperties:
             type: "string"
+          description: "Extra headers sent with each call, by name."
     ConnectionResponse:
       type: "object"
+      description: "A connection. The secret is never part of it."
       properties:
         id:
           type: "string"
+          description: "The id."
         name:
           type: "string"
+          description: "The display name."
         kind:
           type: "string"
+          description: "How the connection authenticates."
         allowedHost:
           type: "string"
+          description: "The one host a step may reach with this connection."
         headers:
           type: "object"
           additionalProperties:
             type: "string"
+          description: "Extra headers sent with each call, by name."
         keyId:
           type: "string"
+          description: "The id of the key the secret was written under. The secret\
+            \ itself is never returned."
         verifiedAt:
           type: "string"
           format: "date-time"
+          description: "When the connection was last verified, or null."
         createdAt:
           type: "string"
           format: "date-time"
+          description: "When the record was created."
         updatedAt:
           type: "string"
           format: "date-time"
+          description: "When the record was last changed."
     ReceiptResponse:
       type: "object"
+      description: "The receipt of a delivered event."
       properties:
         eventId:
           type: "string"
+          description: "The id of the event."
         started:
           type: "integer"
           format: "int32"
+          description: "How many instances the event started."
         duplicate:
           type: "boolean"
+          description: "Whether the event id was seen before. A duplicate starts nothing."
     CreateEndpointRequest:
       type: "object"
+      description: "The endpoint to register."
       properties:
         url:
           type: "string"
+          description: "The HTTPS URL events are posted to. It must resolve to a public\
+            \ address."
         description:
           type: "string"
+          description: "A note about the endpoint."
         eventTypes:
           type: "array"
+          description: "The event types to subscribe to, from workflow's four."
           items:
             type: "string"
     EndpointWithSecretResponse:
       type: "object"
+      description: "An endpoint with its signing secret, shown once."
       properties:
         endpoint:
           $ref: "#/components/schemas/EndpointResponse"
+          description: "The endpoint."
         signingSecret:
           type: "string"
+          description: "The secret that signs deliveries. It is shown only in this\
+            \ response and is never available again."
     DeliveryResponse:
       type: "object"
+      description: "One delivery of an event to an endpoint."
       properties:
         id:
           type: "string"
+          description: "The id."
         endpointId:
           type: "string"
+          description: "The id of the endpoint."
         eventId:
           type: "string"
+          description: "The id of the event. A receiver should treat a repeated event\
+            \ id as a duplicate."
         eventType:
           type: "string"
+          description: "The event's type."
         status:
           type: "string"
+          description: "Where the delivery stands. `DEAD` means it exhausted its attempts."
         attempts:
           type: "integer"
           format: "int32"
+          description: "How many attempts have been made."
         nextAttemptAt:
           type: "string"
           format: "date-time"
+          description: "When the next attempt is due, or null."
         lastStatusCode:
           type: "integer"
           format: "int32"
+          description: "The HTTP status the receiver answered last, or null."
         lastError:
           type: "string"
+          description: "The last error, or null."
         createdAt:
           type: "string"
           format: "date-time"
+          description: "When the record was created."
         completedAt:
           type: "string"
           format: "date-time"
+          description: "When the delivery finished, or null."
     CreateTriggerRequest:
       type: "object"
+      description: "The trigger to create."
       properties:
         name:
           type: "string"
+          description: "The display name."
         kind:
           type: "string"
+          description: "`APP` for a suite app's signed webhook, `EXTERNAL` for an\
+            \ outside system's signed webhook, or `SCHEDULE` for a cron schedule."
         source:
           type: "string"
+          description: "The app code of a suite webhook, or the source name of an\
+            \ external one."
         eventType:
           type: "string"
+          description: "The one event type that starts the workflow, or null for every\
+            \ type of the source."
         definitionId:
           type: "string"
           format: "uuid"
-        filter: {}
-        correlation: {}
-        input: {}
+          description: "The definition to start."
+        filter:
+          description: "An expression over the event envelope that decides whether\
+            \ the trigger fires, or null to accept every event."
+        correlation:
+          description: "An expression for the instance's correlation key, or null."
+        input:
+          description: "An expression for the instance's input, or null to use the\
+            \ event's `data`."
         cron:
           type: "string"
+          description: "The cron expression of a `SCHEDULE` trigger."
         timezone:
           type: "string"
+          description: "The IANA time zone the cron schedule is read in."
     TriggerWithSecretResponse:
       type: "object"
+      description: "A trigger with its signing secret, shown once."
       properties:
         trigger:
           $ref: "#/components/schemas/TriggerResponse"
+          description: "The trigger."
         signingSecret:
           type: "string"
+          description: "The secret that signs deliveries. It is shown only in this\
+            \ response and is never available again."
     ReassignRequest:
       type: "object"
+      description: "Who to move the task to. Give a user or a group."
       properties:
         user:
           type: "string"
           format: "uuid"
+          description: "The id of the user to assign the task to."
         group:
           type: "string"
+          description: "The code of the group to assign the task to. Its members are\
+            \ copied onto the task."
     TaskView:
       type: "object"
+      description: "One human task: what it asks, who it is for, when it is due and\
+        \ what was decided."
       properties:
         id:
           type: "string"
           format: "uuid"
+          description: "The id."
         title:
           type: "string"
+          description: "The task's title."
         status:
           type: "string"
+          description: "`OPEN`, `CLAIMED`, `COMPLETED`, `CANCELLED`, `ESCALATED` or\
+            \ `EXPIRED`."
         instanceId:
           type: "string"
           format: "uuid"
+          description: "The id of the workflow instance."
         nodeId:
           type: "string"
+          description: "The workflow node that created the task."
         assigneeKind:
           type: "string"
+          description: "Whether the task is assigned to a user or to a group."
         assignee:
           type: "string"
+          description: "The user or group the task is assigned to."
         assigneeUserId:
           type: "string"
           format: "uuid"
+          description: "The id of the user the task is assigned to, when it names\
+            \ one, or null."
         outcomes:
           type: "array"
+          description: "The decisions a person may complete the task with."
           items:
             type: "string"
-        form: {}
+        form:
+          description: "The form the output has to match, or null."
         dueAt:
           type: "string"
           format: "date-time"
+          description: "When the task is due, or null."
         escalateAt:
           type: "string"
           format: "date-time"
+          description: "When the task escalates, or null."
         expiresAt:
           type: "string"
           format: "date-time"
+          description: "When the task expires, or null."
         decision:
           type: "string"
-        output: {}
+          description: "The decision the task was completed with, or null."
+        output:
+          description: "The output the person gave, matching the task's form."
         completedBy:
           type: "string"
+          description: "Who completed the task. For a Tenant System this is the person\
+            \ it named, recorded as stated."
         completedVia:
           type: "string"
+          description: "How the task was completed."
         completedAt:
           type: "string"
           format: "date-time"
+          description: "When the task was completed, or null."
         createdAt:
           type: "string"
           format: "date-time"
+          description: "When the record was created."
         version:
           type: "integer"
           format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
     CompleteRequest:
       type: "object"
+      description: "How to complete the task."
       properties:
         decision:
           type: "string"
-        output: {}
+          description: "One of the task's `outcomes`."
+        output:
+          description: "The output the person gave, matching the task's form."
         completedBy:
           type: "string"
+          description: "The person a Tenant System speaks for. It is recorded as stated,\
+            \ not verified."
     StartInstanceRequest:
       type: "object"
+      description: "The instance to start."
       properties:
         definition:
           type: "string"
           format: "uuid"
-        input: {}
+          description: "The id of the definition. Its newest published version is\
+            \ started."
+        input:
+          description: "The input of the instance, as JSON."
         correlationKey:
           type: "string"
+          description: "A key that finds the instance again, or null."
     StartedInstanceResponse:
       type: "object"
+      description: "The instance that was started."
       properties:
         id:
           type: "string"
+          description: "The instance's id."
         status:
           type: "string"
+          description: "The instance's status."
     RetryRequest:
       type: "object"
+      description: "Which step to retry."
       properties:
         nodeId:
           type: "string"
+          description: "The node to retry."
     InstanceStateResponse:
       type: "object"
+      description: "The instance after an operation."
       properties:
         id:
           type: "string"
+          description: "The instance's id."
         status:
           type: "string"
+          description: "The instance's status."
         failureReason:
           type: "string"
+          description: "Why the instance failed, or null."
     CreateDefinitionRequest:
       type: "object"
+      description: "The definition to create. It starts with an empty draft."
       properties:
         code:
           type: "string"
+          description: "The code, unique per tenant. It cannot change."
         name:
           type: "string"
+          description: "The display name."
     SimulateRequest:
       type: "object"
+      description: "The sample to walk the draft with."
       properties:
         input:
           type: "object"
           additionalProperties: {}
+          description: "The input the instance would start with."
         steps:
           type: "object"
           additionalProperties: {}
+          description: "Canned outputs for the steps that would call out, keyed by\
+            \ node id."
     DecisionResponse:
       type: "object"
+      description: "One decision of the walk."
       properties:
         node:
           type: "string"
+          description: "The decision node."
         caseIndex:
           type: "integer"
           format: "int32"
+          description: "The index of the case that matched."
         next:
           type: "string"
+          description: "The node the walk went to."
     SimulationResponse:
       type: "object"
+      description: "What a simulated walk did. Nothing was called or stored."
       properties:
         path:
           type: "array"
+          description: "The ids of the nodes visited, in order."
           items:
             type: "string"
         decisions:
           type: "array"
+          description: "The branch taken at each decision node."
           items:
             $ref: "#/components/schemas/DecisionResponse"
         variables:
           type: "object"
           additionalProperties: {}
+          description: "The variables at the end of the walk."
         stoppedAt:
           type: "string"
+          description: "The node the walk stopped at, or null when it reached an end."
         problems:
           type: "array"
+          description: "Why the walk could not run, by pointer."
           items:
             $ref: "#/components/schemas/ProblemResponse"
     VersionResponse:
       type: "object"
+      description: "One immutable published version of a definition."
       properties:
         id:
           type: "string"
+          description: "The version's id."
         definitionId:
           type: "string"
+          description: "The id of the workflow definition."
         version:
           type: "integer"
           format: "int32"
-        graph: {}
+          description: "The version's number, starting at 1."
+        graph:
+          description: "The workflow graph: its nodes, edges and settings."
         contentHash:
           type: "string"
+          description: "A hash of the graph's content."
         publishedAt:
           type: "string"
           format: "date-time"
+          description: "When it was published."
         publishedBy:
           type: "string"
+          description: "Who published the version."
     PageEndpointResponse:
       type: "object"
+      description: "A page of endpoint response rows, with the paging facts when the\
+        \ request asked for them."
       properties:
         data:
           type: "array"
+          description: "The rows of this page."
           items:
             $ref: "#/components/schemas/EndpointResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
     PageInfo:
       type: "object"
+      description: "The paging facts of a list answer, present when the request asked\
+        \ for them with `page_info`."
       properties:
         limit:
           type: "integer"
           format: "int32"
+          description: "The page size that was applied."
         offset:
           type:
           - "integer"
           - "null"
           format: "int32"
+          description: "The number of rows that were skipped, or null when a cursor\
+            \ positioned the page."
         total:
           type:
           - "integer"
           - "null"
           format: "int64"
+          description: "The number of rows that match the filter, or null when the\
+            \ request asked only for the cursor."
         next_cursor:
           type:
           - "string"
           - "null"
+          description: "The cursor of the following page, or null on the last page.\
+            \ Pass it as `cursor` with the same filter and sort."
     PageDeliveryResponse:
       type: "object"
+      description: "A page of delivery response rows, with the paging facts when the\
+        \ request asked for them."
       properties:
         data:
           type: "array"
+          description: "The rows of this page."
           items:
             $ref: "#/components/schemas/DeliveryResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
     PageTriggerResponse:
       type: "object"
+      description: "A page of trigger response rows, with the paging facts when the\
+        \ request asked for them."
       properties:
         data:
           type: "array"
+          description: "The rows of this page."
           items:
             $ref: "#/components/schemas/TriggerResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
     InstanceView:
       type: "object"
+      description: "One instance of a workflow. The trigger input is never part of\
+        \ it."
       properties:
         id:
           type: "string"
           format: "uuid"
+          description: "The instance's id."
         status:
           type: "string"
+          description: "`RUNNING`, `WAITING`, `COMPLETED`, `FAILED`, `FAILED_STUCK`,\
+            \ `CANCELLED`, `COMPENSATING` or `COMPENSATION_FAILED`."
         definitionId:
           type: "string"
           format: "uuid"
+          description: "The id of the workflow definition."
         definitionCode:
           type: "string"
+          description: "The code of the definition it runs."
         version:
           type: "integer"
           format: "int32"
+          description: "The published version the instance is pinned to."
         correlationKey:
           type: "string"
+          description: "The key that finds the instance again, or null."
         failureReason:
           type: "string"
+          description: "Why the instance failed, or null."
         startedAt:
           type: "string"
           format: "date-time"
+          description: "When it started."
         finishedAt:
           type: "string"
           format: "date-time"
+          description: "When it finished, or null while it is still running."
         liveTokens:
           type: "integer"
           format: "int64"
+          description: "How many steps are currently active."
         steps:
           type: "integer"
           format: "int64"
+          description: "How many step runs were recorded."
         rowVersion:
           type: "integer"
           format: "int64"
+          description: "The version of the instance's row."
     StepRunView:
       type: "object"
+      description: "One run of a step. Requests and responses are redacted."
       properties:
         id:
           type: "string"
           format: "uuid"
+          description: "The step run's id."
         nodeId:
           type: "string"
+          description: "The node the step ran."
         attempt:
           type: "integer"
           format: "int32"
+          description: "The attempt's number, starting at 1."
         startedAt:
           type: "string"
           format: "date-time"
+          description: "When it started."
         finishedAt:
           type: "string"
           format: "date-time"
+          description: "When it finished, or null while it is still running."
         outcome:
           type: "string"
+          description: "How the step ended."
         errorClass:
           type: "string"
+          description: "The class of the error when the step failed, or null."
         failure:
           type: "string"
-        response: {}
+          description: "The reason the step failed, or null."
+        response:
+          description: "The redacted response of the call the step made, or null."
         idempotencyKey:
           type: "string"
+          description: "The idempotency key the step sent. A retry sends the same\
+            \ one."
     PageDefinitionResponse:
       type: "object"
+      description: "A page of definition response rows, with the paging facts when\
+        \ the request asked for them."
       properties:
         data:
           type: "array"
+          description: "The rows of this page."
           items:
             $ref: "#/components/schemas/DefinitionResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
+    ProblemDetail:
+      type: "object"
+      description: "The body of every error: an RFC 9457 problem."
+      properties:
+        type:
+          type: "string"
+          description: "A URI reference that identifies the kind of problem. It is\
+            \ `about:blank` when the status says it all."
+        title:
+          type: "string"
+          description: "A short, human-readable summary of the kind of problem. It\
+            \ is the status's reason phrase unless a more specific one applies."
+        status:
+          type: "integer"
+          format: "int32"
+          description: "The HTTP status of the response."
+        detail:
+          type: "string"
+          description: "A sentence that explains this occurrence."
+        instance:
+          type: "string"
+          description: "A URI reference that identifies this occurrence, when there\
+            \ is one."
+  responses:
+    BadRequest:
+      description: "The request is malformed: a body, query parameter or header is\
+        \ missing, unknown, or not valid for its type."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Unauthenticated:
+      description: "The request carries no valid token."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Forbidden:
+      description: "The token does not carry the permission this operation requires,\
+        \ or the tenant has not enabled the app."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotEntitled:
+      description: "The tenant has not enabled this app, or the caller may not act\
+        \ here."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotFound:
+      description: "Nothing with that id exists for this tenant. A resource of another\
+        \ tenant answers the same."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    IdempotencyConflict:
+      description: "The `Idempotency-Key` was already used with a different body,\
+        \ or the request clashes with the current state of the data."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    PreconditionFailed:
+      description: "The `If-Match` tag does not match the resource's current version.\
+        \ The response carries the current `ETag`; read the resource again and retry."
+      headers:
+        ETag:
+          description: "The current version of the resource."
+          schema:
+            type: "string"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
   securitySchemes:
     oidc:
       type: "http"

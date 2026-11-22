@@ -12,6 +12,8 @@ import dev.ngb.workflow.webhook.application.delivery.query.DeliveryQueries;
 import dev.ngb.workflow.webhook.application.delivery.query.WebhookDeliveryView;
 import dev.ngb.workflow.webhook.domain.delivery.WebhookDelivery;
 import dev.ngb.workflow.webhook.domain.delivery.WebhookDeliveryId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,11 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>A delivery that exhausted its attempts is {@code DEAD} and stays visible here, so a Tenant can retry it once its
  * receiver is healthy again.
  */
+@Tag(
+        name = "Webhook deliveries",
+        description =
+                "The history of attempts to deliver an event to an endpoint, and resending one that finished. A "
+                + "delivery that exhausted its attempts is DEAD and stays visible so it can be resent.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -62,6 +69,12 @@ public class DeliveryController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link DeliveryListing}. */
+    @Operation(
+            summary = "List webhook deliveries",
+            description =
+                    "Lists the attempts workflow made to report an event to an endpoint, with the list-query contract's "
+                    + "filtering, sorting and paging. A delivery that exhausted its attempts is `DEAD` and stays visible "
+                    + "here so it can be retried. Requires `workflow:webhook:manage`.")
     @GetMapping("/webhook-deliveries")
     @Listing(DeliveryListing.class)
     @RequiresPermission(WorkflowPermissions.WEBHOOK_MANAGE)
@@ -70,6 +83,13 @@ public class DeliveryController {
     }
 
     /** Queues a fresh delivery of the same stored event to the same endpoint. Answers 202: sending happens asynchronously. */
+    @Operation(
+            summary = "Retry a webhook delivery",
+            description =
+                    "Queues a fresh delivery of the same stored event to the same endpoint, with a new attempt budget, "
+                    + "and answers `202`: sending happens asynchronously. The original keeps its history. Only a finished "
+                    + "delivery can be retried; one still being attempted is already on its way. Requires "
+                    + "`workflow:webhook:manage`.")
     @PostMapping("/webhook-deliveries/{id}/retry")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @RequiresPermission(WorkflowPermissions.WEBHOOK_MANAGE)

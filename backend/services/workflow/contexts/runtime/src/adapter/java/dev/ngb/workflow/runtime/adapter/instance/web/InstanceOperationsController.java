@@ -9,6 +9,8 @@ import dev.ngb.workflow.runtime.application.runtime.query.InstanceStepsQueries;
 import dev.ngb.workflow.runtime.application.runtime.query.StepRunView;
 import dev.ngb.workflow.runtime.domain.instance.Instance;
 import dev.ngb.workflow.shared.WorkflowPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
@@ -26,6 +28,10 @@ import org.springframework.web.bind.annotation.RestController;
  * What an operator does with an instance that stopped: retry the failed step, replay the input as a new instance, cancel
  * it, and read the recorded timeline. The timeline is redacted: a step's request never leaves this API.
  */
+@Tag(
+        name = "Instance operations",
+        description =
+                "What an operator does with an instance that stopped: retry, replay, cancel and read its timeline.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -57,6 +63,12 @@ public class InstanceOperationsController {
         this.steps = steps;
     }
 
+    @Operation(
+            summary = "Retry a failed instance",
+            description =
+                    "Retries an instance that dead-lettered: the failed step becomes ready again with the same id and "
+                    + "attempt, so it sends the same idempotency key, and the instance goes back to `RUNNING` with no "
+                    + "failure reason. `nodeId` names the step when needed. Requires `workflow:instance:manage`.")
     @PostMapping("/instances/{id}/retry")
     @RequiresPermission(WorkflowPermissions.INSTANCE_MANAGE)
     public ResponseEntity<InstanceStateResponse> retry(
@@ -68,6 +80,12 @@ public class InstanceOperationsController {
                 .body(InstanceStateResponse.of(instance));
     }
 
+    @Operation(
+            summary = "Replay a finished instance",
+            description =
+                    "Starts a new instance from the same input and the same pinned version, and records the instance it "
+                    + "was replayed from. The old instance stays as it was, so the pair is the comparison. Requires "
+                    + "`workflow:instance:manage`.")
     @PostMapping("/instances/{id}/replay")
     @RequiresPermission(WorkflowPermissions.INSTANCE_MANAGE)
     public ResponseEntity<InstanceStateResponse> replay(@PathVariable String id) {
@@ -77,6 +95,12 @@ public class InstanceOperationsController {
                 .body(InstanceStateResponse.of(instance));
     }
 
+    @Operation(
+            summary = "Cancel an instance",
+            description =
+                    "Cancels an instance an operator no longer wants: its live steps are cancelled, no timer or event can "
+                    + "resume it, its open tasks are cancelled and it finishes `CANCELLED`. With `compensate=true` the "
+                    + "completed steps are rolled back first. Requires `workflow:instance:manage`.")
     @PostMapping("/instances/{id}/cancel")
     @RequiresPermission(WorkflowPermissions.INSTANCE_MANAGE)
     public ResponseEntity<InstanceStateResponse> cancel(
@@ -87,6 +111,11 @@ public class InstanceOperationsController {
                 .body(InstanceStateResponse.of(instance));
     }
 
+    @Operation(
+            summary = "List an instance's steps",
+            description =
+                    "Returns the recorded timeline of the instance, one entry per step run. Requests and responses are "
+                    + "redacted: a step's request never leaves this API. Requires `workflow:instance:read`.")
     @GetMapping("/instances/{id}/steps")
     @RequiresPermission(WorkflowPermissions.INSTANCE_READ)
     public List<StepRunView> steps(@PathVariable String id) {

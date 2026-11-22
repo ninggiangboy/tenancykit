@@ -13,6 +13,8 @@ import dev.ngb.workflow.triggers.application.trigger.query.TriggerListing;
 import dev.ngb.workflow.triggers.application.trigger.query.TriggerQueries;
 import dev.ngb.workflow.triggers.application.trigger.query.TriggerView;
 import dev.ngb.workflow.triggers.domain.trigger.Trigger;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
@@ -33,6 +35,10 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>A signed trigger answers with its signing secret exactly once, at creation; every later read shows the trigger
  * without it. A change is conditional on {@code If-Match} like every other resource.
  */
+@Tag(
+        name = "Triggers",
+        description =
+                "The ways a tenant starts a workflow: signed events from apps or external systems, and schedules.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -111,6 +117,15 @@ public class TriggerController {
         this.triggerQueries = triggerQueries;
     }
 
+    @Operation(
+            summary = "Create a trigger",
+            description =
+                    "Creates a way to start a workflow: a `kind` (`APP` for a suite app's signed webhook, "
+                    + "`EXTERNAL` for an outside system's signed webhook, or `SCHEDULE` for a cron schedule), its "
+                    + "`source` and `eventType`, the definition to start, an optional `filter`, `correlation` and "
+                    + "`input`. A signed trigger's secret is in this response and never again. A schedule trigger's first tick is after now, "
+                    + "so one created while the worker was down does not fire every missed tick. Requires "
+                    + "`workflow:trigger:manage`.")
     @PostMapping("/triggers")
     @RequiresPermission(WorkflowPermissions.TRIGGER_MANAGE)
     public ResponseEntity<TriggerWithSecretResponse> createTrigger(
@@ -132,6 +147,11 @@ public class TriggerController {
                 .body(new TriggerWithSecretResponse(TriggerResponse.of(created.trigger()), created.secret()));
     }
 
+    @Operation(
+            summary = "List triggers",
+            description =
+                    "Pages through the tenant's triggers, with the list-query contract's filtering, sorting and paging. "
+                    + "Requires `workflow:trigger:manage`.")
     @GetMapping("/triggers")
     @Listing(TriggerListing.class)
     @RequiresPermission(WorkflowPermissions.TRIGGER_MANAGE)
@@ -139,6 +159,11 @@ public class TriggerController {
         return triggerQueries.list(query).map(TriggerResponse::ofView);
     }
 
+    @Operation(
+            summary = "Get a trigger",
+            description =
+                    "Returns one trigger without its secret; its version is also the response's `ETag`. An unknown id "
+                    + "answers `404`. Requires `workflow:trigger:manage`.")
     @GetMapping("/triggers/{id}")
     @RequiresPermission(WorkflowPermissions.TRIGGER_MANAGE)
     public ResponseEntity<TriggerResponse> getTrigger(@PathVariable String id) {
@@ -148,6 +173,12 @@ public class TriggerController {
                 .body(TriggerResponse.ofView(trigger));
     }
 
+    @Operation(
+            summary = "Update or disable a trigger",
+            description =
+                    "Changes the trigger's name, event type, filter, correlation or input, or disables it with "
+                    + "`enabled=false`. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`. "
+                    + "Requires `workflow:trigger:manage`.")
     @PutMapping("/triggers/{id}")
     @ConditionalUpdate
     @RequiresPermission(WorkflowPermissions.TRIGGER_MANAGE)

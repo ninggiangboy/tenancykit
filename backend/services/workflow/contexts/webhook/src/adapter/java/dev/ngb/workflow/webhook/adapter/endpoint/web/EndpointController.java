@@ -17,6 +17,8 @@ import dev.ngb.workflow.webhook.application.endpoint.query.WebhookEndpointView;
 import dev.ngb.workflow.webhook.domain.endpoint.EndpointStatus;
 import dev.ngb.workflow.webhook.domain.endpoint.WebhookEndpoint;
 import dev.ngb.workflow.webhook.domain.endpoint.WebhookEndpointId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +43,11 @@ import org.springframework.web.bind.annotation.RestController;
  * again. A change is conditional on {@code If-Match}, because a Tenant System and a Tenant User may both hold an
  * endpoint.
  */
+@Tag(
+        name = "Webhook endpoints",
+        description =
+                "Where a tenant wants its events delivered and which event types. The signing secret is returned only "
+                + "when an endpoint is created or its secret rotated, never again.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -81,6 +88,13 @@ public class EndpointController {
         this.endpointQueries = endpointQueries;
     }
 
+    @Operation(
+            summary = "Create a webhook endpoint",
+            description =
+                    "Registers an HTTPS endpoint that subscribes to a subset of workflow's four event types. The signing "
+                    + "secret is returned once, in this response, and never again. A url that is not https or does not "
+                    + "resolve to a public address, or an unknown event type, answers `422`. Answers `201`. Requires "
+                    + "`workflow:webhook:manage`.")
     @PostMapping("/webhook-endpoints")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(WorkflowPermissions.WEBHOOK_MANAGE)
@@ -93,6 +107,11 @@ public class EndpointController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link EndpointListing}. */
+    @Operation(
+            summary = "List webhook endpoints",
+            description =
+                    "Pages through the tenant's webhook endpoints, with the list-query contract's filtering, sorting and "
+                    + "paging. Requires `workflow:webhook:manage`.")
     @GetMapping("/webhook-endpoints")
     @Listing(EndpointListing.class)
     @RequiresPermission(WorkflowPermissions.WEBHOOK_MANAGE)
@@ -100,6 +119,11 @@ public class EndpointController {
         return endpointQueries.list(query).map(EndpointResponse::ofView);
     }
 
+    @Operation(
+            summary = "Get a webhook endpoint",
+            description =
+                    "Returns one endpoint; its version is also the response's `ETag`. The secret is not returned. An "
+                    + "unknown id answers `404`. Requires `workflow:webhook:manage`.")
     @GetMapping("/webhook-endpoints/{id}")
     @RequiresPermission(WorkflowPermissions.WEBHOOK_MANAGE)
     public ResponseEntity<EndpointResponse> getEndpoint(@PathVariable String id) {
@@ -108,6 +132,12 @@ public class EndpointController {
     }
 
     /** Changes only the fields that are present. Setting {@code status} to {@code DISABLED} pauses delivery without losing queued events. */
+    @Operation(
+            summary = "Update a webhook endpoint",
+            description =
+                    "Changes only the fields that are present: url, description, subscribed event types or `status`. "
+                    + "Setting `status` to `DISABLED` pauses delivery without losing queued events. Pass the current `ETag` "
+                    + "in `If-Match`; a stale version is refused with `412`. Requires `workflow:webhook:manage`.")
     @PutMapping("/webhook-endpoints/{id}")
     @RequiresPermission(WorkflowPermissions.WEBHOOK_MANAGE)
     @ConditionalUpdate
@@ -125,6 +155,12 @@ public class EndpointController {
     }
 
     /** Deletes the endpoint: it stops receiving and leaves every list, while its delivery history stays readable. */
+    @Operation(
+            summary = "Delete a webhook endpoint",
+            description =
+                    "Deletes the endpoint: it stops receiving and leaves every list, while its delivery history stays "
+                    + "readable. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`. Requires "
+                    + "`workflow:webhook:manage`.")
     @DeleteMapping("/webhook-endpoints/{id}")
     @RequiresPermission(WorkflowPermissions.WEBHOOK_MANAGE)
     @ConditionalUpdate
@@ -136,6 +172,11 @@ public class EndpointController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(
+            summary = "Rotate a webhook endpoint's secret",
+            description =
+                    "Replaces the endpoint's signing secret and returns the new one once, never again. Requires "
+                    + "`workflow:webhook:manage`.")
     @PostMapping("/webhook-endpoints/{id}/rotate-secret")
     @RequiresPermission(WorkflowPermissions.WEBHOOK_MANAGE)
     public EndpointWithSecretResponse rotateSecret(

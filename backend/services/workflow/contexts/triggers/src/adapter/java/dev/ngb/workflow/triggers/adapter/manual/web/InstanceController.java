@@ -6,6 +6,8 @@ import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.workflow.shared.WorkflowPermissions;
 import dev.ngb.workflow.shared.secret.Hashes;
 import dev.ngb.workflow.triggers.application.trigger.command.StartManualUseCase;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -23,6 +25,10 @@ import tools.jackson.databind.json.JsonMapper;
  * <p>The definition is resolved to its newest published version. A caller that sends {@code Idempotency-Key} gets the
  * first instance back for a repeated identical call, and a 409 when the same key arrives with another body.
  */
+@Tag(
+        name = "Manual start",
+        description =
+                "Starts a workflow instance from a manual call.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -42,6 +48,13 @@ public class InstanceController {
         this.json = json;
     }
 
+    @Operation(
+            summary = "Start a workflow manually",
+            description =
+                    "Starts an instance of `definition` from its newest published version, with `input` and an optional "
+                    + "`correlationKey`. The tenant comes from the request, so a caller can never start another tenant's "
+                    + "workflow. A repeated call with the same `Idempotency-Key` returns the first instance; the same key "
+                    + "with another body answers `409`. Answers `201`. Requires `workflow:instance:manage`.")
     @PostMapping("/instances")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(WorkflowPermissions.INSTANCE_MANAGE)

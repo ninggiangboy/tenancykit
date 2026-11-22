@@ -2,6 +2,8 @@ package dev.ngb.workflow.triggers.adapter.trigger.web;
 
 import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.workflow.triggers.application.trigger.command.ReceiveEventUseCase;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
@@ -19,6 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>A duplicate event id is answered as accepted; a bad signature, a stale timestamp, an unknown trigger and a
  * tampered body all answer the same 401.
  */
+@Tag(
+        name = "Event hooks",
+        description =
+                "The public hook a tenant registers in a source app. The trigger's secret proves the delivery.")
 @Profile("api")
 @RestController
 @RequestMapping("/hooks")
@@ -32,6 +38,14 @@ public class HookController {
         this.receive = receive;
     }
 
+    @Operation(
+            summary = "Receive a signed event hook",
+            description =
+                    "The public hook a tenant registers in a source app. The trigger's secret signs the delivery, so no "
+                    + "suite token is needed, and the tenant comes from the host. A new event starts every matching trigger "
+                    + "and is answered with how many started; a duplicate event id is answered as accepted and starts "
+                    + "nothing. A bad signature, a stale timestamp, an unknown trigger and a tampered body all answer the "
+                    + "same `401`.")
     @PostMapping("/{triggerId}")
     @PublicEndpoint
     public ReceiptResponse receive(

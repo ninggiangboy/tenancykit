@@ -9,6 +9,7 @@ jmustache = "1.16"
 springdoc = "3.2.0"
 # Scalar API reference UI bundled by scalar-core; newer than the version springdoc manages.
 scalar = "0.9.1"
+swagger-annotations = "2.2.55"
 jdk = "25"
 
 [libraries]
@@ -22,6 +23,7 @@ json-schema-validator = { module = "com.networknt:json-schema-validator", versio
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 jmustache = { module = "com.samskivert:jmustache", version.ref = "jmustache" }
 springdoc-webmvc = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdoc" }
+swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version.ref = "swagger-annotations" }
 springdoc-scalar = { module = "org.springdoc:springdoc-openapi-starter-webmvc-scalar", version.ref = "springdoc" }
 scalar-core = { module = "com.scalar.maven:scalar-core", version.ref = "scalar" }
 scalar-webmvc = { module = "com.scalar.maven:scalar-webmvc", version.ref = "scalar" }

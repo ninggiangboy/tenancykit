@@ -22,6 +22,8 @@ import dev.ngb.workflow.definitions.application.definition.service.GraphSimulati
 import dev.ngb.workflow.definitions.domain.definition.Definition;
 import dev.ngb.workflow.definitions.domain.problem.Problem;
 import dev.ngb.workflow.shared.WorkflowPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +48,10 @@ import org.springframework.web.bind.annotation.RestController;
  * publish refuses it with 422 and every problem by pointer. Every response that names a definition carries its version
  * as an {@code ETag}.
  */
+@Tag(
+        name = "Workflow definitions",
+        description =
+                "Create a definition, edit its draft, publish immutable versions, retire it and simulate the draft.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -156,6 +162,11 @@ public class DefinitionController {
         this.currentActor = currentActor;
     }
 
+    @Operation(
+            summary = "Create a workflow definition",
+            description =
+                    "Creates a definition with a `code` and a name and an empty draft; the graph arrives through the "
+                    + "draft endpoint. Requires `workflow:definition:manage`.")
     @PostMapping("/definitions")
     @RequiresPermission(WorkflowPermissions.DEFINITION_MANAGE)
     public ResponseEntity<DefinitionResponse> createDefinition(
@@ -168,6 +179,11 @@ public class DefinitionController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link DefinitionListing}. */
+    @Operation(
+            summary = "List workflow definitions",
+            description =
+                    "Pages through the tenant's definitions, with the list-query contract's filtering, sorting and "
+                    + "paging. Requires `workflow:definition:read`.")
     @GetMapping("/definitions")
     @Listing(DefinitionListing.class)
     @RequiresPermission(WorkflowPermissions.DEFINITION_READ)
@@ -175,6 +191,11 @@ public class DefinitionController {
         return definitionQueries.list(query).map(DefinitionResponse::ofView);
     }
 
+    @Operation(
+            summary = "Get a workflow definition",
+            description =
+                    "Returns one definition; its version is also the response's `ETag`. An unknown id answers `404`. "
+                    + "Requires `workflow:definition:read`.")
     @GetMapping("/definitions/{id}")
     @RequiresPermission(WorkflowPermissions.DEFINITION_READ)
     public ResponseEntity<DefinitionResponse> getDefinition(@PathVariable String id) {
@@ -185,6 +206,13 @@ public class DefinitionController {
     }
 
     /** Replaces the whole draft graph; the version the author pinned must still be the current one. */
+    @Operation(
+            summary = "Replace a definition's draft",
+            description =
+                    "Replaces the whole draft `graph`. A structurally wrong draft is stored as sent and its problems are "
+                    + "returned, because a draft is what an author is still writing; only publish refuses one. Pass the "
+                    + "current `ETag` in `If-Match`; a stale version is refused with `412`. Requires "
+                    + "`workflow:definition:manage`.")
     @PutMapping("/definitions/{id}/draft")
     @ConditionalUpdate
     @RequiresPermission(WorkflowPermissions.DEFINITION_MANAGE)
@@ -203,6 +231,12 @@ public class DefinitionController {
     }
 
     /** Freezes the draft into the next version number; an invalid draft answers 422 with every problem. */
+    @Operation(
+            summary = "Publish a definition",
+            description =
+                    "Freezes the draft into the next immutable version number. An invalid draft answers `422` with every "
+                    + "problem by pointer. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`. "
+                    + "Requires `workflow:definition:manage`.")
     @PostMapping("/definitions/{id}/publish")
     @ConditionalUpdate
     @RequiresPermission(WorkflowPermissions.DEFINITION_MANAGE)
@@ -225,6 +259,12 @@ public class DefinitionController {
     }
 
     /** Stops new instances; the published versions and the instances pinned to them are untouched. */
+    @Operation(
+            summary = "Retire a definition",
+            description =
+                    "Stops new instances from starting. The published versions and the instances pinned to them are "
+                    + "untouched and keep running. Pass the current `ETag` in `If-Match`; a stale version is refused with "
+                    + "`412`. Requires `workflow:definition:manage`.")
     @PostMapping("/definitions/{id}/retire")
     @ConditionalUpdate
     @RequiresPermission(WorkflowPermissions.DEFINITION_MANAGE)
@@ -238,12 +278,21 @@ public class DefinitionController {
                 .body(DefinitionResponse.of(definition));
     }
 
+    @Operation(
+            summary = "List a definition's versions",
+            description =
+                    "Returns the definition's published versions. Requires `workflow:definition:read`.")
     @GetMapping("/definitions/{id}/versions")
     @RequiresPermission(WorkflowPermissions.DEFINITION_READ)
     public List<VersionResponse> listVersions(@PathVariable String id) {
         return definitionQueries.versions(uuid(id)).stream().map(VersionResponse::of).toList();
     }
 
+    @Operation(
+            summary = "Get a published version",
+            description =
+                    "Returns published version `version` of the definition with its graph. A published version never "
+                    + "changes. An unknown definition or version answers `404`. Requires `workflow:definition:read`.")
     @GetMapping("/definitions/{id}/versions/{version}")
     @RequiresPermission(WorkflowPermissions.DEFINITION_READ)
     public VersionResponse getVersion(@PathVariable String id, @PathVariable int version) {
@@ -251,6 +300,12 @@ public class DefinitionController {
     }
 
     /** Walks the draft over a sample payload; it calls nothing out and writes nothing. */
+    @Operation(
+            summary = "Simulate a draft",
+            description =
+                    "Walks the draft over a sample `input` and canned step outputs (`steps`) and reports the path, the "
+                    + "decisions and the variables. It calls nothing out and writes nothing. Requires "
+                    + "`workflow:definition:read`.")
     @PostMapping("/definitions/{id}/simulate")
     @RequiresPermission(WorkflowPermissions.DEFINITION_READ)
     public SimulationResponse simulateDefinition(
