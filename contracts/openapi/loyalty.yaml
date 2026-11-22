@@ -6,11 +6,32 @@ info:
 servers:
 - url: /loyalty
   description: "Any tenant hostname: <tenant-code>.<base-domain>/loyalty"
+tags:
+- name: "Program"
+  description: "The tenant's one points program: read it and create or replace it."
+- name: "Tiers"
+  description: "The program's ordered tier list, read and replaced as a whole."
+- name: "Promotions"
+  description: "Promotions that change how points are earned: list, create, read and update."
+- name: "Members"
+  description: "Enrol or update a member, read their points, tier and expiring points, list their ledger entries and erase them."
+- name: "Orders"
+  description: "Record orders and returns, and read what an order earned and what its returns took back."
+- name: "Rewards"
+  description: "The rewards members can redeem points for: list, create, read and update, and redeem one for a member, which issues a voucher."
+- name: "Redemptions"
+  description: "Spend a member's points, read a redemption and reverse it."
+- name: "Vouchers"
+  description: "Vouchers a reward redemption issued: list a member's vouchers, read one by code and use it once."
+- name: "Webhook endpoints"
+  description: "Where the tenant wants this service's events delivered, and which event types. The signing secret is returned only when an endpoint is created or its secret rotated, never again."
+- name: "Webhook deliveries"
+  description: "The history of attempts to deliver an event to an endpoint, and resending one that finished. A delivery that exhausted its attempts stays visible so it can be resent."
 paths:
   /api/v1/program:
     get:
       tags:
-      - program-controller
+      - "Program"
       summary: "Read the points program"
       operationId: getProgram
       responses:
@@ -35,7 +56,7 @@ paths:
       x-required-permission: loyalty:program:read
     put:
       tags:
-      - program-controller
+      - "Program"
       summary: "Create or replace the points program"
       description: "A full replace of the tenant's one program. The response carries the resource's `ETag`; pass it as `If-Match` on the next write. The `currency` is immutable once a ledger entry exists."
       operationId: putProgram
@@ -85,7 +106,7 @@ paths:
   /api/v1/tiers:
     get:
       tags:
-      - tier-controller
+      - "Tiers"
       summary: "Read the ordered tier list"
       operationId: getTiers
       responses:
@@ -110,7 +131,7 @@ paths:
       x-required-permission: loyalty:program:read
     put:
       tags:
-      - tier-controller
+      - "Tiers"
       summary: "Replace the ordered tier list"
       description: "Replaces the whole tier list by `code`: an existing code keeps its identity, a new code is added, and a removed code is allowed only while no member holds it. A change re-evaluates every member's tier in the daily job. The response carries the list's `ETag`."
       operationId: putTiers
@@ -160,7 +181,7 @@ paths:
   /api/v1/promotions:
     get:
       tags:
-      - promotion-controller
+      - "Promotions"
       summary: "List promotions"
       operationId: listPromotions
       parameters:
@@ -202,7 +223,7 @@ paths:
       x-required-permission: loyalty:program:read
     post:
       tags:
-      - promotion-controller
+      - "Promotions"
       summary: "Create a promotion"
       operationId: createPromotion
       requestBody:
@@ -234,7 +255,7 @@ paths:
   /api/v1/promotions/{id}:
     get:
       tags:
-      - promotion-controller
+      - "Promotions"
       summary: "Read a promotion"
       operationId: getPromotion
       parameters:
@@ -266,7 +287,7 @@ paths:
       x-required-permission: loyalty:program:read
     patch:
       tags:
-      - promotion-controller
+      - "Promotions"
       summary: "Update a promotion"
       description: "Changes only the given fields. The response carries the promotion's `ETag`."
       operationId: updatePromotion
@@ -322,7 +343,7 @@ paths:
   /api/v1/members/{externalRef}:
     put:
       tags:
-      - member-controller
+      - "Members"
       summary: "Enrol or update a member"
       description: "Enrols a member ahead of its first order. Idempotent by `externalRef`: `201` when the member is created and `200` when it already exists. An order for an unknown ref enrols the member the same way and emits the same webhook."
       operationId: putMember
@@ -369,7 +390,7 @@ paths:
       x-required-permission: loyalty:member:manage
     get:
       tags:
-      - member-controller
+      - "Members"
       summary: "Read a member's points, tier and expiring points"
       operationId: getMember
       parameters:
@@ -413,7 +434,7 @@ paths:
   /api/v1/members/{externalRef}/ledger:
     get:
       tags:
-      - member-controller
+      - "Members"
       summary: "List a member's ledger entries"
       description: "The member's append-only ledger, newest first, keyset-paginated by `cursor`."
       operationId: getMemberLedger
@@ -477,7 +498,7 @@ paths:
   /api/v1/members/{externalRef}/erasure:
     post:
       tags:
-      - member-controller
+      - "Members"
       summary: "Erase a member"
       description: "Anonymizes the member, voids its unused vouchers and keeps its ledger as anonymous totals keyed by the opaque member id. Idempotent: erasing an already erased member replays `200`. Emits `member.erased`."
       operationId: eraseMember
@@ -512,7 +533,7 @@ paths:
   /api/v1/orders/{orderRef}:
     put:
       tags:
-      - order-controller
+      - "Orders"
       summary: "Record an order"
       description: "Records an order once and grants the points it earns. Idempotent by `orderRef`: the same body replays the stored result with `200`, a different body is `409`. The first order for an unknown `externalRef` enrols the member. The order lines use the shared order shape."
       operationId: putOrder
@@ -565,7 +586,7 @@ paths:
       x-required-permission: loyalty:order:record
     get:
       tags:
-      - order-controller
+      - "Orders"
       summary: "Read what an order earned and what its returns took back"
       operationId: getOrder
       parameters:
@@ -599,7 +620,7 @@ paths:
   /api/v1/orders/{orderRef}/returns/{returnRef}:
     put:
       tags:
-      - order-controller
+      - "Orders"
       summary: "Record a return against an order"
       description: "Records one return once and recomputes the order's points with the snapshot stored when the order was recorded, never with today's rules. Idempotent by `returnRef`: the same body replays the stored result with `200`, a different body is `409`."
       operationId: putOrderReturn
@@ -660,7 +681,7 @@ paths:
   /api/v1/members/{externalRef}/redemptions:
     post:
       tags:
-      - redemption-controller
+      - "Redemptions"
       summary: "Spend a member's points"
       description: "Spends points at once and consumes lots by earliest expiry. Requires an `Idempotency-Key`: the same key and body replays the stored result with `200`, a different body is `409`."
       operationId: createRedemption
@@ -720,7 +741,7 @@ paths:
   /api/v1/members/{externalRef}/redemptions/{id}:
     get:
       tags:
-      - redemption-controller
+      - "Redemptions"
       summary: "Read a redemption"
       operationId: getRedemption
       parameters:
@@ -760,7 +781,7 @@ paths:
   /api/v1/members/{externalRef}/redemptions/{id}/reversal:
     post:
       tags:
-      - redemption-controller
+      - "Redemptions"
       summary: "Reverse a redemption"
       description: "Restores the lots the redemption consumed and voids an unused voucher it issued. Idempotent: an already reversed redemption replays `200`. Points restored into a lot that has since expired stay expired."
       operationId: reverseRedemption
@@ -807,7 +828,7 @@ paths:
   /api/v1/rewards:
     get:
       tags:
-      - reward-controller
+      - "Rewards"
       summary: "List rewards"
       operationId: listRewards
       parameters:
@@ -849,7 +870,7 @@ paths:
       x-required-permission: loyalty:reward:read
     post:
       tags:
-      - reward-controller
+      - "Rewards"
       summary: "Create a reward"
       operationId: createReward
       requestBody:
@@ -881,7 +902,7 @@ paths:
   /api/v1/rewards/{id}:
     get:
       tags:
-      - reward-controller
+      - "Rewards"
       summary: "Read a reward"
       operationId: getReward
       parameters:
@@ -913,7 +934,7 @@ paths:
       x-required-permission: loyalty:reward:read
     patch:
       tags:
-      - reward-controller
+      - "Rewards"
       summary: "Update a reward"
       description: "Changes only the given fields. A cost or stock change never affects vouchers already issued. The response carries the reward's `ETag`."
       operationId: updateReward
@@ -969,7 +990,7 @@ paths:
   /api/v1/members/{externalRef}/reward-redemptions:
     post:
       tags:
-      - reward-controller
+      - "Rewards"
       summary: "Redeem a reward for a member and issue a voucher"
       description: "Spends the reward's points and issues one single-use voucher in one transaction. Requires an `Idempotency-Key`: a replay returns the same voucher with `200`. loyalty only issues and consumes vouchers; delivering the reward is the Tenant's job."
       operationId: createRewardRedemption
@@ -1035,7 +1056,7 @@ paths:
   /api/v1/members/{externalRef}/vouchers:
     get:
       tags:
-      - voucher-controller
+      - "Vouchers"
       summary: "List a member's vouchers"
       operationId: listMemberVouchers
       parameters:
@@ -1095,7 +1116,7 @@ paths:
   /api/v1/vouchers/{code}:
     get:
       tags:
-      - voucher-controller
+      - "Vouchers"
       summary: "Read a voucher by code"
       operationId: getVoucher
       parameters:
@@ -1130,7 +1151,7 @@ paths:
   /api/v1/vouchers/{code}/use:
     post:
       tags:
-      - voucher-controller
+      - "Vouchers"
       summary: "Use a voucher once"
       description: "Consumes the voucher atomically. Replays by `useRef`: the same `useRef` on a used voucher returns the same result with `200`."
       operationId: useVoucher
@@ -1183,7 +1204,7 @@ paths:
   /api/v1/webhook-endpoints:
     get:
       tags:
-      - endpoint-controller
+      - "Webhook endpoints"
       summary: "List webhook endpoints"
       operationId: listWebhookEndpoints
       parameters:
@@ -1219,7 +1240,7 @@ paths:
       x-required-permission: loyalty:webhook:manage
     post:
       tags:
-      - endpoint-controller
+      - "Webhook endpoints"
       summary: "Create a webhook endpoint"
       description: "Registers an endpoint that subscribes to a subset of loyalty's event types. The signing secret is returned once, in this response."
       operationId: createWebhookEndpoint
@@ -1252,7 +1273,7 @@ paths:
   /api/v1/webhook-endpoints/{id}:
     get:
       tags:
-      - endpoint-controller
+      - "Webhook endpoints"
       summary: "Read a webhook endpoint"
       operationId: getWebhookEndpoint
       parameters:
@@ -1284,7 +1305,7 @@ paths:
       x-required-permission: loyalty:webhook:manage
     put:
       tags:
-      - endpoint-controller
+      - "Webhook endpoints"
       summary: "Update a webhook endpoint"
       description: "Changes the endpoint's url, description, subscribed event types or status. The response carries the endpoint's `ETag`."
       operationId: updateWebhookEndpoint
@@ -1339,7 +1360,7 @@ paths:
       x-required-permission: loyalty:webhook:manage
     delete:
       tags:
-      - endpoint-controller
+      - "Webhook endpoints"
       summary: "Delete a webhook endpoint"
       operationId: deleteWebhookEndpoint
       parameters:
@@ -1378,7 +1399,7 @@ paths:
   /api/v1/webhook-endpoints/{id}/rotate-secret:
     post:
       tags:
-      - endpoint-controller
+      - "Webhook endpoints"
       summary: "Rotate a webhook endpoint's signing secret"
       description: "Replaces the endpoint's signing secret and returns the new one once. A receiver may keep the previous secret during a rotation."
       operationId: rotateWebhookEndpointSecret
@@ -1412,7 +1433,7 @@ paths:
   /api/v1/webhook-deliveries:
     get:
       tags:
-      - delivery-controller
+      - "Webhook deliveries"
       summary: "List webhook deliveries"
       operationId: listWebhookDeliveries
       parameters:
@@ -1462,7 +1483,7 @@ paths:
   /api/v1/webhook-deliveries/{id}/retry:
     post:
       tags:
-      - delivery-controller
+      - "Webhook deliveries"
       summary: "Retry a webhook delivery"
       description: "Schedules another attempt of a finished or dead delivery and answers `202`."
       operationId: retryWebhookDelivery

@@ -6,10 +6,39 @@ info:
 servers:
 - url: /booking
   description: "Any tenant hostname: <tenant-code>.<base-domain>/booking"
+tags:
+- name: "Resources"
+  description: "The people, rooms and equipment that can be booked."
+- name: "Resource groups"
+  description: "Groups of resources with a strategy for choosing among their members."
+- name: "Calendar"
+  description: "Weekly working hours, dated exceptions and blocks, and a preview of a recurrence."
+- name: "Offerings"
+  description: "What a tenant sells: its duration, requirements and cancellation windows."
+- name: "Availability"
+  description: "Free start instants for an interval offering."
+- name: "Queue"
+  description: "The waiting-room counts of an offering."
+- name: "Sessions"
+  description: "Capacity sessions and the repeating series that create them."
+- name: "Bookings"
+  description: "Hold, confirm, extend, move, cancel and read bookings."
+- name: "Booking series"
+  description: "Book a repeating series and confirm or cancel its occurrences."
+- name: "Waitlist"
+  description: "Join, read and leave the waitlist for an offering."
+- name: "Settings"
+  description: "The tenant's booking settings and the public gate."
+- name: "Customer tokens"
+  description: "Mint the short-lived token a customer uses at the public gate."
+- name: "Public gate"
+  description: "Endpoints a customer's browser calls under /p with a customer token: read an offering, hold, queue and waitlist."
+- name: "Webhooks"
+  description: "Register webhook endpoints, rotate their secrets and read or resend deliveries."
 paths:
   /api/v1/resources:
     get:
-      tags: [resource-controller]
+      tags: ["Resources"]
       summary: "List resources"
       description: "One tenant's resources, with the shared list query contract (`docs/list-query-contract.md`): filters on `status`, `zone` and `code`, sorts on `code`, `name` and `created_at`."
       operationId: listResources
@@ -32,7 +61,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:resource:read
     post:
-      tags: [resource-controller]
+      tags: ["Resources"]
       summary: "Create a resource"
       description: "Codes are chosen by the Tenant, unique per tenant and immutable. `zone` must be an IANA id known to the JDK's tz database."
       operationId: createResource
@@ -66,7 +95,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/ResourceId"
     get:
-      tags: [resource-controller]
+      tags: ["Resources"]
       summary: "Read one resource"
       operationId: getResource
       responses:
@@ -83,7 +112,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:resource:read
     patch:
-      tags: [resource-controller]
+      tags: ["Resources"]
       summary: "Change a resource"
       description: "Requires `If-Match`. `zone` is immutable once a booking references the resource."
       operationId: patchResource
@@ -119,7 +148,7 @@ paths:
         "428": { $ref: "#/components/responses/PreconditionRequired" }
       x-required-permission: booking:resource:manage
     delete:
-      tags: [resource-controller]
+      tags: ["Resources"]
       summary: "Archive a resource"
       description: "A referenced resource is archived, never deleted; an unreferenced one is deleted."
       operationId: archiveResource
@@ -137,7 +166,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/ResourceId"
     put:
-      tags: [calendar-controller]
+      tags: ["Calendar"]
       summary: "Replace a resource's weekly hours"
       description: "Local wall-clock times in the resource's zone; several rows per weekday are allowed but must not overlap; `closes` may be `24:00`."
       operationId: replaceWorkingHours
@@ -160,7 +189,7 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
       x-required-permission: booking:resource:manage
     get:
-      tags: [calendar-controller]
+      tags: ["Calendar"]
       summary: "Read a resource's weekly hours"
       operationId: getWorkingHours
       responses:
@@ -178,7 +207,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/ResourceId"
     get:
-      tags: [calendar-controller]
+      tags: ["Calendar"]
       summary: "List a resource's dated exceptions"
       operationId: listExceptions
       responses:
@@ -193,7 +222,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:resource:read
     post:
-      tags: [calendar-controller]
+      tags: ["Calendar"]
       summary: "Add a dated exception"
       description: "`CLOSED` closes the day; `OPEN` replaces that day's hours with the given hours."
       operationId: addException
@@ -223,7 +252,7 @@ paths:
       required: true
       schema: { type: string, format: uuid }
     delete:
-      tags: [calendar-controller]
+      tags: ["Calendar"]
       summary: "Remove an exception"
       operationId: deleteException
       responses:
@@ -234,7 +263,7 @@ paths:
       x-required-permission: booking:resource:manage
   /api/v1/resource-groups:
     get:
-      tags: [resource-group-controller]
+      tags: ["Resource groups"]
       summary: "List resource groups"
       operationId: listGroups
       responses:
@@ -248,7 +277,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:resource:read
     post:
-      tags: [resource-group-controller]
+      tags: ["Resource groups"]
       summary: "Create a resource group"
       operationId: createGroup
       requestBody:
@@ -281,7 +310,7 @@ paths:
       required: true
       schema: { type: string, format: uuid }
     get:
-      tags: [resource-group-controller]
+      tags: ["Resource groups"]
       summary: "Read one group with its members"
       operationId: getGroup
       responses:
@@ -296,7 +325,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:resource:read
     patch:
-      tags: [resource-group-controller]
+      tags: ["Resource groups"]
       summary: "Change a group's strategy or members"
       operationId: patchGroup
       parameters:
@@ -323,7 +352,7 @@ paths:
       x-required-permission: booking:resource:manage
   /api/v1/offerings:
     get:
-      tags: [offering-controller]
+      tags: ["Offerings"]
       summary: "List offerings"
       operationId: listOfferings
       parameters:
@@ -345,7 +374,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:offering:read
     post:
-      tags: [offering-controller]
+      tags: ["Offerings"]
       summary: "Create an offering"
       description: "`INTERVAL` needs at least one requirement; `CAPACITY` needs none, because its pools come with sessions."
       operationId: createOffering
@@ -378,7 +407,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
     get:
-      tags: [offering-controller]
+      tags: ["Offerings"]
       summary: "Read one offering"
       operationId: getOffering
       responses:
@@ -395,7 +424,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:offering:read
     patch:
-      tags: [offering-controller]
+      tags: ["Offerings"]
       summary: "Change an offering"
       operationId: patchOffering
       parameters:
@@ -423,7 +452,7 @@ paths:
         "428": { $ref: "#/components/responses/PreconditionRequired" }
       x-required-permission: booking:offering:manage
     delete:
-      tags: [offering-controller]
+      tags: ["Offerings"]
       summary: "Archive an offering"
       operationId: archiveOffering
       parameters:
@@ -440,7 +469,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
     put:
-      tags: [offering-controller]
+      tags: ["Offerings"]
       summary: "Replace an interval offering's requirements"
       description: "Each requirement names one resource or one group; one booking claims one resource per requirement, all distinct."
       operationId: replaceRequirements
@@ -471,7 +500,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
     put:
-      tags: [offering-controller]
+      tags: ["Offerings"]
       summary: "Replace an offering's cancellation windows"
       description: "A Tenant-chosen `code` per threshold; booking records no amount and charges nothing."
       operationId: replaceCancellationWindows
@@ -497,7 +526,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
     get:
-      tags: [availability-controller]
+      tags: ["Availability"]
       summary: "Free start instants for an interval offering"
       description: "Computed at query time from weekly hours, exceptions, blocks and claims in the resource's zone; never materialized. Keyset-paged by start instant. A start is free only if every requirement has a free, distinct resource."
       operationId: getAvailability
@@ -546,7 +575,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
     get:
-      tags: [queue-controller]
+      tags: ["Queue"]
       summary: "Read an offering's queue counts"
       operationId: getQueueCounts
       responses:
@@ -562,7 +591,7 @@ paths:
       x-required-permission: booking:offering:read
   /api/v1/blocks:
     get:
-      tags: [calendar-controller]
+      tags: ["Calendar"]
       summary: "List blocks"
       operationId: listBlocks
       responses:
@@ -576,7 +605,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:calendar:read
     post:
-      tags: [calendar-controller]
+      tags: ["Calendar"]
       summary: "Create a block"
       description: "A closed period on a resource. Blocks never delete existing bookings; the response reports the bookings they overlap."
       operationId: createBlock
@@ -605,7 +634,7 @@ paths:
       required: true
       schema: { type: string, format: uuid }
     delete:
-      tags: [calendar-controller]
+      tags: ["Calendar"]
       summary: "Remove a block"
       operationId: deleteBlock
       responses:
@@ -616,7 +645,7 @@ paths:
       x-required-permission: booking:calendar:manage
   /api/v1/recurrence/preview:
     post:
-      tags: [calendar-controller]
+      tags: ["Calendar"]
       summary: "Expand a recurrence without storing it"
       description: "The same port the materialization job uses, so a Tenant can check a rule before creating a series. Every vector under `contracts/booking/recurrence-vectors/` passes through this endpoint."
       operationId: previewRecurrence
@@ -644,7 +673,7 @@ paths:
       x-required-permission: booking:calendar:read
   /api/v1/session-series:
     get:
-      tags: [session-controller]
+      tags: ["Sessions"]
       summary: "List session series"
       operationId: listSeries
       responses:
@@ -658,7 +687,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:calendar:read
     post:
-      tags: [session-controller]
+      tags: ["Sessions"]
       summary: "Create a capacity session series"
       description: "Materializes sessions inside the horizon on create. Changing a series regenerates only future sessions with no booking and reports the ones it left alone."
       operationId: createSessionSeries
@@ -686,7 +715,7 @@ paths:
       required: true
       schema: { type: string, format: uuid }
     patch:
-      tags: [session-controller]
+      tags: ["Sessions"]
       summary: "Change a capacity session series"
       operationId: patchSessionSeries
       parameters:
@@ -713,7 +742,7 @@ paths:
       x-required-permission: booking:calendar:manage
   /api/v1/sessions:
     get:
-      tags: [session-controller]
+      tags: ["Sessions"]
       summary: "List sessions"
       description: "Filters on `offering_id`, `status` and a `starts_at` range; each session carries its remaining places per pool."
       operationId: listSessions
@@ -739,7 +768,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/SessionId"
     get:
-      tags: [session-controller]
+      tags: ["Sessions"]
       summary: "Read one session"
       operationId: getSession
       responses:
@@ -754,7 +783,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:offering:read
     delete:
-      tags: [session-controller]
+      tags: ["Sessions"]
       summary: "Cancel one occurrence"
       description: "Marks the session `CANCELLED` and adds an `EXDATE` to its series so it is not re-created. Refused while held or booked places exist."
       operationId: cancelSession
@@ -774,7 +803,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/SessionId"
     put:
-      tags: [session-controller]
+      tags: ["Sessions"]
       summary: "Resize a session's pools"
       description: "Growing inserts free places; shrinking deletes only free places and answers `409` when the target is below held plus booked."
       operationId: resizePools
@@ -804,7 +833,7 @@ paths:
       x-required-permission: booking:booking:manage
   /api/v1/bookings:
     get:
-      tags: [booking-controller]
+      tags: ["Bookings"]
       summary: "List bookings"
       description: "Filters on `status`, `offering_id`, `customer_ref`, `source` and a `starts_at` range, through the shared list query contract."
       operationId: listBookings
@@ -827,7 +856,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:booking:read
     post:
-      tags: [booking-controller]
+      tags: ["Bookings"]
       summary: "Hold a place or a time range"
       description: "Creates a `HELD` booking and claims it through the offering's engine in one transaction. The `Idempotency-Key` header makes a retry return the same booking."
       operationId: createBooking
@@ -874,7 +903,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/BookingId"
     get:
-      tags: [booking-controller]
+      tags: ["Bookings"]
       summary: "Read one booking"
       operationId: getBooking
       responses:
@@ -894,7 +923,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/BookingId"
     post:
-      tags: [booking-controller]
+      tags: ["Bookings"]
       summary: "Confirm a held booking"
       description: "Accepted while the booking is `HELD` and its claims are still held, even inside the grace window. Once the worker expired it the answer is `409 hold-lapsed`."
       operationId: confirmBooking
@@ -923,7 +952,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/BookingId"
     post:
-      tags: [booking-controller]
+      tags: ["Bookings"]
       summary: "Lengthen a hold once"
       operationId: extendBooking
       requestBody:
@@ -959,7 +988,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/BookingId"
     post:
-      tags: [booking-controller]
+      tags: ["Bookings"]
       summary: "Cancel a booking"
       description: "Releases the claims. A cancellation of a `CONFIRMED` booking records the policy window code; booking never charges."
       operationId: cancelBooking
@@ -984,7 +1013,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/BookingId"
     post:
-      tags: [booking-controller]
+      tags: ["Bookings"]
       summary: "Move a booking"
       description: "Claims the new place and releases the old one in one transaction, keeping the booking id and status. If the new place is taken, nothing changes."
       operationId: rescheduleBooking
@@ -1016,7 +1045,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/BookingId"
     post:
-      tags: [booking-controller]
+      tags: ["Bookings"]
       summary: "Mark a confirmed booking as a no-show"
       description: "Allowed once the start has passed. The claims stay as history."
       operationId: markNoShow
@@ -1039,7 +1068,7 @@ paths:
       x-required-permission: booking:booking:manage
   /api/v1/series:
     get:
-      tags: [series-controller]
+      tags: ["Booking series"]
       summary: "List booking series"
       operationId: listBookingSeries
       responses:
@@ -1053,7 +1082,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:series:read
     post:
-      tags: [series-controller]
+      tags: ["Booking series"]
       summary: "Book a repeating series"
       description: "One hold per occurrence, sharing a recurrence and a hold expiry. `ALL_OR_NOTHING` is the default: every occurrence is claimed or none is, and the `409` lists each failing occurrence. `SKIP_CONFLICTS` books what it can and returns `skipped[]`. At most 52 occurrences."
       operationId: createBookingSeries
@@ -1094,7 +1123,7 @@ paths:
       required: true
       schema: { type: string, format: uuid }
     get:
-      tags: [series-controller]
+      tags: ["Booking series"]
       summary: "Read one booking series"
       operationId: getBookingSeries
       responses:
@@ -1115,7 +1144,7 @@ paths:
       required: true
       schema: { type: string, format: uuid }
     post:
-      tags: [series-controller]
+      tags: ["Booking series"]
       summary: "Confirm every held occurrence"
       operationId: confirmBookingSeries
       responses:
@@ -1142,7 +1171,7 @@ paths:
       required: true
       schema: { type: string, format: uuid }
     post:
-      tags: [series-controller]
+      tags: ["Booking series"]
       summary: "Cancel the future occurrences"
       operationId: cancelBookingSeries
       responses:
@@ -1164,7 +1193,7 @@ paths:
       x-required-permission: booking:series:manage
   /api/v1/waitlist:
     get:
-      tags: [waitlist-controller]
+      tags: ["Waitlist"]
       summary: "List waitlist entries"
       operationId: listWaitlist
       responses:
@@ -1178,7 +1207,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:waitlist:read
     post:
-      tags: [waitlist-controller]
+      tags: ["Waitlist"]
       summary: "Join a waitlist"
       description: "Allowed only when the target is not free. One `WAITING` entry per `(customerRef, target)`; the per-target cap answers `409 waitlist-full`."
       operationId: joinWaitlist
@@ -1217,7 +1246,7 @@ paths:
       required: true
       schema: { type: string, format: uuid }
     get:
-      tags: [waitlist-controller]
+      tags: ["Waitlist"]
       summary: "Read one entry and its position"
       operationId: getWaitlistEntry
       responses:
@@ -1232,7 +1261,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:waitlist:read
     delete:
-      tags: [waitlist-controller]
+      tags: ["Waitlist"]
       summary: "Leave the waitlist"
       operationId: leaveWaitlist
       responses:
@@ -1249,7 +1278,7 @@ paths:
       x-required-permission: booking:waitlist:manage
   /api/v1/webhook-endpoints:
     get:
-      tags: [webhook-controller]
+      tags: ["Webhooks"]
       summary: "List webhook endpoints"
       operationId: listWebhookEndpoints
       responses:
@@ -1263,7 +1292,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:webhook:read
     post:
-      tags: [webhook-controller]
+      tags: ["Webhooks"]
       summary: "Register a webhook endpoint"
       description: "The response carries the signing secret once; a private or loopback destination is refused."
       operationId: createWebhookEndpoint
@@ -1296,7 +1325,7 @@ paths:
       required: true
       schema: { type: string, format: uuid }
     get:
-      tags: [webhook-controller]
+      tags: ["Webhooks"]
       summary: "Read one endpoint"
       operationId: getWebhookEndpoint
       responses:
@@ -1311,7 +1340,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:webhook:read
     patch:
-      tags: [webhook-controller]
+      tags: ["Webhooks"]
       summary: "Change or disable an endpoint"
       operationId: patchWebhookEndpoint
       parameters:
@@ -1337,7 +1366,7 @@ paths:
         "428": { $ref: "#/components/responses/PreconditionRequired" }
       x-required-permission: booking:webhook:manage
     delete:
-      tags: [webhook-controller]
+      tags: ["Webhooks"]
       summary: "Delete an endpoint"
       operationId: deleteWebhookEndpoint
       responses:
@@ -1353,7 +1382,7 @@ paths:
       required: true
       schema: { type: string, format: uuid }
     post:
-      tags: [webhook-controller]
+      tags: ["Webhooks"]
       summary: "Rotate an endpoint's secret"
       description: "The previous secret verifies for one rotation window; the new one is shown once."
       operationId: rotateWebhookSecret
@@ -1370,7 +1399,7 @@ paths:
       x-required-permission: booking:webhook:manage
   /api/v1/webhook-deliveries:
     get:
-      tags: [webhook-controller]
+      tags: ["Webhooks"]
       summary: "Read the delivery log"
       operationId: listDeliveries
       responses:
@@ -1390,7 +1419,7 @@ paths:
       required: true
       schema: { type: string, format: uuid }
     post:
-      tags: [webhook-controller]
+      tags: ["Webhooks"]
       summary: "Resend a delivery"
       operationId: resendDelivery
       responses:
@@ -1407,7 +1436,7 @@ paths:
       x-required-permission: booking:webhook:manage
   /api/v1/customer-tokens:
     post:
-      tags: [token-controller]
+      tags: ["Customer tokens"]
       summary: "Mint a customer token for the public gate"
       description: "The token binds tenant, customerRef, the scopes and optionally one offering, carries a signing key id and expires within the tenant's cap. Booking mints it; the Tenant decides which of its customers may have one."
       operationId: createCustomerToken
@@ -1435,7 +1464,7 @@ paths:
       x-required-permission: booking:token:issue
   /api/v1/settings:
     get:
-      tags: [settings-controller]
+      tags: ["Settings"]
       summary: "Read the tenant's booking settings"
       operationId: getSettings
       responses:
@@ -1450,7 +1479,7 @@ paths:
       x-required-permission: booking:settings:read
   /api/v1/settings/gate:
     put:
-      tags: [settings-controller]
+      tags: ["Settings"]
       summary: "Change the public gate settings"
       description: "Only the origins the Tenant registers are echoed by CORS; no wildcard, no credentials."
       operationId: putGateSettings
@@ -1475,7 +1504,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
     get:
-      tags: [public-controller]
+      tags: ["Public gate"]
       summary: "Public: read an offering"
       description: "Requires a customer token with the `browse` scope. `remaining` is included only when the offering sets `publicShowsRemaining`."
       operationId: publicGetOffering
@@ -1496,7 +1525,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
     get:
-      tags: [public-controller]
+      tags: ["Public gate"]
       summary: "Public: free start instants"
       operationId: publicGetAvailability
       security:
@@ -1524,7 +1553,7 @@ paths:
         "429": { $ref: "#/components/responses/TooManyRequests" }
   /p/bookings:
     post:
-      tags: [public-controller]
+      tags: ["Public gate"]
       summary: "Public: hold a place"
       description: "Requires the `hold` scope. The booking always has source `GATE` and the token's own `customerRef`. When the offering sets `queueMode = REQUIRED` the request must carry an admitted ticket token. Emits `booking.held` with source `GATE`."
       operationId: publicHold
@@ -1561,7 +1590,7 @@ paths:
     parameters:
     - $ref: "#/components/parameters/BookingId"
     delete:
-      tags: [public-controller]
+      tags: ["Public gate"]
       summary: "Public: release its own hold"
       description: "Only a booking with source `GATE`, the token's own `customerRef`, and status `HELD`."
       operationId: publicReleaseHold
@@ -1575,7 +1604,7 @@ paths:
         "429": { $ref: "#/components/responses/TooManyRequests" }
   /p/waitlist:
     post:
-      tags: [public-controller]
+      tags: ["Public gate"]
       summary: "Public: join the waitlist"
       operationId: publicJoinWaitlist
       security:
@@ -1609,7 +1638,7 @@ paths:
       required: true
       schema: { type: string, format: uuid }
     get:
-      tags: [public-controller]
+      tags: ["Public gate"]
       summary: "Public: read its position"
       operationId: publicGetWaitlistEntry
       security:
@@ -1626,7 +1655,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
     delete:
-      tags: [public-controller]
+      tags: ["Public gate"]
       summary: "Public: leave the waitlist"
       operationId: publicLeaveWaitlist
       security:
@@ -1639,7 +1668,7 @@ paths:
         "429": { $ref: "#/components/responses/TooManyRequests" }
   /p/queue:
     post:
-      tags: [public-controller]
+      tags: ["Public gate"]
       summary: "Public: enter the waiting room"
       description: "Returns a signed ticket token and a first `retryAfterSeconds`. One active ticket per `(customerRef, target)`; a ticket is insert-only and numbered from a sequence."
       operationId: publicEnterQueue
@@ -1668,7 +1697,7 @@ paths:
                 $ref: "#/components/schemas/Error"
         "429": { $ref: "#/components/responses/TooManyRequests" }
     delete:
-      tags: [public-controller]
+      tags: ["Public gate"]
       summary: "Public: leave the waiting room"
       operationId: publicLeaveQueue
       security:
@@ -1685,7 +1714,7 @@ paths:
         "429": { $ref: "#/components/responses/TooManyRequests" }
   /p/queue/status:
     get:
-      tags: [public-controller]
+      tags: ["Public gate"]
       summary: "Public: poll its admission"
       description: "Reads the instance's cached watermark, never the ticket row. `position` is an upper bound and the watermark may be up to one second stale."
       operationId: publicQueueStatus

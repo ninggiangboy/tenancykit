@@ -6,11 +6,34 @@ info:
 servers:
 - url: /customer
   description: "Any tenant hostname: <tenant-code>.<base-domain>/customer"
+tags:
+- name: "Customers"
+  description: "Create or replace customers by the Tenant's own reference, change them with If-Match, upsert in batches, and search and filter the list."
+- name: "Customer profile"
+  description: "One customer read back as a single 360 profile."
+- name: "Orders"
+  description: "Record orders with line items and returns, and read a customer's orders."
+- name: "Activities"
+  description: "Write activities against a customer, singly or in batches, and read a customer's timeline."
+- name: "Consent"
+  description: "The consent topics a tenant defines and each customer's consent records."
+- name: "Custom fields"
+  description: "The custom fields a tenant defines for its customers."
+- name: "Tags"
+  description: "The tags the tenant's customers carry."
+- name: "Exports"
+  description: "Stream the customer list as CSV."
+- name: "Erasure"
+  description: "Erase a customer's personal data. The original reference can then start a new customer."
+- name: "Webhook endpoints"
+  description: "Where the tenant wants this service's events delivered, and which event types. The signing secret is returned only when an endpoint is created or its secret rotated, never again."
+- name: "Webhook deliveries"
+  description: "The history of attempts to deliver an event to an endpoint, and resending one that finished. A delivery that exhausted its attempts stays visible so it can be resent."
 paths:
   /api/v1/customers/{externalRef}:
     put:
       tags:
-      - customer-controller
+      - "Customers"
       summary: "Create or replace a customer"
       description: "Upserts one customer, keyed by the Tenant's own `externalRef`. The response carries the customer's `ETag`; pass it as `If-Match` on the next `PATCH`. An identical body changes nothing and bumps no version. An order or an activity that names an unknown customer is refused; this endpoint is how the customer is created."
       operationId: putCustomer
@@ -63,7 +86,7 @@ paths:
       x-required-permission: customer:customer:manage
     patch:
       tags:
-      - customer-controller
+      - "Customers"
       summary: "Change some of a customer's attributes, tags and field values"
       description: "Changes only the properties that are present. Requires `If-Match`: the endpoint answers `428` without the header and `412` when the tag does not match. `addTags` and `removeTags` change the tag set without replacing it, and a `customFields` property merges into the stored values. The response carries the new `ETag`."
       operationId: patchCustomer
@@ -126,7 +149,7 @@ paths:
       x-required-permission: customer:customer:manage
     get:
       tags:
-      - customer-controller
+      - "Customers"
       summary: "Read a customer"
       description: "Reads one customer with its field values, tags and current consent state. The response carries the customer's `ETag`."
       operationId: getCustomer
@@ -162,7 +185,7 @@ paths:
   /api/v1/customers/batch:
     post:
       tags:
-      - customer-controller
+      - "Customers"
       summary: "Upsert a batch of customers"
       description: "Applies up to 1,000 customers, each in its own transaction and in the order sent. The batch is `200` even when some items failed: a malformed item fails alone and the others are written. Two items with the same `externalRef` apply in order. A retry of the whole batch is safe, because every item is idempotent by its `externalRef`."
       operationId: createCustomerBatch
@@ -200,7 +223,7 @@ paths:
   /api/v1/customers:
     get:
       tags:
-      - customer-controller
+      - "Customers"
       summary: "Search and list customers"
       description: "Searches the tenant's customers. `q` matches the `externalRef` exactly, a phone-digit prefix, an email prefix or a name. Every `tag` parameter must match, and a custom field, a consent topic and the creation time are filterable. The list is paged with a keyset cursor: pass `cursor` from the previous page with the same filter and sort; a cursor is opaque, it is refused with a different filter or sort, and `page.next_cursor` is null on the last page. Rows follow `sort`, and `id` is appended to make the order total."
       operationId: listCustomers
@@ -306,7 +329,7 @@ paths:
   /api/v1/customers/{externalRef}/profile:
     get:
       tags:
-      - profile-controller
+      - "Customer profile"
       summary: "Read a customer's 360 profile"
       description: "One customer read back as one document: the customer, its field values, its tags, the current status of every consent topic, its latest orders with their lines and returns, and its latest activities. Every slice is bounded and indexed; no aggregate, segment or score is computed here."
       operationId: getCustomerProfile
@@ -362,7 +385,7 @@ paths:
   /api/v1/customers/export:
     get:
       tags:
-      - export-controller
+      - "Exports"
       summary: "Stream the customer list as CSV"
       description: "Takes the same filters as the customer list and streams the matching customers as CSV. The header row is `externalRef,displayName,phone,email,tags,<one column per active custom-field key>,createdAt`; `tags` holds the customer's tags pipe-separated. The stream is read with a server-side cursor and a bounded buffer, so a large export uses a fixed amount of memory. One export runs per tenant at a time, held by a short lease; a second is refused until the first finishes."
       operationId: exportCustomers
@@ -449,7 +472,7 @@ paths:
   /api/v1/customers/{externalRef}/erasure:
     post:
       tags:
-      - erasure-controller
+      - "Erasure"
       summary: "Erase a customer's personal data"
       description: "Clears every personal field of the customer, its field values, its tags, its consent contact data and its activity payloads in one transaction, keeps the customer row and its orders and consent rows as anonymous markers, sets the reference to `erased:<id>` and queues a `customer.erased` webhook. Idempotent: a retry with the reference the caller used finds the stored erasure and answers `200` with the same body. The erasure record stores a hash of the reference, never the reference itself. Erasing a customer here does not erase it anywhere else; a tenant that keeps the same person in another system must erase it there too."
       operationId: eraseCustomer
@@ -485,7 +508,7 @@ paths:
   /api/v1/custom-fields:
     get:
       tags:
-      - field-controller
+      - "Custom fields"
       summary: "List custom-field definitions"
       description: "Lists the tenant's custom-field definitions, archived ones included. A definition's `key` and `type` are immutable; a type change is a new field, never an edit."
       operationId: listCustomFields
@@ -522,7 +545,7 @@ paths:
       x-required-permission: customer:field:manage
     post:
       tags:
-      - field-controller
+      - "Custom fields"
       summary: "Define a custom field"
       operationId: createCustomField
       parameters:
@@ -567,7 +590,7 @@ paths:
   /api/v1/custom-fields/{key}:
     patch:
       tags:
-      - field-controller
+      - "Custom fields"
       summary: "Change a custom-field definition"
       description: "Changes the label, adds choices to a `CHOICE`, or archives and unarchives the definition. An archived definition can still be read and still appears in the profile, but no new value may be written for it. The `key` and the `type` are immutable."
       operationId: patchCustomField
@@ -621,7 +644,7 @@ paths:
   /api/v1/tags:
     get:
       tags:
-      - tag-controller
+      - "Tags"
       summary: "List the tenant's tags"
       description: "Lists the distinct tags the tenant's customers carry, each with the number of customers that use it, ordered by tag."
       operationId: listTags
@@ -659,7 +682,7 @@ paths:
   /api/v1/consent-topics:
     get:
       tags:
-      - consent-controller
+      - "Consent"
       summary: "List consent topics"
       description: "Lists the tenant's consent topics, archived ones included. A topic's `key` is immutable."
       operationId: listConsentTopics
@@ -696,7 +719,7 @@ paths:
       x-required-permission: customer:field:manage
     post:
       tags:
-      - consent-controller
+      - "Consent"
       summary: "Define a consent topic"
       description: "Defines a purpose the tenant's customers consent to. Consent topics are defined per tenant, like custom fields, not fixed by the suite."
       operationId: createConsentTopic
@@ -742,7 +765,7 @@ paths:
   /api/v1/consent-topics/{key}:
     patch:
       tags:
-      - consent-controller
+      - "Consent"
       summary: "Change a consent topic"
       description: "Changes the label or archives and unarchives the topic. An archived topic keeps its recorded history and accepts no new consent record. The `key` is immutable."
       operationId: patchConsentTopic
@@ -790,7 +813,7 @@ paths:
   /api/v1/customers/{externalRef}/consents:
     post:
       tags:
-      - consent-controller
+      - "Consent"
       summary: "Record a consent change"
       description: "Appends one consent record for one topic. Consent is append-only: a revocation adds a record and never rewrites the grant it revokes. An optional `consentRef` makes the call replayable: the same reference and body answers `200` with the stored record, a different body is `409`."
       operationId: recordConsent
@@ -849,7 +872,7 @@ paths:
       x-required-permission: customer:customer:manage
     get:
       tags:
-      - consent-controller
+      - "Consent"
       summary: "Read a customer's consent"
       description: "Returns the current status of every topic the customer has a record for, and the customer's whole consent history, newest first."
       operationId: listConsents
@@ -885,7 +908,7 @@ paths:
   /api/v1/orders/{orderRef}:
     put:
       tags:
-      - order-controller
+      - "Orders"
       summary: "Record an order"
       description: "Records one order with its lines, idempotent by `orderRef`: the same body replays the stored order with `200`, a different body answers `409`. An order is never changed afterwards; a correction is a return. The customer must exist, unless the body sets `createCustomer`, which upserts a customer with the order's `externalRef` and no other data in the same transaction. An order of one line or five hundred is one call; a larger one is a batch."
       operationId: putOrder
@@ -938,7 +961,7 @@ paths:
       x-required-permission: customer:order:record
     get:
       tags:
-      - order-controller
+      - "Orders"
       summary: "Read an order"
       description: "Reads one order with its lines, the cumulative returned quantity and amount of each line, and every return recorded against it. The response carries the order's `ETag`, which is its `orderVersion`."
       operationId: getOrder
@@ -974,7 +997,7 @@ paths:
   /api/v1/orders/batch:
     post:
       tags:
-      - order-controller
+      - "Orders"
       summary: "Record a batch of orders"
       description: "Applies up to 100 orders carrying at most 5,000 lines together, each order in its own transaction and in the order sent. The batch is `200` even when some orders failed: a bad order fails alone and the others are written, and its failure leaves no partial order behind. A retry of the whole batch is safe, because every order is idempotent by its `orderRef`."
       operationId: createOrderBatch
@@ -1012,7 +1035,7 @@ paths:
   /api/v1/orders/{orderRef}/returns/{returnRef}:
     put:
       tags:
-      - order-controller
+      - "Orders"
       summary: "Record a return against an order"
       description: "Records one return once, idempotent by `returnRef`: the same body replays the stored result with `200`, a different body answers `409`. The order's lines take the cumulative returned quantity and amount, the order's `orderVersion` rises by one and an `order.refunded` webhook carrying the order's new state and this return is queued in the same transaction. A returned quantity or amount may never exceed what the line sold."
       operationId: putOrderReturn
@@ -1080,7 +1103,7 @@ paths:
   /api/v1/customers/{externalRef}/orders:
     get:
       tags:
-      - order-controller
+      - "Orders"
       summary: "List a customer's orders"
       description: "Lists the customer's orders newest first, each with its lines and returns, paged with a keyset cursor."
       operationId: listCustomerOrders
@@ -1132,7 +1155,7 @@ paths:
   /api/v1/activities:
     post:
       tags:
-      - activity-controller
+      - "Activities"
       summary: "Record an activity"
       description: "Appends one thing the customer did to its timeline. The `type` is a free string the writer chooses, so a new source posts a new type with no customer change. An optional `activityRef` makes the call replayable: the same reference and body answers `200` with the stored activity, a different body is `409`."
       operationId: recordActivity
@@ -1184,7 +1207,7 @@ paths:
   /api/v1/activities/batch:
     post:
       tags:
-      - activity-controller
+      - "Activities"
       summary: "Record a batch of activities"
       description: "Appends up to 1,000 activities, each in its own transaction and in the order sent. The batch is `200` even when some items failed: a malformed item fails alone and the others are written. A retry of the whole batch is safe, because an item that carries an `activityRef` is idempotent by it."
       operationId: createActivityBatch
@@ -1222,7 +1245,7 @@ paths:
   /api/v1/customers/{externalRef}/activities:
     get:
       tags:
-      - activity-controller
+      - "Activities"
       summary: "List a customer's activities"
       description: "Lists the customer's activities newest first, paged with a keyset cursor. `type`, `from` and `to` narrow the timeline."
       operationId: listCustomerActivities
@@ -1299,7 +1322,7 @@ paths:
   /api/v1/webhook-endpoints:
     get:
       tags:
-      - endpoint-controller
+      - "Webhook endpoints"
       summary: "List webhook endpoints"
       operationId: listWebhookEndpoints
       parameters:
@@ -1344,7 +1367,7 @@ paths:
       x-required-permission: customer:webhook:manage
     post:
       tags:
-      - endpoint-controller
+      - "Webhook endpoints"
       summary: "Create a webhook endpoint"
       description: "Registers an endpoint that subscribes to a subset of customer's four event types. The signing secret is returned once, in this response. Deliveries are signed with the `Customer-*` headers and retried on the shared schedule until they succeed or go `DEAD`."
       operationId: createWebhookEndpoint
@@ -1384,7 +1407,7 @@ paths:
   /api/v1/webhook-endpoints/{id}:
     get:
       tags:
-      - endpoint-controller
+      - "Webhook endpoints"
       summary: "Read a webhook endpoint"
       description: "The response carries the endpoint's `ETag`."
       operationId: getWebhookEndpoint
@@ -1417,7 +1440,7 @@ paths:
       x-required-permission: customer:webhook:manage
     put:
       tags:
-      - endpoint-controller
+      - "Webhook endpoints"
       summary: "Update a webhook endpoint"
       description: "Changes the endpoint's url, description, subscribed event types or status. Setting `status` to `DISABLED` pauses delivery without losing queued events. The response carries the endpoint's `ETag`."
       operationId: updateWebhookEndpoint
@@ -1472,7 +1495,7 @@ paths:
       x-required-permission: customer:webhook:manage
     delete:
       tags:
-      - endpoint-controller
+      - "Webhook endpoints"
       summary: "Delete a webhook endpoint"
       description: "Removes the endpoint and stops future deliveries to it. Its delivery history stays readable."
       operationId: deleteWebhookEndpoint
@@ -1512,7 +1535,7 @@ paths:
   /api/v1/webhook-endpoints/{id}/rotate-secret:
     post:
       tags:
-      - endpoint-controller
+      - "Webhook endpoints"
       summary: "Rotate a webhook endpoint's signing secret"
       description: "Replaces the endpoint's signing secret and returns the new one once. A receiver may keep the previous secret during a rotation and select by the key id a delivery carries."
       operationId: rotateWebhookEndpointSecret
@@ -1546,7 +1569,7 @@ paths:
   /api/v1/webhook-deliveries:
     get:
       tags:
-      - delivery-controller
+      - "Webhook deliveries"
       summary: "List webhook deliveries"
       description: "Lists the attempts customer made to report an event to an endpoint, newest first. A delivery that exhausted its attempts is `DEAD` and stays visible here so it can be retried."
       operationId: listWebhookDeliveries
@@ -1608,7 +1631,7 @@ paths:
   /api/v1/webhook-deliveries/{id}/retry:
     post:
       tags:
-      - delivery-controller
+      - "Webhook deliveries"
       summary: "Retry a webhook delivery"
       description: "Queues a fresh delivery of the same stored event body to the same endpoint, with a new attempt budget, and answers `202`: sending happens asynchronously. The original keeps its history, so a receiver sees exactly what the first attempt carried. Only a finished delivery can be retried; one still being attempted is already on its way."
       operationId: retryWebhookDelivery
