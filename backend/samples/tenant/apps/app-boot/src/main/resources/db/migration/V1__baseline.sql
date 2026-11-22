@@ -1,1 +1,0 @@
--- The baseline is intentionally empty: every module owns the tables it adds in its own migration.
