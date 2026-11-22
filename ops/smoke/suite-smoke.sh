@@ -5,10 +5,8 @@
 #  2. a tenant created with an admin, its billing app enabled
 #  3. Billing's replica answering for the tenant host within the lag budget
 #  4. a tenant-system credential and the suite token it issues, used to call Billing
-#  5. the tenant app's webhook endpoint registered at Billing through that token
-#  6. a charge and the invoice issued for it
-#  7. the tenant app logging one accepted `invoice.created` delivery
-#  8. permission revocation at Platform reaching Billing within the window
+#  5. a charge and the invoice issued for it
+#  6. permission revocation at Platform reaching Billing within the window
 #
 # Users are created with a temporary password, which Keycloak refuses from a direct grant until it is changed. The
 # harness step below clears that for the two accounts this script drives, through Keycloak's admin API, exactly as
@@ -30,7 +28,6 @@ BOOTSTRAP_EMAIL="${PLATFORM_BOOTSTRAP_ADMIN_EMAIL:-}"
 BOOTSTRAP_PASSWORD="${PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD:-}"
 REPLICA_TIMEOUT_SECONDS="${SMOKE_REPLICA_TIMEOUT:-15}"
 REVOCATION_TIMEOUT_SECONDS="${SMOKE_REVOCATION_TIMEOUT:-5}"
-WEBHOOK_TIMEOUT_SECONDS="${SMOKE_WEBHOOK_TIMEOUT:-30}"
 # Every run uses its own ids, so a repeat run never collides with one that already finished.
 RUN_ID="$(date +%s)-$$"
 
@@ -189,35 +186,7 @@ done
 CUSTOMER_ID=$(call POST "${PROXY}/api/v1/customers" "${TENANT_CODE}.localhost" "${SYSTEM_TOKEN}" \
   "{\"externalUserId\":\"smoke-user-${RUN_ID}\",\"displayName\":\"Smoke\",\"email\":\"smoke@acme.test\"}" "smoke-customer-${RUN_ID}" | json .id)
 
-# ------------------------------ 5. register the tenant app's webhook ------------------------------
-step "registering the tenant app's webhook endpoint at Billing"
-# The same endpoint URL registered twice would 409, so each run names its own description and reuses the URL only
-# once: an existing endpoint for the URL is reused.
-EXISTING_ENDPOINT=$(call GET "${PROXY}/api/v1/webhook-endpoints" "${TENANT_CODE}.localhost" "${SYSTEM_TOKEN}" 2>/dev/null |
-  jq -r '(.data // .) | map(select(.url == "http://tenant:8080/webhooks/billing"))[0].id // empty' 2>/dev/null || true)
-if [ -n "${EXISTING_ENDPOINT}" ]; then
-  # The signing secret is shown once, on creation. Rotating gives a fresh one the tenant can adopt.
-  WEBHOOK_SECRET=$(call POST "${PROXY}/api/v1/webhook-endpoints/${EXISTING_ENDPOINT}/rotate-secret" \
-    "${TENANT_CODE}.localhost" "${SYSTEM_TOKEN}" | json .signingSecret)
-else
-  WEBHOOK_SECRET=$(call POST "${PROXY}/api/v1/webhook-endpoints" "${TENANT_CODE}.localhost" "${SYSTEM_TOKEN}" \
-    '{"url":"http://tenant:8080/webhooks/billing","description":"smoke","eventTypes":["invoice.created"]}' | json .signingSecret)
-fi
-
-# The tenant verifies deliveries with that secret, which it reads at start, so it is restarted holding it. This is the
-# local equivalent of storing the secret the bootstrap logs once and restarting the app.
-step "giving the tenant app its webhook signing secret"
-SAMPLE_TENANT_WEBHOOK_SECRET="${WEBHOOK_SECRET}" docker compose up -d --force-recreate tenant > /dev/null
-for _ in $(seq 1 60); do
-  if docker compose exec -T tenant bash -c \
-      'exec 3<>/dev/tcp/localhost/8080 && printf "GET /actuator/health HTTP/1.0\r\n\r\n" >&3 && head -20 <&3 | grep -q UP' \
-      2>/dev/null; then
-    break
-  fi
-  sleep 1
-done
-
-# ------------------------------ 6. charge and invoice ------------------------------
+# ------------------------------ 5. charge and invoice ------------------------------
 step "charging the wallet and issuing an invoice"
 WALLET_ID=$(call POST "${PROXY}/api/v1/wallets" "${TENANT_CODE}.localhost" "${SYSTEM_TOKEN}" \
   "{\"customerId\":\"${CUSTOMER_ID}\",\"currency\":\"USD\",\"mode\":\"POSTPAID\",\"creditLimit\":1000000}" | json .id)
@@ -226,7 +195,7 @@ CHARGE_ID=$(call POST "${PROXY}/api/v1/charges" "${TENANT_CODE}.localhost" "${SY
 call POST "${PROXY}/api/v1/invoices" "${TENANT_CODE}.localhost" "${SYSTEM_TOKEN}" \
   "{\"chargeId\":\"${CHARGE_ID}\"}" > /dev/null
 
-# ------------------------------ 6b. a coupon, redeemed and applied ------------------------------
+# ------------------------------ 5b. a coupon, redeemed and applied ------------------------------
 step "redeeming a coupon and charging a discounted amount"
 COUPON_ID=$(call POST "${PROXY}/api/v1/coupons" "${TENANT_CODE}.localhost" "${SYSTEM_TOKEN}" \
   "{\"name\":\"Smoke 20\",\"currency\":\"USD\",\"benefit\":{\"type\":\"PERCENT_OFF\",\"basisPoints\":2000}, \
@@ -241,20 +210,7 @@ if [ "$(printf '%s' "${COUPON_CHARGE}" | json .amount.amount)" != "800" ] || \
   fail "a coupon did not discount the charge as expected: ${COUPON_CHARGE}"
 fi
 
-# ------------------------------ 7. the tenant recorded a verified webhook ------------------------------
-step "asserting the tenant app accepted one invoice.created webhook"
-DEADLINE=$(( $(date +%s) + WEBHOOK_TIMEOUT_SECONDS ))
-while :; do
-  if docker compose logs tenant 2>/dev/null | grep -q "webhook-accepted type=invoice.created"; then
-    break
-  fi
-  if [ "$(date +%s)" -ge "${DEADLINE}" ]; then
-    fail "the tenant app did not accept an invoice.created webhook within ${WEBHOOK_TIMEOUT_SECONDS}s"
-  fi
-  sleep 1
-done
-
-# ------------------------------ 8. revocation latency ------------------------------
+# ------------------------------ 6. revocation latency ------------------------------
 step "revoking the tenant admin's role at Platform and asserting Billing refuses within ${REVOCATION_TIMEOUT_SECONDS}s"
 ROLE_ID=$(call GET "${PROXY}/platform/api/v1/roles?tenantId=${TENANT_ID}" platform.localhost "${ADMIN_TOKEN}" |
   jq -er '(.data // .) | map(select(.name == "Tenant Administrator"))[0].id')

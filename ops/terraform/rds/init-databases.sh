@@ -19,8 +19,6 @@ psql --set=ON_ERROR_STOP=1 \
   --set=platform_app_password="${PLATFORM_DB_PASSWORD:?set the platform app password}" \
   --set=billing_owner_password="${BILLING_MIGRATION_DB_PASSWORD:?set the billing owner password}" \
   --set=billing_app_password="${BILLING_DB_PASSWORD:?set the billing app password}" \
-  --set=tenant_owner_password="${TENANT_MIGRATION_DB_PASSWORD:?set the tenant owner password}" \
-  --set=tenant_app_password="${TENANT_DB_PASSWORD:?set the tenant app password}" \
   --set=mailer_owner_password="${MAILER_MIGRATION_DB_PASSWORD:?set the mailer owner password}" \
   --set=mailer_app_password="${MAILER_DB_PASSWORD:?set the mailer app password}" \
   --set=notification_owner_password="${NOTIFICATION_MIGRATION_DB_PASSWORD:?set the notification owner password}" \
@@ -46,9 +44,6 @@ create role platform_app login password :'platform_app_password' nosuperuser noc
 
 create role billing_owner login password :'billing_owner_password' nocreatedb nocreaterole;
 create role billing_app login password :'billing_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
-
-create role tenant_owner login password :'tenant_owner_password' nocreatedb nocreaterole;
-create role tenant_app login password :'tenant_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
 create role mailer_owner login password :'mailer_owner_password' nocreatedb nocreaterole;
 create role mailer_app login password :'mailer_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
@@ -81,7 +76,6 @@ create role keycloak_owner login password :'keycloak_owner_password' nocreatedb 
 
 create database platform owner platform_owner;
 create database billing owner billing_owner;
-create database tenant owner tenant_owner;
 create database mailer owner mailer_owner;
 create database notification owner notification_owner;
 create database mailroom owner mailroom_owner;
@@ -95,7 +89,6 @@ create database keycloak owner keycloak_owner;
 
 revoke connect, temporary on database platform from public;
 revoke connect, temporary on database billing from public;
-revoke connect, temporary on database tenant from public;
 revoke connect, temporary on database mailer from public;
 revoke connect, temporary on database notification from public;
 revoke connect, temporary on database mailroom from public;
@@ -109,7 +102,6 @@ revoke connect, temporary on database keycloak from public;
 
 grant connect, temporary on database platform to platform_owner, platform_app;
 grant connect, temporary on database billing to billing_owner, billing_app;
-grant connect, temporary on database tenant to tenant_owner, tenant_app;
 grant connect, temporary on database mailer to mailer_owner, mailer_app;
 grant connect, temporary on database notification to notification_owner, notification_app;
 grant connect, temporary on database mailroom to mailroom_owner, mailroom_app;
@@ -135,7 +127,6 @@ SQL
 
 apply_default_privileges platform_owner "${PLATFORM_MIGRATION_DB_PASSWORD}" platform platform_app
 apply_default_privileges billing_owner "${BILLING_MIGRATION_DB_PASSWORD}" billing billing_app
-apply_default_privileges tenant_owner "${TENANT_MIGRATION_DB_PASSWORD}" tenant tenant_app
 apply_default_privileges mailer_owner "${MAILER_MIGRATION_DB_PASSWORD}" mailer mailer_app
 apply_default_privileges notification_owner "${NOTIFICATION_MIGRATION_DB_PASSWORD}" notification notification_app
 apply_default_privileges mailroom_owner "${MAILROOM_MIGRATION_DB_PASSWORD}" mailroom mailroom_app
@@ -146,4 +137,4 @@ apply_default_privileges booking_owner "${BOOKING_MIGRATION_DB_PASSWORD}" bookin
 apply_default_privileges workflow_owner "${WORKFLOW_MIGRATION_DB_PASSWORD}" workflow workflow_app
 apply_default_privileges attribution_owner "${ATTRIBUTION_MIGRATION_DB_PASSWORD}" attribution attribution_app
 
-echo "created platform, billing, tenant, mailer, notification, mailroom, customer, loyalty, survey, booking, workflow, attribution and keycloak databases with their owner and app roles"
+echo "created platform, billing, mailer, notification, mailroom, customer, loyalty, survey, booking, workflow, attribution and keycloak databases with their owner and app roles"

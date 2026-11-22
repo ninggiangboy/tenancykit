@@ -18,7 +18,7 @@ FRONTEND  := frontend
 REMOTES   ?= platform billing
 SHELLS    ?= platform tenant
 PLATFORM_URL ?= http://platform.localhost:8090/console/
-# Caddy depends on Platform, Billing, Notification, Mailroom, Customer, Loyalty, the tenant and the console server, so
+# Caddy depends on Platform, Billing, Notification, Mailroom, Customer, Loyalty and the console server, so
 # starting it brings up exactly the services the console talks to.
 CONSOLE_SERVICES ?= caddy
 

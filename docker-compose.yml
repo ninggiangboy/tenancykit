@@ -1,11 +1,11 @@
-# The suite, locally. `docker compose up -d --build --wait` starts Platform, Billing (api and worker) and the
-# sample tenant, each with its own database and broker user, behind one reverse proxy that only routes.
+# The suite, locally. `docker compose up -d --build --wait` starts Platform and Billing (api and worker),
+# each with its own database and broker user, behind one reverse proxy that only routes.
 #
 # Infrastructure only: `docker compose up -d postgres rabbitmq keycloak` and run the apps with bootRun.
 # Copy .env.example to .env and fill every placeholder before starting.
 #
 # Billing's schema is written once by the `billing-migrate` step, which runs Flyway as the table owner and exits; its
-# api and worker runtimes connect as the unprivileged role with Flyway off. Platform and the tenant migrate on start.
+# api and worker runtimes connect as the unprivileged role with Flyway off. Platform migrates on start.
 
 # Billing's settings, shared by its migrate step, api and worker. The migrate profile switches Flyway on and web and
 # jobs off, but the context still reads every setting at startup, so all three runtimes read the same values.
@@ -309,8 +309,6 @@ services:
       PLATFORM_DB_PASSWORD: ${PLATFORM_DB_PASSWORD:?set it in .env}
       BILLING_MIGRATION_DB_PASSWORD: ${BILLING_MIGRATION_DB_PASSWORD:?set it in .env}
       BILLING_DB_PASSWORD: ${BILLING_DB_PASSWORD:?set it in .env}
-      TENANT_MIGRATION_DB_PASSWORD: ${TENANT_MIGRATION_DB_PASSWORD:?set it in .env}
-      TENANT_DB_PASSWORD: ${TENANT_DB_PASSWORD:?set it in .env}
       MAILER_MIGRATION_DB_PASSWORD: ${MAILER_MIGRATION_DB_PASSWORD:?set it in .env}
       MAILER_DB_PASSWORD: ${MAILER_DB_PASSWORD:?set it in .env}
       NOTIFICATION_MIGRATION_DB_PASSWORD: ${NOTIFICATION_MIGRATION_DB_PASSWORD:?set it in .env}
@@ -791,42 +789,6 @@ services:
       timeout: 5s
       retries: 60
 
-  # The sample tenant app: its own database, calling Billing with a Platform-issued suite token.
-  tenant:
-    <<: *app
-    build:
-      context: .
-      dockerfile: backend/samples/tenant/apps/app-boot/Dockerfile
-    depends_on:
-      postgres:
-        condition: service_healthy
-      platform:
-        condition: service_healthy
-      billing:
-        condition: service_healthy
-    environment:
-      <<: *app-environment
-      SAMPLE_TENANT_DB_URL: jdbc:postgresql://postgres:5432/tenant
-      SAMPLE_TENANT_DB_USER: tenant_app
-      SAMPLE_TENANT_DB_PASSWORD: ${TENANT_DB_PASSWORD:?set it in .env}
-      # Flyway migrates as the owner; the app connects as tenant_app.
-      SAMPLE_TENANT_MIGRATION_DB_USER: tenant_owner
-      SAMPLE_TENANT_MIGRATION_DB_PASSWORD: ${TENANT_MIGRATION_DB_PASSWORD:?set it in .env}
-      SAMPLE_TENANT_PORT: "8080"
-      SAMPLE_TENANT_BILLING_URL: http://billing:8080
-      SAMPLE_TENANT_PLATFORM_URL: http://platform.localhost:8080
-      SAMPLE_TENANT_PLATFORM_CLIENT_ID: ${SAMPLE_TENANT_PLATFORM_CLIENT_ID:-}
-      SAMPLE_TENANT_PLATFORM_CLIENT_SECRET: ${SAMPLE_TENANT_PLATFORM_CLIENT_SECRET:-}
-      SAMPLE_TENANT_WEBHOOK_SECRET: ${SAMPLE_TENANT_WEBHOOK_SECRET:-}
-      SAMPLE_TENANT_EXECUTION_ENABLED: "false"
-    ports:
-      - "8083:8080"
-    healthcheck:
-      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]
-      interval: 5s
-      timeout: 5s
-      retries: 60
-
   # Routes on the Host header alone; see ops/caddy/Caddyfile.
   # The console's static server: one hostname's shell plus every published remote version, under /console/ on every
   # host. It only reads the volume, so a published build cannot be changed by the server that serves it.
@@ -875,8 +837,6 @@ services:
       customer-api:
         condition: service_healthy
       loyalty-api:
-        condition: service_healthy
-      tenant:
         condition: service_healthy
     ports:
       - "8090:80"

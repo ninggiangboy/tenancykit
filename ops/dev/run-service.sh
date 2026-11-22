@@ -26,7 +26,6 @@ survey|backend/services/survey|survey-api|survey-migrate|8091
 booking|backend/services/booking|booking-api|booking-migrate|8092
 workflow|backend/services/workflow|workflow-api|workflow-migrate|8093
 attribution|backend/services/attribution|attribution-api|attribution-migrate|8094
-tenant|backend/samples/tenant|tenant|-|8083
 "
 
 name="${1:-}"
@@ -82,7 +81,7 @@ if [ "${migrate_service}" != "-" ]; then
 fi
 
 # One process serves both runtimes of an app that splits them: the api profiles compose gives the api container, plus
-# worker. An app without a runtime split (Platform, the sample tenant) keeps whatever compose gives it.
+# worker. An app without a runtime split (Platform) keeps whatever compose gives it.
 profiles="$(service_profiles "${compose_service}")"
 case ",${profiles}," in *,api,*) profiles="${profiles},worker" ;; esac
 boot "${compose_service}" "${profiles}"

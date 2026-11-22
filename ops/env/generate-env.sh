@@ -9,9 +9,8 @@
 #   ENV_OUTPUT=/some/path ops/env/generate-env.sh # writes elsewhere
 #   PLATFORM_ADMIN_EMAIL=me@example.com PLATFORM_ADMIN_PASSWORD='Temporary-1' ops/env/generate-env.sh
 #
-# Values are for local development only. Anything left blank in the example (the sample tenant's Platform credential,
-# the token signing key) stays blank: Platform creates the first on request and generates an ephemeral key for the
-# second. A database volume created with an earlier .env keeps its old passwords; run `make clean` first.
+# Values are for local development only. Anything left blank in the example (the token signing key)
+# stays blank: Platform generates an ephemeral key. A database volume created with an earlier .env keeps its old passwords; run `make clean` first.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"

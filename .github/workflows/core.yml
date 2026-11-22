@@ -1,7 +1,7 @@
 name: core
 
 # A change under backend/libs/core/ reaches every service build through includeBuild("../../libs/core"), but a composite build only
-# builds the tasks it needs: billing, platform and tenant compile core and never run its tests. This workflow runs
+# builds the tasks it needs: billing and platform compile core and never run its tests. This workflow runs
 # them, and it re-runs the rule-id comparison in all four builds so the shared rule set cannot drift apart unnoticed.
 on:
   pull_request:
@@ -48,9 +48,6 @@ jobs:
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
       - name: Platform rule ids
         working-directory: backend/services/platform
-        run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
-      - name: Tenant rule ids
-        working-directory: backend/samples/tenant
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
       - name: Mailer rule ids
         working-directory: backend/services/mailer

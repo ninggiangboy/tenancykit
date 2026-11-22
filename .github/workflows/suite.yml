@@ -23,8 +23,6 @@ jobs:
               -e 's/^PLATFORM_DB_PASSWORD=.*/PLATFORM_DB_PASSWORD=ci-platform-app/' \
               -e 's/^BILLING_MIGRATION_DB_PASSWORD=.*/BILLING_MIGRATION_DB_PASSWORD=ci-billing-owner/' \
               -e 's/^BILLING_DB_PASSWORD=.*/BILLING_DB_PASSWORD=ci-billing-app/' \
-              -e 's/^TENANT_MIGRATION_DB_PASSWORD=.*/TENANT_MIGRATION_DB_PASSWORD=ci-tenant-owner/' \
-              -e 's/^TENANT_DB_PASSWORD=.*/TENANT_DB_PASSWORD=ci-tenant-app/' \
               -e 's/^MAILER_MIGRATION_DB_PASSWORD=.*/MAILER_MIGRATION_DB_PASSWORD=ci-mailer-owner/' \
               -e 's/^MAILER_DB_PASSWORD=.*/MAILER_DB_PASSWORD=ci-mailer-app/' \
               -e 's/^NOTIFICATION_MIGRATION_DB_PASSWORD=.*/NOTIFICATION_MIGRATION_DB_PASSWORD=ci-notification-owner/' \

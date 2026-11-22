@@ -16,8 +16,6 @@ psql -v ON_ERROR_STOP=1 \
   -v platform_app_password="${PLATFORM_DB_PASSWORD:?set it}" \
   -v billing_owner_password="${BILLING_MIGRATION_DB_PASSWORD:?set it}" \
   -v billing_app_password="${BILLING_DB_PASSWORD:?set it}" \
-  -v tenant_owner_password="${TENANT_MIGRATION_DB_PASSWORD:?set it}" \
-  -v tenant_app_password="${TENANT_DB_PASSWORD:?set it}" \
   -v mailer_owner_password="${MAILER_MIGRATION_DB_PASSWORD:?set it}" \
   -v mailer_app_password="${MAILER_DB_PASSWORD:?set it}" \
   -v notification_owner_password="${NOTIFICATION_MIGRATION_DB_PASSWORD:?set it}" \
@@ -42,9 +40,6 @@ create role platform_app login password :'platform_app_password' nosuperuser noc
 
 create role billing_owner login password :'billing_owner_password' nocreatedb nocreaterole;
 create role billing_app login password :'billing_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
-
-create role tenant_owner login password :'tenant_owner_password' nocreatedb nocreaterole;
-create role tenant_app login password :'tenant_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
 create role mailer_owner login password :'mailer_owner_password' nocreatedb nocreaterole;
 create role mailer_app login password :'mailer_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
@@ -75,7 +70,6 @@ create role attribution_app login password :'attribution_app_password' nosuperus
 
 create database platform owner platform_owner;
 create database billing owner billing_owner;
-create database tenant owner tenant_owner;
 create database mailer owner mailer_owner;
 create database notification owner notification_owner;
 create database mailroom owner mailroom_owner;
@@ -88,7 +82,6 @@ create database attribution owner attribution_owner;
 
 revoke connect, temporary on database platform from public;
 revoke connect, temporary on database billing from public;
-revoke connect, temporary on database tenant from public;
 revoke connect, temporary on database mailer from public;
 revoke connect, temporary on database notification from public;
 revoke connect, temporary on database mailroom from public;
@@ -101,7 +94,6 @@ revoke connect, temporary on database attribution from public;
 
 grant connect, temporary on database platform to platform_owner, platform_app;
 grant connect, temporary on database billing to billing_owner, billing_app;
-grant connect, temporary on database tenant to tenant_owner, tenant_app;
 grant connect, temporary on database mailer to mailer_owner, mailer_app;
 grant connect, temporary on database notification to notification_owner, notification_app;
 grant connect, temporary on database mailroom to mailroom_owner, mailroom_app;
@@ -125,12 +117,6 @@ alter default privileges for role billing_owner in schema public
     grant select, insert, update, delete on tables to billing_app;
 alter default privileges for role billing_owner in schema public
     grant usage, select on sequences to billing_app;
-
-\connect tenant
-alter default privileges for role tenant_owner in schema public
-    grant select, insert, update, delete on tables to tenant_app;
-alter default privileges for role tenant_owner in schema public
-    grant usage, select on sequences to tenant_app;
 
 \connect mailer
 alter default privileges for role mailer_owner in schema public

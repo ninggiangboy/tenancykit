@@ -12,8 +12,6 @@ locals {
     { name = "PLATFORM_DB_PASSWORD", valueFrom = var.secret_arns["PLATFORM_DB_PASSWORD"] },
     { name = "BILLING_MIGRATION_DB_PASSWORD", valueFrom = var.secret_arns["BILLING_MIGRATION_DB_PASSWORD"] },
     { name = "BILLING_DB_PASSWORD", valueFrom = var.secret_arns["BILLING_DB_PASSWORD"] },
-    { name = "TENANT_MIGRATION_DB_PASSWORD", valueFrom = var.secret_arns["TENANT_MIGRATION_DB_PASSWORD"] },
-    { name = "TENANT_DB_PASSWORD", valueFrom = var.secret_arns["TENANT_DB_PASSWORD"] },
     { name = "MAILER_MIGRATION_DB_PASSWORD", valueFrom = var.secret_arns["MAILER_MIGRATION_DB_PASSWORD"] },
     { name = "MAILER_DB_PASSWORD", valueFrom = var.secret_arns["MAILER_DB_PASSWORD"] },
     { name = "NOTIFICATION_MIGRATION_DB_PASSWORD", valueFrom = var.secret_arns["NOTIFICATION_MIGRATION_DB_PASSWORD"] },

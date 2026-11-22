@@ -64,28 +64,19 @@ step "cross-database access must be refused"
 # billing_app may reach only billing. Every role exists on the same server, so a connect to another database is the
 # exact escalation `revoke connect on database ... from public` prevents.
 require_refused "billing_app connecting to platform" psql_as billing_app "${BILLING_DB_PASSWORD:?}" platform
-require_refused "billing_app connecting to tenant" psql_as billing_app "${BILLING_DB_PASSWORD:?}" tenant
 require_refused "billing_app connecting to mailer" psql_as billing_app "${BILLING_DB_PASSWORD:?}" mailer
 require_refused "platform_app connecting to billing" psql_as platform_app "${PLATFORM_DB_PASSWORD:?}" billing
-require_refused "platform_app connecting to tenant" psql_as platform_app "${PLATFORM_DB_PASSWORD:?}" tenant
 require_refused "platform_app connecting to mailer" psql_as platform_app "${PLATFORM_DB_PASSWORD:?}" mailer
-require_refused "tenant_app connecting to billing" psql_as tenant_app "${TENANT_DB_PASSWORD:?}" billing
-require_refused "tenant_app connecting to platform" psql_as tenant_app "${TENANT_DB_PASSWORD:?}" platform
-require_refused "tenant_app connecting to mailer" psql_as tenant_app "${TENANT_DB_PASSWORD:?}" mailer
 require_refused "mailer_app connecting to billing" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" billing
 require_refused "mailer_app connecting to platform" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" platform
-require_refused "mailer_app connecting to tenant" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" tenant
 require_refused "billing_app connecting to notification" psql_as billing_app "${BILLING_DB_PASSWORD:?}" notification
 require_refused "platform_app connecting to notification" psql_as platform_app "${PLATFORM_DB_PASSWORD:?}" notification
-require_refused "tenant_app connecting to notification" psql_as tenant_app "${TENANT_DB_PASSWORD:?}" notification
 require_refused "mailer_app connecting to notification" psql_as mailer_app "${MAILER_DB_PASSWORD:?}" notification
 require_refused "notification_app connecting to billing" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" billing
 require_refused "notification_app connecting to platform" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" platform
-require_refused "notification_app connecting to tenant" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" tenant
 require_refused "notification_app connecting to mailer" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" mailer
 require_refused "mailroom_app connecting to billing" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" billing
 require_refused "mailroom_app connecting to platform" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" platform
-require_refused "mailroom_app connecting to tenant" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" tenant
 require_refused "mailroom_app connecting to mailer" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" mailer
 require_refused "mailroom_app connecting to notification" psql_as mailroom_app "${MAILROOM_DB_PASSWORD:?}" notification
 require_refused "notification_app connecting to mailroom" psql_as notification_app "${NOTIFICATION_DB_PASSWORD:?}" mailroom
