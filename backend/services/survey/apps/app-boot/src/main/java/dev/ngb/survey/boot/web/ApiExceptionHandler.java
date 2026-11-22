@@ -3,6 +3,7 @@ package dev.ngb.survey.boot.web;
 import dev.ngb.core.spring.web.CoreExceptionHandlers;
 import dev.ngb.survey.authoring.adapter.document.web.ValidationResult;
 import dev.ngb.survey.authoring.application.draft.exception.DraftInvalidException;
+import dev.ngb.survey.collection.application.link.exception.LinkRefusedException;
 import dev.ngb.survey.shared.PreconditionRequiredException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -31,6 +32,19 @@ class ApiExceptionHandler extends CoreExceptionHandlers {
     @ExceptionHandler(DraftInvalidException.class)
     ResponseEntity<ValidationResult> invalidDocument(DraftInvalidException e) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(ValidationResult.of(e.errors()));
+    }
+
+    /**
+     * A link the suite refuses to issue. A source that already has its public link, or a survey that is not open, is
+     * a clash with the survey's current state ({@code 409}); a recipient named twice is a body that cannot be valid
+     * ({@code 422}). The message never carries the source or the reference, so it is safe to return.
+     */
+    @ExceptionHandler(LinkRefusedException.class)
+    ProblemDetail linkRefused(LinkRefusedException e) {
+        HttpStatus status = e.reason() == LinkRefusedException.Reason.DUPLICATE_REFERENCE
+                ? HttpStatus.UNPROCESSABLE_CONTENT
+                : HttpStatus.CONFLICT;
+        return ProblemDetail.forStatusAndDetail(status, e.getMessage());
     }
 
     /**
