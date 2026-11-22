@@ -16,16 +16,16 @@ cd "${ROOT}"
 # service | build directory | compose service that carries its settings | compose migrate step ('-' for none) | port
 SERVICES="
 platform|backend/services/platform|platform|-|8082
-billing|backend/services/billing|billing|billing-migrate|8080
-notification|backend/services/notification|notification-api|notification-migrate|8085
-mailroom|backend/services/mailroom|mailroom-api|mailroom-migrate|8086
-customer|backend/services/customer|customer-api|customer-migrate|8087
-loyalty|backend/services/loyalty|loyalty-api|loyalty-migrate|8088
-mailer|backend/services/mailer|mailer-worker|mailer-migrate|8084
-survey|backend/services/survey|survey-api|survey-migrate|8091
-booking|backend/services/booking|booking-api|booking-migrate|8092
-workflow|backend/services/workflow|workflow-api|workflow-migrate|8093
-attribution|backend/services/attribution|attribution-api|attribution-migrate|8094
+billing|backend/services/apps/billing|billing|billing-migrate|8080
+notification|backend/services/infra/notification|notification-api|notification-migrate|8085
+mailroom|backend/services/apps/mailroom|mailroom-api|mailroom-migrate|8086
+customer|backend/services/apps/customer|customer-api|customer-migrate|8087
+loyalty|backend/services/apps/loyalty|loyalty-api|loyalty-migrate|8088
+mailer|backend/services/infra/mailer|mailer-worker|mailer-migrate|8084
+survey|backend/services/apps/survey|survey-api|survey-migrate|8091
+booking|backend/services/apps/booking|booking-api|booking-migrate|8092
+workflow|backend/services/apps/workflow|workflow-api|workflow-migrate|8093
+attribution|backend/services/apps/attribution|attribution-api|attribution-migrate|8094
 "
 
 name="${1:-}"

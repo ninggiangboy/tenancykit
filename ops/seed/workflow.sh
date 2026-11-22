@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Workflow: the tenant's own credential registered with the engine, a connection, the four sample definitions published,
 # a task group, and instances in different states: parked on a wait, finished, and waiting for a human to decide.
-# The definitions are the samples the workflow tests keep (backend/services/workflow/.../samples). Sourced by seed.sh.
+# The definitions are the samples the workflow tests keep (backend/services/apps/workflow/.../samples). Sourced by seed.sh.
 
-WORKFLOW_SAMPLES="backend/services/workflow/apps/app-boot/src/test/resources/samples"
+WORKFLOW_SAMPLES="backend/services/apps/workflow/apps/app-boot/src/test/resources/samples"
 
 # wf_publish <code> <sample file>   (definition id in DEFINITION_ID; an existing code is reused)
 wf_publish() {

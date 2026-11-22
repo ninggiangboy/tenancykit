@@ -44,26 +44,26 @@ jobs:
       # Each service declares its own rule ids plus its documented extras, and proves every rule still fails on
       # its fixture. A rule that disappears from one service fails here.
       - name: Billing rule ids
-        working-directory: backend/services/billing
+        working-directory: backend/services/apps/billing
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
       - name: Platform rule ids
         working-directory: backend/services/platform
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
       - name: Mailer rule ids
-        working-directory: backend/services/mailer
+        working-directory: backend/services/infra/mailer
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
       - name: Notification rule ids
-        working-directory: backend/services/notification
+        working-directory: backend/services/infra/notification
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
       - name: Email rule ids
-        working-directory: backend/services/mailroom
+        working-directory: backend/services/apps/mailroom
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
       - name: Customer rule ids
-        working-directory: backend/services/customer
+        working-directory: backend/services/apps/customer
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
       - name: Loyalty rule ids
-        working-directory: backend/services/loyalty
+        working-directory: backend/services/apps/loyalty
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'
       - name: Attribution rule ids
-        working-directory: backend/services/attribution
+        working-directory: backend/services/apps/attribution
         run: ./gradlew :apps:app-boot:test --tests '*ArchitectureTest' --tests '*ArchitectureMetaTest'

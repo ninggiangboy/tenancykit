@@ -207,7 +207,7 @@ docker push "$registry:$tag"
 
 # billing (shared by migrate, api and worker)
 billing_repo="$(terraform output -json ecr_repository_urls | jq -r .billing)"
-docker build -f ../../backend/services/billing/apps/app-boot/Dockerfile -t "$billing_repo:$tag" ../..
+docker build -f ../../backend/services/apps/billing/apps/app-boot/Dockerfile -t "$billing_repo:$tag" ../..
 docker push "$billing_repo:$tag"
 
 # keycloak, with the realm export, the tenant username form and the sign-in theme baked in; the build context is the
@@ -220,7 +220,9 @@ docker push "$keycloak_repo:$tag"
 # customer, loyalty, survey, booking, workflow and attribution (shared by migrate, api and worker)
 for app in mailer notification mailroom customer loyalty survey booking workflow attribution; do
   repo="$(terraform output -json ecr_repository_urls | jq -r --arg app "$app" '.[$app]')"
-  docker build -f "../../backend/services/$app/apps/app-boot/Dockerfile" -t "$repo:$tag" ../..
+  # an app lives under backend/services/apps/ or backend/services/infra/, so the group is matched by a glob
+  dockerfile="$(echo ../../backend/services/*/"$app"/apps/app-boot/Dockerfile)"
+  docker build -f "$dockerfile" -t "$repo:$tag" ../..
   docker push "$repo:$tag"
 done
 ```

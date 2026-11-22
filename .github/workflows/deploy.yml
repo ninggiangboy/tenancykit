@@ -85,37 +85,37 @@ jobs:
           docker build -f backend/services/platform/apps/app-boot/Dockerfile -t "${platform_repo}:${TAG}" .
           docker push "${platform_repo}:${TAG}"
 
-          docker build -f backend/services/billing/apps/app-boot/Dockerfile -t "${billing_repo}:${TAG}" .
+          docker build -f backend/services/apps/billing/apps/app-boot/Dockerfile -t "${billing_repo}:${TAG}" .
           docker push "${billing_repo}:${TAG}"
 
           docker build -f ops/terraform/keycloak/Dockerfile -t "${keycloak_repo}:${TAG}" .
           docker push "${keycloak_repo}:${TAG}"
 
-          docker build -f backend/services/mailer/apps/app-boot/Dockerfile -t "${mailer_repo}:${TAG}" .
+          docker build -f backend/services/infra/mailer/apps/app-boot/Dockerfile -t "${mailer_repo}:${TAG}" .
           docker push "${mailer_repo}:${TAG}"
 
-          docker build -f backend/services/notification/apps/app-boot/Dockerfile -t "${notification_repo}:${TAG}" .
+          docker build -f backend/services/infra/notification/apps/app-boot/Dockerfile -t "${notification_repo}:${TAG}" .
           docker push "${notification_repo}:${TAG}"
 
-          docker build -f backend/services/mailroom/apps/app-boot/Dockerfile -t "${mailroom_repo}:${TAG}" .
+          docker build -f backend/services/apps/mailroom/apps/app-boot/Dockerfile -t "${mailroom_repo}:${TAG}" .
           docker push "${mailroom_repo}:${TAG}"
 
-          docker build -f backend/services/customer/apps/app-boot/Dockerfile -t "${customer_repo}:${TAG}" .
+          docker build -f backend/services/apps/customer/apps/app-boot/Dockerfile -t "${customer_repo}:${TAG}" .
           docker push "${customer_repo}:${TAG}"
 
-          docker build -f backend/services/loyalty/apps/app-boot/Dockerfile -t "${loyalty_repo}:${TAG}" .
+          docker build -f backend/services/apps/loyalty/apps/app-boot/Dockerfile -t "${loyalty_repo}:${TAG}" .
           docker push "${loyalty_repo}:${TAG}"
 
-          docker build -f backend/services/survey/apps/app-boot/Dockerfile -t "${survey_repo}:${TAG}" .
+          docker build -f backend/services/apps/survey/apps/app-boot/Dockerfile -t "${survey_repo}:${TAG}" .
           docker push "${survey_repo}:${TAG}"
 
-          docker build -f backend/services/booking/apps/app-boot/Dockerfile -t "${booking_repo}:${TAG}" .
+          docker build -f backend/services/apps/booking/apps/app-boot/Dockerfile -t "${booking_repo}:${TAG}" .
           docker push "${booking_repo}:${TAG}"
 
-          docker build -f backend/services/workflow/apps/app-boot/Dockerfile -t "${workflow_repo}:${TAG}" .
+          docker build -f backend/services/apps/workflow/apps/app-boot/Dockerfile -t "${workflow_repo}:${TAG}" .
           docker push "${workflow_repo}:${TAG}"
 
-          docker build -f backend/services/attribution/apps/app-boot/Dockerfile -t "${attribution_repo}:${TAG}" .
+          docker build -f backend/services/apps/attribution/apps/app-boot/Dockerfile -t "${attribution_repo}:${TAG}" .
           docker push "${attribution_repo}:${TAG}"
 
       - name: Bootstrap the database and broker (first deploy only)
