@@ -16,6 +16,7 @@ For how to build, run and verify the repository, start with the [root README](..
 |---|---|
 | [overview-and-scope.md](overview-and-scope.md) | Purpose, vocabulary, who is responsible for what, non-goals |
 | [architecture.md](architecture.md) | System diagram, decision ledger, module boundaries, technical principles |
+| [audiences-and-surfaces.md](audiences-and-surfaces.md) | Who may call each endpoint: the seven callers, their route prefixes, containers and the generated contract matrix |
 | [platform-service.md](platform-service.md) | Platform's contexts, surface, token issuance, snapshot and streams, the UI remote registry |
 | [console.md](console.md) | The Suite Console: the monorepo, the two shells, how a remote loads, the design system, the registry, deploy and the end-to-end gate |
 | [suite-messaging.md](suite-messaging.md) | RabbitMQ topology, envelope, versioned replicas, rebuild, dead-letter handling |

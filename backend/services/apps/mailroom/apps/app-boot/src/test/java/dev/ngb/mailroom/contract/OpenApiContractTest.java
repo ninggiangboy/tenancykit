@@ -72,12 +72,12 @@ class OpenApiContractTest {
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         assertThat(generated).startsWith("openapi:");
         CallerLabelRules.check(generated, false);
+        String published = publishedDocument(generated);
         CallerOpenApiSplitter.writeOrVerify(
-                generated,
+                published,
                 RepositoryPaths.repositoryRoot().resolve("contracts/openapi"),
                 "mailroom",
                 Boolean.getBoolean("openapi.update"));
-        String published = publishedDocument(generated);
 
         Path file = RepositoryPaths.repositoryRoot().resolve(CONTRACT);
         if (Boolean.getBoolean("openapi.update")) {

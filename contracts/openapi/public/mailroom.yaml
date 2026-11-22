@@ -35,57 +35,6 @@ tags:
   description: "A tenant's own customers by email address. Deleting a receiver is\
     \ an erasure, not a soft delete."
 paths:
-  /mailroom/t/u/{token}:
-    get:
-      tags:
-      - "Public tracking"
-      summary: "Show the unsubscribe page"
-      description: "The page a recipient opens from the unsubscribe link: it asks\
-        \ the recipient to confirm. It changes nothing itself. Public: no suite token\
-        \ is needed.\n\nCallers: public."
-      operationId: "unsubscribePage"
-      parameters:
-      - name: "token"
-        in: "path"
-        description: "The signed token that was written into the email, naming the\
-          \ email and its recipient."
-        required: true
-        schema:
-          type: "string"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                type: "string"
-      x-allowed-callers:
-      - "public"
-    post:
-      tags:
-      - "Public tracking"
-      summary: "Unsubscribe a recipient"
-      description: "The one-click unsubscribe of RFC 8058. It adds a marketing suppression\
-        \ and flips the receiver's status, idempotently, and never stops transactional\
-        \ mail. Public: no suite token is needed.\n\nCallers: public."
-      operationId: "unsubscribe"
-      parameters:
-      - name: "token"
-        in: "path"
-        description: "The signed token that was written into the email, naming the\
-          \ email and its recipient."
-        required: true
-        schema:
-          type: "string"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                type: "string"
-      x-allowed-callers:
-      - "public"
   /t/u/{token}:
     get:
       tags:
@@ -135,35 +84,6 @@ paths:
                 type: "string"
       x-allowed-callers:
       - "public"
-  /mailroom/t/o/{token}:
-    get:
-      tags:
-      - "Public tracking"
-      summary: "Record an email open"
-      description: "The tracking pixel a recipient's mail client loads. It always\
-        \ answers the same transparent GIF, whatever the token says, so a bad token\
-        \ is indistinguishable from a good one. A valid token records an open, at\
-        \ most sixty a minute per email. Public: no suite token is needed.\n\nCallers:\
-        \ public."
-      operationId: "open"
-      parameters:
-      - name: "token"
-        in: "path"
-        description: "The signed token that was written into the email, naming the\
-          \ email and its recipient."
-        required: true
-        schema:
-          type: "string"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                type: "string"
-                format: "byte"
-      x-allowed-callers:
-      - "public"
   /t/o/{token}:
     get:
       tags:
@@ -191,33 +111,6 @@ paths:
               schema:
                 type: "string"
                 format: "byte"
-      x-allowed-callers:
-      - "public"
-  /mailroom/t/c/{token}:
-    get:
-      tags:
-      - "Public tracking"
-      summary: "Follow a tracked link"
-      description: "Redirects to the URL recorded when the email was rendered and\
-        \ records the click; it never reads a URL from the request, so it cannot be\
-        \ used as an open redirect. A token whose link was purged shows a \"link expired\"\
-        \ page. Public: no suite token is needed.\n\nCallers: public."
-      operationId: "click"
-      parameters:
-      - name: "token"
-        in: "path"
-        description: "The signed token that was written into the email, naming the\
-          \ email and its recipient."
-        required: true
-        schema:
-          type: "string"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                type: "object"
       x-allowed-callers:
       - "public"
   /t/c/{token}:

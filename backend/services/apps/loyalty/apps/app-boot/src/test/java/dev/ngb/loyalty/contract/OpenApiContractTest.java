@@ -44,7 +44,7 @@ class OpenApiContractTest extends LoyaltyIntegrationTest {
         CallerLabelRules.check(generated.toString(), false);
         CallerLabelRules.check(publishedText, false);
         CallerOpenApiSplitter.writeOrVerify(
-                generated.toString(),
+                publishedText,
                 RepositoryPaths.repositoryRoot().resolve("contracts/openapi"),
                 "loyalty",
                 Boolean.getBoolean("openapi.update"));

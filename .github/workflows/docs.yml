@@ -1,0 +1,34 @@
+name: docs
+
+# The caller matrix and the per-caller documents are generated from contracts/openapi; this gate keeps the document
+# equal to the contracts without building a service. Ruby (stdlib YAML) is the only runtime it needs.
+on:
+  pull_request:
+    paths:
+      - "contracts/openapi/**"
+      - "docs/audiences-and-surfaces.md"
+      - "docs/README.md"
+      - "docs/system-specification.md"
+      - "ops/docs/**"
+      - "Makefile"
+      - ".github/workflows/docs.yml"
+  push:
+    branches: [main, dev]
+    paths:
+      - "contracts/openapi/**"
+      - "docs/audiences-and-surfaces.md"
+      - "docs/README.md"
+      - "docs/system-specification.md"
+      - "ops/docs/**"
+      - "Makefile"
+      - ".github/workflows/docs.yml"
+
+jobs:
+  caller-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - run: make docs-check

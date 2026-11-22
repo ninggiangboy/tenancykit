@@ -3,901 +3,257 @@ openapi: "3.1.0"
 info:
   title: "Customer API"
   description: "The API a Tenant System uses to keep a Tenant's own customer data:\
-    \ customers, orders with lines and returns, activities, custom fields, tags, consent,\
-    \ the 360 profile, the CSV export and erasure, plus the signed webhook endpoints\
-    \ customer delivers to. There is no public surface."
+    \ upsert customers one at a time or in batches, change their tags, field values\
+    \ and consent, record orders with line items and returns, write activities, read\
+    \ a customer back as one 360 profile, search and filter the customer list and\
+    \ stream it as CSV, define the custom fields and consent topics the tenant uses,\
+    \ erase a customer, and manage the signed webhooks customer sends to the Tenant's\
+    \ own endpoints. customer reports every customer, order and erasure change as\
+    \ a signed HTTP webhook to the Tenant's subscribed endpoints, never through a\
+    \ broker exchange. The tenant is taken from the request's host and suite token,\
+    \ never from a body: every call acts on one Tenant's data only, and no request\
+    \ body carries a tenant."
   version: "v1"
 servers:
 - url: "/customer"
   description: "Any tenant hostname: <tenant-code>.<base-domain>/customer"
+tags:
+- name: "Customers"
+  description: "Create or replace customers by the Tenant's own reference, change\
+    \ them with If-Match, upsert in batches, and search and filter the list."
+- name: "Customer profile"
+  description: "One customer read back as a single 360 profile."
+- name: "Orders"
+  description: "Record orders with line items and returns, and read a customer's orders."
+- name: "Activities"
+  description: "Write activities against a customer, singly or in batches, and read\
+    \ a customer's timeline."
+- name: "Consent"
+  description: "The consent topics a tenant defines and each customer's consent records."
+- name: "Custom fields"
+  description: "The custom fields a tenant defines for its customers."
+- name: "Tags"
+  description: "The tags the tenant's customers carry."
+- name: "Exports"
+  description: "Stream the customer list as CSV."
+- name: "Erasure"
+  description: "Erase a customer's personal data. The original reference can then\
+    \ start a new customer."
+- name: "Webhook endpoints"
+  description: "Where the tenant wants this service's events delivered, and which\
+    \ event types. The signing secret is returned only when an endpoint is created\
+    \ or its secret rotated, never again."
+- name: "Webhook deliveries"
+  description: "The history of attempts to deliver an event to an endpoint, and resending\
+    \ one that finished. A delivery that exhausted its attempts stays visible so it\
+    \ can be resent."
 paths:
-  /api/v1/webhook-endpoints/{id}:
-    get:
-      tags:
-      - "endpoint-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
-      operationId: "getEndpoint"
-      parameters:
-      - name: "id"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/EndpointResponse"
-      x-required-permission: "customer:webhook:manage"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-    put:
-      tags:
-      - "endpoint-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
-      operationId: "updateEndpoint"
-      parameters:
-      - name: "id"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      - name: "If-Match"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateEndpointRequest"
-        required: true
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/EndpointResponse"
-      x-required-permission: "customer:webhook:manage"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-    delete:
-      tags:
-      - "endpoint-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
-      operationId: "deleteEndpoint"
-      parameters:
-      - name: "id"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      - name: "If-Match"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      responses:
-        "200":
-          description: "OK"
-      x-required-permission: "customer:webhook:manage"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/orders/{orderRef}:
-    get:
-      tags:
-      - "order-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:order:read`."
-      operationId: "getOrder"
-      parameters:
-      - name: "orderRef"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/OrderResponse"
-      x-required-permission: "customer:order:read"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-    put:
-      tags:
-      - "order-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:order:record`."
-      operationId: "putOrder"
-      parameters:
-      - name: "orderRef"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/OrderUpsertRequest"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/OrderResponse"
-      x-required-permission: "customer:order:record"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/orders/{orderRef}/returns/{returnRef}:
-    put:
-      tags:
-      - "order-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:order:record`."
-      operationId: "putReturn"
-      parameters:
-      - name: "orderRef"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      - name: "returnRef"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ReturnRequest"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/OrderResponse"
-      x-required-permission: "customer:order:record"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
   /api/v1/customers/{externalRef}:
-    get:
-      tags:
-      - "customer-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:customer:read`."
-      operationId: "getCustomer"
-      parameters:
-      - name: "externalRef"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/CustomerResponse"
-      x-required-permission: "customer:customer:read"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
     put:
       tags:
-      - "customer-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:customer:manage`."
+      - "Customers"
+      summary: "Create or replace a customer"
+      description: "Upserts one customer, keyed by the Tenant's own `externalRef`.\
+        \ The response carries the customer's `ETag`; pass it as `If-Match` on the\
+        \ next `PATCH`. An identical body changes nothing and bumps no version. An\
+        \ order or an activity that names an unknown customer is refused; this endpoint\
+        \ is how the customer is created.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `customer:customer:manage`."
       operationId: "putCustomer"
       parameters:
       - name: "externalRef"
         in: "path"
         required: true
+        description: "The Tenant's reference for the customer, unique per tenant and\
+          \ immutable."
         schema:
           type: "string"
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
+          minLength: 1
+          maxLength: 128
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CustomerUpsertRequest"
+              $ref: "#/components/schemas/CustomerUpsert"
         required: true
       responses:
-        "200":
-          description: "OK"
+        "201":
+          description: "The customer did not exist and was created. A `customer.created`\
+            \ webhook is queued in the same transaction."
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/CustomerResponse"
+                $ref: "#/components/schemas/Customer"
+        "200":
+          description: "The customer existed: the representation was replaced, or\
+            \ it was already identical and nothing changed."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "The `externalRef` in the body, when sent, names a different\
+            \ reference than the path. Code `IDEMPOTENCY_CONFLICT`. The reference\
+            \ of an erased customer is `erased:<id>`, so writing to it is `CUSTOMER_ERASED`;\
+            \ the original reference starts a new customer."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The body is not a valid customer: `displayName` is empty or\
+            \ longer than 200 characters, `phone` is longer than 32, `email` is longer\
+            \ than 254 or malformed, a `customFields` key is unknown or archived or\
+            \ its value is of the wrong type, the customer would hold more than 50\
+            \ tags, or the serialized field values exceed 16 KiB. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
       x-required-permission: "customer:customer:manage"
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
     patch:
       tags:
-      - "customer-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:customer:manage`."
+      - "Customers"
+      summary: "Change some of a customer's attributes, tags and field values"
+      description: "Changes only the properties that are present. Requires `If-Match`:\
+        \ the endpoint answers `428` without the header and `412` when the tag does\
+        \ not match. `addTags` and `removeTags` change the tag set without replacing\
+        \ it, and a `customFields` property merges into the stored values. The response\
+        \ carries the new `ETag`.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `customer:customer:manage`."
       operationId: "patchCustomer"
       parameters:
       - name: "externalRef"
         in: "path"
         required: true
+        description: "The Tenant's reference for the customer."
         schema:
           type: "string"
+          minLength: 1
+          maxLength: 128
       - name: "If-Match"
         in: "header"
         required: false
-        schema:
-          type: "string"
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
+        description: "Required by this update; the endpoint answers `428` without\
+          \ it and `412` when it does not match the current `ETag`."
         schema:
           type: "string"
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CustomerPatchRequest"
+              $ref: "#/components/schemas/CustomerPatch"
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "The customer after the change."
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/CustomerResponse"
-      x-required-permission: "customer:customer:manage"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/webhook-endpoints:
-    get:
-      tags:
-      - "endpoint-controller"
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `customer:webhook:manage`."
-      operationId: "listEndpoints"
-      parameters:
-      - name: "filter[created_at][eq]"
-        in: "query"
-        description: "`created_at` eq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][gt]"
-        in: "query"
-        description: "`created_at` gt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][gte]"
-        in: "query"
-        description: "`created_at` gte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[created_at][lt]"
-        in: "query"
-        description: "`created_at` lt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][lte]"
-        in: "query"
-        description: "`created_at` lte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][neq]"
-        in: "query"
-        description: "`created_at` neq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[description][eq]"
-        in: "query"
-        description: "`description` eq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[description][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `description`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[description][is_null]"
-        in: "query"
-        description: "`true` for rows where `description` is null, `false` for rows\
-          \ where it is set."
-        required: false
-        schema:
-          type: "boolean"
-      - name: "filter[description][neq]"
-        in: "query"
-        description: "`description` neq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[description][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `description`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[description][starts_with]"
-        in: "query"
-        description: "Case-insensitive prefix match on `description`."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[id][eq]"
-        in: "query"
-        description: "`id` eq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "uuid"
-      - name: "filter[id][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `id`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[id][neq]"
-        in: "query"
-        description: "`id` neq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "uuid"
-      - name: "filter[id][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `id`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[key_id][eq]"
-        in: "query"
-        description: "`key_id` eq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[key_id][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `key_id`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[key_id][neq]"
-        in: "query"
-        description: "`key_id` neq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[key_id][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `key_id`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[key_id][starts_with]"
-        in: "query"
-        description: "Case-insensitive prefix match on `key_id`."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[secret_rotated_at][eq]"
-        in: "query"
-        description: "`secret_rotated_at` eq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[secret_rotated_at][gt]"
-        in: "query"
-        description: "`secret_rotated_at` gt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[secret_rotated_at][gte]"
-        in: "query"
-        description: "`secret_rotated_at` gte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[secret_rotated_at][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `secret_rotated_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[secret_rotated_at][is_null]"
-        in: "query"
-        description: "`true` for rows where `secret_rotated_at` is null, `false` for\
-          \ rows where it is set."
-        required: false
-        schema:
-          type: "boolean"
-      - name: "filter[secret_rotated_at][lt]"
-        in: "query"
-        description: "`secret_rotated_at` lt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[secret_rotated_at][lte]"
-        in: "query"
-        description: "`secret_rotated_at` lte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[secret_rotated_at][neq]"
-        in: "query"
-        description: "`secret_rotated_at` neq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[secret_rotated_at][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `secret_rotated_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[status][eq]"
-        in: "query"
-        description: "`status` eq the value."
-        required: false
-        schema:
-          type: "string"
-          enum:
-          - "ACTIVE"
-          - "DELETED"
-          - "DISABLED"
-      - name: "filter[status][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `status`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[status][neq]"
-        in: "query"
-        description: "`status` neq the value."
-        required: false
-        schema:
-          type: "string"
-          enum:
-          - "ACTIVE"
-          - "DELETED"
-          - "DISABLED"
-      - name: "filter[status][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `status`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[updated_at][eq]"
-        in: "query"
-        description: "`updated_at` eq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[updated_at][gt]"
-        in: "query"
-        description: "`updated_at` gt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[updated_at][gte]"
-        in: "query"
-        description: "`updated_at` gte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[updated_at][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[updated_at][lt]"
-        in: "query"
-        description: "`updated_at` lt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[updated_at][lte]"
-        in: "query"
-        description: "`updated_at` lte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[updated_at][neq]"
-        in: "query"
-        description: "`updated_at` neq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[updated_at][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[url][eq]"
-        in: "query"
-        description: "`url` eq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[url][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `url`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[url][neq]"
-        in: "query"
-        description: "`url` neq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[url][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `url`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[url][starts_with]"
-        in: "query"
-        description: "Case-insensitive prefix match on `url`."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "sort"
-        in: "query"
-        description: "Comma-separated sortable fields, each optionally prefixed with\
-          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
-          \ to make the order total. Default: `created_at,id`."
-        required: false
-        schema:
-          type: "string"
-      - name: "limit"
-        in: "query"
-        description: "Page size, 1 to 200."
-        required: false
-        schema:
-          type: "integer"
-          format: "int32"
-          default: 50
-          maximum: 200
-          minimum: 1
-      - name: "offset"
-        in: "query"
-        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
-        required: false
-        schema:
-          type: "integer"
-          format: "int32"
-          default: 0
-          maximum: 10000
-          minimum: 0
-      - name: "cursor"
-        in: "query"
-        description: "The `next_cursor` of the previous page. Valid only with the\
-          \ same filter and sort."
-        required: false
-        schema:
-          type: "string"
-      - name: "page_info"
-        in: "query"
-        description: "`full` fills `page` with the limit, offset, total and next cursor;\
-          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
-          \ over a large listing is not counted; omit it for the rows alone."
-        required: false
-        schema:
-          type: "string"
-          enum:
-          - "full"
-          - "cursor"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PageEndpointResponse"
+                $ref: "#/components/schemas/Customer"
         "400":
-          description: "A filter, sort, cursor or paging parameter is unknown, not\
-            \ allowed for the field, or not valid for its type."
-      x-required-permission: "customer:webhook:manage"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-    post:
-      tags:
-      - "endpoint-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
-      operationId: "createEndpoint"
-      parameters:
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateEndpointRequest"
-        required: true
-      responses:
-        "201":
-          description: "Created"
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No customer with that `externalRef` in this tenant. Code `CUSTOMER_NOT_FOUND`."
           content:
-            '*/*':
+            application/problem+json:
               schema:
-                $ref: "#/components/schemas/EndpointWithSecretResponse"
-      x-required-permission: "customer:webhook:manage"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/webhook-endpoints/{id}/rotate-secret:
-    post:
-      tags:
-      - "endpoint-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
-      operationId: "rotateSecret"
-      parameters:
-      - name: "id"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      responses:
-        "200":
-          description: "OK"
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "The customer's personal data was erased; the ref an erased\
+            \ customer keeps is `erased:<id>` and holds no writable data. Code `CUSTOMER_ERASED`."
           content:
-            '*/*':
+            application/problem+json:
               schema:
-                $ref: "#/components/schemas/EndpointWithSecretResponse"
-      x-required-permission: "customer:webhook:manage"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/webhook-deliveries/{id}/retry:
-    post:
-      tags:
-      - "delivery-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
-      operationId: "retry"
-      parameters:
-      - name: "id"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      responses:
-        "202":
-          description: "Accepted"
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: "A property of the body is not valid: `displayName` is empty\
+            \ or longer than 200 characters, `phone` is longer than 32, `email` is\
+            \ longer than 254 or malformed, a `customFields` key is unknown or archived\
+            \ or its value is of the wrong type, or the customer would hold more than\
+            \ 50 tags. Code `VALIDATION_FAILED`."
           content:
-            '*/*':
+            application/problem+json:
               schema:
-                $ref: "#/components/schemas/DeliveryResponse"
-      x-required-permission: "customer:webhook:manage"
+                $ref: "#/components/schemas/Error"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: "customer:customer:manage"
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-  /api/v1/orders/batch:
-    post:
-      tags:
-      - "order-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:order:record`."
-      operationId: "recordOrders"
-      parameters:
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/OrderBatchRequest"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/OrderBatchResponse"
-      x-required-permission: "customer:order:record"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/customers/{externalRef}/erasure:
-    post:
-      tags:
-      - "erasure-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:customer:erase`."
-      operationId: "eraseCustomer"
-      parameters:
-      - name: "externalRef"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/ErasureResponse"
-      x-required-permission: "customer:customer:erase"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/customers/{externalRef}/consents:
     get:
       tags:
-      - "consent-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:customer:read`."
-      operationId: "listConsents"
+      - "Customers"
+      summary: "Read a customer"
+      description: "Reads one customer with its field values, tags and current consent\
+        \ state. The response carries the customer's `ETag`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `customer:customer:read`."
+      operationId: "getCustomer"
       parameters:
       - name: "externalRef"
         in: "path"
         required: true
+        description: "The Tenant's reference for the customer."
         schema:
           type: "string"
+          minLength: 1
+          maxLength: 128
       responses:
         "200":
-          description: "OK"
+          description: "The customer."
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ConsentsResponse"
+                $ref: "#/components/schemas/Customer"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No customer with that `externalRef` in this tenant. Code `CUSTOMER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
       x-required-permission: "customer:customer:read"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-    post:
-      tags:
-      - "consent-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:customer:manage`."
-      operationId: "recordConsent"
-      parameters:
-      - name: "externalRef"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ConsentRequest"
-        required: true
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/ConsentRecordResponse"
-      x-required-permission: "customer:customer:manage"
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
   /api/v1/customers/batch:
     post:
       tags:
-      - "customer-batch-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:customer:manage`."
-      operationId: "upsertCustomers"
+      - "Customers"
+      summary: "Upsert a batch of customers"
+      description: "Applies up to 1,000 customers, each in its own transaction and\
+        \ in the order sent. The batch is `200` even when some items failed: a malformed\
+        \ item fails alone and the others are written. Two items with the same `externalRef`\
+        \ apply in order. A retry of the whole batch is safe, because every item is\
+        \ idempotent by its `externalRef`.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `customer:customer:manage`."
+      operationId: "createCustomerBatch"
       parameters:
       - name: "X-Request-Id"
         in: "header"
         required: false
+        description: "The caller's own id for this call, recorded with it."
         schema:
           type: "string"
       requestBody:
@@ -905,271 +261,434 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/BatchCustomersRequest"
+        required: true
       responses:
         "200":
-          description: "OK"
+          description: "One result per item, in the order sent. A `CREATED` item queued\
+            \ its `customer.created` webhook; a `FAILED` item carries the code it\
+            \ failed with."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/BatchCustomersResponse"
+        "400":
+          description: "The envelope is malformed or has no `items` (`INVALID_REQUEST`),\
+            \ or it holds more than 1,000 items (`BATCH_LIMIT_EXCEEDED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "customer:customer:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/customers:
+    get:
+      tags:
+      - "Customers"
+      summary: "Search and list customers"
+      description: "Searches the tenant's customers. `q` matches the `externalRef`\
+        \ exactly, a phone-digit prefix, an email prefix or a name. Every `tag` parameter\
+        \ must match, and a custom field, a consent topic and the creation time are\
+        \ filterable. The list is paged with a keyset cursor: pass `cursor` from the\
+        \ previous page with the same filter and sort; a cursor is opaque, it is refused\
+        \ with a different filter or sort, and `page.next_cursor` is null on the last\
+        \ page. Rows follow `sort`, and `id` is appended to make the order total.\n\
+        \nCallers: tenant-user, tenant-system. Requires `customer:customer:read`."
+      operationId: "listCustomers"
+      parameters:
+      - name: "q"
+        in: "query"
+        required: false
+        description: "A search term: the `externalRef` exactly, a phone-digit prefix,\
+          \ an email prefix or part of a name."
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "tag"
+        in: "query"
+        required: false
+        description: "A tag the customer must carry. Repeat the parameter to require\
+          \ every named tag."
+        schema:
+          type: "array"
+          items:
+            type: "string"
+      - name: "field.<key>"
+        in: "query"
+        required: false
+        description: "Equality on the value of the custom field `<key>`, one parameter\
+          \ per key. The value must match the field definition's type."
+        schema:
+          type: "string"
+      - name: "field.<key>.gte"
+        in: "query"
+        required: false
+        description: "The value of the custom field `<key>` is at or above this value.\
+          \ `NUMBER` and `DATE` fields only."
+        schema:
+          type: "string"
+      - name: "field.<key>.lte"
+        in: "query"
+        required: false
+        description: "The value of the custom field `<key>` is at or below this value.\
+          \ `NUMBER` and `DATE` fields only."
+        schema:
+          type: "string"
+      - name: "consent.<topic>"
+        in: "query"
+        required: false
+        description: "The current state of the consent topic `<topic>`, one parameter\
+          \ per topic: `granted` (the latest event grants it), `revoked` (the latest\
+          \ event revokes it) or `none` (the customer has no event for it)."
+        schema:
+          type: "string"
+          enum:
+          - "granted"
+          - "revoked"
+          - "none"
+      - name: "createdFrom"
+        in: "query"
+        required: false
+        description: "The customer was created at or after this instant."
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "createdTo"
+        in: "query"
+        required: false
+        description: "The customer was created at or before this instant."
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "sort"
+        in: "query"
+        required: false
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total."
+        schema:
+          type: "string"
+          default: "-created_at,id"
+      - name: "limit"
+        in: "query"
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: "cursor"
+        in: "query"
+        required: false
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "A page of customers, each with its field values, tags and\
+            \ current consent state."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CustomerPage"
+        "400":
+          description: "A filter, sort or paging parameter is unknown (`INVALID_REQUEST`);\
+            \ a value is not valid for its type, a custom-field key is unknown, a\
+            \ consent topic is unknown, or the `cursor` is malformed or belongs to\
+            \ a different filter or sort (`VALIDATION_FAILED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "customer:customer:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/customers/{externalRef}/profile:
+    get:
+      tags:
+      - "Customer profile"
+      summary: "Read a customer's 360 profile"
+      description: "One customer read back as one document: the customer, its field\
+        \ values, its tags, the current status of every consent topic, its latest\
+        \ orders with their lines and returns, and its latest activities. Every slice\
+        \ is bounded and indexed; no aggregate, segment or score is computed here.\n\
+        \nCallers: tenant-user, tenant-system. Requires `customer:customer:read`."
+      operationId: "getCustomerProfile"
+      parameters:
+      - name: "externalRef"
+        in: "path"
+        required: true
+        description: "The Tenant's reference for the customer."
+        schema:
+          type: "string"
+          minLength: 1
+          maxLength: 128
+      - name: "orders"
+        in: "query"
+        required: false
+        description: "How many of the customer's latest orders to include, 0 to 50."
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 10
+          minimum: 0
+          maximum: 50
+      - name: "activities"
+        in: "query"
+        required: false
+        description: "How many of the customer's latest activities to include, 0 to\
+          \ 100."
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 20
+          minimum: 0
+          maximum: 100
+      responses:
+        "200":
+          description: "The profile, newest first within each slice."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No customer with that `externalRef` in this tenant. Code `CUSTOMER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: "customer:customer:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/customers/export:
+    get:
+      tags:
+      - "Exports"
+      summary: "Stream the customer list as CSV"
+      description: "Takes the same filters as the customer list and streams the matching\
+        \ customers as CSV. The header row is `externalRef,displayName,phone,email,tags,<one\
+        \ column per active custom-field key>,createdAt`; `tags` holds the customer's\
+        \ tags pipe-separated. The stream is read with a server-side cursor and a\
+        \ bounded buffer, so a large export uses a fixed amount of memory. One export\
+        \ runs per tenant at a time, held by a short lease; a second is refused until\
+        \ the first finishes.\n\nCallers: tenant-user, tenant-system. Requires `customer:customer:export`."
+      operationId: "exportCustomers"
+      parameters:
+      - name: "q"
+        in: "query"
+        required: false
+        description: "A search term: the `externalRef` exactly, a phone-digit prefix,\
+          \ an email prefix or part of a name."
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "tag"
+        in: "query"
+        required: false
+        description: "A tag the customer must carry. Repeat the parameter to require\
+          \ every named tag."
+        schema:
+          type: "array"
+          items:
+            type: "string"
+      - name: "field.<key>"
+        in: "query"
+        required: false
+        description: "Equality on the value of the custom field `<key>`, one parameter\
+          \ per key."
+        schema:
+          type: "string"
+      - name: "createdFrom"
+        in: "query"
+        required: false
+        description: "The customer was created at or after this instant."
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "createdTo"
+        in: "query"
+        required: false
+        description: "The customer was created at or before this instant."
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "consent.<topic>"
+        in: "query"
+        required: false
+        description: "The current state of the consent topic `<topic>`: `granted`,\
+          \ `revoked` or `none`."
+        schema:
+          type: "string"
+          enum:
+          - "granted"
+          - "revoked"
+          - "none"
+      - name: "page_size"
+        in: "query"
+        required: false
+        description: "How many rows the server-side cursor reads at a time, 1 to 10000.\
+          \ Its default is a setting; the export is a stream, so this is not a page\
+          \ of the response."
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 1000
+          minimum: 1
+          maximum: 10000
+      responses:
+        "200":
+          description: "The matching customers as CSV, streamed. A cell that starts\
+            \ with `=`, `+`, `-` or `@` is prefixed with a quote, so a spreadsheet\
+            \ cannot run it."
+          content:
+            text/csv:
+              schema:
+                type: "string"
+        "400":
+          description: "A filter is unknown (`INVALID_REQUEST`), or a value is not\
+            \ valid for its type or a custom-field key is unknown (`VALIDATION_FAILED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          description: "Another export of this tenant is still running. Code `EXPORT_IN_PROGRESS`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: "customer:customer:export"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/customers/{externalRef}/erasure:
+    post:
+      tags:
+      - "Erasure"
+      summary: "Erase a customer's personal data"
+      description: "Clears every personal field of the customer, its field values,\
+        \ its tags, its consent contact data and its activity payloads in one transaction,\
+        \ keeps the customer row and its orders and consent rows as anonymous markers,\
+        \ sets the reference to `erased:<id>` and queues a `customer.erased` webhook.\
+        \ Idempotent: a retry with the reference the caller used finds the stored\
+        \ erasure and answers `200` with the same body. The erasure record stores\
+        \ a hash of the reference, never the reference itself. Erasing a customer\
+        \ here does not erase it anywhere else; a tenant that keeps the same person\
+        \ in another system must erase it there too.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `customer:customer:erase`."
+      operationId: "eraseCustomer"
+      parameters:
+      - name: "externalRef"
+        in: "path"
+        required: true
+        description: "The Tenant's reference for the customer."
+        schema:
+          type: "string"
+          minLength: 1
+          maxLength: 128
+      responses:
+        "200":
+          description: "The customer's personal data is erased. A retry of the same\
+            \ erasure replays this body."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErasureResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No customer with that `externalRef` in this tenant, and no\
+            \ erasure of it. Code `CUSTOMER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: "customer:customer:erase"
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
   /api/v1/custom-fields:
     get:
       tags:
-      - "custom-field-controller"
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `customer:field:manage`."
+      - "Custom fields"
+      summary: "List custom-field definitions"
+      description: "Lists the tenant's custom-field definitions, archived ones included.\
+        \ A definition's `key` and `type` are immutable; a type change is a new field,\
+        \ never an edit.\n\nCallers: tenant-user, tenant-system. Requires `customer:field:manage`."
       operationId: "listCustomFields"
       parameters:
-      - name: "filter[archived][eq]"
-        in: "query"
-        description: "`archived` eq the value."
-        required: false
-        schema:
-          type: "boolean"
-      - name: "filter[archived][neq]"
-        in: "query"
-        description: "`archived` neq the value."
-        required: false
-        schema:
-          type: "boolean"
-      - name: "filter[created_at][eq]"
-        in: "query"
-        description: "`created_at` eq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][gt]"
-        in: "query"
-        description: "`created_at` gt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][gte]"
-        in: "query"
-        description: "`created_at` gte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[created_at][lt]"
-        in: "query"
-        description: "`created_at` lt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][lte]"
-        in: "query"
-        description: "`created_at` lte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][neq]"
-        in: "query"
-        description: "`created_at` neq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[key][eq]"
-        in: "query"
-        description: "`key` eq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[key][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `key`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[key][neq]"
-        in: "query"
-        description: "`key` neq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[key][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `key`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[key][starts_with]"
-        in: "query"
-        description: "Case-insensitive prefix match on `key`."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[label][eq]"
-        in: "query"
-        description: "`label` eq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[label][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `label`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[label][neq]"
-        in: "query"
-        description: "`label` neq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[label][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `label`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[label][starts_with]"
-        in: "query"
-        description: "Case-insensitive prefix match on `label`."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[type][eq]"
-        in: "query"
-        description: "`type` eq the value."
-        required: false
-        schema:
-          type: "string"
-          enum:
-          - "BOOLEAN"
-          - "CHOICE"
-          - "DATE"
-          - "NUMBER"
-          - "TEXT"
-      - name: "filter[type][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `type`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[type][neq]"
-        in: "query"
-        description: "`type` neq the value."
-        required: false
-        schema:
-          type: "string"
-          enum:
-          - "BOOLEAN"
-          - "CHOICE"
-          - "DATE"
-          - "NUMBER"
-          - "TEXT"
-      - name: "filter[type][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `type`."
-        required: false
-        schema:
-          type: "string"
-      - name: "sort"
-        in: "query"
-        description: "Comma-separated sortable fields, each optionally prefixed with\
-          \ `-` for descending: created_at, key. At most 4 fields; `key` is appended\
-          \ to make the order total. Default: `key`."
-        required: false
-        schema:
-          type: "string"
       - name: "limit"
         in: "query"
-        description: "Page size, 1 to 200."
         required: false
+        description: "Page size, 1 to 200."
         schema:
           type: "integer"
           format: "int32"
           default: 50
-          maximum: 200
           minimum: 1
-      - name: "offset"
-        in: "query"
-        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
-        required: false
-        schema:
-          type: "integer"
-          format: "int32"
-          default: 0
-          maximum: 10000
-          minimum: 0
+          maximum: 200
       - name: "cursor"
         in: "query"
+        required: false
         description: "The `next_cursor` of the previous page. Valid only with the\
-          \ same filter and sort."
-        required: false
+          \ same filter."
         schema:
           type: "string"
-      - name: "page_info"
-        in: "query"
-        description: "`full` fills `page` with the limit, offset, total and next cursor;\
-          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
-          \ over a large listing is not counted; omit it for the rows alone."
-        required: false
-        schema:
-          type: "string"
-          enum:
-          - "full"
-          - "cursor"
       responses:
         "200":
-          description: "OK"
+          description: "A page of custom-field definitions."
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/PageCustomFieldResponse"
+                $ref: "#/components/schemas/CustomFieldPage"
         "400":
-          description: "A filter, sort, cursor or paging parameter is unknown, not\
-            \ allowed for the field, or not valid for its type."
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "customer:field:manage"
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
     post:
       tags:
-      - "custom-field-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:field:manage`."
+      - "Custom fields"
+      summary: "Define a custom field"
       operationId: "createCustomField"
       parameters:
       - name: "X-Request-Id"
         in: "header"
         required: false
+        description: "The caller's own id for this call, recorded with it."
         schema:
           type: "string"
       requestBody:
@@ -1179,180 +698,202 @@ paths:
               $ref: "#/components/schemas/CustomFieldRequest"
         required: true
       responses:
-        "200":
-          description: "OK"
+        "201":
+          description: "The definition, ready to take values."
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/CustomFieldResponse"
+                $ref: "#/components/schemas/CustomField"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "A definition with that `key` already exists in this tenant.\
+            \ Code `FIELD_KEY_EXISTS`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The `key` does not match `^[a-z][a-z0-9_]{0,39}$`, the `label`\
+            \ is empty, the `type` is unknown, a `CHOICE` has no value or more than\
+            \ 50, a non-`CHOICE` carries choices, or the tenant already holds 50 active\
+            \ definitions. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
       x-required-permission: "customer:field:manage"
+      description: "Callers: tenant-user, tenant-system. Requires `customer:field:manage`."
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/custom-fields/{key}:
+    patch:
+      tags:
+      - "Custom fields"
+      summary: "Change a custom-field definition"
+      description: "Changes the label, adds choices to a `CHOICE`, or archives and\
+        \ unarchives the definition. An archived definition can still be read and\
+        \ still appears in the profile, but no new value may be written for it. The\
+        \ `key` and the `type` are immutable.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `customer:field:manage`."
+      operationId: "patchCustomField"
+      parameters:
+      - name: "key"
+        in: "path"
+        required: true
+        description: "The definition's key."
+        schema:
+          type: "string"
+          minLength: 1
+          maxLength: 40
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomFieldPatch"
+        required: true
+      responses:
+        "200":
+          description: "The definition after the change."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CustomField"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No custom field with that key in this tenant. Code `CUSTOM_FIELD_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "The request tries to change the definition's `type`, which\
+            \ is immutable: a type change is a new field. Code `FIELD_TYPE_IMMUTABLE`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The `label` is empty, or the added choices would break the\
+            \ 50-value limit or repeat an existing one. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: "customer:field:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/tags:
+    get:
+      tags:
+      - "Tags"
+      summary: "List the tenant's tags"
+      description: "Lists the distinct tags the tenant's customers carry, each with\
+        \ the number of customers that use it, ordered by tag.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `customer:customer:read`."
+      operationId: "listTags"
+      parameters:
+      - name: "limit"
+        in: "query"
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: "cursor"
+        in: "query"
+        required: false
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter."
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "A page of tags with their customer counts."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TagPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "customer:customer:read"
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
   /api/v1/consent-topics:
     get:
       tags:
-      - "consent-controller"
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `customer:field:manage`."
+      - "Consent"
+      summary: "List consent topics"
+      description: "Lists the tenant's consent topics, archived ones included. A topic's\
+        \ `key` is immutable.\n\nCallers: tenant-user, tenant-system. Requires `customer:field:manage`."
       operationId: "listConsentTopics"
       parameters:
-      - name: "filter[archived][eq]"
-        in: "query"
-        description: "`archived` eq the value."
-        required: false
-        schema:
-          type: "boolean"
-      - name: "filter[archived][neq]"
-        in: "query"
-        description: "`archived` neq the value."
-        required: false
-        schema:
-          type: "boolean"
-      - name: "filter[key][eq]"
-        in: "query"
-        description: "`key` eq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[key][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `key`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[key][neq]"
-        in: "query"
-        description: "`key` neq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[key][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `key`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[key][starts_with]"
-        in: "query"
-        description: "Case-insensitive prefix match on `key`."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[label][eq]"
-        in: "query"
-        description: "`label` eq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[label][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `label`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[label][neq]"
-        in: "query"
-        description: "`label` neq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[label][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `label`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[label][starts_with]"
-        in: "query"
-        description: "Case-insensitive prefix match on `label`."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "sort"
-        in: "query"
-        description: "Comma-separated sortable fields, each optionally prefixed with\
-          \ `-` for descending: key. At most 4 fields; `key` is appended to make the\
-          \ order total. Default: `key`."
-        required: false
-        schema:
-          type: "string"
       - name: "limit"
         in: "query"
-        description: "Page size, 1 to 200."
         required: false
+        description: "Page size, 1 to 200."
         schema:
           type: "integer"
           format: "int32"
           default: 50
-          maximum: 200
           minimum: 1
-      - name: "offset"
-        in: "query"
-        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
-        required: false
-        schema:
-          type: "integer"
-          format: "int32"
-          default: 0
-          maximum: 10000
-          minimum: 0
+          maximum: 200
       - name: "cursor"
         in: "query"
+        required: false
         description: "The `next_cursor` of the previous page. Valid only with the\
-          \ same filter and sort."
-        required: false
+          \ same filter."
         schema:
           type: "string"
-      - name: "page_info"
-        in: "query"
-        description: "`full` fills `page` with the limit, offset, total and next cursor;\
-          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
-          \ over a large listing is not counted; omit it for the rows alone."
-        required: false
-        schema:
-          type: "string"
-          enum:
-          - "full"
-          - "cursor"
       responses:
         "200":
-          description: "OK"
+          description: "A page of consent topics."
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/PageConsentTopicResponse"
+                $ref: "#/components/schemas/ConsentTopicPage"
         "400":
-          description: "A filter, sort, cursor or paging parameter is unknown, not\
-            \ allowed for the field, or not valid for its type."
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: "customer:field:manage"
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
     post:
       tags:
-      - "consent-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:field:manage`."
+      - "Consent"
+      summary: "Define a consent topic"
+      description: "Defines a purpose the tenant's customers consent to. Consent topics\
+        \ are defined per tenant, like custom fields, not fixed by the suite.\n\n\
+        Callers: tenant-user, tenant-system. Requires `customer:field:manage`."
       operationId: "createConsentTopic"
       parameters:
       - name: "X-Request-Id"
         in: "header"
         required: false
+        description: "The caller's own id for this call, recorded with it."
         schema:
           type: "string"
       requestBody:
@@ -1362,102 +903,32 @@ paths:
               $ref: "#/components/schemas/ConsentTopicRequest"
         required: true
       responses:
-        "200":
-          description: "OK"
+        "201":
+          description: "The topic, ready to receive consent records."
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ConsentTopicResponse"
-      x-required-permission: "customer:field:manage"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/activities:
-    post:
-      tags:
-      - "activity-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:activity:record`."
-      operationId: "recordActivity"
-      parameters:
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ActivityRequest"
-      responses:
-        "200":
-          description: "OK"
+                $ref: "#/components/schemas/ConsentTopic"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "A topic with that `key` already exists in this tenant. Code\
+            \ `CONSENT_TOPIC_KEY_EXISTS`."
           content:
-            '*/*':
+            application/problem+json:
               schema:
-                $ref: "#/components/schemas/ActivityResponse"
-      x-required-permission: "customer:activity:record"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/activities/batch:
-    post:
-      tags:
-      - "activity-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:activity:record`."
-      operationId: "recordActivities"
-      parameters:
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ActivityBatchRequest"
-      responses:
-        "200":
-          description: "OK"
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The `key` does not match `^[a-z][a-z0-9_]{0,39}$` or the `label`\
+            \ is empty. Code `VALIDATION_FAILED`."
           content:
-            '*/*':
+            application/problem+json:
               schema:
-                $ref: "#/components/schemas/ActivityBatchResponse"
-      x-required-permission: "customer:activity:record"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/custom-fields/{key}:
-    patch:
-      tags:
-      - "custom-field-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:field:manage`."
-      operationId: "patchCustomField"
-      parameters:
-      - name: "key"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CustomFieldPatch"
-        required: true
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/CustomFieldResponse"
+                $ref: "#/components/schemas/Error"
       x-required-permission: "customer:field:manage"
       x-allowed-callers:
       - "tenant-user"
@@ -1465,20 +936,21 @@ paths:
   /api/v1/consent-topics/{key}:
     patch:
       tags:
-      - "consent-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:field:manage`."
+      - "Consent"
+      summary: "Change a consent topic"
+      description: "Changes the label or archives and unarchives the topic. An archived\
+        \ topic keeps its recorded history and accepts no new consent record. The\
+        \ `key` is immutable.\n\nCallers: tenant-user, tenant-system. Requires `customer:field:manage`."
       operationId: "patchConsentTopic"
       parameters:
       - name: "key"
         in: "path"
         required: true
+        description: "The topic's key."
         schema:
           type: "string"
-      - name: "X-Request-Id"
-        in: "header"
-        required: false
-        schema:
-          type: "string"
+          minLength: 1
+          maxLength: 40
       requestBody:
         content:
           application/json:
@@ -1487,865 +959,1931 @@ paths:
         required: true
       responses:
         "200":
-          description: "OK"
+          description: "The topic after the change."
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ConsentTopicResponse"
+                $ref: "#/components/schemas/ConsentTopic"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No consent topic with that key in this tenant. Code `CONSENT_TOPIC_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The `label` is empty. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
       x-required-permission: "customer:field:manage"
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-  /api/v1/webhook-deliveries:
-    get:
+  /api/v1/customers/{externalRef}/consents:
+    post:
       tags:
-      - "delivery-controller"
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `customer:webhook:manage`."
-      operationId: "listDeliveries"
-      parameters:
-      - name: "filter[attempts][eq]"
-        in: "query"
-        description: "`attempts` eq the value."
-        required: false
-        schema:
-          type: "integer"
-          format: "int64"
-      - name: "filter[attempts][gt]"
-        in: "query"
-        description: "`attempts` gt the value."
-        required: false
-        schema:
-          type: "integer"
-          format: "int64"
-      - name: "filter[attempts][gte]"
-        in: "query"
-        description: "`attempts` gte the value."
-        required: false
-        schema:
-          type: "integer"
-          format: "int64"
-      - name: "filter[attempts][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `attempts`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[attempts][lt]"
-        in: "query"
-        description: "`attempts` lt the value."
-        required: false
-        schema:
-          type: "integer"
-          format: "int64"
-      - name: "filter[attempts][lte]"
-        in: "query"
-        description: "`attempts` lte the value."
-        required: false
-        schema:
-          type: "integer"
-          format: "int64"
-      - name: "filter[attempts][neq]"
-        in: "query"
-        description: "`attempts` neq the value."
-        required: false
-        schema:
-          type: "integer"
-          format: "int64"
-      - name: "filter[attempts][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `attempts`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[completed_at][eq]"
-        in: "query"
-        description: "`completed_at` eq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[completed_at][gt]"
-        in: "query"
-        description: "`completed_at` gt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[completed_at][gte]"
-        in: "query"
-        description: "`completed_at` gte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[completed_at][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `completed_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[completed_at][is_null]"
-        in: "query"
-        description: "`true` for rows where `completed_at` is null, `false` for rows\
-          \ where it is set."
-        required: false
-        schema:
-          type: "boolean"
-      - name: "filter[completed_at][lt]"
-        in: "query"
-        description: "`completed_at` lt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[completed_at][lte]"
-        in: "query"
-        description: "`completed_at` lte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[completed_at][neq]"
-        in: "query"
-        description: "`completed_at` neq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[completed_at][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `completed_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[created_at][eq]"
-        in: "query"
-        description: "`created_at` eq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][gt]"
-        in: "query"
-        description: "`created_at` gt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][gte]"
-        in: "query"
-        description: "`created_at` gte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[created_at][lt]"
-        in: "query"
-        description: "`created_at` lt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][lte]"
-        in: "query"
-        description: "`created_at` lte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][neq]"
-        in: "query"
-        description: "`created_at` neq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[created_at][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[endpoint_id][eq]"
-        in: "query"
-        description: "`endpoint_id` eq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "uuid"
-      - name: "filter[endpoint_id][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `endpoint_id`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[endpoint_id][neq]"
-        in: "query"
-        description: "`endpoint_id` neq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "uuid"
-      - name: "filter[endpoint_id][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `endpoint_id`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[event_id][eq]"
-        in: "query"
-        description: "`event_id` eq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "uuid"
-      - name: "filter[event_id][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `event_id`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[event_id][neq]"
-        in: "query"
-        description: "`event_id` neq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "uuid"
-      - name: "filter[event_id][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `event_id`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[event_type][eq]"
-        in: "query"
-        description: "`event_type` eq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[event_type][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `event_type`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[event_type][neq]"
-        in: "query"
-        description: "`event_type` neq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[event_type][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `event_type`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[event_type][starts_with]"
-        in: "query"
-        description: "Case-insensitive prefix match on `event_type`."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[id][eq]"
-        in: "query"
-        description: "`id` eq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "uuid"
-      - name: "filter[id][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `id`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[id][neq]"
-        in: "query"
-        description: "`id` neq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "uuid"
-      - name: "filter[id][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `id`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[last_error][eq]"
-        in: "query"
-        description: "`last_error` eq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[last_error][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `last_error`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[last_error][is_null]"
-        in: "query"
-        description: "`true` for rows where `last_error` is null, `false` for rows\
-          \ where it is set."
-        required: false
-        schema:
-          type: "boolean"
-      - name: "filter[last_error][neq]"
-        in: "query"
-        description: "`last_error` neq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[last_error][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `last_error`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[last_error][starts_with]"
-        in: "query"
-        description: "Case-insensitive prefix match on `last_error`."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[last_status_code][eq]"
-        in: "query"
-        description: "`last_status_code` eq the value."
-        required: false
-        schema:
-          type: "integer"
-          format: "int64"
-      - name: "filter[last_status_code][gt]"
-        in: "query"
-        description: "`last_status_code` gt the value."
-        required: false
-        schema:
-          type: "integer"
-          format: "int64"
-      - name: "filter[last_status_code][gte]"
-        in: "query"
-        description: "`last_status_code` gte the value."
-        required: false
-        schema:
-          type: "integer"
-          format: "int64"
-      - name: "filter[last_status_code][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `last_status_code`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[last_status_code][is_null]"
-        in: "query"
-        description: "`true` for rows where `last_status_code` is null, `false` for\
-          \ rows where it is set."
-        required: false
-        schema:
-          type: "boolean"
-      - name: "filter[last_status_code][lt]"
-        in: "query"
-        description: "`last_status_code` lt the value."
-        required: false
-        schema:
-          type: "integer"
-          format: "int64"
-      - name: "filter[last_status_code][lte]"
-        in: "query"
-        description: "`last_status_code` lte the value."
-        required: false
-        schema:
-          type: "integer"
-          format: "int64"
-      - name: "filter[last_status_code][neq]"
-        in: "query"
-        description: "`last_status_code` neq the value."
-        required: false
-        schema:
-          type: "integer"
-          format: "int64"
-      - name: "filter[last_status_code][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `last_status_code`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[next_attempt_at][eq]"
-        in: "query"
-        description: "`next_attempt_at` eq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[next_attempt_at][gt]"
-        in: "query"
-        description: "`next_attempt_at` gt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[next_attempt_at][gte]"
-        in: "query"
-        description: "`next_attempt_at` gte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[next_attempt_at][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `next_attempt_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[next_attempt_at][lt]"
-        in: "query"
-        description: "`next_attempt_at` lt the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[next_attempt_at][lte]"
-        in: "query"
-        description: "`next_attempt_at` lte the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[next_attempt_at][neq]"
-        in: "query"
-        description: "`next_attempt_at` neq the value."
-        required: false
-        schema:
-          type: "string"
-          format: "date-time"
-      - name: "filter[next_attempt_at][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `next_attempt_at`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[status][eq]"
-        in: "query"
-        description: "`status` eq the value."
-        required: false
-        schema:
-          type: "string"
-          enum:
-          - "DEAD"
-          - "IN_PROGRESS"
-          - "PENDING"
-          - "SUCCEEDED"
-      - name: "filter[status][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `status`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[status][neq]"
-        in: "query"
-        description: "`status` neq the value."
-        required: false
-        schema:
-          type: "string"
-          enum:
-          - "DEAD"
-          - "IN_PROGRESS"
-          - "PENDING"
-          - "SUCCEEDED"
-      - name: "filter[status][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `status`."
-        required: false
-        schema:
-          type: "string"
-      - name: "sort"
-        in: "query"
-        description: "Comma-separated sortable fields, each optionally prefixed with\
-          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
-          \ to make the order total. Default: `-created_at,id`."
-        required: false
-        schema:
-          type: "string"
-      - name: "limit"
-        in: "query"
-        description: "Page size, 1 to 200."
-        required: false
-        schema:
-          type: "integer"
-          format: "int32"
-          default: 50
-          maximum: 200
-          minimum: 1
-      - name: "offset"
-        in: "query"
-        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
-        required: false
-        schema:
-          type: "integer"
-          format: "int32"
-          default: 0
-          maximum: 10000
-          minimum: 0
-      - name: "cursor"
-        in: "query"
-        description: "The `next_cursor` of the previous page. Valid only with the\
-          \ same filter and sort."
-        required: false
-        schema:
-          type: "string"
-      - name: "page_info"
-        in: "query"
-        description: "`full` fills `page` with the limit, offset, total and next cursor;\
-          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
-          \ over a large listing is not counted; omit it for the rows alone."
-        required: false
-        schema:
-          type: "string"
-          enum:
-          - "full"
-          - "cursor"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PageDeliveryResponse"
-        "400":
-          description: "A filter, sort, cursor or paging parameter is unknown, not\
-            \ allowed for the field, or not valid for its type."
-      x-required-permission: "customer:webhook:manage"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/tags:
-    get:
-      tags:
-      - "tag-controller"
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `customer:customer:read`."
-      operationId: "listTags"
-      parameters:
-      - name: "filter[tag][eq]"
-        in: "query"
-        description: "`tag` eq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[tag][in]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `in` of `tag`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[tag][neq]"
-        in: "query"
-        description: "`tag` neq the value."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "filter[tag][nin]"
-        in: "query"
-        description: "Comma-separated list of up to 100 values; `nin` of `tag`."
-        required: false
-        schema:
-          type: "string"
-      - name: "filter[tag][starts_with]"
-        in: "query"
-        description: "Case-insensitive prefix match on `tag`."
-        required: false
-        schema:
-          type: "string"
-          maxLength: 255
-      - name: "sort"
-        in: "query"
-        description: "Comma-separated sortable fields, each optionally prefixed with\
-          \ `-` for descending: tag. At most 4 fields; `tag` is appended to make the\
-          \ order total. Default: `tag`."
-        required: false
-        schema:
-          type: "string"
-      - name: "limit"
-        in: "query"
-        description: "Page size, 1 to 200."
-        required: false
-        schema:
-          type: "integer"
-          format: "int32"
-          default: 50
-          maximum: 200
-          minimum: 1
-      - name: "offset"
-        in: "query"
-        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
-        required: false
-        schema:
-          type: "integer"
-          format: "int32"
-          default: 0
-          maximum: 10000
-          minimum: 0
-      - name: "cursor"
-        in: "query"
-        description: "The `next_cursor` of the previous page. Valid only with the\
-          \ same filter and sort."
-        required: false
-        schema:
-          type: "string"
-      - name: "page_info"
-        in: "query"
-        description: "`full` fills `page` with the limit, offset, total and next cursor;\
-          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
-          \ over a large listing is not counted; omit it for the rows alone."
-        required: false
-        schema:
-          type: "string"
-          enum:
-          - "full"
-          - "cursor"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PageTagResponse"
-        "400":
-          description: "A filter, sort, cursor or paging parameter is unknown, not\
-            \ allowed for the field, or not valid for its type."
-      x-required-permission: "customer:customer:read"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/customers:
-    get:
-      tags:
-      - "customer-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:customer:read`."
-      operationId: "listCustomers"
-      parameters:
-      - name: "params"
-        in: "query"
-        required: true
-        schema:
-          $ref: "#/components/schemas/MultiValueMapStringString"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PageCustomerResponse"
-      x-required-permission: "customer:customer:read"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/customers/{externalRef}/profile:
-    get:
-      tags:
-      - "profile-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:customer:read`."
-      operationId: "getProfile"
+      - "Consent"
+      summary: "Record a consent change"
+      description: "Appends one consent record for one topic. Consent is append-only:\
+        \ a revocation adds a record and never rewrites the grant it revokes. An optional\
+        \ `consentRef` makes the call replayable: the same reference and body answers\
+        \ `200` with the stored record, a different body is `409`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `customer:customer:manage`."
+      operationId: "recordConsent"
       parameters:
       - name: "externalRef"
         in: "path"
         required: true
+        description: "The Tenant's reference for the customer."
         schema:
           type: "string"
-      - name: "orders"
-        in: "query"
-        required: false
-        schema:
-          type: "integer"
-          format: "int32"
-      - name: "activities"
-        in: "query"
-        required: false
-        schema:
-          type: "integer"
-          format: "int32"
+          minLength: 1
+          maxLength: 128
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsentRequest"
+        required: true
       responses:
-        "200":
-          description: "OK"
+        "201":
+          description: "The record was appended and is the topic's current state."
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/ProfileResponse"
+                $ref: "#/components/schemas/ConsentRecord"
+        "200":
+          description: "The same `consentRef` and body were seen before; the stored\
+            \ record is replayed."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ConsentRecord"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No customer with that `externalRef` in this tenant. Code `CUSTOMER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "The `consentRef` was used before with a different body (`IDEMPOTENCY_CONFLICT`),\
+            \ or the customer's personal data was erased (`CUSTOMER_ERASED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The topic is unknown or archived in this tenant (`CONSENT_TOPIC_UNKNOWN`),\
+            \ the `status` is not `GRANTED` or `REVOKED`, or `occurredAt` is more\
+            \ than five minutes in the future (`VALIDATION_FAILED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: "customer:customer:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    get:
+      tags:
+      - "Consent"
+      summary: "Read a customer's consent"
+      description: "Returns the current status of every topic the customer has a record\
+        \ for, and the customer's whole consent history, newest first.\n\nCallers:\
+        \ tenant-user, tenant-system. Requires `customer:customer:read`."
+      operationId: "listConsents"
+      parameters:
+      - name: "externalRef"
+        in: "path"
+        required: true
+        description: "The Tenant's reference for the customer."
+        schema:
+          type: "string"
+          minLength: 1
+          maxLength: 128
+      responses:
+        "200":
+          description: "The current consent state per topic and the history behind\
+            \ it."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ConsentsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No customer with that `externalRef` in this tenant. Code `CUSTOMER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
       x-required-permission: "customer:customer:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/orders/{orderRef}:
+    put:
+      tags:
+      - "Orders"
+      summary: "Record an order"
+      description: "Records one order with its lines, idempotent by `orderRef`: the\
+        \ same body replays the stored order with `200`, a different body answers\
+        \ `409`. An order is never changed afterwards; a correction is a return. The\
+        \ customer must exist, unless the body sets `createCustomer`, which upserts\
+        \ a customer with the order's `externalRef` and no other data in the same\
+        \ transaction. An order of one line or five hundred is one call; a larger\
+        \ one is a batch.\n\nCallers: tenant-user, tenant-system. Requires `customer:order:record`."
+      operationId: "putOrder"
+      parameters:
+      - name: "orderRef"
+        in: "path"
+        required: true
+        description: "The Tenant's reference for the order, unique per tenant and\
+          \ the idempotency key of the order."
+        schema:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderUpsert"
+        required: true
+      responses:
+        "201":
+          description: "The order was recorded and a `order.recorded` webhook is queued\
+            \ in the same transaction."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Order"
+        "200":
+          description: "The same `orderRef` and body were seen before; the stored\
+            \ order is replayed. Nothing is written and no webhook is queued."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "The same `orderRef` was sent before with a different body\
+            \ (`IDEMPOTENCY_CONFLICT`), or the customer named by the order is erased\
+            \ (`CUSTOMER_ERASED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The customer is unknown and `createCustomer` is not set (`CUSTOMER_UNKNOWN`);\
+            \ the order carries more than 500 lines (`LINE_LIMIT_EXCEEDED`); or a\
+            \ line has no `sku`, has no `category`, has a quantity that is not positive,\
+            \ an amount that is negative, a line number outside the order, a `currency`\
+            \ that is not an ISO 4217 code, `total` that is negative, or an `occurredAt`\
+            \ more than five minutes in the future (`VALIDATION_FAILED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: "customer:order:record"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    get:
+      tags:
+      - "Orders"
+      summary: "Read an order"
+      description: "Reads one order with its lines, the cumulative returned quantity\
+        \ and amount of each line, and every return recorded against it. The response\
+        \ carries the order's `ETag`, which is its `orderVersion`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `customer:order:read`."
+      operationId: "getOrder"
+      parameters:
+      - name: "orderRef"
+        in: "path"
+        required: true
+        description: "The Tenant's reference for the order."
+        schema:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+      responses:
+        "200":
+          description: "The order as stored."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No order with that `orderRef` in this tenant. Code `ORDER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: "customer:order:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/orders/batch:
+    post:
+      tags:
+      - "Orders"
+      summary: "Record a batch of orders"
+      description: "Applies up to 100 orders carrying at most 5,000 lines together,\
+        \ each order in its own transaction and in the order sent. The batch is `200`\
+        \ even when some orders failed: a bad order fails alone and the others are\
+        \ written, and its failure leaves no partial order behind. A retry of the\
+        \ whole batch is safe, because every order is idempotent by its `orderRef`.\n\
+        \nCallers: tenant-user, tenant-system. Requires `customer:order:record`."
+      operationId: "createOrderBatch"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        description: "The caller's own id for this call, recorded with it."
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderBatchRequest"
+        required: true
+      responses:
+        "200":
+          description: "One result per order, in the order sent, each `CREATED`, `REPLAYED`\
+            \ or `FAILED` with its code."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderBatchResponse"
+        "400":
+          description: "The envelope is malformed or has no `orders` (`INVALID_REQUEST`),\
+            \ or it holds more than 100 orders or more than 5,000 lines in all (`BATCH_LIMIT_EXCEEDED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "customer:order:record"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/orders/{orderRef}/returns/{returnRef}:
+    put:
+      tags:
+      - "Orders"
+      summary: "Record a return against an order"
+      description: "Records one return once, idempotent by `returnRef`: the same body\
+        \ replays the stored result with `200`, a different body answers `409`. The\
+        \ order's lines take the cumulative returned quantity and amount, the order's\
+        \ `orderVersion` rises by one and an `order.refunded` webhook carrying the\
+        \ order's new state and this return is queued in the same transaction. A returned\
+        \ quantity or amount may never exceed what the line sold.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `customer:order:record`."
+      operationId: "putOrderReturn"
+      parameters:
+      - name: "orderRef"
+        in: "path"
+        required: true
+        description: "The Tenant's reference for the order the return belongs to."
+        schema:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+      - name: "returnRef"
+        in: "path"
+        required: true
+        description: "The Tenant's reference for the return, unique per tenant and\
+          \ the idempotency key of the return."
+        schema:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReturnRequest"
+        required: true
+      responses:
+        "201":
+          description: "The return was recorded and the order was updated."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Order"
+        "200":
+          description: "The same `returnRef` and body were seen before; the stored\
+            \ result is replayed. The cumulative figures and the `orderVersion` do\
+            \ not change."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No order with that `orderRef` in this tenant, so the return\
+            \ has nothing to return against. Code `ORDER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "The same `returnRef` was sent before with a different body,\
+            \ or it names a different order. Code `IDEMPOTENCY_CONFLICT`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The cumulative returned quantity or amount of a line would\
+            \ exceed what was sold (`RETURN_EXCEEDS_SALE`), or a line number is not\
+            \ in the order, a quantity is not positive, an amount is negative, a line\
+            \ is missing, or `occurredAt` is more than five minutes in the future\
+            \ (`VALIDATION_FAILED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: "customer:order:record"
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
   /api/v1/customers/{externalRef}/orders:
     get:
       tags:
-      - "order-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:order:read`."
+      - "Orders"
+      summary: "List a customer's orders"
+      description: "Lists the customer's orders newest first, each with its lines\
+        \ and returns, paged with a keyset cursor.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `customer:order:read`."
       operationId: "listCustomerOrders"
       parameters:
       - name: "externalRef"
         in: "path"
         required: true
+        description: "The Tenant's reference for the customer."
         schema:
           type: "string"
+          minLength: 1
+          maxLength: 128
       - name: "limit"
         in: "query"
         required: false
+        description: "Page size, 1 to 200."
         schema:
           type: "integer"
           format: "int32"
+          default: 50
+          minimum: 1
+          maximum: 200
       - name: "cursor"
         in: "query"
         required: false
+        description: "The `next_cursor` of the previous page. Valid only for the same\
+          \ customer."
         schema:
           type: "string"
       responses:
         "200":
-          description: "OK"
+          description: "A page of the customer's orders, newest first."
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/PageOrderResponse"
+                $ref: "#/components/schemas/OrderPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No customer with that `externalRef` in this tenant. Code `CUSTOMER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
       x-required-permission: "customer:order:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/activities:
+    post:
+      tags:
+      - "Activities"
+      summary: "Record an activity"
+      description: "Appends one thing the customer did to its timeline. The `type`\
+        \ is a free string the writer chooses, so a new source posts a new type with\
+        \ no customer change. An optional `activityRef` makes the call replayable:\
+        \ the same reference and body answers `200` with the stored activity, a different\
+        \ body is `409`.\n\nCallers: tenant-user, tenant-system. Requires `customer:activity:record`."
+      operationId: "recordActivity"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        description: "The caller's own id for this call, recorded with it."
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityRequest"
+        required: true
+      responses:
+        "201":
+          description: "The activity was appended."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "200":
+          description: "The same `activityRef` and body were seen before; the stored\
+            \ activity is replayed."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Activity"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "The `activityRef` was used before with a different body (`IDEMPOTENCY_CONFLICT`),\
+            \ or the customer's personal data was erased (`CUSTOMER_ERASED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The customer is unknown (`CUSTOMER_UNKNOWN`); the `payload`\
+            \ is not a JSON object or is larger than 8 KiB (`PAYLOAD_TOO_LARGE`);\
+            \ or the `type` does not match `^[a-z][a-z0-9._-]{0,63}$`, the `source`\
+            \ is longer than 64 characters, or `occurredAt` is malformed (`VALIDATION_FAILED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: "customer:activity:record"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/activities/batch:
+    post:
+      tags:
+      - "Activities"
+      summary: "Record a batch of activities"
+      description: "Appends up to 1,000 activities, each in its own transaction and\
+        \ in the order sent. The batch is `200` even when some items failed: a malformed\
+        \ item fails alone and the others are written. A retry of the whole batch\
+        \ is safe, because an item that carries an `activityRef` is idempotent by\
+        \ it.\n\nCallers: tenant-user, tenant-system. Requires `customer:activity:record`."
+      operationId: "createActivityBatch"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        description: "The caller's own id for this call, recorded with it."
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ActivityBatchRequest"
+        required: true
+      responses:
+        "200":
+          description: "One result per item, in the order sent, each `CREATED`, `REPLAYED`\
+            \ or `FAILED` with its code."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ActivityBatchResponse"
+        "400":
+          description: "The envelope is malformed or has no `items` (`INVALID_REQUEST`),\
+            \ or it holds more than 1,000 items (`BATCH_LIMIT_EXCEEDED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "customer:activity:record"
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
   /api/v1/customers/{externalRef}/activities:
     get:
       tags:
-      - "activity-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:activity:read`."
+      - "Activities"
+      summary: "List a customer's activities"
+      description: "Lists the customer's activities newest first, paged with a keyset\
+        \ cursor. `type`, `from` and `to` narrow the timeline.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `customer:activity:read`."
       operationId: "listCustomerActivities"
       parameters:
       - name: "externalRef"
         in: "path"
         required: true
+        description: "The Tenant's reference for the customer."
         schema:
           type: "string"
+          minLength: 1
+          maxLength: 128
       - name: "type"
         in: "query"
         required: false
+        description: "Return only activities of this type, exactly as the writer sent\
+          \ it."
         schema:
           type: "string"
+          maxLength: 64
       - name: "from"
         in: "query"
         required: false
+        description: "The activity happened at or after this instant."
         schema:
           type: "string"
           format: "date-time"
       - name: "to"
         in: "query"
         required: false
+        description: "The activity happened at or before this instant."
         schema:
           type: "string"
           format: "date-time"
       - name: "limit"
         in: "query"
         required: false
+        description: "Page size, 1 to 200."
         schema:
           type: "integer"
           format: "int32"
+          default: 50
+          minimum: 1
+          maximum: 200
       - name: "cursor"
         in: "query"
         required: false
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter."
         schema:
           type: "string"
       responses:
         "200":
-          description: "OK"
+          description: "A page of the customer's activities, newest first."
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/PageActivityResponse"
+                $ref: "#/components/schemas/ActivityPage"
+        "400":
+          description: "A filter is unknown or a value is not valid for its type (`INVALID_REQUEST`),\
+            \ or the `cursor` is malformed or belongs to a different filter (`VALIDATION_FAILED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No customer with that `externalRef` in this tenant. Code `CUSTOMER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
       x-required-permission: "customer:activity:read"
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-  /api/v1/customers/export:
+  /api/v1/webhook-endpoints:
     get:
       tags:
-      - "export-controller"
-      description: "Callers: tenant-user, tenant-system. Requires `customer:customer:export`."
-      operationId: "exportCustomers"
+      - "Webhook endpoints"
+      summary: "List webhook endpoints"
+      operationId: "listWebhookEndpoints"
       parameters:
-      - name: "params"
+      - name: "status"
         in: "query"
-        required: true
+        required: false
+        description: "Return only endpoints in this state."
         schema:
-          $ref: "#/components/schemas/MultiValueMapStringString"
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "DISABLED"
+      - name: "limit"
+        in: "query"
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: "cursor"
+        in: "query"
+        required: false
+        description: "The `next_cursor` of the previous page."
+        schema:
+          type: "string"
       responses:
         "200":
-          description: "OK"
-      x-required-permission: "customer:customer:export"
+          description: "A page of the tenant's webhook endpoints."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpointPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "customer:webhook:manage"
+      description: "Callers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    post:
+      tags:
+      - "Webhook endpoints"
+      summary: "Create a webhook endpoint"
+      description: "Registers an endpoint that subscribes to a subset of customer's\
+        \ four event types. The signing secret is returned once, in this response.\
+        \ Deliveries are signed with the `Customer-*` headers and retried on the shared\
+        \ schedule until they succeed or go `DEAD`.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `customer:webhook:manage`."
+      operationId: "createWebhookEndpoint"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        description: "The caller's own id for this call, recorded with it."
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEndpointRequest"
+        required: true
+      responses:
+        "201":
+          description: "The endpoint with its signing secret."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpointWithSecret"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          description: "The `url` is not an https URL that resolves to a public address,\
+            \ `eventTypes` is empty, or it contains a type that is not one of customer's\
+            \ four. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: "customer:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/webhook-endpoints/{id}:
+    get:
+      tags:
+      - "Webhook endpoints"
+      summary: "Read a webhook endpoint"
+      description: "The response carries the endpoint's `ETag`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `customer:webhook:manage`."
+      operationId: "getWebhookEndpoint"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "The endpoint."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpoint"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No endpoint with that id in this tenant. Code `WEBHOOK_ENDPOINT_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: "customer:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    put:
+      tags:
+      - "Webhook endpoints"
+      summary: "Update a webhook endpoint"
+      description: "Changes the endpoint's url, description, subscribed event types\
+        \ or status. Setting `status` to `DISABLED` pauses delivery without losing\
+        \ queued events. The response carries the endpoint's `ETag`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `customer:webhook:manage`."
+      operationId: "updateWebhookEndpoint"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        description: "Required by this update; the endpoint answers `428` without\
+          \ it and `412` when it does not match the current `ETag`."
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEndpointRequest"
+        required: true
+      responses:
+        "200":
+          description: "The endpoint as stored."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpoint"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No endpoint with that id in this tenant. Code `WEBHOOK_ENDPOINT_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: "The `url` is not an https URL that resolves to a public address,\
+            \ `eventTypes` is empty, or it contains a type that is not one of customer's\
+            \ four. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: "customer:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    delete:
+      tags:
+      - "Webhook endpoints"
+      summary: "Delete a webhook endpoint"
+      description: "Removes the endpoint and stops future deliveries to it. Its delivery\
+        \ history stays readable.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `customer:webhook:manage`."
+      operationId: "deleteWebhookEndpoint"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        description: "Required by this delete; the endpoint answers `428` without\
+          \ it and `412` when it does not match the current `ETag`."
+        schema:
+          type: "string"
+      responses:
+        "204":
+          description: "The endpoint was deleted."
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No endpoint with that id in this tenant. Code `WEBHOOK_ENDPOINT_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: "customer:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/webhook-endpoints/{id}/rotate-secret:
+    post:
+      tags:
+      - "Webhook endpoints"
+      summary: "Rotate a webhook endpoint's signing secret"
+      description: "Replaces the endpoint's signing secret and returns the new one\
+        \ once. A receiver may keep the previous secret during a rotation and select\
+        \ by the key id a delivery carries.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `customer:webhook:manage`."
+      operationId: "rotateWebhookEndpointSecret"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "The endpoint with its new signing secret."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpointWithSecret"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No endpoint with that id in this tenant. Code `WEBHOOK_ENDPOINT_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: "customer:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/webhook-deliveries:
+    get:
+      tags:
+      - "Webhook deliveries"
+      summary: "List webhook deliveries"
+      description: "Lists the attempts customer made to report an event to an endpoint,\
+        \ newest first. A delivery that exhausted its attempts is `DEAD` and stays\
+        \ visible here so it can be retried.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `customer:webhook:manage`."
+      operationId: "listWebhookDeliveries"
+      parameters:
+      - name: "endpointId"
+        in: "query"
+        required: false
+        description: "Return only deliveries of this endpoint."
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "event_type"
+        in: "query"
+        required: false
+        description: "Return only deliveries of this event type."
+        schema:
+          $ref: "#/components/schemas/EventType"
+      - name: "status"
+        in: "query"
+        required: false
+        description: "Return only deliveries in this state."
+        schema:
+          type: "string"
+          enum:
+          - "PENDING"
+          - "IN_PROGRESS"
+          - "SUCCEEDED"
+          - "DEAD"
+      - name: "limit"
+        in: "query"
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: "cursor"
+        in: "query"
+        required: false
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter."
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "A page of webhook deliveries."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookDeliveryPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "customer:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/webhook-deliveries/{id}/retry:
+    post:
+      tags:
+      - "Webhook deliveries"
+      summary: "Retry a webhook delivery"
+      description: "Queues a fresh delivery of the same stored event body to the same\
+        \ endpoint, with a new attempt budget, and answers `202`: sending happens\
+        \ asynchronously. The original keeps its history, so a receiver sees exactly\
+        \ what the first attempt carried. Only a finished delivery can be retried;\
+        \ one still being attempted is already on its way.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `customer:webhook:manage`."
+      operationId: "retryWebhookDelivery"
+      parameters:
+      - name: "id"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "202":
+          description: "The new delivery, queued for its first attempt."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookDelivery"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No delivery with that id in this tenant. Code `WEBHOOK_DELIVERY_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "The delivery is still being attempted, so it cannot be retried.\
+            \ Code `DELIVERY_IN_PROGRESS`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: "customer:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
 components:
+  responses:
+    BadRequest:
+      description: "The request is malformed: a body or query parameter is missing,\
+        \ unknown or not valid for its type, or a header is empty. Code `INVALID_REQUEST`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthenticated:
+      description: "The caller presented no valid suite token for this tenant. Code\
+        \ `UNAUTHENTICATED`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: "The token does not carry this operation's `x-required-permission`\
+        \ code, or the tenant is not entitled to customer. Code `FORBIDDEN`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    PreconditionFailed:
+      description: "The `If-Match` tag does not match the resource's current version.\
+        \ The response carries the current `ETag`; fetch the resource again and retry.\
+        \ Code `PRECONDITION_FAILED`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    PreconditionRequired:
+      description: "This update requires an `If-Match` header. Send the `ETag` last\
+        \ read. Code `IF_MATCH_REQUIRED`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
   schemas:
-    UpdateEndpointRequest:
+    Customer:
       type: "object"
-      properties:
-        url:
-          type: "string"
-        description:
-          type: "string"
-        eventTypes:
-          type: "array"
-          items:
-            type: "string"
-        status:
-          type: "string"
-    EndpointResponse:
-      type: "object"
+      description: "One of the Tenant's customers: the `externalRef` the Tenant chose\
+        \ plus the attributes the Tenant sent. customer generates its own id and never\
+        \ matches a customer by phone or email."
       properties:
         id:
           type: "string"
-        url:
+          format: "uuid"
+          description: "customer's own opaque id for the customer."
+        externalRef:
           type: "string"
-        description:
+          minLength: 1
+          maxLength: 128
+          description: "The Tenant's reference for the customer, unique per tenant\
+            \ and immutable. An erased customer keeps the reference `erased:<id>`."
+        displayName:
           type: "string"
-        eventTypes:
+          maxLength: 200
+        phone:
+          type: "string"
+          maxLength: 32
+          description: "Stored as sent; the digits are derived from it for search."
+        email:
+          type: "string"
+          maxLength: 254
+          description: "Stored lower-cased and loosely validated."
+        customFields:
+          type: "object"
+          additionalProperties: {}
+          description: "The customer's field values, keyed by custom-field key."
+        tags:
           type: "array"
           items:
             type: "string"
+        consents:
+          type: "array"
+          description: "The customer's current consent state, one entry per topic\
+            \ it has a record for."
+          items:
+            $ref: "#/components/schemas/ConsentRecord"
         status:
           type: "string"
+          description: "`ERASED` once the customer's personal data was erased: the\
+            \ row stays as an anonymous marker, its orders and consent rows stay with\
+            \ it, and its reference is `erased:<id>`."
+          enum:
+          - "ACTIVE"
+          - "ERASED"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+    CustomerUpsert:
+      type: "object"
+      description: "The representation `PUT /customers/{externalRef}` stores. The\
+        \ path names the customer; `customFields` and `tags` replace the whole set."
+      properties:
+        externalRef:
+          type: "string"
+          description: "Optional. When sent it must equal the path's `externalRef`;\
+            \ a different value is `409 IDEMPOTENCY_CONFLICT`, because the reference\
+            \ is immutable."
+        displayName:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        phone:
+          type: "string"
+          maxLength: 32
+        email:
+          type: "string"
+          maxLength: 254
+        customFields:
+          type: "object"
+          additionalProperties: {}
+          description: "Field values keyed by custom-field key. A key must be an active\
+            \ definition and its value must match the definition's type; a null clears\
+            \ the value."
+        tags:
+          type: "array"
+          maxItems: 50
+          items:
+            type: "string"
+    CustomerPatch:
+      type: "object"
+      description: "The properties to change. An omitted property is left as it is."
+      properties:
+        displayName:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        phone:
+          type: "string"
+          maxLength: 32
+        email:
+          type: "string"
+          maxLength: 254
+        customFields:
+          type: "object"
+          additionalProperties: {}
+          description: "Field values to merge into the stored set, keyed by custom-field\
+            \ key; a null clears that key."
+        addTags:
+          type: "array"
+          description: "Tags to add to the customer's set. Adding a tag it already\
+            \ carries changes nothing."
+          items:
+            type: "string"
+        removeTags:
+          type: "array"
+          description: "Tags to remove from the customer's set. Removing a tag it\
+            \ does not carry changes nothing."
+          items:
+            type: "string"
+    BatchCustomersRequest:
+      type: "object"
+      required:
+      - "items"
+      properties:
+        items:
+          type: "array"
+          minItems: 1
+          maxItems: 1000
+          description: "Up to 1,000 customers, each applied in its own transaction\
+            \ and in the order sent. Two items with the same `externalRef` apply in\
+            \ order."
+          items:
+            $ref: "#/components/schemas/CustomerUpsert"
+    BatchCustomersResponse:
+      type: "object"
+      properties:
+        results:
+          type: "array"
+          description: "One result per item, in the order the items were sent. The\
+            \ response is `200` even when some items failed."
+          items:
+            $ref: "#/components/schemas/BatchItemResult"
+    BatchItemResult:
+      type: "object"
+      properties:
+        index:
+          type: "integer"
+          format: "int32"
+          description: "The item's position in the request, starting at 0."
+        ref:
+          type: "string"
+          description: "The item's natural key: `externalRef`, `orderRef` or `activityRef`.\
+            \ Null when the item carried no reference."
+        outcome:
+          type: "string"
+          description: "`CREATED`, `UPDATED` or `UNCHANGED` for a customer; `CREATED`\
+            \ or `REPLAYED` for an order or an activity; `FAILED` with a `code` in\
+            \ every case."
+          enum:
+          - "CREATED"
+          - "UPDATED"
+          - "UNCHANGED"
+          - "REPLAYED"
+          - "FAILED"
+        code:
+          type: "string"
+          description: "The concrete failure code when `outcome` is `FAILED`, for\
+            \ example `VALIDATION_FAILED`, `CUSTOMER_ERASED`, `CUSTOMER_UNKNOWN` or\
+            \ `IDEMPOTENCY_CONFLICT`. Absent otherwise."
+    CustomerPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Customer"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    CustomField:
+      type: "object"
+      description: "A Tenant-defined customer attribute. Its `key` and `type` are\
+        \ immutable: a type change is a new field, never an edit."
+      properties:
+        key:
+          type: "string"
+          description: "The definition's key, `^[a-z][a-z0-9_]{0,39}$`, immutable\
+            \ and unique per tenant."
+        label:
+          type: "string"
+          description: "What the tenant calls the field."
+        type:
+          type: "string"
+          enum:
+          - "TEXT"
+          - "NUMBER"
+          - "DATE"
+          - "BOOLEAN"
+          - "CHOICE"
+        choices:
+          type: "array"
+          description: "The values a `CHOICE` accepts, 1 to 50 of them. Empty for\
+            \ every other type."
+          items:
+            type: "string"
+        archived:
+          type: "boolean"
+          description: "An archived definition is still readable and still appears\
+            \ in a profile, but no value may be written for it."
+        createdAt:
+          type: "string"
+          format: "date-time"
+    CustomFieldRequest:
+      type: "object"
+      required:
+      - "key"
+      - "label"
+      - "type"
+      properties:
+        key:
+          type: "string"
+          description: "`^[a-z][a-z0-9_]{0,39}$`; the key is immutable once the definition\
+            \ exists."
+        label:
+          type: "string"
+        type:
+          type: "string"
+          enum:
+          - "TEXT"
+          - "NUMBER"
+          - "DATE"
+          - "BOOLEAN"
+          - "CHOICE"
+        choices:
+          type: "array"
+          description: "The values of a `CHOICE`, 1 to 50 of them, at least one. Omitted\
+            \ or empty for every other type."
+          items:
+            type: "string"
+    CustomFieldPatch:
+      type: "object"
+      description: "The properties to change on a definition. The `key` and the `type`\
+        \ cannot be changed here."
+      properties:
+        label:
+          type: "string"
+        choices:
+          type: "array"
+          description: "Choices to add to a `CHOICE` definition. An existing choice\
+            \ cannot be removed and a `CHOICE` cannot grow past 50 values."
+          items:
+            type: "string"
+        archived:
+          type: "boolean"
+          description: "Archive the definition, or unarchive it. Archiving keeps the\
+            \ values already stored."
+    CustomFieldPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CustomField"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    Tag:
+      type: "object"
+      description: "A tag the tenant's customers carry."
+      properties:
+        tag:
+          type: "string"
+          description: "Lower-case, `^[a-z0-9][a-z0-9 _:-]{0,49}$`."
+        customerCount:
+          type: "integer"
+          format: "int64"
+          description: "How many of the tenant's customers carry the tag."
+    TagPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Tag"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    ConsentTopic:
+      type: "object"
+      description: "A purpose the tenant's customers consent to. Topics are defined\
+        \ per tenant, like custom fields."
+      properties:
+        key:
+          type: "string"
+          description: "The topic's key, `^[a-z][a-z0-9_]{0,39}$`, immutable and unique\
+            \ per tenant."
+        label:
+          type: "string"
+        archived:
+          type: "boolean"
+          description: "An archived topic keeps its recorded history and accepts no\
+            \ new consent record."
+    ConsentTopicRequest:
+      type: "object"
+      required:
+      - "key"
+      - "label"
+      properties:
+        key:
+          type: "string"
+          description: "`^[a-z][a-z0-9_]{0,39}$`; the key is immutable once the topic\
+            \ exists."
+        label:
+          type: "string"
+    ConsentTopicPatch:
+      type: "object"
+      properties:
+        label:
+          type: "string"
+        archived:
+          type: "boolean"
+    ConsentTopicPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ConsentTopic"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    ConsentRecord:
+      type: "object"
+      description: "One consent record. Consent is append-only: a revocation adds\
+        \ a record and leaves the grant it revokes in the history."
+      properties:
+        topicKey:
+          type: "string"
+        status:
+          type: "string"
+          enum:
+          - "GRANTED"
+          - "REVOKED"
+        occurredAt:
+          type: "string"
+          format: "date-time"
+          description: "When the consent changed, at most five minutes in the future."
+        recordedAt:
+          type: "string"
+          format: "date-time"
+          description: "When customer recorded the change."
+        source:
+          type: "string"
+          description: "Where the consent was collected; free text the tenant sends.\
+            \ Cleared when the customer is erased."
+        evidenceRef:
+          type: "string"
+          description: "The tenant's reference to the evidence of the consent; free\
+            \ text. Cleared when the customer is erased."
+        consentRef:
+          type: "string"
+          description: "The caller's own reference for this record, when it sent one:\
+            \ the idempotency key of the call."
+    ConsentRequest:
+      type: "object"
+      required:
+      - "topicKey"
+      - "status"
+      - "occurredAt"
+      properties:
+        topicKey:
+          type: "string"
+        status:
+          type: "string"
+          enum:
+          - "GRANTED"
+          - "REVOKED"
+        occurredAt:
+          type: "string"
+          format: "date-time"
+          description: "When the consent changed. It may not be more than five minutes\
+            \ in the future."
+        source:
+          type: "string"
+        evidenceRef:
+          type: "string"
+        consentRef:
+          type: "string"
+          description: "Optional. The same reference and body replays the stored record\
+            \ with `200`; a different body is `409`."
+    ConsentsResponse:
+      type: "object"
+      properties:
+        current:
+          type: "array"
+          description: "The current status of every topic the customer has a record\
+            \ for: the latest record by `occurredAt`, then by id."
+          items:
+            $ref: "#/components/schemas/ConsentRecord"
+        history:
+          type: "array"
+          description: "Every consent record of the customer, newest first."
+          items:
+            $ref: "#/components/schemas/ConsentRecord"
+    OrderLine:
+      type: "object"
+      description: "One sold item with the cumulative returned figures every order\
+        \ webhook carries."
+      properties:
+        lineNo:
+          type: "integer"
+          format: "int32"
+          description: "The line's number in the order, starting at 1."
+        sku:
+          type: "string"
+          maxLength: 100
+        name:
+          type: "string"
+          description: "The item's name as the Tenant's system sent it."
+        category:
+          type: "string"
+          maxLength: 100
+          description: "The Tenant's category for the line."
+        quantity:
+          type: "number"
+          description: "The quantity sold, with up to three fraction digits."
+        amount:
+          type: "integer"
+          format: "int64"
+          description: "The line's net amount in minor units of the order's `currency`,\
+            \ net of discount."
+        earnEligible:
+          type: "boolean"
+          description: "Whether the line counts towards a promotion; false for a line\
+            \ the Tenant or a rule excludes."
+        returnedQuantity:
+          type: "number"
+          description: "The cumulative quantity returned across every return of this\
+            \ order, with up to three fraction digits. Never exceeds `quantity`."
+        returnedAmount:
+          type: "integer"
+          format: "int64"
+          description: "The cumulative amount returned across every return of this\
+            \ order, in minor units of the order's `currency`. Never exceeds `amount`."
+    OrderUpsert:
+      type: "object"
+      description: "One order as the Tenant's system records it. An order is immutable\
+        \ once recorded: a change of what was bought is a return."
+      required:
+      - "externalRef"
+      - "currency"
+      - "occurredAt"
+      - "storeCode"
+      - "channel"
+      - "total"
+      - "lines"
+      properties:
+        externalRef:
+          type: "string"
+          minLength: 1
+          maxLength: 128
+          description: "The Tenant's reference for the customer the order belongs\
+            \ to."
+        currency:
+          type: "string"
+          pattern: "^[A-Z]{3}$"
+          description: "The ISO 4217 code every amount in the order is denominated\
+            \ in."
+        occurredAt:
+          type: "string"
+          format: "date-time"
+          description: "When the order was placed, at most five minutes in the future.\
+            \ A historic order has no lower bound."
+        storeCode:
+          type: "string"
+          maxLength: 100
+        channel:
+          type: "string"
+          maxLength: 100
+          description: "The Tenant's name for the channel the order came through,\
+            \ for example `pos` or `web`."
+        total:
+          type: "integer"
+          format: "int64"
+          description: "The order total in minor units of `currency`. Informational:\
+            \ tax, delivery and order-level discounts make it differ from the sum\
+            \ of the lines, and it is never an earn base."
+        createCustomer:
+          type: "boolean"
+          default: false
+          description: "Upsert a customer with the order's `externalRef` and no other\
+            \ data, in the same transaction, instead of refusing an unknown customer."
+        lines:
+          type: "array"
+          minItems: 1
+          maxItems: 500
+          description: "The order's lines, numbered by their position starting at\
+            \ 1."
+          items:
+            $ref: "#/components/schemas/OrderLineUpsert"
+    OrderLineUpsert:
+      type: "object"
+      required:
+      - "sku"
+      - "category"
+      - "quantity"
+      - "amount"
+      properties:
+        sku:
+          type: "string"
+          maxLength: 100
+        name:
+          type: "string"
+        category:
+          type: "string"
+          maxLength: 100
+        quantity:
+          type: "number"
+          exclusiveMinimum: 0
+          description: "The quantity sold, positive, with up to three fraction digits."
+        amount:
+          type: "integer"
+          format: "int64"
+          description: "The line's net amount in minor units of the order's `currency`,\
+            \ net of discount, never negative."
+        earnEligible:
+          type: "boolean"
+          default: true
+          description: "Whether the line counts towards a promotion. Defaults to true."
+    OrderBatchRequest:
+      type: "object"
+      required:
+      - "orders"
+      properties:
+        orders:
+          type: "array"
+          minItems: 1
+          maxItems: 100
+          description: "Up to 100 orders carrying at most 5,000 lines together, each\
+            \ applied in its own transaction and in the order sent."
+          items:
+            $ref: "#/components/schemas/OrderUpsert"
+    OrderBatchResponse:
+      type: "object"
+      properties:
+        results:
+          type: "array"
+          description: "One result per order, in the order the orders were sent. The\
+            \ response is `200` even when some orders failed."
+          items:
+            $ref: "#/components/schemas/BatchItemResult"
+    ReturnLine:
+      type: "object"
+      required:
+      - "lineNo"
+      - "quantity"
+      - "amount"
+      properties:
+        lineNo:
+          type: "integer"
+          format: "int32"
+          description: "The number of the order line this return names."
+        quantity:
+          type: "number"
+          exclusiveMinimum: 0
+          description: "The quantity returned in this return, positive, with up to\
+            \ three fraction digits."
+        amount:
+          type: "integer"
+          format: "int64"
+          description: "The amount returned in this return, in minor units of the\
+            \ order's `currency`, never negative."
+    ReturnRequest:
+      type: "object"
+      required:
+      - "occurredAt"
+      - "lines"
+      properties:
+        occurredAt:
+          type: "string"
+          format: "date-time"
+          description: "When the return was made, at most five minutes in the future."
+        lines:
+          type: "array"
+          minItems: 1
+          maxItems: 500
+          description: "The returned lines of this return, not the cumulative state."
+          items:
+            $ref: "#/components/schemas/ReturnLine"
+    Return:
+      type: "object"
+      description: "One return recorded against an order."
+      properties:
+        returnRef:
+          type: "string"
+          description: "The Tenant's reference for the return, unique per tenant and\
+            \ the idempotency key of the return."
+        occurredAt:
+          type: "string"
+          format: "date-time"
+        lines:
+          type: "array"
+          description: "The returned lines of this return, not the cumulative state."
+          items:
+            $ref: "#/components/schemas/ReturnLine"
+    Order:
+      type: "object"
+      description: "One recorded order: its lines with their cumulative returned figures,\
+        \ its `orderVersion` and every return recorded against it."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "customer's own opaque id for the order."
+        orderRef:
+          type: "string"
+          description: "The Tenant's reference for the order, unique per tenant."
+        customerId:
+          type: "string"
+          format: "uuid"
+          description: "customer's own id for the customer the order belongs to."
+        externalRef:
+          type: "string"
+          description: "The Tenant's reference for the customer, so a caller can match\
+            \ the order without a second read."
+        currency:
+          type: "string"
+          pattern: "^[A-Z]{3}$"
+        total:
+          type: "integer"
+          format: "int64"
+          description: "The order total in minor units of `currency`."
+        occurredAt:
+          type: "string"
+          format: "date-time"
+        storeCode:
+          type: "string"
+        channel:
+          type: "string"
+        status:
+          type: "string"
+          enum:
+          - "RECORDED"
+          - "PARTIALLY_RETURNED"
+          - "RETURNED"
+        orderVersion:
+          type: "integer"
+          format: "int64"
+          description: "The order's version: 1 when it was recorded, one more for\
+            \ every return. Monotonic per order, so a receiver that keeps the order's\
+            \ state can drop a delivery whose `orderVersion` is not newer. It is also\
+            \ the `ETag`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+        lines:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/OrderLine"
+        returns:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Return"
+    OrderPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Order"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    Activity:
+      type: "object"
+      description: "One thing the customer did, as the writer reported it."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "customer's own opaque id for the activity."
+        customerId:
+          type: "string"
+          format: "uuid"
+        externalRef:
+          type: "string"
+        type:
+          type: "string"
+          description: "A free string the writer chooses, `^[a-z][a-z0-9._-]{0,63}$`,\
+            \ so a new source posts a new type with no customer change."
+        occurredAt:
+          type: "string"
+          format: "date-time"
+        source:
+          type: "string"
+          maxLength: 64
+        payload:
+          type: "object"
+          additionalProperties: {}
+          description: "The writer's own payload, up to 8 KiB. Cleared when the customer\
+            \ is erased."
+        activityRef:
+          type: "string"
+          description: "The caller's own reference for the activity, when it sent\
+            \ one: the idempotency key of the call. Cleared when the customer is erased."
+        createdAt:
+          type: "string"
+          format: "date-time"
+    ActivityRequest:
+      type: "object"
+      required:
+      - "externalRef"
+      - "type"
+      - "occurredAt"
+      properties:
+        externalRef:
+          type: "string"
+          minLength: 1
+          maxLength: 128
+          description: "The Tenant's reference for the customer the activity belongs\
+            \ to. The customer must exist."
+        type:
+          type: "string"
+          description: "`^[a-z][a-z0-9._-]{0,63}$`."
+        occurredAt:
+          type: "string"
+          format: "date-time"
+          description: "When it happened, at most five minutes in the future."
+        source:
+          type: "string"
+          maxLength: 64
+        payload:
+          type: "object"
+          additionalProperties: {}
+          description: "A JSON object of at most 8 KiB. A larger one is `422 PAYLOAD_TOO_LARGE`."
+        activityRef:
+          type: "string"
+          description: "Optional. The same reference and body replays the stored activity\
+            \ with `200`; a different body is `409`."
+    ActivityBatchRequest:
+      type: "object"
+      required:
+      - "items"
+      properties:
+        items:
+          type: "array"
+          minItems: 1
+          maxItems: 1000
+          description: "Up to 1,000 activities, each applied in its own transaction\
+            \ and in the order sent."
+          items:
+            $ref: "#/components/schemas/ActivityRequest"
+    ActivityBatchResponse:
+      type: "object"
+      properties:
+        results:
+          type: "array"
+          description: "One result per item, in the order the items were sent. The\
+            \ response is `200` even when some items failed."
+          items:
+            $ref: "#/components/schemas/BatchItemResult"
+    ActivityPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Activity"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    Profile:
+      type: "object"
+      description: "One customer read back as one document. Every slice is bounded\
+        \ by its request parameter and no aggregate is computed."
+      properties:
+        customer:
+          $ref: "#/components/schemas/Customer"
+        customFields:
+          type: "object"
+          additionalProperties: {}
+          description: "The customer's field values, keyed by custom-field key."
+        tags:
+          type: "array"
+          items:
+            type: "string"
+        consents:
+          type: "array"
+          description: "The current status of every topic the customer has a record\
+            \ for."
+          items:
+            $ref: "#/components/schemas/ConsentRecord"
+        orders:
+          type: "array"
+          description: "The customer's latest orders, newest first, each with its\
+            \ lines and returns."
+          items:
+            $ref: "#/components/schemas/Order"
+        activities:
+          type: "array"
+          description: "The customer's latest activities, newest first."
+          items:
+            $ref: "#/components/schemas/Activity"
+    ErasureResponse:
+      type: "object"
+      description: "The result of an erasure request. The erasure record keeps a hash\
+        \ of the reference, never the reference itself."
+      properties:
+        customerId:
+          type: "string"
+          format: "uuid"
+          description: "customer's own opaque id for the customer that was erased.\
+            \ The `customer.erased` webhook carries the same id and no personal data."
+        erasedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the customer's personal data was erased."
+        outcome:
+          type: "string"
+          description: "`ERASED` for the call that erased the data, `REPLAYED` for\
+            \ a retry of the same reference."
+          enum:
+          - "ERASED"
+          - "REPLAYED"
+    WebhookEndpoint:
+      type: "object"
+      description: "A destination customer sends signed HTTP webhooks to. It subscribes\
+        \ to a subset of customer's four event types."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        url:
+          type: "string"
+          description: "An https URL that resolves to a public address."
+        description:
+          type: "string"
+          maxLength: 255
+        eventTypes:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/EventType"
+        status:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "DISABLED"
         keyId:
           type: "string"
+          description: "Identifies which signing secret signed a delivery."
         createdAt:
           type: "string"
           format: "date-time"
@@ -2355,234 +2893,69 @@ components:
         secretRotatedAt:
           type: "string"
           format: "date-time"
-    OrderLineRequest:
+    WebhookEndpointRequest:
       type: "object"
-      properties:
-        sku:
-          type: "string"
-        name:
-          type: "string"
-        category:
-          type: "string"
-        quantity:
-          type: "number"
-        amount:
-          type: "integer"
-          format: "int64"
-        earnEligible:
-          type: "boolean"
-    OrderUpsertRequest:
-      type: "object"
-      properties:
-        orderRef:
-          type: "string"
-        externalRef:
-          type: "string"
-        currency:
-          type: "string"
-        occurredAt:
-          type: "string"
-          format: "date-time"
-        storeCode:
-          type: "string"
-        channel:
-          type: "string"
-        total:
-          type: "integer"
-          format: "int64"
-        createCustomer:
-          type: "boolean"
-        lines:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/OrderLineRequest"
-    OrderLineResponse:
-      type: "object"
-      properties:
-        lineNo:
-          type: "integer"
-          format: "int32"
-        sku:
-          type: "string"
-        name:
-          type: "string"
-        category:
-          type: "string"
-        quantity:
-          type: "number"
-        amount:
-          type: "integer"
-          format: "int64"
-        earnEligible:
-          type: "boolean"
-        returnedQuantity:
-          type: "number"
-        returnedAmount:
-          type: "integer"
-          format: "int64"
-    OrderResponse:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        orderRef:
-          type: "string"
-        customerId:
-          type: "string"
-        externalRef:
-          type: "string"
-        currency:
-          type: "string"
-        total:
-          type: "integer"
-          format: "int64"
-        occurredAt:
-          type: "string"
-          format: "date-time"
-        storeCode:
-          type: "string"
-        channel:
-          type: "string"
-        status:
-          type: "string"
-        orderVersion:
-          type: "integer"
-          format: "int64"
-        createdAt:
-          type: "string"
-          format: "date-time"
-        lines:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/OrderLineResponse"
-        returns:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/ReturnResponse"
-    ReturnLineResponse:
-      type: "object"
-      properties:
-        lineNo:
-          type: "integer"
-          format: "int32"
-        quantity:
-          type: "number"
-        amount:
-          type: "integer"
-          format: "int64"
-    ReturnResponse:
-      type: "object"
-      properties:
-        returnRef:
-          type: "string"
-        occurredAt:
-          type: "string"
-          format: "date-time"
-        lines:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/ReturnLineResponse"
-    ReturnLineRequest:
-      type: "object"
-      properties:
-        lineNo:
-          type: "integer"
-          format: "int32"
-        quantity:
-          type: "number"
-        amount:
-          type: "integer"
-          format: "int64"
-    ReturnRequest:
-      type: "object"
-      properties:
-        occurredAt:
-          type: "string"
-          format: "date-time"
-        lines:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/ReturnLineRequest"
-    CustomerUpsertRequest:
-      type: "object"
-      properties:
-        externalRef:
-          type: "string"
-        displayName:
-          type: "string"
-        phone:
-          type: "string"
-        email:
-          type: "string"
-        customFields:
-          type: "object"
-          additionalProperties: {}
-        tags:
-          type: "array"
-          items:
-            type: "string"
-    CustomerResponse:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        externalRef:
-          type: "string"
-        displayName:
-          type: "string"
-        phone:
-          type: "string"
-        email:
-          type: "string"
-        customFields:
-          type: "object"
-          additionalProperties: {}
-        tags:
-          type: "array"
-          items:
-            type: "string"
-        status:
-          type: "string"
-        createdAt:
-          type: "string"
-          format: "date-time"
-        updatedAt:
-          type: "string"
-          format: "date-time"
-    CreateEndpointRequest:
-      type: "object"
+      required:
+      - "url"
+      - "eventTypes"
       properties:
         url:
           type: "string"
+          description: "An https URL that resolves to a public address."
         description:
           type: "string"
+          maxLength: 255
         eventTypes:
           type: "array"
+          minItems: 1
+          description: "The customer event types this endpoint subscribes to, a subset\
+            \ of the four."
           items:
-            type: "string"
-    EndpointWithSecretResponse:
+            $ref: "#/components/schemas/EventType"
+        status:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "DISABLED"
+    WebhookEndpointWithSecret:
       type: "object"
       properties:
         endpoint:
-          $ref: "#/components/schemas/EndpointResponse"
+          $ref: "#/components/schemas/WebhookEndpoint"
         signingSecret:
           type: "string"
-    DeliveryResponse:
+          description: "Returned only when the endpoint is created or its secret is\
+            \ rotated. The HMAC key is the whole secret string."
+    WebhookDelivery:
       type: "object"
       properties:
         id:
           type: "string"
+          format: "uuid"
         endpointId:
           type: "string"
+          format: "uuid"
         eventId:
           type: "string"
+          format: "uuid"
+          description: "The event's deduplication key, carried as `Customer-Event-Id`\
+            \ on the delivery."
         eventType:
-          type: "string"
+          $ref: "#/components/schemas/EventType"
         status:
           type: "string"
+          description: "`PENDING` waits for its next attempt, `IN_PROGRESS` is being\
+            \ sent, `SUCCEEDED` is a 2xx answer and `DEAD` exhausted its attempts."
+          enum:
+          - "PENDING"
+          - "IN_PROGRESS"
+          - "SUCCEEDED"
+          - "DEAD"
         attempts:
           type: "integer"
           format: "int32"
+          description: "How many attempts were made, carried as `Customer-Attempt`\
+            \ on each one."
         nextAttemptAt:
           type: "string"
           format: "date-time"
@@ -2597,406 +2970,75 @@ components:
         completedAt:
           type: "string"
           format: "date-time"
-    OrderBatchRequest:
-      type: "object"
-      properties:
-        orders:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/OrderUpsertRequest"
-    BatchItemResult:
-      type: "object"
-      properties:
-        index:
-          type: "integer"
-          format: "int32"
-        ref:
-          type: "string"
-        outcome:
-          type: "string"
-        code:
-          type: "string"
-    OrderBatchResponse:
-      type: "object"
-      properties:
-        results:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/BatchItemResult"
-    ErasureResponse:
-      type: "object"
-      properties:
-        customerId:
-          type: "string"
-        erasedAt:
-          type: "string"
-          format: "date-time"
-        outcome:
-          type: "string"
-    ConsentRequest:
-      type: "object"
-      properties:
-        topicKey:
-          type: "string"
-        status:
-          type: "string"
-        occurredAt:
-          type: "string"
-          format: "date-time"
-        source:
-          type: "string"
-        evidenceRef:
-          type: "string"
-        consentRef:
-          type: "string"
-    ConsentRecordResponse:
-      type: "object"
-      properties:
-        topicKey:
-          type: "string"
-        status:
-          type: "string"
-        occurredAt:
-          type: "string"
-          format: "date-time"
-        recordedAt:
-          type: "string"
-          format: "date-time"
-        source:
-          type: "string"
-        evidenceRef:
-          type: "string"
-        consentRef:
-          type: "string"
-    BatchCustomersRequest:
-      type: "object"
-      properties:
-        items:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/CustomerUpsertRequest"
-    BatchCustomersResponse:
-      type: "object"
-      properties:
-        results:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/BatchItemResult"
-    CustomFieldRequest:
-      type: "object"
-      properties:
-        key:
-          type: "string"
-        label:
-          type: "string"
-        type:
-          type: "string"
-        choices:
-          type: "array"
-          items:
-            type: "string"
-    CustomFieldResponse:
-      type: "object"
-      properties:
-        key:
-          type: "string"
-        label:
-          type: "string"
-        type:
-          type: "string"
-        choices:
-          type: "array"
-          items:
-            type: "string"
-        archived:
-          type: "boolean"
-        createdAt:
-          type: "string"
-          format: "date-time"
-    ConsentTopicRequest:
-      type: "object"
-      properties:
-        key:
-          type: "string"
-        label:
-          type: "string"
-    ConsentTopicResponse:
-      type: "object"
-      properties:
-        key:
-          type: "string"
-        label:
-          type: "string"
-        archived:
-          type: "boolean"
-    ActivityRequest:
-      type: "object"
-      properties:
-        externalRef:
-          type: "string"
-        type:
-          type: "string"
-        occurredAt:
-          type: "string"
-          format: "date-time"
-        source:
-          type: "string"
-        payload: {}
-        activityRef:
-          type: "string"
-    ActivityResponse:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        customerId:
-          type: "string"
-        externalRef:
-          type: "string"
-        type:
-          type: "string"
-        occurredAt:
-          type: "string"
-          format: "date-time"
-        source:
-          type: "string"
-        payload:
-          type: "object"
-          additionalProperties: {}
-        activityRef:
-          type: "string"
-        createdAt:
-          type: "string"
-          format: "date-time"
-    ActivityBatchRequest:
-      type: "object"
-      properties:
-        items:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/ActivityRequest"
-    ActivityBatchResponse:
-      type: "object"
-      properties:
-        results:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/BatchItemResult"
-    CustomerPatchRequest:
-      type: "object"
-      properties:
-        displayName:
-          type: "string"
-        phone:
-          type: "string"
-        email:
-          type: "string"
-        customFields:
-          type: "object"
-          additionalProperties: {}
-        addTags:
-          type: "array"
-          items:
-            type: "string"
-        removeTags:
-          type: "array"
-          items:
-            type: "string"
-    CustomFieldPatch:
-      type: "object"
-      properties:
-        label:
-          type: "string"
-        choices:
-          type: "array"
-          items:
-            type: "string"
-        archived:
-          type: "boolean"
-        type:
-          type: "string"
-    ConsentTopicPatch:
-      type: "object"
-      properties:
-        label:
-          type: "string"
-        archived:
-          type: "boolean"
-    PageEndpointResponse:
+    WebhookEndpointPage:
       type: "object"
       properties:
         data:
           type: "array"
           items:
-            $ref: "#/components/schemas/EndpointResponse"
+            $ref: "#/components/schemas/WebhookEndpoint"
         page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
+          $ref: "#/components/schemas/PageInfo"
+    WebhookDeliveryPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WebhookDelivery"
+        page:
+          $ref: "#/components/schemas/PageInfo"
+    EventType:
+      type: "string"
+      description: "One customer event type an endpoint may subscribe to. Every event\
+        \ is a fact customer reports as a signed HTTP webhook to the Tenant's subscribed\
+        \ endpoints; no broker exchange carries it."
+      enum:
+      - "customer.created"
+      - "order.recorded"
+      - "order.refunded"
+      - "customer.erased"
     PageInfo:
       type: "object"
+      description: "The page's facts, present only when the request asked for them."
       properties:
         limit:
           type: "integer"
           format: "int32"
+          description: "The page size that was applied."
         offset:
-          type:
-          - "integer"
-          - "null"
+          type: "integer"
           format: "int32"
+          description: "Rows skipped; null when a cursor positioned the page."
         total:
-          type:
-          - "integer"
-          - "null"
-          format: "int64"
-        next_cursor:
-          type:
-          - "string"
-          - "null"
-    PageDeliveryResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/DeliveryResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PageTagResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/TagResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    TagResponse:
-      type: "object"
-      properties:
-        tag:
-          type: "string"
-        customerCount:
           type: "integer"
           format: "int64"
-    MultiValueMapStringString:
-      type: "object"
-      additionalProperties:
-        type: "array"
-        items:
+          description: "Every row matching the filters, wherever the page starts."
+        next_cursor:
           type: "string"
-      properties:
-        all:
-          type: "object"
-          additionalProperties:
-            type: "string"
-          writeOnly: true
-        empty:
-          type: "boolean"
-    PageCustomerResponse:
+          description: "Pass this as `cursor`, with the same filter and sort, to read\
+            \ the next page. It is opaque and null on the last page."
+    Error:
       type: "object"
+      description: "The RFC 9457 problem detail every operation returns on failure.\
+        \ `title` repeats the status reason, `status` repeats the HTTP status and\
+        \ `detail` is a human-readable message. `code` names the concrete customer\
+        \ failure where the operation documents one."
       properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/CustomerResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    ConsentRecord:
-      type: "object"
-      properties:
-        topicKey:
+        type:
+          type: "string"
+          format: "uri-reference"
+        title:
           type: "string"
         status:
+          type: "integer"
+          format: "int32"
+        detail:
           type: "string"
-        occurredAt:
+        code:
           type: "string"
-          format: "date-time"
-    ProfileResponse:
-      type: "object"
-      properties:
-        customer:
-          $ref: "#/components/schemas/CustomerResponse"
-        customFields:
-          type: "object"
-          additionalProperties: {}
-        tags:
-          type: "array"
-          items:
-            type: "string"
-        consents:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/ConsentRecord"
-        orders:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/OrderResponse"
-        activities:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/ActivityResponse"
-    PageOrderResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/OrderResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    ConsentsResponse:
-      type: "object"
-      properties:
-        current:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/ConsentRecordResponse"
-        history:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/ConsentRecordResponse"
-    PageActivityResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/ActivityResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PageCustomFieldResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/CustomFieldResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PageConsentTopicResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/ConsentTopicResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
+          description: "The concrete failure code named in the operation's error description,\
+            \ for example `CUSTOMER_NOT_FOUND`, `IDEMPOTENCY_CONFLICT` or `CUSTOMER_ERASED`."
   securitySchemes:
     oidc:
       type: "http"

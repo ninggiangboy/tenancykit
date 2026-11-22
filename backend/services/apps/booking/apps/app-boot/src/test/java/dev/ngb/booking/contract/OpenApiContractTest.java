@@ -82,7 +82,7 @@ class OpenApiContractTest {
         CallerLabelRules.check(served.toString(), false);
         CallerLabelRules.check(documentedText, false);
         CallerOpenApiSplitter.writeOrVerify(
-                served.toString(),
+                documentedText,
                 RepositoryPaths.repositoryRoot().resolve("contracts/openapi"),
                 "booking",
                 Boolean.getBoolean("openapi.update"));

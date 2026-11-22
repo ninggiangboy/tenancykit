@@ -1,0 +1,118 @@
+# Audiences and surfaces
+
+Who may call an endpoint is a property of the suite, not a convention a reader has to infer from a path. Every
+operation carries one or more **callers** in its OpenAPI label, and the route prefix, the container and this document's
+matrix are derived from the same declaration. A test fails the build when they drift apart.
+
+## Callers, not audiences
+
+The word is **caller**, because "audience" already means two other things in the suite: the JWT `aud` claim names the
+app a suite token is for, and `ui_remotes.audiences` says which shell may load a remote. A caller answers a different
+question: who is on the other end of this request, and how did they prove it?
+
+## The seven callers
+
+| Caller | Authenticates with | Target route prefix | Container |
+|---|---|---|---|
+| `platform-user` | Keycloak JWT, platform scope | `/admin/v1/**` (Platform, Notification), `/api/v1/me/**` | `platform`, `notification-api` |
+| `tenant-user` | Keycloak JWT, tenant scope | `/api/v1/**` | `<app>-api` |
+| `tenant-system` | suite token (`cbk_...` credential) | `/system/v1/**` | `<app>-api` |
+| `customer-session` | Billing portal cookie | `/public/billing/portal/**` | `billing-public` |
+| `public` | signed link, customer token, anonymous | `/public/<app>/**` | `<app>-public` |
+| `provider` | signed inbound webhook (Stripe, ad platforms, a Tenant's apps) | `/public/<app>/**` | `<app>-public` |
+| `internal` | service-client suite token | `/internal/v1/**`; CI registration under `/admin/v1/ui-remotes/{name}/versions` | `platform`; never routed at the edge |
+
+Two standard paths keep their path and are the only exceptions: `POST /oauth/token` (`tenant-system` and `internal`)
+and `GET /.well-known/jwks.json` (`public`). Platform is one process and has no public profile.
+
+The matrix at the bottom of this page shows the prefixes that exist in the committed contracts today. Phases 5-11 of
+`plans/261122-1543-caller-surfaces` move the paths to the target prefixes above; the matrix regenerates as they land.
+
+## How an endpoint names its caller
+
+A controller declares only the resource path (`@RequestMapping("/wallets")`). The caller comes from one source:
+
+1. `@Callers` on the handler method — an exception;
+2. `@Callers` on the controller class — the default for its methods;
+3. `@PublicEndpoint(caller = ...)` — `PUBLIC` for an anonymous surface, `PROVIDER` for a signed webhook;
+4. an annotation that implies a caller: Billing's `@RequiresPortalPermission` means `CUSTOMER_SESSION`.
+
+The path is never read to decide a caller. A handler that resolves to none fails the build: the OpenAPI contract test
+refuses to generate its document, and the shared `every-endpoint-declares-a-caller` architecture rule reports it on
+the service's own classes. `/me` endpoints use both person kinds, and `prefix = NONE` keeps a standard path
+(`/oauth/token`, the JWKS) as declared.
+
+The prefixes are derived from the callers, one mapping per distinct prefix: `TENANT_USER` → `/api/v1`,
+`TENANT_SYSTEM` → `/system/v1`, `PLATFORM_USER` → `/admin/v1`, `INTERNAL` → `/internal/v1`, and the public callers →
+`/public/<app code>`. A controller annotated `@Callers({TENANT_USER, TENANT_SYSTEM})` is served at both
+`/api/v1/<path>` and `/system/v1/<path>`; a non-grantable operation only at `/api/v1`, so its `/system/v1` twin is a
+404.
+
+The permission catalog is the second half of the guard. For a route with `@RequiresPermission(code)` the declared
+callers must be the callers the catalog allows (`scopes` has `tenant` iff `TENANT_USER`, `platform` iff
+`PLATFORM_USER`; `grantable_to_tenant_system` iff `TENANT_SYSTEM`; empty scopes iff `INTERNAL`). A code valid in both
+scopes may be split into an administrator route and a tenant route, each declaring one caller — that is how Platform's
+`users` and `roles` become `/admin/v1/users` and `/api/v1/users`.
+
+Same behaviour for different callers is one controller whose `@Callers` lists both. Different behaviour is two thin
+controllers over the same use cases, the prefix pinning the scope and a wrong scope answering `403`.
+
+## Token type per prefix
+
+The prefix is also the credential: `/system/v1` accepts only suite tokens; `/api/v1` and `/admin/v1` accept only
+Keycloak JWTs; `/internal/v1` accepts only service-client suite tokens. A valid token of the wrong kind answers `403`.
+Authentication mechanisms themselves do not change. `POST /oauth/token` and the JWKS are the only unauthenticated
+standard paths; the public surfaces prove themselves with a signed link, a customer token or a webhook signature.
+
+## What the edge does
+
+Caddy (compose) and the ALB (AWS) route by host and path. `/internal/**` is answered `404` at both, so a replica
+client reaches Platform by its internal address and never through the public edge. The `public` callers are served by
+the same paths the app declares; the proxy adds no logic and does not read the caller.
+
+## Contract matrix
+
+<!-- BEGIN GENERATED -->
+<!-- Generated by ops/docs/caller-matrix.rb from contracts/openapi/<caller>/<app>.yaml. Run `make docs-check`. -->
+| App | Caller | Prefix | Container | Operations |
+|---|---|---|---|---|
+| Platform | tenant-user | `/api/v1` | `platform` | 20 |
+| Platform | tenant-system | `/oauth/token` | `platform` | 1 |
+| Platform | platform-user | `/api/v1` | `platform` | 21 |
+| Platform | public | `/.well-known/jwks.json` | `platform` | 1 |
+| Platform | internal | `/api/v1`, `/internal`, `/oauth/token` | `platform` | 3 |
+| Billing | tenant-user | `/api/v1` | `billing-api` | 85 |
+| Billing | tenant-system | `/api/v1` | `billing-api` | 64 |
+| Billing | customer-session | `/portal` | `billing-public` | 17 |
+| Billing | public | `/portal` | `billing-public` | 2 |
+| Billing | provider | `/stripe/webhooks` | `billing-public` | 2 |
+| Notification | tenant-user | `/api/v1` | `notification-api` | 8 |
+| Notification | platform-user | `/api/v1` | `notification-api` | 9 |
+| Mailroom | tenant-user | `/api/v1` | `mailroom-api` | 47 |
+| Mailroom | tenant-system | `/api/v1` | `mailroom-api` | 46 |
+| Mailroom | public | `/t` | `mailroom-public` | 4 |
+| Survey | tenant-user | `/api/v1` | `survey-api` | 40 |
+| Survey | tenant-system | `/api/v1` | `survey-api` | 38 |
+| Survey | public | `/p` | `survey-public` | 7 |
+| Attribution | tenant-user | `/api/v1` | `attribution-api` | 40 |
+| Attribution | tenant-system | `/api/v1` | `attribution-api` | 37 |
+| Attribution | public | `/go`, `/t` | `attribution-public` | 4 |
+| Workflow | tenant-user | `/api/v1` | `workflow-api` | 43 |
+| Workflow | tenant-system | `/api/v1` | `workflow-api` | 43 |
+| Workflow | provider | `/hooks` | `workflow-public` | 1 |
+| Booking | tenant-user | `/api/v1` | `booking-api` | 62 |
+| Booking | tenant-system | `/api/v1` | `booking-api` | 61 |
+| Booking | public | `/p` | `booking-public` | 10 |
+| Customer | tenant-user | `/api/v1` | `customer-api` | 33 |
+| Customer | tenant-system | `/api/v1` | `customer-api` | 33 |
+| Loyalty | tenant-user | `/api/v1` | `loyalty-api` | 34 |
+| Loyalty | tenant-system | `/api/v1` | `loyalty-api` | 30 |
+<!-- END GENERATED -->
+
+## Where this lives
+
+- The model: `Caller`, `Callers` and `PublicEndpoint` in `backend/libs/core/core-kernel/src/main/java/dev/ngb/core/security/`.
+- The label and its description line: `CallerLabelCustomizer`, `PermissionCatalogs` and `CallerCatalog` in
+  `backend/libs/core/core-openapi`.
+- The per-caller documents and their code: `contracts/README.md` and `ops/docs/caller-matrix.rb`.
+- The caller pages: run `make docs` and open one page per caller.

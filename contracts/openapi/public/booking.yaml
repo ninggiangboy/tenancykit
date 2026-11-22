@@ -2,176 +2,95 @@
 openapi: "3.1.0"
 info:
   title: "Booking API"
-  description: "The API a Tenant System uses to build versioned bookings, issue links\
-    \ and read what came back, plus the public endpoints a respondent's browser calls\
-    \ without credentials."
+  description: "The API a Tenant System uses to describe what may be booked and when\
+    \ it is open, search availability, hold, confirm, extend, reschedule and cancel\
+    \ bookings, run repeating series, keep a waitlist, issue customer tokens, manage\
+    \ the signed webhooks booking sends, and read the tenant's settings. The public\
+    \ gate under `/p/**` is the surface a Tenant's customer's browser calls with a\
+    \ short-lived customer token; it can browse, hold, release its own hold and join\
+    \ the waitlist, and it can never confirm. Booking never touches money: the Tenant\
+    \ holds, charges through Billing, then confirms. The tenant is taken from the\
+    \ request's host and suite token, never from a body; no request body carries a\
+    \ tenant. This document is a skeleton written in phase 1 and filled by each phase;\
+    \ the committed generated document replaces it once controllers exist."
   version: "v1"
 servers:
 - url: "/booking"
   description: "Any tenant hostname: <tenant-code>.<base-domain>/booking"
+tags:
+- name: "Resources"
+  description: "The people, rooms and equipment that can be booked."
+- name: "Resource groups"
+  description: "Groups of resources with a strategy for choosing among their members."
+- name: "Calendar"
+  description: "Weekly working hours, dated exceptions and blocks, and a preview of\
+    \ a recurrence."
+- name: "Offerings"
+  description: "What a tenant sells: its duration, requirements and cancellation windows."
+- name: "Availability"
+  description: "Free start instants for an interval offering."
+- name: "Queue"
+  description: "The waiting-room counts of an offering."
+- name: "Sessions"
+  description: "Capacity sessions and the repeating series that create them."
+- name: "Bookings"
+  description: "Hold, confirm, extend, move, cancel and read bookings."
+- name: "Booking series"
+  description: "Book a repeating series and confirm or cancel its occurrences."
+- name: "Waitlist"
+  description: "Join, read and leave the waitlist for an offering."
+- name: "Settings"
+  description: "The tenant's booking settings and the public gate."
+- name: "Customer tokens"
+  description: "Mint the short-lived token a customer uses at the public gate."
+- name: "Public gate"
+  description: "Endpoints a customer's browser calls under /p with a customer token:\
+    \ read an offering, hold, queue and waitlist."
+- name: "Webhooks"
+  description: "Register webhook endpoints, rotate their secrets and read or resend\
+    \ deliveries."
 paths:
-  /p/waitlist:
-    post:
-      tags:
-      - "public-controller"
-      description: "Callers: public."
-      operationId: "joinWaitlist"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PublicWaitlistJoin"
-        required: true
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PublicWaitlistEntry"
-      x-allowed-callers:
-      - "public"
-  /p/queue:
-    post:
-      tags:
-      - "public-controller"
-      description: "Callers: public."
-      operationId: "enterQueue"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/QueueEntry"
-        required: true
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/QueueTicketResponse"
-      x-allowed-callers:
-      - "public"
-    delete:
-      tags:
-      - "public-controller"
-      description: "Callers: public."
-      operationId: "leaveQueue"
-      responses:
-        "200":
-          description: "OK"
-      x-allowed-callers:
-      - "public"
-  /p/bookings:
-    post:
-      tags:
-      - "public-controller"
-      description: "Callers: public."
-      operationId: "hold"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PublicBookingCreate"
-        required: true
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PublicBooking"
-      x-allowed-callers:
-      - "public"
-  /p/waitlist/{entryId}:
-    get:
-      tags:
-      - "public-controller"
-      description: "Callers: public."
-      operationId: "getWaitlistEntry"
-      parameters:
-      - name: "entryId"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-          format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/PublicWaitlistEntry"
-      x-allowed-callers:
-      - "public"
-    delete:
-      tags:
-      - "public-controller"
-      description: "Callers: public."
-      operationId: "leaveWaitlist"
-      parameters:
-      - name: "entryId"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-          format: "uuid"
-      responses:
-        "200":
-          description: "OK"
-      x-allowed-callers:
-      - "public"
-  /p/queue/status:
-    get:
-      tags:
-      - "public-controller"
-      description: "Callers: public."
-      operationId: "queueStatus"
-      responses:
-        "200":
-          description: "OK"
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/QueueStatusResponse"
-      x-allowed-callers:
-      - "public"
   /p/offerings/{offeringId}:
+    parameters:
+    - $ref: "#/components/parameters/OfferingId"
     get:
       tags:
-      - "public-controller"
-      description: "Callers: public."
-      operationId: "getOffering_1"
-      parameters:
-      - name: "offeringId"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-          format: "uuid"
+      - "Public gate"
+      summary: "Public: read an offering"
+      description: "Requires a customer token with the `browse` scope. `remaining`\
+        \ is included only when the offering sets `publicShowsRemaining`.\n\nCallers:\
+        \ public."
+      operationId: "publicGetOffering"
+      security:
+      - CustomerToken: []
       responses:
         "200":
-          description: "OK"
+          description: "The offering as the gate may see it."
           content:
-            '*/*':
+            application/json:
               schema:
                 $ref: "#/components/schemas/PublicOffering"
+        "401":
+          $ref: "#/components/responses/CustomerUnauthenticated"
+        "403":
+          $ref: "#/components/responses/CustomerForbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
       x-allowed-callers:
       - "public"
   /p/offerings/{offeringId}/availability:
+    parameters:
+    - $ref: "#/components/parameters/OfferingId"
     get:
       tags:
-      - "public-controller"
-      description: "Callers: public."
-      operationId: "getAvailability"
+      - "Public gate"
+      summary: "Public: free start instants"
+      operationId: "publicGetAvailability"
+      security:
+      - CustomerToken: []
       parameters:
-      - name: "offeringId"
-        in: "path"
-        required: true
-        schema:
-          type: "string"
-          format: "uuid"
       - name: "from"
         in: "query"
         required: true
@@ -184,700 +103,551 @@ paths:
         schema:
           type: "string"
           format: "date-time"
-      - name: "durationMinutes"
-        in: "query"
-        required: false
-        schema:
-          type: "integer"
-          format: "int32"
-      - name: "resource"
-        in: "query"
+      - $ref: "#/components/parameters/Limit"
+      - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: "The free starts."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilityPage"
+        "401":
+          $ref: "#/components/responses/CustomerUnauthenticated"
+        "403":
+          $ref: "#/components/responses/CustomerForbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      description: "Callers: public."
+      x-allowed-callers:
+      - "public"
+  /p/bookings:
+    post:
+      tags:
+      - "Public gate"
+      summary: "Public: hold a place"
+      description: "Requires the `hold` scope. The booking always has source `GATE`\
+        \ and the token's own `customerRef`. When the offering sets `queueMode = REQUIRED`\
+        \ the request must carry an admitted ticket token. Emits `booking.held` with\
+        \ source `GATE`.\n\nCallers: public."
+      operationId: "publicHold"
+      security:
+      - CustomerToken: []
+      parameters:
+      - name: "X-Queue-Ticket"
+        in: "header"
         required: false
         schema:
           type: "string"
-          format: "uuid"
-      - name: "partySize"
-        in: "query"
-        required: false
-        schema:
-          type: "integer"
-          format: "int32"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingCreate"
       responses:
-        "200":
-          description: "OK"
+        "201":
+          description: "The held booking."
           content:
-            '*/*':
+            application/json:
               schema:
-                $ref: "#/components/schemas/PublicAvailability"
+                $ref: "#/components/schemas/Booking"
+        "401":
+          $ref: "#/components/responses/CustomerUnauthenticated"
+        "403":
+          $ref: "#/components/responses/CustomerForbidden"
+        "409":
+          description: "`slot-taken` or `sold-out`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
       x-allowed-callers:
       - "public"
   /p/bookings/{bookingId}:
+    parameters:
+    - $ref: "#/components/parameters/BookingId"
     delete:
       tags:
-      - "public-controller"
+      - "Public gate"
+      summary: "Public: release its own hold"
+      description: "Only a booking with source `GATE`, the token's own `customerRef`,\
+        \ and status `HELD`.\n\nCallers: public."
+      operationId: "publicReleaseHold"
+      security:
+      - CustomerToken: []
+      responses:
+        "204":
+          description: "Released."
+        "401":
+          $ref: "#/components/responses/CustomerUnauthenticated"
+        "403":
+          $ref: "#/components/responses/CustomerForbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-allowed-callers:
+      - "public"
+  /p/waitlist:
+    post:
+      tags:
+      - "Public gate"
+      summary: "Public: join the waitlist"
+      operationId: "publicJoinWaitlist"
+      security:
+      - CustomerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WaitlistJoin"
+      responses:
+        "201":
+          description: "The waiting entry."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WaitlistEntry"
+        "401":
+          $ref: "#/components/responses/CustomerUnauthenticated"
+        "403":
+          $ref: "#/components/responses/CustomerForbidden"
+        "409":
+          description: "`waitlist-full` or `ALREADY_WAITING`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
       description: "Callers: public."
-      operationId: "release"
+      x-allowed-callers:
+      - "public"
+  /p/waitlist/{entryId}:
+    parameters:
+    - name: "entryId"
+      in: "path"
+      required: true
+      schema:
+        type: "string"
+        format: "uuid"
+    get:
+      tags:
+      - "Public gate"
+      summary: "Public: read its position"
+      operationId: "publicGetWaitlistEntry"
+      security:
+      - CustomerToken: []
+      responses:
+        "200":
+          description: "The entry and its position."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WaitlistEntry"
+        "401":
+          $ref: "#/components/responses/CustomerUnauthenticated"
+        "403":
+          $ref: "#/components/responses/CustomerForbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      description: "Callers: public."
+      x-allowed-callers:
+      - "public"
+    delete:
+      tags:
+      - "Public gate"
+      summary: "Public: leave the waitlist"
+      operationId: "publicLeaveWaitlist"
+      security:
+      - CustomerToken: []
+      responses:
+        "204":
+          description: "Left."
+        "401":
+          $ref: "#/components/responses/CustomerUnauthenticated"
+        "403":
+          $ref: "#/components/responses/CustomerForbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      description: "Callers: public."
+      x-allowed-callers:
+      - "public"
+  /p/queue:
+    post:
+      tags:
+      - "Public gate"
+      summary: "Public: enter the waiting room"
+      description: "Returns a signed ticket token and a first `retryAfterSeconds`.\
+        \ One active ticket per `(customerRef, target)`; a ticket is insert-only and\
+        \ numbered from a sequence.\n\nCallers: public."
+      operationId: "publicEnterQueue"
+      security:
+      - CustomerToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueueEntryRequest"
+      responses:
+        "201":
+          description: "The ticket."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueTicket"
+        "401":
+          $ref: "#/components/responses/CustomerUnauthenticated"
+        "403":
+          $ref: "#/components/responses/CustomerForbidden"
+        "409":
+          description: "The customer already holds an active ticket for this target.\
+            \ Code `ALREADY_QUEUED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      x-allowed-callers:
+      - "public"
+    delete:
+      tags:
+      - "Public gate"
+      summary: "Public: leave the waiting room"
+      operationId: "publicLeaveQueue"
+      security:
+      - CustomerToken: []
       parameters:
-      - name: "bookingId"
-        in: "path"
+      - name: "X-Queue-Ticket"
+        in: "header"
         required: true
         schema:
           type: "string"
-          format: "uuid"
+      responses:
+        "204":
+          description: "Left."
+        "401":
+          $ref: "#/components/responses/CustomerUnauthenticated"
+        "403":
+          $ref: "#/components/responses/CustomerForbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+      description: "Callers: public."
+      x-allowed-callers:
+      - "public"
+  /p/queue/status:
+    get:
+      tags:
+      - "Public gate"
+      summary: "Public: poll its admission"
+      description: "Reads the instance's cached watermark, never the ticket row. `position`\
+        \ is an upper bound and the watermark may be up to one second stale.\n\nCallers:\
+        \ public."
+      operationId: "publicQueueStatus"
+      security:
+      - CustomerToken: []
+      parameters:
+      - name: "X-Queue-Ticket"
+        in: "header"
+        required: true
+        schema:
+          type: "string"
       responses:
         "200":
-          description: "OK"
+          description: "The status."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueStatus"
+        "401":
+          $ref: "#/components/responses/CustomerUnauthenticated"
+        "403":
+          $ref: "#/components/responses/CustomerForbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
       x-allowed-callers:
       - "public"
 components:
+  securitySchemes:
+    SuiteToken:
+      type: "http"
+      scheme: "bearer"
+      description: "The Platform-issued suite token of a Tenant System; booking mints\
+        \ no JWT."
+    CustomerToken:
+      type: "http"
+      scheme: "bearer"
+      description: "The short-lived HMAC customer token the Tenant System minted through\
+        \ `POST /customer-tokens`."
+  parameters:
+    ResourceId:
+      name: "resourceId"
+      in: "path"
+      required: true
+      schema:
+        type: "string"
+        format: "uuid"
+    OfferingId:
+      name: "offeringId"
+      in: "path"
+      required: true
+      schema:
+        type: "string"
+        format: "uuid"
+    SessionId:
+      name: "sessionId"
+      in: "path"
+      required: true
+      schema:
+        type: "string"
+        format: "uuid"
+    BookingId:
+      name: "bookingId"
+      in: "path"
+      required: true
+      schema:
+        type: "string"
+        format: "uuid"
+    IfMatch:
+      name: "If-Match"
+      in: "header"
+      required: false
+      description: "Required by every update; the endpoint answers `428` without it\
+        \ and `412` when it does not match."
+      schema:
+        type: "string"
+    IdempotencyKey:
+      name: "Idempotency-Key"
+      in: "header"
+      required: false
+      description: "A retry with the same key and body returns the first result; a\
+        \ different body is `409`."
+      schema:
+        type: "string"
+        minLength: 1
+        maxLength: 200
+    Filter:
+      name: "filter"
+      in: "query"
+      required: false
+      description: "The shared list query contract: `filter[<field>][<op>]=<value>`.\
+        \ The generated document lists this resource's fields and operators."
+      style: "deepObject"
+      schema:
+        type: "object"
+    Sort:
+      name: "sort"
+      in: "query"
+      required: false
+      description: "Sortable fields, `-` for descending, at most four."
+      schema:
+        type: "string"
+    Limit:
+      name: "limit"
+      in: "query"
+      required: false
+      schema:
+        type: "integer"
+        minimum: 1
+        maximum: 200
+        default: 50
+    Offset:
+      name: "offset"
+      in: "query"
+      required: false
+      schema:
+        type: "integer"
+        minimum: 0
+        maximum: 10000
+    Cursor:
+      name: "cursor"
+      in: "query"
+      required: false
+      schema:
+        type: "string"
+    PageInfo:
+      name: "page_info"
+      in: "query"
+      required: false
+      schema:
+        type: "string"
+        enum:
+        - "full"
+        - "cursor"
+  headers:
+    ETag:
+      description: "The resource's current version; send it as `If-Match` on the next\
+        \ update."
+      schema:
+        type: "string"
+  security:
+  - SuiteToken: []
+  responses:
+    BadRequest:
+      description: "The request is malformed, for example both `offset` and `cursor`,\
+        \ or a filter beyond the contract's limits. Code `VALIDATION_FAILED`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthenticated:
+      description: "No suite token, or an expired or invalid one. Code `UNAUTHENTICATED`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Forbidden:
+      description: "The token lacks the operation's permission, or the tenant has\
+        \ no `booking` entitlement. Code `FORBIDDEN`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: "No such object in this tenant. Code `<RESOURCE>_NOT_FOUND`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    PreconditionRequired:
+      description: "The update needs `If-Match`. Code `PRECONDITION_REQUIRED`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    PreconditionFailed:
+      description: "`If-Match` does not match the current version. Code `STALE_VERSION`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    UnprocessableEntity:
+      description: "The body is well formed but invalid. Code `VALIDATION_FAILED`\
+        \ with the offending field."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    TooManyRequests:
+      description: "The gate's per-fingerprint rate limit or the admission cap refused\
+        \ the request. `Retry-After` carries the wait."
+      headers:
+        Retry-After:
+          schema:
+            type: "integer"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    CustomerUnauthenticated:
+      description: "A missing, expired, tampered or wrong-tenant customer token. The\
+        \ same code as a missing one, so nothing leaks."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    CustomerForbidden:
+      description: "The token lacks the scope, names another customer, or the destination\
+        \ is not served by the gate (for example `confirm`). Code `FORBIDDEN`."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Error"
   schemas:
-    GateSettingsRequest:
+    Error:
       type: "object"
+      description: "A typed problem."
+      additionalProperties: true
+      required:
+      - "type"
+      - "title"
+      - "status"
+      - "code"
       properties:
-        allowedOrigins:
-          type: "array"
-          items:
-            type: "string"
-        maxTokenTtlSeconds:
+        type:
+          type: "string"
+        title:
+          type: "string"
+        status:
           type: "integer"
-          format: "int32"
-    GateSettingsResponse:
+        detail:
+          type: "string"
+        code:
+          type: "string"
+          description: "A stable code, such as `slot-taken`, `sold-out`, `hold-lapsed`,\
+            \ `outside-open-hours`, `invalid-recurrence`, `booking-state`."
+      example:
+        type: "about:blank"
+        title: "Slot taken"
+        status: 409
+        detail: "The requested range overlaps another booking."
+        code: "slot-taken"
+    ResourceCreate:
       type: "object"
-      properties:
-        allowedOrigins:
-          type: "array"
-          items:
-            type: "string"
-        maxTokenTtlSeconds:
-          type: "integer"
-          format: "int32"
-    PoolRequest:
-      type: "object"
+      additionalProperties: false
+      required:
+      - "code"
+      - "name"
+      - "zone"
       properties:
         code:
           type: "string"
-        capacity:
-          type: "integer"
-          format: "int32"
-    PoolResizeRequest:
-      type: "object"
-      properties:
-        pools:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/PoolRequest"
-    PoolResponse:
-      type: "object"
-      properties:
-        code:
-          type: "string"
-        capacity:
-          type: "integer"
-          format: "int32"
-        remaining:
-          type: "integer"
-          format: "int32"
-    SessionResponse:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        offeringId:
-          type: "string"
-          format: "uuid"
-        seriesId:
-          type: "string"
-          format: "uuid"
-        startsAt:
-          type: "string"
-          format: "date-time"
-        endsAt:
-          type: "string"
-          format: "date-time"
-        status:
-          type: "string"
-        capacity:
-          type: "integer"
-          format: "int32"
-        pools:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/PoolResponse"
-    WorkingHourRequest:
-      type: "object"
-      properties:
-        weekday:
-          type: "integer"
-          format: "int32"
-        opens:
-          type: "string"
-        closes:
-          type: "string"
-    WorkingHoursReplaceRequest:
-      type: "object"
-      properties:
-        hours:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/WorkingHourRequest"
-    WorkingHourResponse:
-      type: "object"
-      properties:
-        weekday:
-          type: "integer"
-          format: "int32"
-        opens:
-          type: "string"
-        closes:
-          type: "string"
-    WorkingHoursResponse:
-      type: "object"
-      properties:
-        hours:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/WorkingHourResponse"
-    RequirementRequest:
-      type: "object"
-      properties:
-        slotCode:
-          type: "string"
-        resourceId:
-          type: "string"
-          format: "uuid"
-        groupId:
-          type: "string"
-          format: "uuid"
-    RequirementsReplaceRequest:
-      type: "object"
-      properties:
-        requirements:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/RequirementRequest"
-    RequirementResponse:
-      type: "object"
-      properties:
-        slotCode:
-          type: "string"
-        resourceId:
-          type: "string"
-          format: "uuid"
-        groupId:
-          type: "string"
-          format: "uuid"
-    RequirementsResponse:
-      type: "object"
-      properties:
-        requirements:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/RequirementResponse"
-    CancellationWindowRequest:
-      type: "object"
-      properties:
-        minutesBeforeStart:
-          type: "integer"
-          format: "int32"
-        code:
-          type: "string"
-    CancellationWindowsReplaceRequest:
-      type: "object"
-      properties:
-        windows:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/CancellationWindowRequest"
-    CancellationWindowResponse:
-      type: "object"
-      properties:
-        minutesBeforeStart:
-          type: "integer"
-          format: "int32"
-        code:
-          type: "string"
-    CancellationWindowsResponse:
-      type: "object"
-      properties:
-        windows:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/CancellationWindowResponse"
-    PublicWaitlistJoin:
-      type: "object"
-      properties:
-        offeringId:
-          type: "string"
-          format: "uuid"
-        qty:
-          type: "integer"
-          format: "int32"
-        sessionId:
-          type: "string"
-          format: "uuid"
-        poolCode:
-          type: "string"
-        startsAt:
-          type: "string"
-          format: "date-time"
-        endsAt:
-          type: "string"
-          format: "date-time"
-        resourceId:
-          type: "string"
-          format: "uuid"
-    PublicWaitlistEntry:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-          format: "uuid"
-        offeringId:
-          type: "string"
-          format: "uuid"
-        customerRef:
-          type: "string"
-        qty:
-          type: "integer"
-          format: "int32"
-        status:
-          type: "string"
-        position:
-          type: "integer"
-          format: "int32"
-        sessionId:
-          type: "string"
-          format: "uuid"
-        poolCode:
-          type: "string"
-        startsAt:
-          type: "string"
-          format: "date-time"
-        endsAt:
-          type: "string"
-          format: "date-time"
-        offeredBookingId:
-          type: "string"
-          format: "uuid"
-        offeredUntil:
-          type: "string"
-          format: "date-time"
-        createdAt:
-          type: "string"
-          format: "date-time"
-    QueueEntry:
-      type: "object"
-      properties:
-        offeringId:
-          type: "string"
-          format: "uuid"
-        sessionId:
-          type: "string"
-          format: "uuid"
-    QueueTicketResponse:
-      type: "object"
-      properties:
-        ticketToken:
-          type: "string"
-        retryAfterSeconds:
-          type: "integer"
-          format: "int32"
-    PublicBookingCreate:
-      type: "object"
-      properties:
-        offeringId:
-          type: "string"
-          format: "uuid"
-        sessionId:
-          type: "string"
-          format: "uuid"
-        poolCode:
-          type: "string"
-        qty:
-          type: "integer"
-          format: "int32"
-        start:
-          type: "string"
-          format: "date-time"
-        durationMinutes:
-          type: "integer"
-          format: "int32"
-        resourceId:
-          type: "string"
-          format: "uuid"
-        partySize:
-          type: "integer"
-          format: "int32"
-    AssignedResourceResponse:
-      type: "object"
-      properties:
-        slotCode:
-          type: "string"
-        resourceId:
-          type: "string"
-          format: "uuid"
-    PublicBooking:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        status:
-          type: "string"
-        offeringId:
-          type: "string"
-          format: "uuid"
-        offeringKind:
-          type: "string"
-        customerRef:
-          type: "string"
-        qty:
-          type: "integer"
-          format: "int32"
-        source:
-          type: "string"
-        sessionId:
-          type: "string"
-          format: "uuid"
-        poolCode:
-          type: "string"
-        startsAt:
-          type: "string"
-          format: "date-time"
-        endsAt:
-          type: "string"
-          format: "date-time"
-        resources:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/AssignedResourceResponse"
-        seriesId:
-          type: "string"
-          format: "uuid"
-        holdExpiresAt:
-          type: "string"
-          format: "date-time"
-        extendedSeconds:
-          type: "integer"
-          format: "int32"
-        confirmedAt:
-          type: "string"
-          format: "date-time"
-        cancelledAt:
-          type: "string"
-          format: "date-time"
-        policyCode:
-          type: "string"
-        version:
-          type: "integer"
-          format: "int64"
-    CreateEndpointRequest:
-      type: "object"
-      properties:
-        url:
-          type: "string"
-        description:
-          type: "string"
-        eventTypes:
-          type: "array"
-          items:
-            type: "string"
-    EndpointResponse:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        url:
-          type: "string"
-        eventTypes:
-          type: "array"
-          items:
-            type: "string"
-        status:
-          type: "string"
-        keyId:
-          type: "string"
-        version:
-          type: "integer"
-          format: "int64"
-    EndpointWithSecretResponse:
-      type: "object"
-      properties:
-        endpoint:
-          $ref: "#/components/schemas/EndpointResponse"
-        secret:
-          type: "string"
-    DeliveryResponse:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        endpointId:
-          type: "string"
-        eventId:
-          type: "string"
-        eventType:
-          type: "string"
-        status:
-          type: "string"
-        attempts:
-          type: "integer"
-          format: "int32"
-        lastStatusCode:
-          type: "integer"
-          format: "int32"
-        lastError:
-          type: "string"
-        nextAttemptAt:
-          type: "string"
-          format: "date-time"
-    WaitlistJoinRequest:
-      type: "object"
-      properties:
-        offeringId:
-          type: "string"
-          format: "uuid"
-        customerRef:
-          type: "string"
-        qty:
-          type: "integer"
-          format: "int32"
-        sessionId:
-          type: "string"
-          format: "uuid"
-        poolCode:
-          type: "string"
-        startsAt:
-          type: "string"
-          format: "date-time"
-        endsAt:
-          type: "string"
-          format: "date-time"
-        resourceId:
-          type: "string"
-          format: "uuid"
-    WaitlistEntryResponse:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-          format: "uuid"
-        offeringId:
-          type: "string"
-          format: "uuid"
-        customerRef:
-          type: "string"
-        qty:
-          type: "integer"
-          format: "int32"
-        status:
-          type: "string"
-        position:
-          type: "integer"
-          format: "int32"
-        sessionId:
-          type: "string"
-          format: "uuid"
-        poolCode:
-          type: "string"
-        startsAt:
-          type: "string"
-          format: "date-time"
-        endsAt:
-          type: "string"
-          format: "date-time"
-        offeredBookingId:
-          type: "string"
-          format: "uuid"
-        offeredUntil:
-          type: "string"
-          format: "date-time"
-        createdAt:
-          type: "string"
-          format: "date-time"
-    SessionSeriesCreateRequest:
-      type: "object"
-      properties:
-        offeringId:
-          type: "string"
-          format: "uuid"
+          minLength: 1
+          maxLength: 60
+        name:
+          type: "string"
+          minLength: 1
+          maxLength: 200
         zone:
           type: "string"
-        dtstart:
-          type: "string"
-        rule:
-          type: "array"
-          items:
-            type: "string"
-        durationMinutes:
-          type: "integer"
-          format: "int32"
-        capacity:
-          type: "integer"
-          format: "int32"
-        pools:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/PoolRequest"
-    SessionSeriesCreatedResponse:
+          description: "An IANA zone id."
+        seats:
+          type:
+          - "integer"
+          - "null"
+          minimum: 1
+    ResourcePatch:
       type: "object"
+      additionalProperties: false
       properties:
-        series:
-          $ref: "#/components/schemas/SessionSeriesResponse"
-        sessions:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/SessionResponse"
-        untouchedSessions:
-          type: "array"
-          items:
-            type: "string"
-            format: "uuid"
-    SessionSeriesResponse:
-      type: "object"
-      properties:
-        id:
+        name:
           type: "string"
-        offeringId:
-          type: "string"
-          format: "uuid"
-        zone:
-          type: "string"
-        dtstart:
-          type: "string"
-        rule:
-          type: "array"
-          items:
-            type: "string"
-        durationMinutes:
-          type: "integer"
-          format: "int32"
-        capacity:
-          type: "integer"
-          format: "int32"
-        pools:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/PoolResponse"
-        version:
-          type: "integer"
-          format: "int64"
-    SeriesCreateRequest:
-      type: "object"
-      properties:
-        offeringId:
-          type: "string"
-          format: "uuid"
-        customerRef:
-          type: "string"
-        zone:
-          type: "string"
-        dtstart:
-          type: "string"
-        rule:
-          type: "array"
-          items:
-            type: "string"
-        durationMinutes:
-          type: "integer"
-          format: "int32"
-        poolCode:
-          type: "string"
-        mode:
+          minLength: 1
+          maxLength: 200
+        seats:
+          type:
+          - "integer"
+          - "null"
+          minimum: 1
+        status:
           type: "string"
           enum:
-          - "ALL_OR_NOTHING"
-          - "SKIP_CONFLICTS"
-    BookingResponse:
+          - "ACTIVE"
+          - "ARCHIVED"
+    Resource:
       type: "object"
-      properties:
-        id:
-          type: "string"
-        status:
-          type: "string"
-        offeringId:
-          type: "string"
-          format: "uuid"
-        offeringKind:
-          type: "string"
-        customerRef:
-          type: "string"
-        qty:
-          type: "integer"
-          format: "int32"
-        source:
-          type: "string"
-        sessionId:
-          type: "string"
-          format: "uuid"
-        poolCode:
-          type: "string"
-        startsAt:
-          type: "string"
-          format: "date-time"
-        endsAt:
-          type: "string"
-          format: "date-time"
-        resources:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/AssignedResourceResponse"
-        seriesId:
-          type: "string"
-          format: "uuid"
-        holdExpiresAt:
-          type: "string"
-          format: "date-time"
-        extendedSeconds:
-          type: "integer"
-          format: "int32"
-        confirmedAt:
-          type: "string"
-          format: "date-time"
-        cancelledAt:
-          type: "string"
-          format: "date-time"
-        policyCode:
-          type: "string"
-        version:
-          type: "integer"
-          format: "int64"
-    SeriesResponse:
-      type: "object"
+      additionalProperties: false
+      required:
+      - "id"
+      - "code"
+      - "name"
+      - "zone"
+      - "status"
+      - "version"
       properties:
         id:
           type: "string"
           format: "uuid"
-        offeringId:
-          type: "string"
-          format: "uuid"
-        customerRef:
-          type: "string"
-        mode:
-          type: "string"
-        status:
-          type: "string"
-        occurrences:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/BookingResponse"
-        skipped:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/SkippedOccurrenceResponse"
-        version:
-          type: "integer"
-          format: "int64"
-    SkippedOccurrenceResponse:
-      type: "object"
-      properties:
-        startsAt:
-          type: "string"
-          format: "date-time"
-        reason:
-          type: "string"
-    ResourceCreateRequest:
-      type: "object"
-      properties:
         code:
           type: "string"
         name:
@@ -885,29 +655,94 @@ components:
         zone:
           type: "string"
         seats:
-          type: "integer"
-          format: "int32"
-    ResourceResponse:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        code:
-          type: "string"
-        name:
-          type: "string"
-        zone:
-          type: "string"
-        seats:
-          type: "integer"
-          format: "int32"
+          type:
+          - "integer"
+          - "null"
+          minimum: 1
         status:
           type: "string"
+          enum:
+          - "ACTIVE"
+          - "ARCHIVED"
         version:
           type: "integer"
-          format: "int64"
-    CalendarExceptionCreateRequest:
+          minimum: 1
+    ResourcePage:
       type: "object"
+      required:
+      - "data"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Resource"
+        page:
+          $ref: "#/components/schemas/Page"
+    Page:
+      type:
+      - "object"
+      - "null"
+      additionalProperties: false
+      properties:
+        limit:
+          type: "integer"
+        offset:
+          type:
+          - "integer"
+          - "null"
+        total:
+          type: "integer"
+        next_cursor:
+          type:
+          - "string"
+          - "null"
+    WorkingHoursReplace:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "hours"
+      properties:
+        hours:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WorkingHour"
+    WorkingHour:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "weekday"
+      - "opens"
+      - "closes"
+      properties:
+        weekday:
+          type: "integer"
+          minimum: 1
+          maximum: 7
+          description: "ISO weekday, 1 = Monday."
+        opens:
+          type: "string"
+          pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+        closes:
+          type: "string"
+          pattern: "^(([01][0-9]|2[0-3]):[0-5][0-9]|24:00)$"
+          description: "Local wall-clock in the resource's zone; `24:00` is allowed."
+    WorkingHours:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "hours"
+      properties:
+        hours:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WorkingHour"
+    CalendarExceptionCreate:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "fromDate"
+      - "toDate"
+      - "kind"
       properties:
         fromDate:
           type: "string"
@@ -917,30 +752,117 @@ components:
           format: "date"
         kind:
           type: "string"
+          enum:
+          - "CLOSED"
+          - "OPEN"
         hours:
           type: "array"
+          description: "Required and meaningful when `kind` is `OPEN`; replaces that\
+            \ day's hours."
           items:
-            $ref: "#/components/schemas/WorkingHourRequest"
-    CalendarExceptionResponse:
+            $ref: "#/components/schemas/WorkingHour"
+    CalendarException:
+      allOf:
+      - $ref: "#/components/schemas/CalendarExceptionCreate"
+      - type: "object"
+        required:
+        - "id"
+        properties:
+          id:
+            type: "string"
+            format: "uuid"
+    ExceptionPage:
       type: "object"
+      required:
+      - "data"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CalendarException"
+    GroupCreate:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "code"
+      - "name"
+      - "strategy"
+      properties:
+        code:
+          type: "string"
+          minLength: 1
+          maxLength: 60
+        name:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        strategy:
+          type: "string"
+          enum:
+          - "PRIORITY"
+          - "ROUND_ROBIN"
+          - "LEAST_BUSY"
+          - "FIT_SEATS"
+        maxCombine:
+          type: "integer"
+          minimum: 1
+          maximum: 20
+          default: 1
+        members:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/GroupMember"
+    GroupMember:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "resourceId"
+      - "priority"
+      properties:
+        resourceId:
+          type: "string"
+          format: "uuid"
+        priority:
+          type: "integer"
+          minimum: 0
+    GroupPatch:
+      type: "object"
+      additionalProperties: false
+      properties:
+        name:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        strategy:
+          type: "string"
+          enum:
+          - "PRIORITY"
+          - "ROUND_ROBIN"
+          - "LEAST_BUSY"
+          - "FIT_SEATS"
+        maxCombine:
+          type: "integer"
+          minimum: 1
+          maximum: 20
+        members:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/GroupMember"
+    ResourceGroup:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "id"
+      - "code"
+      - "name"
+      - "strategy"
+      - "maxCombine"
+      - "members"
+      - "version"
       properties:
         id:
           type: "string"
-        fromDate:
-          type: "string"
-          format: "date"
-        toDate:
-          type: "string"
-          format: "date"
-        kind:
-          type: "string"
-        hours:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/WorkingHourResponse"
-    GroupCreateRequest:
-      type: "object"
-      properties:
+          format: "uuid"
         code:
           type: "string"
         name:
@@ -954,56 +876,406 @@ components:
           - "FIT_SEATS"
         maxCombine:
           type: "integer"
-          format: "int32"
+          minimum: 1
         members:
           type: "array"
           items:
-            $ref: "#/components/schemas/GroupMemberRequest"
-    GroupMemberRequest:
+            $ref: "#/components/schemas/GroupMember"
+        version:
+          type: "integer"
+          minimum: 1
+    GroupPage:
       type: "object"
+      required:
+      - "data"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ResourceGroup"
+    OfferingCreate:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "code"
+      - "name"
+      - "kind"
+      - "durationMin"
+      - "slotStep"
+      properties:
+        code:
+          type: "string"
+          minLength: 1
+          maxLength: 60
+        name:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        kind:
+          type: "string"
+          enum:
+          - "INTERVAL"
+          - "CAPACITY"
+        durationMin:
+          type: "integer"
+          minimum: 1
+          description: "Minutes."
+        durationMax:
+          type: "integer"
+          minimum: 1
+        durationStep:
+          type: "integer"
+          minimum: 1
+          default: 1
+        slotStep:
+          type: "integer"
+          minimum: 1
+        bufferBefore:
+          type: "integer"
+          minimum: 0
+          default: 0
+        bufferAfter:
+          type: "integer"
+          minimum: 0
+          default: 0
+        leadTimeSeconds:
+          type: "integer"
+          minimum: 0
+          default: 0
+        horizonDays:
+          type: "integer"
+          minimum: 1
+        holdTtlSeconds:
+          type:
+          - "integer"
+          - "null"
+          minimum: 1
+        maxQty:
+          type: "integer"
+          minimum: 1
+          default: 1
+        publicShowsRemaining:
+          type: "boolean"
+          default: false
+        queueMode:
+          type: "string"
+          enum:
+          - "NONE"
+          - "REQUIRED"
+          default: "NONE"
+        admitPerSecond:
+          type: "integer"
+          minimum: 1
+          default: 50
+        admitWindowSeconds:
+          type: "integer"
+          minimum: 1
+          default: 120
+    OfferingPatch:
+      type: "object"
+      additionalProperties: false
+      properties:
+        name:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        status:
+          type: "string"
+          enum:
+          - "DRAFT"
+          - "ACTIVE"
+          - "ARCHIVED"
+        durationMin:
+          type: "integer"
+          minimum: 1
+        durationMax:
+          type: "integer"
+          minimum: 1
+        durationStep:
+          type: "integer"
+          minimum: 1
+        slotStep:
+          type: "integer"
+          minimum: 1
+        bufferBefore:
+          type: "integer"
+          minimum: 0
+        bufferAfter:
+          type: "integer"
+          minimum: 0
+        leadTimeSeconds:
+          type: "integer"
+          minimum: 0
+        horizonDays:
+          type: "integer"
+          minimum: 1
+        holdTtlSeconds:
+          type:
+          - "integer"
+          - "null"
+          minimum: 1
+        maxQty:
+          type: "integer"
+          minimum: 1
+        publicShowsRemaining:
+          type: "boolean"
+        queueMode:
+          type: "string"
+          enum:
+          - "NONE"
+          - "REQUIRED"
+        admitPerSecond:
+          type: "integer"
+          minimum: 1
+        admitWindowSeconds:
+          type: "integer"
+          minimum: 1
+    Offering:
+      allOf:
+      - $ref: "#/components/schemas/OfferingCreate"
+      - type: "object"
+        required:
+        - "id"
+        - "status"
+        - "version"
+        - "requirements"
+        - "cancellationWindows"
+        properties:
+          id:
+            type: "string"
+            format: "uuid"
+          status:
+            type: "string"
+            enum:
+            - "DRAFT"
+            - "ACTIVE"
+            - "ARCHIVED"
+          version:
+            type: "integer"
+            minimum: 1
+          requirements:
+            type: "array"
+            items:
+              $ref: "#/components/schemas/Requirement"
+          cancellationWindows:
+            type: "array"
+            items:
+              $ref: "#/components/schemas/CancellationWindow"
+    OfferingPage:
+      type: "object"
+      required:
+      - "data"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Offering"
+        page:
+          $ref: "#/components/schemas/Page"
+    Requirement:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "slotCode"
+      properties:
+        slotCode:
+          type: "string"
+          minLength: 1
+          maxLength: 60
+        resourceId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+        groupId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+    RequirementsReplace:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "requirements"
+      properties:
+        requirements:
+          type: "array"
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/Requirement"
+    Requirements:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "requirements"
+      properties:
+        requirements:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Requirement"
+    CancellationWindowsReplace:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "windows"
+      properties:
+        windows:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CancellationWindow"
+    CancellationWindow:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "minutesBeforeStart"
+      - "code"
+      properties:
+        minutesBeforeStart:
+          type: "integer"
+          minimum: 0
+        code:
+          type: "string"
+          minLength: 1
+          maxLength: 60
+    CancellationWindows:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "windows"
+      properties:
+        windows:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CancellationWindow"
+    AvailabilityPage:
+      type: "object"
+      required:
+      - "data"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/AvailabilitySlot"
+        page:
+          $ref: "#/components/schemas/Page"
+    AvailabilitySlot:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "start"
+      properties:
+        start:
+          type: "string"
+          format: "date-time"
+        end:
+          type: "string"
+          format: "date-time"
+        resourceIds:
+          type: "array"
+          description: "One resource per requirement, in requirement order; present\
+            \ when the caller did not pin a resource."
+          items:
+            type: "string"
+            format: "uuid"
+    QueueCounts:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "waiting"
+      - "admitted"
+      - "used"
+      - "expired"
+      properties:
+        waiting:
+          type: "integer"
+          minimum: 0
+        admitted:
+          type: "integer"
+          minimum: 0
+        used:
+          type: "integer"
+          minimum: 0
+        expired:
+          type: "integer"
+          minimum: 0
+    BlockCreate:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "resourceId"
+      - "reason"
       properties:
         resourceId:
           type: "string"
           format: "uuid"
-        priority:
-          type: "integer"
-          format: "int32"
-    GroupMemberResponse:
+        reason:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        startsAt:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        endsAt:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        rule:
+          type: "array"
+          description: "iCalendar content lines for a recurring block; the block closes\
+            \ what they expand to."
+          items:
+            type: "string"
+    Block:
+      allOf:
+      - $ref: "#/components/schemas/BlockCreate"
+      - type: "object"
+        required:
+        - "id"
+        properties:
+          id:
+            type: "string"
+            format: "uuid"
+    BlockCreated:
       type: "object"
+      additionalProperties: false
+      required:
+      - "block"
+      - "overlappingBookings"
       properties:
-        resourceId:
-          type: "string"
-        priority:
-          type: "integer"
-          format: "int32"
-    GroupResponse:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        code:
-          type: "string"
-        name:
-          type: "string"
-        strategy:
-          type: "string"
-        maxCombine:
-          type: "integer"
-          format: "int32"
-        members:
+        block:
+          $ref: "#/components/schemas/Block"
+        overlappingBookings:
           type: "array"
           items:
-            $ref: "#/components/schemas/GroupMemberResponse"
-        version:
-          type: "integer"
-          format: "int64"
+            type: "string"
+            format: "uuid"
+    BlockPage:
+      type: "object"
+      required:
+      - "data"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Block"
     RecurrencePreviewRequest:
       type: "object"
+      additionalProperties: false
+      required:
+      - "zone"
+      - "dtstart"
+      - "rule"
+      - "from"
+      - "to"
       properties:
         zone:
           type: "string"
         dtstart:
           type: "string"
+          description: "Local wall-clock, no offset."
         rule:
           type: "array"
           items:
@@ -1014,19 +1286,924 @@ components:
         to:
           type: "string"
           format: "date-time"
-    RecurrencePreviewResponse:
+    RecurrencePreview:
       type: "object"
+      additionalProperties: false
+      required:
+      - "instants"
       properties:
         instants:
           type: "array"
           items:
             type: "string"
             format: "date-time"
-    OfferingCreateRequest:
+    SessionSeriesCreate:
       type: "object"
+      additionalProperties: false
+      required:
+      - "offeringId"
+      - "zone"
+      - "dtstart"
+      - "rule"
+      - "durationMinutes"
+      - "capacity"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        zone:
+          type: "string"
+        dtstart:
+          type: "string"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        durationMinutes:
+          type: "integer"
+          minimum: 1
+        capacity:
+          type: "integer"
+          minimum: 1
+        pools:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Pool"
+    SessionSeriesPatch:
+      type: "object"
+      additionalProperties: false
+      properties:
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        durationMinutes:
+          type: "integer"
+          minimum: 1
+        capacity:
+          type: "integer"
+          minimum: 1
+        status:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "ARCHIVED"
+    SessionSeries:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "id"
+      - "offeringId"
+      - "zone"
+      - "dtstart"
+      - "rule"
+      - "durationMinutes"
+      - "capacity"
+      - "version"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        zone:
+          type: "string"
+        dtstart:
+          type: "string"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        durationMinutes:
+          type: "integer"
+        capacity:
+          type: "integer"
+        pools:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Pool"
+        version:
+          type: "integer"
+          minimum: 1
+    SessionSeriesCreated:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "series"
+      - "sessions"
+      - "untouchedSessions"
+      properties:
+        series:
+          $ref: "#/components/schemas/SessionSeries"
+        sessions:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Session"
+        untouchedSessions:
+          type: "array"
+          description: "Future sessions a change left alone because a booking references\
+            \ them."
+          items:
+            type: "string"
+            format: "uuid"
+    SessionSeriesPage:
+      type: "object"
+      required:
+      - "data"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SessionSeries"
+    Session:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "id"
+      - "offeringId"
+      - "startsAt"
+      - "endsAt"
+      - "status"
+      - "capacity"
+      - "pools"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        seriesId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        status:
+          type: "string"
+          enum:
+          - "SCHEDULED"
+          - "CANCELLED"
+        capacity:
+          type: "integer"
+          minimum: 0
+        pools:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Pool"
+    Pool:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "code"
+      - "capacity"
       properties:
         code:
           type: "string"
+          minLength: 1
+          maxLength: 60
+        capacity:
+          type: "integer"
+          minimum: 0
+        remaining:
+          type: "integer"
+          minimum: 0
+          description: "Read-only: free places in this pool."
+    SessionPage:
+      type: "object"
+      required:
+      - "data"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Session"
+        page:
+          $ref: "#/components/schemas/Page"
+    PoolResize:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "pools"
+      properties:
+        pools:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Pool"
+    BookingCreate:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "offeringId"
+      - "customerRef"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        sessionId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+        poolCode:
+          type:
+          - "string"
+          - "null"
+          maxLength: 60
+        qty:
+          type:
+          - "integer"
+          - "null"
+          minimum: 1
+        start:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        durationMinutes:
+          type:
+          - "integer"
+          - "null"
+          minimum: 1
+        resourceId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+        partySize:
+          type:
+          - "integer"
+          - "null"
+          minimum: 1
+    BookingExtend:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "seconds"
+      properties:
+        seconds:
+          type: "integer"
+          minimum: 1
+    BookingReschedule:
+      type: "object"
+      additionalProperties: false
+      properties:
+        sessionId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+        poolCode:
+          type:
+          - "string"
+          - "null"
+          maxLength: 60
+        start:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        durationMinutes:
+          type:
+          - "integer"
+          - "null"
+          minimum: 1
+        resourceId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+    Booking:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "id"
+      - "status"
+      - "offeringId"
+      - "customerRef"
+      - "qty"
+      - "source"
+      - "resources"
+      - "version"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        status:
+          type: "string"
+          enum:
+          - "HELD"
+          - "CONFIRMED"
+          - "CANCELLED"
+          - "EXPIRED"
+          - "NO_SHOW"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        offeringKind:
+          type: "string"
+          enum:
+          - "INTERVAL"
+          - "CAPACITY"
+        customerRef:
+          type: "string"
+        qty:
+          type: "integer"
+          minimum: 1
+        source:
+          type: "string"
+          enum:
+          - "TENANT"
+          - "GATE"
+          - "WAITLIST"
+        sessionId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+        poolCode:
+          type:
+          - "string"
+          - "null"
+        startsAt:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        endsAt:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        resources:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/AssignedResource"
+        seriesId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+        holdExpiresAt:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        extendedSeconds:
+          type: "integer"
+          minimum: 0
+        confirmedAt:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        cancelledAt:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        policyCode:
+          type:
+          - "string"
+          - "null"
+        version:
+          type: "integer"
+          minimum: 1
+    AssignedResource:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "slotCode"
+      - "resourceId"
+      properties:
+        slotCode:
+          type: "string"
+        resourceId:
+          type: "string"
+          format: "uuid"
+    BookingPage:
+      type: "object"
+      required:
+      - "data"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Booking"
+        page:
+          $ref: "#/components/schemas/Page"
+    BookingSeriesCreate:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "offeringId"
+      - "customerRef"
+      - "zone"
+      - "dtstart"
+      - "rule"
+      - "mode"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        zone:
+          type: "string"
+        dtstart:
+          type: "string"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        durationMinutes:
+          type:
+          - "integer"
+          - "null"
+          minimum: 1
+        poolCode:
+          type:
+          - "string"
+          - "null"
+          maxLength: 60
+        mode:
+          type: "string"
+          enum:
+          - "ALL_OR_NOTHING"
+          - "SKIP_CONFLICTS"
+    BookingSeries:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "id"
+      - "offeringId"
+      - "customerRef"
+      - "mode"
+      - "status"
+      - "occurrences"
+      - "version"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        mode:
+          type: "string"
+          enum:
+          - "ALL_OR_NOTHING"
+          - "SKIP_CONFLICTS"
+        status:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "CANCELLED"
+        occurrences:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Booking"
+        skipped:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SkippedOccurrence"
+        version:
+          type: "integer"
+          minimum: 1
+    SkippedOccurrence:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "startsAt"
+      - "reason"
+      properties:
+        startsAt:
+          type: "string"
+          format: "date-time"
+        reason:
+          type: "string"
+          enum:
+          - "slot-taken"
+          - "sold-out"
+          - "outside-open-hours"
+    SeriesConflict:
+      allOf:
+      - $ref: "#/components/schemas/Error"
+      - type: "object"
+        required:
+        - "conflicts"
+        properties:
+          conflicts:
+            type: "array"
+            items:
+              $ref: "#/components/schemas/SkippedOccurrence"
+    BookingSeriesPage:
+      type: "object"
+      required:
+      - "data"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/BookingSeries"
+    WaitlistJoin:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "offeringId"
+      - "customerRef"
+      - "qty"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        qty:
+          type: "integer"
+          minimum: 1
+        sessionId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+        poolCode:
+          type:
+          - "string"
+          - "null"
+          maxLength: 60
+        startsAt:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        endsAt:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        resourceId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+    WaitlistEntry:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "id"
+      - "offeringId"
+      - "customerRef"
+      - "qty"
+      - "status"
+      - "position"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        qty:
+          type: "integer"
+          minimum: 1
+        status:
+          type: "string"
+          enum:
+          - "WAITING"
+          - "OFFERED"
+          - "ACCEPTED"
+          - "LAPSED"
+          - "CANCELLED"
+        position:
+          type: "integer"
+          minimum: 0
+          description: "How many `WAITING` entries are ahead."
+        sessionId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+        poolCode:
+          type:
+          - "string"
+          - "null"
+        startsAt:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        endsAt:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        offeredBookingId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+        offeredUntil:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+        createdAt:
+          type: "string"
+          format: "date-time"
+    WaitlistEntryPage:
+      type: "object"
+      required:
+      - "data"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WaitlistEntry"
+    WebhookEndpointCreate:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "url"
+      - "eventTypes"
+      properties:
+        url:
+          type: "string"
+          format: "uri"
+        eventTypes:
+          type: "array"
+          minItems: 1
+          items:
+            type: "string"
+            enum:
+            - "booking.held"
+            - "booking.confirmed"
+            - "booking.rescheduled"
+            - "booking.cancelled"
+            - "booking.expired"
+            - "booking.no-show"
+            - "waitlist.offered"
+            - "waitlist.lapsed"
+            - "series.created"
+            - "series.cancelled"
+    WebhookEndpointPatch:
+      type: "object"
+      additionalProperties: false
+      properties:
+        url:
+          type: "string"
+          format: "uri"
+        eventTypes:
+          type: "array"
+          items:
+            type: "string"
+        status:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "DISABLED"
+    WebhookEndpoint:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "id"
+      - "url"
+      - "eventTypes"
+      - "status"
+      - "keyId"
+      - "version"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        url:
+          type: "string"
+          format: "uri"
+        eventTypes:
+          type: "array"
+          items:
+            type: "string"
+        status:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "DISABLED"
+        keyId:
+          type: "string"
+        version:
+          type: "integer"
+          minimum: 1
+    WebhookEndpointSecret:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "endpoint"
+      - "secret"
+      properties:
+        endpoint:
+          $ref: "#/components/schemas/WebhookEndpoint"
+        secret:
+          type: "string"
+          description: "Shown once. The whole string, including its prefix, is the\
+            \ HMAC key."
+    WebhookEndpointPage:
+      type: "object"
+      required:
+      - "data"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WebhookEndpoint"
+    Delivery:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "id"
+      - "endpointId"
+      - "eventId"
+      - "eventType"
+      - "status"
+      - "attempts"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        endpointId:
+          type: "string"
+          format: "uuid"
+        eventId:
+          type: "string"
+          format: "uuid"
+        eventType:
+          type: "string"
+        status:
+          type: "string"
+          enum:
+          - "PENDING"
+          - "DELIVERED"
+          - "RETRYING"
+          - "DEAD"
+        attempts:
+          type: "integer"
+          minimum: 0
+        lastStatusCode:
+          type:
+          - "integer"
+          - "null"
+        lastError:
+          type:
+          - "string"
+          - "null"
+        nextAttemptAt:
+          type:
+          - "string"
+          - "null"
+          format: "date-time"
+    DeliveryPage:
+      type: "object"
+      required:
+      - "data"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Delivery"
+    CustomerTokenRequest:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "customerRef"
+      - "scopes"
+      properties:
+        customerRef:
+          type: "string"
+          minLength: 1
+          maxLength: 200
+        scopes:
+          type: "array"
+          minItems: 1
+          items:
+            type: "string"
+            enum:
+            - "browse"
+            - "hold"
+            - "waitlist"
+        offeringId:
+          type:
+          - "string"
+          - "null"
+          format: "uuid"
+        ttlSeconds:
+          type: "integer"
+          minimum: 1
+          maximum: 3600
+    CustomerToken:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "token"
+      - "expiresAt"
+      - "keyId"
+      properties:
+        token:
+          type: "string"
+        expiresAt:
+          type: "string"
+          format: "date-time"
+        keyId:
+          type: "string"
+    Settings:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "holdTtlSeconds"
+      - "maxExtensionSeconds"
+      - "graceSeconds"
+      - "offerWindowSeconds"
+      - "horizonDays"
+      - "tokenTtlCapSeconds"
+      - "rateLimitPerMinute"
+      - "admissionCap"
+      - "waitlistCapPerTarget"
+      properties:
+        holdTtlSeconds:
+          type: "integer"
+          minimum: 1
+        maxExtensionSeconds:
+          type: "integer"
+          minimum: 0
+        graceSeconds:
+          type: "integer"
+          minimum: 0
+        offerWindowSeconds:
+          type: "integer"
+          minimum: 1
+        horizonDays:
+          type: "integer"
+          minimum: 1
+        tokenTtlCapSeconds:
+          type: "integer"
+          minimum: 1
+        rateLimitPerMinute:
+          type: "integer"
+          minimum: 1
+        admissionCap:
+          type: "integer"
+          minimum: 1
+        waitlistCapPerTarget:
+          type: "integer"
+          minimum: 1
+        allowedOrigins:
+          type: "array"
+          items:
+            type: "string"
+    GateSettings:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "allowedOrigins"
+      - "maxTokenTtlSeconds"
+      properties:
+        allowedOrigins:
+          type: "array"
+          maxItems: 20
+          items:
+            type: "string"
+            format: "uri"
+        maxTokenTtlSeconds:
+          type: "integer"
+          minimum: 1
+          maximum: 3600
+    PublicOffering:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "id"
+      - "name"
+      - "kind"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
         name:
           type: "string"
         kind:
@@ -1036,585 +2213,62 @@ components:
           - "CAPACITY"
         durationMin:
           type: "integer"
-          format: "int32"
         durationMax:
           type: "integer"
-          format: "int32"
         durationStep:
           type: "integer"
-          format: "int32"
-        slotStep:
-          type: "integer"
-          format: "int32"
-        bufferBefore:
-          type: "integer"
-          format: "int32"
-        bufferAfter:
-          type: "integer"
-          format: "int32"
-        leadTimeSeconds:
-          type: "integer"
-          format: "int32"
-        horizonDays:
-          type: "integer"
-          format: "int32"
-        holdTtlSeconds:
-          type: "integer"
-          format: "int32"
-        maxQty:
-          type: "integer"
-          format: "int32"
-        publicShowsRemaining:
-          type: "boolean"
-        queueMode:
-          type: "string"
-          enum:
-          - "NONE"
-          - "REQUIRED"
-        admitPerSecond:
-          type: "integer"
-          format: "int32"
-        admitWindowSeconds:
-          type: "integer"
-          format: "int32"
-    OfferingResponse:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        code:
-          type: "string"
-        name:
-          type: "string"
-        kind:
-          type: "string"
-        status:
-          type: "string"
-        durationMin:
-          type: "integer"
-          format: "int32"
-        durationMax:
-          type: "integer"
-          format: "int32"
-        durationStep:
-          type: "integer"
-          format: "int32"
-        slotStep:
-          type: "integer"
-          format: "int32"
-        bufferBefore:
-          type: "integer"
-          format: "int32"
-        bufferAfter:
-          type: "integer"
-          format: "int32"
-        leadTimeSeconds:
-          type: "integer"
-          format: "int32"
-        horizonDays:
-          type: "integer"
-          format: "int32"
-        holdTtlSeconds:
-          type: "integer"
-          format: "int32"
-        maxQty:
-          type: "integer"
-          format: "int32"
-        publicShowsRemaining:
-          type: "boolean"
-        queueMode:
-          type: "string"
-        admitPerSecond:
-          type: "integer"
-          format: "int32"
-        admitWindowSeconds:
-          type: "integer"
-          format: "int32"
-        version:
-          type: "integer"
-          format: "int64"
-        requirements:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/RequirementResponse"
-        cancellationWindows:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/CancellationWindowResponse"
-    IssueTokenRequest:
-      type: "object"
-      properties:
-        customerRef:
-          type: "string"
-        scopes:
-          type: "array"
-          items:
-            type: "string"
-        offeringId:
-          type: "string"
-          format: "uuid"
-        ttlSeconds:
-          type: "integer"
-          format: "int32"
-    CustomerTokenResponse:
-      type: "object"
-      properties:
-        token:
-          type: "string"
-        expiresAt:
-          type: "string"
-          format: "date-time"
-        keyId:
-          type: "string"
-    BookingCreateRequest:
-      type: "object"
-      properties:
-        offeringId:
-          type: "string"
-          format: "uuid"
-        customerRef:
-          type: "string"
-        sessionId:
-          type: "string"
-          format: "uuid"
-        poolCode:
-          type: "string"
-        qty:
-          type: "integer"
-          format: "int32"
-        start:
-          type: "string"
-          format: "date-time"
-        durationMinutes:
-          type: "integer"
-          format: "int32"
-        resourceId:
-          type: "string"
-          format: "uuid"
-        partySize:
-          type: "integer"
-          format: "int32"
-    BookingRescheduleRequest:
-      type: "object"
-      properties:
-        sessionId:
-          type: "string"
-          format: "uuid"
-        poolCode:
-          type: "string"
-        start:
-          type: "string"
-          format: "date-time"
-        durationMinutes:
-          type: "integer"
-          format: "int32"
-        resourceId:
-          type: "string"
-          format: "uuid"
-    BookingExtendRequest:
-      type: "object"
-      properties:
-        seconds:
-          type: "integer"
-          format: "int32"
-    BlockRequest:
-      type: "object"
-      properties:
-        resourceId:
-          type: "string"
-          format: "uuid"
-        reason:
-          type: "string"
-        startsAt:
-          type: "string"
-          format: "date-time"
-        endsAt:
-          type: "string"
-          format: "date-time"
-        rule:
-          type: "array"
-          items:
-            type: "string"
-    BlockCreatedResponse:
-      type: "object"
-      properties:
-        block:
-          $ref: "#/components/schemas/BlockResponse"
-        overlappingBookings:
-          type: "array"
-          items:
-            type: "string"
-            format: "uuid"
-    BlockResponse:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        resourceId:
-          type: "string"
-          format: "uuid"
-        reason:
-          type: "string"
-        startsAt:
-          type: "string"
-          format: "date-time"
-        endsAt:
-          type: "string"
-          format: "date-time"
-        rule:
-          type: "array"
-          items:
-            type: "string"
-    UpdateEndpointRequest:
-      type: "object"
-      properties:
-        url:
-          type: "string"
-        description:
-          type: "string"
-        eventTypes:
-          type: "array"
-          items:
-            type: "string"
-        status:
-          type: "string"
-    SessionSeriesPatchRequest:
-      type: "object"
-      properties:
-        rule:
-          type: "array"
-          items:
-            type: "string"
-        durationMinutes:
-          type: "integer"
-          format: "int32"
-        capacity:
-          type: "integer"
-          format: "int32"
-        status:
-          type: "string"
-          enum:
-          - "ACTIVE"
-          - "ARCHIVED"
-    ResourcePatchRequest:
-      type: "object"
-      properties:
-        name:
-          type: "string"
-        seats:
-          type: "integer"
-          format: "int32"
-        status:
-          type: "string"
-    GroupPatchRequest:
-      type: "object"
-      properties:
-        name:
-          type: "string"
-        strategy:
-          type: "string"
-          enum:
-          - "PRIORITY"
-          - "ROUND_ROBIN"
-          - "LEAST_BUSY"
-          - "FIT_SEATS"
-        maxCombine:
-          type: "integer"
-          format: "int32"
-        members:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/GroupMemberRequest"
-    OfferingPatchRequest:
-      type: "object"
-      properties:
-        name:
-          type: "string"
-        status:
-          type: "string"
-          enum:
-          - "DRAFT"
-          - "ACTIVE"
-          - "ARCHIVED"
-        durationMin:
-          type: "integer"
-          format: "int32"
-        durationMax:
-          type: "integer"
-          format: "int32"
-        durationStep:
-          type: "integer"
-          format: "int32"
-        slotStep:
-          type: "integer"
-          format: "int32"
-        bufferBefore:
-          type: "integer"
-          format: "int32"
-        bufferAfter:
-          type: "integer"
-          format: "int32"
-        leadTimeSeconds:
-          type: "integer"
-          format: "int32"
-        horizonDays:
-          type: "integer"
-          format: "int32"
-        holdTtlSeconds:
-          type: "integer"
-          format: "int32"
-        maxQty:
-          type: "integer"
-          format: "int32"
-        publicShowsRemaining:
-          type: "boolean"
-        queueMode:
-          type: "string"
-          enum:
-          - "NONE"
-          - "REQUIRED"
-        admitPerSecond:
-          type: "integer"
-          format: "int32"
-        admitWindowSeconds:
-          type: "integer"
-          format: "int32"
-    QueueStatusResponse:
-      type: "object"
-      properties:
-        status:
-          type: "string"
-        position:
-          type: "integer"
-          format: "int32"
-        retryAfterSeconds:
-          type: "integer"
-          format: "int32"
-    PublicOffering:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-          format: "uuid"
-        name:
-          type: "string"
-        kind:
-          type: "string"
-        durationMin:
-          type: "integer"
-          format: "int32"
-        durationMax:
-          type: "integer"
-          format: "int32"
-        durationStep:
-          type: "integer"
-          format: "int32"
         remaining:
           type: "integer"
-          format: "int32"
-    PublicAvailability:
+          minimum: 0
+          description: "Only when the offering sets `publicShowsRemaining`."
+    QueueEntryRequest:
       type: "object"
+      additionalProperties: false
+      required:
+      - "offeringId"
       properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/PublicAvailabilitySlot"
-    PublicAvailabilitySlot:
-      type: "object"
-      properties:
-        start:
+        offeringId:
           type: "string"
-          format: "date-time"
-        end:
-          type: "string"
-          format: "date-time"
-        resourceIds:
-          type: "array"
-          items:
-            type: "string"
-            format: "uuid"
-    PageEndpointResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/EndpointResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    PageInfo:
-      type: "object"
-      properties:
-        limit:
-          type: "integer"
-          format: "int32"
-        offset:
-          type:
-          - "integer"
-          - "null"
-          format: "int32"
-        total:
-          type:
-          - "integer"
-          - "null"
-          format: "int64"
-        next_cursor:
+          format: "uuid"
+        sessionId:
           type:
           - "string"
           - "null"
-    PageDeliveryResponse:
+          format: "uuid"
+    QueueTicket:
       type: "object"
+      additionalProperties: false
+      required:
+      - "ticketToken"
+      - "retryAfterSeconds"
       properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/DeliveryResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    WaitlistPage:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/WaitlistEntryResponse"
-    GateTimingView:
-      type: "object"
-      properties:
-        holdTtlSeconds:
-          type: "integer"
-          format: "int64"
-        maxExtensionSeconds:
-          type: "integer"
-          format: "int64"
-        graceSeconds:
-          type: "integer"
-          format: "int64"
-        offerWindowSeconds:
-          type: "integer"
-          format: "int64"
-        horizonDays:
-          type: "integer"
-          format: "int64"
-        tokenTtlCapSeconds:
-          type: "integer"
-          format: "int64"
-        rateLimitPerMinute:
-          type: "integer"
-          format: "int32"
-        admissionCap:
-          type: "integer"
-          format: "int32"
-        waitlistCapPerTarget:
-          type: "integer"
-          format: "int32"
-    PageSessionResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/SessionResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    SessionSeriesPageResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/SessionSeriesResponse"
-    SeriesPage:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/SeriesResponse"
-    PageResourceResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/ResourceResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    ExceptionPageResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/CalendarExceptionResponse"
-    GroupPage:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/GroupResponse"
-    PageOfferingResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/OfferingResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    AvailabilityPage:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/AvailabilitySlotResponse"
-    AvailabilitySlotResponse:
-      type: "object"
-      properties:
-        start:
+        ticketToken:
           type: "string"
-          format: "date-time"
-        end:
+        retryAfterSeconds:
+          type: "integer"
+          minimum: 1
+    QueueStatus:
+      type: "object"
+      additionalProperties: false
+      required:
+      - "status"
+      properties:
+        status:
           type: "string"
-          format: "date-time"
-        resourceIds:
-          type: "array"
-          items:
-            type: "string"
-            format: "uuid"
-    PageBookingResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/BookingResponse"
-        page:
-          oneOf:
-          - $ref: "#/components/schemas/PageInfo"
-          - type: "null"
-    BlockPageResponse:
-      type: "object"
-      properties:
-        data:
-          type: "array"
-          items:
-            $ref: "#/components/schemas/BlockResponse"
-  securitySchemes:
-    oidc:
-      type: "http"
-      description: "A suite token issued by Platform for this tenant"
-      scheme: "bearer"
-      bearerFormat: "JWT"
+          enum:
+          - "WAITING"
+          - "ADMITTED"
+          - "USED"
+          - "EXPIRED"
+          - "LEFT"
+        position:
+          type:
+          - "integer"
+          - "null"
+          minimum: 0
+          description: "An upper bound; ticket numbers are shared across targets."
+        retryAfterSeconds:
+          type:
+          - "integer"
+          - "null"
+          minimum: 1
