@@ -5,9 +5,9 @@ Each service jar runs in one shape. Billing's, Notification's and Email's jars e
 runtime at all. `dev` and `test` start Billing with no profile, which activates `api` and `worker` together — the
 all-in-one behaviour from before the split; production starts one of the profiles below.
 
-Platform and the sample tenant have no such split; each runs as one process and migrates on start. Mailer runs with **no
+Platform has no such split; it runs as one process and migrates on start. Mailer runs with **no
 profile** on a laptop, which leaves Flyway on and creates neither the listener nor the jobs, so a web test can migrate a
-schema without connecting to a broker. Under `docker compose`, Platform and the tenant boot normally, Billing writes its
+schema without connecting to a broker. Under `docker compose`, Platform boots normally, Billing writes its
 schema once through `billing-migrate`, and Billing's `api` and `worker` runtimes and mailer's `worker` connect as their
 unprivileged application roles with Flyway off.
 
@@ -33,7 +33,7 @@ as the unprivileged application role with Flyway switched off, so a rolling star
 ## The suite's processes
 
 `docker compose up` runs one reverse proxy, one PostgreSQL server (one database per service), one RabbitMQ, Keycloak,
-Platform, Billing's api and worker, and the sample tenant. The reverse proxy routes on the Host header only: it adds
+Platform, and Billing's api and worker. The reverse proxy routes on the Host header only: it adds
 no logic, retries nothing and rewrites no body. See [suite-messaging.md](suite-messaging.md) for the broker and
 [platform-service.md](platform-service.md) for Platform's shape.
 
@@ -59,7 +59,6 @@ no logic, retries nothing and rewrites no body. See [suite-messaging.md](suite-m
 | `loyalty-api` (`api`) | The program, tiers, promotions, members, orders and returns, the balance and ledger, redemptions and reversals, rewards and vouchers, and the webhook endpoint management | Its database, Platform (replica snapshots) |
 | `loyalty-worker` (`worker`) | The `loyalty.platform-events` listener, the outbox relay, the webhook delivery round, the expiry run, the expiry notice, the daily tier evaluation and housekeeping; the replica rebuild on start | Its database, the broker, Platform (replica snapshots) |
 | `mailpit` | SMTP on 1025 and an HTTP API/UI on 8025, for local development only | Nothing |
-| `tenant` | Its own HTTP surface, webhook verification, the Platform token provider, the execution worker | Its database, Platform, Billing |
 
 ## What each profile owns
 

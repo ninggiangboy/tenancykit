@@ -196,7 +196,7 @@ names the host a respondent's browser reaches (`SURVEY_S3_PUBLIC_ENDPOINT`), whi
 server uses. At submit the server `HEAD`s each referenced object (the size must equal the declared size and fit the
 question's limit) and reads its first 512 bytes to match magic bytes against the question's allowed types, then marks
 the upload `ATTACHED`. A renamed `.exe` declared as `image/png` fails that check. Object keys are
-`backend/samples/tenant/{tenant_id}/survey/{survey_id}/{upload_id}`; a filename is never used as a key.
+`tenant/{tenant_id}/survey/{survey_id}/{upload_id}`; a filename is never used as a key.
 
 Downloads go only through a presigned GET with `Content-Disposition: attachment`. Pending uploads older than 24 hours
 are deleted, together with their objects, by the worker's housekeeping job. There is no virus scan: that is a

@@ -237,7 +237,7 @@ each route and compares the points it gets.
 - A `customer.events` exchange, and any other app binding to a customer fact. customer's facts leave only as signed webhooks.
 - Matching a customer customer to a Billing customer. The Tenant System owns identity across the suite.
 - Any link between customer and loyalty: no call, no event, no shared table and no shared code.
-- Integrating customer into the sample Tenant System, and migrating existing data from an earlier layout.
+- Migrating existing data from an earlier layout.
 
 ## Documents this app owns
 

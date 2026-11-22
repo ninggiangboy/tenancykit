@@ -1,6 +1,6 @@
 # TenancyKit Documentation
 
-Documentation for the suite: the **Platform** service; the **Billing**, **Notification**, **Mailroom**, **Survey**, **Attribution**, **Booking**, **Customer**, **Loyalty** and **Workflow** apps; the **Mailer** delivery service; the **Sample Tenant System** (a Cloud Resource Management reference tenant); and the **Suite Console** that fronts them. Each backend deployable is independently built and deployed. It is written for people and AI collaborators who need to know what the systems must do, why they are shaped this way, and where each rule is owned.
+Documentation for the suite: the **Platform** service; the **Billing**, **Notification**, **Mailroom**, **Survey**, **Attribution**, **Booking**, **Customer**, **Loyalty** and **Workflow** apps; the **Mailer** delivery service; and the **Suite Console** that fronts them. Each backend deployable is independently built and deployed. It is written for people and AI collaborators who need to know what the systems must do, why they are shaped this way, and where each rule is owned.
 
 For how to build, run and verify the repository, start with the [root README](../README.md). This index covers what the systems are and why.
 
@@ -40,7 +40,6 @@ For how to build, run and verify the repository, start with the [root README](..
 | [billing-session-and-portal.md](billing-session-and-portal.md) | Billing Session and the Customer Portal |
 | [webhooks-and-events.md](webhooks-and-events.md) | Tenant System to Billing and Billing to Tenant System integration |
 | [list-query-contract.md](list-query-contract.md) | The one filter, sort and paging contract every list endpoint follows, and how a resource declares it |
-| [tenant-system.md](tenant-system.md) | The reference tenant, its scenarios and the Platform token flow |
 | [security-and-reliability.md](security-and-reliability.md) | Security and operational requirements: token checks, broker users, DLQ runbook, key rotation |
 | [concurrency-and-locking.md](concurrency-and-locking.md) | Lock order, coordination transactions, and the lock safety net |
 | [runtime-profiles.md](runtime-profiles.md) | Which profile runs jobs and listeners, pools, probes and rollout order |

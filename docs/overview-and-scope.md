@@ -4,7 +4,7 @@
 
 The repository is the foundation of a multi-tenant SaaS suite: one **Platform** owns identity, tenancy, access and
 app entitlement, and every **app** of the suite owns its own business data and enforces the access it was granted.
-Billing is the first app; the sample tenant is a complete integration reference. Many Tenants share the one Platform
+Billing is the first app. Many Tenants share the one Platform
 while keeping independent data, accounts, integration configuration and billing operations.
 
 The goal is that a new business app (Customer, HR, …) joins the suite by adding a build, a permission catalog, an
@@ -23,7 +23,6 @@ The goal is that a new business app (Customer, HR, …) joins the suite by addin
 | **Booking** (`backend/services/booking/`) | A Tenant's bookable time and places: resources with a zone and weekly hours, exceptions, groups, interval and capacity offerings, repeating sessions, holds, confirmations, reschedules, series, a waitlist and a waiting room, and the signed webhooks a Tenant acts on. Two inventory engines behind one `Booking` lifecycle; the public gate lets a Tenant's own customers browse, hold and join a waitlist with a short-lived customer token and never confirm. It keeps the Platform replica, stores no money and no personal data, declares no exchange and calls no app | `<tenant-code>.<base-domain>` through the `/booking` prefix; `/booking/p/*` is public for a Tenant's customers |
 | **Customer** (`backend/services/customer/`) | A Tenant's own customers: the people it sells to, the orders with their line items and the returns against them, the activities on a customer's timeline, its own custom fields, tags and consent topics, the 360 profile, search, filters and a CSV export. It keeps the Platform replica, declares no exchange, reads no other app's data and sends four signed webhooks (`customer.created`, `order.recorded`, `order.refunded`, `customer.erased`); erasure is its own idempotent endpoint | `<tenant-code>.<base-domain>` through the `/customer` prefix; there is no public surface |
 | **Loyalty** (`backend/services/loyalty/`) | A Tenant's points program: one program per Tenant with its currency, expiry and tier window, the ordered tiers, the promotions that multiply points, the members, the lot-based points ledger with its debt, redemption and its reversal, point expiry with an advance notice, the rewards catalog and single-use vouchers, and twelve signed webhooks of every change to a member's points, tier and vouchers. It keeps the Platform replica, takes orders through its own API, declares no exchange and calls no app | `<tenant-code>.<base-domain>` through the `/loyalty` prefix; there is no public surface |
-| **Sample Tenant System** (`backend/samples/tenant/`) | Its own users, catalog, orders, usage and the policy it applies to Billing's state changes. It proves the integration and deploys without Billing | its own host |
 | **Workflow** (`backend/services/workflow/`) | A Tenant's workflow definitions and their immutable published versions, the durable engine that runs them, the instances, the human tasks, the external connections, the triggers and the signed events it emits. It keeps the Platform replica and acts as the Tenant's own system: it calls apps by their public API with a Tenant-owned credential and receives their signed webhooks as triggers | `<tenant-code>.<base-domain>` through the `/workflow` prefix; `/workflow/hooks/*` is public for the signed triggers |
 
 `backend/services/notification/` is the suite's app for **notifying the suite's own users** about platform-side state changes. It
@@ -197,18 +196,10 @@ usage-based, workload-based, event-based, subscription and hybrid; both Prepaid 
 - Stores connection secrets encrypted with a key outside the database and write-only through the API, and records only
   redacted requests and responses.
 
-**Sample Tenant System**
-- Manages its own users, business roles and permissions.
-- Manages Customers and their mapping to Billing Customers.
-- Owns resources, orders, execution, the resource lifecycle, the execution queue and background workloads.
-- Exchanges its Platform client credentials for a suite token and calls Billing with it.
-- Decides whether to execute, renew, suspend or stop the service, and defines its own policy for Billing state
-  changes.
-
 **Division rules**
 - Keycloak authenticates; Platform authorizes; apps only enforce.
 - No shared database. Shared code lives only in `backend/libs/core/`; contracts live in `contracts/`.
-- An app never operates on another app's resources; the sample tenant controls its own resource lifecycle.
+- An app never operates on another app's resources; a Tenant System controls its own resource lifecycle.
 - Billing publishes state and results through API, Events and Webhooks. It never imposes actions on the Tenant
   System, which decides its own next step.
 - Stripe processes payment transactions; Billing synchronizes status and updates the financial ledger.

@@ -6,7 +6,6 @@
 flowchart LR
     subgraph TENANTS["Tenants"]
         EXTAPP["External Tenant System"]
-        RM["Sample Tenant System<br/>resources, orders, usage"]
     end
 
     subgraph PLATFORM["Platform service"]
@@ -36,8 +35,6 @@ flowchart LR
     end
 
     EXTAPP -->|"suite token, aud=billing"| BAPI
-    RM -->|"suite token, aud=billing"| BAPI
-    RM -->|"client credentials"| PTOK
     EXTAPP -->|"client credentials"| PTOK
 
     PAPI --> PALOGIN
@@ -62,7 +59,6 @@ flowchart LR
     BREP --> BDB
     BEVT --> MQ
 
-    BCTX -. "signed webhooks" .-> RM
     BCTX -. "signed webhooks" .-> EXTAPP
     BCTX -->|"Stripe"| STRIPE["Stripe"]
 ```
@@ -77,7 +73,7 @@ see [payments-and-stripe.md](payments-and-stripe.md) and [webhooks-and-events.md
 | Area | Decision | Why |
 |---|---|---|
 | Deployment shape | A Platform service plus one or more apps (Billing first) and any tenant systems, each a separate build, database and process. They meet only through signed tokens, RabbitMQ events and the snapshot API; at build time they share one technical core, `backend/libs/core/`, and the documents in `contracts/` | Platform owns tenancy, identity and access; an app owns its data and enforces what Platform granted; a new app joins without touching the others |
-| Backend | Java with Spring Boot, DDD and Clean Architecture, built as a Gradle multi-module project; used for both Billing and the Sample Tenant System | Chosen by the project owner |
+| Backend | Java with Spring Boot, DDD and Clean Architecture, built as a Gradle multi-module project; used for every deployable service | Chosen by the project owner |
 | Backend shape | Modular monolith per system, with Gradle modules as bounded-context boundaries | Wallet, Ledger and the outbox must change in one ACID transaction on one database |
 | Backend layering | A bounded context is a Gradle module with `api`, `domain`, `application` and `adapter` source sets. `domain`, `application` and `adapter` group packages by feature first and then by role, in every context, including one with a single feature (`customer.application.customer.command`); no class sits in a layer-root or feature-root package. In `application` the roles are `command` (only `*UseCase` classes), `query`, `port` (interfaces and their data carriers), `service` (collaborators and settings that use cases share, and the `<Interface>Service` that implements an `api` interface for other contexts) and `exception`. In `adapter` the roles are technologies: `adapter.<feature>.<technology>` with `persistence`, `web`, `messaging` and the packages of an external system (`provider`, `keycloak`, `http`, `crypto`, `json`); a feature's write and read repositories share its `persistence` package and each feature has its own controller. `api` is the one exception: its packages are named for the capability a caller uses (`lookup`, `invoice`, `wallet`), not for a feature. Tests mirror the production packages, which the `tests-mirror-production-packages` rule in `core-arch` enforces in every service. Both systems follow this shape; the convention lives in each build's `build-logic/` | Keeps the module boundary above the framework, gives every package one job and every kind of class one home, and lets the build enforce the shape |
 | Inner layers | `domain` and `application` are plain Java: no Spring, JPA or Jackson; persistence types stay in the adapter | Business rules stay independent of the framework, and the rule can be enforced mechanically |
@@ -85,17 +81,17 @@ see [payments-and-stripe.md](payments-and-stripe.md) and [webhooks-and-events.md
 | Transaction boundary | An application-owned `UnitOfWork` port in `core-kernel` that use cases wrap themselves. Its Spring implementation, `SpringUnitOfWork` in `core-spring`, takes a `TransactionScopeHook` that runs first in every new transaction and rejects a nested unit of work from another scope. Billing plugs in the hook that sets `app.tenant_id` for row-level security; the sample plugs in none | Money keeps one ACID transaction while the application layer never sees `@Transactional` |
 | Cross-context calls | Synchronous in-process only on the money path, through each context's public `api` package; other flows use domain events through the outbox | Money needs one transaction; the rest can stay decoupled without weakening the ledger |
 | Discounts | `money` owns a discount port, `ChargeDiscounts` (`preview`, `claim`, `consume`), in its `api` source set, implemented by the `coupon` context, so `money` depends on nothing in `coupon` | A discount applies in the one place every charge already passes through, so pricing, the ledger, invoices and replay keep their meaning. Rejected: a discount at the invoice (a Charge and its ledger entry would disagree, and a Prepaid wallet would show the wrong balance); a discount inside `pricing` (usage rating and renewal would each need their own copy, and a standalone or reservation charge has no plan to price against); one apply per caller (four call sites drift, which is the bug the seam exists to prevent); Stripe-side coupons (they would not reach a Prepaid wallet, a reservation or a usage charge, and would put a Tenant's promotion inside Stripe) |
-| Boundary enforcement | Gradle classpath rules first, then ArchUnit and Spring Modulith in the build. Each module declares `api`, `domain`, `application` and `adapter` as Gradle source sets with different classpaths (`api` sees only the kernel and the core, `domain` adds `api`, and so on), so a framework import in the inner layers, or a domain type in the contract, fails to compile. Modulith discovers modules across Gradle modules by their shared root package and treats a sub-package as internal, so a module's `api` package is exposed to it by a `package-info.java` in the `adapter` source set, which keeps the framework annotation out of the plain-Java layers | A violation must fail the build, not depend on review discipline. The convention lives in each build's `build-logic/` (`backend/services/billing/build-logic/`, `backend/samples/tenant/build-logic/`) |
+| Boundary enforcement | Gradle classpath rules first, then ArchUnit and Spring Modulith in the build. Each module declares `api`, `domain`, `application` and `adapter` as Gradle source sets with different classpaths (`api` sees only the kernel and the core, `domain` adds `api`, and so on), so a framework import in the inner layers, or a domain type in the contract, fails to compile. Modulith discovers modules across Gradle modules by their shared root package and treats a sub-package as internal, so a module's `api` package is exposed to it by a `package-info.java` in the `adapter` source set, which keeps the framework annotation out of the plain-Java layers | A violation must fail the build, not depend on review discipline. The convention lives in each build's `build-logic/` (for example `backend/services/billing/build-logic/`) |
 | Pattern scope | Tactical DDD with in-process CQRS: a command side (use cases, aggregates, write ports, jOOQ persistence) and a query side (immutable views, read ports, direct SQL projections) over the same database and the same tenant-scoped transaction. No event sourcing, command/query bus, asynchronous projections or separate read store. | Reads stay immediately consistent without a second consistency model; the split keeps a read from driving a write while leaving the money path in one transaction |
-| DDD base types | `AggregateRoot`, `Entity` and `ValueObject` stay in `core-kernel` unchanged, and are adopted by exactly two aggregates: Platform's `TenantSystem` (`backend/services/platform/contexts/integration`) and the sample tenant system's `WebhookEvent` (`backend/samples/tenant/contexts/webhook`). No production code calls `AggregateRoot.register` or `pullEvents` — one domain test asserts `pullEvents()` is empty — so every aggregate that announces a change does it through an injected `EventPublisher`. Every other aggregate (Billing's `Wallet`, `Charge`, `Reservation`, `Customer`, `Payment`, `Refund`, `Subscription`, the sample's own …) is a plain class with a static factory and a restore factory and extends no base type. No further adoption and no deletion | The base types are the documented option for an aggregate that must hold its own events until its caller takes them out, and nothing needed it; deleting them would churn code without changing behaviour. The plain class plus `EventPublisher` is the convention a new aggregate follows, and this row records that decision so the two adopters are not read as the norm |
-| Frontend | React, Vite and TanStack (Router and Query) in one monorepo of separate apps with shared packages: Platform Admin, Tenant Admin, Customer Portal and Sample Tenant UI | **Delivered as the Suite Console** in `frontend/`: two shells split by hostname (Platform and Tenant), every UI a Module Federation remote behind a registry in Platform, shared packages for the shell contract, auth, the design system and the generated client. v1 ships `remote-platform` and `remote-billing`; the other apps' UIs and the Customer Portal stay out of scope. The TanStack decision stands. See [console.md](console.md) |
+| DDD base types | `AggregateRoot`, `Entity` and `ValueObject` stay in `core-kernel` unchanged, and are adopted by exactly one aggregate: Platform's `TenantSystem` (`backend/services/platform/contexts/integration`). No production code calls `AggregateRoot.register` or `pullEvents` — one domain test asserts `pullEvents()` is empty — so every aggregate that announces a change does it through an injected `EventPublisher`. Every other aggregate (Billing's `Wallet`, `Charge`, `Reservation`, `Customer`, `Payment`, `Refund`, `Subscription`) is a plain class with a static factory and a restore factory and extends no base type. No further adoption and no deletion | The base types are the documented option for an aggregate that must hold its own events until its caller takes them out, and nothing needed it; deleting them would churn code without changing behaviour. The plain class plus `EventPublisher` is the convention a new aggregate follows, and this row records that decision so the one adopter is not read as the norm |
+| Frontend | React, Vite and TanStack (Router and Query) in one monorepo of separate apps with shared packages: Platform Admin, Tenant Admin and Customer Portal | **Delivered as the Suite Console** in `frontend/`: two shells split by hostname (Platform and Tenant), every UI a Module Federation remote behind a registry in Platform, shared packages for the shell contract, auth, the design system and the generated client. v1 ships `remote-platform` and `remote-billing`; the other apps' UIs and the Customer Portal stay out of scope. The TanStack decision stands. See [console.md](console.md) |
 | Data isolation | One database per service (owner role + unprivileged app role, `revoke connect` from public). Within a service: shared schema, `tenant_id` on tenant-scoped tables, composite foreign keys and PostgreSQL Row-Level Security. Cross-service data reaches an app only as a replica it owns | A leaked query cannot reach another service's database, and the replica keeps the foreign keys and RLS that already governed the data. See [multi-tenancy-and-data-isolation.md](multi-tenancy-and-data-isolation.md) |
 | Identity and authorization | One shared Keycloak realm for authentication. Platform owns users, roles, permission catalogs, assignments and app entitlement, and issues the suite's tokens. Apps enforce from a replica of that data | One authority for access, so a new app declares its codes and enforces them without its own identity model. See [authentication-and-authorization.md](authentication-and-authorization.md) |
 | Tenant System authentication | Platform-issued client credentials exchanged at `POST /oauth/token` for a 10-minute suite token (`aud` = one app, `scope` = that app's granted codes). HMAC-SHA256 only for outbound webhooks | Tenant Systems self-serve outside the Platform's identity provider, and short-lived tokens limit the blast radius of a leaked secret while one authority (Platform) mints every credential |
 | Stripe Connect money flow | Direct charges: the charge is created on the Tenant's connected account, so the Tenant bears fees, refunds and disputes | The specification defers this choice. Direct charges match the rules that each Tenant owns its Stripe account and its data and money stay isolated |
 | Platform data | The Platform owns its own data (administrators, roles, audit entries) as a reserved tenant, so platform-level rows use the same Row-Level Security template and composite foreign keys as every Tenant | Avoids a second isolation model with nullable tenant columns; a Platform-scope request still cannot read another Tenant's rows |
 | Keycloak login identifier | The username `{tenant-code}:{email}`, with duplicate emails allowed in the Realm and a `tenant_code` token claim checked against the hostname | See [authentication-and-authorization.md](authentication-and-authorization.md). Needs no Keycloak extension |
-| Repository layout | One repository with `backend/services/platform/`, `backend/services/billing/`, the other apps, `backend/samples/tenant/`, `backend/libs/core/`, `frontend/`, `contracts/` and `ops/`; `frontend/` is the Suite Console monorepo and the console itself is served at `/console/` on every host | `backend/` groups the three kinds of Gradle build: `services/` are deployable products, `libs/` is the shared technical core, and `samples/` is a reference Tenant System that proves the integration. Keeps the suite and all frontends together while they deploy separately; `contracts/` holds the documents they share (OpenAPI, event schemas, permission catalogs, the token claim list), never code, and the only code they share is the technical `backend/libs/core/` |
+| Repository layout | One repository with `backend/services/platform/`, `backend/services/billing/`, the other apps, `backend/libs/core/`, `frontend/`, `contracts/` and `ops/`; `frontend/` is the Suite Console monorepo and the console itself is served at `/console/` on every host | `backend/` groups the two kinds of Gradle build: `services/` are deployable products and `libs/` is the shared technical core. Keeps the suite and all frontends together while they deploy separately; `contracts/` holds the documents they share (OpenAPI, event schemas, permission catalogs, the token claim list), never code, and the only code they share is the technical `backend/libs/core/` |
 | Runtime shape | One jar with `api`, `worker` and `migrate` Spring profiles; `spring.profiles.default` activates `api` and `worker` together for dev and test, and each profile file applies only to a runtime that runs alone | The HTTP edge scales independently of background work, heavy singleton jobs get a lease instead of a second scheduler, and Flyway runs as one step rather than racing a rolling start. See [runtime-profiles.md](runtime-profiles.md) |
 | Ledger and wallet model | Append-only, single-entry Ledger per wallet; the balance is a projection verified by a rebuild job; corrections are reversal entries. A wallet holds one immutable currency, so multi-currency means multiple wallets | The Ledger is the financial source of truth, and recovering from a mistake must not rewrite history; single-entry is enough because the system has no internal account transfers. Details in [wallet-ledger-and-charging.md](wallet-ledger-and-charging.md) |
 | Platform service | Tenancy, users and RBAC, entitlement, Tenant Systems, credentials and token issuance move out of Billing into a `backend/services/platform/` build | Two responsibilities with different lifecycles: identity and access belong to the suite, not to one app, and every app then enforces the same authorities |
@@ -260,7 +256,7 @@ makes the balance safe under parallel redemptions; a voucher use locks only the 
 
 **The shared core** sits next to the services, in `backend/libs/core/`. It is its own Gradle build that
 `backend/services/platform/`, `backend/services/billing/`, `backend/services/notification/`, `backend/services/mailer/`,
-`backend/services/mailroom/`, `backend/services/survey/` and `backend/samples/tenant/` include with
+`backend/services/mailroom/` and `backend/services/survey/` include with
 `includeBuild("../../libs/core")`:
 
 | Module | Holds |
@@ -286,7 +282,7 @@ source set. `backend/libs/core/build-logic` keeps its own copy of the `java-conv
 
 Decisions:
 
-- The Java root packages are `dev.ngb.platform`, `dev.ngb.billing` and `dev.ngb.tenant`; each build's Modulith
+- The Java root packages are `dev.ngb.platform` and `dev.ngb.billing` (and one per other service); each build's Modulith
   discovers its modules by that root. The Gradle group is `dev.ngb` everywhere; the core is found by its coordinates
   (`dev.ngb:core-kernel`, `dev.ngb:core-spring`, `dev.ngb:core-messaging`, `dev.ngb:core-replica`,
   `dev.ngb:core-platform-sync`, `dev.ngb:core-suite`, `dev.ngb:core-feign`, `dev.ngb:core-arch`).
@@ -299,8 +295,7 @@ Decisions:
   of one service. It takes `TenantId` and `TenantSystemId` because every service is multi-tenant and the events carry
   them; `Money`, `CustomerId` and `WalletId` stay in the service that owns them.
 - The DDD base types in `core-kernel` (`AggregateRoot`, `Entity`, `ValueObject`) stay as they are and are adopted by
-  exactly two aggregates: `TenantSystem` in `backend/services/platform/contexts/integration` and `WebhookEvent` in
-  `backend/samples/tenant/contexts/webhook`. Nothing calls `AggregateRoot.register` or `pullEvents` in production, so an aggregate
+  exactly one aggregate: `TenantSystem` in `backend/services/platform/contexts/integration`. Nothing calls `AggregateRoot.register` or `pullEvents` in production, so an aggregate
   announces a change through the injected `EventPublisher` it is given, and every other aggregate is a plain class
   with a static factory and a restore factory. Keep that direction: a new aggregate is a plain class, and the base
   types are for an aggregate that must hold its own events until its caller takes them out.
@@ -314,18 +309,16 @@ Decisions:
   are the documented exception: their read models carry the context's domain vocabulary (status enums, money) and the
   pricing api, so moving them behind `api` would either leak the domain into the contract or make the contract layer
   see another module. Their read side stays in `application...query` until the read model is reshaped for its callers.
-  `backend/services/platform/contexts/access`, `backend/services/platform/contexts/integration`, `backend/samples/tenant/contexts/execution` and `backend/samples/tenant/contexts/webhook`
+  `backend/services/platform/contexts/access` and `backend/services/platform/contexts/integration`
   were moved in phase 7 of the refactor review.
 - The architecture rule set itself is shared: `core-arch` holds the generic rules parameterised by each service's
   profile (root package, context or module, kernel, generated jOOQ package, table owners, allowed query domain types,
-  the packages persistence may appear in, and the two dated allowlists below), and every service runs those rule ids
+  the packages persistence may appear in, and the dated allowlist below), and every service runs those rule ids
   plus its own documented extras. `ArchitectureMetaTest` in each service proves each rule still fails on its fixture
   in `testing/arch-fixtures`, so a rule cannot be weakened or removed from one service alone.
-- Two dated allowlists exist in phase 7, both with a 2026-01-31 follow-up: Platform's `ResolveHostUseCase` reads
+- One dated allowlist exists in phase 7, with a 2026-01-31 follow-up: Platform's `ResolveHostUseCase` reads
   through the tenancy read side while it moves onto a port of its own
-  (`write-side-does-not-depend-on-query`), and the sample tenant system's seven use cases that do not open a unit of
-  work while they are wrapped or recorded as read-only (`use-case-opens-a-unit-of-work`). Both are named on the
-  service's `ArchitectureRules` profile.
+  (`write-side-does-not-depend-on-query`). It is named on the service's `ArchitectureRules` profile.
 
 ## Text conventions
 

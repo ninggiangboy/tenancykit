@@ -44,8 +44,8 @@ replica lag therefore delays enforcement, not isolation: a tenant that Platform 
 still reachable until the consumer catches up, and `tenant_systems.status` is re-checked on every request so a
 disabled system stops working at once.
 
-Billing is the only app that keeps a replica. The sample tenant system holds none: its users, roles and sessions are
-its own, and it reaches Billing with a Platform-issued suite token instead of enforcing Platform's grants.
+Billing is the only app that keeps a replica. A Tenant System holds none: its users, roles and sessions are its own,
+and it reaches Billing with a Platform-issued suite token instead of enforcing Platform's grants.
 
 ## Tenant resolution and domains
 

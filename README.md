@@ -2,8 +2,8 @@
 
 TenancyKit is a multi-tenant SaaS suite. One **Platform** service owns identity, tenancy, access and app entitlement.
 Every **app** of the suite (Billing, Notification, Mailroom, Survey, Attribution, Booking, Customer, Loyalty, Workflow)
-owns its own business data in its own database and enforces the access Platform granted it. A **Sample Tenant System**
-proves that an outside system can integrate with the suite using only REST, signed tokens and signed webhooks.
+owns its own business data in its own database and enforces the access Platform granted it. An outside system
+integrates with the suite using only REST, signed tokens and signed webhooks.
 
 Many Tenants share the one Platform while keeping independent data, users, integration configuration and billing
 operations. A new business app joins the suite by adding a build, a permission catalog, an app code and a proxy route;
@@ -50,7 +50,6 @@ build and verify it.
 | **Customer** | `backend/services/customer/` | A Tenant's own customers, orders and returns, activities, custom fields, tags, consent, the 360 profile, search, CSV export, four signed webhooks | `/customer/*`; no public surface |
 | **Loyalty** | `backend/services/loyalty/` | A points program: tiers, promotions, members, the lot-based points ledger, redemption and reversal, expiry, rewards and vouchers, twelve signed webhooks | `/loyalty/*`; no public surface |
 | **Workflow** | `backend/services/workflow/` | Versioned JSON workflows, the durable engine, instances, human tasks, connections, triggers and signed events; acts as the Tenant's own system | `/workflow/*`; `/workflow/hooks/*` is public for signed triggers |
-| **Sample Tenant System** | `backend/samples/tenant/` | A Cloud Resource Management reference tenant: users, catalog, orders, usage, and the policy it applies to Billing's state changes | Its own host |
 | **Suite Console** | `frontend/` | The web UI: two shells (Platform, Tenant) and every app UI as a Module Federation remote | `/console/` on every host |
 
 Each deployable is a separate Gradle build (or pnpm workspace), with its own database, its own database roles and its
@@ -133,7 +132,6 @@ backend/
   libs/core/            the shared technical core (the only code services share)
   services/<name>/      deployable products: platform, billing, mailer, notification, mailroom,
                         survey, attribution, booking, customer, loyalty, workflow
-  samples/tenant/       the reference Tenant System
 frontend/               the Suite Console: pnpm + Turborepo monorepo
 contracts/              OpenAPI, event schemas, commands, permission catalogs, token claims, test vectors
 ops/                    local runtime scripts, proxy config, Terraform for AWS
@@ -145,9 +143,8 @@ Makefile                shortcuts for the local runtime (`make help`)
 .github/workflows/      one workflow per build, plus the end-to-end gate
 ```
 
-`backend/` separates three kinds of Gradle build: `services/` are deployable products, `libs/` is the shared technical
-core, and `samples/` is a reference Tenant System. Only `services/` and `samples/` are deployed, and each is its own
-Gradle build with its own wrapper.
+`backend/` separates two kinds of Gradle build: `services/` are deployable products and `libs/` is the shared technical
+core. Only `services/` are deployed, and each is its own Gradle build with its own wrapper.
 
 ### The shared core: `backend/libs/core/`
 
@@ -178,7 +175,7 @@ project path follows its directory:
 | Directory | Contents |
 |---|---|
 | `contexts/` | The service's bounded contexts (see the table below) |
-| `libs/` | `shared-kernel` (the service's value objects; `shared-core` in the sample tenant) and `jooq-schema` |
+| `libs/` | `shared-kernel` (the service's value objects) and `jooq-schema` |
 | `apps/` | `app-boot`, which wires the contexts and holds the Flyway migrations |
 | `testing/` | `arch-fixtures`, the deliberately violating classes the architecture rules are tested against |
 | `build-logic/` | The convention plugins that declare the layers and run the gates |
@@ -198,7 +195,6 @@ Contexts per service:
 | customer | `activity`, `customers`, `orders`, `platform`, `profile`, `webhook` |
 | loyalty | `platform`, `points`, `program`, `rewards`, `tiers`, `webhook` |
 | workflow | `connections`, `definitions`, `platform`, `runtime`, `tasks`, `triggers`, `webhook` |
-| samples/tenant | `billing-client`, `catalog`, `customer`, `execution`, `identity`, `resource`, `usage`, `webhook` |
 
 The `platform` context in each app is its replica of the Platform data it enforces.
 
@@ -228,7 +224,7 @@ One jar runs in one shape, chosen by Spring profile:
 | `migrate` | Nothing | Flyway as the table owner, then exits |
 | none (dev and test) | `api` and `worker` together | yes |
 
-Platform and the sample tenant run as one process and migrate on start; Mailer has no `api` runtime. Deploy in the
+Platform runs as one process and migrates on start; Mailer has no `api` runtime. Deploy in the
 order `migrate`, `api`, `worker`. See [docs/runtime-profiles.md](docs/runtime-profiles.md).
 
 ## Technology
@@ -275,7 +271,7 @@ make console     # builds the console and publishes its shells and remotes into 
    every placeholder with a fresh random value and every service-client hash with the SHA-256 of its secret. When
    `.env` exists it only **appends** variables `.env.example` gained since and never changes a value you have.
 2. It then runs `docker compose up -d --build --wait` for Caddy and its dependency chain: the `api` runtimes of
-   Platform, Billing, Notification, Mailroom, Customer and Loyalty, the sample tenant and the console's static server,
+   Platform, Billing, Notification, Mailroom, Customer and Loyalty, and the console's static server,
    with PostgreSQL, RabbitMQ, Keycloak and each migrate step behind them. Every service has a health check and starts
    only after what it depends on is healthy. This is enough to sign in and use the console. It does **not** start the
    `worker` runtimes (`billing-worker`, `notification-worker`, `mailroom-worker`, `customer-worker`,
@@ -387,7 +383,7 @@ Billing reads `<tenant-code>.<base-domain>` from the same Host to pick the tenan
 
 ### Startup order and migrations
 
-Platform and the sample tenant migrate on start. Every other service writes its schema once through its
+Platform migrates on start. Every other service writes its schema once through its
 `<service>-migrate` step (Flyway as the table owner), and its `api` and `worker` runtimes connect as the unprivileged
 application role with Flyway off. `ops/postgres/init/00-databases.sh` creates each database with its owner and app
 roles and revokes `connect` from public, so one service's role cannot open another's database.
@@ -428,7 +424,6 @@ Host ports published by `docker compose`:
 | 8080 | Billing |
 | 8081 | Keycloak (realm `tenancykit`; admin user and password from `.env`) |
 | 8082 | Platform |
-| 8083 | Sample tenant |
 | 8084 | Mailer (actuator probe) |
 | 8085 | Notification |
 | 8086 | Mailroom |
@@ -450,7 +445,7 @@ Tenant Shell 5175, remote-billing 5176.
 ## Configuration
 
 `.env` is the only place for secrets and is ignored by git. `.env.example` documents every variable by section:
-Platform, one block per app, Console, Keycloak, RabbitMQ and the sample tenant. The patterns that repeat:
+Platform, one block per app, Console, Keycloak and RabbitMQ. The patterns that repeat:
 
 - **Database roles.** `<SERVICE>_MIGRATION_DB_PASSWORD` is the table owner Flyway uses; `<SERVICE>_DB_PASSWORD` is the
   unprivileged role the service runs as.
@@ -488,7 +483,6 @@ cd backend/services/booking && ./gradlew build
 cd backend/services/customer && ./gradlew build
 cd backend/services/loyalty && ./gradlew build
 cd backend/services/workflow && ./gradlew build
-cd backend/samples/tenant && ./gradlew build
 ```
 
 `./gradlew check` in a service runs the unit and integration tests together with the gates that keep the architecture
@@ -671,7 +665,7 @@ and `PUBLIC_DOMAIN` and an S3 state backend.
 | Messaging, replicas, dead letters | [docs/suite-messaging.md](docs/suite-messaging.md) |
 | Authentication and RBAC | [docs/authentication-and-authorization.md](docs/authentication-and-authorization.md) |
 | The money path | [docs/wallet-ledger-and-charging.md](docs/wallet-ledger-and-charging.md), [docs/pricing-and-usage.md](docs/pricing-and-usage.md), [docs/invoicing-and-subscriptions.md](docs/invoicing-and-subscriptions.md), [docs/payments-and-stripe.md](docs/payments-and-stripe.md) |
-| Integrating a Tenant System | [docs/tenant-system.md](docs/tenant-system.md), [docs/webhooks-and-events.md](docs/webhooks-and-events.md) |
+| Integrating a Tenant System | [docs/authentication-and-authorization.md](docs/authentication-and-authorization.md), [docs/webhooks-and-events.md](docs/webhooks-and-events.md) |
 | An individual app | [docs/mailer.md](docs/mailer.md), [notification](docs/notification.md), [mailroom](docs/mailroom.md), [survey](docs/survey.md), [attribution](docs/attribution.md), [booking](docs/booking.md), [customer](docs/customer.md), [loyalty](docs/loyalty.md), [workflow](docs/workflow.md) |
 | Locking, runtime profiles, security | [docs/concurrency-and-locking.md](docs/concurrency-and-locking.md), [docs/runtime-profiles.md](docs/runtime-profiles.md), [docs/security-and-reliability.md](docs/security-and-reliability.md) |
 | The list endpoint contract | [docs/list-query-contract.md](docs/list-query-contract.md) |
