@@ -8,6 +8,8 @@ import dev.ngb.notification.dispatch.application.notification.command.MarkNotifi
 import dev.ngb.notification.dispatch.application.notification.query.ListNotificationsQuery;
 import dev.ngb.notification.dispatch.application.notification.query.NotificationListing;
 import dev.ngb.notification.dispatch.application.notification.query.NotificationView;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** The caller's own inbox. The user comes from the token; another user's id is a 404 by construction. */
+@Tag(
+        name = "Notification inbox",
+        description =
+                "The caller's own in-app inbox: list, mark one read, mark all read. The user always comes from the "
+                + "token.")
 @RestController
 @RequestMapping("/api/v1/notifications")
 class NotificationController {
@@ -62,6 +69,10 @@ class NotificationController {
      * The caller's own inbox, filtered, sorted and paged by the list-query contract. Unread rows are
      * {@code filter[read_at][is_null]=true}; {@code page_info=full} adds the limit, offset, total and next cursor.
      */
+    @Operation(
+            summary = "List the caller's notifications",
+            description =
+                    "Pages through the caller's own in-app inbox. The user comes from the token, so no other user's notifications are reachable. Unread rows are `filter[read_at][is_null]=true`. Any authenticated caller may read their own inbox.")
     @GetMapping
     @Listing(NotificationListing.class)
     @Authenticated
@@ -69,6 +80,10 @@ class NotificationController {
         return list.list(query).map(NotificationResponse::of);
     }
 
+    @Operation(
+            summary = "Mark one notification as read",
+            description =
+                    "Sets `readAt` on one of the caller's own notifications. Answers `204` with no body. An id that does not exist, or that belongs to another user, answers `404`.")
     @PostMapping("/{id}/read")
     @Authenticated
     ResponseEntity<Void> read(@PathVariable UUID id) {
@@ -76,6 +91,10 @@ class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(
+            summary = "Mark every notification as read",
+            description =
+                    "Sets `readAt` on all of the caller's notifications in one call. Answers `204` with no body.")
     @PostMapping("/read-all")
     @Authenticated
     ResponseEntity<Void> readAll() {

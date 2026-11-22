@@ -8,12 +8,19 @@ import dev.ngb.notification.dispatch.application.notification.query.DispatchList
 import dev.ngb.notification.dispatch.application.notification.query.DispatchView;
 import dev.ngb.notification.dispatch.application.notification.query.ListDispatchesQuery;
 import dev.ngb.notification.shared.NotificationPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** The dispatch ledger, behind {@code notification:dispatch:read}; it answers "why did this user get no email". */
+@Tag(
+        name = "Email dispatches",
+        description =
+                "The dispatch ledger: one row per email the suite decided on, with its status and why it was not "
+                + "sent.")
 @RestController
 @RequestMapping("/api/v1/email-dispatches")
 class DispatchController {
@@ -61,6 +68,10 @@ class DispatchController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link DispatchListing}. */
+    @Operation(
+            summary = "List email dispatches",
+            description =
+                    "Pages through the tenant's dispatch ledger, newest first by default: one row per email the suite decided on, with its status, the reason when it was not sent, and the template, version and locale used. It answers why a user did not receive an email. Requires `notification:dispatch:read`.")
     @GetMapping
     @Listing(DispatchListing.class)
     @RequiresPermission(NotificationPermissions.DISPATCH_READ)

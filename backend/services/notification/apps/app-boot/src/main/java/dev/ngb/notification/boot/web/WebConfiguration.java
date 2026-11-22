@@ -1,5 +1,7 @@
 package dev.ngb.notification.boot.web;
 
+import dev.ngb.core.openapi.DescriptionsOpenApiCustomizer;
+import dev.ngb.core.openapi.ErrorResponsesOpenApiCustomizer;
 import dev.ngb.core.openapi.ListingOpenApiCustomizer;
 import dev.ngb.core.security.Authenticated;
 import dev.ngb.core.security.Authorizer;
@@ -61,6 +63,18 @@ class WebConfiguration implements WebMvcConfigurer {
     @Bean
     ListingOpenApiCustomizer listingParameters() {
         return new ListingOpenApiCustomizer();
+    }
+
+    /** Describes the fields, parameters and bodies the controllers' signatures cannot; the words live in openapi-descriptions.conf. */
+    @Bean
+    DescriptionsOpenApiCustomizer openApiDescriptions() {
+        return new DescriptionsOpenApiCustomizer("openapi-descriptions.conf");
+    }
+
+    /** Documents the errors each operation can answer: the derived ones, and the service's own lines in the same file. */
+    @Bean
+    ErrorResponsesOpenApiCustomizer openApiErrors() {
+        return new ErrorResponsesOpenApiCustomizer("openapi-descriptions.conf");
     }
 
     @Bean
