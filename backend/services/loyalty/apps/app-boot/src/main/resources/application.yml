@@ -139,3 +139,9 @@ loyalty:
     dead-outbox-retention: P7D
     batch-size: 500
     interval: PT1H
+
+# The Scalar reference at /scalar renders the /v3/api-docs document; its JavaScript is served from the app, and the
+# vendor telemetry stays off.
+scalar:
+  page-title: Loyalty API
+  telemetry: false

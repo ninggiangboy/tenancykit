@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>tenancykit API reference</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <!-- One Scalar page over every service's committed OpenAPI document; the selector at the top switches service.
+         `make docs` serves this file next to a copy of contracts/openapi/ as ./openapi/. -->
+    <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.82.1/dist/browser/standalone.js"></script>
+    <script>
+      const services = [
+        ["platform", "Platform"],
+        ["billing", "Billing"],
+        ["billing-tenant-system", "Billing (Tenant System)"],
+        ["notification", "Notification"],
+        ["mailroom", "Mailroom"],
+        ["customer", "Customer"],
+        ["loyalty", "Loyalty"],
+        ["survey", "Survey"],
+        ["booking", "Booking"],
+        ["workflow", "Workflow"],
+        ["attribution", "Attribution"],
+      ];
+      Scalar.createApiReference("#app", {
+        telemetry: false,
+        sources: services.map(([slug, title], index) => ({
+          title,
+          slug,
+          url: `./openapi/${slug}.yaml`,
+          default: index === 0,
+        })),
+      });
+    </script>
+  </body>
+</html>

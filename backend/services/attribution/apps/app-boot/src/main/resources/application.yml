@@ -148,3 +148,9 @@ attribution:
     # The click-token HMAC keys. New tokens use active-key-id; every listed key still verifies.
     click-keys:
       k1: ${ATTRIBUTION_CLICK_SECRET:}
+
+# The Scalar reference at /scalar renders the /v3/api-docs document; its JavaScript is served from the app, and the
+# vendor telemetry stays off.
+scalar:
+  page-title: Attribution API
+  telemetry: false

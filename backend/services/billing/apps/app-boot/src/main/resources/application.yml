@@ -168,3 +168,9 @@ suite:
       backoff-cap: PT1H
     document:
       schema-version: 2
+
+# The Scalar reference at /scalar renders the /v3/api-docs document; its JavaScript is served from the app, and the
+# vendor telemetry stays off.
+scalar:
+  page-title: Billing API
+  telemetry: false

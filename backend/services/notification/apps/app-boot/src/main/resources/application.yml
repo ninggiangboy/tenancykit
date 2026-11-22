@@ -110,3 +110,9 @@ notification:
   templates:
     # A template part larger than this is refused rather than truncated.
     max-part-bytes: 65536
+
+# The Scalar reference at /scalar renders the /v3/api-docs document; its JavaScript is served from the app, and the
+# vendor telemetry stays off.
+scalar:
+  page-title: Notification API
+  telemetry: false

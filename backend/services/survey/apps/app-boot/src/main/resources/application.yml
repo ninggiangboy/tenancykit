@@ -147,3 +147,9 @@ survey:
     # Both are per instance and in memory, so with N instances the effective limit is N times the setting.
     rate-per-minute: ${SURVEY_PUBLIC_RATE_PER_MINUTE:120}
     max-body-bytes: ${SURVEY_PUBLIC_MAX_BODY_BYTES:262144}
+
+# The Scalar reference at /scalar renders the /v3/api-docs document; its JavaScript is served from the app, and the
+# vendor telemetry stays off.
+scalar:
+  page-title: Survey API
+  telemetry: false

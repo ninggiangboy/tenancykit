@@ -518,6 +518,21 @@ Regenerate generated artifacts after an intended change:
 The exact test class name for a contract can differ by service (Platform uses `*PlatformOpenApiContractTest`); see
 [contracts/README.md](contracts/README.md).
 
+Every service with a REST API also serves that document live and renders it with [Scalar](https://scalar.com): the raw
+document at `/v3/api-docs` (or `/v3/api-docs.yaml`) and the interactive reference at `/scalar`. Both need no token and
+expose no data. With `make run SERVICE=platform` the reference is at <http://localhost:8082/scalar>; each service has its
+own host port, listed in `ops/dev/run-service.sh`. A service that picks its tenant from the hostname (Billing,
+Notification) answers these paths only on a known host, for example `http://acme.localhost:8080/scalar`. The page and its JavaScript are served by the service itself, vendor
+telemetry is off, and the interactive "try it" calls still need a suite token. The gateway's `/<service>/` prefixes are
+not proxied for these pages, because the service writes absolute asset and document URLs into the page; open the service
+on its own port.
+
+To browse every service in one page, run `make docs` and open <http://localhost:8095/> (`DOCS_PORT` changes the port).
+It renders the committed `contracts/openapi/*.yaml` files with Scalar, needs no running service, and switches service
+from the dropdown at the top left; each service has its own link, such as `#loyalty`. The Scalar script comes from
+jsDelivr, so this page needs internet access. Its "try it" requests go to the docs server, not to a service, so use the
+per-service `/scalar` page to call a running API.
+
 Frontend, from `frontend/`:
 
 ```bash

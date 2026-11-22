@@ -22,6 +22,8 @@ springdoc:
     enabled: false
   swagger-ui:
     enabled: false
+scalar:
+  enabled: false
 management:
   endpoints:
     web:

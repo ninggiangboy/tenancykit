@@ -135,3 +135,9 @@ booking:
     waitlist-cap-per-target: ${BOOKING_WAITLIST_CAP_PER_TARGET:1000}
     admit-per-second: ${BOOKING_ADMIT_PER_SECOND:50}
     admit-window-seconds: ${BOOKING_ADMIT_WINDOW_SECONDS:120}
+
+# The Scalar reference at /scalar renders the /v3/api-docs document; its JavaScript is served from the app, and the
+# vendor telemetry stays off.
+scalar:
+  page-title: Booking API
+  telemetry: false

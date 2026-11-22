@@ -78,4 +78,13 @@ class OpenApiContractTest extends SurveyIntegrationTest {
             }
         }
     }
+
+    @Test
+    void scalarReferenceIsServedWithoutATokenAndReadsTheGeneratedDocument() throws Exception {
+        var response = mvc.perform(get("/scalar")).andReturn().getResponse();
+        String page = response.getContentAsString(StandardCharsets.UTF_8);
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getContentType()).startsWith("text/html");
+        assertThat(page).contains("/scalar/scalar.js").contains("/v3/api-docs").contains("\"telemetry\":false");
+    }
 }

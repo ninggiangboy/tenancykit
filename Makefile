@@ -13,6 +13,7 @@
 SHELL := /bin/bash
 
 COMPOSE   ?= docker compose
+DOCS_PORT ?= 8095
 FRONTEND  := frontend
 REMOTES   ?= platform billing
 SHELLS    ?= platform tenant
@@ -25,7 +26,7 @@ comma := ,
 
 .DEFAULT_GOAL := help
 
-.PHONY: help env-check infra gateway run up up-all down clean ps logs frontend-install console-build console-publish console dev e2e smoke isolation seed demo
+.PHONY: help docs env-check infra gateway run up up-all down clean ps logs frontend-install console-build console-publish console dev e2e smoke isolation seed demo
 
 help: ## List the targets
 	@grep -E '^[a-zA-Z0-9_-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-18s %s\n", $$1, $$2}'
@@ -96,6 +97,10 @@ dev: frontend-install ## Run every shell and remote dev server (the stack must b
 
 e2e: ## Run the Playwright suite against the running stack
 	cd $(FRONTEND)/e2e && pnpm test
+
+docs: ## One page with every service's API reference (Scalar), from contracts/openapi; DOCS_PORT changes the port
+	@dir=$$(mktemp -d) && trap 'rm -rf "$$dir"' EXIT && cp ops/docs/index.html "$$dir"/ && cp -R contracts/openapi "$$dir"/openapi \
+	  && echo "API reference: http://localhost:$(DOCS_PORT)/  (Ctrl-C to stop)" && python3 -m http.server $(DOCS_PORT) --bind 127.0.0.1 --directory "$$dir"
 
 smoke: env-check ## Run the suite smoke test against the running stack
 	ops/smoke/suite-smoke.sh

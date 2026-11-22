@@ -146,3 +146,9 @@ management:
     health:
       probes:
         enabled: true
+
+# The Scalar reference at /scalar renders the /v3/api-docs document; its JavaScript is served from the app, and the
+# vendor telemetry stays off.
+scalar:
+  page-title: Platform API
+  telemetry: false

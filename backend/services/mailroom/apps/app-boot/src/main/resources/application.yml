@@ -128,3 +128,9 @@ mailroom:
     # recipient's links with a secret the whole internet can read.
     keys:
       k1: ${MAILROOM_TRACKING_SECRET:}
+
+# The Scalar reference at /scalar renders the /v3/api-docs document; its JavaScript is served from the app, and the
+# vendor telemetry stays off.
+scalar:
+  page-title: Mailroom API
+  telemetry: false

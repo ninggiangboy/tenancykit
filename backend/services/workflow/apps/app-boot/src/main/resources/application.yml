@@ -107,3 +107,9 @@ workflow:
     allow-non-public-targets: ${WORKFLOW_WEBHOOKS_ALLOW_NON_PUBLIC_TARGETS:false}
   migrate:
     exit-on-finish: ${WORKFLOW_MIGRATE_EXIT_ON_FINISH:true}
+
+# The Scalar reference at /scalar renders the /v3/api-docs document; its JavaScript is served from the app, and the
+# vendor telemetry stays off.
+scalar:
+  page-title: Workflow API
+  telemetry: false
