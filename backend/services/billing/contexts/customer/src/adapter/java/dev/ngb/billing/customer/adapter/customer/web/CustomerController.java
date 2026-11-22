@@ -1,6 +1,8 @@
 package dev.ngb.billing.customer.adapter.customer.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.context.annotation.Profile;
 import dev.ngb.billing.customer.application.customer.command.CreateCustomerUseCase;
 import dev.ngb.billing.customer.application.customer.command.ManageCustomerUseCase;
@@ -41,6 +43,10 @@ import org.springframework.web.bind.annotation.RestController;
  * Customers of the current tenant, for both kinds of caller: a Tenant System (API key) maps its own users, a
  * Tenant User (OIDC) administers customers and names the tenant system explicitly.
  */
+@Tag(
+        name = "Customers",
+        description =
+                "Billing customers of the tenant, optionally mapped to a Tenant System's own users.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1/customers")
@@ -92,6 +98,13 @@ public class CustomerController {
     }
 
     /** Safe to retry: the same Idempotency-Key returns the same customer (201 for new, 200 for replay); the same key with a different body is a 409. */
+    @Operation(
+            summary = "Create a customer",
+            description =
+                    "Creates a billing customer, optionally mapped to a Tenant System user through `tenantSystemId` and "
+                    + "`externalUserId`. A Tenant System maps its own users; a Tenant User names the tenant system "
+                    + "explicitly. Safe to retry: the same `Idempotency-Key` returns the same customer (`201` for a new "
+                    + "one, `200` for a replay), and the same key with a different body answers `409`.")
     @PostMapping
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.CUSTOMER_WRITE)
@@ -108,6 +121,11 @@ public class CustomerController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link CustomerListing}. */
+    @Operation(
+            summary = "List customers",
+            description =
+                    "Pages through the tenant's customers, with the list-query contract's filtering, sorting and paging. "
+                    + "A Tenant System sees and acts on the customers mapped to it only.")
     @GetMapping
     @Listing(CustomerListing.class)
     @RequiresPermission(BillingPermissions.CUSTOMER_READ)
@@ -115,12 +133,21 @@ public class CustomerController {
         return queries.list(query, currentActor.callerId()).map(CustomerResponse::ofView);
     }
 
+    @Operation(
+            summary = "Find a customer by external user id",
+            description =
+                    "Returns the customer mapped to `externalUserId`, which is how a Tenant System finds a customer by "
+                    + "its own user reference. A Tenant User also passes `tenantSystemId`. An unmapped user answers `404`.")
     @GetMapping("/by-external-user/{externalUserId}")
     @RequiresPermission(BillingPermissions.CUSTOMER_READ)
     public CustomerResponse byExternalUser(@PathVariable String externalUserId, @RequestParam(required = false) String tenantSystemId) {
         return CustomerResponse.ofView(queries.getByExternalUser(currentActor.callerId(), tenantSystemId, externalUserId));
     }
 
+    @Operation(
+            summary = "Get a customer",
+            description =
+                    "Returns one customer; its version is also the response's `ETag`. An unknown id answers `404`.")
     @GetMapping("/{id}")
     @RequiresPermission(BillingPermissions.CUSTOMER_READ)
     public ResponseEntity<CustomerResponse> get(@PathVariable String id) {
@@ -128,6 +155,11 @@ public class CustomerController {
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(customer.version())).body(CustomerResponse.ofView(customer));
     }
 
+    @Operation(
+            summary = "Update a customer",
+            description =
+                    "Changes the customer's display name and email. Pass the current `ETag` in `If-Match`; a stale "
+                    + "version is refused with `412`.")
     @PutMapping("/{id}")
     @RequiresPermission(BillingPermissions.CUSTOMER_WRITE)
     @ConditionalUpdate
@@ -143,6 +175,11 @@ public class CustomerController {
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(customer.version())).body(CustomerResponse.of(customer));
     }
 
+    @Operation(
+            summary = "Deactivate a customer",
+            description =
+                    "Deactivates the customer. Pass the current `ETag` in `If-Match`; a stale version is refused with "
+                    + "`412`.")
     @PostMapping("/{id}/deactivate")
     @RequiresPermission(BillingPermissions.CUSTOMER_WRITE)
     @ConditionalUpdate

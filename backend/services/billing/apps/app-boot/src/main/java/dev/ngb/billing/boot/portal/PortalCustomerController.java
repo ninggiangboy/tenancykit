@@ -3,6 +3,8 @@ package dev.ngb.billing.boot.portal;
 import dev.ngb.billing.customer.application.customer.query.CustomerView;
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
@@ -11,6 +13,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** The customer the session was issued for, and nothing else. */
+@Tag(
+        name = "Portal: customer",
+        description =
+                "The customer the portal session was issued for.")
 @Profile("api")
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
@@ -29,6 +35,11 @@ public class PortalCustomerController {
         this.portal = portal;
     }
 
+    @Operation(
+            summary = "Get the portal customer",
+            description =
+                    "Returns the customer the portal session was issued for, and nothing else. The customer is fixed by "
+                    + "the portal session, so no other customer's data is reachable.")
     @GetMapping
     @RequiresPortalPermission(PortalPermission.CUSTOMER_VIEW)
     public CustomerResponse customer() {

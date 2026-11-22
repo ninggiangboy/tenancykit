@@ -19,6 +19,8 @@ import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
 import dev.ngb.core.spring.query.Listing;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.context.annotation.Profile;
@@ -34,6 +36,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Opens and reads wallets. Amounts are integers in minor units (cents, dong) with an ISO 4217 currency code. */
+@Tag(
+        name = "Wallets",
+        description =
+                "Open and read wallets. Amounts are integers in minor units with an ISO 4217 currency.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -73,6 +79,13 @@ public class WalletController {
         this.currentActor = currentActor;
     }
 
+    @Operation(
+            summary = "Open a wallet",
+            description =
+                    "Opens a customer's wallet in one `currency`, as prepaid or postpaid (`mode`, with a `creditLimit` "
+                    + "for postpaid). Amounts are integers in minor units. Asking again with the same settings answers the "
+                    + "existing wallet; different settings are a conflict, because a wallet's currency and mode never "
+                    + "change.")
     @PostMapping("/wallets")
     @RequiresPermission(BillingPermissions.WALLET_MANAGE)
     public ResponseEntity<WalletResponse> openWallet(
@@ -86,6 +99,11 @@ public class WalletController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link WalletListing}. */
+    @Operation(
+            summary = "List wallets",
+            description =
+                    "Pages through the tenant's wallets, with the list-query contract's filtering, sorting and paging. A "
+                    + "Tenant System sees and acts on the customers mapped to it only.")
     @GetMapping("/wallets")
     @Listing(WalletListing.class)
     @RequiresPermission(BillingPermissions.WALLET_READ)
@@ -93,6 +111,11 @@ public class WalletController {
         return queries.wallets(query, currentActor.caller()).map(WalletResponse::ofView);
     }
 
+    @Operation(
+            summary = "Get a wallet",
+            description =
+                    "Returns one wallet with its balance, the amount held by reservations and the amount available to "
+                    + "spend. An unknown id answers `404`.")
     @GetMapping("/wallets/{id}")
     @RequiresPermission(BillingPermissions.WALLET_READ)
     public WalletResponse wallet(@PathVariable String id) {

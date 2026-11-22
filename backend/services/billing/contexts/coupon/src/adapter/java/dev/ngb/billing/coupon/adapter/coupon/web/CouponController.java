@@ -28,6 +28,8 @@ import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -49,6 +51,11 @@ import org.springframework.web.bind.annotation.RestController;
  * runs its own promotions; the creating actor is stored on every coupon. Terms are never edited, so the only writes
  * after creation are a deactivation and a new code.
  */
+@Tag(
+        name = "Coupons",
+        description =
+                "Coupons and promotion codes. Terms are never edited, so the only writes after creation are a "
+                + "deactivation and a new code.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -150,6 +157,14 @@ public class CouponController {
         this.currentActor = currentActor;
     }
 
+    @Operation(
+            summary = "Create a coupon",
+            description =
+                    "Creates a coupon with immutable terms: a benefit (a percentage in basis points or a fixed amount), "
+                    + "an optional window, limits and scope, and optionally its first promotion code. A coupon without a "
+                    + "total bound, a benefit out of range or a currency mismatch is refused before anything is stored. An "
+                    + "Administrator and a Tenant System both create coupons, and the creating actor is stored on the "
+                    + "coupon. Answers `201`.")
     @PostMapping("/coupons")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(BillingPermissions.COUPON_MANAGE)
@@ -173,6 +188,10 @@ public class CouponController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link CouponListing}. */
+    @Operation(
+            summary = "List coupons",
+            description =
+                    "Pages through the tenant's coupons, with the list-query contract's filtering, sorting and paging.")
     @GetMapping("/coupons")
     @Listing(CouponListing.class)
     @RequiresPermission(BillingPermissions.COUPON_READ)
@@ -180,6 +199,10 @@ public class CouponController {
         return queries.coupons(query).map(CouponResponse::of);
     }
 
+    @Operation(
+            summary = "Get a coupon",
+            description =
+                    "Returns one coupon with its terms and how much has been redeemed. An unknown id answers `404`.")
     @GetMapping("/coupons/{id}")
     @RequiresPermission(BillingPermissions.COUPON_READ)
     public CouponResponse coupon(@PathVariable String id) {
@@ -187,6 +210,12 @@ public class CouponController {
     }
 
     /** Stops new redemptions; running ones keep working unless {@code revokeRedemptions} is set. */
+    @Operation(
+            summary = "Deactivate a coupon",
+            description =
+                    "Final: stops new redemptions of the coupon and deactivates its codes. A running redemption keeps "
+                    + "working unless `revokeRedemptions` is set, which pulls a bad coupon without invalidating a charge "
+                    + "that already used it.")
     @PostMapping("/coupons/{id}/deactivate")
     @RequiresPermission(BillingPermissions.COUPON_MANAGE)
     public CouponResponse deactivateCoupon(
@@ -198,6 +227,11 @@ public class CouponController {
         return CouponResponse.of(queries.coupon(coupon.id().value()));
     }
 
+    @Operation(
+            summary = "Add a promotion code",
+            description =
+                    "Adds a promotion code to a coupon, with an optional redemption limit and `redeemBy` date. A code "
+                    + "never outlives its coupon's terms. Answers `201`.")
     @PostMapping("/coupons/{id}/codes")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(BillingPermissions.COUPON_MANAGE)
@@ -210,6 +244,11 @@ public class CouponController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the coupon is fixed by the path. */
+    @Operation(
+            summary = "List a coupon's promotion codes",
+            description =
+                    "Pages through the promotion codes of the coupon named by the path, with the list-query contract's "
+                    + "filtering, sorting and paging.")
     @GetMapping("/coupons/{id}/codes")
     @Listing(PromotionCodeListing.class)
     @RequiresPermission(BillingPermissions.COUPON_READ)
@@ -217,6 +256,10 @@ public class CouponController {
         return queries.codesOf(UUID.fromString(id), query).map(PromotionCodeResponse::of);
     }
 
+    @Operation(
+            summary = "Deactivate a promotion code",
+            description =
+                    "Stops a promotion code being redeemed; the coupon and its other codes are unaffected.")
     @PostMapping("/promotion-codes/{id}/deactivate")
     @RequiresPermission(BillingPermissions.COUPON_MANAGE)
     public PromotionCodeResponse deactivateCode(

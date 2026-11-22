@@ -9,6 +9,8 @@ import dev.ngb.billing.payment.domain.payment.PaymentStatus;
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import dev.ngb.billing.payment.application.payment.query.PaymentListing;
@@ -27,6 +29,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** The session's customer's payments, refunds and the Stripe-hosted page for managing payment methods. */
+@Tag(
+        name = "Portal: payments",
+        description =
+                "The session's customer's payments, refunds and the Stripe-hosted payment-methods page.")
 @Profile("api")
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
@@ -68,6 +74,12 @@ public class PortalPaymentController {
     }
 
     /** The customer is fixed by the portal session; the same filter, sort and paging contract as the API applies. */
+    @Operation(
+            summary = "List the customer's payments",
+            description =
+                    "Pages through the payments of the portal session's customer, with the list-query contract's "
+                    + "filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's "
+                    + "data is reachable.")
     @GetMapping("/payments")
     @Listing(PaymentListing.class)
     @RequiresPortalPermission(PortalPermission.PAYMENT_VIEW)
@@ -75,6 +87,11 @@ public class PortalPaymentController {
         return portal.payments(query).map(PaymentResponse::of);
     }
 
+    @Operation(
+            summary = "Get one of the customer's payments",
+            description =
+                    "Returns a payment of the portal session's customer with its status. A payment of another customer "
+                    + "answers `404`.")
     @GetMapping("/payments/{id}")
     @RequiresPortalPermission(PortalPermission.PAYMENT_VIEW)
     public PaymentDetailResponse payment(@PathVariable String id) {
@@ -84,6 +101,12 @@ public class PortalPaymentController {
     }
 
     /** Refunds of the session's customer's payments; the same filter, sort and paging contract as the API applies. */
+    @Operation(
+            summary = "List the customer's refunds",
+            description =
+                    "Pages through the refunds of the portal session's customer's payments, with the list-query "
+                    + "contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other "
+                    + "customer's data is reachable.")
     @GetMapping("/refunds")
     @Listing(RefundListing.class)
     @RequiresPortalPermission(PortalPermission.REFUND_VIEW)
@@ -95,6 +118,12 @@ public class PortalPaymentController {
      * Opens Stripe's hosted page for managing payment methods. The provider customer is created once per Billing
      * Customer and Stripe configuration, and the page is the Tenant's own Stripe account.
      */
+    @Operation(
+            summary = "Open the payment-methods page",
+            description =
+                    "Opens Stripe's hosted page where the customer manages payment methods, in the Tenant's own Stripe "
+                    + "account. The Stripe customer is created once per billing customer and Stripe configuration and "
+                    + "reused afterwards.")
     @PostMapping("/payment-methods")
     @RequiresPortalPermission(PortalPermission.PAYMENT_METHOD_MANAGE)
     public HostedPageResponse paymentMethods(HttpServletRequest request) {

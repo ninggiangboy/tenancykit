@@ -6,6 +6,8 @@ import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.audit.Audit;
 import dev.ngb.billing.session.application.portal.command.ManageReturnUrlsUseCase;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Set;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -18,6 +20,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** The Tenant's allowlist of URLs a Billing Session may return the customer to. */
+@Tag(
+        name = "Portal settings",
+        description =
+                "The tenant's allowlist of URLs a billing session may return the customer to.")
 @Profile("api")
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
@@ -34,12 +40,20 @@ public class PortalSettingsController {
         this.currentActor = currentActor;
     }
 
+    @Operation(
+            summary = "List the portal return URLs",
+            description =
+                    "Returns the tenant's allowlist of URLs a billing session may send the customer back to.")
     @GetMapping
     @RequiresPermission(BillingPermissions.PORTAL_SETTINGS_MANAGE)
     public List<String> list() {
         return manage.list().stream().sorted().toList();
     }
 
+    @Operation(
+            summary = "Replace the portal return URLs",
+            description =
+                    "Replaces the whole allowlist of return URLs with `urls`.")
     @PutMapping
     @RequiresPermission(BillingPermissions.PORTAL_SETTINGS_MANAGE)
     public List<String> replace(

@@ -18,6 +18,8 @@ import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
@@ -32,6 +34,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Refunds of payments. Money-moving POSTs need an {@code Idempotency-Key}. */
+@Tag(
+        name = "Refunds",
+        description =
+                "Refunds of payments.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -68,6 +74,13 @@ public class RefundController {
      * asked, and the wallet is debited when Stripe confirms. 409 when the amount exceeds what is left to refund
      * or the wallet has already spent it.
      */
+    @Operation(
+            summary = "Refund a payment",
+            description =
+                    "Sends money back to the customer's card, in full when `amount` is omitted. The unspent balance is "
+                    + "held at once, Stripe is asked, and the wallet is debited only when Stripe confirms. Answers `409` "
+                    + "when the amount exceeds what is left to refund or the wallet has already spent it. Send an "
+                    + "`Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.")
     @PostMapping("/payments/{id}/refunds")
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.REFUND_CREATE)
@@ -88,6 +101,11 @@ public class RefundController {
     }
 
     /** Filter, sort and paging follow the list-query contract; a Tenant System sees only its customers' refunds. */
+    @Operation(
+            summary = "List refunds",
+            description =
+                    "Pages through the tenant's refunds, with the list-query contract's filtering, sorting and paging. A "
+                    + "Tenant System sees and acts on the customers mapped to it only.")
     @GetMapping("/refunds")
     @Listing(RefundListing.class)
     @RequiresPermission(BillingPermissions.PAYMENT_READ)
@@ -95,6 +113,10 @@ public class RefundController {
         return refundQueries.list(query, currentActor.caller()).map(RefundResponse::ofView);
     }
 
+    @Operation(
+            summary = "Get a refund",
+            description =
+                    "Returns one refund with its status and failure reason. An unknown id answers `404`.")
     @GetMapping("/refunds/{id}")
     @RequiresPermission(BillingPermissions.PAYMENT_READ)
     public RefundResponse getRefund(@PathVariable String id) {

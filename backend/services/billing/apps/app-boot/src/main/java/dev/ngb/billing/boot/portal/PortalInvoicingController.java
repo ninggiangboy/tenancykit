@@ -11,6 +11,8 @@ import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionView
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import dev.ngb.billing.invoicing.application.invoice.query.InvoiceListing;
 import dev.ngb.core.query.ListQuery;
@@ -27,6 +29,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** The session's customer's invoices and subscriptions. */
+@Tag(
+        name = "Portal: invoices and subscriptions",
+        description =
+                "The session's customer's invoices and subscriptions.")
 @Profile("api")
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
@@ -107,6 +113,12 @@ public class PortalInvoicingController {
     }
 
     /** The customer is fixed by the portal session; the same filter, sort and paging contract as the API applies. */
+    @Operation(
+            summary = "List the customer's invoices",
+            description =
+                    "Pages through the invoices of the portal session's customer, with the list-query contract's "
+                    + "filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's "
+                    + "data is reachable.")
     @GetMapping("/invoices")
     @Listing(InvoiceListing.class)
     @RequiresPortalPermission(PortalPermission.INVOICE_VIEW)
@@ -114,6 +126,11 @@ public class PortalInvoicingController {
         return portal.invoices(query).map(InvoiceResponse::of);
     }
 
+    @Operation(
+            summary = "Get one of the customer's invoices",
+            description =
+                    "Returns an invoice of the portal session's customer with its lines. An invoice of another customer "
+                    + "answers `404`.")
     @GetMapping("/invoices/{id}")
     @RequiresPortalPermission(PortalPermission.INVOICE_VIEW)
     public InvoiceDetailResponse invoice(@PathVariable String id) {
@@ -121,6 +138,12 @@ public class PortalInvoicingController {
     }
 
     /** The customer is fixed by the portal session; the same filter, sort and paging contract as the API applies. */
+    @Operation(
+            summary = "List the customer's subscriptions",
+            description =
+                    "Pages through the subscriptions of the portal session's customer, with the list-query contract's "
+                    + "filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's "
+                    + "data is reachable.")
     @GetMapping("/subscriptions")
     @Listing(SubscriptionListing.class)
     @RequiresPortalPermission(PortalPermission.SUBSCRIPTION_VIEW)
@@ -128,6 +151,11 @@ public class PortalInvoicingController {
         return portal.subscriptions(query).map(SubscriptionResponse::of);
     }
 
+    @Operation(
+            summary = "Get one of the customer's subscriptions",
+            description =
+                    "Returns a subscription of the portal session's customer with its history. A subscription of another "
+                    + "customer answers `404`.")
     @GetMapping("/subscriptions/{id}")
     @RequiresPortalPermission(PortalPermission.SUBSCRIPTION_VIEW)
     public SubscriptionDetailResponse subscription(@PathVariable String id) {

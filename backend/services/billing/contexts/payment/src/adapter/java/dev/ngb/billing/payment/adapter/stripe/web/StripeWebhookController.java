@@ -1,5 +1,7 @@
 package dev.ngb.billing.payment.adapter.stripe.web;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.context.annotation.Profile;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.payment.application.stripe.command.ReceiveStripeWebhookUseCase;
@@ -21,6 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
  * it is checked before anything in the body is read. The body is read as bytes, up to a fixed limit, so it reaches
  * the verifier exactly as Stripe sent it.
  */
+@Tag(
+        name = "Stripe webhooks",
+        description =
+                "Where Stripe delivers events. No login: the signature of the raw body is the proof.")
 @Profile("api")
 @RestController
 public class StripeWebhookController {
@@ -35,6 +41,12 @@ public class StripeWebhookController {
     }
 
     /** A Direct webhook: the Tenant creates this endpoint in its own Stripe Dashboard and keeps the signing secret it is shown. */
+    @Operation(
+            summary = "Receive a direct Stripe webhook",
+            description =
+                    "Where Stripe delivers events for a tenant's own Stripe account; the tenant creates this endpoint in "
+                    + "its own Stripe Dashboard. The signature of the raw body is the proof and is checked before anything "
+                    + "in the body is read. Public: no suite token is needed.")
     @PostMapping("/stripe/webhooks/direct/{configurationId}")
     @PublicEndpoint
     public Map<String, String> direct(
@@ -50,6 +62,12 @@ public class StripeWebhookController {
     }
 
     /** The Platform's Connect webhook, one endpoint for every connected account. */
+    @Operation(
+            summary = "Receive a Stripe Connect webhook",
+            description =
+                    "The platform's Connect webhook, one endpoint for every connected account; the tenant comes from "
+                    + "Billing's own routing table, never from the request. The signature of the raw body is the proof. "
+                    + "Public: no suite token is needed.")
     @PostMapping("/stripe/webhooks/connect")
     @PublicEndpoint
     public Map<String, String> connect(@RequestHeader(value = HttpHeaders.STRIPE_SIGNATURE, required = false) String signature, HttpServletRequest request)

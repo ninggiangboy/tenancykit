@@ -8,6 +8,8 @@ import dev.ngb.billing.usage.application.usage.query.UsageEventView;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
 import dev.ngb.core.spring.query.Listing;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -18,6 +20,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Usage reported for the session's customer: event history and per-metric totals. */
+@Tag(
+        name = "Portal: usage",
+        description =
+                "Usage reported for the session's customer.")
 @Profile("api")
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
@@ -44,6 +50,12 @@ public class PortalUsageController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the customer is fixed by the portal session. */
+    @Operation(
+            summary = "List the customer's usage events",
+            description =
+                    "Pages through the usage reported for the portal session's customer, with the list-query contract's "
+                    + "filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's "
+                    + "data is reachable.")
     @GetMapping("/history")
     @Listing(UsageEventListing.class)
     @RequiresPortalPermission(PortalPermission.USAGE_VIEW)
@@ -51,6 +63,11 @@ public class PortalUsageController {
         return portal.usage(query).map(UsageEventResponse::of);
     }
 
+    @Operation(
+            summary = "Get the customer's usage totals",
+            description =
+                    "Returns the quantity and number of events per metric over `[from, to)`, optionally for one `metric`. "
+                    + "The customer is fixed by the portal session, so no other customer's data is reachable.")
     @GetMapping("/totals")
     @RequiresPortalPermission(PortalPermission.USAGE_VIEW)
     public List<UsageTotalResponse> totals(

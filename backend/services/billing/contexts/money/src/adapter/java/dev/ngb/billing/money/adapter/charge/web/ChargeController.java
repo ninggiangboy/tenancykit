@@ -20,6 +20,8 @@ import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -33,6 +35,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Charges a wallet directly or by capturing a reservation. Every money-moving POST needs an {@code Idempotency-Key}. */
+@Tag(
+        name = "Charges",
+        description =
+                "Charge a wallet directly or by capturing a reservation.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -79,6 +85,11 @@ public class ChargeController {
     }
 
     /** Charges the actual cost against the reservation and releases whatever was not used. */
+    @Operation(
+            summary = "Capture a reservation",
+            description =
+                    "Charges the actual cost against the reservation and releases whatever was not used. Send an "
+                    + "`Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.")
     @PostMapping("/reservations/{id}/capture")
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.CHARGE_CREATE)
@@ -89,6 +100,12 @@ public class ChargeController {
         return chargeResponse(result, currentActor.caller());
     }
 
+    @Operation(
+            summary = "Charge a wallet",
+            description =
+                    "Records the actual cost incurred against a wallet (`walletId`, `amount` in minor units, `currency`), "
+                    + "once per `Idempotency-Key`. A wallet that cannot pay yields a recorded `insufficient_funds` failure "
+                    + "rather than an error. A repeat answers the first charge with `200`.")
     @PostMapping("/charges")
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.CHARGE_CREATE)
@@ -100,6 +117,11 @@ public class ChargeController {
     }
 
     /** Filter, sort and paging follow the list-query contract; a Tenant System sees only its customers' wallets. */
+    @Operation(
+            summary = "List charges",
+            description =
+                    "Pages through the tenant's charges, with the list-query contract's filtering, sorting and paging. A "
+                    + "Tenant System sees and acts on the customers mapped to it only.")
     @GetMapping("/charges")
     @Listing(ChargeListing.class)
     @RequiresPermission(BillingPermissions.WALLET_READ)
@@ -107,6 +129,10 @@ public class ChargeController {
         return queries.charges(query, currentActor.caller()).map(ChargeResponse::ofView);
     }
 
+    @Operation(
+            summary = "Get a charge",
+            description =
+                    "Returns one charge with the discounts applied to it. An unknown id answers `404`.")
     @GetMapping("/charges/{id}")
     @RequiresPermission(BillingPermissions.WALLET_READ)
     public ChargeResponse getCharge(@PathVariable String id) {

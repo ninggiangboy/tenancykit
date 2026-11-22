@@ -20,6 +20,8 @@ import dev.ngb.billing.pricing.domain.rule.PriceLine;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
@@ -39,6 +41,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** What is done with a plan: cost estimation, reserving the estimate, and charging usage. Amounts that are charged are integers in minor units. */
+@Tag(
+        name = "Rating",
+        description =
+                "What is done with a plan: cost estimates, reserving the estimate and charging usage.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -147,6 +153,12 @@ public class RatingController {
     }
 
     /** A pure calculation: nothing is stored, and the same input is priced exactly as the real charge would be. */
+    @Operation(
+            summary = "Estimate a cost",
+            description =
+                    "A pure calculation: prices expected `usage` against a plan version with the same rules and the same "
+                    + "single rounding as the real charge, and stores nothing. When `walletId` is named, it also shows what "
+                    + "that wallet would pay after its coupons.")
     @PostMapping("/pricing/estimates")
     @RequiresPermission(BillingPermissions.PRICING_READ)
     public EstimateResponse estimate(@RequestBody EstimateRequest request) {
@@ -156,6 +168,12 @@ public class RatingController {
     }
 
     /** Holds the estimated cost on the wallet. 201 for a new reservation, 200 when the key replays one, 402 when the wallet cannot cover it. */
+    @Operation(
+            summary = "Reserve an estimated cost",
+            description =
+                    "Holds the estimated cost of a resource on the wallet before it runs. Answers `201` for a new "
+                    + "reservation, `200` when the `Idempotency-Key` replays one, and `402` when the wallet cannot cover "
+                    + "it.")
     @PostMapping("/pricing/reservations")
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.RESERVATION_MANAGE)
@@ -173,6 +191,13 @@ public class RatingController {
      * returns the earlier result instead of charging again. 201 when charged, 200 when repeated or when there was
      * nothing to charge, 402 when the wallet could not pay (the same request succeeds after a top-up).
      */
+    @Operation(
+            summary = "Charge a customer's usage",
+            description =
+                    "Prices the customer's not-yet-rated usage in `[from, to)` against the plan and charges the wallet, "
+                    + "exactly once per usage event. Answers `201` when charged, `200` when repeated or when there was "
+                    + "nothing to charge, and `402` when the wallet could not pay; the same request succeeds after a "
+                    + "top-up.")
     @PostMapping("/pricing/usage-charges")
     @RepeatableCreate(repeated = "The usage was already charged and that rating is returned, or there was nothing to charge")
     @RequiresPermission(BillingPermissions.CHARGE_CREATE)
@@ -191,6 +216,11 @@ public class RatingController {
         return ResponseEntity.status(status).body(RatingResponse.of(result));
     }
 
+    @Operation(
+            summary = "Get a usage rating",
+            description =
+                    "Returns one rating with its lines, the period it covers and the charge it produced. An unknown id "
+                    + "answers `404`.")
     @GetMapping("/pricing/usage-charges/{id}")
     @RequiresPermission(BillingPermissions.PRICING_READ)
     public RatingResponse getRating(@PathVariable String id) {

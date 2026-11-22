@@ -19,6 +19,8 @@ import dev.ngb.core.audit.Audit;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +37,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Subscriptions. Money-moving POSTs that are not repeatable by data take an {@code Idempotency-Key}. A Tenant System sees and acts on the customers mapped to it only. */
+@Tag(
+        name = "Subscriptions",
+        description =
+                "Subscribe a wallet to a plan, read and cancel subscriptions.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -84,6 +90,13 @@ public class SubscriptionController {
      * Subscribes a customer's wallet to a plan and charges the first period at once. 201 for a new subscription, 200 when the
      * {@code Idempotency-Key} was used before. A first period the wallet cannot pay leaves it {@code PAST_DUE}, not rejected.
      */
+    @Operation(
+            summary = "Subscribe a wallet to a plan",
+            description =
+                    "Subscribes a customer's wallet (`walletId`) to a plan (`planId`) and charges the first period at "
+                    + "once. The cycle and currency come from the plan and stay fixed for the life of the subscription. A "
+                    + "first period the wallet cannot pay leaves the subscription `PAST_DUE` rather than rejecting it. Send "
+                    + "an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.")
     @PostMapping("/subscriptions")
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.SUBSCRIPTION_MANAGE)
@@ -99,6 +112,11 @@ public class SubscriptionController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link SubscriptionListing}. */
+    @Operation(
+            summary = "List subscriptions",
+            description =
+                    "Pages through the tenant's subscriptions, with the list-query contract's filtering, sorting and "
+                    + "paging. A Tenant System sees and acts on the customers mapped to it only.")
     @GetMapping("/subscriptions")
     @Listing(SubscriptionListing.class)
     @RequiresPermission(BillingPermissions.SUBSCRIPTION_READ)
@@ -106,6 +124,10 @@ public class SubscriptionController {
         return subscriptionQueries.list(query, currentActor.caller()).map(SubscriptionResponse::of);
     }
 
+    @Operation(
+            summary = "Get a subscription",
+            description =
+                    "Returns one subscription with its history of periods. An unknown id answers `404`.")
     @GetMapping("/subscriptions/{id}")
     @RequiresPermission(BillingPermissions.SUBSCRIPTION_READ)
     public SubscriptionDetailResponse subscription(@PathVariable String id) {
@@ -116,6 +138,12 @@ public class SubscriptionController {
      * Cancels at the end of the paid period, or at once when no paid period is running. Repeating it changes nothing.
      * Billing stops no Resource: the Tenant System decides what the end means for it.
      */
+    @Operation(
+            summary = "Cancel a subscription",
+            description =
+                    "Cancels at the end of the period already paid, so the customer keeps what was paid for, or at once "
+                    + "when no paid period is running. Repeating it changes nothing. Billing stops no resource: the Tenant "
+                    + "System decides what the end means for it.")
     @PostMapping("/subscriptions/{id}/cancel")
     @RequiresPermission(BillingPermissions.SUBSCRIPTION_MANAGE)
     public SubscriptionDetailResponse cancel(@PathVariable String id, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {

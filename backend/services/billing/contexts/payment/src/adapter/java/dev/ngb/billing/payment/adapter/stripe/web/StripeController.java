@@ -23,6 +23,8 @@ import dev.ngb.core.audit.Audit;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
 import dev.ngb.core.spring.query.Listing;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -41,6 +43,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** The Tenant's Stripe connection and the history of Stripe webhook processing. Nothing here returns a secret: the read side only says whether a webhook secret is set. */
+@Tag(
+        name = "Stripe configuration",
+        description =
+                "The tenant's Stripe connection and the history of Stripe webhook processing. Nothing here returns a "
+                + "secret.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -109,6 +116,13 @@ public class StripeController {
         this.currentActor = currentActor;
     }
 
+    @Operation(
+            summary = "Connect the tenant's own Stripe account",
+            description =
+                    "Replaces any current configuration with a Direct one built on the tenant's own Stripe keys "
+                    + "(`secretKey`, `publishableKey` and `webhookSecret`). Stripe is asked first and the secrets are "
+                    + "stored encrypted; they are never returned, and the configuration only says whether a webhook secret "
+                    + "is set.")
     @PutMapping("/stripe/configuration/direct")
     @RequiresPermission(BillingPermissions.STRIPE_MANAGE)
     public ConfigurationResponse connectDirect(
@@ -116,6 +130,11 @@ public class StripeController {
         return configurationResponse(configuration.connectDirect(Audit.of(currentActor.get().auditName(), requestId), request.secretKey(), request.publishableKey(), request.webhookSecret()));
     }
 
+    @Operation(
+            summary = "Set the Stripe webhook signing secret",
+            description =
+                    "Stores the signing secret of the webhook the tenant created in its own Stripe Dashboard. It is never "
+                    + "returned.")
     @PutMapping("/stripe/configuration/webhook-secret")
     @RequiresPermission(BillingPermissions.STRIPE_MANAGE)
     public ConfigurationResponse setWebhookSecret(
@@ -123,6 +142,12 @@ public class StripeController {
         return configurationResponse(configuration.setWebhookSecret(Audit.of(currentActor.get().auditName(), requestId), request.webhookSecret()));
     }
 
+    @Operation(
+            summary = "Start Stripe Connect onboarding",
+            description =
+                    "Starts linking a Stripe account through the platform's Connect application and answers the "
+                    + "Stripe-hosted onboarding page the tenant finishes. Repeating it while onboarding is open answers a "
+                    + "fresh link.")
     @PostMapping("/stripe/configuration/connect")
     @RequiresPermission(BillingPermissions.STRIPE_MANAGE)
     public ConnectionResponse startConnect(
@@ -131,6 +156,10 @@ public class StripeController {
     }
 
     /** A new onboarding link, for when the earlier one has expired. */
+    @Operation(
+            summary = "Get a new Stripe onboarding link",
+            description =
+                    "Answers a fresh onboarding link, for when the earlier one has expired.")
     @PostMapping("/stripe/configuration/connect/link")
     @RequiresPermission(BillingPermissions.STRIPE_MANAGE)
     public ConnectionResponse onboardingLink() {
@@ -138,18 +167,31 @@ public class StripeController {
     }
 
     /** Asks Stripe what the connected account can do now. Call it when the Tenant returns from onboarding. */
+    @Operation(
+            summary = "Refresh the Stripe account status",
+            description =
+                    "Asks Stripe what the connected account can do now. Call it when the tenant returns from onboarding.")
     @PostMapping("/stripe/configuration/refresh")
     @RequiresPermission(BillingPermissions.STRIPE_MANAGE)
     public ConfigurationResponse refresh(@RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
         return configurationResponse(configuration.refresh(Audit.of(currentActor.get().auditName(), requestId)));
     }
 
+    @Operation(
+            summary = "Get the Stripe configuration",
+            description =
+                    "Returns the tenant's Stripe connection: mode, account, environment, status, whether card payments "
+                    + "are active and the webhook URL. No secret is returned.")
     @GetMapping("/stripe/configuration")
     @RequiresPermission(BillingPermissions.STRIPE_READ)
     public ConfigurationResponse getConfiguration() {
         return configurationResponse(configurationQueries.get());
     }
 
+    @Operation(
+            summary = "Disconnect Stripe",
+            description =
+                    "Removes the tenant's Stripe configuration. Answers `204`.")
     @DeleteMapping("/stripe/configuration")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequiresPermission(BillingPermissions.STRIPE_MANAGE)
@@ -158,6 +200,11 @@ public class StripeController {
     }
 
     /** Newest received first by default; filter, sort and paging follow the list-query contract. */
+    @Operation(
+            summary = "List Stripe events",
+            description =
+                    "Pages through the Stripe webhook events received for the tenant, newest first by default, with the "
+                    + "list-query contract's filtering, sorting and paging.")
     @GetMapping("/stripe/events")
     @Listing(StripeEventListing.class)
     @RequiresPermission(BillingPermissions.STRIPE_READ)
@@ -165,6 +212,10 @@ public class StripeController {
         return eventQueries.list(query).map(EventResponse::ofView);
     }
 
+    @Operation(
+            summary = "Get a Stripe event",
+            description =
+                    "Returns one received Stripe event with how its processing went. An unknown id answers `404`.")
     @GetMapping("/stripe/events/{id}")
     @RequiresPermission(BillingPermissions.STRIPE_READ)
     public EventDetailResponse event(@PathVariable String id) {
@@ -172,6 +223,10 @@ public class StripeController {
     }
 
     /** Tries an event that failed or gave up again, now. */
+    @Operation(
+            summary = "Retry a Stripe event",
+            description =
+                    "Tries an event that failed or gave up again, now.")
     @PostMapping("/stripe/events/{id}/retry")
     @RequiresPermission(BillingPermissions.STRIPE_MANAGE)
     public EventDetailResponse retry(@PathVariable String id, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {
@@ -180,6 +235,12 @@ public class StripeController {
     }
 
     /** Compares recent payments and refunds with Stripe now, instead of waiting for the scheduled run. */
+    @Operation(
+            summary = "Reconcile payments with Stripe",
+            description =
+                    "Compares recent payments and refunds with what Stripe holds now, instead of waiting for the "
+                    + "scheduled run. A disagreement is recorded as an incident; where Stripe is authoritative and ahead, "
+                    + "the correction goes through the same path as a verified event.")
     @PostMapping("/stripe/reconcile")
     @RequiresPermission(BillingPermissions.STRIPE_MANAGE)
     public ReconcileResponse reconcile() {

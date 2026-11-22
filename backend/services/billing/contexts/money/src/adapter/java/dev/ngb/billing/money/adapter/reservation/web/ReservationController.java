@@ -18,6 +18,8 @@ import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Duration;
 import java.time.Instant;
 import org.springframework.context.annotation.Profile;
@@ -32,6 +34,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Holds part of a wallet's balance for a later charge. Every money-moving POST needs an {@code Idempotency-Key}. */
+@Tag(
+        name = "Reservations",
+        description =
+                "Hold part of a wallet's balance for a later charge.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -61,6 +67,13 @@ public class ReservationController {
         this.currentActor = currentActor;
     }
 
+    @Operation(
+            summary = "Reserve part of a wallet's balance",
+            description =
+                    "Holds `amount` of the wallet for a bounded time (`ttlSeconds`) for a later charge, after checking "
+                    + "the wallet can cover it or its postpaid limit. Nothing is posted to the ledger until the reservation "
+                    + "is captured. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result "
+                    + "with `200`.")
     @PostMapping("/reservations")
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.RESERVATION_MANAGE)
@@ -73,6 +86,11 @@ public class ReservationController {
     }
 
     /** Filter, sort and paging follow the list-query contract; a Tenant System sees only its customers' wallets. */
+    @Operation(
+            summary = "List reservations",
+            description =
+                    "Pages through the tenant's reservations, with the list-query contract's filtering, sorting and "
+                    + "paging. A Tenant System sees and acts on the customers mapped to it only.")
     @GetMapping("/reservations")
     @Listing(ReservationListing.class)
     @RequiresPermission(BillingPermissions.WALLET_READ)
@@ -80,12 +98,22 @@ public class ReservationController {
         return queries.reservations(query, currentActor.caller()).map(ReservationResponse::ofView);
     }
 
+    @Operation(
+            summary = "Get a reservation",
+            description =
+                    "Returns one reservation with its status, amount, what was captured and when it expires. An unknown "
+                    + "id answers `404`.")
     @GetMapping("/reservations/{id}")
     @RequiresPermission(BillingPermissions.WALLET_READ)
     public ReservationResponse reservation(@PathVariable String id) {
         return ReservationResponse.ofView(queries.reservation(ReservationId.of(id), currentActor.caller()));
     }
 
+    @Operation(
+            summary = "Release a reservation",
+            description =
+                    "Gives the held amount back to the wallet. Releasing a reservation that is already released changes "
+                    + "nothing.")
     @PostMapping("/reservations/{id}/release")
     @RequiresPermission(BillingPermissions.RESERVATION_MANAGE)
     public ReservationResponse release(@PathVariable String id) {

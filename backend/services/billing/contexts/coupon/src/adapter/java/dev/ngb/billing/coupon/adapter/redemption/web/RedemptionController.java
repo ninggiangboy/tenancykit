@@ -17,6 +17,8 @@ import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +40,10 @@ import org.springframework.web.bind.annotation.RestController;
  * {@code billing:coupon:manage}, and the two are separate operations here rather than one endpoint that infers which
  * act the caller intended.
  */
+@Tag(
+        name = "Coupon redemptions",
+        description =
+                "Redeem a coupon onto a wallet by code or by id, revoke one, and read a wallet's redemptions.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -87,6 +93,12 @@ public class RedemptionController {
      * Redeems by code. 201 for a new redemption, 200 when the {@code Idempotency-Key} was used before. Every refusal
      * answers 404, so a caller cannot learn whether a code exists, is inactive, expired or exhausted.
      */
+    @Operation(
+            summary = "Redeem a promotion code",
+            description =
+                    "Redeems the promotion `code` onto a wallet. Send an `Idempotency-Key`; a repeat of the same key and "
+                    + "body answers the first result with `200`. Every refusal answers `404`, so a caller cannot learn "
+                    + "whether a code exists, is inactive, expired or exhausted. Answers `201` for a new redemption.")
     @PostMapping("/wallets/{walletId}/coupon-redemptions")
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.COUPON_REDEEM)
@@ -105,6 +117,13 @@ public class RedemptionController {
      * Attaches a coupon to a wallet by its id, which asks for {@code billing:coupon:manage} because it skips a code's
      * own limits. A Tenant System uses this route to grant a coupon it chose itself.
      */
+    @Operation(
+            summary = "Attach a coupon to a wallet",
+            description =
+                    "Attaches a coupon to a wallet by its `couponId`, which skips a code's own limits and so needs the "
+                    + "coupon manage permission rather than the redeem one. A Tenant System uses it to grant a coupon it "
+                    + "chose itself. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result "
+                    + "with `200`.")
     @PostMapping("/wallets/{walletId}/coupon-redemptions/attach")
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.COUPON_MANAGE)
@@ -120,6 +139,11 @@ public class RedemptionController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the wallet is fixed by the path. */
+    @Operation(
+            summary = "List a wallet's coupon redemptions",
+            description =
+                    "Pages through the redemptions on the wallet named by the path, with the list-query contract's "
+                    + "filtering, sorting and paging.")
     @GetMapping("/wallets/{walletId}/coupon-redemptions")
     @Listing(RedemptionListing.class)
     @RequiresPermission(BillingPermissions.COUPON_READ)
@@ -127,6 +151,10 @@ public class RedemptionController {
         return queries.redemptionsOfWallet(UUID.fromString(walletId), currentActor.caller(), query).map(RedemptionResponse::of);
     }
 
+    @Operation(
+            summary = "Get a coupon redemption",
+            description =
+                    "Returns one redemption with its coupon, code and wallet. An unknown id answers `404`.")
     @GetMapping("/coupon-redemptions/{id}")
     @RequiresPermission(BillingPermissions.COUPON_READ)
     public RedemptionResponse redemption(@PathVariable String id) {
@@ -134,6 +162,11 @@ public class RedemptionController {
     }
 
     /** Ends the redemption early; nothing already discounted is released. Idempotent. */
+    @Operation(
+            summary = "Revoke a coupon redemption",
+            description =
+                    "Ends the redemption early. Nothing is released or refunded: discounts already given were charged "
+                    + "correctly at the time. Idempotent: revoking again changes nothing and announces nothing.")
     @PostMapping("/coupon-redemptions/{id}/revoke")
     @RequiresPermission(BillingPermissions.COUPON_MANAGE)
     public RedemptionResponse revoke(

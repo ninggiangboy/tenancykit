@@ -22,6 +22,8 @@ import dev.ngb.billing.pricing.domain.plan.PricingPlan;
 import dev.ngb.billing.pricing.domain.plan.RoundingPolicy;
 import dev.ngb.billing.pricing.domain.rule.PricingModel;
 import dev.ngb.billing.sharedkernel.money.Currency;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +41,10 @@ import org.springframework.web.bind.annotation.RestController;
 import tools.jackson.databind.json.JsonMapper;
 
 /** Pricing plans and their versions. Prices are decimals in minor units of the plan's currency. */
+@Tag(
+        name = "Pricing plans",
+        description =
+                "Pricing plans and their versions.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -89,6 +95,12 @@ public class PlanController {
         this.json = json;
     }
 
+    @Operation(
+            summary = "Create a pricing plan",
+            description =
+                    "Creates a plan with a `code`, a name, a currency, a pricing `model` and its first version. Prices "
+                    + "are decimals in minor units of the plan's currency. Creating a plan fixes the unit of each metric it "
+                    + "prices; a later plan that measures the same metric in another unit is refused. Answers `201`.")
     @PostMapping("/pricing-plans")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(BillingPermissions.PRICING_MANAGE)
@@ -102,6 +114,11 @@ public class PlanController {
     }
 
     /** Tenant systems list the plans they may offer; filter, sort and paging follow the list-query contract. */
+    @Operation(
+            summary = "List pricing plans",
+            description =
+                    "Pages through the plans a tenant system may offer, with the list-query contract's filtering, sorting "
+                    + "and paging.")
     @GetMapping("/pricing-plans")
     @Listing(PlanListing.class)
     @RequiresPermission(BillingPermissions.PRICING_READ)
@@ -109,6 +126,10 @@ public class PlanController {
         return planQueries.list(query).map(view -> PlanResponse.ofView(view, json));
     }
 
+    @Operation(
+            summary = "Get a pricing plan",
+            description =
+                    "Returns one plan with its current version. An unknown id answers `404`.")
     @GetMapping("/pricing-plans/{id}")
     @RequiresPermission(BillingPermissions.PRICING_READ)
     public PlanResponse getPlan(@PathVariable String id) {
@@ -116,6 +137,11 @@ public class PlanController {
     }
 
     /** Adds the next version. Earlier versions, and every charge that used them, are unchanged. */
+    @Operation(
+            summary = "Publish a plan version",
+            description =
+                    "Adds the next version of the plan. Earlier versions, and every charge that used them, are unchanged. "
+                    + "Answers `201`.")
     @PostMapping("/pricing-plans/{id}/versions")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(BillingPermissions.PRICING_MANAGE)
@@ -128,6 +154,11 @@ public class PlanController {
         return VersionResponse.of(plans.publishVersion(Audit.of(currentActor.get().auditName(), requestId), planId, terms(request, plans.get(planId).model())));
     }
 
+    @Operation(
+            summary = "Retire a pricing plan",
+            description =
+                    "Retires the plan so it can no longer be offered; existing versions and the charges that used them "
+                    + "stay.")
     @PostMapping("/pricing-plans/{id}/retire")
     @RequiresPermission(BillingPermissions.PRICING_MANAGE)
     public PlanResponse retire(@PathVariable String id, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {

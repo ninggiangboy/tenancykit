@@ -16,6 +16,8 @@ import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.context.annotation.Profile;
@@ -28,6 +30,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Reads a wallet's ledger and corrects it with reversal entries; the ledger itself is append-only. */
+@Tag(
+        name = "Ledger",
+        description =
+                "A wallet's append-only ledger, corrected only with reversal entries.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -68,6 +74,11 @@ public class LedgerController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the wallet is fixed by the path. */
+    @Operation(
+            summary = "List a wallet's ledger",
+            description =
+                    "Pages through the append-only ledger of the wallet named by the path, with the list-query contract's "
+                    + "filtering, sorting and paging.")
     @GetMapping("/wallets/{id}/ledger")
     @Listing(LedgerListing.class)
     @RequiresPermission(BillingPermissions.WALLET_READ)
@@ -75,6 +86,12 @@ public class LedgerController {
         return queries.ledger(WalletId.of(id), query, currentActor.caller()).map(LedgerEntryResponse::ofView);
     }
 
+    @Operation(
+            summary = "Reverse a ledger entry",
+            description =
+                    "The only way to correct the ledger: posts an entry that negates an earlier one on the same wallet "
+                    + "and, optionally, a `replacement` with the right amount. The original is never touched. Reversing the "
+                    + "same entry twice answers the first reversal, with `replayed` set.")
     @PostMapping("/ledger-entries/{id}/reverse")
     @RequiresPermission(BillingPermissions.LEDGER_REVERSE)
     public ReversalResponse reverse(@PathVariable String id, @RequestBody ReverseRequest request) {

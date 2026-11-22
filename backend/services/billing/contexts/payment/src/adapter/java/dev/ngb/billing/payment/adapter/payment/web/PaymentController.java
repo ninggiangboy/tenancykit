@@ -21,6 +21,8 @@ import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
 import dev.ngb.billing.sharedkernel.id.WalletId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +38,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Wallet top-ups and the payment history. Money-moving POSTs need an {@code Idempotency-Key}. Creating a payment never changes a balance; only a verified Stripe event does. */
+@Tag(
+        name = "Payments",
+        description =
+                "Wallet top-ups and the payment history. A payment never changes a balance; only a verified Stripe "
+                + "event does.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -84,6 +91,13 @@ public class PaymentController {
      * Starts a wallet top-up and returns the Stripe-hosted page where the customer pays. 201 for a new payment,
      * 200 when the {@code Idempotency-Key} was used before. The wallet is credited only after Stripe confirms.
      */
+    @Operation(
+            summary = "Start a wallet top-up",
+            description =
+                    "Starts a top-up of a wallet and answers the Stripe-hosted page where the customer pays. Creating a "
+                    + "payment never changes a balance: the wallet is credited only when a verified Stripe event says the "
+                    + "money arrived. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result "
+                    + "with `200`.")
     @PostMapping("/payments/top-ups")
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.PAYMENT_CREATE)
@@ -99,6 +113,11 @@ public class PaymentController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link PaymentListing}. */
+    @Operation(
+            summary = "List payments",
+            description =
+                    "Pages through the tenant's payments, with the list-query contract's filtering, sorting and paging. A "
+                    + "Tenant System sees and acts on the customers mapped to it only.")
     @GetMapping("/payments")
     @Listing(PaymentListing.class)
     @RequiresPermission(BillingPermissions.PAYMENT_READ)
@@ -106,6 +125,10 @@ public class PaymentController {
         return queries.list(query, currentActor.caller()).map(PaymentResponse::ofView);
     }
 
+    @Operation(
+            summary = "Get a payment",
+            description =
+                    "Returns one payment with its status and the amount refunded so far. An unknown id answers `404`.")
     @GetMapping("/payments/{id}")
     @RequiresPermission(BillingPermissions.PAYMENT_READ)
     public PaymentDetailResponse payment(@PathVariable String id) {

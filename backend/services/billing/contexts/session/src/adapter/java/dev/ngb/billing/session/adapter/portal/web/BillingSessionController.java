@@ -12,6 +12,8 @@ import dev.ngb.billing.session.application.portal.command.RevokeBillingSessionUs
 import dev.ngb.billing.session.domain.portal.BillingSession;
 import dev.ngb.billing.session.domain.portal.BillingSessionId;
 import dev.ngb.billing.sharedkernel.id.CustomerId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Duration;
 import java.time.Instant;
@@ -34,6 +36,10 @@ import org.springframework.web.bind.annotation.RestController;
  * The Tenant System side of a Billing Session: create one for a mapped customer, and revoke a session it issued.
  * The exchange token is returned once, inside the portal URL.
  */
+@Tag(
+        name = "Billing sessions",
+        description =
+                "The Tenant System side of the customer portal: create a billing session and revoke one.")
 @Profile("api")
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
@@ -54,6 +60,13 @@ public class BillingSessionController {
         this.currentActor = currentActor;
     }
 
+    @Operation(
+            summary = "Create a billing session",
+            description =
+                    "Issues a portal session for one customer (`customerId`) to the Tenant System that asked, with a "
+                    + "`returnUrl` from the tenant's allowlist, the `permissions` it grants and a lifetime. The answer "
+                    + "carries the `portalUrl` to open in the customer's browser; its single-use exchange token is shown "
+                    + "once there, and only its digest is stored.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(BillingPermissions.BILLING_SESSION_CREATE)
@@ -81,6 +94,11 @@ public class BillingSessionController {
                 session.expiresAt());
     }
 
+    @Operation(
+            summary = "Revoke a billing session",
+            description =
+                    "Revokes the session at once. A Tenant System may revoke only the sessions it issued; a Tenant User "
+                    + "may revoke any.")
     @PostMapping("/{id}/revoke")
     @RequiresPermission(BillingPermissions.BILLING_SESSION_CREATE)
     public ResponseEntity<Void> revoke(

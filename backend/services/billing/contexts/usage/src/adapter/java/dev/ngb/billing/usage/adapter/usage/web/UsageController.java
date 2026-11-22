@@ -1,5 +1,7 @@
 package dev.ngb.billing.usage.adapter.usage.web;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.context.annotation.Profile;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.CurrentActor;
@@ -38,6 +40,10 @@ import org.springframework.web.bind.annotation.RestController;
  * event or of a whole batch never records anything twice. Quantities are decimal strings (or numbers) with up
  * to six decimal places, in the unit the metric's pricing plan defines.
  */
+@Tag(
+        name = "Usage",
+        description =
+                "Usage reported by tenant systems, idempotent per event, and its aggregates.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -90,6 +96,13 @@ public class UsageController {
     }
 
     /** 201 for a newly recorded event, 200 when the same event was already recorded. */
+    @Operation(
+            summary = "Record a usage event",
+            description =
+                    "Reports one usage event for a customer: the `metric`, a `quantity` with up to six decimal places in "
+                    + "the unit the metric's plan defines, and when it `occurredAt`. Each event carries its own "
+                    + "`idempotencyKey`, so a retry never records anything twice: `201` for a new event, `200` with the "
+                    + "recorded event when it was already recorded, and `409` when the key arrives with different content.")
     @PostMapping("/usage-events")
     @RepeatableCreate(repeated = "The same event was already recorded; the recorded event is returned")
     @RequiresPermission(BillingPermissions.USAGE_RECORD)
@@ -99,6 +112,11 @@ public class UsageController {
     }
 
     /** All-or-nothing: if any event is invalid or conflicts, none is stored. Up to 500 events. */
+    @Operation(
+            summary = "Record usage events in a batch",
+            description =
+                    "Reports up to 500 usage events at once, all-or-nothing: if any event is invalid or conflicts, none "
+                    + "is stored.")
     @PostMapping("/usage-events/batch")
     @RequiresPermission(BillingPermissions.USAGE_RECORD)
     public BatchResponse recordBatch(@RequestBody BatchRequest request) {
@@ -111,6 +129,11 @@ public class UsageController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link UsageEventListing}. */
+    @Operation(
+            summary = "List usage events",
+            description =
+                    "Pages through the recorded usage events, with the list-query contract's filtering, sorting and "
+                    + "paging. A Tenant System sees and acts on the customers mapped to it only.")
     @GetMapping("/usage-events")
     @Listing(UsageEventListing.class)
     @RequiresPermission(BillingPermissions.USAGE_READ)
@@ -119,6 +142,11 @@ public class UsageController {
     }
 
     /** Quantity and event count per metric over {@code [from, to)}, for rating and for invoices. */
+    @Operation(
+            summary = "Get usage aggregates",
+            description =
+                    "Returns the quantity and the number of events per metric for a customer over `[from, to)`, "
+                    + "optionally for the `metric` values given. Rating and invoices read the same totals.")
     @GetMapping("/usage-aggregates")
     @RequiresPermission(BillingPermissions.USAGE_READ)
     public List<TotalResponse> aggregates(

@@ -21,6 +21,8 @@ import dev.ngb.core.query.Page;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +38,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Invoices. An invoice becomes paid only from a verified payment (or because the wallet already paid the charge it documents); no request here marks one paid. A Tenant System sees and acts on the customers mapped to it only. */
+@Tag(
+        name = "Invoices",
+        description =
+                "Invoices. An invoice becomes paid only from a verified payment; no request marks one paid.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -100,6 +106,11 @@ public class InvoiceController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link InvoiceListing}. */
+    @Operation(
+            summary = "List invoices",
+            description =
+                    "Pages through the tenant's invoices, with the list-query contract's filtering, sorting and paging. A "
+                    + "Tenant System sees and acts on the customers mapped to it only.")
     @GetMapping("/invoices")
     @Listing(InvoiceListing.class)
     @RequiresPermission(BillingPermissions.INVOICE_READ)
@@ -107,6 +118,12 @@ public class InvoiceController {
         return invoiceQueries.list(query, currentActor.caller()).map(InvoiceResponse::of);
     }
 
+    @Operation(
+            summary = "Get an invoice",
+            description =
+                    "Returns one invoice with its lines. An invoice becomes paid only from a verified payment, or because "
+                    + "the wallet already paid the charge it documents; no request marks one paid. An unknown id answers "
+                    + "`404`.")
     @GetMapping("/invoices/{id}")
     @RequiresPermission(BillingPermissions.INVOICE_READ)
     public InvoiceDetailResponse invoice(@PathVariable String id) {
@@ -117,6 +134,13 @@ public class InvoiceController {
      * Issues an invoice for one succeeded charge. 201 for a new invoice, 200 when the charge already had one, which is
      * returned: a charge is billed on one line at most, so no key is needed.
      */
+    @Operation(
+            summary = "Invoice a charge",
+            description =
+                    "Issues an invoice for one succeeded charge, with the same numbering as a cycle invoice. A charge is "
+                    + "billed on one line at most, so asking again answers the existing invoice with `200` and needs no "
+                    + "key. A postpaid charge opens for payment; a prepaid charge was paid from the wallet, so its invoice "
+                    + "is a paid record. Answers `201`.")
     @PostMapping("/invoices")
     @RepeatableCreate(repeated = "The charge already had an invoice; that invoice is returned")
     @RequiresPermission(BillingPermissions.INVOICE_CREATE)
@@ -135,6 +159,12 @@ public class InvoiceController {
      * Starts a payment of an open invoice and returns Stripe's hosted page. The invoice is paid, and the debt paid off,
      * only when Stripe's verified result arrives. 201 for a new payment, 200 when the {@code Idempotency-Key} was used before.
      */
+    @Operation(
+            summary = "Pay an invoice",
+            description =
+                    "Starts a payment of an open invoice and answers Stripe's hosted page where the customer pays. The "
+                    + "invoice is paid, and the debt paid off, only when Stripe's verified result arrives. Send an "
+                    + "`Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.")
     @PostMapping("/invoices/{id}/payments")
     @RepeatableCreate
     @RequiresPermission(BillingPermissions.PAYMENT_CREATE)
@@ -149,6 +179,12 @@ public class InvoiceController {
     }
 
     /** Cancels the request for payment. The wallet is not touched and a paid invoice cannot be voided (409). */
+    @Operation(
+            summary = "Void an invoice",
+            description =
+                    "Cancels the request for payment, with a `reason`. The wallet is not touched: what was charged stays "
+                    + "charged, and correcting the ledger is a reversal, not a void. A paid invoice cannot be voided and "
+                    + "answers `409`.")
     @PostMapping("/invoices/{id}/void")
     @RequiresPermission(BillingPermissions.INVOICE_MANAGE)
     public InvoiceDetailResponse voidInvoice(
@@ -158,6 +194,10 @@ public class InvoiceController {
     }
 
     /** Writes an open invoice off as unlikely to be paid. It can still be paid later. */
+    @Operation(
+            summary = "Write an invoice off",
+            description =
+                    "Writes an open invoice off as unlikely to be paid. It can still be paid later.")
     @PostMapping("/invoices/{id}/uncollectible")
     @RequiresPermission(BillingPermissions.INVOICE_MANAGE)
     public InvoiceDetailResponse markUncollectible(@PathVariable String id, @RequestHeader(value = HttpHeaders.REQUEST_ID, required = false) String requestId) {

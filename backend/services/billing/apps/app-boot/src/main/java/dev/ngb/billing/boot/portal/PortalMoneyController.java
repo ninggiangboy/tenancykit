@@ -19,6 +19,8 @@ import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
 import dev.ngb.billing.sharedkernel.money.Currency;
 import dev.ngb.billing.sharedkernel.money.Money;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -36,6 +38,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /** The customer's wallets, balance, ledger, charges and top-ups, always scoped to the session's customer. */
+@Tag(
+        name = "Portal: wallets and charges",
+        description =
+                "The session's customer's wallets, ledger, charges and top-ups.")
 @Profile("api")
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
@@ -89,6 +95,12 @@ public class PortalMoneyController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the customer is fixed by the portal session. */
+    @Operation(
+            summary = "List the customer's wallets",
+            description =
+                    "Pages through the wallets of the portal session's customer, with the list-query contract's "
+                    + "filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's "
+                    + "data is reachable.")
     @GetMapping("/wallets")
     @Listing(WalletListing.class)
     @RequiresPortalPermission(PortalPermission.WALLET_VIEW)
@@ -96,6 +108,11 @@ public class PortalMoneyController {
         return portal.wallets(query).map(WalletResponse::of);
     }
 
+    @Operation(
+            summary = "Get one of the customer's wallets",
+            description =
+                    "Returns a wallet of the portal session's customer with its balance, held amount and available "
+                    + "amount. A wallet of another customer answers `404`.")
     @GetMapping("/wallets/{id}")
     @RequiresPortalPermission(PortalPermission.WALLET_VIEW)
     public WalletResponse wallet(@PathVariable String id) {
@@ -103,6 +120,11 @@ public class PortalMoneyController {
     }
 
     /** The wallet is fixed by the path; filter, sort and paging follow the list-query contract. */
+    @Operation(
+            summary = "List a wallet's ledger",
+            description =
+                    "Pages through the append-only ledger of one of the customer's wallets, with the list-query "
+                    + "contract's filtering, sorting and paging.")
     @GetMapping("/wallets/{id}/ledger")
     @Listing(LedgerListing.class)
     @RequiresPortalPermission(PortalPermission.LEDGER_VIEW)
@@ -111,6 +133,12 @@ public class PortalMoneyController {
     }
 
     /** Charges of the session's customer's wallets; the same filter, sort and paging contract as the API applies. */
+    @Operation(
+            summary = "List the customer's charges",
+            description =
+                    "Pages through the charges made against the portal session's customer's wallets, with the list-query "
+                    + "contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other "
+                    + "customer's data is reachable.")
     @GetMapping("/charges")
     @Listing(ChargeListing.class)
     @RequiresPortalPermission(PortalPermission.CHARGE_VIEW)
@@ -119,6 +147,13 @@ public class PortalMoneyController {
     }
 
     /** Starts a top-up through the Tenant's Stripe configuration; the wallet is credited only by the verified event. */
+    @Operation(
+            summary = "Start a wallet top-up",
+            description =
+                    "Starts a top-up of one of the customer's wallets through the Tenant's Stripe configuration and "
+                    + "answers the Stripe-hosted page where the customer pays. The wallet is credited only when a verified "
+                    + "Stripe event confirms the money arrived. Requires an `Idempotency-Key`; a repeat answers the first "
+                    + "top-up with `200`.")
     @PostMapping("/top-ups")
     @RepeatableCreate
     @RequiresPortalPermission(PortalPermission.TOP_UP)

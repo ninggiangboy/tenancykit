@@ -6,6 +6,8 @@ import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.api.portal.PortalSessions;
 import dev.ngb.billing.session.api.portal.PortalVisitor;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import java.time.Instant;
@@ -25,6 +27,11 @@ import org.springframework.web.bind.annotation.RestController;
  * from the URL fragment (so it never reaches a server log or a Referer header), and exchanges it here for the
  * HttpOnly session cookie and the readable CSRF cookie.
  */
+@Tag(
+        name = "Portal: session",
+        description =
+                "The browser side of a billing session: exchange the single-use token for a cookie and read the "
+                + "session.")
 @Profile("api")
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
@@ -57,6 +64,12 @@ public class PortalSessionController {
     }
 
     /** Public on purpose: the single-use token is the proof. A token for another tenant is unknown on this hostname. */
+    @Operation(
+            summary = "Exchange a billing-session token",
+            description =
+                    "Exchanges the single-use token the portal read from its URL fragment for an HttpOnly session cookie "
+                    + "and a readable CSRF cookie. The token cannot be used again; a token for another tenant is unknown on "
+                    + "this hostname. Public: the token is the proof, and no suite token is needed.")
     @PostMapping("/exchange")
     @PublicEndpoint
     public ExchangeResponse exchange(
@@ -77,6 +90,10 @@ public class PortalSessionController {
     }
 
     /** What the portal may show, and how long the visit lasts. */
+    @Operation(
+            summary = "Get the portal session",
+            description =
+                    "Returns what the portal may show, the permissions the session carries, and when the visit expires.")
     @GetMapping
     @RequiresPortalPermission(PortalPermission.SESSION_VIEW)
     public SessionResponse session() {
