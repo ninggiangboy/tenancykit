@@ -1,0 +1,1033 @@
+---
+openapi: "3.1.0"
+info:
+  title: "Workflow API"
+  description: "The API a Tenant System uses to publish and run workflows, take part\
+    \ in human tasks and manage the connections and triggers that drive them."
+  version: "v1"
+servers:
+- url: "/workflow"
+  description: "Any tenant hostname: <tenant-code>.<base-domain>/workflow"
+tags:
+- name: "Workflow instances"
+  description: "What a tenant's flows did and are doing: the instances started and\
+    \ their state."
+- name: "Webhook deliveries"
+  description: "The history of attempts to deliver an event to an endpoint, and resending\
+    \ one that finished. A delivery that exhausted its attempts is DEAD and stays\
+    \ visible so it can be resent."
+- name: "Platform credential"
+  description: "The tenant's write-only credential for calling Platform, and its status."
+- name: "Workflow definitions"
+  description: "Create a definition, edit its draft, publish immutable versions, retire\
+    \ it and simulate the draft."
+- name: "Connections"
+  description: "The connections a workflow step may call. A secret goes in and never\
+    \ comes out."
+- name: "Manual start"
+  description: "Starts a workflow instance from a manual call."
+- name: "Task groups"
+  description: "The named lists a human task may be assigned to."
+- name: "Event hooks"
+  description: "The public hook a tenant registers in a source app. The trigger's\
+    \ secret proves the delivery."
+- name: "Webhook endpoints"
+  description: "Where a tenant wants its events delivered and which event types. The\
+    \ signing secret is returned only when an endpoint is created or its secret rotated,\
+    \ never again."
+- name: "Triggers"
+  description: "The ways a tenant starts a workflow: signed events from apps or external\
+    \ systems, and schedules."
+- name: "Human tasks"
+  description: "The human-task inbox: read, claim, complete and reassign tasks."
+- name: "Instance operations"
+  description: "What an operator does with an instance that stopped: retry, replay,\
+    \ cancel and read its timeline."
+paths:
+  /hooks/{triggerId}:
+    post:
+      tags:
+      - "Event hooks"
+      summary: "Receive a signed event hook"
+      description: "The public hook a tenant registers in a source app. The trigger's\
+        \ secret signs the delivery, so no suite token is needed, and the tenant comes\
+        \ from the host. A new event starts every matching trigger and is answered\
+        \ with how many started; a duplicate event id is answered as accepted and\
+        \ starts nothing. A bad signature, a stale timestamp, an unknown trigger and\
+        \ a tampered body all answer the same `401`.\n\nCallers: provider."
+      operationId: "receive"
+      parameters:
+      - name: "triggerId"
+        in: "path"
+        description: "The id of the trigger the delivery is for. The trigger's secret\
+          \ signs the delivery."
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        description: "The event as the source app sent it, byte for byte. The signature\
+          \ in the headers covers exactly these bytes."
+        content:
+          application/json:
+            schema:
+              type: "string"
+        required: true
+      responses:
+        "200":
+          description: "The receipt of a delivered event."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ReceiptResponse"
+        "401":
+          description: "The signature is wrong, the timestamp is stale, the trigger\
+            \ is unknown, or the body was tampered with. All of them answer the same."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+      x-allowed-callers:
+      - "provider"
+components:
+  schemas:
+    UpdateEndpointRequest:
+      type: "object"
+      description: "The fields to change. A field that is left out keeps its value."
+      properties:
+        url:
+          type: "string"
+          description: "The HTTPS URL events are posted to. It must resolve to a public\
+            \ address."
+        description:
+          type: "string"
+          description: "A note about the endpoint."
+        eventTypes:
+          type: "array"
+          description: "The event types the endpoint subscribes to."
+          items:
+            type: "string"
+        status:
+          type: "string"
+          description: "`ACTIVE`, or `DISABLED` to pause delivery without losing queued\
+            \ events."
+    EndpointResponse:
+      type: "object"
+      description: "A webhook endpoint. The signing secret is not part of it."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        url:
+          type: "string"
+          description: "The HTTPS URL events are posted to. It must resolve to a public\
+            \ address."
+        description:
+          type: "string"
+          description: "A note about the endpoint."
+        eventTypes:
+          type: "array"
+          description: "The event types the endpoint subscribes to."
+          items:
+            type: "string"
+        status:
+          type: "string"
+          description: "`ACTIVE` or `DISABLED`."
+        keyId:
+          type: "string"
+          description: "The id of the key the secret was written under. The secret\
+            \ itself is never returned."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+        secretRotatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the signing secret was last rotated, or null."
+    UpdateTriggerRequest:
+      type: "object"
+      description: "The fields to change. A field that is left out keeps its value."
+      properties:
+        name:
+          type: "string"
+          description: "The display name."
+        eventType:
+          type: "string"
+          description: "The one event type that starts the workflow, or null for every\
+            \ type of the source."
+        filter:
+          description: "An expression over the event envelope that decides whether\
+            \ the trigger fires, or null to accept every event."
+        correlation:
+          description: "An expression for the instance's correlation key, or null."
+        input:
+          description: "An expression for the instance's input."
+        enabled:
+          type: "boolean"
+          description: "`false` disables the trigger."
+    TriggerResponse:
+      type: "object"
+      description: "A way a definition starts. The signing secret is not part of it."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        name:
+          type: "string"
+          description: "The display name."
+        kind:
+          type: "string"
+          description: "`APP`, `EXTERNAL` or `SCHEDULE`."
+        source:
+          type: "string"
+          description: "The app code of a suite webhook, the source name of an external\
+            \ one, or the kind's own name."
+        eventType:
+          type: "string"
+          description: "The one event type that starts the workflow, or null for every\
+            \ type of the source."
+        definitionId:
+          type: "string"
+          description: "The id of the workflow definition."
+        filter:
+          description: "An expression over the event envelope that decides whether\
+            \ the trigger fires, or null to accept every event."
+        correlation:
+          description: "An expression for the instance's correlation key, or null."
+        input:
+          description: "An expression for the instance's input, or null."
+        enabled:
+          type: "boolean"
+          description: "Whether the trigger is active."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+    GroupRequest:
+      type: "object"
+      description: "The task group to store."
+      properties:
+        code:
+          type: "string"
+          description: "The code, unique per tenant. It cannot change."
+        name:
+          type: "string"
+          description: "The display name."
+        members:
+          type: "array"
+          description: "The ids of the members. Each must be an active user."
+          items:
+            type: "string"
+            format: "uuid"
+          uniqueItems: true
+    GroupResponse:
+      type: "object"
+      description: "A named list a task may be assigned to."
+      properties:
+        code:
+          type: "string"
+          description: "The code, unique per tenant. It cannot change."
+        name:
+          type: "string"
+          description: "The display name."
+        members:
+          type: "array"
+          description: "The ids of the members."
+          items:
+            type: "string"
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+    RegisterRequest:
+      type: "object"
+      description: "The credential to store."
+      properties:
+        clientId:
+          type: "string"
+          description: "The client id of the Platform credential."
+        secret:
+          type: "string"
+          description: "The secret. It is write-only: it is encrypted on the way in\
+            \ and never returned."
+    CredentialResponse:
+      type: "object"
+      description: "The Platform credential's status. The secret is never part of\
+        \ it."
+      properties:
+        clientId:
+          type: "string"
+          description: "The client id of the Platform credential."
+        status:
+          type: "string"
+          description: "`ACTIVE`, or `INVALID` when Platform no longer accepts it."
+        keyId:
+          type: "string"
+          description: "The id of the key the secret was written under. The secret\
+            \ itself is never returned."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+    DraftRequest:
+      type: "object"
+      description: "The draft graph, replacing the stored one."
+      properties:
+        graph:
+          description: "The workflow graph: its nodes, edges and settings."
+    DefinitionResponse:
+      type: "object"
+      description: "A workflow definition."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        code:
+          type: "string"
+          description: "The code, unique per tenant. It cannot change."
+        name:
+          type: "string"
+          description: "The display name."
+        status:
+          type: "string"
+          description: "`DRAFT`, `PUBLISHED` or `RETIRED`."
+        latestVersion:
+          type: "integer"
+          format: "int32"
+          description: "The number of the newest published version, or 0 before the\
+            \ first publish."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+    DraftResponse:
+      type: "object"
+      description: "The definition with the problems found in its draft."
+      properties:
+        definition:
+          $ref: "#/components/schemas/DefinitionResponse"
+          description: "The definition."
+        problems:
+          type: "array"
+          description: "The structural problems of the draft. A draft with problems\
+            \ is still stored; only publish refuses it."
+          items:
+            $ref: "#/components/schemas/ProblemResponse"
+    ProblemResponse:
+      type: "object"
+      description: "One problem in a draft."
+      properties:
+        pointer:
+          type: "string"
+          description: "The JSON pointer to the offending member of the graph."
+        code:
+          type: "string"
+          description: "The kind of problem."
+        message:
+          type: "string"
+          description: "What is wrong."
+    ConnectionRequest:
+      type: "object"
+      description: "The connection to store."
+      properties:
+        name:
+          type: "string"
+          description: "The display name."
+        kind:
+          type: "string"
+          description: "How the connection authenticates: `BEARER`, `BASIC`, `API_KEY`,\
+            \ `HMAC` or `NONE`."
+        allowedHost:
+          type: "string"
+          description: "The one host a step may reach with this connection."
+        secret:
+          type: "string"
+          description: "The secret. It is write-only: it is encrypted on the way in\
+            \ and never returned."
+        headers:
+          type: "object"
+          additionalProperties:
+            type: "string"
+          description: "Extra headers sent with each call, by name."
+    ConnectionResponse:
+      type: "object"
+      description: "A connection. The secret is never part of it."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        name:
+          type: "string"
+          description: "The display name."
+        kind:
+          type: "string"
+          description: "How the connection authenticates."
+        allowedHost:
+          type: "string"
+          description: "The one host a step may reach with this connection."
+        headers:
+          type: "object"
+          additionalProperties:
+            type: "string"
+          description: "Extra headers sent with each call, by name."
+        keyId:
+          type: "string"
+          description: "The id of the key the secret was written under. The secret\
+            \ itself is never returned."
+        verifiedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the connection was last verified, or null."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+    ReceiptResponse:
+      type: "object"
+      description: "The receipt of a delivered event."
+      properties:
+        eventId:
+          type: "string"
+          description: "The id of the event."
+        started:
+          type: "integer"
+          format: "int32"
+          description: "How many instances the event started."
+        duplicate:
+          type: "boolean"
+          description: "Whether the event id was seen before. A duplicate starts nothing."
+    CreateEndpointRequest:
+      type: "object"
+      description: "The endpoint to register."
+      properties:
+        url:
+          type: "string"
+          description: "The HTTPS URL events are posted to. It must resolve to a public\
+            \ address."
+        description:
+          type: "string"
+          description: "A note about the endpoint."
+        eventTypes:
+          type: "array"
+          description: "The event types to subscribe to, from workflow's four."
+          items:
+            type: "string"
+    EndpointWithSecretResponse:
+      type: "object"
+      description: "An endpoint with its signing secret, shown once."
+      properties:
+        endpoint:
+          $ref: "#/components/schemas/EndpointResponse"
+          description: "The endpoint."
+        signingSecret:
+          type: "string"
+          description: "The secret that signs deliveries. It is shown only in this\
+            \ response and is never available again."
+    DeliveryResponse:
+      type: "object"
+      description: "One delivery of an event to an endpoint."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        endpointId:
+          type: "string"
+          description: "The id of the endpoint."
+        eventId:
+          type: "string"
+          description: "The id of the event. A receiver should treat a repeated event\
+            \ id as a duplicate."
+        eventType:
+          type: "string"
+          description: "The event's type."
+        status:
+          type: "string"
+          description: "Where the delivery stands. `DEAD` means it exhausted its attempts."
+        attempts:
+          type: "integer"
+          format: "int32"
+          description: "How many attempts have been made."
+        nextAttemptAt:
+          type: "string"
+          format: "date-time"
+          description: "When the next attempt is due, or null."
+        lastStatusCode:
+          type: "integer"
+          format: "int32"
+          description: "The HTTP status the receiver answered last, or null."
+        lastError:
+          type: "string"
+          description: "The last error, or null."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        completedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the delivery finished, or null."
+    CreateTriggerRequest:
+      type: "object"
+      description: "The trigger to create."
+      properties:
+        name:
+          type: "string"
+          description: "The display name."
+        kind:
+          type: "string"
+          description: "`APP` for a suite app's signed webhook, `EXTERNAL` for an\
+            \ outside system's signed webhook, or `SCHEDULE` for a cron schedule."
+        source:
+          type: "string"
+          description: "The app code of a suite webhook, or the source name of an\
+            \ external one."
+        eventType:
+          type: "string"
+          description: "The one event type that starts the workflow, or null for every\
+            \ type of the source."
+        definitionId:
+          type: "string"
+          format: "uuid"
+          description: "The definition to start."
+        filter:
+          description: "An expression over the event envelope that decides whether\
+            \ the trigger fires, or null to accept every event."
+        correlation:
+          description: "An expression for the instance's correlation key, or null."
+        input:
+          description: "An expression for the instance's input, or null to use the\
+            \ event's `data`."
+        cron:
+          type: "string"
+          description: "The cron expression of a `SCHEDULE` trigger."
+        timezone:
+          type: "string"
+          description: "The IANA time zone the cron schedule is read in."
+    TriggerWithSecretResponse:
+      type: "object"
+      description: "A trigger with its signing secret, shown once."
+      properties:
+        trigger:
+          $ref: "#/components/schemas/TriggerResponse"
+          description: "The trigger."
+        signingSecret:
+          type: "string"
+          description: "The secret that signs deliveries. It is shown only in this\
+            \ response and is never available again."
+    ReassignRequest:
+      type: "object"
+      description: "Who to move the task to. Give a user or a group."
+      properties:
+        user:
+          type: "string"
+          format: "uuid"
+          description: "The id of the user to assign the task to."
+        group:
+          type: "string"
+          description: "The code of the group to assign the task to. Its members are\
+            \ copied onto the task."
+    TaskView:
+      type: "object"
+      description: "One human task: what it asks, who it is for, when it is due and\
+        \ what was decided."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        title:
+          type: "string"
+          description: "The task's title."
+        status:
+          type: "string"
+          description: "`OPEN`, `CLAIMED`, `COMPLETED`, `CANCELLED`, `ESCALATED` or\
+            \ `EXPIRED`."
+        instanceId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the workflow instance."
+        nodeId:
+          type: "string"
+          description: "The workflow node that created the task."
+        assigneeKind:
+          type: "string"
+          description: "Whether the task is assigned to a user or to a group."
+        assignee:
+          type: "string"
+          description: "The user or group the task is assigned to."
+        assigneeUserId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the user the task is assigned to, when it names\
+            \ one, or null."
+        outcomes:
+          type: "array"
+          description: "The decisions a person may complete the task with."
+          items:
+            type: "string"
+        form:
+          description: "The form the output has to match, or null."
+        dueAt:
+          type: "string"
+          format: "date-time"
+          description: "When the task is due, or null."
+        escalateAt:
+          type: "string"
+          format: "date-time"
+          description: "When the task escalates, or null."
+        expiresAt:
+          type: "string"
+          format: "date-time"
+          description: "When the task expires, or null."
+        decision:
+          type: "string"
+          description: "The decision the task was completed with, or null."
+        output:
+          description: "The output the person gave, matching the task's form."
+        completedBy:
+          type: "string"
+          description: "Who completed the task. For a Tenant System this is the person\
+            \ it named, recorded as stated."
+        completedVia:
+          type: "string"
+          description: "How the task was completed."
+        completedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the task was completed, or null."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+    CompleteRequest:
+      type: "object"
+      description: "How to complete the task."
+      properties:
+        decision:
+          type: "string"
+          description: "One of the task's `outcomes`."
+        output:
+          description: "The output the person gave, matching the task's form."
+        completedBy:
+          type: "string"
+          description: "The person a Tenant System speaks for. It is recorded as stated,\
+            \ not verified."
+    StartInstanceRequest:
+      type: "object"
+      description: "The instance to start."
+      properties:
+        definition:
+          type: "string"
+          format: "uuid"
+          description: "The id of the definition. Its newest published version is\
+            \ started."
+        input:
+          description: "The input of the instance, as JSON."
+        correlationKey:
+          type: "string"
+          description: "A key that finds the instance again, or null."
+    StartedInstanceResponse:
+      type: "object"
+      description: "The instance that was started."
+      properties:
+        id:
+          type: "string"
+          description: "The instance's id."
+        status:
+          type: "string"
+          description: "The instance's status."
+    RetryRequest:
+      type: "object"
+      description: "Which step to retry."
+      properties:
+        nodeId:
+          type: "string"
+          description: "The node to retry."
+    InstanceStateResponse:
+      type: "object"
+      description: "The instance after an operation."
+      properties:
+        id:
+          type: "string"
+          description: "The instance's id."
+        status:
+          type: "string"
+          description: "The instance's status."
+        failureReason:
+          type: "string"
+          description: "Why the instance failed, or null."
+    CreateDefinitionRequest:
+      type: "object"
+      description: "The definition to create. It starts with an empty draft."
+      properties:
+        code:
+          type: "string"
+          description: "The code, unique per tenant. It cannot change."
+        name:
+          type: "string"
+          description: "The display name."
+    SimulateRequest:
+      type: "object"
+      description: "The sample to walk the draft with."
+      properties:
+        input:
+          type: "object"
+          additionalProperties: {}
+          description: "The input the instance would start with."
+        steps:
+          type: "object"
+          additionalProperties: {}
+          description: "Canned outputs for the steps that would call out, keyed by\
+            \ node id."
+    DecisionResponse:
+      type: "object"
+      description: "One decision of the walk."
+      properties:
+        node:
+          type: "string"
+          description: "The decision node."
+        caseIndex:
+          type: "integer"
+          format: "int32"
+          description: "The index of the case that matched."
+        next:
+          type: "string"
+          description: "The node the walk went to."
+    SimulationResponse:
+      type: "object"
+      description: "What a simulated walk did. Nothing was called or stored."
+      properties:
+        path:
+          type: "array"
+          description: "The ids of the nodes visited, in order."
+          items:
+            type: "string"
+        decisions:
+          type: "array"
+          description: "The branch taken at each decision node."
+          items:
+            $ref: "#/components/schemas/DecisionResponse"
+        variables:
+          type: "object"
+          additionalProperties: {}
+          description: "The variables at the end of the walk."
+        stoppedAt:
+          type: "string"
+          description: "The node the walk stopped at, or null when it reached an end."
+        problems:
+          type: "array"
+          description: "Why the walk could not run, by pointer."
+          items:
+            $ref: "#/components/schemas/ProblemResponse"
+    VersionResponse:
+      type: "object"
+      description: "One immutable published version of a definition."
+      properties:
+        id:
+          type: "string"
+          description: "The version's id."
+        definitionId:
+          type: "string"
+          description: "The id of the workflow definition."
+        version:
+          type: "integer"
+          format: "int32"
+          description: "The version's number, starting at 1."
+        graph:
+          description: "The workflow graph: its nodes, edges and settings."
+        contentHash:
+          type: "string"
+          description: "A hash of the graph's content."
+        publishedAt:
+          type: "string"
+          format: "date-time"
+          description: "When it was published."
+        publishedBy:
+          type: "string"
+          description: "Who published the version."
+    PageEndpointResponse:
+      type: "object"
+      description: "A page of endpoint response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/EndpointResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageInfo:
+      type: "object"
+      description: "The paging facts of a list answer, present when the request asked\
+        \ for them with `page_info`."
+      properties:
+        limit:
+          type: "integer"
+          format: "int32"
+          description: "The page size that was applied."
+        offset:
+          type:
+          - "integer"
+          - "null"
+          format: "int32"
+          description: "The number of rows that were skipped, or null when a cursor\
+            \ positioned the page."
+        total:
+          type:
+          - "integer"
+          - "null"
+          format: "int64"
+          description: "The number of rows that match the filter, or null when the\
+            \ request asked only for the cursor."
+        next_cursor:
+          type:
+          - "string"
+          - "null"
+          description: "The cursor of the following page, or null on the last page.\
+            \ Pass it as `cursor` with the same filter and sort."
+    PageDeliveryResponse:
+      type: "object"
+      description: "A page of delivery response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/DeliveryResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageTriggerResponse:
+      type: "object"
+      description: "A page of trigger response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/TriggerResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    InstanceView:
+      type: "object"
+      description: "One instance of a workflow. The trigger input is never part of\
+        \ it."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The instance's id."
+        status:
+          type: "string"
+          description: "`RUNNING`, `WAITING`, `COMPLETED`, `FAILED`, `FAILED_STUCK`,\
+            \ `CANCELLED`, `COMPENSATING` or `COMPENSATION_FAILED`."
+        definitionId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the workflow definition."
+        definitionCode:
+          type: "string"
+          description: "The code of the definition it runs."
+        version:
+          type: "integer"
+          format: "int32"
+          description: "The published version the instance is pinned to."
+        correlationKey:
+          type: "string"
+          description: "The key that finds the instance again, or null."
+        failureReason:
+          type: "string"
+          description: "Why the instance failed, or null."
+        startedAt:
+          type: "string"
+          format: "date-time"
+          description: "When it started."
+        finishedAt:
+          type: "string"
+          format: "date-time"
+          description: "When it finished, or null while it is still running."
+        liveTokens:
+          type: "integer"
+          format: "int64"
+          description: "How many steps are currently active."
+        steps:
+          type: "integer"
+          format: "int64"
+          description: "How many step runs were recorded."
+        rowVersion:
+          type: "integer"
+          format: "int64"
+          description: "The version of the instance's row."
+    StepRunView:
+      type: "object"
+      description: "One run of a step. Requests and responses are redacted."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The step run's id."
+        nodeId:
+          type: "string"
+          description: "The node the step ran."
+        attempt:
+          type: "integer"
+          format: "int32"
+          description: "The attempt's number, starting at 1."
+        startedAt:
+          type: "string"
+          format: "date-time"
+          description: "When it started."
+        finishedAt:
+          type: "string"
+          format: "date-time"
+          description: "When it finished, or null while it is still running."
+        outcome:
+          type: "string"
+          description: "How the step ended."
+        errorClass:
+          type: "string"
+          description: "The class of the error when the step failed, or null."
+        failure:
+          type: "string"
+          description: "The reason the step failed, or null."
+        response:
+          description: "The redacted response of the call the step made, or null."
+        idempotencyKey:
+          type: "string"
+          description: "The idempotency key the step sent. A retry sends the same\
+            \ one."
+    PageDefinitionResponse:
+      type: "object"
+      description: "A page of definition response rows, with the paging facts when\
+        \ the request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/DefinitionResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    ProblemDetail:
+      type: "object"
+      description: "The body of every error: an RFC 9457 problem."
+      properties:
+        type:
+          type: "string"
+          description: "A URI reference that identifies the kind of problem. It is\
+            \ `about:blank` when the status says it all."
+        title:
+          type: "string"
+          description: "A short, human-readable summary of the kind of problem. It\
+            \ is the status's reason phrase unless a more specific one applies."
+        status:
+          type: "integer"
+          format: "int32"
+          description: "The HTTP status of the response."
+        detail:
+          type: "string"
+          description: "A sentence that explains this occurrence."
+        instance:
+          type: "string"
+          description: "A URI reference that identifies this occurrence, when there\
+            \ is one."
+  responses:
+    BadRequest:
+      description: "The request is malformed: a body, query parameter or header is\
+        \ missing, unknown, or not valid for its type."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Unauthenticated:
+      description: "The request carries no valid token."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Forbidden:
+      description: "The token does not carry the permission this operation requires,\
+        \ or the tenant has not enabled the app."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotEntitled:
+      description: "The tenant has not enabled this app, or the caller may not act\
+        \ here."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotFound:
+      description: "Nothing with that id exists for this tenant. A resource of another\
+        \ tenant answers the same."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    IdempotencyConflict:
+      description: "The `Idempotency-Key` was already used with a different body,\
+        \ or the request clashes with the current state of the data."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    PreconditionFailed:
+      description: "The `If-Match` tag does not match the resource's current version.\
+        \ The response carries the current `ETag`; read the resource again and retry."
+      headers:
+        ETag:
+          description: "The current version of the resource."
+          schema:
+            type: "string"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+  securitySchemes:
+    oidc:
+      type: "http"
+      description: "A suite token issued by Platform for this tenant"
+      scheme: "bearer"
+      bearerFormat: "JWT"

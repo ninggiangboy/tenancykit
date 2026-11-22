@@ -1,0 +1,854 @@
+---
+openapi: "3.1.0"
+info:
+  title: "Platform API"
+  version: "v1"
+servers:
+- url: "/"
+  description: "The Platform hostname, e.g. platform.<base-domain>"
+tags:
+- name: "Users"
+  description: "Platform administration of users: create, enable, disable, rename\
+    \ and grant direct permissions."
+- name: "Tenant provisioning"
+  description: "Creates a tenant together with its Tenant Administrator role and first\
+    \ administrator in one call."
+- name: "Roles"
+  description: "Platform administration of roles: their permissions, names and assignment\
+    \ to users."
+- name: "Tenants"
+  description: "Platform administration of tenants: list, rename, deactivate and map\
+    \ hostnames."
+- name: "Tenant systems"
+  description: "A tenant's machine callers and the API credentials they authenticate\
+    \ with: issue, rotate and revoke."
+- name: "Signing keys"
+  description: "The public halves of the keys Platform signs suite tokens with, so\
+    \ every app can verify a token."
+- name: "Console feed"
+  description: "The feed a console shell reads on load: the UI remotes the caller\
+    \ may mount."
+- name: "App entitlements"
+  description: "Which apps of the suite each tenant may use."
+- name: "UI remotes"
+  description: "The console's UI remote registry: CI registers versions; an operator\
+    \ enables, disables and activates them."
+- name: "Replica snapshots"
+  description: "Internal paged snapshots of Platform state that a replica rebuilds\
+    \ from, merged with live change events."
+- name: "Current user"
+  description: "The signed-in user and the permissions they hold across the suite."
+- name: "Access tokens"
+  description: "The OAuth client-credentials grant a Tenant System or service client\
+    \ exchanges its credential for a token."
+paths:
+  /oauth/token:
+    post:
+      tags:
+      - "Access tokens"
+      summary: "Get an access token with client credentials"
+      description: "The OAuth client-credentials grant for Tenant Systems and service\
+        \ clients. Authenticate with HTTP Basic using the credential's id and secret,\
+        \ send `grant_type=client_credentials` and the `audience` of the app to call\
+        \ as a form, and receive a short-lived `Bearer` token (`access_token`, `token_type`,\
+        \ `expires_in`). An unsupported grant or audience answers `400`; a missing\
+        \ or wrong credential answers `401` with no detail on which half was wrong;\
+        \ too many attempts answer `429` with `Retry-After`. Public: no token is needed.\n\
+        \nCallers: tenant-system, internal."
+      operationId: "token"
+      parameters:
+      - name: "Authorization"
+        in: "header"
+        description: "The credential of the Tenant System: `Basic` followed by the\
+          \ base64 of `clientId:secret`."
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "The token request, sent as an `application/x-www-form-urlencoded`\
+          \ form."
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: "object"
+              properties:
+                grant_type:
+                  type: "string"
+                  description: "The grant type. It must be `client_credentials`."
+                audience:
+                  type: "string"
+                  description: "The app the token is for. An audience the suite does\
+                    \ not offer answers `400`."
+              required:
+              - "audience"
+              - "grant_type"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+                additionalProperties: {}
+        "400":
+          description: "The `grant_type` is not `client_credentials`, or the `audience`\
+            \ is not one the suite offers."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          description: "The credential is missing or wrong. The answer never says\
+            \ which half was wrong."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "403":
+          $ref: "#/components/responses/NotEntitled"
+        "429":
+          description: "Too many attempts. Repeat after the number of seconds in `Retry-After`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+      x-allowed-callers:
+      - "tenant-system"
+      - "internal"
+components:
+  schemas:
+    UserResponse:
+      type: "object"
+      description: "A user of the suite."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        tenantId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the tenant it belongs to, or null for a Platform-scope\
+            \ record."
+        scope:
+          type: "string"
+          description: "The scope: `PLATFORM` for the suite's own staff, `TENANT`\
+            \ for one tenant's people."
+        email:
+          type: "string"
+          description: "The email address."
+        displayName:
+          type: "string"
+          description: "The name shown for the user."
+        status:
+          type: "string"
+          description: "`ACTIVE` or `DISABLED`."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+    StateRequest:
+      type: "object"
+      description: "The change an operator makes to a remote."
+      properties:
+        enabled:
+          type: "boolean"
+          description: "Whether the remote is offered to the console. Required."
+        activeVersion:
+          type: "string"
+          description: "The registered version to activate; an older one is a rollback."
+        title:
+          type: "string"
+          description: "The new title, or null to keep it."
+        navOrder:
+          type: "integer"
+          format: "int32"
+          description: "The new navigation position, or null to keep it."
+    RemoteResponse:
+      type: "object"
+      description: "A UI remote of the console and its registered versions."
+      properties:
+        name:
+          type: "string"
+          description: "The remote's unique name."
+        appCode:
+          type: "string"
+          description: "The app the remote belongs to."
+        title:
+          type: "string"
+          description: "The title shown in the console."
+        navOrder:
+          type: "integer"
+          format: "int32"
+          description: "The position in the console's navigation; lower comes first."
+        audiences:
+          type: "array"
+          description: "The shells the remote may be mounted in: the platform shell,\
+            \ the tenant shell, or both."
+          items:
+            type: "string"
+        enabled:
+          type: "boolean"
+          description: "Whether it is enabled."
+        activeVersion:
+          type: "string"
+          description: "The version the console mounts, or null while none is activated."
+        createdAt:
+          type: "string"
+          description: "When the record was created."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+        versions:
+          type: "array"
+          description: "The versions CI has registered."
+          items:
+            $ref: "#/components/schemas/VersionResponse"
+    VersionResponse:
+      type: "object"
+      description: "One registered version of a UI remote."
+      properties:
+        version:
+          type: "string"
+          description: "The version string CI registered."
+        entryPath:
+          type: "string"
+          description: "The path of the remote's entry module. It is same-origin and\
+            \ inside the published directory of this remote's name and version."
+        integrity:
+          type: "string"
+          description: "The subresource-integrity hash of the entry module, which\
+            \ the shell verifies before it mounts it."
+        sdkMajor:
+          type: "integer"
+          format: "int32"
+          description: "The major version of the console SDK the remote was built\
+            \ against."
+        registeredAt:
+          type: "string"
+          description: "When CI registered the version."
+        registeredBy:
+          type: "string"
+          description: "Who registered the version."
+    EntitlementRequest:
+      type: "object"
+      description: "The state to set."
+      properties:
+        enabled:
+          type: "boolean"
+          description: "Whether the tenant may use the app. Required."
+    EntitlementResponse:
+      type: "object"
+      description: "A tenant's entitlement to one app."
+      properties:
+        tenantId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the tenant."
+        appCode:
+          type: "string"
+          description: "The code of the app."
+        enabled:
+          type: "boolean"
+          description: "Whether it is enabled."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+    RenameRequest:
+      type: "object"
+      description: "The new name."
+      properties:
+        name:
+          type: "string"
+          description: "The new name."
+    TenantResponse:
+      type: "object"
+      description: "A tenant of the suite."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        code:
+          type: "string"
+          description: "The tenant's unique code, which also names its hostname."
+        name:
+          type: "string"
+          description: "The display name."
+        status:
+          type: "string"
+          description: "`ACTIVE` or `DEACTIVATED`."
+        createdAt:
+          type: "string"
+          description: "When the record was created."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+    UpdateSystemRequest:
+      type: "object"
+      description: "The change to apply to a tenant system."
+      properties:
+        action:
+          type: "string"
+          description: "`RENAME` or `DISABLE`."
+        name:
+          type: "string"
+          description: "The new name, for `RENAME`."
+    SystemResponse:
+      type: "object"
+      description: "A tenant system: a machine caller of one tenant."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        name:
+          type: "string"
+          description: "The display name."
+        purpose:
+          type: "string"
+          description: "What the system is for: `GENERIC` or `WORKFLOW`."
+        status:
+          type: "string"
+          description: "`ACTIVE` or `DISABLED`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+    RoleResponse:
+      type: "object"
+      description: "A role and the permissions it grants."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        tenantId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the tenant it belongs to, or null for a Platform-scope\
+            \ record."
+        scope:
+          type: "string"
+          description: "The scope: `PLATFORM` for the suite's own staff, `TENANT`\
+            \ for one tenant's people."
+        name:
+          type: "string"
+          description: "The display name."
+        system:
+          type: "boolean"
+          description: "Whether the role is a built-in one that cannot be edited."
+        permissions:
+          type: "array"
+          description: "The permission codes the role grants."
+          items:
+            type: "string"
+          uniqueItems: true
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+    PermissionsRequest:
+      type: "object"
+      description: "The role's new permission set, replacing the stored one."
+      properties:
+        permissions:
+          type: "array"
+          description: "The permission codes the role grants."
+          items:
+            type: "string"
+          uniqueItems: true
+    CreateRequest:
+      type: "object"
+      description: "The user to create."
+      properties:
+        tenantCode:
+          type: "string"
+          description: "The code of the tenant the user belongs to."
+        email:
+          type: "string"
+          description: "The email address."
+        displayName:
+          type: "string"
+          description: "The name shown for the user."
+        temporaryPassword:
+          type: "string"
+          description: "The user's initial password."
+    RegisterRequest:
+      type: "object"
+      description: "The version CI registers."
+      properties:
+        version:
+          type: "string"
+          description: "The version string. A registered version is immutable."
+        entryPath:
+          type: "string"
+          description: "The path of the remote's entry module. It is same-origin and\
+            \ inside the published directory of this remote's name and version."
+        integrity:
+          type: "string"
+          description: "The subresource-integrity hash of the entry module, which\
+            \ the shell verifies before it mounts it."
+        sdkMajor:
+          type: "integer"
+          format: "int32"
+          description: "The major version of the console SDK the remote was built\
+            \ against."
+        appCode:
+          type: "string"
+          description: "The app the remote belongs to. Used when this call creates\
+            \ the remote."
+        title:
+          type: "string"
+          description: "The title to show. Used when this call creates the remote."
+        audiences:
+          type: "array"
+          description: "The shells the remote may be mounted in: the platform shell,\
+            \ the tenant shell, or both. Used when this call creates the remote."
+          items:
+            type: "string"
+        navOrder:
+          type: "integer"
+          format: "int32"
+          description: "The navigation position. Used when this call creates the remote."
+    ProvisionRequest:
+      type: "object"
+      description: "The tenant to provision."
+      properties:
+        code:
+          type: "string"
+          description: "The tenant's unique code. It cannot change afterwards."
+        name:
+          type: "string"
+          description: "The tenant's display name."
+        adminEmail:
+          type: "string"
+          description: "The email of the first administrator. When omitted, no administrator\
+            \ is created."
+        adminTemporaryPassword:
+          type: "string"
+          description: "The first administrator's initial password."
+    ProvisionedResponse:
+      type: "object"
+      description: "The tenant that was provisioned."
+      properties:
+        tenantId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the new tenant."
+        adminEmail:
+          type: "string"
+          description: "The email of the administrator that was created, or null."
+    DomainRequest:
+      type: "object"
+      description: "The hostname to map to the tenant."
+      properties:
+        hostname:
+          type: "string"
+          description: "The hostname, such as `acme.example.com`."
+    CreateSystemRequest:
+      type: "object"
+      description: "The tenant system to register."
+      properties:
+        name:
+          type: "string"
+          description: "The system's name."
+        purpose:
+          type: "string"
+          description: "What the system is for: `GENERIC` or `WORKFLOW`. Defaults\
+            \ to `GENERIC`."
+    CreateCredentialRequest:
+      type: "object"
+      description: "The credential to issue."
+      properties:
+        label:
+          type: "string"
+          description: "A label that tells the credentials of a system apart."
+        scopes:
+          type: "array"
+          description: "The permission codes the credential may use."
+          items:
+            type: "string"
+    CredentialResponse:
+      type: "object"
+      description: "An API credential. The secret is never part of it."
+      properties:
+        id:
+          type: "string"
+          description: "The credential's id."
+        keyId:
+          type: "string"
+          description: "The public part of the API key. It identifies the credential\
+            \ without revealing the secret."
+        label:
+          type: "string"
+          description: "The credential's label."
+        scopes:
+          type: "array"
+          description: "The permission codes the credential may use."
+          items:
+            type: "string"
+          uniqueItems: true
+        status:
+          type: "string"
+          description: "`ACTIVE` or `REVOKED`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        expiresAt:
+          type: "string"
+          format: "date-time"
+          description: "When the credential stops working, or null. A rotated credential\
+            \ expires at the end of its overlap."
+        revokedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the credential was revoked, or null."
+    IssuedCredentialResponse:
+      type: "object"
+      description: "A newly issued credential with its secret."
+      properties:
+        credential:
+          $ref: "#/components/schemas/CredentialResponse"
+          description: "The credential."
+        key:
+          type: "string"
+          description: "The API key. It is shown only in this response and is never\
+            \ available again."
+    RotateRequest:
+      type: "object"
+      description: "How the old credential is retired."
+      properties:
+        overlapMinutes:
+          type: "integer"
+          format: "int64"
+          description: "How long the previous credential keeps working, in minutes.\
+            \ Defaults to 1440 (24 hours)."
+    CreateRoleRequest:
+      type: "object"
+      description: "The role to create."
+      properties:
+        name:
+          type: "string"
+          description: "The role's name."
+        permissions:
+          type: "array"
+          description: "The permission codes the role grants. Each must be in the\
+            \ catalog and valid in the role's scope."
+          items:
+            type: "string"
+          uniqueItems: true
+    UpdateRequest:
+      type: "object"
+      description: "The change to apply to a user."
+      properties:
+        action:
+          type: "string"
+          description: "`ENABLE`, `DISABLE` or `RENAME`."
+        name:
+          type: "string"
+          description: "The new display name, for `RENAME`."
+    PageInfo:
+      type: "object"
+      description: "The paging facts of a list answer, present when the request asked\
+        \ for them with `page_info`."
+      properties:
+        limit:
+          type: "integer"
+          format: "int32"
+          description: "The page size that was applied."
+        offset:
+          type:
+          - "integer"
+          - "null"
+          format: "int32"
+          description: "The number of rows that were skipped, or null when a cursor\
+            \ positioned the page."
+        total:
+          type:
+          - "integer"
+          - "null"
+          format: "int64"
+          description: "The number of rows that match the filter, or null when the\
+            \ request asked only for the cursor."
+        next_cursor:
+          type:
+          - "string"
+          - "null"
+          description: "The cursor of the following page, or null on the last page.\
+            \ Pass it as `cursor` with the same filter and sort."
+    PageUserResponse:
+      type: "object"
+      description: "A page of user response rows, with the paging facts when the request\
+        \ asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/UserResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageRemoteResponse:
+      type: "object"
+      description: "A page of remote response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/RemoteResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageTenantResponse:
+      type: "object"
+      description: "A page of tenant response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/TenantResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    AppResponse:
+      type: "object"
+      description: "One app of the suite and this tenant's state of it."
+      properties:
+        appCode:
+          type: "string"
+          description: "The code of the app."
+        enabled:
+          type: "boolean"
+          description: "Whether the tenant may use the app. An app the tenant never\
+            \ changed is disabled."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+    PageSystemResponse:
+      type: "object"
+      description: "A page of system response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/SystemResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageCredentialResponse:
+      type: "object"
+      description: "A page of credential response rows, with the paging facts when\
+        \ the request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/CredentialResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageRoleResponse:
+      type: "object"
+      description: "A page of role response rows, with the paging facts when the request\
+        \ asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/RoleResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    MeResponse:
+      type: "object"
+      description: "The signed-in user."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        tenantId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the tenant it belongs to, or null for a Platform-scope\
+            \ record."
+        scope:
+          type: "string"
+          description: "The scope: `PLATFORM` for the suite's own staff, `TENANT`\
+            \ for one tenant's people."
+        email:
+          type: "string"
+          description: "The email address."
+        displayName:
+          type: "string"
+          description: "The name shown for the user."
+        status:
+          type: "string"
+          description: "The current status."
+        permissions:
+          type: "array"
+          description: "The permission codes the user holds across the suite, through\
+            \ roles and directly."
+          items:
+            type: "string"
+    ConsoleRemoteResponse:
+      type: "object"
+      description: "A remote the caller may mount, with the one version an operator\
+        \ activated."
+      properties:
+        name:
+          type: "string"
+          description: "The display name."
+        title:
+          type: "string"
+          description: "The title shown in the console."
+        appCode:
+          type: "string"
+          description: "The code of the app."
+        navOrder:
+          type: "integer"
+          format: "int32"
+          description: "The position in the console's navigation; lower comes first."
+        version:
+          type: "string"
+          description: "The active version."
+        entryPath:
+          type: "string"
+          description: "The path of the remote's entry module. It is same-origin and\
+            \ inside the published directory of this remote's name and version."
+        integrity:
+          type: "string"
+          description: "The subresource-integrity hash of the entry module, which\
+            \ the shell verifies before it mounts it."
+        sdkMajor:
+          type: "integer"
+          format: "int32"
+          description: "The major version of the console SDK the remote was built\
+            \ against."
+    ProblemDetail:
+      type: "object"
+      description: "The body of every error: an RFC 9457 problem."
+      properties:
+        type:
+          type: "string"
+          description: "A URI reference that identifies the kind of problem. It is\
+            \ `about:blank` when the status says it all."
+        title:
+          type: "string"
+          description: "A short, human-readable summary of the kind of problem. It\
+            \ is the status's reason phrase unless a more specific one applies."
+        status:
+          type: "integer"
+          format: "int32"
+          description: "The HTTP status of the response."
+        detail:
+          type: "string"
+          description: "A sentence that explains this occurrence."
+        instance:
+          type: "string"
+          description: "A URI reference that identifies this occurrence, when there\
+            \ is one."
+  responses:
+    BadRequest:
+      description: "The request is malformed: a body, query parameter or header is\
+        \ missing, unknown, or not valid for its type."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Unauthenticated:
+      description: "The request carries no valid token."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Forbidden:
+      description: "The token does not carry the permission this operation requires,\
+        \ or the tenant has not enabled the app."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotEntitled:
+      description: "The tenant has not enabled this app, or the caller may not act\
+        \ here."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotFound:
+      description: "Nothing with that id exists for this tenant. A resource of another\
+        \ tenant answers the same."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    IdempotencyConflict:
+      description: "The `Idempotency-Key` was already used with a different body,\
+        \ or the request clashes with the current state of the data."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    PreconditionFailed:
+      description: "The `If-Match` tag does not match the resource's current version.\
+        \ The response carries the current `ETag`; read the resource again and retry."
+      headers:
+        ETag:
+          description: "The current version of the resource."
+          schema:
+            type: "string"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"

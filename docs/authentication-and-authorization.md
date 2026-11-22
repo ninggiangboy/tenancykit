@@ -143,7 +143,7 @@ through Keycloak. It exchanges a Platform-issued client credential for a short-l
   the Customers it mapped and their wallets, reservations, charges, payments, usage and ratings; a resource owned by
   another Tenant System in the same Tenant answers 404. A Tenant User keeps the tenant-wide view.
 - The operations a Tenant System may call are published in
-  [contracts/openapi/billing-tenant-system.yaml](../contracts/openapi/billing-tenant-system.yaml), generated from the
+  [contracts/openapi/tenant-system/billing.yaml](../contracts/openapi/tenant-system/billing.yaml), generated from the
   same code as the full contract. Each operation carries its required permission and its allowed callers.
 - Revocation latency: a revoked credential's existing tokens stay valid until they expire (at most 10 minutes);
   disabling the Tenant System is immediate, because every app re-checks `tenant_systems.status` on each request.

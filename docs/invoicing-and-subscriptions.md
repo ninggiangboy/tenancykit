@@ -77,7 +77,7 @@ Cancelling keeps the period that is already paid: the subscription ends where th
 
 ## API and permissions
 
-The shapes are in [contracts/openapi/billing.yaml](../contracts/openapi/billing.yaml) (and `billing-tenant-system.yaml` for what a Tenant System may call) and the event shapes in [contracts/events](../contracts/events/README.md).
+The shapes are in [contracts/openapi/billing.yaml](../contracts/openapi/billing.yaml) (and [contracts/openapi/tenant-system/billing.yaml](../contracts/openapi/tenant-system/billing.yaml) for what a Tenant System may call) and the event shapes in [contracts/events](../contracts/events/README.md).
 
 | Operation | Permission | Who |
 |---|---|---|

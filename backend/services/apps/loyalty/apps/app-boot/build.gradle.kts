@@ -39,6 +39,7 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation(project(":testing:arch-fixtures"))
+    testImplementation(testFixtures("dev.ngb:core-openapi"))
     // The shared architecture rule set every service runs, so the services cannot drift apart.
     testImplementation("dev.ngb:core-arch")
     // Generates the jOOQ schema from the migrations for the drift test.
@@ -78,4 +79,6 @@ tasks.processResources {
 tasks.test {
     // `./gradlew :apps:app-boot:test --tests '*JooqSchemaTest' -Djooq.update=true` regenerates the committed jOOQ schema.
     systemProperty("jooq.update", System.getProperty("jooq.update", "false"))
+    // The contract test writes the per-caller OpenAPI files under -Dopenapi.update=true.
+    systemProperty("openapi.update", System.getProperty("openapi.update", "false"))
 }

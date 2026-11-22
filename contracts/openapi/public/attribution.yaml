@@ -1,0 +1,1071 @@
+---
+openapi: "3.1.0"
+info:
+  title: "Attribution API"
+  description: "The API a Tenant System uses to run tracked marketing links, report\
+    \ conversions, read measurement and keep advertising cost, plus the public redirect\
+    \ and collection endpoints a visitor's browser calls without credentials."
+  version: "v1"
+servers:
+- url: "/attribution"
+  description: "Any tenant hostname: <tenant-code>.<base-domain>/attribution"
+tags:
+- name: "Link redirects"
+  description: "The public redirect of a tracked link: records a click and answers\
+    \ 302, with refusals that reveal little."
+- name: "Campaign spend"
+  description: "A campaign's advertising cost: set manual days, bulk set, delete a\
+    \ manual day and read the rows."
+- name: "Conversions"
+  description: "The postback a tenant's order flow calls and the read side of conversions\
+    \ with their credits."
+- name: "Data subjects"
+  description: "Erasing one visitor's collected data."
+- name: "Campaigns"
+  description: "A tenant's campaigns, their attribution model and window."
+- name: "Health check"
+  description: "Answers the caller's tenant identity, proving the token, tenant scope\
+    \ and permission check are wired."
+- name: "Attribution settings"
+  description: "The click parameter, the origins allowed to collect and the default\
+    \ attribution window."
+- name: "Link statistics"
+  description: "A link's click totals and last thirty days."
+- name: "Reports"
+  description: "Time series, breakdowns, funnel, cohorts and cost reports, each as\
+    \ JSON or CSV."
+- name: "Goals"
+  description: "The conversion keys a tenant's site and backend report."
+- name: "Tracked links"
+  description: "Create, edit, pause, resume and archive tracked links, mint personal\
+    \ links in bulk and fetch a QR code."
+- name: "Page-view collection"
+  description: "The public endpoint a tenant's page snippet posts page views to. Anything\
+    \ unacceptable answers 204 without storing."
+paths:
+  /t/v1/events:
+    post:
+      tags:
+      - "Page-view collection"
+      summary: "Collect page views from a tenant's site"
+      description: "The public endpoint a tenant's page snippet posts a batch of page\
+        \ views, a session and a `consent` flag to. Everything not acceptable (a bad\
+        \ signature, a foreign origin, an oversize body, a batch over the limit, a\
+        \ rate refusal) answers the same `204` without storing anything, so a probe\
+        \ learns nothing. With `consent=false` the server drops the visitor and session\
+        \ ids, so no identifier reaches a row. An event is stored only when its click\
+        \ id is a token this app signed. Public: no suite token is needed.\n\nCallers:\
+        \ public."
+      operationId: "collect"
+      requestBody:
+        description: "A batch of page views from a tenant's page."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventBatch"
+      responses:
+        "204":
+          description: "Always, whether or not the batch was stored, so a probe learns\
+            \ nothing."
+      x-allowed-callers:
+      - "public"
+  /go/{slug}:
+    get:
+      tags:
+      - "Link redirects"
+      summary: "Follow a tracked link"
+      description: "The public redirect of a tracked link. It resolves the link `slug`,\
+        \ applies its rules and answers `302` to the destination with a signed click\
+        \ id appended, recording one click; `e` names the entry point. Refusals reveal\
+        \ as little as possible: an unknown, archived, paused or not-entitled link\
+        \ answers `404`, an expired or capped link `410`, and a password-protected\
+        \ link `401`, which takes its password by `POST`. Measurement never fails\
+        \ or slows the redirect. Public: no suite token is needed.\n\nCallers: public."
+      operationId: "redirect"
+      parameters:
+      - name: "slug"
+        in: "path"
+        description: "The slug of the tracked link, the last part of its public URL."
+        required: true
+        schema:
+          type: "string"
+      - name: "e"
+        in: "query"
+        description: "The entry point that sent the visitor, recorded with the click."
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "302":
+          description: "Redirects to the destination with the signed click id appended,\
+            \ and records one click."
+        "401":
+          description: "The link is protected by a password, which is given by `POST`\
+            \ to the same URL."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "404":
+          description: "The link does not exist, is archived or paused, or the tenant\
+            \ is not entitled to the app. All of them answer the same."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "410":
+          description: "The link has expired or reached its click cap."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+      x-allowed-callers:
+      - "public"
+    post:
+      tags:
+      - "Link redirects"
+      summary: "Unlock a password-protected link"
+      description: "Takes the link's `password` as JSON and answers `302` to the destination,\
+        \ with the click recorded, when it is right, and `403` otherwise. Public:\
+        \ no suite token is needed.\n\nCallers: public."
+      operationId: "unlock"
+      parameters:
+      - name: "slug"
+        in: "path"
+        description: "The slug of the tracked link, the last part of its public URL."
+        required: true
+        schema:
+          type: "string"
+      - name: "e"
+        in: "query"
+        description: "The entry point that sent the visitor, recorded with the click."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "The password of a protected link."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UnlockRequest"
+      responses:
+        "302":
+          description: "The password is right: redirects to the destination and records\
+            \ the click."
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: "The password is wrong."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "404":
+          description: "The link does not exist, is archived or paused, or the tenant\
+            \ is not entitled to the app. All of them answer the same."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "410":
+          description: "The link has expired or reached its click cap."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+      x-allowed-callers:
+      - "public"
+    head:
+      tags:
+      - "Link redirects"
+      summary: "Probe a tracked link"
+      description: "Answers like `GET /go/{slug}` without recording a click, so a\
+        \ link preview's probe spends nothing, including a capped link's budget. Public:\
+        \ no suite token is needed.\n\nCallers: public."
+      operationId: "head"
+      parameters:
+      - name: "slug"
+        in: "path"
+        description: "The slug of the tracked link, the last part of its public URL."
+        required: true
+        schema:
+          type: "string"
+      - name: "e"
+        in: "query"
+        description: "The entry point that sent the visitor, recorded with the click."
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "302":
+          description: "Redirects like `GET` without recording a click."
+        "404":
+          description: "The link does not exist, is archived or paused, or the tenant\
+            \ is not entitled to the app. All of them answer the same."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "410":
+          description: "The link has expired or reached its click cap."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+      x-allowed-callers:
+      - "public"
+components:
+  schemas:
+    SettingsRequest:
+      type: "object"
+      description: "The settings to store."
+      properties:
+        click_param:
+          type: "string"
+          description: "The name of the query parameter that carries the click id."
+        allowed_origins:
+          type: "array"
+          description: "The origins allowed to post to the collection endpoint. Each\
+            \ is an absolute `https` origin, or `http://localhost`; wildcards are\
+            \ refused."
+          items:
+            type: "string"
+        default_window_days:
+          type: "integer"
+          format: "int32"
+          description: "The attribution window applied when a campaign does not set\
+            \ its own, in days."
+    SettingsView:
+      type: "object"
+      description: "The tenant's attribution settings."
+      properties:
+        clickParam:
+          type: "string"
+          description: "The name of the query parameter that carries the click id."
+        allowedOrigins:
+          type: "array"
+          description: "The origins allowed to post to the collection endpoint."
+          items:
+            type: "string"
+        defaultWindowDays:
+          type: "integer"
+          format: "int32"
+          description: "The default attribution window in days."
+    SpendRequest:
+      type: "object"
+      description: "The cost of one day."
+      properties:
+        amount:
+          type: "string"
+          description: "The cost as a decimal string, in major units of the campaign's\
+            \ currency."
+        currency:
+          type: "string"
+          description: "The currency, which must be the campaign's."
+        impressions:
+          type: "integer"
+          format: "int64"
+          description: "The number of impressions, or null."
+        clicks:
+          type: "integer"
+          format: "int64"
+          description: "The number of paid clicks, or null."
+    SpendResponse:
+      type: "object"
+      description: "The cost of one day."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        campaignId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the campaign."
+        day:
+          type: "string"
+          format: "date"
+          description: "The day."
+        source:
+          type: "string"
+          description: "Where the row came from: `MANUAL`, `GOOGLE_ADS` or `META_ADS`."
+        amount:
+          type: "number"
+          description: "The amount, in major units of the currency."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
+        impressions:
+          type: "integer"
+          format: "int64"
+          description: "The number of impressions, when known."
+        clicks:
+          type: "integer"
+          format: "int64"
+          description: "The number of clicks."
+    EventBatch:
+      type: "object"
+      description: "A batch of page views from a tenant's page."
+      properties:
+        events:
+          type: "array"
+          description: "The page views."
+          items:
+            $ref: "#/components/schemas/RawEvent"
+        consent:
+          type: "boolean"
+          description: "Whether the visitor consented to identifiers. With `false`\
+            \ the server drops the visitor and session ids."
+    RawEvent:
+      type: "object"
+      description: "One collected page view."
+      properties:
+        eventId:
+          type: "string"
+          description: "An id for the event, unique to this page view."
+        clickId:
+          type: "string"
+          description: "The signed click token a redirect appended to the destination\
+            \ URL."
+        visitorId:
+          type: "string"
+          description: "The pseudonymous id of the visitor, created by the page snippet."
+        sessionId:
+          type: "string"
+          description: "The id of the visitor's session."
+        path:
+          type: "string"
+          description: "The path of the page that was viewed."
+        occurredAt:
+          type: "string"
+          description: "When the page was viewed, as an ISO-8601 instant."
+    UnlockRequest:
+      type: "object"
+      description: "The password of a protected link."
+      properties:
+        password:
+          type: "string"
+          description: "The password the link's owner chose."
+    DestinationRequest:
+      type: "object"
+      description: "One place a link can send a visitor."
+      properties:
+        url:
+          type: "string"
+          description: "The destination URL. One that points at the suite or a private\
+            \ address is refused."
+        weight:
+          type: "integer"
+          format: "int32"
+          description: "How often the destination is chosen among the ones that match,\
+            \ from 1 to 1000."
+        devices:
+          type: "array"
+          description: "The device classes the destination is for. Empty means any."
+          items:
+            type: "string"
+        countries:
+          type: "array"
+          description: "The countries the destination is for. Empty means any."
+          items:
+            type: "string"
+        fallback:
+          type: "boolean"
+          description: "Whether this is the one destination used when no rule matches."
+    LinkRequest:
+      type: "object"
+      description: "The link to create, or its new properties."
+      properties:
+        campaignId:
+          type: "string"
+          format: "uuid"
+          description: "The campaign the link belongs to."
+        slug:
+          type: "string"
+          description: "The slug of the public URL."
+        externalRef:
+          type: "string"
+          description: "The tenant's own reference for the recipient."
+        expiresAt:
+          type: "string"
+          format: "date-time"
+          description: "When the link stops redirecting, or null."
+        maxClicks:
+          type: "integer"
+          format: "int64"
+          description: "The most clicks the link redirects, or null for no cap."
+        password:
+          type: "string"
+          description: "A password visitors must give before they are redirected.\
+            \ On update, a blank value keeps the stored one."
+        utm:
+          type: "object"
+          additionalProperties:
+            type: "string"
+          description: "The UTM parameters appended to the destination, by name, such\
+            \ as `utm_source`."
+        destinations:
+          type: "array"
+          description: "Where the link sends visitors, with the rules that choose\
+            \ among them."
+          items:
+            $ref: "#/components/schemas/DestinationRequest"
+    DestinationView:
+      type: "object"
+      description: "One destination of a link."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        url:
+          type: "string"
+          description: "The URL."
+        position:
+          type: "integer"
+          format: "int32"
+          description: "The order the destination was given in."
+        weight:
+          type: "integer"
+          format: "int32"
+          description: "How often the destination is chosen among the ones that match."
+        fallback:
+          type: "boolean"
+          description: "Whether this is the destination used when no rule matches."
+        devices:
+          type: "array"
+          description: "The device classes the destination is for. Empty means any."
+          items:
+            type: "string"
+        countries:
+          type: "array"
+          description: "The countries the destination is for. Empty means any."
+          items:
+            type: "string"
+    LinkResponse:
+      type: "object"
+      description: "A tracked link."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        campaignId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the campaign."
+        slug:
+          type: "string"
+          description: "The short, URL-safe name."
+        kind:
+          type: "string"
+          description: "`STANDARD` or `PERSONAL`."
+        externalRef:
+          type: "string"
+          description: "The tenant's own reference for the recipient."
+        status:
+          type: "string"
+          description: "`ACTIVE`, `PAUSED` or `ARCHIVED`. Only an active link redirects."
+        url:
+          type: "string"
+          description: "The public URL to share."
+        expiresAt:
+          type: "string"
+          format: "date-time"
+          description: "When the link stops redirecting, or null."
+        maxClicks:
+          type: "integer"
+          format: "int64"
+          description: "The most clicks the link redirects, or null for no cap."
+        hasPassword:
+          type: "boolean"
+          description: "Whether the link is protected by a password. The password\
+            \ itself is never returned."
+        utm:
+          type: "object"
+          additionalProperties:
+            type: "string"
+          description: "The UTM parameters appended to the destination, by name, such\
+            \ as `utm_source`."
+        destinations:
+          type: "array"
+          description: "Where the link sends visitors."
+          items:
+            $ref: "#/components/schemas/DestinationView"
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+    BulkLinkRow:
+      type: "object"
+      description: "One personal link to mint."
+      properties:
+        externalRef:
+          type: "string"
+          description: "The tenant's own reference for the recipient."
+    BulkRequest:
+      type: "object"
+      description: "The personal links to mint, one per row."
+      properties:
+        campaignId:
+          type: "string"
+          format: "uuid"
+          description: "The campaign the links belong to."
+        destination:
+          type: "string"
+          description: "The destination URL every link shares."
+        utm:
+          type: "object"
+          additionalProperties:
+            type: "string"
+          description: "The UTM parameters every link shares."
+        expiresAt:
+          type: "string"
+          format: "date-time"
+          description: "When the links stop redirecting, or null."
+        rows:
+          type: "array"
+          description: "One row per link."
+          items:
+            $ref: "#/components/schemas/BulkLinkRow"
+    PersonalLink:
+      type: "object"
+      description: "A personal link that was minted."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The link's id."
+        slug:
+          type: "string"
+          description: "The link's slug."
+        url:
+          type: "string"
+          description: "The public URL to give to the recipient."
+        externalRef:
+          type: "string"
+          description: "The tenant's own reference for the recipient."
+    GoalRequest:
+      type: "object"
+      description: "The goal to create, or its new properties."
+      properties:
+        key:
+          type: "string"
+          description: "The conversion key the tenant's site and backend both report.\
+            \ It cannot change."
+        name:
+          type: "string"
+          description: "The display name."
+        defaultValue:
+          type: "string"
+          description: "The value a conversion has when it reports none, as a decimal\
+            \ string."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
+    GoalResponse:
+      type: "object"
+      description: "A goal."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        key:
+          type: "string"
+          description: "The conversion key the tenant's site and backend both report."
+        name:
+          type: "string"
+          description: "The display name."
+        defaultValue:
+          type: "string"
+          description: "The value a conversion has when it reports none, as a decimal\
+            \ string, or null."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
+        status:
+          type: "string"
+          description: "`ACTIVE` or `ARCHIVED`."
+    ErasureRequest:
+      type: "object"
+      description: "The visitor to erase."
+      properties:
+        visitor_id:
+          type: "string"
+          description: "The id of the visitor whose collected data is removed."
+    ErasureView:
+      type: "object"
+      description: "How many rows of each kind were removed."
+      properties:
+        page_events:
+          type: "integer"
+          format: "int32"
+          description: "The number of page events removed."
+        sessions:
+          type: "integer"
+          format: "int32"
+          description: "The number of sessions removed."
+        bindings:
+          type: "integer"
+          format: "int32"
+          description: "The number of visitor-to-click bindings removed."
+        clicks:
+          type: "integer"
+          format: "int32"
+          description: "The number of clicks removed that only this visitor was bound\
+            \ to."
+        conversions:
+          type: "integer"
+          format: "int32"
+          description: "The number of conversions detached from the visitor."
+    ConversionRequest:
+      type: "object"
+      description: "The conversion to record."
+      properties:
+        goalKey:
+          type: "string"
+          description: "The key of the goal that was reached."
+        clickId:
+          type: "string"
+          description: "The click token of the visit that led to the conversion. Give\
+            \ this or `visitorId`."
+        visitorId:
+          type: "string"
+          description: "The visitor who converted. Give this or `clickId`."
+        value:
+          type: "string"
+          description: "The value of the conversion as a decimal string."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
+        occurredAt:
+          type: "string"
+          format: "date-time"
+          description: "When it happened."
+    ChainTouchResponse:
+      type: "object"
+      description: "One click in a conversion's chain."
+      properties:
+        clickId:
+          type: "string"
+          description: "The signed click token a redirect appended to the destination\
+            \ URL."
+        linkId:
+          type: "string"
+          description: "The id of the link."
+        campaignId:
+          type: "string"
+          description: "The id of the campaign."
+        at:
+          type: "string"
+          format: "date-time"
+          description: "When the click happened."
+    ConversionResponse:
+      type: "object"
+      description: "A conversion with its chain and credits."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        goalId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the goal."
+        value:
+          type: "string"
+          description: "The value of the conversion as a decimal string."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
+        occurredAt:
+          type: "string"
+          format: "date-time"
+          description: "When it happened."
+        source:
+          type: "string"
+          description: "The source of the conversion."
+        creditStatus:
+          type: "string"
+          description: "`PENDING`, `COMPUTED` or `UNATTRIBUTED`."
+        owningCampaignId:
+          type: "string"
+          format: "uuid"
+          description: "The campaign that received the main credit, or null."
+        touchChain:
+          type: "array"
+          description: "The clicks that led to the conversion, in order."
+          items:
+            $ref: "#/components/schemas/ChainTouchResponse"
+        credits:
+          type: "array"
+          description: "The credit each click received."
+          items:
+            $ref: "#/components/schemas/CreditResponse"
+    CreditResponse:
+      type: "object"
+      description: "The credit one click received."
+      properties:
+        clickId:
+          type: "string"
+          description: "The click that received credit."
+        credit:
+          type: "string"
+          description: "The share of the conversion's value, as a decimal string."
+    CampaignRequest:
+      type: "object"
+      description: "The campaign to create, or its new properties."
+      properties:
+        name:
+          type: "string"
+          description: "The display name."
+        slug:
+          type: "string"
+          description: "The short, URL-safe name."
+        channel:
+          type: "string"
+          description: "The marketing channel the campaign runs on."
+        attributionModel:
+          type: "string"
+          description: "How a conversion's credit is shared among the touches of its\
+            \ chain: `FIRST`, `LAST` or `LINEAR`."
+        windowDays:
+          type: "integer"
+          format: "int32"
+          description: "How many days before a conversion a click can still earn credit."
+        currency:
+          type: "string"
+          description: "The currency of the campaign's spend and conversions. It is\
+            \ fixed once spend or a conversion exists."
+        startsOn:
+          type: "string"
+          format: "date"
+          description: "The first day of the campaign, or null."
+        endsOn:
+          type: "string"
+          format: "date"
+          description: "The last day of the campaign, or null."
+    CampaignResponse:
+      type: "object"
+      description: "A campaign."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        name:
+          type: "string"
+          description: "The display name."
+        slug:
+          type: "string"
+          description: "The short, URL-safe name."
+        channel:
+          type: "string"
+          description: "The marketing channel."
+        status:
+          type: "string"
+          description: "`ACTIVE` or `ARCHIVED`."
+        attributionModel:
+          type: "string"
+          description: "`FIRST`, `LAST` or `LINEAR`."
+        windowDays:
+          type: "integer"
+          format: "int32"
+          description: "How many days before a conversion a click can still earn credit."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
+        startsOn:
+          type: "string"
+          format: "date"
+          description: "The first day of the campaign, or null."
+        endsOn:
+          type: "string"
+          format: "date"
+          description: "The last day of the campaign, or null."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+    StreamingResponseBody: {}
+    PageInfo:
+      type: "object"
+      description: "The paging facts of a list answer, present when the request asked\
+        \ for them with `page_info`."
+      properties:
+        limit:
+          type: "integer"
+          format: "int32"
+          description: "The page size that was applied."
+        offset:
+          type:
+          - "integer"
+          - "null"
+          format: "int32"
+          description: "The number of rows that were skipped, or null when a cursor\
+            \ positioned the page."
+        total:
+          type:
+          - "integer"
+          - "null"
+          format: "int64"
+          description: "The number of rows that match the filter, or null when the\
+            \ request asked only for the cursor."
+        next_cursor:
+          type:
+          - "string"
+          - "null"
+          description: "The cursor of the following page, or null on the last page.\
+            \ Pass it as `cursor` with the same filter and sort."
+    PageLinkResponse:
+      type: "object"
+      description: "A page of link response rows, with the paging facts when the request\
+        \ asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/LinkResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    DailyCount:
+      type: "object"
+      description: "The clicks of one day."
+      properties:
+        day:
+          type: "string"
+          format: "date"
+          description: "The day."
+        clicks:
+          type: "integer"
+          format: "int64"
+          description: "The clicks on that day."
+    LinkStatsView:
+      type: "object"
+      description: "A link's click statistics."
+      properties:
+        linkId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the link."
+        status:
+          type: "string"
+          description: "`ACTIVE`, `PAUSED` or `ARCHIVED`."
+        maxClicks:
+          type: "integer"
+          format: "int64"
+          description: "The link's click cap, or null."
+        clicks:
+          type: "integer"
+          format: "int64"
+          description: "The total clicks recorded."
+        last30Days:
+          type: "array"
+          description: "The clicks per day over the last thirty days."
+          items:
+            $ref: "#/components/schemas/DailyCount"
+        botClicksExcluded:
+          type: "integer"
+          format: "int64"
+          description: "How many bot clicks the default left out."
+        dataThrough:
+          type: "string"
+          format: "date-time"
+          description: "The time the rollups are current to."
+    PageGoalResponse:
+      type: "object"
+      description: "A page of goal response rows, with the paging facts when the request\
+        \ asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/GoalResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageConversionResponse:
+      type: "object"
+      description: "A page of conversion response rows, with the paging facts when\
+        \ the request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/ConversionResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageCampaignResponse:
+      type: "object"
+      description: "A page of campaign response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/CampaignResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    SpendView:
+      type: "object"
+      description: "One cost row of a campaign."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        campaignId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the campaign."
+        day:
+          type: "string"
+          format: "date"
+          description: "The day."
+        source:
+          type: "string"
+          description: "Where the row came from: `MANUAL`, `GOOGLE_ADS` or `META_ADS`."
+        connectionId:
+          type: "string"
+          format: "uuid"
+          description: "The ad connection an imported row came from, or null for a\
+            \ manual one."
+        amount:
+          type: "number"
+          description: "The amount, in major units of the currency."
+        currency:
+          type: "string"
+          description: "The ISO 4217 currency code of the amounts."
+        impressions:
+          type: "integer"
+          format: "int64"
+          description: "The number of impressions, when known."
+        clicks:
+          type: "integer"
+          format: "int64"
+          description: "The number of clicks."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+    ProblemDetail:
+      type: "object"
+      description: "The body of every error: an RFC 9457 problem."
+      properties:
+        type:
+          type: "string"
+          description: "A URI reference that identifies the kind of problem. It is\
+            \ `about:blank` when the status says it all."
+        title:
+          type: "string"
+          description: "A short, human-readable summary of the kind of problem. It\
+            \ is the status's reason phrase unless a more specific one applies."
+        status:
+          type: "integer"
+          format: "int32"
+          description: "The HTTP status of the response."
+        detail:
+          type: "string"
+          description: "A sentence that explains this occurrence."
+        instance:
+          type: "string"
+          description: "A URI reference that identifies this occurrence, when there\
+            \ is one."
+  responses:
+    BadRequest:
+      description: "The request is malformed: a body, query parameter or header is\
+        \ missing, unknown, or not valid for its type."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Unauthenticated:
+      description: "The request carries no valid token."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Forbidden:
+      description: "The token does not carry the permission this operation requires,\
+        \ or the tenant has not enabled the app."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotEntitled:
+      description: "The tenant has not enabled this app, or the caller may not act\
+        \ here."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotFound:
+      description: "Nothing with that id exists for this tenant. A resource of another\
+        \ tenant answers the same."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    IdempotencyConflict:
+      description: "The `Idempotency-Key` was already used with a different body,\
+        \ or the request clashes with the current state of the data."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    PreconditionFailed:
+      description: "The `If-Match` tag does not match the resource's current version.\
+        \ The response carries the current `ETag`; read the resource again and retry."
+      headers:
+        ETag:
+          description: "The current version of the resource."
+          schema:
+            type: "string"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+  securitySchemes:
+    oidc:
+      type: "http"
+      description: "A suite token issued by Platform for this tenant"
+      scheme: "bearer"
+      bearerFormat: "JWT"

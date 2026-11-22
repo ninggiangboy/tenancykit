@@ -590,7 +590,7 @@ shell's memory. Adding a remote is described in [frontend/README.md](frontend/RE
 
 | Path | Owns |
 |---|---|
-| `openapi/` | One generated OpenAPI document per service, checked by a test, plus `billing-tenant-system.yaml`, the subset a Tenant System may call |
+| `openapi/` | One generated OpenAPI document per service, checked by a test, plus `openapi/<caller>/<app>.yaml`, the caller's filtered view (`platform-user`, `tenant-user`, `tenant-system`, `customer-session`, `public`, `provider`, `internal`) |
 | `events/` | JSON Schemas for the events and webhooks each service publishes |
 | `commands/` | Commands one app sends to the app that owns the work (`email.send`) |
 | `messaging/` | The AMQP envelope, topology, delivery guarantees and dead-letter runbook |

@@ -3,6 +3,8 @@ package dev.ngb.loyalty.contract;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
+import dev.ngb.core.openapi.CallerLabelRules;
+import dev.ngb.core.openapi.CallerOpenApiSplitter;
 import dev.ngb.loyalty.shared.LoyaltyPermissions;
 import dev.ngb.loyalty.support.LoyaltyIntegrationTest;
 import dev.ngb.loyalty.support.RepositoryPaths;
@@ -37,7 +39,15 @@ class OpenApiContractTest extends LoyaltyIntegrationTest {
     @Test
     void everyServedOperationIsDocumented() throws Exception {
         JsonNode generated = generatedDocument();
-        JsonNode published = YAML.readTree(Files.readString(RepositoryPaths.repositoryRoot().resolve(CONTRACT), StandardCharsets.UTF_8));
+        String publishedText = Files.readString(RepositoryPaths.repositoryRoot().resolve(CONTRACT), StandardCharsets.UTF_8);
+        JsonNode published = YAML.readTree(publishedText);
+        CallerLabelRules.check(generated.toString(), false);
+        CallerLabelRules.check(publishedText, false);
+        CallerOpenApiSplitter.writeOrVerify(
+                generated.toString(),
+                RepositoryPaths.repositoryRoot().resolve("contracts/openapi"),
+                "loyalty",
+                Boolean.getBoolean("openapi.update"));
 
         List<String> undocumented = new ArrayList<>();
         for (String path : generated.get("paths").propertyNames()) {
@@ -49,12 +59,31 @@ class OpenApiContractTest extends LoyaltyIntegrationTest {
                 }
                 if (documented == null || documented.get(method) == null || !documented.get(method).isObject()) {
                     undocumented.add(method.toUpperCase(java.util.Locale.ROOT) + " " + path);
+                    continue;
                 }
+                JsonNode operation = served.get(method);
+                JsonNode documentedOperation = documented.get(method);
+                assertThat(documentedOperation.get("x-allowed-callers"))
+                        .as(method.toUpperCase(java.util.Locale.ROOT) + " " + path
+                                + " documents another caller than the app derives")
+                        .isEqualTo(operation.get("x-allowed-callers"));
+                assertThat(documentedOperation.path("description").asString(""))
+                        .as(method.toUpperCase(java.util.Locale.ROOT) + " " + path
+                                + " documents another callers line than the app derives")
+                        .contains(callersLine(operation));
             }
         }
         assertThat(undocumented)
                 .as("an operation the app serves must be in " + CONTRACT)
                 .isEmpty();
+    }
+
+    private static String callersLine(JsonNode operation) {
+        String description = operation.path("description").asString("");
+        int at = description.lastIndexOf("\n\n");
+        String line = at < 0 ? description : description.substring(at + 2);
+        assertThat(line).startsWith("Callers:");
+        return line;
     }
 
     @Test

@@ -1,0 +1,1222 @@
+---
+openapi: "3.1.0"
+info:
+  title: "Mailroom API"
+  description: "The API a Tenant System uses to email a Tenant's own customers, plus\
+    \ the public tracking endpoints a recipient's mail client calls without credentials."
+  version: "v1"
+servers:
+- url: "/mailroom"
+  description: "Any tenant hostname: <tenant-code>.<base-domain>/mailroom"
+tags:
+- name: "Segments"
+  description: "Saved filters over receiver attributes, with a preview of the audience\
+    \ they match."
+- name: "Campaigns"
+  description: "Bulk email campaigns and their state machine: draft, schedule, send,\
+    \ pause, resume, cancel, test and statistics."
+- name: "Suppressions"
+  description: "Addresses the tenant must not mail. Removing one is the only action\
+    \ that re-subscribes an address."
+- name: "Email templates"
+  description: "A tenant's email templates. Every edit appends an immutable revision,\
+    \ so recorded emails and campaigns never change."
+- name: "Public tracking"
+  description: "Unauthenticated endpoints a recipient's mail client hits: open pixel,\
+    \ tracked link and one-click unsubscribe."
+- name: "Receiver groups"
+  description: "Static groups of receivers and their membership."
+- name: "Mail settings"
+  description: "The tenant's default sender, reply-to, body retention and campaign\
+    \ publish rate."
+- name: "Emails"
+  description: "Sending one email or a batch, and reading the email ledger."
+- name: "Receivers"
+  description: "A tenant's own customers by email address. Deleting a receiver is\
+    \ an erasure, not a soft delete."
+paths:
+  /mailroom/t/u/{token}:
+    get:
+      tags:
+      - "Public tracking"
+      summary: "Show the unsubscribe page"
+      description: "The page a recipient opens from the unsubscribe link: it asks\
+        \ the recipient to confirm. It changes nothing itself. Public: no suite token\
+        \ is needed.\n\nCallers: public."
+      operationId: "unsubscribePage"
+      parameters:
+      - name: "token"
+        in: "path"
+        description: "The signed token that was written into the email, naming the\
+          \ email and its recipient."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+      x-allowed-callers:
+      - "public"
+    post:
+      tags:
+      - "Public tracking"
+      summary: "Unsubscribe a recipient"
+      description: "The one-click unsubscribe of RFC 8058. It adds a marketing suppression\
+        \ and flips the receiver's status, idempotently, and never stops transactional\
+        \ mail. Public: no suite token is needed.\n\nCallers: public."
+      operationId: "unsubscribe"
+      parameters:
+      - name: "token"
+        in: "path"
+        description: "The signed token that was written into the email, naming the\
+          \ email and its recipient."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+      x-allowed-callers:
+      - "public"
+  /t/u/{token}:
+    get:
+      tags:
+      - "Public tracking"
+      summary: "Show the unsubscribe page"
+      description: "The page a recipient opens from the unsubscribe link: it asks\
+        \ the recipient to confirm. It changes nothing itself. Public: no suite token\
+        \ is needed.\n\nCallers: public."
+      operationId: "unsubscribePage_1"
+      parameters:
+      - name: "token"
+        in: "path"
+        description: "The signed unsubscribe token of the email."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+      x-allowed-callers:
+      - "public"
+    post:
+      tags:
+      - "Public tracking"
+      summary: "Unsubscribe a recipient"
+      description: "The one-click unsubscribe of RFC 8058. It adds a marketing suppression\
+        \ and flips the receiver's status, idempotently, and never stops transactional\
+        \ mail. Public: no suite token is needed.\n\nCallers: public."
+      operationId: "unsubscribe_1"
+      parameters:
+      - name: "token"
+        in: "path"
+        description: "The signed unsubscribe token of the email."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+      x-allowed-callers:
+      - "public"
+  /mailroom/t/o/{token}:
+    get:
+      tags:
+      - "Public tracking"
+      summary: "Record an email open"
+      description: "The tracking pixel a recipient's mail client loads. It always\
+        \ answers the same transparent GIF, whatever the token says, so a bad token\
+        \ is indistinguishable from a good one. A valid token records an open, at\
+        \ most sixty a minute per email. Public: no suite token is needed.\n\nCallers:\
+        \ public."
+      operationId: "open"
+      parameters:
+      - name: "token"
+        in: "path"
+        description: "The signed token that was written into the email, naming the\
+          \ email and its recipient."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+                format: "byte"
+      x-allowed-callers:
+      - "public"
+  /t/o/{token}:
+    get:
+      tags:
+      - "Public tracking"
+      summary: "Record an email open"
+      description: "The tracking pixel a recipient's mail client loads. It always\
+        \ answers the same transparent GIF, whatever the token says, so a bad token\
+        \ is indistinguishable from a good one. A valid token records an open, at\
+        \ most sixty a minute per email. Public: no suite token is needed.\n\nCallers:\
+        \ public."
+      operationId: "open_1"
+      parameters:
+      - name: "token"
+        in: "path"
+        description: "The signed tracking token of the email. A token that does not\
+          \ verify is treated like a valid one, so nothing can be probed."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+                format: "byte"
+      x-allowed-callers:
+      - "public"
+  /mailroom/t/c/{token}:
+    get:
+      tags:
+      - "Public tracking"
+      summary: "Follow a tracked link"
+      description: "Redirects to the URL recorded when the email was rendered and\
+        \ records the click; it never reads a URL from the request, so it cannot be\
+        \ used as an open redirect. A token whose link was purged shows a \"link expired\"\
+        \ page. Public: no suite token is needed.\n\nCallers: public."
+      operationId: "click"
+      parameters:
+      - name: "token"
+        in: "path"
+        description: "The signed token that was written into the email, naming the\
+          \ email and its recipient."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+      x-allowed-callers:
+      - "public"
+  /t/c/{token}:
+    get:
+      tags:
+      - "Public tracking"
+      summary: "Follow a tracked link"
+      description: "Redirects to the URL recorded when the email was rendered and\
+        \ records the click; it never reads a URL from the request, so it cannot be\
+        \ used as an open redirect. A token whose link was purged shows a \"link expired\"\
+        \ page. Public: no suite token is needed.\n\nCallers: public."
+      operationId: "click_1"
+      parameters:
+      - name: "token"
+        in: "path"
+        description: "The signed tracking token of the link. It resolves to a URL\
+          \ recorded when the email was rendered."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "The link has expired or its record was purged. An HTML page\
+            \ says so."
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "302":
+          description: "Redirects to the URL recorded when the email was rendered,\
+            \ and records the click."
+      x-allowed-callers:
+      - "public"
+components:
+  schemas:
+    TemplateRequest:
+      type: "object"
+      description: "The template to create, or the new content of an existing one."
+      properties:
+        key:
+          type: "string"
+          description: "The template key. It is immutable once created and ignored\
+            \ on update."
+        name:
+          type: "string"
+          description: "The template's name."
+        subject:
+          type: "string"
+          description: "The email subject line, as a template."
+        html:
+          type: "string"
+          description: "The HTML body, as a template."
+        text:
+          type: "string"
+          description: "The plain-text body, as a template."
+    TemplateResponse:
+      type: "object"
+      description: "A template at its current revision."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        key:
+          type: "string"
+          description: "The template key, unique per tenant. It cannot change."
+        name:
+          type: "string"
+          description: "The display name."
+        revision:
+          type: "integer"
+          format: "int32"
+          description: "The number of the current immutable revision. Every edit appends\
+            \ one."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+    SettingsRequest:
+      type: "object"
+      description: "The tenant's mail settings to store, each bounded as the schema\
+        \ states."
+      properties:
+        fromKey:
+          type: "string"
+          description: "The key of the default sender identity."
+        fromName:
+          type: "string"
+          description: "The sender's display name."
+        replyTo:
+          type: "string"
+          description: "The reply-to address."
+        bodyRetentionDays:
+          type: "integer"
+          format: "int32"
+          description: "How many days a rendered body is kept before it is purged."
+        campaignPublishPerMinute:
+          type: "integer"
+          format: "int32"
+          description: "How many campaign emails are queued per minute across all\
+            \ of the tenant's campaigns."
+    SettingsResponse:
+      type: "object"
+      description: "The tenant's mail settings."
+      properties:
+        fromKey:
+          type: "string"
+          description: "The key of the default sender identity."
+        fromName:
+          type: "string"
+          description: "The sender's display name."
+        replyTo:
+          type: "string"
+          description: "The reply-to address."
+        bodyRetentionDays:
+          type: "integer"
+          format: "int32"
+          description: "How many days a rendered body is kept before it is purged."
+        campaignPublishPerMinute:
+          type: "integer"
+          format: "int32"
+          description: "How many campaign emails are queued per minute across all\
+            \ of the tenant's campaigns."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+    SegmentRequest:
+      type: "object"
+      description: "The segment to save."
+      properties:
+        name:
+          type: "string"
+          description: "The segment's name."
+        filter:
+          type: "object"
+          additionalProperties: {}
+          description: "The filter over receiver attributes. Composite nodes `and`,\
+            \ `or` (lists of filters) and `not` (one filter), and predicates `{field,\
+            \ op, value}` with `op` one of `eq`, `neq`, `in`, `gt`, `gte`, `lt`, `lte`,\
+            \ `exists` or `in_group`. The built-in fields are `email_domain`, `created_at`,\
+            \ `status` and `group`."
+    SegmentResponse:
+      type: "object"
+      description: "A saved segment."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        name:
+          type: "string"
+          description: "The display name."
+        filter:
+          type: "object"
+          additionalProperties: {}
+          description: "The filter over receiver attributes, as it was stored."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+    ReceiverRequest:
+      type: "object"
+      description: "The receiver to create or update, identified by its email."
+      properties:
+        email:
+          type: "string"
+          description: "The email address. It is the receiver's identity."
+        firstName:
+          type: "string"
+          description: "The receiver's first name."
+        lastName:
+          type: "string"
+          description: "The receiver's last name."
+        attributes:
+          type: "object"
+          additionalProperties: {}
+          description: "Free-form attributes of the receiver, which segments filter\
+            \ on and templates read as variables."
+    ReceiverResponse:
+      type: "object"
+      description: "A receiver: one of the tenant's own customers."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        email:
+          type: "string"
+          description: "The email address. It is the receiver's identity."
+        firstName:
+          type: "string"
+          description: "The receiver's first name."
+        lastName:
+          type: "string"
+          description: "The receiver's last name."
+        attributes:
+          type: "object"
+          additionalProperties: {}
+          description: "Free-form attributes of the receiver, which segments filter\
+            \ on and templates read as variables."
+        status:
+          type: "string"
+          description: "`SUBSCRIBED` or `UNSUBSCRIBED`. Only removing a suppression\
+            \ re-subscribes a receiver."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+    GroupRequest:
+      type: "object"
+      description: "The group's name."
+      properties:
+        name:
+          type: "string"
+          description: "The display name."
+    GroupResponse:
+      type: "object"
+      description: "A static group of receivers."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        name:
+          type: "string"
+          description: "The display name."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+    CampaignRequest:
+      type: "object"
+      description: "The campaign to create, or its new properties."
+      properties:
+        name:
+          type: "string"
+          description: "The campaign's name."
+        templateKey:
+          type: "string"
+          description: "The key of the template to send. The campaign pins that template's\
+            \ current revision."
+        targetType:
+          type: "string"
+          description: "What the campaign targets: `GROUP` or `SEGMENT`."
+        targetId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the group or segment."
+        fromKey:
+          type: "string"
+          description: "The sender identity to send from. When omitted, the tenant's\
+            \ default sender is used."
+    CampaignResponse:
+      type: "object"
+      description: "A campaign and where it stands."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        name:
+          type: "string"
+          description: "The display name."
+        status:
+          type: "string"
+          description: "`DRAFT`, `SCHEDULED`, `SENDING`, `PAUSED`, `COMPLETED` or\
+            \ `CANCELLED`."
+        templateId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the template."
+        templateRevision:
+          type: "integer"
+          format: "int32"
+          description: "The revision of the template that was pinned."
+        targetType:
+          type: "string"
+          description: "`GROUP` or `SEGMENT`."
+        targetId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the group or segment."
+        fromKey:
+          type: "string"
+          description: "The sender identity to send from. When omitted, the tenant's\
+            \ default sender is used."
+        fromName:
+          type: "string"
+          description: "The sender's display name."
+        replyTo:
+          type: "string"
+          description: "The reply-to address."
+        scheduledAt:
+          type: "string"
+          format: "date-time"
+          description: "When the campaign is to start, or null."
+        startedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the campaign entered `SENDING`, or null."
+        completedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the campaign finished, or null."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+    PreviewRequest:
+      type: "object"
+      description: "The values to render the template with."
+      properties:
+        variables:
+          type: "object"
+          additionalProperties: {}
+          description: "The values the template reads, by variable name."
+    RenderedResponse:
+      type: "object"
+      description: "A template rendered with the given variables."
+      properties:
+        subject:
+          type: "string"
+          description: "The email subject line, as a template."
+        html:
+          type: "string"
+          description: "The HTML body, as a template."
+        text:
+          type: "string"
+          description: "The plain-text body, as a template."
+    SuppressionRequest:
+      type: "object"
+      description: "The address to block."
+      properties:
+        email:
+          type: "string"
+          description: "The address to block."
+        scope:
+          type: "string"
+          description: "Which mail the suppression blocks: `MARKETING` or `ALL`."
+    SuppressionResponse:
+      type: "object"
+      description: "An address the tenant must not mail."
+      properties:
+        email:
+          type: "string"
+          description: "The email address. It is the receiver's identity."
+        scope:
+          type: "string"
+          description: "Which mail the suppression blocks: `MARKETING` or `ALL`."
+        reason:
+          type: "string"
+          description: "Why it is blocked: `UNSUBSCRIBED` or `MANUAL`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+    Preview:
+      type: "object"
+      description: "How many receivers a segment matches now, with a sample."
+      properties:
+        count:
+          type: "integer"
+          format: "int64"
+          description: "The number of matching receivers."
+        capped:
+          type: "boolean"
+          description: "Whether `count` stopped at a cap, so the real number is at\
+            \ least that large."
+        sample:
+          type: "array"
+          description: "A few of the matching receivers."
+          items:
+            $ref: "#/components/schemas/ReceiverSummary"
+    ReceiverSummary:
+      type: "object"
+      description: "A receiver as listed in a sample."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        email:
+          type: "string"
+          description: "The email address. It is the receiver's identity."
+        firstName:
+          type: "string"
+          description: "The receiver's first name."
+        lastName:
+          type: "string"
+          description: "The receiver's last name."
+        attributes:
+          type: "object"
+          additionalProperties: {}
+          description: "Free-form attributes of the receiver, which segments filter\
+            \ on and templates read as variables."
+    BulkRequest:
+      type: "object"
+      description: "The receivers to upsert, at most 1,000."
+      properties:
+        receivers:
+          type: "array"
+          description: "The receivers to upsert."
+          items:
+            $ref: "#/components/schemas/ReceiverRequest"
+    BulkResult:
+      type: "object"
+      description: "The outcome for one receiver of a bulk upsert."
+      properties:
+        index:
+          type: "integer"
+          format: "int32"
+          description: "The position of the item in the request, starting at 0."
+        receiverId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the receiver, or null when the item failed."
+        error:
+          type: "string"
+          description: "Why the item failed, or null when it succeeded. One bad address\
+            \ does not fail the others."
+    MemberIds:
+      type: "object"
+      description: "The receivers to add to or remove from a group, at most 1,000."
+      properties:
+        receiverIds:
+          type: "array"
+          description: "The ids of the receivers."
+          items:
+            type: "string"
+            format: "uuid"
+    MemberChange:
+      type: "object"
+      description: "How many memberships changed."
+      properties:
+        changed:
+          type: "integer"
+          format: "int32"
+          description: "The number of memberships that were added or removed."
+    SendEmailRequest:
+      type: "object"
+      description: "The email to send."
+      properties:
+        to:
+          type: "string"
+          description: "The recipient's address."
+        kind:
+          type: "string"
+          description: "`TRANSACTIONAL` or `MARKETING`. A marketing email honours\
+            \ a `MARKETING` suppression; a transactional one honours only `ALL`. Required."
+        fromKey:
+          type: "string"
+          description: "The sender identity to send from. When omitted, the tenant's\
+            \ default sender is used."
+        templateKey:
+          type: "string"
+          description: "The template to render. Omit it to send the inline `subject`,\
+            \ `html` and `text`."
+        variables:
+          type: "object"
+          additionalProperties: {}
+          description: "The values the template reads, by variable name."
+        subject:
+          type: "string"
+          description: "The inline subject line, when no template is used."
+        html:
+          type: "string"
+          description: "The inline HTML body, when no template is used."
+        text:
+          type: "string"
+          description: "The inline plain-text body, when no template is used."
+        idempotencyKey:
+          type: "string"
+          description: "A key that makes a retried item return the same email. The\
+            \ `Idempotency-Key` header does the same for a single send."
+    EmailResponse:
+      type: "object"
+      description: "One email of the ledger."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        kind:
+          type: "string"
+          description: "`TRANSACTIONAL` or `MARKETING`."
+        status:
+          type: "string"
+          description: "`QUEUED`, `SENT`, `FAILED` or `SKIPPED`."
+        statusReason:
+          type: "string"
+          description: "Why the email is `FAILED` or `SKIPPED`, or null."
+        to:
+          type: "string"
+          description: "The recipient's address."
+        subject:
+          type: "string"
+          description: "The email subject line, as a template."
+        campaignId:
+          type: "string"
+          format: "uuid"
+          description: "The campaign that sent it, or null for a single send."
+        receiverId:
+          type: "string"
+          format: "uuid"
+          description: "The receiver it was sent to, or null."
+        templateId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the template."
+        templateRevision:
+          type: "integer"
+          format: "int32"
+          description: "The revision of the template that was pinned."
+        html:
+          type: "string"
+          description: "The rendered HTML body, or null once the body was purged."
+        text:
+          type: "string"
+          description: "The rendered plain-text body, or null once the body was purged."
+        bodyPurged:
+          type: "boolean"
+          description: "Whether the rendered body was removed after the tenant's retention.\
+            \ Metadata and events stay."
+        deliveryUpdatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the mailer last reported on the delivery, or null."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+        events:
+          type: "array"
+          description: "What happened to the email after it was sent, such as opens\
+            \ and clicks."
+          items: {}
+    BatchRequest:
+      type: "object"
+      description: "The emails to send, each shaped like a single send."
+      properties:
+        items:
+          type: "array"
+          description: "The emails to send."
+          items:
+            $ref: "#/components/schemas/SendEmailRequest"
+    BatchResultResponse:
+      type: "object"
+      description: "The outcome for one item of a batch."
+      properties:
+        index:
+          type: "integer"
+          format: "int32"
+          description: "The position of the item in the request, starting at 0."
+        emailId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the email that was recorded, or null when the item\
+            \ was refused."
+        status:
+          type: "string"
+          description: "The status of the recorded email."
+        reason:
+          type: "string"
+          description: "Why the email was skipped or failed, or null."
+        error:
+          type: "string"
+          description: "Why the item was refused, or null."
+    TestRequest:
+      type: "object"
+      description: "Where to send the test."
+      properties:
+        addresses:
+          type: "array"
+          description: "Up to five addresses to send a sample to."
+          items:
+            type: "string"
+    Result:
+      type: "object"
+      description: "The outcome of one test send."
+      properties:
+        to:
+          type: "string"
+          description: "The address."
+        status:
+          type: "string"
+          description: "The status of the test email."
+        reason:
+          type: "string"
+          description: "Why it was not sent, or null."
+    ScheduleRequest:
+      type: "object"
+      description: "When to start the campaign."
+      properties:
+        scheduledAt:
+          type: "string"
+          format: "date-time"
+          description: "The time to start, which must be in the future."
+    ReceiverPatch:
+      type: "object"
+      description: "The receiver properties to change. The email and the consent status\
+        \ cannot be edited here."
+      properties:
+        firstName:
+          type: "string"
+          description: "The receiver's first name."
+        lastName:
+          type: "string"
+          description: "The receiver's last name."
+        attributes:
+          type: "object"
+          additionalProperties: {}
+          description: "Free-form attributes of the receiver, which segments filter\
+            \ on and templates read as variables."
+    PageInfo:
+      type: "object"
+      description: "The paging facts of a list answer, present when the request asked\
+        \ for them with `page_info`."
+      properties:
+        limit:
+          type: "integer"
+          format: "int32"
+          description: "The page size that was applied."
+        offset:
+          type:
+          - "integer"
+          - "null"
+          format: "int32"
+          description: "The number of rows that were skipped, or null when a cursor\
+            \ positioned the page."
+        total:
+          type:
+          - "integer"
+          - "null"
+          format: "int64"
+          description: "The number of rows that match the filter, or null when the\
+            \ request asked only for the cursor."
+        next_cursor:
+          type:
+          - "string"
+          - "null"
+          description: "The cursor of the following page, or null on the last page.\
+            \ Pass it as `cursor` with the same filter and sort."
+    PageTemplateResponse:
+      type: "object"
+      description: "A page of template response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/TemplateResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageTemplateRevisionView:
+      type: "object"
+      description: "A page of template revision view rows, with the paging facts when\
+        \ the request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/TemplateRevisionView"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    TemplateRevisionView:
+      type: "object"
+      description: "One immutable revision of a template."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The revision's id."
+        revision:
+          type: "integer"
+          format: "int32"
+          description: "The revision's number."
+        subject:
+          type: "string"
+          description: "The email subject line, as a template."
+        html:
+          type: "string"
+          description: "The HTML body, as a template."
+        text:
+          type: "string"
+          description: "The plain-text body, as a template."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the revision was appended."
+    PageSuppressionResponse:
+      type: "object"
+      description: "A page of suppression response rows, with the paging facts when\
+        \ the request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/SuppressionResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageSegmentResponse:
+      type: "object"
+      description: "A page of segment response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/SegmentResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageReceiverResponse:
+      type: "object"
+      description: "A page of receiver response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/ReceiverResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageGroupResponse:
+      type: "object"
+      description: "A page of group response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/GroupResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    MemberResponse:
+      type: "object"
+      description: "A receiver that belongs to a group."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        email:
+          type: "string"
+          description: "The email address. It is the receiver's identity."
+        firstName:
+          type: "string"
+          description: "The receiver's first name."
+        lastName:
+          type: "string"
+          description: "The receiver's last name."
+    PageMemberResponse:
+      type: "object"
+      description: "A page of member response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/MemberResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageEmailResponse:
+      type: "object"
+      description: "A page of email response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/EmailResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageCampaignResponse:
+      type: "object"
+      description: "A page of campaign response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/CampaignResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    CampaignStatsView:
+      type: "object"
+      description: "The counts of a campaign."
+      properties:
+        recipients:
+          type: "integer"
+          format: "int64"
+          description: "How many receivers the campaign's audience snapshot holds."
+        published:
+          type: "integer"
+          format: "int64"
+          description: "How many recipients' emails were handed on for delivery."
+        sent:
+          type: "integer"
+          format: "int64"
+          description: "How many emails ended as `SENT`."
+        failed:
+          type: "integer"
+          format: "int64"
+          description: "How many emails ended as `FAILED`."
+        skipped:
+          type: "integer"
+          format: "int64"
+          description: "How many emails ended as `SKIPPED`, for example because the\
+            \ address was suppressed."
+        opened:
+          type: "integer"
+          format: "int64"
+          description: "How many distinct emails had their tracking pixel loaded.\
+            \ A mail client that prefetches inflates it, so an open is a signal, not\
+            \ proof of intent."
+        openEvents:
+          type: "integer"
+          format: "int64"
+          description: "How many pixel loads were recorded in all. A prefetching mail\
+            \ client inflates it."
+        clicked:
+          type: "integer"
+          format: "int64"
+          description: "How many distinct emails had a link clicked."
+        clickEvents:
+          type: "integer"
+          format: "int64"
+          description: "How many clicks were recorded in all."
+        unsubscribed:
+          type: "integer"
+          format: "int64"
+          description: "How many recipients unsubscribed from this campaign's emails."
+    ProblemDetail:
+      type: "object"
+      description: "The body of every error: an RFC 9457 problem."
+      properties:
+        type:
+          type: "string"
+          description: "A URI reference that identifies the kind of problem. It is\
+            \ `about:blank` when the status says it all."
+        title:
+          type: "string"
+          description: "A short, human-readable summary of the kind of problem. It\
+            \ is the status's reason phrase unless a more specific one applies."
+        status:
+          type: "integer"
+          format: "int32"
+          description: "The HTTP status of the response."
+        detail:
+          type: "string"
+          description: "A sentence that explains this occurrence."
+        instance:
+          type: "string"
+          description: "A URI reference that identifies this occurrence, when there\
+            \ is one."
+  responses:
+    BadRequest:
+      description: "The request is malformed: a body, query parameter or header is\
+        \ missing, unknown, or not valid for its type."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Unauthenticated:
+      description: "The request carries no valid token."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Forbidden:
+      description: "The token does not carry the permission this operation requires,\
+        \ or the tenant has not enabled the app."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotEntitled:
+      description: "The tenant has not enabled this app, or the caller may not act\
+        \ here."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotFound:
+      description: "Nothing with that id exists for this tenant. A resource of another\
+        \ tenant answers the same."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    IdempotencyConflict:
+      description: "The `Idempotency-Key` was already used with a different body,\
+        \ or the request clashes with the current state of the data."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    PreconditionFailed:
+      description: "The `If-Match` tag does not match the resource's current version.\
+        \ The response carries the current `ETag`; read the resource again and retry."
+      headers:
+        ETag:
+          description: "The current version of the resource."
+          schema:
+            type: "string"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+  securitySchemes:
+    oidc:
+      type: "http"
+      description: "A suite token issued by Platform for this tenant"
+      scheme: "bearer"
+      bearerFormat: "JWT"

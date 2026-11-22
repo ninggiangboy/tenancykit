@@ -3,6 +3,8 @@ package dev.ngb.customer.contract;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
+import dev.ngb.core.openapi.CallerLabelRules;
+import dev.ngb.core.openapi.CallerOpenApiSplitter;
 import dev.ngb.customer.Application;
 import dev.ngb.customer.shared.CustomerPermissions;
 import dev.ngb.customer.support.PostgresContainerConfig;
@@ -73,7 +75,15 @@ class OpenApiContractTest {
         assertThat(served.get("openapi")).as("the generated document is readable").isNotNull();
 
         Path file = RepositoryPaths.repositoryRoot().resolve(CONTRACT);
-        JsonNode documented = YAML.readTree(Files.readString(file, StandardCharsets.UTF_8));
+        String documentedText = Files.readString(file, StandardCharsets.UTF_8);
+        CallerLabelRules.check(served.toString(), false);
+        CallerLabelRules.check(documentedText, false);
+        CallerOpenApiSplitter.writeOrVerify(
+                served.toString(),
+                RepositoryPaths.repositoryRoot().resolve("contracts/openapi"),
+                "customer",
+                Boolean.getBoolean("openapi.update"));
+        JsonNode documented = YAML.readTree(documentedText);
 
         int operations = 0;
         Set<String> operationIds = new TreeSet<>();
@@ -85,15 +95,20 @@ class OpenApiContractTest {
                 if (!operation.isObject()) {
                     continue;
                 }
-                operations++;
-                String id = operation.get("operationId") == null ? null : operation.get("operationId").asString();
-                assertThat(id).as(path + " " + method + " has no operationId").isNotBlank();
-                assertThat(operationIds.add(id)).as("operationId " + id + " appears twice").isTrue();
-
                 JsonNode documentedOperation = documented.path("paths").path(path).path(method);
                 assertThat(documentedOperation.isObject())
                         .as(method.toUpperCase() + " " + path + " is served but " + CONTRACT + " does not document it")
                         .isTrue();
+                assertThat(documentedOperation.get("x-allowed-callers"))
+                        .as(method.toUpperCase() + " " + path + " documents another caller than the app derives")
+                        .isEqualTo(operation.get("x-allowed-callers"));
+                assertThat(documentedOperation.path("description").asString(""))
+                        .as(method.toUpperCase() + " " + path + " documents another callers line than the app derives")
+                        .contains(callersLine(operation));
+                operations++;
+                String id = operation.get("operationId") == null ? null : operation.get("operationId").asString();
+                assertThat(id).as(path + " " + method + " has no operationId").isNotBlank();
+                assertThat(operationIds.add(id)).as("operationId " + id + " appears twice").isTrue();
 
                 JsonNode permission = operation.get("x-required-permission");
                 assertThat(permission).as(path + " " + method + " declares no permission").isNotNull();
@@ -108,6 +123,14 @@ class OpenApiContractTest {
         }
         assertThat(operations).as("a scan that finds no operation would pass vacuousley").isGreaterThan(0);
         assertThat(permissionByOperation.values()).isSubsetOf(CustomerPermissions.CODES);
+    }
+
+    private static String callersLine(JsonNode operation) {
+        String description = operation.path("description").asString("");
+        int at = description.lastIndexOf("\n\n");
+        String line = at < 0 ? description : description.substring(at + 2);
+        assertThat(line).startsWith("Callers:");
+        return line;
     }
 
     /**

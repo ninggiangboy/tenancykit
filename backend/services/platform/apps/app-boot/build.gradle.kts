@@ -36,6 +36,7 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     testImplementation(project(":testing:arch-fixtures"))
+    testImplementation(testFixtures("dev.ngb:core-openapi"))
     // The shared architecture rule set every service runs, so the three services cannot drift apart.
     testImplementation("dev.ngb:core-arch")
     // The core rules cover every shared module, including the one Platform does not call with.

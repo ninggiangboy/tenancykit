@@ -3,6 +3,8 @@ package dev.ngb.mailroom.contract;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
+import dev.ngb.core.openapi.CallerLabelRules;
+import dev.ngb.core.openapi.CallerOpenApiSplitter;
 import dev.ngb.mailroom.Application;
 import dev.ngb.mailroom.shared.MailroomPermissions;
 import dev.ngb.mailroom.support.PostgresContainerConfig;
@@ -69,6 +71,12 @@ class OpenApiContractTest {
         String generated = mvc.perform(get("/v3/api-docs.yaml"))
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         assertThat(generated).startsWith("openapi:");
+        CallerLabelRules.check(generated, false);
+        CallerOpenApiSplitter.writeOrVerify(
+                generated,
+                RepositoryPaths.repositoryRoot().resolve("contracts/openapi"),
+                "mailroom",
+                Boolean.getBoolean("openapi.update"));
         String published = publishedDocument(generated);
 
         Path file = RepositoryPaths.repositoryRoot().resolve(CONTRACT);

@@ -1,0 +1,1650 @@
+---
+openapi: "3.1.0"
+info:
+  title: "Survey API"
+  description: "The API a Tenant System uses to build versioned surveys, issue links\
+    \ and read what came back, plus the public endpoints a respondent's browser calls\
+    \ without credentials."
+  version: "v1"
+servers:
+- url: "/survey"
+  description: "Any tenant hostname: <tenant-code>.<base-domain>/survey"
+tags:
+- name: "Surveys"
+  description: "A tenant's surveys and their lifecycle: create, read, close and reopen."
+- name: "Public fill surface"
+  description: "The unauthenticated endpoints a respondent's browser uses to open\
+    \ a link and read the survey."
+- name: "Survey settings"
+  description: "The tenant's survey defaults: abandonment window, upload limit, public\
+    \ rate limit and time zone."
+- name: "Survey respondents"
+  description: "The respondents of a survey, for importing into a mailroom group for\
+    \ a reminder."
+- name: "Webhook endpoints"
+  description: "Where a tenant wants its events delivered and which event types. The\
+    \ signing secret is returned only when an endpoint is created or its secret rotated,\
+    \ never again."
+- name: "Survey exports"
+  description: "Queued CSV exports of responses and reading their state."
+- name: "Survey links"
+  description: "Public and personal links that open a survey, and revoking them."
+- name: "Survey drafts"
+  description: "A survey's one editable document: read, save under If-Match, and validate."
+- name: "Survey versions"
+  description: "Publishing the draft as an immutable version and reading the version\
+    \ history."
+- name: "Webhook deliveries"
+  description: "The history of attempts to deliver an event to an endpoint, and resending\
+    \ one that finished. A delivery that exhausted its attempts is DEAD and stays\
+    \ visible so it can be resent."
+- name: "Survey analytics"
+  description: "Per-question aggregates, cross-tabs, trends and the drop-off funnel."
+- name: "Respondent answers"
+  description: "The respondent's own surface, authorised by the visit token: save\
+    \ and resume a draft, sign an upload and submit."
+- name: "Survey preview and simulation"
+  description: "Try a draft's logic without publishing: preview a locale, or simulate\
+    \ answers through the draft or a version."
+- name: "Survey responses"
+  description: "Reading and deleting completed responses."
+paths:
+  /p/v/{visitToken}/draft:
+    get:
+      tags:
+      - "Respondent answers"
+      summary: "Resume a respondent's draft"
+      description: "Returns the answers the visit saved so far, so a browser can resume;\
+        \ before the first save the answers are empty. It reads only this visit's\
+        \ own draft; a completed response answers `409` rather than a document. Public:\
+        \ the visit token in the path is the credential, and no suite token is needed.\n\
+        \nCallers: public."
+      operationId: "readDraft"
+      parameters:
+      - name: "visitToken"
+        in: "path"
+        description: "The visit token the respondent received when opening a link.\
+          \ It is the credential for the call."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "A survey's draft, with the tag its next save has to carry."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DraftResponse"
+        "404":
+          description: "The visit token is malformed, unknown or expired. Every failure\
+            \ answers the same, so a caller cannot probe for live visits."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "409":
+          description: "The visit already completed, so there is no draft to resume."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+      x-allowed-callers:
+      - "public"
+    put:
+      tags:
+      - "Respondent answers"
+      summary: "Save a respondent's draft"
+      description: "Saves the respondent's partial `answers`, creating the in-progress\
+        \ response on the first save and moving the visit to `STARTED`. The response\
+        \ records the version the visit opened, so a resume after a newer publish\
+        \ keeps its questions. A visit that already completed answers `409`. Public:\
+        \ the visit token in the path is the credential, and no suite token is needed.\n\
+        \nCallers: public."
+      operationId: "saveDraft"
+      parameters:
+      - name: "visitToken"
+        in: "path"
+        description: "The visit token the respondent received when opening a link.\
+          \ It is the credential for the call."
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        description: "The respondent's answers."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswersRequest"
+        required: true
+      responses:
+        "200":
+          description: "A survey's draft, with the tag its next save has to carry."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DraftResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: "The visit token is malformed, unknown or expired. Every failure\
+            \ answers the same, so a caller cannot probe for live visits."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "409":
+          description: "The visit already completed, so its answers cannot go back\
+            \ to a draft."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+      x-allowed-callers:
+      - "public"
+  /p/v/{visitToken}/uploads:
+    post:
+      tags:
+      - "Respondent answers"
+      summary: "Request a file upload"
+      description: "Asks to upload a file for question `questionId`, declaring `filename`,\
+        \ `size` and `mime`, and answers `201` with a signed upload (`uploadId`, `url`\
+        \ and the `headers` to send) the browser then uses. A file the question does\
+        \ not accept, or one over the size limit, is refused. Public: the visit token\
+        \ in the path is the credential, and no suite token is needed.\n\nCallers:\
+        \ public."
+      operationId: "upload"
+      parameters:
+      - name: "visitToken"
+        in: "path"
+        description: "The visit token the respondent received when opening a link.\
+          \ It is the credential for the call."
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        description: "The file the respondent wants to upload."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadRequest"
+        required: true
+      responses:
+        "201":
+          description: "A signed upload the browser then uses."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Signed"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: "The visit token is malformed, unknown or expired. Every failure\
+            \ answers the same, so a caller cannot probe for live visits."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+      x-allowed-callers:
+      - "public"
+  /p/v/{visitToken}/submit:
+    post:
+      tags:
+      - "Respondent answers"
+      summary: "Submit a respondent's answers"
+      description: "Completes the response: validates `answers`, recomputes the variables\
+        \ and score, and enforces the survey's window, cap, single use and idempotency\
+        \ in one transaction. Without an `Idempotency-Key` header it answers `428`,\
+        \ and a repeated key returns the first result. A validation failure answers\
+        \ `422` with the field and code of every problem, never the value. A completed\
+        \ visit answers `409`. Public: the visit token in the path is the credential,\
+        \ and no suite token is needed.\n\nCallers: public."
+      operationId: "submit"
+      parameters:
+      - name: "visitToken"
+        in: "path"
+        description: "The visit token the respondent received when opening a link.\
+          \ It is the credential for the call."
+        required: true
+        schema:
+          type: "string"
+      - name: "Idempotency-Key"
+        in: "header"
+        description: "A key the caller chooses so a retry is safe: the same key with\
+          \ the same body answers the first result instead of acting twice, and the\
+          \ same key with a different body is a conflict."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "The respondent's answers."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnswersRequest"
+        required: true
+      responses:
+        "200":
+          description: "The outcome of a submit."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SubmitResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: "The visit token is malformed, unknown or expired. Every failure\
+            \ answers the same, so a caller cannot probe for live visits."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "409":
+          description: "The visit already completed, the survey's response cap is\
+            \ reached, or its window is closed."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "422":
+          description: "The answers do not satisfy the survey. The body lists the\
+            \ question and code of every problem, never the value."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SubmitResult"
+        "428":
+          description: "The request has no `Idempotency-Key` header, which this endpoint\
+            \ requires."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+      x-allowed-callers:
+      - "public"
+  /p/v/{visitToken}/pages/{pageId}/view:
+    post:
+      tags:
+      - "Public fill surface"
+      summary: "Record a page view"
+      description: "Records that the respondent saw page `pageId`, which feeds the\
+        \ drop-off funnel. Answers no body. Public: the visit token in the path is\
+        \ the credential.\n\nCallers: public."
+      operationId: "pageViewed"
+      parameters:
+      - name: "visitToken"
+        in: "path"
+        description: "The visit token the respondent received when opening a link.\
+          \ It is the credential for the call."
+        required: true
+        schema:
+          type: "string"
+      - name: "pageId"
+        in: "path"
+        description: "The id of the page the respondent saw."
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: "The visit token is malformed, unknown or expired. Every failure\
+            \ answers the same, so a caller cannot probe for live visits."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+      x-allowed-callers:
+      - "public"
+  /p/l/{token}/open:
+    post:
+      tags:
+      - "Public fill surface"
+      summary: "Open a survey link"
+      description: "Starts a visit from a link's signed `token`, recording the referrer,\
+        \ user agent and query's source facts, and answers the visit token the browser\
+        \ uses from then on. Every failure answers the same `404` body, whether the\
+        \ token is malformed, unknown, revoked, expired or another tenant's, so a\
+        \ caller cannot probe for live links. Public: no suite token is needed.\n\n\
+        Callers: public."
+      operationId: "open"
+      parameters:
+      - name: "token"
+        in: "path"
+        description: "The signed token of the survey link the respondent opened. A\
+          \ malformed, unknown, revoked or expired token all answer the same `404`."
+        required: true
+        schema:
+          type: "string"
+      - name: "Referer"
+        in: "header"
+        description: "The page that referred the respondent, recorded with the visit."
+        required: false
+        schema:
+          type: "string"
+      - name: "User-Agent"
+        in: "header"
+        description: "The respondent's browser, from which the device facts of the\
+          \ visit are taken."
+        required: false
+        schema:
+          type: "string"
+      - name: "query"
+        in: "query"
+        description: "The query string of the link, which carries the source facts\
+          \ to record."
+        required: true
+        schema:
+          type: "object"
+          additionalProperties:
+            type: "string"
+      responses:
+        "200":
+          description: "A visit that was just started from a link."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OpenedResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: "The link token is malformed, unknown, revoked or expired,\
+            \ or belongs to another tenant. Every failure answers the same, so a caller\
+            \ cannot probe for live links."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+      x-allowed-callers:
+      - "public"
+  /p/v/{visitToken}/schema:
+    get:
+      tags:
+      - "Public fill surface"
+      summary: "Get the survey a visit fills"
+      description: "Returns the published version the visit pinned, as `locale` renders\
+        \ it, with the decoy field a bot would fill. Public: the visit token in the\
+        \ path is the credential.\n\nCallers: public."
+      operationId: "schema"
+      parameters:
+      - name: "visitToken"
+        in: "path"
+        description: "The visit token the respondent received when opening a link.\
+          \ It is the credential for the call."
+        required: true
+        schema:
+          type: "string"
+      - name: "locale"
+        in: "query"
+        description: "The locale to render the survey in."
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "The survey a visit fills."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SchemaResponse"
+        "404":
+          description: "The visit token is malformed, unknown or expired. Every failure\
+            \ answers the same, so a caller cannot probe for live visits."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+      x-allowed-callers:
+      - "public"
+components:
+  schemas:
+    AnswersRequest:
+      type: "object"
+      description: "The respondent's answers."
+      properties:
+        answers:
+          type: "object"
+          additionalProperties: {}
+          description: "The answers, keyed by question id."
+        locale:
+          type: "string"
+          description: "The locale of the text: for example the survey's translation\
+            \ to show."
+    DraftResponse:
+      type: "object"
+      description: "A survey's draft, with the tag its next save has to carry."
+      properties:
+        status:
+          type: "string"
+          description: "The current status."
+        answers:
+          type: "object"
+          additionalProperties: {}
+          description: "The answers, keyed by question id."
+    DraftRequest:
+      type: "object"
+      description: "The draft document to store."
+      properties:
+        document:
+          type: "object"
+          additionalProperties: {}
+          description: "The whole document. It replaces the draft."
+    UploadRequest:
+      type: "object"
+      description: "The file the respondent wants to upload."
+      properties:
+        questionId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the file question the upload is for."
+        filename:
+          type: "string"
+          description: "The file's name."
+        size:
+          type: "integer"
+          format: "int64"
+          description: "The file's size in bytes."
+        mime:
+          type: "string"
+          description: "The file's media type."
+    Signed:
+      type: "object"
+      description: "A signed upload the browser then uses."
+      properties:
+        uploadId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the upload."
+        url:
+          type: "string"
+          description: "The URL to send the file to."
+        headers:
+          type: "object"
+          additionalProperties:
+            type: "string"
+          description: "The headers the upload request must carry."
+    Problem:
+      type: "object"
+      description: "One problem with a document or an answer."
+      properties:
+        field:
+          type: "string"
+          description: "The question or member the problem is about."
+        code:
+          type: "string"
+          description: "The kind of problem. The value the sender gave is never echoed."
+    SubmitResult:
+      type: "object"
+      description: "The outcome of a submit."
+      properties:
+        responseId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the completed response."
+        score:
+          type: "number"
+          description: "The quiz score, or null when the version does not score."
+        problems:
+          type: "array"
+          description: "The problems found when the submit is refused, by question\
+            \ and code. Empty on success."
+          items:
+            $ref: "#/components/schemas/Problem"
+    FlowResult:
+      type: "object"
+      description: "What one run of the version's logic produces."
+      properties:
+        path:
+          type: "array"
+          description: "The ids of the pages visited, in order."
+          items:
+            type: "string"
+        visible:
+          type: "object"
+          additionalProperties:
+            type: "boolean"
+          description: "Every question of the version, mapped to whether it is asked."
+        vars:
+          type: "object"
+          additionalProperties: {}
+          description: "Every computed variable's value."
+        score:
+          type: "number"
+          description: "The quiz score, or null when the version does not score."
+        errors:
+          type: "array"
+          description: "Every reason the version could not be evaluated, by pointer.\
+            \ A non-empty list means nothing ran."
+          items:
+            $ref: "#/components/schemas/ValidationError"
+    OpenedResponse:
+      type: "object"
+      description: "A visit that was just started from a link."
+      properties:
+        visitToken:
+          type: "string"
+          description: "The opaque token the browser uses for every later call of\
+            \ this visit."
+        surveyId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the survey."
+        versionNo:
+          type: "integer"
+          format: "int32"
+          description: "The number of the published version the visit pinned."
+        honeypot:
+          type: "string"
+          description: "The name of a decoy field. A real respondent never sees it,\
+            \ so a submit that fills it is discarded without telling the sender."
+        flow:
+          $ref: "#/components/schemas/FlowResult"
+          description: "The version's logic evaluated for no answers, so the browser\
+            \ knows what to ask first."
+    ValidationError:
+      type: "object"
+      description: "One reason a document cannot be published or evaluated."
+      properties:
+        pointer:
+          type: "string"
+          description: "The JSON pointer to the offending member of the document."
+        code:
+          type: "string"
+          description: "The kind of problem."
+          enum:
+          - "REQUIRED"
+          - "UNKNOWN_TYPE"
+          - "DUPLICATE_ID"
+          - "DANGLING_REFERENCE"
+          - "TRANSLATION_MISSING"
+          - "LIMIT_EXCEEDED"
+          - "CYCLE"
+          - "EXPRESSION_INVALID"
+        message:
+          type: "string"
+          description: "What is wrong."
+    CreateEndpointRequest:
+      type: "object"
+      description: "The endpoint to register."
+      properties:
+        url:
+          type: "string"
+          description: "The HTTPS URL events are posted to. It must resolve to a public\
+            \ address."
+        description:
+          type: "string"
+          description: "A note about the endpoint."
+        eventTypes:
+          type: "array"
+          description: "The event types to subscribe to: `survey-version.published`,\
+            \ `survey.closed` or `survey-response.submitted`."
+          items:
+            type: "string"
+    EndpointResponse:
+      type: "object"
+      description: "A webhook endpoint. The signing secret is not part of it."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        url:
+          type: "string"
+          description: "The URL."
+        description:
+          type: "string"
+          description: "A note about the endpoint."
+        eventTypes:
+          type: "array"
+          description: "The event types the endpoint subscribes to."
+          items:
+            type: "string"
+        status:
+          type: "string"
+          description: "`ACTIVE` or `DISABLED`."
+        keyId:
+          type: "string"
+          description: "The id of the key the signing secret was written under."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
+        secretRotatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the signing secret was last rotated, or null."
+    EndpointWithSecretResponse:
+      type: "object"
+      description: "An endpoint with its signing secret, shown once."
+      properties:
+        endpoint:
+          $ref: "#/components/schemas/EndpointResponse"
+          description: "The endpoint."
+        signingSecret:
+          type: "string"
+          description: "The secret that signs deliveries. It is shown only in this\
+            \ response and is never available again."
+    DeliveryResponse:
+      type: "object"
+      description: "One delivery of an event to an endpoint."
+      properties:
+        id:
+          type: "string"
+          description: "The id."
+        endpointId:
+          type: "string"
+          description: "The id of the endpoint."
+        eventId:
+          type: "string"
+          description: "The id of the event. A receiver should treat a repeated event\
+            \ id as a duplicate."
+        eventType:
+          type: "string"
+          description: "The event's type."
+        status:
+          type: "string"
+          description: "Where the delivery stands. `DEAD` means it exhausted its attempts."
+        attempts:
+          type: "integer"
+          format: "int32"
+          description: "How many attempts have been made."
+        nextAttemptAt:
+          type: "string"
+          format: "date-time"
+          description: "When the next attempt is due, or null."
+        lastStatusCode:
+          type: "integer"
+          format: "int32"
+          description: "The HTTP status the receiver answered last, or null."
+        lastError:
+          type: "string"
+          description: "The last error, or null."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        completedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the delivery finished, or null."
+    SurveyRequest:
+      type: "object"
+      description: "The survey to create."
+      properties:
+        name:
+          type: "string"
+          description: "The survey's name."
+    SurveyResponse:
+      type: "object"
+      description: "A survey and where it stands in its lifecycle."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        name:
+          type: "string"
+          description: "The display name."
+        status:
+          type: "string"
+          description: "`DRAFT`, `OPEN` or `CLOSED`."
+          enum:
+          - "DRAFT"
+          - "OPEN"
+          - "CLOSED"
+        currentVersionId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the published version respondents see, or null before\
+            \ the first publish."
+        currentVersionNo:
+          type: "integer"
+          format: "int32"
+          description: "The number of that version, or null."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+    SimulateRequest:
+      type: "object"
+      description: "The answers to run through the version's logic."
+      properties:
+        answers:
+          type: "object"
+          additionalProperties: {}
+          description: "The answers, keyed by question id."
+        locale:
+          type: "string"
+          description: "The locale of the text: for example the survey's translation\
+            \ to show."
+    VersionResponse:
+      type: "object"
+      description: "One published version with its document. A published version never\
+        \ changes."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The version's id."
+        versionNo:
+          type: "integer"
+          format: "int32"
+          description: "The version's number."
+        publishedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the version was published."
+        document:
+          type: "object"
+          additionalProperties: {}
+          description: "The survey document: its pages, questions, logic and translations."
+    PublicLinkRequest:
+      type: "object"
+      description: "The public link to create."
+      properties:
+        source:
+          type: "string"
+          description: "The source the link is attributed to. A survey has at most\
+            \ one public link per source."
+    LinkResponse:
+      type: "object"
+      description: "A link that opens a survey."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        surveyId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the survey."
+        kind:
+          type: "string"
+          description: "`PUBLIC` for the one link of a source, `PERSONAL` for a link\
+            \ made for one recipient."
+        source:
+          type: "string"
+          description: "The source the visit or link is attributed to, such as a campaign\
+            \ name."
+        externalRef:
+          type: "string"
+          description: "The tenant's own reference for the recipient."
+        expiresAt:
+          type: "string"
+          format: "date-time"
+          description: "When the link stops working, or null."
+        status:
+          type: "string"
+          description: "`ACTIVE` or `REVOKED`."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        url:
+          type: "string"
+          description: "The URL to hand out. It is rebuilt from the link id, so it\
+            \ is always current."
+    PersonalLinksRequest:
+      type: "object"
+      description: "The personal links to create, one per recipient."
+      properties:
+        source:
+          type: "string"
+          description: "The source every recipient inherits unless its entry names\
+            \ its own."
+        links:
+          type: "array"
+          description: "One entry per recipient."
+          items:
+            $ref: "#/components/schemas/RecipientRequest"
+    RecipientRequest:
+      type: "object"
+      description: "One recipient of a personal link."
+      properties:
+        externalRef:
+          type: "string"
+          description: "The tenant's own reference for the recipient. It must be unique\
+            \ within the request."
+        source:
+          type: "string"
+          description: "This recipient's source, or null to use the default."
+        expiresAt:
+          type: "string"
+          format: "date-time"
+          description: "When this recipient's link stops working, or null."
+    ExportRequest:
+      type: "object"
+      description: "Which responses to export."
+      properties:
+        filter:
+          type: "object"
+          additionalProperties: {}
+          description: "The same filter a response list takes."
+    ExportView:
+      type: "object"
+      description: "A CSV export and its state."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        surveyId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the survey."
+        status:
+          type: "string"
+          description: "`QUEUED`, `RUNNING`, `DONE` or `FAILED`."
+        rows:
+          type: "integer"
+          format: "int64"
+          description: "The number of rows written, once finished."
+        requestedBy:
+          type: "string"
+          description: "Who asked for the export."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was created."
+        finishedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the export finished, or null."
+        downloadUrl:
+          type: "string"
+          description: "A presigned download that expires in fifteen minutes, present\
+            \ once the export is `DONE`."
+    ValidationResult:
+      type: "object"
+      description: "Every reason a document would not publish."
+      properties:
+        errors:
+          type: "array"
+          description: "The problems, each with the pointer of the offending member.\
+            \ Empty when the document would publish."
+          items:
+            $ref: "#/components/schemas/Problem"
+    OptionView:
+      type: "object"
+      description: "One option of a choice question."
+      properties:
+        id:
+          type: "string"
+          description: "The option's id."
+        value:
+          type: "string"
+          description: "The option's stable value, which an answer stores."
+        label:
+          type: "string"
+          description: "The option's label in this locale."
+    PageView:
+      type: "object"
+      description: "One page of the preview."
+      properties:
+        id:
+          type: "string"
+          description: "The page's id."
+        title:
+          type: "string"
+          description: "The page's title in this locale."
+        questions:
+          type: "array"
+          description: "The page's questions."
+          items:
+            $ref: "#/components/schemas/QuestionView"
+    PreviewView:
+      type: "object"
+      description: "The draft's pages as one locale renders them, in presentation\
+        \ order."
+      properties:
+        locale:
+          type: "string"
+          description: "The locale of the text: for example the survey's translation\
+            \ to show."
+        pages:
+          type: "array"
+          description: "The pages in presentation order."
+          items:
+            $ref: "#/components/schemas/PageView"
+    QuestionView:
+      type: "object"
+      description: "One question as the preview shows it."
+      properties:
+        id:
+          type: "string"
+          description: "The question's id."
+        type:
+          type: "string"
+          description: "The question type."
+        required:
+          type: "boolean"
+          description: "Whether an answer is required."
+        label:
+          type: "string"
+          description: "The question text in this locale."
+        help:
+          type: "string"
+          description: "The help text in this locale, or null."
+        options:
+          type: "array"
+          description: "The options of a choice question."
+          items:
+            $ref: "#/components/schemas/OptionView"
+    TrendRequest:
+      type: "object"
+      description: "Which responses to count over time, and how to bucket them."
+      properties:
+        version:
+          type: "integer"
+          format: "int32"
+          description: "Only responses to this published version, or null for all."
+        from:
+          type: "string"
+          format: "date-time"
+          description: "Only responses submitted at or after this time."
+        to:
+          type: "string"
+          format: "date-time"
+          description: "Only responses submitted before this time."
+        source:
+          type: "string"
+          description: "Only responses from this source."
+        externalRef:
+          type: "string"
+          description: "Only responses of this recipient."
+        bucket:
+          type: "string"
+          description: "The size of each time bucket."
+        timezone:
+          type: "string"
+          description: "The IANA time zone the buckets are cut in."
+    BucketCount:
+      type: "object"
+      description: "The responses in one time bucket."
+      properties:
+        bucket:
+          type: "string"
+          description: "The start of the bucket."
+        count:
+          type: "integer"
+          format: "int64"
+          description: "The number of responses in the bucket."
+    TrendView:
+      type: "object"
+      description: "The number of responses per time bucket."
+      properties:
+        bucket:
+          type: "string"
+          description: "The size of each time bucket."
+        timezone:
+          type: "string"
+          description: "The IANA time zone the buckets were cut in."
+        points:
+          type: "array"
+          description: "One count per bucket."
+          items:
+            $ref: "#/components/schemas/BucketCount"
+    CrossTabRequest:
+      type: "object"
+      description: "The two questions to cross-tabulate, and which responses to count."
+      properties:
+        version:
+          type: "integer"
+          format: "int32"
+          description: "Only responses to this published version, or null for all."
+        from:
+          type: "string"
+          format: "date-time"
+          description: "Only responses submitted at or after this time."
+        to:
+          type: "string"
+          format: "date-time"
+          description: "Only responses submitted before this time."
+        source:
+          type: "string"
+          description: "Only responses from this source."
+        externalRef:
+          type: "string"
+          description: "Only responses of this recipient."
+        rowQuestionId:
+          type: "string"
+          format: "uuid"
+          description: "The question whose answers form the rows."
+        columnQuestionId:
+          type: "string"
+          format: "uuid"
+          description: "The question whose answers form the columns."
+    CrossTabView:
+      type: "object"
+      description: "How respondents answered one question within each answer to another."
+      properties:
+        rowDimension:
+          type: "string"
+          description: "The question that forms the rows."
+        columnDimension:
+          type: "string"
+          description: "The question that forms the columns."
+        total:
+          type: "integer"
+          format: "int64"
+          description: "The number of responses counted in the table."
+        cells:
+          type: "object"
+          additionalProperties:
+            type: "integer"
+            format: "int64"
+          description: "One entry per non-empty cell, keyed by a `row|column` pair\
+            \ of answers, with the number of responses."
+    FilterRequest:
+      type: "object"
+      description: "Which responses an aggregate covers."
+      properties:
+        version:
+          type: "integer"
+          format: "int32"
+          description: "Only responses to this published version, or null for all."
+        from:
+          type: "string"
+          format: "date-time"
+          description: "Only responses submitted at or after this time."
+        to:
+          type: "string"
+          format: "date-time"
+          description: "Only responses submitted before this time."
+        source:
+          type: "string"
+          description: "Only responses from this source."
+        externalRef:
+          type: "string"
+          description: "Only responses of this recipient."
+    AggregateView:
+      type: "object"
+      description: "Per-question aggregates of a survey's responses."
+      properties:
+        surveyId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the survey."
+        responses:
+          type: "integer"
+          format: "int64"
+          description: "How many responses the aggregate covers."
+        questions:
+          type: "array"
+          description: "One entry per question."
+          items:
+            $ref: "#/components/schemas/QuestionAggregate"
+        crossTabs:
+          type: "array"
+          description: "The cross-tabulations that were asked for."
+          items:
+            $ref: "#/components/schemas/CrossTabView"
+    QuestionAggregate:
+      type: "object"
+      description: "One question's numbers."
+      properties:
+        questionId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the question."
+        type:
+          type: "string"
+          description: "The question type."
+        answered:
+          type: "integer"
+          format: "int64"
+          description: "How many responses answered this question at all."
+        counts:
+          type: "object"
+          additionalProperties:
+            type: "integer"
+            format: "int64"
+          description: "The chosen options, keyed by the option's stable value."
+        mean:
+          type: "number"
+          description: "The average of a numeric answer, or null."
+        median:
+          type: "number"
+          description: "The median of a numeric answer, or null."
+        distribution:
+          type: "object"
+          additionalProperties:
+            type: "integer"
+            format: "int64"
+          description: "The counts per numeric value or per NPS bucket."
+        matrixCells:
+          type: "object"
+          additionalProperties:
+            type: "integer"
+            format: "int64"
+          description: "The counts per matrix cell, keyed by row and column id."
+    UpdateEndpointRequest:
+      type: "object"
+      description: "The fields to change. A field that is left out keeps its value."
+      properties:
+        url:
+          type: "string"
+          description: "The URL."
+        description:
+          type: "string"
+          description: "A note about the endpoint."
+        eventTypes:
+          type: "array"
+          description: "The event types the endpoint subscribes to."
+          items:
+            type: "string"
+        status:
+          type: "string"
+          description: "`ACTIVE`, or `DISABLED` to pause delivery without losing queued\
+            \ events."
+    ChangeRequest:
+      type: "object"
+      description: "The settings to change. A field that is left out keeps its current\
+        \ value."
+      properties:
+        defaultLocale:
+          type: "string"
+          description: "The locale a new version starts from."
+        abandonAfter:
+          type: "string"
+          format: "duration"
+          description: "How long a visit may sit idle before it is counted as abandoned,\
+            \ as an ISO-8601 duration such as `PT30M`."
+        uploadMaxBytes:
+          type: "integer"
+          format: "int64"
+          description: "The largest file a respondent may upload, in bytes."
+        publicRatePerMinute:
+          type: "integer"
+          format: "int32"
+          description: "How many requests per minute the public surface accepts from\
+            \ one caller."
+        timezone:
+          type: "string"
+          description: "The IANA time zone, such as `Europe/Paris`."
+    SettingsResponse:
+      type: "object"
+      description: "The tenant's survey defaults. Before the tenant changed any, they\
+        \ are the configured defaults."
+      properties:
+        defaultLocale:
+          type: "string"
+          description: "The locale a new version starts from."
+        abandonAfter:
+          type: "string"
+          format: "duration"
+          description: "How long a visit may sit idle before it is counted as abandoned,\
+            \ as an ISO-8601 duration such as `PT30M`."
+        uploadMaxBytes:
+          type: "integer"
+          format: "int64"
+          description: "The largest file a respondent may upload, in bytes."
+        publicRatePerMinute:
+          type: "integer"
+          format: "int32"
+          description: "How many requests per minute the public surface accepts from\
+            \ one caller."
+        timezone:
+          type: "string"
+          description: "The IANA time zone, such as `Europe/Paris`."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
+    SchemaResponse:
+      type: "object"
+      description: "The survey a visit fills."
+      properties:
+        versionNo:
+          type: "integer"
+          format: "int32"
+          description: "The number of the version the visit pinned."
+        locale:
+          type: "string"
+          description: "The locale of the text: for example the survey's translation\
+            \ to show."
+        document:
+          type: "object"
+          additionalProperties: {}
+          description: "The version's document, rendered for the visit."
+        honeypot:
+          type: "string"
+          description: "The name of a decoy field. A real respondent never sees it,\
+            \ so a submit that fills it is discarded without telling the sender."
+    PageEndpointResponse:
+      type: "object"
+      description: "A page of endpoint response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/EndpointResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageInfo:
+      type: "object"
+      description: "The paging facts of a list answer, present when the request asked\
+        \ for them with `page_info`."
+      properties:
+        limit:
+          type: "integer"
+          format: "int32"
+          description: "The page size that was applied."
+        offset:
+          type:
+          - "integer"
+          - "null"
+          format: "int32"
+          description: "The number of rows that were skipped, or null when a cursor\
+            \ positioned the page."
+        total:
+          type:
+          - "integer"
+          - "null"
+          format: "int64"
+          description: "The number of rows that match the filter, or null when the\
+            \ request asked only for the cursor."
+        next_cursor:
+          type:
+          - "string"
+          - "null"
+          description: "The cursor of the following page, or null on the last page.\
+            \ Pass it as `cursor` with the same filter and sort."
+    PageDeliveryResponse:
+      type: "object"
+      description: "A page of delivery response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/DeliveryResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    AttemptResponse:
+      type: "object"
+      description: "One attempt to deliver."
+      properties:
+        attemptNo:
+          type: "integer"
+          format: "int32"
+          description: "The attempt's number, starting at 1."
+        statusCode:
+          type: "integer"
+          format: "int32"
+          description: "The HTTP status the receiver answered, or null when no answer\
+            \ came."
+        error:
+          type: "string"
+          description: "The error, or null."
+        responseExcerpt:
+          type: "string"
+          description: "The start of the receiver's answer."
+        latencyMs:
+          type: "integer"
+          format: "int64"
+          description: "How long the attempt took, in milliseconds."
+        attemptedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the attempt was made."
+    DeliveryDetailResponse:
+      type: "object"
+      description: "A delivery with the body that was sent and every attempt."
+      properties:
+        delivery:
+          $ref: "#/components/schemas/DeliveryResponse"
+          description: "The delivery."
+        body:
+          type: "string"
+          description: "The event body that is sent."
+        attempts:
+          type: "array"
+          description: "Every attempt, oldest first."
+          items:
+            $ref: "#/components/schemas/AttemptResponse"
+    PageSurveyResponse:
+      type: "object"
+      description: "A page of survey response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/SurveyResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageVersionSummary:
+      type: "object"
+      description: "A page of version summary rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/VersionSummary"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    VersionSummary:
+      type: "object"
+      description: "One published version, without its document."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The version's id."
+        versionNo:
+          type: "integer"
+          format: "int32"
+          description: "The version's number."
+        publishedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the version was published."
+    PageResponseRow:
+      type: "object"
+      description: "A page of response row rows, with the paging facts when the request\
+        \ asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/ResponseRow"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    ResponseRow:
+      type: "object"
+      description: "One response with its answers as submitted."
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id."
+        versionId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the version the response answered."
+        status:
+          type: "string"
+          description: "`IN_PROGRESS` or `COMPLETED`."
+        locale:
+          type: "string"
+          description: "The locale of the text: for example the survey's translation\
+            \ to show."
+        answers:
+          type: "object"
+          additionalProperties: {}
+          description: "The answers, keyed by question id."
+        vars:
+          type: "object"
+          additionalProperties: {}
+          description: "The variables the server computed at submit."
+        score:
+          type: "number"
+          description: "The quiz score the server computed at submit, or null."
+        respondentIdentity:
+          type: "string"
+          description: "The identity the respondent gave, when the survey asks for\
+            \ one."
+        externalRef:
+          type: "string"
+          description: "The tenant's own reference for the recipient."
+        source:
+          type: "string"
+          description: "The source the visit or link is attributed to, such as a campaign\
+            \ name."
+        startedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the respondent started."
+        submittedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the respondent submitted, or null while in progress."
+    PageRespondentView:
+      type: "object"
+      description: "A page of respondent view rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/RespondentView"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    RespondentView:
+      type: "object"
+      description: "One respondent of a survey."
+      properties:
+        respondentIdentity:
+          type: "string"
+          description: "The identity the respondent gave, or null."
+        externalRef:
+          type: "string"
+          description: "The tenant's own reference for the recipient."
+        source:
+          type: "string"
+          description: "The source the visit or link is attributed to, such as a campaign\
+            \ name."
+        state:
+          type: "string"
+          description: "Where the respondent's visit stands: `OPENED`, `STARTED`,\
+            \ `COMPLETED` or `ABANDONED`."
+        lastActivityAt:
+          type: "string"
+          format: "date-time"
+          description: "When the visit was last active."
+        responseId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the response, or null when none was started."
+    PageLinkResponse:
+      type: "object"
+      description: "A page of link response rows, with the paging facts when the request\
+        \ asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/LinkResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageExportView:
+      type: "object"
+      description: "A page of export view rows, with the paging facts when the request\
+        \ asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/ExportView"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    FunnelView:
+      type: "object"
+      description: "How many people opened a link, started answering, completed and\
+        \ stopped. Bot visits are excluded."
+      properties:
+        groupBy:
+          type: "string"
+          description: "What the rows split the funnel by."
+        rows:
+          type: "array"
+          description: "One row per group."
+          items:
+            $ref: "#/components/schemas/Row"
+        opened:
+          type: "integer"
+          format: "int64"
+          description: "How many opened a link."
+        started:
+          type: "integer"
+          format: "int64"
+          description: "How many started answering."
+        completed:
+          type: "integer"
+          format: "int64"
+          description: "How many completed the survey."
+        abandoned:
+          type: "integer"
+          format: "int64"
+          description: "How many stopped without completing."
+    Row:
+      type: "object"
+      description: "The funnel of one group."
+      properties:
+        key:
+          type: "string"
+          description: "The group, such as a source or a country."
+        opened:
+          type: "integer"
+          format: "int64"
+          description: "How many opened a link."
+        started:
+          type: "integer"
+          format: "int64"
+          description: "How many started answering."
+        completed:
+          type: "integer"
+          format: "int64"
+          description: "How many completed the survey."
+        abandoned:
+          type: "integer"
+          format: "int64"
+          description: "How many stopped without completing."
+        lastPage:
+          type: "string"
+          description: "The page respondents most often stopped at. It depends on\
+            \ the client reporting page views, so it is approximate."
+    ProblemDetail:
+      type: "object"
+      description: "The body of every error: an RFC 9457 problem."
+      properties:
+        type:
+          type: "string"
+          description: "A URI reference that identifies the kind of problem. It is\
+            \ `about:blank` when the status says it all."
+        title:
+          type: "string"
+          description: "A short, human-readable summary of the kind of problem. It\
+            \ is the status's reason phrase unless a more specific one applies."
+        status:
+          type: "integer"
+          format: "int32"
+          description: "The HTTP status of the response."
+        detail:
+          type: "string"
+          description: "A sentence that explains this occurrence."
+        instance:
+          type: "string"
+          description: "A URI reference that identifies this occurrence, when there\
+            \ is one."
+  responses:
+    BadRequest:
+      description: "The request is malformed: a body, query parameter or header is\
+        \ missing, unknown, or not valid for its type."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Unauthenticated:
+      description: "The request carries no valid token."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Forbidden:
+      description: "The token does not carry the permission this operation requires,\
+        \ or the tenant has not enabled the app."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotEntitled:
+      description: "The tenant has not enabled this app, or the caller may not act\
+        \ here."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotFound:
+      description: "Nothing with that id exists for this tenant. A resource of another\
+        \ tenant answers the same."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    IdempotencyConflict:
+      description: "The `Idempotency-Key` was already used with a different body,\
+        \ or the request clashes with the current state of the data."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    PreconditionFailed:
+      description: "The `If-Match` tag does not match the resource's current version.\
+        \ The response carries the current `ETag`; read the resource again and retry."
+      headers:
+        ETag:
+          description: "The current version of the resource."
+          schema:
+            type: "string"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+  securitySchemes:
+    oidc:
+      type: "http"
+      description: "A suite token issued by Platform for this tenant"
+      scheme: "bearer"
+      bearerFormat: "JWT"

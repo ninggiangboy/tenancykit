@@ -14,7 +14,7 @@
       const services = [
         ["platform", "Platform"],
         ["billing", "Billing"],
-        ["billing-tenant-system", "Billing (Tenant System)"],
+        ["tenant-system/billing", "Billing (Tenant System)", "tenant-system/billing"],
         ["notification", "Notification"],
         ["mailroom", "Mailroom"],
         ["customer", "Customer"],
@@ -26,10 +26,10 @@
       ];
       Scalar.createApiReference("#app", {
         telemetry: false,
-        sources: services.map(([slug, title], index) => ({
+        sources: services.map(([slug, title, path], index) => ({
           title,
           slug,
-          url: `./openapi/${slug}.yaml`,
+          url: `./openapi/${path ?? slug}.yaml`,
           default: index === 0,
         })),
       });

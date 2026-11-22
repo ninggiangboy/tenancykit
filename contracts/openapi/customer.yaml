@@ -35,7 +35,7 @@ paths:
       tags:
       - "Customers"
       summary: "Create or replace a customer"
-      description: "Upserts one customer, keyed by the Tenant's own `externalRef`. The response carries the customer's `ETag`; pass it as `If-Match` on the next `PATCH`. An identical body changes nothing and bumps no version. An order or an activity that names an unknown customer is refused; this endpoint is how the customer is created."
+      description: "Upserts one customer, keyed by the Tenant's own `externalRef`. The response carries the customer's `ETag`; pass it as `If-Match` on the next `PATCH`. An identical body changes nothing and bumps no version. An order or an activity that names an unknown customer is refused; this endpoint is how the customer is created.\n\nCallers: tenant-user, tenant-system. Requires `customer:customer:manage`."
       operationId: putCustomer
       parameters:
       - name: externalRef
@@ -84,11 +84,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:customer:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     patch:
       tags:
       - "Customers"
       summary: "Change some of a customer's attributes, tags and field values"
-      description: "Changes only the properties that are present. Requires `If-Match`: the endpoint answers `428` without the header and `412` when the tag does not match. `addTags` and `removeTags` change the tag set without replacing it, and a `customFields` property merges into the stored values. The response carries the new `ETag`."
+      description: "Changes only the properties that are present. Requires `If-Match`: the endpoint answers `428` without the header and `412` when the tag does not match. `addTags` and `removeTags` change the tag set without replacing it, and a `customFields` property merges into the stored values. The response carries the new `ETag`.\n\nCallers: tenant-user, tenant-system. Requires `customer:customer:manage`."
       operationId: patchCustomer
       parameters:
       - name: externalRef
@@ -147,11 +150,14 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: customer:customer:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     get:
       tags:
       - "Customers"
       summary: "Read a customer"
-      description: "Reads one customer with its field values, tags and current consent state. The response carries the customer's `ETag`."
+      description: "Reads one customer with its field values, tags and current consent state. The response carries the customer's `ETag`.\n\nCallers: tenant-user, tenant-system. Requires `customer:customer:read`."
       operationId: getCustomer
       parameters:
       - name: externalRef
@@ -182,12 +188,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:customer:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/customers/batch:
     post:
       tags:
       - "Customers"
       summary: "Upsert a batch of customers"
-      description: "Applies up to 1,000 customers, each in its own transaction and in the order sent. The batch is `200` even when some items failed: a malformed item fails alone and the others are written. Two items with the same `externalRef` apply in order. A retry of the whole batch is safe, because every item is idempotent by its `externalRef`."
+      description: "Applies up to 1,000 customers, each in its own transaction and in the order sent. The batch is `200` even when some items failed: a malformed item fails alone and the others are written. Two items with the same `externalRef` apply in order. A retry of the whole batch is safe, because every item is idempotent by its `externalRef`.\n\nCallers: tenant-user, tenant-system. Requires `customer:customer:manage`."
       operationId: createCustomerBatch
       parameters:
       - name: X-Request-Id
@@ -220,12 +229,15 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: customer:customer:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/customers:
     get:
       tags:
       - "Customers"
       summary: "Search and list customers"
-      description: "Searches the tenant's customers. `q` matches the `externalRef` exactly, a phone-digit prefix, an email prefix or a name. Every `tag` parameter must match, and a custom field, a consent topic and the creation time are filterable. The list is paged with a keyset cursor: pass `cursor` from the previous page with the same filter and sort; a cursor is opaque, it is refused with a different filter or sort, and `page.next_cursor` is null on the last page. Rows follow `sort`, and `id` is appended to make the order total."
+      description: "Searches the tenant's customers. `q` matches the `externalRef` exactly, a phone-digit prefix, an email prefix or a name. Every `tag` parameter must match, and a custom field, a consent topic and the creation time are filterable. The list is paged with a keyset cursor: pass `cursor` from the previous page with the same filter and sort; a cursor is opaque, it is refused with a different filter or sort, and `page.next_cursor` is null on the last page. Rows follow `sort`, and `id` is appended to make the order total.\n\nCallers: tenant-user, tenant-system. Requires `customer:customer:read`."
       operationId: listCustomers
       parameters:
       - name: q
@@ -326,12 +338,15 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: customer:customer:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/customers/{externalRef}/profile:
     get:
       tags:
       - "Customer profile"
       summary: "Read a customer's 360 profile"
-      description: "One customer read back as one document: the customer, its field values, its tags, the current status of every consent topic, its latest orders with their lines and returns, and its latest activities. Every slice is bounded and indexed; no aggregate, segment or score is computed here."
+      description: "One customer read back as one document: the customer, its field values, its tags, the current status of every consent topic, its latest orders with their lines and returns, and its latest activities. Every slice is bounded and indexed; no aggregate, segment or score is computed here.\n\nCallers: tenant-user, tenant-system. Requires `customer:customer:read`."
       operationId: getCustomerProfile
       parameters:
       - name: externalRef
@@ -382,12 +397,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:customer:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/customers/export:
     get:
       tags:
       - "Exports"
       summary: "Stream the customer list as CSV"
-      description: "Takes the same filters as the customer list and streams the matching customers as CSV. The header row is `externalRef,displayName,phone,email,tags,<one column per active custom-field key>,createdAt`; `tags` holds the customer's tags pipe-separated. The stream is read with a server-side cursor and a bounded buffer, so a large export uses a fixed amount of memory. One export runs per tenant at a time, held by a short lease; a second is refused until the first finishes."
+      description: "Takes the same filters as the customer list and streams the matching customers as CSV. The header row is `externalRef,displayName,phone,email,tags,<one column per active custom-field key>,createdAt`; `tags` holds the customer's tags pipe-separated. The stream is read with a server-side cursor and a bounded buffer, so a large export uses a fixed amount of memory. One export runs per tenant at a time, held by a short lease; a second is refused until the first finishes.\n\nCallers: tenant-user, tenant-system. Requires `customer:customer:export`."
       operationId: exportCustomers
       parameters:
       - name: q
@@ -469,12 +487,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:customer:export
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/customers/{externalRef}/erasure:
     post:
       tags:
       - "Erasure"
       summary: "Erase a customer's personal data"
-      description: "Clears every personal field of the customer, its field values, its tags, its consent contact data and its activity payloads in one transaction, keeps the customer row and its orders and consent rows as anonymous markers, sets the reference to `erased:<id>` and queues a `customer.erased` webhook. Idempotent: a retry with the reference the caller used finds the stored erasure and answers `200` with the same body. The erasure record stores a hash of the reference, never the reference itself. Erasing a customer here does not erase it anywhere else; a tenant that keeps the same person in another system must erase it there too."
+      description: "Clears every personal field of the customer, its field values, its tags, its consent contact data and its activity payloads in one transaction, keeps the customer row and its orders and consent rows as anonymous markers, sets the reference to `erased:<id>` and queues a `customer.erased` webhook. Idempotent: a retry with the reference the caller used finds the stored erasure and answers `200` with the same body. The erasure record stores a hash of the reference, never the reference itself. Erasing a customer here does not erase it anywhere else; a tenant that keeps the same person in another system must erase it there too.\n\nCallers: tenant-user, tenant-system. Requires `customer:customer:erase`."
       operationId: eraseCustomer
       parameters:
       - name: externalRef
@@ -505,12 +526,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:customer:erase
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/custom-fields:
     get:
       tags:
       - "Custom fields"
       summary: "List custom-field definitions"
-      description: "Lists the tenant's custom-field definitions, archived ones included. A definition's `key` and `type` are immutable; a type change is a new field, never an edit."
+      description: "Lists the tenant's custom-field definitions, archived ones included. A definition's `key` and `type` are immutable; a type change is a new field, never an edit.\n\nCallers: tenant-user, tenant-system. Requires `customer:field:manage`."
       operationId: listCustomFields
       parameters:
       - name: limit
@@ -543,6 +567,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: customer:field:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     post:
       tags:
       - "Custom fields"
@@ -587,12 +614,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:field:manage
+      description: "Callers: tenant-user, tenant-system. Requires `customer:field:manage`."
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/custom-fields/{key}:
     patch:
       tags:
       - "Custom fields"
       summary: "Change a custom-field definition"
-      description: "Changes the label, adds choices to a `CHOICE`, or archives and unarchives the definition. An archived definition can still be read and still appears in the profile, but no new value may be written for it. The `key` and the `type` are immutable."
+      description: "Changes the label, adds choices to a `CHOICE`, or archives and unarchives the definition. An archived definition can still be read and still appears in the profile, but no new value may be written for it. The `key` and the `type` are immutable.\n\nCallers: tenant-user, tenant-system. Requires `customer:field:manage`."
       operationId: patchCustomField
       parameters:
       - name: key
@@ -641,12 +672,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:field:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/tags:
     get:
       tags:
       - "Tags"
       summary: "List the tenant's tags"
-      description: "Lists the distinct tags the tenant's customers carry, each with the number of customers that use it, ordered by tag."
+      description: "Lists the distinct tags the tenant's customers carry, each with the number of customers that use it, ordered by tag.\n\nCallers: tenant-user, tenant-system. Requires `customer:customer:read`."
       operationId: listTags
       parameters:
       - name: limit
@@ -679,12 +713,15 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: customer:customer:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/consent-topics:
     get:
       tags:
       - "Consent"
       summary: "List consent topics"
-      description: "Lists the tenant's consent topics, archived ones included. A topic's `key` is immutable."
+      description: "Lists the tenant's consent topics, archived ones included. A topic's `key` is immutable.\n\nCallers: tenant-user, tenant-system. Requires `customer:field:manage`."
       operationId: listConsentTopics
       parameters:
       - name: limit
@@ -717,11 +754,14 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: customer:field:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     post:
       tags:
       - "Consent"
       summary: "Define a consent topic"
-      description: "Defines a purpose the tenant's customers consent to. Consent topics are defined per tenant, like custom fields, not fixed by the suite."
+      description: "Defines a purpose the tenant's customers consent to. Consent topics are defined per tenant, like custom fields, not fixed by the suite.\n\nCallers: tenant-user, tenant-system. Requires `customer:field:manage`."
       operationId: createConsentTopic
       parameters:
       - name: X-Request-Id
@@ -762,12 +802,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:field:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/consent-topics/{key}:
     patch:
       tags:
       - "Consent"
       summary: "Change a consent topic"
-      description: "Changes the label or archives and unarchives the topic. An archived topic keeps its recorded history and accepts no new consent record. The `key` is immutable."
+      description: "Changes the label or archives and unarchives the topic. An archived topic keeps its recorded history and accepts no new consent record. The `key` is immutable.\n\nCallers: tenant-user, tenant-system. Requires `customer:field:manage`."
       operationId: patchConsentTopic
       parameters:
       - name: key
@@ -810,12 +853,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:field:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/customers/{externalRef}/consents:
     post:
       tags:
       - "Consent"
       summary: "Record a consent change"
-      description: "Appends one consent record for one topic. Consent is append-only: a revocation adds a record and never rewrites the grant it revokes. An optional `consentRef` makes the call replayable: the same reference and body answers `200` with the stored record, a different body is `409`."
+      description: "Appends one consent record for one topic. Consent is append-only: a revocation adds a record and never rewrites the grant it revokes. An optional `consentRef` makes the call replayable: the same reference and body answers `200` with the stored record, a different body is `409`.\n\nCallers: tenant-user, tenant-system. Requires `customer:customer:manage`."
       operationId: recordConsent
       parameters:
       - name: externalRef
@@ -870,11 +916,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:customer:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     get:
       tags:
       - "Consent"
       summary: "Read a customer's consent"
-      description: "Returns the current status of every topic the customer has a record for, and the customer's whole consent history, newest first."
+      description: "Returns the current status of every topic the customer has a record for, and the customer's whole consent history, newest first.\n\nCallers: tenant-user, tenant-system. Requires `customer:customer:read`."
       operationId: listConsents
       parameters:
       - name: externalRef
@@ -905,12 +954,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:customer:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/orders/{orderRef}:
     put:
       tags:
       - "Orders"
       summary: "Record an order"
-      description: "Records one order with its lines, idempotent by `orderRef`: the same body replays the stored order with `200`, a different body answers `409`. An order is never changed afterwards; a correction is a return. The customer must exist, unless the body sets `createCustomer`, which upserts a customer with the order's `externalRef` and no other data in the same transaction. An order of one line or five hundred is one call; a larger one is a batch."
+      description: "Records one order with its lines, idempotent by `orderRef`: the same body replays the stored order with `200`, a different body answers `409`. An order is never changed afterwards; a correction is a return. The customer must exist, unless the body sets `createCustomer`, which upserts a customer with the order's `externalRef` and no other data in the same transaction. An order of one line or five hundred is one call; a larger one is a batch.\n\nCallers: tenant-user, tenant-system. Requires `customer:order:record`."
       operationId: putOrder
       parameters:
       - name: orderRef
@@ -959,11 +1011,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:order:record
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     get:
       tags:
       - "Orders"
       summary: "Read an order"
-      description: "Reads one order with its lines, the cumulative returned quantity and amount of each line, and every return recorded against it. The response carries the order's `ETag`, which is its `orderVersion`."
+      description: "Reads one order with its lines, the cumulative returned quantity and amount of each line, and every return recorded against it. The response carries the order's `ETag`, which is its `orderVersion`.\n\nCallers: tenant-user, tenant-system. Requires `customer:order:read`."
       operationId: getOrder
       parameters:
       - name: orderRef
@@ -994,12 +1049,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:order:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/orders/batch:
     post:
       tags:
       - "Orders"
       summary: "Record a batch of orders"
-      description: "Applies up to 100 orders carrying at most 5,000 lines together, each order in its own transaction and in the order sent. The batch is `200` even when some orders failed: a bad order fails alone and the others are written, and its failure leaves no partial order behind. A retry of the whole batch is safe, because every order is idempotent by its `orderRef`."
+      description: "Applies up to 100 orders carrying at most 5,000 lines together, each order in its own transaction and in the order sent. The batch is `200` even when some orders failed: a bad order fails alone and the others are written, and its failure leaves no partial order behind. A retry of the whole batch is safe, because every order is idempotent by its `orderRef`.\n\nCallers: tenant-user, tenant-system. Requires `customer:order:record`."
       operationId: createOrderBatch
       parameters:
       - name: X-Request-Id
@@ -1032,12 +1090,15 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: customer:order:record
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/orders/{orderRef}/returns/{returnRef}:
     put:
       tags:
       - "Orders"
       summary: "Record a return against an order"
-      description: "Records one return once, idempotent by `returnRef`: the same body replays the stored result with `200`, a different body answers `409`. The order's lines take the cumulative returned quantity and amount, the order's `orderVersion` rises by one and an `order.refunded` webhook carrying the order's new state and this return is queued in the same transaction. A returned quantity or amount may never exceed what the line sold."
+      description: "Records one return once, idempotent by `returnRef`: the same body replays the stored result with `200`, a different body answers `409`. The order's lines take the cumulative returned quantity and amount, the order's `orderVersion` rises by one and an `order.refunded` webhook carrying the order's new state and this return is queued in the same transaction. A returned quantity or amount may never exceed what the line sold.\n\nCallers: tenant-user, tenant-system. Requires `customer:order:record`."
       operationId: putOrderReturn
       parameters:
       - name: orderRef
@@ -1100,12 +1161,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:order:record
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/customers/{externalRef}/orders:
     get:
       tags:
       - "Orders"
       summary: "List a customer's orders"
-      description: "Lists the customer's orders newest first, each with its lines and returns, paged with a keyset cursor."
+      description: "Lists the customer's orders newest first, each with its lines and returns, paged with a keyset cursor.\n\nCallers: tenant-user, tenant-system. Requires `customer:order:read`."
       operationId: listCustomerOrders
       parameters:
       - name: externalRef
@@ -1152,12 +1216,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:order:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/activities:
     post:
       tags:
       - "Activities"
       summary: "Record an activity"
-      description: "Appends one thing the customer did to its timeline. The `type` is a free string the writer chooses, so a new source posts a new type with no customer change. An optional `activityRef` makes the call replayable: the same reference and body answers `200` with the stored activity, a different body is `409`."
+      description: "Appends one thing the customer did to its timeline. The `type` is a free string the writer chooses, so a new source posts a new type with no customer change. An optional `activityRef` makes the call replayable: the same reference and body answers `200` with the stored activity, a different body is `409`.\n\nCallers: tenant-user, tenant-system. Requires `customer:activity:record`."
       operationId: recordActivity
       parameters:
       - name: X-Request-Id
@@ -1204,12 +1271,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:activity:record
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/activities/batch:
     post:
       tags:
       - "Activities"
       summary: "Record a batch of activities"
-      description: "Appends up to 1,000 activities, each in its own transaction and in the order sent. The batch is `200` even when some items failed: a malformed item fails alone and the others are written. A retry of the whole batch is safe, because an item that carries an `activityRef` is idempotent by it."
+      description: "Appends up to 1,000 activities, each in its own transaction and in the order sent. The batch is `200` even when some items failed: a malformed item fails alone and the others are written. A retry of the whole batch is safe, because an item that carries an `activityRef` is idempotent by it.\n\nCallers: tenant-user, tenant-system. Requires `customer:activity:record`."
       operationId: createActivityBatch
       parameters:
       - name: X-Request-Id
@@ -1242,12 +1312,15 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: customer:activity:record
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/customers/{externalRef}/activities:
     get:
       tags:
       - "Activities"
       summary: "List a customer's activities"
-      description: "Lists the customer's activities newest first, paged with a keyset cursor. `type`, `from` and `to` narrow the timeline."
+      description: "Lists the customer's activities newest first, paged with a keyset cursor. `type`, `from` and `to` narrow the timeline.\n\nCallers: tenant-user, tenant-system. Requires `customer:activity:read`."
       operationId: listCustomerActivities
       parameters:
       - name: externalRef
@@ -1319,6 +1392,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:activity:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/webhook-endpoints:
     get:
       tags:
@@ -1365,11 +1441,15 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: customer:webhook:manage
+      description: "Callers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     post:
       tags:
       - "Webhook endpoints"
       summary: "Create a webhook endpoint"
-      description: "Registers an endpoint that subscribes to a subset of customer's four event types. The signing secret is returned once, in this response. Deliveries are signed with the `Customer-*` headers and retried on the shared schedule until they succeed or go `DEAD`."
+      description: "Registers an endpoint that subscribes to a subset of customer's four event types. The signing secret is returned once, in this response. Deliveries are signed with the `Customer-*` headers and retried on the shared schedule until they succeed or go `DEAD`.\n\nCallers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
       operationId: createWebhookEndpoint
       parameters:
       - name: X-Request-Id
@@ -1404,12 +1484,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:webhook:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/webhook-endpoints/{id}:
     get:
       tags:
       - "Webhook endpoints"
       summary: "Read a webhook endpoint"
-      description: "The response carries the endpoint's `ETag`."
+      description: "The response carries the endpoint's `ETag`.\n\nCallers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
       operationId: getWebhookEndpoint
       parameters:
       - name: id
@@ -1438,11 +1521,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:webhook:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     put:
       tags:
       - "Webhook endpoints"
       summary: "Update a webhook endpoint"
-      description: "Changes the endpoint's url, description, subscribed event types or status. Setting `status` to `DISABLED` pauses delivery without losing queued events. The response carries the endpoint's `ETag`."
+      description: "Changes the endpoint's url, description, subscribed event types or status. Setting `status` to `DISABLED` pauses delivery without losing queued events. The response carries the endpoint's `ETag`.\n\nCallers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
       operationId: updateWebhookEndpoint
       parameters:
       - name: id
@@ -1493,11 +1579,14 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: customer:webhook:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     delete:
       tags:
       - "Webhook endpoints"
       summary: "Delete a webhook endpoint"
-      description: "Removes the endpoint and stops future deliveries to it. Its delivery history stays readable."
+      description: "Removes the endpoint and stops future deliveries to it. Its delivery history stays readable.\n\nCallers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
       operationId: deleteWebhookEndpoint
       parameters:
       - name: id
@@ -1532,12 +1621,15 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: customer:webhook:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/webhook-endpoints/{id}/rotate-secret:
     post:
       tags:
       - "Webhook endpoints"
       summary: "Rotate a webhook endpoint's signing secret"
-      description: "Replaces the endpoint's signing secret and returns the new one once. A receiver may keep the previous secret during a rotation and select by the key id a delivery carries."
+      description: "Replaces the endpoint's signing secret and returns the new one once. A receiver may keep the previous secret during a rotation and select by the key id a delivery carries.\n\nCallers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
       operationId: rotateWebhookEndpointSecret
       parameters:
       - name: id
@@ -1566,12 +1658,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:webhook:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/webhook-deliveries:
     get:
       tags:
       - "Webhook deliveries"
       summary: "List webhook deliveries"
-      description: "Lists the attempts customer made to report an event to an endpoint, newest first. A delivery that exhausted its attempts is `DEAD` and stays visible here so it can be retried."
+      description: "Lists the attempts customer made to report an event to an endpoint, newest first. A delivery that exhausted its attempts is `DEAD` and stays visible here so it can be retried.\n\nCallers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
       operationId: listWebhookDeliveries
       parameters:
       - name: endpointId
@@ -1628,12 +1723,15 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: customer:webhook:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/webhook-deliveries/{id}/retry:
     post:
       tags:
       - "Webhook deliveries"
       summary: "Retry a webhook delivery"
-      description: "Queues a fresh delivery of the same stored event body to the same endpoint, with a new attempt budget, and answers `202`: sending happens asynchronously. The original keeps its history, so a receiver sees exactly what the first attempt carried. Only a finished delivery can be retried; one still being attempted is already on its way."
+      description: "Queues a fresh delivery of the same stored event body to the same endpoint, with a new attempt budget, and answers `202`: sending happens asynchronously. The original keeps its history, so a receiver sees exactly what the first attempt carried. Only a finished delivery can be retried; one still being attempted is already on its way.\n\nCallers: tenant-user, tenant-system. Requires `customer:webhook:manage`."
       operationId: retryWebhookDelivery
       parameters:
       - name: id
@@ -1668,6 +1766,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: customer:webhook:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
 components:
   responses:
     BadRequest:

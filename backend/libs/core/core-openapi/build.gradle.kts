@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    `java-test-fixtures`
     id("java-conventions")
 }
 
@@ -14,4 +15,8 @@ dependencies {
     testImplementation("org.assertj:assertj-core")
     testImplementation(libs.archunit.junit5)
     testImplementation("org.springframework:spring-webmvc")
+    // The test fixtures see core-spring, whose versions come from the same BOM as every other test configuration.
+    testFixturesImplementation(platform(libs.spring.boot.bom))
+    testFixturesRuntimeOnly(platform(libs.spring.boot.bom))
+    testFixturesImplementation("tools.jackson.dataformat:jackson-dataformat-yaml")
 }

@@ -1,24 +1,11 @@
 ---
 openapi: "3.1.0"
 info:
-  title: "Billing API - Tenant Systems"
+  title: "Billing API"
   version: "v1"
-  description: "The API a Tenant System calls with the credential Billing issued to\
-    \ it.\nBase URL: https://{tenant-code}.{base-domain} - the hostname selects the\
-    \ Tenant.\nAuthentication: `Authorization: Bearer cbk_<key-id>_<secret>`. The\
-    \ credential's scopes are the `x-required-permission` codes below; an operation\
-    \ outside those scopes answers 403.\nSend `Idempotency-Key` where the operation\
-    \ documents it.\nEvery resource is limited to the Customers mapped to this Tenant\
-    \ System. A resource owned by another Tenant System in the same Tenant answers\
-    \ 404 exactly like a resource that does not exist.\nOperations not listed here\
-    \ are not available to a Tenant System."
 servers:
-- url: "https://{tenant-code}.{base-domain}"
-  variables:
-    tenant-code:
-      default: "tenant-a"
-    base-domain:
-      default: "base-domain.com"
+- url: "/"
+  description: "Any Billing hostname: platform.<base-domain> or <tenant-code>.<base-domain>"
 tags:
 - name: "Billing sessions"
   description: "The Tenant System side of the customer portal: create a billing session\
@@ -125,8 +112,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
     put:
       tags:
       - "Customers"
@@ -201,8 +186,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/webhook-endpoints:
     get:
       tags:
@@ -623,8 +606,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
     post:
       tags:
       - "Webhook endpoints"
@@ -666,8 +647,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/webhook-endpoints/{id}/rotate-secret:
     post:
       tags:
@@ -707,8 +686,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/webhook-deliveries/{id}/resend:
     post:
       tags:
@@ -749,8 +726,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/wallets:
     get:
       tags:
@@ -1225,8 +1200,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
     post:
       tags:
       - "Wallets"
@@ -1283,8 +1256,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/wallets/{walletId}/coupon-redemptions:
     get:
       tags:
@@ -2030,8 +2001,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
     post:
       tags:
       - "Coupon redemptions"
@@ -2106,8 +2075,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/wallets/{walletId}/coupon-redemptions/attach:
     post:
       tags:
@@ -2178,8 +2145,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/usage-events:
     get:
       tags:
@@ -2663,8 +2628,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
     post:
       tags:
       - "Usage"
@@ -2714,8 +2677,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/usage-events/batch:
     post:
       tags:
@@ -2749,8 +2710,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/subscriptions:
     get:
       tags:
@@ -3450,8 +3409,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
     post:
       tags:
       - "Subscriptions"
@@ -3513,8 +3470,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/subscriptions/{id}/cancel:
     post:
       tags:
@@ -3557,8 +3512,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/reservations:
     get:
       tags:
@@ -4077,8 +4030,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
     post:
       tags:
       - "Reservations"
@@ -4138,8 +4089,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/reservations/{id}/release:
     post:
       tags:
@@ -4173,8 +4122,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/reservations/{id}/capture:
     post:
       tags:
@@ -4235,8 +4182,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/promotion-codes/{id}/deactivate:
     post:
       tags:
@@ -4276,8 +4221,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/pricing/usage-charges:
     post:
       tags:
@@ -4327,8 +4270,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/pricing/reservations:
     post:
       tags:
@@ -4387,8 +4328,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/pricing/estimates:
     post:
       tags:
@@ -4424,8 +4363,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/pricing-plans:
     get:
       tags:
@@ -4823,8 +4760,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/payments/{id}/refunds:
     post:
       tags:
@@ -4912,8 +4847,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/payments/top-ups:
     post:
       tags:
@@ -4988,8 +4921,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/invoices:
     get:
       tags:
@@ -5739,8 +5670,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
     post:
       tags:
       - "Invoices"
@@ -5790,8 +5719,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/invoices/{id}/payments:
     post:
       tags:
@@ -5866,8 +5793,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/customers:
     get:
       tags:
@@ -6140,8 +6065,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
     post:
       tags:
       - "Customers"
@@ -6206,8 +6129,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/customers/{id}/deactivate:
     post:
       tags:
@@ -6274,8 +6195,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/coupons:
     get:
       tags:
@@ -6910,8 +6829,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
     post:
       tags:
       - "Coupons"
@@ -6956,8 +6873,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/coupons/{id}/deactivate:
     post:
       tags:
@@ -7007,8 +6922,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/coupons/{id}/codes:
     get:
       tags:
@@ -7433,8 +7346,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
     post:
       tags:
       - "Coupons"
@@ -7483,8 +7394,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/coupon-redemptions/{id}/revoke:
     post:
       tags:
@@ -7526,8 +7435,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/charges:
     get:
       tags:
@@ -8011,8 +7918,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
     post:
       tags:
       - "Charges"
@@ -8065,8 +7970,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/billing-sessions:
     post:
       tags:
@@ -8111,8 +8014,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/billing-sessions/{id}/revoke:
     post:
       tags:
@@ -8149,8 +8050,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/webhook-endpoints/{id}:
     get:
       tags:
@@ -8184,8 +8083,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
     patch:
       tags:
       - "Webhook endpoints"
@@ -8262,8 +8159,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/webhook-deliveries:
     get:
       tags:
@@ -8856,8 +8751,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/webhook-deliveries/{id}:
     get:
       tags:
@@ -8891,8 +8784,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/wallets/{id}:
     get:
       tags:
@@ -8926,8 +8817,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/wallets/{id}/ledger:
     get:
       tags:
@@ -9450,8 +9339,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/usage-aggregates:
     get:
       tags:
@@ -9510,8 +9397,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/subscriptions/{id}:
     get:
       tags:
@@ -9544,8 +9429,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/reservations/{id}:
     get:
       tags:
@@ -9579,8 +9462,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/refunds:
     get:
       tags:
@@ -10022,8 +9903,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/refunds/{id}:
     get:
       tags:
@@ -10056,8 +9935,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/pricing/usage-charges/{id}:
     get:
       tags:
@@ -10091,8 +9968,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/pricing-plans/{id}:
     get:
       tags:
@@ -10125,8 +10000,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/payments:
     get:
       tags:
@@ -10699,8 +10572,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/payments/{id}:
     get:
       tags:
@@ -10734,8 +10605,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/invoices/{id}:
     get:
       tags:
@@ -10770,8 +10639,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/customers/by-external-user/{externalUserId}:
     get:
       tags:
@@ -10814,8 +10681,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/coupons/{id}:
     get:
       tags:
@@ -10849,8 +10714,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/coupon-redemptions/{id}:
     get:
       tags:
@@ -10883,8 +10746,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
   /api/v1/charges/{id}:
     get:
       tags:
@@ -10917,8 +10778,6 @@ paths:
       x-allowed-callers:
       - "tenant-user"
       - "tenant-system"
-      security:
-      - apiKey: []
 components:
   schemas:
     WebhookSecretRequest:
@@ -13477,6 +13336,11 @@ components:
           schema:
             $ref: "#/components/schemas/ProblemDetail"
   securitySchemes:
+    oidc:
+      type: "http"
+      description: "Billing User signed in through Keycloak"
+      scheme: "bearer"
+      bearerFormat: "JWT"
     suiteToken:
       type: "http"
       description: "Platform suite token for a Tenant System; obtain it from POST\

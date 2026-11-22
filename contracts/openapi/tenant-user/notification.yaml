@@ -1,0 +1,1387 @@
+---
+openapi: "3.1.0"
+info:
+  title: "Notification API"
+  version: "v1"
+servers:
+- url: "/"
+  description: "Any notification hostname: <tenant-code>.<base-domain>/notification"
+tags:
+- name: "Notification templates"
+  description: "The suite-wide template overrides that shape every notification's\
+    \ wording. Reachable at platform scope only, because one row serves every tenant."
+- name: "Notification inbox"
+  description: "The caller's own in-app inbox: list, mark one read, mark all read.\
+    \ The user always comes from the token."
+- name: "Notification settings"
+  description: "A tenant's default locale and the notification types it has enabled."
+- name: "Email dispatches"
+  description: "The dispatch ledger: one row per email the suite decided on, with\
+    \ its status and why it was not sent."
+- name: "Notification preferences"
+  description: "The caller's own locale and muted notification types."
+paths:
+  /api/v1/settings:
+    get:
+      tags:
+      - "Notification settings"
+      summary: "Get the tenant's notification settings"
+      description: "Returns the tenant's default locale and the notification types\
+        \ it has enabled. The tenant is taken from the request host.\n\nCallers: tenant-user.\
+        \ Requires `notification:config:manage`."
+      operationId: "current"
+      responses:
+        "200":
+          description: "The tenant's notification settings."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "notification:config:manage"
+      x-allowed-callers:
+      - "tenant-user"
+    put:
+      tags:
+      - "Notification settings"
+      summary: "Replace the tenant's notification settings"
+      description: "Stores the tenant's default locale and the full set of enabled\
+        \ notification types, replacing what was stored; a type missing from `enabledTypes`\
+        \ is no longer enabled. A locale the suite does not support, or a notification\
+        \ type it does not know, answers `400`. Answers the stored settings.\n\nCallers:\
+        \ tenant-user. Requires `notification:config:manage`."
+      operationId: "save_1"
+      requestBody:
+        description: "The tenant's notification settings to store, replacing the stored\
+          \ ones."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsRequest"
+        required: true
+      responses:
+        "200":
+          description: "The tenant's notification settings."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "notification:config:manage"
+      x-allowed-callers:
+      - "tenant-user"
+  /api/v1/notifications/preferences:
+    get:
+      tags:
+      - "Notification preferences"
+      summary: "Get the caller's notification preferences"
+      description: "Returns the caller's own locale and the notification types they\
+        \ have muted. The user comes from the token. Any authenticated caller may\
+        \ read their own preferences.\n\nCallers: platform-user, tenant-user."
+      operationId: "current_1"
+      responses:
+        "200":
+          description: "The caller's notification preferences."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PreferenceResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/NotEntitled"
+      x-allowed-callers:
+      - "platform-user"
+      - "tenant-user"
+    put:
+      tags:
+      - "Notification preferences"
+      summary: "Replace the caller's notification preferences"
+      description: "Stores the caller's locale and the full set of muted notification\
+        \ types, replacing what was stored. A blank locale clears the caller's locale\
+        \ preference. A locale the suite does not support, or an unknown notification\
+        \ type, answers `400`. Answers the stored preferences.\n\nCallers: platform-user,\
+        \ tenant-user."
+      operationId: "save_2"
+      requestBody:
+        description: "The caller's preferences to store, replacing the stored ones."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferenceRequest"
+        required: true
+      responses:
+        "200":
+          description: "The caller's notification preferences."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PreferenceResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/NotEntitled"
+      x-allowed-callers:
+      - "platform-user"
+      - "tenant-user"
+  /api/v1/notifications/{id}/read:
+    post:
+      tags:
+      - "Notification inbox"
+      summary: "Mark one notification as read"
+      description: "Sets `readAt` on one of the caller's own notifications. Answers\
+        \ `204` with no body. An id that does not exist, or that belongs to another\
+        \ user, answers `404`.\n\nCallers: platform-user, tenant-user."
+      operationId: "read"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the notification."
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "204":
+          description: "The notification was marked as read."
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/NotEntitled"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-allowed-callers:
+      - "platform-user"
+      - "tenant-user"
+  /api/v1/notifications/read-all:
+    post:
+      tags:
+      - "Notification inbox"
+      summary: "Mark every notification as read"
+      description: "Sets `readAt` on all of the caller's notifications in one call.\
+        \ Answers `204` with no body.\n\nCallers: platform-user, tenant-user."
+      operationId: "readAll"
+      responses:
+        "204":
+          description: "The caller's notifications were marked as read."
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/NotEntitled"
+      x-allowed-callers:
+      - "platform-user"
+      - "tenant-user"
+  /api/v1/notifications:
+    get:
+      tags:
+      - "Notification inbox"
+      summary: "List the caller's notifications"
+      description: "Pages through the caller's own in-app inbox. The user comes from\
+        \ the token, so no other user's notifications are reachable. Unread rows are\
+        \ `filter[read_at][is_null]=true`. Any authenticated caller may read their\
+        \ own inbox.\n\n**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone.\n\nCallers: platform-user, tenant-user."
+      operationId: "list_1"
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[locale][eq]"
+        in: "query"
+        description: "`locale` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[locale][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `locale`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[locale][neq]"
+        in: "query"
+        description: "`locale` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[locale][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `locale`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[locale][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `locale`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[read_at][eq]"
+        in: "query"
+        description: "`read_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[read_at][gt]"
+        in: "query"
+        description: "`read_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[read_at][gte]"
+        in: "query"
+        description: "`read_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[read_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `read_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[read_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `read_at` is null, `false` for rows where\
+          \ it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[read_at][lt]"
+        in: "query"
+        description: "`read_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[read_at][lte]"
+        in: "query"
+        description: "`read_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[read_at][neq]"
+        in: "query"
+        description: "`read_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[read_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `read_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[template_key][eq]"
+        in: "query"
+        description: "`template_key` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[template_key][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `template_key`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[template_key][neq]"
+        in: "query"
+        description: "`template_key` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[template_key][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `template_key`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[template_key][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `template_key`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[title][eq]"
+        in: "query"
+        description: "`title` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[title][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `title`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[title][neq]"
+        in: "query"
+        description: "`title` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[title][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `title`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[title][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `title`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[type][eq]"
+        in: "query"
+        description: "`type` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACCESS_CHANGED"
+          - "ACCESS_DISABLED"
+          - "ACCESS_GRANTED"
+          - "ENTITLEMENT_CHANGED"
+          - "TENANT_DEACTIVATED"
+      - name: "filter[type][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[type][neq]"
+        in: "query"
+        description: "`type` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACCESS_CHANGED"
+          - "ACCESS_DISABLED"
+          - "ACCESS_GRANTED"
+          - "ENTITLEMENT_CHANGED"
+          - "TENANT_DEACTIVATED"
+      - name: "filter[type][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "A page of notification response rows, with the paging facts\
+            \ when the request asked for them."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageNotificationResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/NotEntitled"
+      x-allowed-callers:
+      - "platform-user"
+      - "tenant-user"
+  /api/v1/email-dispatches:
+    get:
+      tags:
+      - "Email dispatches"
+      summary: "List email dispatches"
+      description: "Pages through the tenant's dispatch ledger, newest first by default:\
+        \ one row per email the suite decided on, with its status, the reason when\
+        \ it was not sent, and the template, version and locale used. It answers why\
+        \ a user did not receive an email.\n\n**Filtering, sorting and paging** follow\
+        \ the list-query contract. Conditions in `filter[field][op]` are combined\
+        \ with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the\
+        \ index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20\
+        \ predicates in all, 100 values in an `in` list). `neq` and `nin` do not match\
+        \ rows where the field is null. Send `limit` with either `offset` (at most\
+        \ 10000) or the `cursor` taken from a previous page, never both. The body\
+        \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
+        \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
+        \ with `limit` and `next_cursor` alone, without counting the matching rows;\
+        \ omit it for the rows alone.\n\nCallers: tenant-user. Requires `notification:dispatch:read`."
+      operationId: "list_2"
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[notification_type][eq]"
+        in: "query"
+        description: "`notification_type` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACCESS_CHANGED"
+          - "ACCESS_DISABLED"
+          - "ACCESS_GRANTED"
+          - "ENTITLEMENT_CHANGED"
+          - "TENANT_DEACTIVATED"
+      - name: "filter[notification_type][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `notification_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[notification_type][neq]"
+        in: "query"
+        description: "`notification_type` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACCESS_CHANGED"
+          - "ACCESS_DISABLED"
+          - "ACCESS_GRANTED"
+          - "ENTITLEMENT_CHANGED"
+          - "TENANT_DEACTIVATED"
+      - name: "filter[notification_type][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `notification_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[published_at][eq]"
+        in: "query"
+        description: "`published_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[published_at][gt]"
+        in: "query"
+        description: "`published_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[published_at][gte]"
+        in: "query"
+        description: "`published_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[published_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `published_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[published_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `published_at` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[published_at][lt]"
+        in: "query"
+        description: "`published_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[published_at][lte]"
+        in: "query"
+        description: "`published_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[published_at][neq]"
+        in: "query"
+        description: "`published_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[published_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `published_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[reason][eq]"
+        in: "query"
+        description: "`reason` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[reason][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `reason`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[reason][is_null]"
+        in: "query"
+        description: "`true` for rows where `reason` is null, `false` for rows where\
+          \ it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[reason][neq]"
+        in: "query"
+        description: "`reason` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[reason][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `reason`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[reason][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `reason`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[recipient][contains]"
+        in: "query"
+        description: "Case-insensitive substring match on `recipient`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[recipient][eq]"
+        in: "query"
+        description: "`recipient` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[recipient][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `recipient`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[recipient][is_null]"
+        in: "query"
+        description: "`true` for rows where `recipient` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[recipient][neq]"
+        in: "query"
+        description: "`recipient` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[recipient][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `recipient`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[recipient][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `recipient`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[source_event_id][eq]"
+        in: "query"
+        description: "`source_event_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[source_event_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `source_event_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[source_event_id][neq]"
+        in: "query"
+        description: "`source_event_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[source_event_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `source_event_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "DEAD"
+          - "PENDING"
+          - "PUBLISHED"
+          - "SKIPPED_INACTIVE"
+          - "SKIPPED_NO_ADDRESS"
+          - "SUPPRESSED_MUTED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "DEAD"
+          - "PENDING"
+          - "PUBLISHED"
+          - "SKIPPED_INACTIVE"
+          - "SKIPPED_NO_ADDRESS"
+          - "SUPPRESSED_MUTED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[template_key][eq]"
+        in: "query"
+        description: "`template_key` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[template_key][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `template_key`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[template_key][neq]"
+        in: "query"
+        description: "`template_key` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[template_key][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `template_key`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[template_key][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `template_key`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[user_id][eq]"
+        in: "query"
+        description: "`user_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[user_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `user_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[user_id][neq]"
+        in: "query"
+        description: "`user_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[user_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `user_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "A page of dispatch response rows, with the paging facts when\
+            \ the request asked for them."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageDispatchResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "notification:dispatch:read"
+      x-allowed-callers:
+      - "tenant-user"
+components:
+  schemas:
+    TemplateRequest:
+      type: "object"
+      description: "The parts of a template override. A part left out keeps the packaged\
+        \ default."
+      properties:
+        subject:
+          type: "string"
+          description: "The email subject line, as a template."
+        html:
+          type: "string"
+          description: "The HTML body of the email, as a template."
+        text:
+          type: "string"
+          description: "The plain-text body of the email, as a template."
+        title:
+          type: "string"
+          description: "The title of the in-app notification, as a template."
+        body:
+          type: "string"
+          description: "The body of the in-app notification, as a template."
+    SettingsRequest:
+      type: "object"
+      description: "The tenant's notification settings to store, replacing the stored\
+        \ ones."
+      properties:
+        defaultLocale:
+          type: "string"
+          description: "The locale used for a user who has not chosen one: `en` or\
+            \ `vi`."
+        enabledTypes:
+          type: "array"
+          description: "The notification types the tenant has enabled. A type missing\
+            \ here is not sent."
+          items:
+            type: "string"
+          uniqueItems: true
+    SettingsResponse:
+      type: "object"
+      description: "The tenant's notification settings."
+      properties:
+        defaultLocale:
+          type: "string"
+          description: "The locale used for a user who has not chosen one: `en` or\
+            \ `vi`."
+        enabledTypes:
+          type: "array"
+          description: "The notification types the tenant has enabled. A type missing\
+            \ here is not sent."
+          items:
+            type: "string"
+          uniqueItems: true
+    PreferenceRequest:
+      type: "object"
+      description: "The caller's preferences to store, replacing the stored ones."
+      properties:
+        locale:
+          type: "string"
+          description: "The caller's locale: `en` or `vi`. Blank clears the preference."
+        mutedTypes:
+          type: "array"
+          description: "The notification types the caller does not want to receive."
+          items:
+            type: "string"
+          uniqueItems: true
+    PreferenceResponse:
+      type: "object"
+      description: "The caller's notification preferences."
+      properties:
+        locale:
+          type: "string"
+          description: "The caller's locale, or null when the caller has none."
+        mutedTypes:
+          type: "array"
+          description: "The notification types the caller does not want to receive."
+          items:
+            type: "string"
+          uniqueItems: true
+    TemplateSummary:
+      type: "object"
+      description: "A notification type and the template key that renders it."
+      properties:
+        type:
+          type: "string"
+          description: "The notification type."
+        key:
+          type: "string"
+          description: "The template key that renders the notification type."
+    Resolved:
+      type: "object"
+      description: "The template as the suite renders it for a key and locale."
+      properties:
+        key:
+          type: "string"
+          description: "The template key that was asked for."
+        locale:
+          type: "string"
+          description: "The locale the variant was resolved for."
+        variant:
+          $ref: "#/components/schemas/TemplateVariant"
+          description: "The parts the suite renders: each part the override defines,\
+            \ and the packaged default for the rest."
+        overridden:
+          type: "boolean"
+          description: "Whether a suite-wide override exists for this key and locale."
+    TemplateVariant:
+      type: "object"
+      description: "One template in one locale: the email subject, HTML and text,\
+        \ and the in-app title and body."
+      properties:
+        subject:
+          type: "string"
+          description: "The email subject line, as a template."
+        html:
+          type: "string"
+          description: "The HTML body of the email, as a template."
+        text:
+          type: "string"
+          description: "The plain-text body of the email, as a template."
+        title:
+          type: "string"
+          description: "The title of the in-app notification, as a template."
+        body:
+          type: "string"
+          description: "The body of the in-app notification, as a template."
+        version:
+          type: "integer"
+          format: "int32"
+          description: "The version of the stored override; 0 for the packaged default."
+    NotificationResponse:
+      type: "object"
+      description: "One notification in the caller's in-app inbox."
+      properties:
+        id:
+          type: "string"
+          description: "The notification's id."
+        type:
+          type: "string"
+          description: "The notification type."
+        templateKey:
+          type: "string"
+          description: "The key of the template that rendered it."
+        templateVersion:
+          type: "integer"
+          format: "int32"
+          description: "The version of the template that rendered it."
+        locale:
+          type: "string"
+          description: "The locale it was rendered in."
+        title:
+          type: "string"
+          description: "The rendered title."
+        body:
+          type: "string"
+          description: "The rendered body."
+        link:
+          type: "string"
+          description: "Where the notification leads, or null."
+        readAt:
+          type: "string"
+          format: "date-time"
+          description: "When the caller read it, or null while it is unread."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the notification was created."
+    PageInfo:
+      type: "object"
+      description: "The paging facts of a list answer, present when the request asked\
+        \ for them with `page_info`."
+      properties:
+        limit:
+          type: "integer"
+          format: "int32"
+          description: "The page size that was applied."
+        offset:
+          type:
+          - "integer"
+          - "null"
+          format: "int32"
+          description: "The number of rows that were skipped, or null when a cursor\
+            \ positioned the page."
+        total:
+          type:
+          - "integer"
+          - "null"
+          format: "int64"
+          description: "The number of rows that match the filter, or null when the\
+            \ request asked only for the cursor."
+        next_cursor:
+          type:
+          - "string"
+          - "null"
+          description: "The cursor of the following page, or null on the last page.\
+            \ Pass it as `cursor` with the same filter and sort."
+    PageNotificationResponse:
+      type: "object"
+      description: "A page of notification response rows, with the paging facts when\
+        \ the request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/NotificationResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    DispatchResponse:
+      type: "object"
+      description: "One row of the dispatch ledger: an email the suite decided to\
+        \ send or not to send."
+      properties:
+        id:
+          type: "string"
+          description: "The ledger row's id."
+        sourceEventId:
+          type: "string"
+          description: "The id of the event that caused the notification."
+        notificationType:
+          type: "string"
+          description: "The notification type."
+        userId:
+          type: "string"
+          description: "The id of the user the email was for."
+        recipient:
+          type: "string"
+          description: "The email address it was addressed to."
+        fromKey:
+          type: "string"
+          description: "The sender identity the email was sent from."
+        templateKey:
+          type: "string"
+          description: "The key of the template that rendered it."
+        templateVersion:
+          type: "integer"
+          format: "int32"
+          description: "The version of the template that rendered it."
+        locale:
+          type: "string"
+          description: "The locale it was rendered in."
+        subject:
+          type: "string"
+          description: "The rendered subject line."
+        status:
+          type: "string"
+          description: "Where the dispatch stands: `PENDING`, `PUBLISHED`, `SUPPRESSED_MUTED`\
+            \ or `SKIPPED_INACTIVE`."
+        reason:
+          type: "string"
+          description: "Why the email was not sent, or null when it was."
+        createdAt:
+          type: "string"
+          format: "date-time"
+          description: "When the dispatch was decided."
+        publishedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the email was handed to the mailer, or null."
+    PageDispatchResponse:
+      type: "object"
+      description: "A page of dispatch response rows, with the paging facts when the\
+        \ request asked for them."
+      properties:
+        data:
+          type: "array"
+          description: "The rows of this page."
+          items:
+            $ref: "#/components/schemas/DispatchResponse"
+        page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    ProblemDetail:
+      type: "object"
+      description: "The body of every error: an RFC 9457 problem."
+      properties:
+        type:
+          type: "string"
+          description: "A URI reference that identifies the kind of problem. It is\
+            \ `about:blank` when the status says it all."
+        title:
+          type: "string"
+          description: "A short, human-readable summary of the kind of problem. It\
+            \ is the status's reason phrase unless a more specific one applies."
+        status:
+          type: "integer"
+          format: "int32"
+          description: "The HTTP status of the response."
+        detail:
+          type: "string"
+          description: "A sentence that explains this occurrence."
+        instance:
+          type: "string"
+          description: "A URI reference that identifies this occurrence, when there\
+            \ is one."
+  responses:
+    BadRequest:
+      description: "The request is malformed: a body, query parameter or header is\
+        \ missing, unknown, or not valid for its type."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Unauthenticated:
+      description: "The request carries no valid token."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Forbidden:
+      description: "The token does not carry the permission this operation requires,\
+        \ or the tenant has not enabled the app."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotEntitled:
+      description: "The tenant has not enabled this app, or the caller may not act\
+        \ here."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotFound:
+      description: "Nothing with that id exists for this tenant. A resource of another\
+        \ tenant answers the same."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    IdempotencyConflict:
+      description: "The `Idempotency-Key` was already used with a different body,\
+        \ or the request clashes with the current state of the data."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    PreconditionFailed:
+      description: "The `If-Match` tag does not match the resource's current version.\
+        \ The response carries the current `ETag`; read the resource again and retry."
+      headers:
+        ETag:
+          description: "The current version of the resource."
+          schema:
+            type: "string"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+  securitySchemes:
+    oidc:
+      type: "http"
+      description: "A tenant user signed in through Keycloak"
+      scheme: "bearer"
+      bearerFormat: "JWT"

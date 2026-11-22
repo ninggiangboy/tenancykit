@@ -1,0 +1,5072 @@
+---
+openapi: "3.1.0"
+info:
+  title: "Booking API"
+  description: "The API a Tenant System uses to build versioned bookings, issue links\
+    \ and read what came back, plus the public endpoints a respondent's browser calls\
+    \ without credentials."
+  version: "v1"
+servers:
+- url: "/booking"
+  description: "Any tenant hostname: <tenant-code>.<base-domain>/booking"
+paths:
+  /api/v1/sessions/{sessionId}/pools:
+    put:
+      tags:
+      - "session-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:booking:manage`."
+      operationId: "resizePools"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PoolResizeRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+      x-required-permission: "booking:booking:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/resources/{resourceId}/working-hours:
+    get:
+      tags:
+      - "calendar-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      operationId: "getWorkingHours"
+      parameters:
+      - name: "resourceId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WorkingHoursResponse"
+      x-required-permission: "booking:resource:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    put:
+      tags:
+      - "calendar-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      operationId: "replaceWorkingHours"
+      parameters:
+      - name: "resourceId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkingHoursReplaceRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WorkingHoursResponse"
+      x-required-permission: "booking:resource:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/offerings/{offeringId}/requirements:
+    put:
+      tags:
+      - "offering-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:manage`."
+      operationId: "replaceRequirements"
+      parameters:
+      - name: "offeringId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequirementsReplaceRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RequirementsResponse"
+      x-required-permission: "booking:offering:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/offerings/{offeringId}/cancellation-windows:
+    put:
+      tags:
+      - "offering-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:manage`."
+      operationId: "replaceCancellationWindows"
+      parameters:
+      - name: "offeringId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancellationWindowsReplaceRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CancellationWindowsResponse"
+      x-required-permission: "booking:offering:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/webhook-endpoints:
+    get:
+      tags:
+      - "endpoint-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `booking:webhook:read`."
+      operationId: "listEndpoints"
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[description][eq]"
+        in: "query"
+        description: "`description` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[description][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `description`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[description][is_null]"
+        in: "query"
+        description: "`true` for rows where `description` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[description][neq]"
+        in: "query"
+        description: "`description` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[description][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `description`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[description][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `description`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[key_id][eq]"
+        in: "query"
+        description: "`key_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[key_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `key_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[key_id][neq]"
+        in: "query"
+        description: "`key_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[key_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `key_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[key_id][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `key_id`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[secret_rotated_at][eq]"
+        in: "query"
+        description: "`secret_rotated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][gt]"
+        in: "query"
+        description: "`secret_rotated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][gte]"
+        in: "query"
+        description: "`secret_rotated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `secret_rotated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[secret_rotated_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `secret_rotated_at` is null, `false` for\
+          \ rows where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[secret_rotated_at][lt]"
+        in: "query"
+        description: "`secret_rotated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][lte]"
+        in: "query"
+        description: "`secret_rotated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][neq]"
+        in: "query"
+        description: "`secret_rotated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `secret_rotated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "DELETED"
+          - "DISABLED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "DELETED"
+          - "DISABLED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[url][eq]"
+        in: "query"
+        description: "`url` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[url][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `url`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[url][neq]"
+        in: "query"
+        description: "`url` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[url][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `url`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[url][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `url`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `created_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageEndpointResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "booking:webhook:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    post:
+      tags:
+      - "endpoint-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+      operationId: "createEndpoint"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEndpointRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointWithSecretResponse"
+      x-required-permission: "booking:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/webhook-endpoints/{endpointId}/rotate-secret:
+    post:
+      tags:
+      - "endpoint-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+      operationId: "rotateSecret"
+      parameters:
+      - name: "endpointId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointWithSecretResponse"
+      x-required-permission: "booking:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/webhook-deliveries/{deliveryId}/resend:
+    post:
+      tags:
+      - "delivery-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+      operationId: "retry"
+      parameters:
+      - name: "deliveryId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "202":
+          description: "Accepted"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DeliveryResponse"
+      x-required-permission: "booking:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/waitlist:
+    get:
+      tags:
+      - "waitlist-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:waitlist:read`."
+      operationId: "listWaitlist"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WaitlistPage"
+      x-required-permission: "booking:waitlist:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    post:
+      tags:
+      - "waitlist-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:waitlist:manage`."
+      operationId: "joinWaitlist_1"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WaitlistJoinRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WaitlistEntryResponse"
+      x-required-permission: "booking:waitlist:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/session-series:
+    get:
+      tags:
+      - "session-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:read`."
+      operationId: "listSeries"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SessionSeriesPageResponse"
+      x-required-permission: "booking:calendar:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    post:
+      tags:
+      - "session-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+      operationId: "createSessionSeries"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionSeriesCreateRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SessionSeriesCreatedResponse"
+      x-required-permission: "booking:calendar:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/series:
+    get:
+      tags:
+      - "booking-series-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:series:read`."
+      operationId: "listSeries_1"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SeriesPage"
+      x-required-permission: "booking:series:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    post:
+      tags:
+      - "booking-series-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:series:manage`."
+      operationId: "createSeries"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeriesCreateRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SeriesResponse"
+      x-required-permission: "booking:series:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/series/{seriesId}/confirm:
+    post:
+      tags:
+      - "booking-series-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:series:manage`."
+      operationId: "confirmSeries"
+      parameters:
+      - name: "seriesId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SeriesResponse"
+      x-required-permission: "booking:series:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/series/{seriesId}/cancel:
+    post:
+      tags:
+      - "booking-series-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:series:manage`."
+      operationId: "cancelSeries"
+      parameters:
+      - name: "seriesId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SeriesResponse"
+      x-required-permission: "booking:series:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/resources:
+    get:
+      tags:
+      - "resource-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `booking:resource:read`."
+      operationId: "listResources"
+      parameters:
+      - name: "filter[code][eq]"
+        in: "query"
+        description: "`code` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[code][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[code][neq]"
+        in: "query"
+        description: "`code` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[code][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[code][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `code`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][eq]"
+        in: "query"
+        description: "`name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][neq]"
+        in: "query"
+        description: "`name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[seats][eq]"
+        in: "query"
+        description: "`seats` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[seats][gt]"
+        in: "query"
+        description: "`seats` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[seats][gte]"
+        in: "query"
+        description: "`seats` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[seats][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `seats`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[seats][is_null]"
+        in: "query"
+        description: "`true` for rows where `seats` is null, `false` for rows where\
+          \ it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[seats][lt]"
+        in: "query"
+        description: "`seats` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[seats][lte]"
+        in: "query"
+        description: "`seats` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[seats][neq]"
+        in: "query"
+        description: "`seats` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[seats][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `seats`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "ARCHIVED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "ARCHIVED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[zone][eq]"
+        in: "query"
+        description: "`zone` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[zone][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `zone`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[zone][neq]"
+        in: "query"
+        description: "`zone` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[zone][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `zone`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[zone][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `zone`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: code, created_at, id, name. At most 4 fields; `id`\
+          \ is appended to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageResourceResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "booking:resource:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    post:
+      tags:
+      - "resource-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      operationId: "createResource"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceCreateRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResourceResponse"
+      x-required-permission: "booking:resource:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/resources/{resourceId}/exceptions:
+    get:
+      tags:
+      - "calendar-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      operationId: "listExceptions"
+      parameters:
+      - name: "resourceId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ExceptionPageResponse"
+      x-required-permission: "booking:resource:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    post:
+      tags:
+      - "calendar-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      operationId: "addException"
+      parameters:
+      - name: "resourceId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalendarExceptionCreateRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CalendarExceptionResponse"
+      x-required-permission: "booking:resource:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/resource-groups:
+    get:
+      tags:
+      - "resource-group-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      operationId: "listGroups"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GroupPage"
+      x-required-permission: "booking:resource:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    post:
+      tags:
+      - "resource-group-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      operationId: "createGroup"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupCreateRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+      x-required-permission: "booking:resource:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/recurrence/preview:
+    post:
+      tags:
+      - "calendar-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:read`."
+      operationId: "previewRecurrence"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurrencePreviewRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RecurrencePreviewResponse"
+      x-required-permission: "booking:calendar:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/offerings:
+    get:
+      tags:
+      - "offering-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `booking:offering:read`."
+      operationId: "listOfferings"
+      parameters:
+      - name: "filter[code][eq]"
+        in: "query"
+        description: "`code` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[code][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[code][neq]"
+        in: "query"
+        description: "`code` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[code][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[code][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `code`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[kind][eq]"
+        in: "query"
+        description: "`kind` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "CAPACITY"
+          - "INTERVAL"
+      - name: "filter[kind][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `kind`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[kind][neq]"
+        in: "query"
+        description: "`kind` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "CAPACITY"
+          - "INTERVAL"
+      - name: "filter[kind][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `kind`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][eq]"
+        in: "query"
+        description: "`name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][neq]"
+        in: "query"
+        description: "`name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "ARCHIVED"
+          - "DRAFT"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "ARCHIVED"
+          - "DRAFT"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: code, created_at, id, name. At most 4 fields; `id`\
+          \ is appended to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageOfferingResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "booking:offering:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    post:
+      tags:
+      - "offering-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:manage`."
+      operationId: "createOffering"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfferingCreateRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OfferingResponse"
+      x-required-permission: "booking:offering:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/customer-tokens:
+    post:
+      tags:
+      - "customer-token-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:token:issue`."
+      operationId: "issue"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssueTokenRequest"
+        required: true
+      responses:
+        "201":
+          description: "Created"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CustomerTokenResponse"
+      x-required-permission: "booking:token:issue"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/bookings:
+    get:
+      tags:
+      - "booking-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `booking:booking:read`."
+      operationId: "listBookings"
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[customer_ref][eq]"
+        in: "query"
+        description: "`customer_ref` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[customer_ref][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `customer_ref`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[customer_ref][neq]"
+        in: "query"
+        description: "`customer_ref` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[customer_ref][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `customer_ref`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[customer_ref][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `customer_ref`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[offering_id][eq]"
+        in: "query"
+        description: "`offering_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[offering_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `offering_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[offering_id][neq]"
+        in: "query"
+        description: "`offering_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[offering_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `offering_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[source][eq]"
+        in: "query"
+        description: "`source` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "GATE"
+          - "TENANT"
+          - "WAITLIST"
+      - name: "filter[source][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `source`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[source][neq]"
+        in: "query"
+        description: "`source` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "GATE"
+          - "TENANT"
+          - "WAITLIST"
+      - name: "filter[source][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `source`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[starts_at][eq]"
+        in: "query"
+        description: "`starts_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[starts_at][gt]"
+        in: "query"
+        description: "`starts_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[starts_at][gte]"
+        in: "query"
+        description: "`starts_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[starts_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `starts_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[starts_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `starts_at` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[starts_at][lt]"
+        in: "query"
+        description: "`starts_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[starts_at][lte]"
+        in: "query"
+        description: "`starts_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[starts_at][neq]"
+        in: "query"
+        description: "`starts_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[starts_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `starts_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "CANCELLED"
+          - "CONFIRMED"
+          - "EXPIRED"
+          - "HELD"
+          - "NO_SHOW"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "CANCELLED"
+          - "CONFIRMED"
+          - "EXPIRED"
+          - "HELD"
+          - "NO_SHOW"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageBookingResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "booking:booking:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    post:
+      tags:
+      - "booking-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:booking:hold`."
+      operationId: "createBooking"
+      parameters:
+      - name: "Idempotency-Key"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingCreateRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+      x-required-permission: "booking:booking:hold"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/bookings/{bookingId}/reschedule:
+    post:
+      tags:
+      - "booking-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:booking:manage`."
+      operationId: "rescheduleBooking"
+      parameters:
+      - name: "bookingId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingRescheduleRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+      x-required-permission: "booking:booking:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/bookings/{bookingId}/no-show:
+    post:
+      tags:
+      - "booking-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:booking:manage`."
+      operationId: "markNoShow"
+      parameters:
+      - name: "bookingId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+      x-required-permission: "booking:booking:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/bookings/{bookingId}/extend:
+    post:
+      tags:
+      - "booking-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:booking:hold`."
+      operationId: "extendBooking"
+      parameters:
+      - name: "bookingId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingExtendRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+      x-required-permission: "booking:booking:hold"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/bookings/{bookingId}/confirm:
+    post:
+      tags:
+      - "booking-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:booking:confirm`."
+      operationId: "confirmBooking"
+      parameters:
+      - name: "bookingId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+      x-required-permission: "booking:booking:confirm"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/bookings/{bookingId}/cancel:
+    post:
+      tags:
+      - "booking-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:booking:hold`."
+      operationId: "cancelBooking"
+      parameters:
+      - name: "bookingId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+      x-required-permission: "booking:booking:hold"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/blocks:
+    get:
+      tags:
+      - "calendar-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:read`."
+      operationId: "listBlocks"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BlockPageResponse"
+      x-required-permission: "booking:calendar:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    post:
+      tags:
+      - "calendar-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+      operationId: "createBlock"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BlockCreatedResponse"
+      x-required-permission: "booking:calendar:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/webhook-endpoints/{endpointId}:
+    get:
+      tags:
+      - "endpoint-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:read`."
+      operationId: "getEndpoint"
+      parameters:
+      - name: "endpointId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointResponse"
+      x-required-permission: "booking:webhook:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    delete:
+      tags:
+      - "endpoint-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+      operationId: "deleteEndpoint"
+      parameters:
+      - name: "endpointId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+      x-required-permission: "booking:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    patch:
+      tags:
+      - "endpoint-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+      operationId: "updateEndpoint"
+      parameters:
+      - name: "endpointId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEndpointRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointResponse"
+      x-required-permission: "booking:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/session-series/{seriesId}:
+    patch:
+      tags:
+      - "session-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+      operationId: "patchSessionSeries"
+      parameters:
+      - name: "seriesId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionSeriesPatchRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SessionSeriesCreatedResponse"
+      x-required-permission: "booking:calendar:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/resources/{resourceId}:
+    get:
+      tags:
+      - "resource-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      operationId: "getResource"
+      parameters:
+      - name: "resourceId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResourceResponse"
+      x-required-permission: "booking:resource:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    delete:
+      tags:
+      - "resource-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      operationId: "archiveResource"
+      parameters:
+      - name: "resourceId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+      x-required-permission: "booking:resource:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    patch:
+      tags:
+      - "resource-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      operationId: "patchResource"
+      parameters:
+      - name: "resourceId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourcePatchRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ResourceResponse"
+      x-required-permission: "booking:resource:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/resource-groups/{groupId}:
+    get:
+      tags:
+      - "resource-group-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      operationId: "getGroup"
+      parameters:
+      - name: "groupId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+      x-required-permission: "booking:resource:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    patch:
+      tags:
+      - "resource-group-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      operationId: "patchGroup"
+      parameters:
+      - name: "groupId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupPatchRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+      x-required-permission: "booking:resource:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/offerings/{offeringId}:
+    get:
+      tags:
+      - "offering-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:read`."
+      operationId: "getOffering"
+      parameters:
+      - name: "offeringId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OfferingResponse"
+      x-required-permission: "booking:offering:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    delete:
+      tags:
+      - "offering-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:manage`."
+      operationId: "archiveOffering"
+      parameters:
+      - name: "offeringId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "204":
+          description: "No Content"
+      x-required-permission: "booking:offering:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    patch:
+      tags:
+      - "offering-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:manage`."
+      operationId: "patchOffering"
+      parameters:
+      - name: "offeringId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfferingPatchRequest"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OfferingResponse"
+      x-required-permission: "booking:offering:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/webhook-deliveries:
+    get:
+      tags:
+      - "delivery-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `booking:webhook:read`."
+      operationId: "listDeliveries"
+      parameters:
+      - name: "filter[attempts][eq]"
+        in: "query"
+        description: "`attempts` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][gt]"
+        in: "query"
+        description: "`attempts` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][gte]"
+        in: "query"
+        description: "`attempts` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `attempts`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[attempts][lt]"
+        in: "query"
+        description: "`attempts` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][lte]"
+        in: "query"
+        description: "`attempts` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][neq]"
+        in: "query"
+        description: "`attempts` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `attempts`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[completed_at][eq]"
+        in: "query"
+        description: "`completed_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][gt]"
+        in: "query"
+        description: "`completed_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][gte]"
+        in: "query"
+        description: "`completed_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `completed_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[completed_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `completed_at` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[completed_at][lt]"
+        in: "query"
+        description: "`completed_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][lte]"
+        in: "query"
+        description: "`completed_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][neq]"
+        in: "query"
+        description: "`completed_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `completed_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[endpoint_id][eq]"
+        in: "query"
+        description: "`endpoint_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[endpoint_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `endpoint_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[endpoint_id][neq]"
+        in: "query"
+        description: "`endpoint_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[endpoint_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `endpoint_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_id][eq]"
+        in: "query"
+        description: "`event_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[event_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `event_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_id][neq]"
+        in: "query"
+        description: "`event_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[event_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `event_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_type][eq]"
+        in: "query"
+        description: "`event_type` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[event_type][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `event_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_type][neq]"
+        in: "query"
+        description: "`event_type` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[event_type][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `event_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_type][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `event_type`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_error][eq]"
+        in: "query"
+        description: "`last_error` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[last_error][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `last_error`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_error][is_null]"
+        in: "query"
+        description: "`true` for rows where `last_error` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[last_error][neq]"
+        in: "query"
+        description: "`last_error` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[last_error][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `last_error`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_error][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `last_error`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[last_status_code][eq]"
+        in: "query"
+        description: "`last_status_code` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][gt]"
+        in: "query"
+        description: "`last_status_code` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][gte]"
+        in: "query"
+        description: "`last_status_code` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `last_status_code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_status_code][is_null]"
+        in: "query"
+        description: "`true` for rows where `last_status_code` is null, `false` for\
+          \ rows where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[last_status_code][lt]"
+        in: "query"
+        description: "`last_status_code` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][lte]"
+        in: "query"
+        description: "`last_status_code` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][neq]"
+        in: "query"
+        description: "`last_status_code` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `last_status_code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[next_attempt_at][eq]"
+        in: "query"
+        description: "`next_attempt_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][gt]"
+        in: "query"
+        description: "`next_attempt_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][gte]"
+        in: "query"
+        description: "`next_attempt_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `next_attempt_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[next_attempt_at][lt]"
+        in: "query"
+        description: "`next_attempt_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][lte]"
+        in: "query"
+        description: "`next_attempt_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][neq]"
+        in: "query"
+        description: "`next_attempt_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `next_attempt_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "DEAD"
+          - "IN_PROGRESS"
+          - "PENDING"
+          - "SUCCEEDED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "DEAD"
+          - "IN_PROGRESS"
+          - "PENDING"
+          - "SUCCEEDED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageDeliveryResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "booking:webhook:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/waitlist/{entryId}:
+    get:
+      tags:
+      - "waitlist-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:waitlist:read`."
+      operationId: "getWaitlistEntry_1"
+      parameters:
+      - name: "entryId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WaitlistEntryResponse"
+      x-required-permission: "booking:waitlist:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    delete:
+      tags:
+      - "waitlist-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:waitlist:manage`."
+      operationId: "leaveWaitlist_1"
+      parameters:
+      - name: "entryId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+      x-required-permission: "booking:waitlist:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/settings:
+    get:
+      tags:
+      - "settings-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:settings:read`."
+      operationId: "settings"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GateTimingView"
+      x-required-permission: "booking:settings:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/sessions:
+    get:
+      tags:
+      - "session-controller"
+      description: "**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `booking:offering:read`."
+      operationId: "listSessions"
+      parameters:
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[offering_id][eq]"
+        in: "query"
+        description: "`offering_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[offering_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `offering_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[offering_id][neq]"
+        in: "query"
+        description: "`offering_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[offering_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `offering_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[starts_at][eq]"
+        in: "query"
+        description: "`starts_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[starts_at][gt]"
+        in: "query"
+        description: "`starts_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[starts_at][gte]"
+        in: "query"
+        description: "`starts_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[starts_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `starts_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[starts_at][lt]"
+        in: "query"
+        description: "`starts_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[starts_at][lte]"
+        in: "query"
+        description: "`starts_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[starts_at][neq]"
+        in: "query"
+        description: "`starts_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[starts_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `starts_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "CANCELLED"
+          - "SCHEDULED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "CANCELLED"
+          - "SCHEDULED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: id, starts_at. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `starts_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageSessionResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+      x-required-permission: "booking:offering:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/sessions/{sessionId}:
+    get:
+      tags:
+      - "session-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:read`."
+      operationId: "getSession"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+      x-required-permission: "booking:offering:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+    delete:
+      tags:
+      - "session-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+      operationId: "cancelSession"
+      parameters:
+      - name: "sessionId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "204":
+          description: "No Content"
+      x-required-permission: "booking:calendar:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/series/{seriesId}:
+    get:
+      tags:
+      - "booking-series-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:series:read`."
+      operationId: "getSeries"
+      parameters:
+      - name: "seriesId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SeriesResponse"
+      x-required-permission: "booking:series:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/offerings/{offeringId}/availability:
+    get:
+      tags:
+      - "availability-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:read`."
+      operationId: "getAvailability_1"
+      parameters:
+      - name: "offeringId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "from"
+        in: "query"
+        required: true
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "to"
+        in: "query"
+        required: true
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "durationMinutes"
+        in: "query"
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+      - name: "resource"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "partySize"
+        in: "query"
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/AvailabilityPage"
+      x-required-permission: "booking:offering:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/bookings/{bookingId}:
+    get:
+      tags:
+      - "booking-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:booking:read`."
+      operationId: "getBooking"
+      parameters:
+      - name: "bookingId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/BookingResponse"
+      x-required-permission: "booking:booking:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/resources/{resourceId}/exceptions/{exceptionId}:
+    delete:
+      tags:
+      - "calendar-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      operationId: "deleteException"
+      parameters:
+      - name: "resourceId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "exceptionId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+      x-required-permission: "booking:resource:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+  /api/v1/blocks/{blockId}:
+    delete:
+      tags:
+      - "calendar-controller"
+      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+      operationId: "deleteBlock"
+      parameters:
+      - name: "blockId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "204":
+          description: "No Content"
+      x-required-permission: "booking:calendar:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
+components:
+  schemas:
+    GateSettingsRequest:
+      type: "object"
+      properties:
+        allowedOrigins:
+          type: "array"
+          items:
+            type: "string"
+        maxTokenTtlSeconds:
+          type: "integer"
+          format: "int32"
+    GateSettingsResponse:
+      type: "object"
+      properties:
+        allowedOrigins:
+          type: "array"
+          items:
+            type: "string"
+        maxTokenTtlSeconds:
+          type: "integer"
+          format: "int32"
+    PoolRequest:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        capacity:
+          type: "integer"
+          format: "int32"
+    PoolResizeRequest:
+      type: "object"
+      properties:
+        pools:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/PoolRequest"
+    PoolResponse:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        capacity:
+          type: "integer"
+          format: "int32"
+        remaining:
+          type: "integer"
+          format: "int32"
+    SessionResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        seriesId:
+          type: "string"
+          format: "uuid"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        status:
+          type: "string"
+        capacity:
+          type: "integer"
+          format: "int32"
+        pools:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/PoolResponse"
+    WorkingHourRequest:
+      type: "object"
+      properties:
+        weekday:
+          type: "integer"
+          format: "int32"
+        opens:
+          type: "string"
+        closes:
+          type: "string"
+    WorkingHoursReplaceRequest:
+      type: "object"
+      properties:
+        hours:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WorkingHourRequest"
+    WorkingHourResponse:
+      type: "object"
+      properties:
+        weekday:
+          type: "integer"
+          format: "int32"
+        opens:
+          type: "string"
+        closes:
+          type: "string"
+    WorkingHoursResponse:
+      type: "object"
+      properties:
+        hours:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WorkingHourResponse"
+    RequirementRequest:
+      type: "object"
+      properties:
+        slotCode:
+          type: "string"
+        resourceId:
+          type: "string"
+          format: "uuid"
+        groupId:
+          type: "string"
+          format: "uuid"
+    RequirementsReplaceRequest:
+      type: "object"
+      properties:
+        requirements:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/RequirementRequest"
+    RequirementResponse:
+      type: "object"
+      properties:
+        slotCode:
+          type: "string"
+        resourceId:
+          type: "string"
+          format: "uuid"
+        groupId:
+          type: "string"
+          format: "uuid"
+    RequirementsResponse:
+      type: "object"
+      properties:
+        requirements:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/RequirementResponse"
+    CancellationWindowRequest:
+      type: "object"
+      properties:
+        minutesBeforeStart:
+          type: "integer"
+          format: "int32"
+        code:
+          type: "string"
+    CancellationWindowsReplaceRequest:
+      type: "object"
+      properties:
+        windows:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CancellationWindowRequest"
+    CancellationWindowResponse:
+      type: "object"
+      properties:
+        minutesBeforeStart:
+          type: "integer"
+          format: "int32"
+        code:
+          type: "string"
+    CancellationWindowsResponse:
+      type: "object"
+      properties:
+        windows:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CancellationWindowResponse"
+    PublicWaitlistJoin:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        qty:
+          type: "integer"
+          format: "int32"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        resourceId:
+          type: "string"
+          format: "uuid"
+    PublicWaitlistEntry:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+        position:
+          type: "integer"
+          format: "int32"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        offeredBookingId:
+          type: "string"
+          format: "uuid"
+        offeredUntil:
+          type: "string"
+          format: "date-time"
+        createdAt:
+          type: "string"
+          format: "date-time"
+    QueueEntry:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        sessionId:
+          type: "string"
+          format: "uuid"
+    QueueTicketResponse:
+      type: "object"
+      properties:
+        ticketToken:
+          type: "string"
+        retryAfterSeconds:
+          type: "integer"
+          format: "int32"
+    PublicBookingCreate:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        start:
+          type: "string"
+          format: "date-time"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        resourceId:
+          type: "string"
+          format: "uuid"
+        partySize:
+          type: "integer"
+          format: "int32"
+    AssignedResourceResponse:
+      type: "object"
+      properties:
+        slotCode:
+          type: "string"
+        resourceId:
+          type: "string"
+          format: "uuid"
+    PublicBooking:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        status:
+          type: "string"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        offeringKind:
+          type: "string"
+        customerRef:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        source:
+          type: "string"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        resources:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/AssignedResourceResponse"
+        seriesId:
+          type: "string"
+          format: "uuid"
+        holdExpiresAt:
+          type: "string"
+          format: "date-time"
+        extendedSeconds:
+          type: "integer"
+          format: "int32"
+        confirmedAt:
+          type: "string"
+          format: "date-time"
+        cancelledAt:
+          type: "string"
+          format: "date-time"
+        policyCode:
+          type: "string"
+        version:
+          type: "integer"
+          format: "int64"
+    CreateEndpointRequest:
+      type: "object"
+      properties:
+        url:
+          type: "string"
+        description:
+          type: "string"
+        eventTypes:
+          type: "array"
+          items:
+            type: "string"
+    EndpointResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        url:
+          type: "string"
+        eventTypes:
+          type: "array"
+          items:
+            type: "string"
+        status:
+          type: "string"
+        keyId:
+          type: "string"
+        version:
+          type: "integer"
+          format: "int64"
+    EndpointWithSecretResponse:
+      type: "object"
+      properties:
+        endpoint:
+          $ref: "#/components/schemas/EndpointResponse"
+        secret:
+          type: "string"
+    DeliveryResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        endpointId:
+          type: "string"
+        eventId:
+          type: "string"
+        eventType:
+          type: "string"
+        status:
+          type: "string"
+        attempts:
+          type: "integer"
+          format: "int32"
+        lastStatusCode:
+          type: "integer"
+          format: "int32"
+        lastError:
+          type: "string"
+        nextAttemptAt:
+          type: "string"
+          format: "date-time"
+    WaitlistJoinRequest:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        resourceId:
+          type: "string"
+          format: "uuid"
+    WaitlistEntryResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+        position:
+          type: "integer"
+          format: "int32"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        offeredBookingId:
+          type: "string"
+          format: "uuid"
+        offeredUntil:
+          type: "string"
+          format: "date-time"
+        createdAt:
+          type: "string"
+          format: "date-time"
+    SessionSeriesCreateRequest:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        zone:
+          type: "string"
+        dtstart:
+          type: "string"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        capacity:
+          type: "integer"
+          format: "int32"
+        pools:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/PoolRequest"
+    SessionSeriesCreatedResponse:
+      type: "object"
+      properties:
+        series:
+          $ref: "#/components/schemas/SessionSeriesResponse"
+        sessions:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SessionResponse"
+        untouchedSessions:
+          type: "array"
+          items:
+            type: "string"
+            format: "uuid"
+    SessionSeriesResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        zone:
+          type: "string"
+        dtstart:
+          type: "string"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        capacity:
+          type: "integer"
+          format: "int32"
+        pools:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/PoolResponse"
+        version:
+          type: "integer"
+          format: "int64"
+    SeriesCreateRequest:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        zone:
+          type: "string"
+        dtstart:
+          type: "string"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        poolCode:
+          type: "string"
+        mode:
+          type: "string"
+          enum:
+          - "ALL_OR_NOTHING"
+          - "SKIP_CONFLICTS"
+    BookingResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        status:
+          type: "string"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        offeringKind:
+          type: "string"
+        customerRef:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        source:
+          type: "string"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        resources:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/AssignedResourceResponse"
+        seriesId:
+          type: "string"
+          format: "uuid"
+        holdExpiresAt:
+          type: "string"
+          format: "date-time"
+        extendedSeconds:
+          type: "integer"
+          format: "int32"
+        confirmedAt:
+          type: "string"
+          format: "date-time"
+        cancelledAt:
+          type: "string"
+          format: "date-time"
+        policyCode:
+          type: "string"
+        version:
+          type: "integer"
+          format: "int64"
+    SeriesResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        mode:
+          type: "string"
+        status:
+          type: "string"
+        occurrences:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/BookingResponse"
+        skipped:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SkippedOccurrenceResponse"
+        version:
+          type: "integer"
+          format: "int64"
+    SkippedOccurrenceResponse:
+      type: "object"
+      properties:
+        startsAt:
+          type: "string"
+          format: "date-time"
+        reason:
+          type: "string"
+    ResourceCreateRequest:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        name:
+          type: "string"
+        zone:
+          type: "string"
+        seats:
+          type: "integer"
+          format: "int32"
+    ResourceResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        code:
+          type: "string"
+        name:
+          type: "string"
+        zone:
+          type: "string"
+        seats:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+        version:
+          type: "integer"
+          format: "int64"
+    CalendarExceptionCreateRequest:
+      type: "object"
+      properties:
+        fromDate:
+          type: "string"
+          format: "date"
+        toDate:
+          type: "string"
+          format: "date"
+        kind:
+          type: "string"
+        hours:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WorkingHourRequest"
+    CalendarExceptionResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        fromDate:
+          type: "string"
+          format: "date"
+        toDate:
+          type: "string"
+          format: "date"
+        kind:
+          type: "string"
+        hours:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WorkingHourResponse"
+    GroupCreateRequest:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        name:
+          type: "string"
+        strategy:
+          type: "string"
+          enum:
+          - "PRIORITY"
+          - "ROUND_ROBIN"
+          - "LEAST_BUSY"
+          - "FIT_SEATS"
+        maxCombine:
+          type: "integer"
+          format: "int32"
+        members:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/GroupMemberRequest"
+    GroupMemberRequest:
+      type: "object"
+      properties:
+        resourceId:
+          type: "string"
+          format: "uuid"
+        priority:
+          type: "integer"
+          format: "int32"
+    GroupMemberResponse:
+      type: "object"
+      properties:
+        resourceId:
+          type: "string"
+        priority:
+          type: "integer"
+          format: "int32"
+    GroupResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        code:
+          type: "string"
+        name:
+          type: "string"
+        strategy:
+          type: "string"
+        maxCombine:
+          type: "integer"
+          format: "int32"
+        members:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/GroupMemberResponse"
+        version:
+          type: "integer"
+          format: "int64"
+    RecurrencePreviewRequest:
+      type: "object"
+      properties:
+        zone:
+          type: "string"
+        dtstart:
+          type: "string"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        from:
+          type: "string"
+          format: "date-time"
+        to:
+          type: "string"
+          format: "date-time"
+    RecurrencePreviewResponse:
+      type: "object"
+      properties:
+        instants:
+          type: "array"
+          items:
+            type: "string"
+            format: "date-time"
+    OfferingCreateRequest:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        name:
+          type: "string"
+        kind:
+          type: "string"
+          enum:
+          - "INTERVAL"
+          - "CAPACITY"
+        durationMin:
+          type: "integer"
+          format: "int32"
+        durationMax:
+          type: "integer"
+          format: "int32"
+        durationStep:
+          type: "integer"
+          format: "int32"
+        slotStep:
+          type: "integer"
+          format: "int32"
+        bufferBefore:
+          type: "integer"
+          format: "int32"
+        bufferAfter:
+          type: "integer"
+          format: "int32"
+        leadTimeSeconds:
+          type: "integer"
+          format: "int32"
+        horizonDays:
+          type: "integer"
+          format: "int32"
+        holdTtlSeconds:
+          type: "integer"
+          format: "int32"
+        maxQty:
+          type: "integer"
+          format: "int32"
+        publicShowsRemaining:
+          type: "boolean"
+        queueMode:
+          type: "string"
+          enum:
+          - "NONE"
+          - "REQUIRED"
+        admitPerSecond:
+          type: "integer"
+          format: "int32"
+        admitWindowSeconds:
+          type: "integer"
+          format: "int32"
+    OfferingResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        code:
+          type: "string"
+        name:
+          type: "string"
+        kind:
+          type: "string"
+        status:
+          type: "string"
+        durationMin:
+          type: "integer"
+          format: "int32"
+        durationMax:
+          type: "integer"
+          format: "int32"
+        durationStep:
+          type: "integer"
+          format: "int32"
+        slotStep:
+          type: "integer"
+          format: "int32"
+        bufferBefore:
+          type: "integer"
+          format: "int32"
+        bufferAfter:
+          type: "integer"
+          format: "int32"
+        leadTimeSeconds:
+          type: "integer"
+          format: "int32"
+        horizonDays:
+          type: "integer"
+          format: "int32"
+        holdTtlSeconds:
+          type: "integer"
+          format: "int32"
+        maxQty:
+          type: "integer"
+          format: "int32"
+        publicShowsRemaining:
+          type: "boolean"
+        queueMode:
+          type: "string"
+        admitPerSecond:
+          type: "integer"
+          format: "int32"
+        admitWindowSeconds:
+          type: "integer"
+          format: "int32"
+        version:
+          type: "integer"
+          format: "int64"
+        requirements:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/RequirementResponse"
+        cancellationWindows:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CancellationWindowResponse"
+    IssueTokenRequest:
+      type: "object"
+      properties:
+        customerRef:
+          type: "string"
+        scopes:
+          type: "array"
+          items:
+            type: "string"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        ttlSeconds:
+          type: "integer"
+          format: "int32"
+    CustomerTokenResponse:
+      type: "object"
+      properties:
+        token:
+          type: "string"
+        expiresAt:
+          type: "string"
+          format: "date-time"
+        keyId:
+          type: "string"
+    BookingCreateRequest:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        start:
+          type: "string"
+          format: "date-time"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        resourceId:
+          type: "string"
+          format: "uuid"
+        partySize:
+          type: "integer"
+          format: "int32"
+    BookingRescheduleRequest:
+      type: "object"
+      properties:
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        start:
+          type: "string"
+          format: "date-time"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        resourceId:
+          type: "string"
+          format: "uuid"
+    BookingExtendRequest:
+      type: "object"
+      properties:
+        seconds:
+          type: "integer"
+          format: "int32"
+    BlockRequest:
+      type: "object"
+      properties:
+        resourceId:
+          type: "string"
+          format: "uuid"
+        reason:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+    BlockCreatedResponse:
+      type: "object"
+      properties:
+        block:
+          $ref: "#/components/schemas/BlockResponse"
+        overlappingBookings:
+          type: "array"
+          items:
+            type: "string"
+            format: "uuid"
+    BlockResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        resourceId:
+          type: "string"
+          format: "uuid"
+        reason:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+    UpdateEndpointRequest:
+      type: "object"
+      properties:
+        url:
+          type: "string"
+        description:
+          type: "string"
+        eventTypes:
+          type: "array"
+          items:
+            type: "string"
+        status:
+          type: "string"
+    SessionSeriesPatchRequest:
+      type: "object"
+      properties:
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        capacity:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "ARCHIVED"
+    ResourcePatchRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        seats:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+    GroupPatchRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        strategy:
+          type: "string"
+          enum:
+          - "PRIORITY"
+          - "ROUND_ROBIN"
+          - "LEAST_BUSY"
+          - "FIT_SEATS"
+        maxCombine:
+          type: "integer"
+          format: "int32"
+        members:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/GroupMemberRequest"
+    OfferingPatchRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        status:
+          type: "string"
+          enum:
+          - "DRAFT"
+          - "ACTIVE"
+          - "ARCHIVED"
+        durationMin:
+          type: "integer"
+          format: "int32"
+        durationMax:
+          type: "integer"
+          format: "int32"
+        durationStep:
+          type: "integer"
+          format: "int32"
+        slotStep:
+          type: "integer"
+          format: "int32"
+        bufferBefore:
+          type: "integer"
+          format: "int32"
+        bufferAfter:
+          type: "integer"
+          format: "int32"
+        leadTimeSeconds:
+          type: "integer"
+          format: "int32"
+        horizonDays:
+          type: "integer"
+          format: "int32"
+        holdTtlSeconds:
+          type: "integer"
+          format: "int32"
+        maxQty:
+          type: "integer"
+          format: "int32"
+        publicShowsRemaining:
+          type: "boolean"
+        queueMode:
+          type: "string"
+          enum:
+          - "NONE"
+          - "REQUIRED"
+        admitPerSecond:
+          type: "integer"
+          format: "int32"
+        admitWindowSeconds:
+          type: "integer"
+          format: "int32"
+    QueueStatusResponse:
+      type: "object"
+      properties:
+        status:
+          type: "string"
+        position:
+          type: "integer"
+          format: "int32"
+        retryAfterSeconds:
+          type: "integer"
+          format: "int32"
+    PublicOffering:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        kind:
+          type: "string"
+        durationMin:
+          type: "integer"
+          format: "int32"
+        durationMax:
+          type: "integer"
+          format: "int32"
+        durationStep:
+          type: "integer"
+          format: "int32"
+        remaining:
+          type: "integer"
+          format: "int32"
+    PublicAvailability:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/PublicAvailabilitySlot"
+    PublicAvailabilitySlot:
+      type: "object"
+      properties:
+        start:
+          type: "string"
+          format: "date-time"
+        end:
+          type: "string"
+          format: "date-time"
+        resourceIds:
+          type: "array"
+          items:
+            type: "string"
+            format: "uuid"
+    PageEndpointResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/EndpointResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageInfo:
+      type: "object"
+      properties:
+        limit:
+          type: "integer"
+          format: "int32"
+        offset:
+          type:
+          - "integer"
+          - "null"
+          format: "int32"
+        total:
+          type:
+          - "integer"
+          - "null"
+          format: "int64"
+        next_cursor:
+          type:
+          - "string"
+          - "null"
+    PageDeliveryResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DeliveryResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    WaitlistPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WaitlistEntryResponse"
+    GateTimingView:
+      type: "object"
+      properties:
+        holdTtlSeconds:
+          type: "integer"
+          format: "int64"
+        maxExtensionSeconds:
+          type: "integer"
+          format: "int64"
+        graceSeconds:
+          type: "integer"
+          format: "int64"
+        offerWindowSeconds:
+          type: "integer"
+          format: "int64"
+        horizonDays:
+          type: "integer"
+          format: "int64"
+        tokenTtlCapSeconds:
+          type: "integer"
+          format: "int64"
+        rateLimitPerMinute:
+          type: "integer"
+          format: "int32"
+        admissionCap:
+          type: "integer"
+          format: "int32"
+        waitlistCapPerTarget:
+          type: "integer"
+          format: "int32"
+    PageSessionResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SessionResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    SessionSeriesPageResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SessionSeriesResponse"
+    SeriesPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SeriesResponse"
+    PageResourceResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ResourceResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    ExceptionPageResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CalendarExceptionResponse"
+    GroupPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/GroupResponse"
+    PageOfferingResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/OfferingResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    AvailabilityPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/AvailabilitySlotResponse"
+    AvailabilitySlotResponse:
+      type: "object"
+      properties:
+        start:
+          type: "string"
+          format: "date-time"
+        end:
+          type: "string"
+          format: "date-time"
+        resourceIds:
+          type: "array"
+          items:
+            type: "string"
+            format: "uuid"
+    PageBookingResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/BookingResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    BlockPageResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/BlockResponse"
+  securitySchemes:
+    oidc:
+      type: "http"
+      description: "A suite token issued by Platform for this tenant"
+      scheme: "bearer"
+      bearerFormat: "JWT"

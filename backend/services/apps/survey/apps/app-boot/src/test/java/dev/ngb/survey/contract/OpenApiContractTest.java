@@ -3,6 +3,8 @@ package dev.ngb.survey.contract;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
+import dev.ngb.core.openapi.CallerLabelRules;
+import dev.ngb.core.openapi.CallerOpenApiSplitter;
 import dev.ngb.survey.shared.SurveyPermissions;
 import dev.ngb.survey.support.RepositoryPaths;
 import dev.ngb.survey.support.SurveyIntegrationTest;
@@ -38,6 +40,12 @@ class OpenApiContractTest extends SurveyIntegrationTest {
         String generated = mvc.perform(get("/v3/api-docs.yaml"))
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         assertThat(generated).startsWith("openapi:");
+        CallerLabelRules.check(generated, false);
+        CallerOpenApiSplitter.writeOrVerify(
+                generated,
+                RepositoryPaths.repositoryRoot().resolve("contracts/openapi"),
+                "survey",
+                Boolean.getBoolean("openapi.update"));
 
         Path file = RepositoryPaths.repositoryRoot().resolve(CONTRACT);
         if (Boolean.getBoolean("openapi.update")) {

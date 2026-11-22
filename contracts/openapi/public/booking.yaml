@@ -1,0 +1,1620 @@
+---
+openapi: "3.1.0"
+info:
+  title: "Booking API"
+  description: "The API a Tenant System uses to build versioned bookings, issue links\
+    \ and read what came back, plus the public endpoints a respondent's browser calls\
+    \ without credentials."
+  version: "v1"
+servers:
+- url: "/booking"
+  description: "Any tenant hostname: <tenant-code>.<base-domain>/booking"
+paths:
+  /p/waitlist:
+    post:
+      tags:
+      - "public-controller"
+      description: "Callers: public."
+      operationId: "joinWaitlist"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicWaitlistJoin"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PublicWaitlistEntry"
+      x-allowed-callers:
+      - "public"
+  /p/queue:
+    post:
+      tags:
+      - "public-controller"
+      description: "Callers: public."
+      operationId: "enterQueue"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueueEntry"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/QueueTicketResponse"
+      x-allowed-callers:
+      - "public"
+    delete:
+      tags:
+      - "public-controller"
+      description: "Callers: public."
+      operationId: "leaveQueue"
+      responses:
+        "200":
+          description: "OK"
+      x-allowed-callers:
+      - "public"
+  /p/bookings:
+    post:
+      tags:
+      - "public-controller"
+      description: "Callers: public."
+      operationId: "hold"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PublicBookingCreate"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PublicBooking"
+      x-allowed-callers:
+      - "public"
+  /p/waitlist/{entryId}:
+    get:
+      tags:
+      - "public-controller"
+      description: "Callers: public."
+      operationId: "getWaitlistEntry"
+      parameters:
+      - name: "entryId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PublicWaitlistEntry"
+      x-allowed-callers:
+      - "public"
+    delete:
+      tags:
+      - "public-controller"
+      description: "Callers: public."
+      operationId: "leaveWaitlist"
+      parameters:
+      - name: "entryId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+      x-allowed-callers:
+      - "public"
+  /p/queue/status:
+    get:
+      tags:
+      - "public-controller"
+      description: "Callers: public."
+      operationId: "queueStatus"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/QueueStatusResponse"
+      x-allowed-callers:
+      - "public"
+  /p/offerings/{offeringId}:
+    get:
+      tags:
+      - "public-controller"
+      description: "Callers: public."
+      operationId: "getOffering_1"
+      parameters:
+      - name: "offeringId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PublicOffering"
+      x-allowed-callers:
+      - "public"
+  /p/offerings/{offeringId}/availability:
+    get:
+      tags:
+      - "public-controller"
+      description: "Callers: public."
+      operationId: "getAvailability"
+      parameters:
+      - name: "offeringId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "from"
+        in: "query"
+        required: true
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "to"
+        in: "query"
+        required: true
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "durationMinutes"
+        in: "query"
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+      - name: "resource"
+        in: "query"
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "partySize"
+        in: "query"
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PublicAvailability"
+      x-allowed-callers:
+      - "public"
+  /p/bookings/{bookingId}:
+    delete:
+      tags:
+      - "public-controller"
+      description: "Callers: public."
+      operationId: "release"
+      parameters:
+      - name: "bookingId"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+          format: "uuid"
+      responses:
+        "200":
+          description: "OK"
+      x-allowed-callers:
+      - "public"
+components:
+  schemas:
+    GateSettingsRequest:
+      type: "object"
+      properties:
+        allowedOrigins:
+          type: "array"
+          items:
+            type: "string"
+        maxTokenTtlSeconds:
+          type: "integer"
+          format: "int32"
+    GateSettingsResponse:
+      type: "object"
+      properties:
+        allowedOrigins:
+          type: "array"
+          items:
+            type: "string"
+        maxTokenTtlSeconds:
+          type: "integer"
+          format: "int32"
+    PoolRequest:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        capacity:
+          type: "integer"
+          format: "int32"
+    PoolResizeRequest:
+      type: "object"
+      properties:
+        pools:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/PoolRequest"
+    PoolResponse:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        capacity:
+          type: "integer"
+          format: "int32"
+        remaining:
+          type: "integer"
+          format: "int32"
+    SessionResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        seriesId:
+          type: "string"
+          format: "uuid"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        status:
+          type: "string"
+        capacity:
+          type: "integer"
+          format: "int32"
+        pools:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/PoolResponse"
+    WorkingHourRequest:
+      type: "object"
+      properties:
+        weekday:
+          type: "integer"
+          format: "int32"
+        opens:
+          type: "string"
+        closes:
+          type: "string"
+    WorkingHoursReplaceRequest:
+      type: "object"
+      properties:
+        hours:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WorkingHourRequest"
+    WorkingHourResponse:
+      type: "object"
+      properties:
+        weekday:
+          type: "integer"
+          format: "int32"
+        opens:
+          type: "string"
+        closes:
+          type: "string"
+    WorkingHoursResponse:
+      type: "object"
+      properties:
+        hours:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WorkingHourResponse"
+    RequirementRequest:
+      type: "object"
+      properties:
+        slotCode:
+          type: "string"
+        resourceId:
+          type: "string"
+          format: "uuid"
+        groupId:
+          type: "string"
+          format: "uuid"
+    RequirementsReplaceRequest:
+      type: "object"
+      properties:
+        requirements:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/RequirementRequest"
+    RequirementResponse:
+      type: "object"
+      properties:
+        slotCode:
+          type: "string"
+        resourceId:
+          type: "string"
+          format: "uuid"
+        groupId:
+          type: "string"
+          format: "uuid"
+    RequirementsResponse:
+      type: "object"
+      properties:
+        requirements:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/RequirementResponse"
+    CancellationWindowRequest:
+      type: "object"
+      properties:
+        minutesBeforeStart:
+          type: "integer"
+          format: "int32"
+        code:
+          type: "string"
+    CancellationWindowsReplaceRequest:
+      type: "object"
+      properties:
+        windows:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CancellationWindowRequest"
+    CancellationWindowResponse:
+      type: "object"
+      properties:
+        minutesBeforeStart:
+          type: "integer"
+          format: "int32"
+        code:
+          type: "string"
+    CancellationWindowsResponse:
+      type: "object"
+      properties:
+        windows:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CancellationWindowResponse"
+    PublicWaitlistJoin:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        qty:
+          type: "integer"
+          format: "int32"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        resourceId:
+          type: "string"
+          format: "uuid"
+    PublicWaitlistEntry:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+        position:
+          type: "integer"
+          format: "int32"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        offeredBookingId:
+          type: "string"
+          format: "uuid"
+        offeredUntil:
+          type: "string"
+          format: "date-time"
+        createdAt:
+          type: "string"
+          format: "date-time"
+    QueueEntry:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        sessionId:
+          type: "string"
+          format: "uuid"
+    QueueTicketResponse:
+      type: "object"
+      properties:
+        ticketToken:
+          type: "string"
+        retryAfterSeconds:
+          type: "integer"
+          format: "int32"
+    PublicBookingCreate:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        start:
+          type: "string"
+          format: "date-time"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        resourceId:
+          type: "string"
+          format: "uuid"
+        partySize:
+          type: "integer"
+          format: "int32"
+    AssignedResourceResponse:
+      type: "object"
+      properties:
+        slotCode:
+          type: "string"
+        resourceId:
+          type: "string"
+          format: "uuid"
+    PublicBooking:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        status:
+          type: "string"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        offeringKind:
+          type: "string"
+        customerRef:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        source:
+          type: "string"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        resources:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/AssignedResourceResponse"
+        seriesId:
+          type: "string"
+          format: "uuid"
+        holdExpiresAt:
+          type: "string"
+          format: "date-time"
+        extendedSeconds:
+          type: "integer"
+          format: "int32"
+        confirmedAt:
+          type: "string"
+          format: "date-time"
+        cancelledAt:
+          type: "string"
+          format: "date-time"
+        policyCode:
+          type: "string"
+        version:
+          type: "integer"
+          format: "int64"
+    CreateEndpointRequest:
+      type: "object"
+      properties:
+        url:
+          type: "string"
+        description:
+          type: "string"
+        eventTypes:
+          type: "array"
+          items:
+            type: "string"
+    EndpointResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        url:
+          type: "string"
+        eventTypes:
+          type: "array"
+          items:
+            type: "string"
+        status:
+          type: "string"
+        keyId:
+          type: "string"
+        version:
+          type: "integer"
+          format: "int64"
+    EndpointWithSecretResponse:
+      type: "object"
+      properties:
+        endpoint:
+          $ref: "#/components/schemas/EndpointResponse"
+        secret:
+          type: "string"
+    DeliveryResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        endpointId:
+          type: "string"
+        eventId:
+          type: "string"
+        eventType:
+          type: "string"
+        status:
+          type: "string"
+        attempts:
+          type: "integer"
+          format: "int32"
+        lastStatusCode:
+          type: "integer"
+          format: "int32"
+        lastError:
+          type: "string"
+        nextAttemptAt:
+          type: "string"
+          format: "date-time"
+    WaitlistJoinRequest:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        resourceId:
+          type: "string"
+          format: "uuid"
+    WaitlistEntryResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+        position:
+          type: "integer"
+          format: "int32"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        offeredBookingId:
+          type: "string"
+          format: "uuid"
+        offeredUntil:
+          type: "string"
+          format: "date-time"
+        createdAt:
+          type: "string"
+          format: "date-time"
+    SessionSeriesCreateRequest:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        zone:
+          type: "string"
+        dtstart:
+          type: "string"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        capacity:
+          type: "integer"
+          format: "int32"
+        pools:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/PoolRequest"
+    SessionSeriesCreatedResponse:
+      type: "object"
+      properties:
+        series:
+          $ref: "#/components/schemas/SessionSeriesResponse"
+        sessions:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SessionResponse"
+        untouchedSessions:
+          type: "array"
+          items:
+            type: "string"
+            format: "uuid"
+    SessionSeriesResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        zone:
+          type: "string"
+        dtstart:
+          type: "string"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        capacity:
+          type: "integer"
+          format: "int32"
+        pools:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/PoolResponse"
+        version:
+          type: "integer"
+          format: "int64"
+    SeriesCreateRequest:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        zone:
+          type: "string"
+        dtstart:
+          type: "string"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        poolCode:
+          type: "string"
+        mode:
+          type: "string"
+          enum:
+          - "ALL_OR_NOTHING"
+          - "SKIP_CONFLICTS"
+    BookingResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        status:
+          type: "string"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        offeringKind:
+          type: "string"
+        customerRef:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        source:
+          type: "string"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        resources:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/AssignedResourceResponse"
+        seriesId:
+          type: "string"
+          format: "uuid"
+        holdExpiresAt:
+          type: "string"
+          format: "date-time"
+        extendedSeconds:
+          type: "integer"
+          format: "int32"
+        confirmedAt:
+          type: "string"
+          format: "date-time"
+        cancelledAt:
+          type: "string"
+          format: "date-time"
+        policyCode:
+          type: "string"
+        version:
+          type: "integer"
+          format: "int64"
+    SeriesResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        mode:
+          type: "string"
+        status:
+          type: "string"
+        occurrences:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/BookingResponse"
+        skipped:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SkippedOccurrenceResponse"
+        version:
+          type: "integer"
+          format: "int64"
+    SkippedOccurrenceResponse:
+      type: "object"
+      properties:
+        startsAt:
+          type: "string"
+          format: "date-time"
+        reason:
+          type: "string"
+    ResourceCreateRequest:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        name:
+          type: "string"
+        zone:
+          type: "string"
+        seats:
+          type: "integer"
+          format: "int32"
+    ResourceResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        code:
+          type: "string"
+        name:
+          type: "string"
+        zone:
+          type: "string"
+        seats:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+        version:
+          type: "integer"
+          format: "int64"
+    CalendarExceptionCreateRequest:
+      type: "object"
+      properties:
+        fromDate:
+          type: "string"
+          format: "date"
+        toDate:
+          type: "string"
+          format: "date"
+        kind:
+          type: "string"
+        hours:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WorkingHourRequest"
+    CalendarExceptionResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        fromDate:
+          type: "string"
+          format: "date"
+        toDate:
+          type: "string"
+          format: "date"
+        kind:
+          type: "string"
+        hours:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WorkingHourResponse"
+    GroupCreateRequest:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        name:
+          type: "string"
+        strategy:
+          type: "string"
+          enum:
+          - "PRIORITY"
+          - "ROUND_ROBIN"
+          - "LEAST_BUSY"
+          - "FIT_SEATS"
+        maxCombine:
+          type: "integer"
+          format: "int32"
+        members:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/GroupMemberRequest"
+    GroupMemberRequest:
+      type: "object"
+      properties:
+        resourceId:
+          type: "string"
+          format: "uuid"
+        priority:
+          type: "integer"
+          format: "int32"
+    GroupMemberResponse:
+      type: "object"
+      properties:
+        resourceId:
+          type: "string"
+        priority:
+          type: "integer"
+          format: "int32"
+    GroupResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        code:
+          type: "string"
+        name:
+          type: "string"
+        strategy:
+          type: "string"
+        maxCombine:
+          type: "integer"
+          format: "int32"
+        members:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/GroupMemberResponse"
+        version:
+          type: "integer"
+          format: "int64"
+    RecurrencePreviewRequest:
+      type: "object"
+      properties:
+        zone:
+          type: "string"
+        dtstart:
+          type: "string"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        from:
+          type: "string"
+          format: "date-time"
+        to:
+          type: "string"
+          format: "date-time"
+    RecurrencePreviewResponse:
+      type: "object"
+      properties:
+        instants:
+          type: "array"
+          items:
+            type: "string"
+            format: "date-time"
+    OfferingCreateRequest:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        name:
+          type: "string"
+        kind:
+          type: "string"
+          enum:
+          - "INTERVAL"
+          - "CAPACITY"
+        durationMin:
+          type: "integer"
+          format: "int32"
+        durationMax:
+          type: "integer"
+          format: "int32"
+        durationStep:
+          type: "integer"
+          format: "int32"
+        slotStep:
+          type: "integer"
+          format: "int32"
+        bufferBefore:
+          type: "integer"
+          format: "int32"
+        bufferAfter:
+          type: "integer"
+          format: "int32"
+        leadTimeSeconds:
+          type: "integer"
+          format: "int32"
+        horizonDays:
+          type: "integer"
+          format: "int32"
+        holdTtlSeconds:
+          type: "integer"
+          format: "int32"
+        maxQty:
+          type: "integer"
+          format: "int32"
+        publicShowsRemaining:
+          type: "boolean"
+        queueMode:
+          type: "string"
+          enum:
+          - "NONE"
+          - "REQUIRED"
+        admitPerSecond:
+          type: "integer"
+          format: "int32"
+        admitWindowSeconds:
+          type: "integer"
+          format: "int32"
+    OfferingResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        code:
+          type: "string"
+        name:
+          type: "string"
+        kind:
+          type: "string"
+        status:
+          type: "string"
+        durationMin:
+          type: "integer"
+          format: "int32"
+        durationMax:
+          type: "integer"
+          format: "int32"
+        durationStep:
+          type: "integer"
+          format: "int32"
+        slotStep:
+          type: "integer"
+          format: "int32"
+        bufferBefore:
+          type: "integer"
+          format: "int32"
+        bufferAfter:
+          type: "integer"
+          format: "int32"
+        leadTimeSeconds:
+          type: "integer"
+          format: "int32"
+        horizonDays:
+          type: "integer"
+          format: "int32"
+        holdTtlSeconds:
+          type: "integer"
+          format: "int32"
+        maxQty:
+          type: "integer"
+          format: "int32"
+        publicShowsRemaining:
+          type: "boolean"
+        queueMode:
+          type: "string"
+        admitPerSecond:
+          type: "integer"
+          format: "int32"
+        admitWindowSeconds:
+          type: "integer"
+          format: "int32"
+        version:
+          type: "integer"
+          format: "int64"
+        requirements:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/RequirementResponse"
+        cancellationWindows:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CancellationWindowResponse"
+    IssueTokenRequest:
+      type: "object"
+      properties:
+        customerRef:
+          type: "string"
+        scopes:
+          type: "array"
+          items:
+            type: "string"
+        offeringId:
+          type: "string"
+          format: "uuid"
+        ttlSeconds:
+          type: "integer"
+          format: "int32"
+    CustomerTokenResponse:
+      type: "object"
+      properties:
+        token:
+          type: "string"
+        expiresAt:
+          type: "string"
+          format: "date-time"
+        keyId:
+          type: "string"
+    BookingCreateRequest:
+      type: "object"
+      properties:
+        offeringId:
+          type: "string"
+          format: "uuid"
+        customerRef:
+          type: "string"
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        qty:
+          type: "integer"
+          format: "int32"
+        start:
+          type: "string"
+          format: "date-time"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        resourceId:
+          type: "string"
+          format: "uuid"
+        partySize:
+          type: "integer"
+          format: "int32"
+    BookingRescheduleRequest:
+      type: "object"
+      properties:
+        sessionId:
+          type: "string"
+          format: "uuid"
+        poolCode:
+          type: "string"
+        start:
+          type: "string"
+          format: "date-time"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        resourceId:
+          type: "string"
+          format: "uuid"
+    BookingExtendRequest:
+      type: "object"
+      properties:
+        seconds:
+          type: "integer"
+          format: "int32"
+    BlockRequest:
+      type: "object"
+      properties:
+        resourceId:
+          type: "string"
+          format: "uuid"
+        reason:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+    BlockCreatedResponse:
+      type: "object"
+      properties:
+        block:
+          $ref: "#/components/schemas/BlockResponse"
+        overlappingBookings:
+          type: "array"
+          items:
+            type: "string"
+            format: "uuid"
+    BlockResponse:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        resourceId:
+          type: "string"
+          format: "uuid"
+        reason:
+          type: "string"
+        startsAt:
+          type: "string"
+          format: "date-time"
+        endsAt:
+          type: "string"
+          format: "date-time"
+        rule:
+          type: "array"
+          items:
+            type: "string"
+    UpdateEndpointRequest:
+      type: "object"
+      properties:
+        url:
+          type: "string"
+        description:
+          type: "string"
+        eventTypes:
+          type: "array"
+          items:
+            type: "string"
+        status:
+          type: "string"
+    SessionSeriesPatchRequest:
+      type: "object"
+      properties:
+        rule:
+          type: "array"
+          items:
+            type: "string"
+        durationMinutes:
+          type: "integer"
+          format: "int32"
+        capacity:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "ARCHIVED"
+    ResourcePatchRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        seats:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+    GroupPatchRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        strategy:
+          type: "string"
+          enum:
+          - "PRIORITY"
+          - "ROUND_ROBIN"
+          - "LEAST_BUSY"
+          - "FIT_SEATS"
+        maxCombine:
+          type: "integer"
+          format: "int32"
+        members:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/GroupMemberRequest"
+    OfferingPatchRequest:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+        status:
+          type: "string"
+          enum:
+          - "DRAFT"
+          - "ACTIVE"
+          - "ARCHIVED"
+        durationMin:
+          type: "integer"
+          format: "int32"
+        durationMax:
+          type: "integer"
+          format: "int32"
+        durationStep:
+          type: "integer"
+          format: "int32"
+        slotStep:
+          type: "integer"
+          format: "int32"
+        bufferBefore:
+          type: "integer"
+          format: "int32"
+        bufferAfter:
+          type: "integer"
+          format: "int32"
+        leadTimeSeconds:
+          type: "integer"
+          format: "int32"
+        horizonDays:
+          type: "integer"
+          format: "int32"
+        holdTtlSeconds:
+          type: "integer"
+          format: "int32"
+        maxQty:
+          type: "integer"
+          format: "int32"
+        publicShowsRemaining:
+          type: "boolean"
+        queueMode:
+          type: "string"
+          enum:
+          - "NONE"
+          - "REQUIRED"
+        admitPerSecond:
+          type: "integer"
+          format: "int32"
+        admitWindowSeconds:
+          type: "integer"
+          format: "int32"
+    QueueStatusResponse:
+      type: "object"
+      properties:
+        status:
+          type: "string"
+        position:
+          type: "integer"
+          format: "int32"
+        retryAfterSeconds:
+          type: "integer"
+          format: "int32"
+    PublicOffering:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+        kind:
+          type: "string"
+        durationMin:
+          type: "integer"
+          format: "int32"
+        durationMax:
+          type: "integer"
+          format: "int32"
+        durationStep:
+          type: "integer"
+          format: "int32"
+        remaining:
+          type: "integer"
+          format: "int32"
+    PublicAvailability:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/PublicAvailabilitySlot"
+    PublicAvailabilitySlot:
+      type: "object"
+      properties:
+        start:
+          type: "string"
+          format: "date-time"
+        end:
+          type: "string"
+          format: "date-time"
+        resourceIds:
+          type: "array"
+          items:
+            type: "string"
+            format: "uuid"
+    PageEndpointResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/EndpointResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    PageInfo:
+      type: "object"
+      properties:
+        limit:
+          type: "integer"
+          format: "int32"
+        offset:
+          type:
+          - "integer"
+          - "null"
+          format: "int32"
+        total:
+          type:
+          - "integer"
+          - "null"
+          format: "int64"
+        next_cursor:
+          type:
+          - "string"
+          - "null"
+    PageDeliveryResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/DeliveryResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    WaitlistPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/WaitlistEntryResponse"
+    GateTimingView:
+      type: "object"
+      properties:
+        holdTtlSeconds:
+          type: "integer"
+          format: "int64"
+        maxExtensionSeconds:
+          type: "integer"
+          format: "int64"
+        graceSeconds:
+          type: "integer"
+          format: "int64"
+        offerWindowSeconds:
+          type: "integer"
+          format: "int64"
+        horizonDays:
+          type: "integer"
+          format: "int64"
+        tokenTtlCapSeconds:
+          type: "integer"
+          format: "int64"
+        rateLimitPerMinute:
+          type: "integer"
+          format: "int32"
+        admissionCap:
+          type: "integer"
+          format: "int32"
+        waitlistCapPerTarget:
+          type: "integer"
+          format: "int32"
+    PageSessionResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SessionResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    SessionSeriesPageResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SessionSeriesResponse"
+    SeriesPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SeriesResponse"
+    PageResourceResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ResourceResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    ExceptionPageResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/CalendarExceptionResponse"
+    GroupPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/GroupResponse"
+    PageOfferingResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/OfferingResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    AvailabilityPage:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/AvailabilitySlotResponse"
+    AvailabilitySlotResponse:
+      type: "object"
+      properties:
+        start:
+          type: "string"
+          format: "date-time"
+        end:
+          type: "string"
+          format: "date-time"
+        resourceIds:
+          type: "array"
+          items:
+            type: "string"
+            format: "uuid"
+    PageBookingResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/BookingResponse"
+        page:
+          oneOf:
+          - $ref: "#/components/schemas/PageInfo"
+          - type: "null"
+    BlockPageResponse:
+      type: "object"
+      properties:
+        data:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/BlockResponse"
+  securitySchemes:
+    oidc:
+      type: "http"
+      description: "A suite token issued by Platform for this tenant"
+      scheme: "bearer"
+      bearerFormat: "JWT"
