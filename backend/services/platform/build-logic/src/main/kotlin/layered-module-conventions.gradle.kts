@@ -50,6 +50,8 @@ dependencies {
     // Lets an adapter-side package-info.java declare the module's `api` package a Spring Modulith
     // named interface without putting a framework annotation into the plain-Java application layer.
     add(adapter.implementationConfigurationName, catalog.findLibrary("spring-modulith-api").get())
+    // Controllers name and describe their operations with @Operation, which springdoc reads into the OpenAPI document.
+    add(adapter.implementationConfigurationName, catalog.findLibrary("swagger-annotations").get())
 }
 
 // Test configurations inherit the adapter's framework dependencies so adapter tests compile.

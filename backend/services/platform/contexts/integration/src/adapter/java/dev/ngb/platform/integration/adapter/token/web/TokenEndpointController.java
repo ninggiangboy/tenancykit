@@ -6,6 +6,8 @@ import dev.ngb.platform.integration.application.auth.exception.RateLimitExceeded
 import dev.ngb.platform.integration.application.token.command.IssueTokenUseCase;
 import dev.ngb.platform.integration.application.token.port.AudienceCatalog;
 import dev.ngb.platform.integration.application.token.port.TokenIssuer;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -24,6 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
  * The client-credentials grant. Client authentication is HTTP Basic; a wrong secret answers 401 with no detail, so
  * the endpoint never says which half was wrong.
  */
+@Tag(
+        name = "Access tokens",
+        description =
+                "The OAuth client-credentials grant a Tenant System or service client exchanges its credential for a "
+                + "token.")
 @RestController
 class TokenEndpointController {
 
@@ -37,6 +44,15 @@ class TokenEndpointController {
         this.audiences = audiences;
     }
 
+    @Operation(
+            summary = "Get an access token with client credentials",
+            description =
+                    "The OAuth client-credentials grant for Tenant Systems and service clients. Authenticate with HTTP "
+                    + "Basic using the credential's id and secret, send `grant_type=client_credentials` and the `audience` "
+                    + "of the app to call as a form, and receive a short-lived `Bearer` token (`access_token`, "
+                    + "`token_type`, `expires_in`). An unsupported grant or audience answers `400`; a missing or wrong "
+                    + "credential answers `401` with no detail on which half was wrong; too many attempts answer `429` with "
+                    + "`Retry-After`. Public: no token is needed.")
     @PostMapping(path = "/oauth/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @PublicEndpoint
     ResponseEntity<Map<String, Object>> token(

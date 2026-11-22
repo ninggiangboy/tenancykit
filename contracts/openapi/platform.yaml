@@ -5,69 +5,145 @@ info:
 servers:
 - url: /
   description: "The Platform hostname, e.g. platform.<base-domain>"
+tags:
+- name: Users
+  description: "Platform administration of users: create, enable, disable, rename\
+    \ and grant direct permissions."
+- name: Tenant provisioning
+  description: Creates a tenant together with its Tenant Administrator role and first
+    administrator in one call.
+- name: Roles
+  description: "Platform administration of roles: their permissions, names and assignment\
+    \ to users."
+- name: Tenants
+  description: "Platform administration of tenants: list, rename, deactivate and map\
+    \ hostnames."
+- name: Tenant systems
+  description: "A tenant's machine callers and the API credentials they authenticate\
+    \ with: issue, rotate and revoke."
+- name: Signing keys
+  description: "The public halves of the keys Platform signs suite tokens with, so\
+    \ every app can verify a token."
+- name: Console feed
+  description: "The feed a console shell reads on load: the UI remotes the caller\
+    \ may mount."
+- name: App entitlements
+  description: Which apps of the suite each tenant may use.
+- name: UI remotes
+  description: "The console's UI remote registry: CI registers versions; an operator\
+    \ enables, disables and activates them."
+- name: Replica snapshots
+  description: "Internal paged snapshots of Platform state that a replica rebuilds\
+    \ from, merged with live change events."
+- name: Current user
+  description: The signed-in user and the permissions they hold across the suite.
+- name: Access tokens
+  description: The OAuth client-credentials grant a Tenant System or service client
+    exchanges its credential for a token.
 paths:
   /api/v1/users/{id}/permissions/{code}:
     put:
       tags:
-      - user-controller
+      - Users
+      summary: Grant or revoke a direct permission
+      description: "Grants (`grant=true`) or revokes (`grant=false`) one permission\
+        \ `code` directly on the user, outside any role. Each effective change is\
+        \ audited. Pass the user's `ETag` in `If-Match`; a stale version is refused.\
+        \ Requires `platform:user:manage`."
       operationId: setPermission
       parameters:
       - name: id
         in: path
+        description: The id of the user.
         required: true
         schema:
           type: string
           format: uuid
       - name: code
         in: path
+        description: "The permission code, such as `platform:tenant:read`."
         required: true
         schema:
           type: string
       - name: grant
         in: query
+        description: "`true` to grant the permission to the user, `false` to revoke\
+          \ it."
         required: true
         schema:
           type: boolean
       - name: If-Match
         in: header
+        description: The `ETag` of the version the caller last read. The change is
+          refused with `412` when the resource has moved on since.
         required: false
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       responses:
         "200":
-          description: OK
+          description: A user of the suite.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: The permission code is not in the catalog.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:user:manage
   /api/v1/ui-remotes/{name}:
     put:
       tags:
-      - ui-remote-controller
+      - UI remotes
+      summary: Change a UI remote
+      description: "The operator's one write on a remote: enable or disable it, point\
+        \ it at a registered version with `activeVersion` (a rollback is the same\
+        \ call with an older version), and edit its `title` and `navOrder`. `enabled`\
+        \ is required. Pass the remote's `ETag` in `If-Match`; a stale version is\
+        \ refused. Requires `platform:ui-remote:manage`."
       operationId: setState
       parameters:
       - name: name
         in: path
+        description: The name of the UI remote.
         required: true
         schema:
           type: string
       - name: If-Match
         in: header
+        description: The `ETag` of the version the caller last read. The change is
+          refused with `412` when the resource has moved on since.
         required: false
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: The change an operator makes to a remote.
         content:
           application/json:
             schema:
@@ -75,40 +151,62 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: A UI remote of the console and its registered versions.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/RemoteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: platform:ui-remote:manage
   /api/v1/tenants/{tenantId}/apps/{appCode}:
     put:
       tags:
-      - entitlement-controller
+      - App entitlements
+      summary: Enable or disable an app for a tenant
+      description: Sets whether the Tenant may use the app `appCode`. Setting the
+        state it already has changes nothing and publishes nothing; the audit entry
+        names the action asked for. `enabled` is required. Pass the entitlement's
+        `ETag` in `If-Match`; a stale version is refused. Requires `platform:entitlement:manage`.
       operationId: set
       parameters:
       - name: tenantId
         in: path
+        description: The id of the tenant.
         required: true
         schema:
           type: string
           format: uuid
       - name: appCode
         in: path
+        description: "The code of the app, such as `billing`."
         required: true
         schema:
           type: string
       - name: If-Match
         in: header
+        description: The `ETag` of the version the caller last read. The change is
+          refused with `412` when the resource has moved on since.
         required: false
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: The state to set.
         content:
           application/json:
             schema:
@@ -116,35 +214,61 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: A tenant's entitlement to one app.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/EntitlementResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: The app code is not one of the suite's apps.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:entitlement:manage
   /api/v1/tenants/{id}:
     put:
       tags:
-      - tenant-controller
+      - Tenants
+      summary: Rename a tenant
+      description: Changes the Tenant's display name; its code does not change. The
+        version is bumped and the new state is published. Pass the tenant's `ETag`
+        in `If-Match`; a stale version is refused. Requires `platform:tenant:rename`.
       operationId: rename
       parameters:
       - name: id
         in: path
+        description: The id of the tenant.
         required: true
         schema:
           type: string
           format: uuid
       - name: If-Match
         in: header
+        description: The `ETag` of the version the caller last read. The change is
+          refused with `412` when the resource has moved on since.
         required: false
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: The new name.
         content:
           application/json:
             schema:
@@ -152,52 +276,83 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: A tenant of the suite.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/TenantResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: platform:tenant:rename
   /api/v1/tenant-systems/{id}:
     get:
       tags:
-      - tenant-system-controller
+      - Tenant systems
+      summary: Get a tenant system
+      description: "Returns one Tenant System of the current Tenant with its purpose,\
+        \ status and version; the version is also the response's `ETag`. An unknown\
+        \ id answers `404`. Requires `platform:tenant-system:read`."
       operationId: get
       parameters:
       - name: id
         in: path
+        description: The id of the tenant system.
         required: true
         schema:
           type: string
       responses:
         "200":
-          description: OK
+          description: "A tenant system: a machine caller of one tenant."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/SystemResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: platform:tenant-system:read
     put:
       tags:
-      - tenant-system-controller
+      - Tenant systems
+      summary: Rename or disable a tenant system
+      description: "Applies one `action` to the system: `RENAME` with the new `name`,\
+        \ or `DISABLE`. Each change publishes the system's state. Pass the system's\
+        \ `ETag` in `If-Match`; a stale version is refused. Requires `platform:tenant-system:manage`."
       operationId: update
       parameters:
       - name: id
         in: path
+        description: The id of the tenant system.
         required: true
         schema:
           type: string
       - name: If-Match
         in: header
+        description: The `ETag` of the version the caller last read. The change is
+          refused with `412` when the resource has moved on since.
         required: false
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: The change to apply to a tenant system.
         content:
           application/json:
             schema:
@@ -205,35 +360,54 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: "A tenant system: a machine caller of one tenant."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/SystemResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: platform:tenant-system:manage
   /api/v1/roles/{id}:
     put:
       tags:
-      - role-controller
+      - Roles
+      summary: Rename a role
+      description: Changes the role's name. Pass the role's `ETag` in `If-Match`;
+        a stale version is refused. Requires `platform:role:manage`.
       operationId: rename_1
       parameters:
       - name: id
         in: path
+        description: The id of the role.
         required: true
         schema:
           type: string
           format: uuid
       - name: If-Match
         in: header
+        description: The `ETag` of the version the caller last read. The change is
+          refused with `412` when the resource has moved on since.
         required: false
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: The new name.
         content:
           application/json:
             schema:
@@ -241,35 +415,55 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: A role and the permissions it grants.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/RoleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: platform:role:manage
   /api/v1/roles/{id}/permissions:
     put:
       tags:
-      - role-controller
+      - Roles
+      summary: Replace a role's permissions
+      description: Replaces the role's whole permission set with `permissions`. Every
+        holder of the role has its effective access recomputed. Pass the role's `ETag`
+        in `If-Match`; a stale version is refused. Requires `platform:role:manage`.
       operationId: replacePermissions
       parameters:
       - name: id
         in: path
+        description: The id of the role.
         required: true
         schema:
           type: string
           format: uuid
       - name: If-Match
         in: header
+        description: The `ETag` of the version the caller last read. The change is
+          refused with `412` when the resource has moved on since.
         required: false
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: "The role's new permission set, replacing the stored one."
         content:
           application/json:
             schema:
@@ -277,29 +471,59 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: A role and the permissions it grants.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/RoleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: A permission code is not in the catalog.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:role:manage
   /oauth/token:
     post:
       tags:
-      - token-endpoint-controller
+      - Access tokens
+      summary: Get an access token with client credentials
+      description: "The OAuth client-credentials grant for Tenant Systems and service\
+        \ clients. Authenticate with HTTP Basic using the credential's id and secret,\
+        \ send `grant_type=client_credentials` and the `audience` of the app to call\
+        \ as a form, and receive a short-lived `Bearer` token (`access_token`, `token_type`,\
+        \ `expires_in`). An unsupported grant or audience answers `400`; a missing\
+        \ or wrong credential answers `401` with no detail on which half was wrong;\
+        \ too many attempts answer `429` with `Retry-After`. Public: no token is needed."
       operationId: token
       parameters:
       - name: Authorization
         in: header
+        description: "The credential of the Tenant System: `Basic` followed by the\
+          \ base64 of `clientId:secret`."
         required: false
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: "The token request, sent as an `application/x-www-form-urlencoded`\
+          \ form."
         content:
           application/x-www-form-urlencoded:
             schema:
@@ -307,8 +531,11 @@ paths:
               properties:
                 grant_type:
                   type: string
+                  description: The grant type. It must be `client_credentials`.
                 audience:
                   type: string
+                  description: The app the token is for. An audience the suite does
+                    not offer answers `400`.
               required:
               - audience
               - grant_type
@@ -320,21 +547,36 @@ paths:
               schema:
                 type: object
                 additionalProperties: {}
+        "400":
+          description: "The `grant_type` is not `client_credentials`, or the `audience`\
+            \ is not one the suite offers."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          description: The credential is missing or wrong. The answer never says which
+            half was wrong.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "429":
+          description: Too many attempts. Repeat after the number of seconds in `Retry-After`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-public: true
   /api/v1/users:
     get:
       tags:
-      - user-controller
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+      - Users
+      summary: List users
+      description: |-
+        Pages through users, with the list-query contract's filtering, sorting and paging. `tenant_id` is a filter, and a Tenant-scope caller never sees another Tenant's users. Requires `platform:user:read`.
+
+        **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
       operationId: list
       parameters:
       - name: "filter[created_at][eq]"
@@ -678,7 +920,8 @@ paths:
           - cursor
       responses:
         "200":
-          description: OK
+          description: "A page of user response rows, with the paging facts when the\
+            \ request asked for them."
           content:
             '*/*':
               schema:
@@ -686,18 +929,33 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:user:read
     post:
       tags:
-      - user-controller
+      - Users
+      summary: Create a user
+      description: "Creates the user's sign-in identity and the Platform user for\
+        \ `tenantCode`, with a temporary password. A Tenant-scope caller cannot create\
+        \ a Platform-scope user. Answers `201` with the user. Requires `platform:user:manage`."
       operationId: create
       parameters:
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: The user to create.
         content:
           application/json:
             schema:
@@ -705,29 +963,47 @@ paths:
         required: true
       responses:
         "201":
-          description: Created
+          description: A user of the suite.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:user:manage
   /api/v1/ui-remotes/{name}/versions:
     post:
       tags:
-      - ui-remote-controller
+      - UI remotes
+      summary: Register a UI remote version
+      description: "Called by CI after it publishes a build. The first call also creates\
+        \ the remote, disabled and with no active version; registering never enables\
+        \ a remote or changes its active version, so a deploy cannot reach a browser\
+        \ until an operator activates it. Repeating the same version with the same\
+        \ content answers `200` instead of `201`; the same version with different\
+        \ content is a conflict, because a version is immutable once a shell may have\
+        \ verified it. Requires `platform:ui-remote:register`."
       operationId: registerVersion
       parameters:
       - name: name
         in: path
+        description: The name of the UI remote the version belongs to.
         required: true
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: The version CI registers.
         content:
           application/json:
             schema:
@@ -735,26 +1011,44 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: "The same version with the same content was already registered,\
+            \ so nothing changed."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/VersionResponse"
+        "201":
+          description: "The version was registered. A first call also created the\
+            \ remote, disabled and with no active version."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VersionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: The version is already registered with different content. A
+            registered version is immutable.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:ui-remote:register
   /api/v1/tenants:
     get:
       tags:
-      - tenant-controller
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+      - Tenants
+      summary: List tenants
+      description: |-
+        Pages through the suite's Tenants, with the list-query contract's filtering, sorting and paging. Requires `platform:tenant:read`.
+
+        **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
       operationId: list_1
       parameters:
       - name: "filter[code][eq]"
@@ -1042,7 +1336,8 @@ paths:
           - cursor
       responses:
         "200":
-          description: OK
+          description: "A page of tenant response rows, with the paging facts when\
+            \ the request asked for them."
           content:
             '*/*':
               schema:
@@ -1050,12 +1345,28 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:tenant:read
     post:
       tags:
-      - provision-tenant-controller
+      - Tenant provisioning
+      summary: Provision a tenant with its first administrator
+      description: "Creates a Tenant, seeds its Tenant Administrator role with every\
+        \ tenant-scope permission and, when `adminEmail` is given, creates the first\
+        \ administrator with `adminTemporaryPassword` and assigns that role, all in\
+        \ one call. A failure leaves neither a Tenant without its role nor an administrator\
+        \ without the Tenant. Answers `201` with the tenant id and the administrator's\
+        \ email. Requires `platform:tenant:create`."
       operationId: create_1
       requestBody:
+        description: The tenant to provision.
         content:
           application/json:
             schema:
@@ -1063,30 +1374,51 @@ paths:
         required: true
       responses:
         "201":
-          description: Created
+          description: The tenant that was provisioned.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ProvisionedResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: The tenant code is already used.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:tenant:create
   /api/v1/tenants/{id}/domains:
     post:
       tags:
-      - tenant-controller
+      - Tenants
+      summary: Add a hostname to a tenant
+      description: "Maps one more hostname to the Tenant, so its people reach the\
+        \ console on that host. The host also becomes a sign-in redirect target; if\
+        \ that registration fails the request still succeeds and a reconciler repairs\
+        \ it. Answers `201` with no body. Requires `platform:tenant-domain:manage`."
       operationId: addDomain
       parameters:
       - name: id
         in: path
+        description: The id of the tenant.
         required: true
         schema:
           type: string
           format: uuid
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: The hostname to map to the tenant.
         content:
           application/json:
             schema:
@@ -1095,51 +1427,79 @@ paths:
       responses:
         "201":
           description: Created
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: The hostname is already mapped to a tenant.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:tenant-domain:manage
   /api/v1/tenants/{id}/deactivate:
     post:
       tags:
-      - tenant-controller
+      - Tenants
+      summary: Deactivate a tenant
+      description: Deactivates the Tenant. Deactivating a Tenant that is already inactive
+        changes nothing and publishes nothing. Pass the tenant's `ETag` in `If-Match`;
+        a stale version is refused. Requires `platform:tenant:deactivate`.
       operationId: deactivate
       parameters:
       - name: id
         in: path
+        description: The id of the tenant.
         required: true
         schema:
           type: string
           format: uuid
       - name: If-Match
         in: header
+        description: The `ETag` of the version the caller last read. The change is
+          refused with `412` when the resource has moved on since.
         required: false
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       responses:
         "200":
-          description: OK
+          description: A tenant of the suite.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/TenantResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: platform:tenant:deactivate
   /api/v1/tenant-systems:
     get:
       tags:
-      - tenant-system-controller
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+      - Tenant systems
+      summary: List tenant systems
+      description: |-
+        Pages through the current Tenant's Tenant Systems, with the list-query contract's filtering, sorting and paging. Requires `platform:tenant-system:read`.
+
+        **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
       operationId: list_2
       parameters:
       - name: "filter[created_at][eq]"
@@ -1420,7 +1780,8 @@ paths:
           - cursor
       responses:
         "200":
-          description: OK
+          description: "A page of system response rows, with the paging facts when\
+            \ the request asked for them."
           content:
             '*/*':
               schema:
@@ -1428,18 +1789,34 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:tenant-system:read
     post:
       tags:
-      - tenant-system-controller
+      - Tenant systems
+      summary: Register a tenant system
+      description: "Registers a Tenant System of the current Tenant: a named machine\
+        \ caller with a stated `purpose` that authenticates with API credentials instead\
+        \ of a user sign-in. It has no credential yet; issue one with `POST /api/v1/tenant-systems/{id}/credentials`.\
+        \ Answers `201`. Requires `platform:tenant-system:manage`."
       operationId: create_2
       parameters:
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: The tenant system to register.
         content:
           application/json:
             schema:
@@ -1447,30 +1824,32 @@ paths:
         required: true
       responses:
         "201":
-          description: Created
+          description: "A tenant system: a machine caller of one tenant."
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/SystemResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:tenant-system:manage
   /api/v1/tenant-systems/{id}/credentials:
     get:
       tags:
-      - tenant-system-controller
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+      - Tenant systems
+      summary: List a tenant system's credentials
+      description: |-
+        Pages through the credentials of the Tenant System named in the path, with the list-query contract's filtering, sorting and paging. The secrets are never returned. Requires `platform:credential:manage`.
+
+        **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
       operationId: listCredentials
       parameters:
       - name: id
         in: path
+        description: The id of the tenant system.
         required: true
         schema:
           type: string
@@ -1881,7 +2260,8 @@ paths:
           - cursor
       responses:
         "200":
-          description: OK
+          description: "A page of credential response rows, with the paging facts\
+            \ when the request asked for them."
           content:
             '*/*':
               schema:
@@ -1889,23 +2269,41 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: platform:credential:manage
     post:
       tags:
-      - tenant-system-controller
+      - Tenant systems
+      summary: Issue an API credential
+      description: Issues a credential for the Tenant System with a `label` and the
+        `scopes` it may use. The secret `key` is in the response and is never shown
+        again; storage keeps only a digest. Answers `201`. Requires `platform:credential:manage`.
       operationId: createCredential
       parameters:
       - name: id
         in: path
+        description: The id of the tenant system.
         required: true
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: The credential to issue.
         content:
           application/json:
             schema:
@@ -1913,55 +2311,75 @@ paths:
         required: true
       responses:
         "201":
-          description: Created
+          description: A newly issued credential with its secret.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/IssuedCredentialResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: platform:credential:manage
   /api/v1/tenant-systems/{id}/credentials/rotate:
     post:
       tags:
-      - tenant-system-controller
+      - Tenant systems
+      summary: Rotate a tenant system's credential
+      description: "Issues a new credential and lets the previous one keep working\
+        \ for `overlapMinutes` (24 hours when the body is omitted), so the Tenant\
+        \ System can switch over without downtime. The new secret `key` is in the\
+        \ response and is never shown again. Requires `platform:credential:manage`."
       operationId: rotate
       parameters:
       - name: id
         in: path
+        description: The id of the tenant system.
         required: true
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: How the old credential is retired.
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/RotateRequest"
       responses:
         "200":
-          description: OK
+          description: A newly issued credential with its secret.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/IssuedCredentialResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: platform:credential:manage
   /api/v1/roles:
     get:
       tags:
-      - role-controller
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+      - Roles
+      summary: List roles
+      description: |-
+        Pages through roles, with the list-query contract's filtering, sorting and paging. `tenant_id` is a filter, and a Tenant-scope caller never sees another Tenant's roles. Requires `platform:role:read`.
+
+        **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
       operationId: list_3
       parameters:
       - name: "filter[created_at][eq]"
@@ -2254,7 +2672,8 @@ paths:
           - cursor
       responses:
         "200":
-          description: OK
+          description: "A page of role response rows, with the paging facts when the\
+            \ request asked for them."
           content:
             '*/*':
               schema:
@@ -2262,18 +2681,34 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:role:read
     post:
       tags:
-      - role-controller
+      - Roles
+      summary: Create a custom role
+      description: "Creates a role with a name and a set of permission codes. Every\
+        \ code must be in the permission catalog and valid in the role's scope, and\
+        \ a role can never be wider than the caller's own scope. Answers `201` with\
+        \ the role. Requires `platform:role:manage`."
       operationId: create_3
       parameters:
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: The role to create.
         content:
           application/json:
             schema:
@@ -2281,96 +2716,149 @@ paths:
         required: true
       responses:
         "201":
-          description: Created
+          description: A role and the permissions it grants.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/RoleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          description: A permission code is not in the catalog.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:role:manage
   /api/v1/roles/{id}/users/{userId}:
     post:
       tags:
-      - role-controller
+      - Roles
+      summary: Assign a role to a user
+      description: "Gives the user the role, so the user holds every permission the\
+        \ role carries. Answers the role. Requires `platform:role:manage`."
       operationId: assign
       parameters:
       - name: id
         in: path
+        description: The id of the role.
         required: true
         schema:
           type: string
           format: uuid
       - name: userId
         in: path
+        description: The id of the user to give the role to or take it from.
         required: true
         schema:
           type: string
           format: uuid
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       responses:
         "200":
-          description: OK
+          description: A role and the permissions it grants.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/RoleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: platform:role:manage
     delete:
       tags:
-      - role-controller
+      - Roles
+      summary: Remove a role from a user
+      description: "Takes the role away from the user, so the user loses the permissions\
+        \ only that role carried. Answers the role. Requires `platform:role:manage`."
       operationId: unassign
       parameters:
       - name: id
         in: path
+        description: The id of the role.
         required: true
         schema:
           type: string
           format: uuid
       - name: userId
         in: path
+        description: The id of the user to give the role to or take it from.
         required: true
         schema:
           type: string
           format: uuid
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       responses:
         "200":
-          description: OK
+          description: A role and the permissions it grants.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/RoleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: platform:role:manage
   /api/v1/users/{id}:
     patch:
       tags:
-      - user-controller
+      - Users
+      summary: "Enable, disable or rename a user"
+      description: "Applies one `action` to the user: `ENABLE`, `DISABLE`, or `RENAME`\
+        \ with the new `name`. Every effective change publishes the user's new access\
+        \ and is audited. Pass the user's `ETag` in `If-Match`; a stale version is\
+        \ refused. Requires `platform:user:manage`."
       operationId: update_1
       parameters:
       - name: id
         in: path
+        description: The id of the user.
         required: true
         schema:
           type: string
           format: uuid
       - name: If-Match
         in: header
+        description: The `ETag` of the version the caller last read. The change is
+          refused with `412` when the resource has moved on since.
         required: false
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       requestBody:
+        description: The change to apply to a user.
         content:
           application/json:
             schema:
@@ -2378,31 +2866,53 @@ paths:
         required: true
       responses:
         "200":
-          description: OK
+          description: A user of the suite.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/UserResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: platform:user:manage
   /internal/replica/{stream}:
     get:
       tags:
-      - snapshot-controller
+      - Replica snapshots
+      summary: Page through a replica snapshot stream
+      description: "Internal endpoint a replica rebuilds its copy of Platform state\
+        \ from. `stream` names the stream: `tenants`, `tenant-domains`, `tenant-systems`,\
+        \ `entitlements` or `user-access`; an unknown name answers `404`. Pass the\
+        \ previous answer's `next` as `after` to read the following page; `limit`\
+        \ is clamped to 1 to 500 and defaults to 100. Each item carries the same JSON\
+        \ as the matching `*.changed` event plus its `version`, so a replica can merge\
+        \ snapshot rows and live events in any order. Requires `platform:replica:read`."
       operationId: page
       parameters:
       - name: stream
         in: path
+        description: "The replica stream to read: `tenants`, `tenant-domains`, `tenant-systems`,\
+          \ `entitlements` or `user-access`."
         required: true
         schema:
           type: string
       - name: after
         in: query
+        description: The `next` of the previous page; omit it to start from the beginning.
         required: false
         schema:
           type: string
           format: uuid
       - name: limit
         in: query
+        description: "The page size, clamped to 1 to 500. Defaults to 100."
         required: false
         schema:
           type: integer
@@ -2416,21 +2926,28 @@ paths:
               schema:
                 type: object
                 additionalProperties: {}
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: The stream is not one of the replica streams.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:replica:read
   /api/v1/ui-remotes:
     get:
       tags:
-      - ui-remote-controller
-      description: "**Filtering, sorting and paging** follow the list-query contract.\
-        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+      - UI remotes
+      summary: List UI remotes
+      description: |-
+        Pages through the console's UI remotes, with the list-query contract's filtering, sorting and paging. Requires `platform:ui-remote:read`.
+
+        **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
       operationId: listRemotes
       parameters:
       - name: "filter[app_code][eq]"
@@ -2728,7 +3245,8 @@ paths:
           - cursor
       responses:
         "200":
-          description: OK
+          description: "A page of remote response rows, with the paging facts when\
+            \ the request asked for them."
           content:
             '*/*':
               schema:
@@ -2736,15 +3254,28 @@ paths:
         "400":
           description: "A filter, sort, cursor or paging parameter is unknown, not\
             \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:ui-remote:read
   /api/v1/tenants/{tenantId}/apps:
     get:
       tags:
-      - entitlement-controller
+      - App entitlements
+      summary: List a tenant's apps
+      description: Returns every app of the suite with this Tenant's state of it;
+        an app the Tenant never changed is reported as disabled at version 0. Requires
+        `platform:tenant:read`.
       operationId: apps
       parameters:
       - name: tenantId
         in: path
+        description: The id of the tenant.
         required: true
         schema:
           type: string
@@ -2758,23 +3289,44 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AppResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: platform:tenant:read
   /api/v1/me:
     get:
       tags:
-      - me-controller
+      - Current user
+      summary: Get the signed-in user
+      description: "Returns the caller's own user record (id, tenant, scope, email,\
+        \ display name, status) and the permission codes the caller holds across the\
+        \ suite. The console reads it to decide what to show. Any authenticated user\
+        \ may call it; a token whose user no longer exists answers `404`."
       operationId: me
       responses:
         "200":
-          description: OK
+          description: The signed-in user.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/MeResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/NotEntitled"
   /api/v1/console/remotes:
     get:
       tags:
-      - console-remote-controller
+      - Console feed
+      summary: Get the console's UI remotes
+      description: "The feed a console shell reads on load: only the remotes the caller\
+        \ may mount, each with the one version an operator activated, filtered on\
+        \ the server. Any authenticated user may call it."
       operationId: feed
       responses:
         "200":
@@ -2785,10 +3337,18 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ConsoleRemoteResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/NotEntitled"
   /.well-known/jwks.json:
     get:
       tags:
-      - jwks-controller
+      - Signing keys
+      summary: Get the suite's public signing keys
+      description: "Publishes the public halves of the keys Platform signs suite tokens\
+        \ with, as a JSON Web Key Set, so every app can verify a token without calling\
+        \ Platform. Public: no token is needed."
       operationId: jwks
       responses:
         "200":
@@ -2802,470 +3362,770 @@ paths:
   /api/v1/tenant-systems/{systemId}/credentials/{credentialId}:
     delete:
       tags:
-      - tenant-system-controller
+      - Tenant systems
+      summary: Revoke an API credential
+      description: Revokes one credential of the Tenant System at once; a token request
+        with it is refused from then on. Answers the credential with its new state.
+        Requires `platform:credential:manage`.
       operationId: revoke
       parameters:
       - name: systemId
         in: path
+        description: The id of the tenant system the credential belongs to.
         required: true
         schema:
           type: string
       - name: credentialId
         in: path
+        description: The id of the credential to revoke.
         required: true
         schema:
           type: string
       - name: X-Request-Id
         in: header
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
         required: false
         schema:
           type: string
       responses:
         "200":
-          description: OK
+          description: An API credential. The secret is never part of it.
           content:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CredentialResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
       x-required-permission: platform:credential:manage
 components:
   schemas:
     UserResponse:
       type: object
+      description: A user of the suite.
       properties:
         id:
           type: string
           format: uuid
+          description: The id.
         tenantId:
           type: string
           format: uuid
+          description: "The id of the tenant it belongs to, or null for a Platform-scope\
+            \ record."
         scope:
           type: string
+          description: "The scope: `PLATFORM` for the suite's own staff, `TENANT`\
+            \ for one tenant's people."
         email:
           type: string
+          description: The email address.
         displayName:
           type: string
+          description: The name shown for the user.
         status:
           type: string
+          description: '`ACTIVE` or `DISABLED`.'
         version:
           type: integer
           format: int64
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
     StateRequest:
       type: object
+      description: The change an operator makes to a remote.
       properties:
         enabled:
           type: boolean
+          description: Whether the remote is offered to the console. Required.
         activeVersion:
           type: string
+          description: The registered version to activate; an older one is a rollback.
         title:
           type: string
+          description: "The new title, or null to keep it."
         navOrder:
           type: integer
           format: int32
+          description: "The new navigation position, or null to keep it."
     RemoteResponse:
       type: object
+      description: A UI remote of the console and its registered versions.
       properties:
         name:
           type: string
+          description: The remote's unique name.
         appCode:
           type: string
+          description: The app the remote belongs to.
         title:
           type: string
+          description: The title shown in the console.
         navOrder:
           type: integer
           format: int32
+          description: The position in the console's navigation; lower comes first.
         audiences:
           type: array
+          description: "The shells the remote may be mounted in: the platform shell,\
+            \ the tenant shell, or both."
           items:
             type: string
         enabled:
           type: boolean
+          description: Whether it is enabled.
         activeVersion:
           type: string
+          description: "The version the console mounts, or null while none is activated."
         createdAt:
           type: string
+          description: When the record was created.
         version:
           type: integer
           format: int64
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
         versions:
           type: array
+          description: The versions CI has registered.
           items:
             $ref: "#/components/schemas/VersionResponse"
     VersionResponse:
       type: object
+      description: One registered version of a UI remote.
       properties:
         version:
           type: string
+          description: The version string CI registered.
         entryPath:
           type: string
+          description: The path of the remote's entry module. It is same-origin and
+            inside the published directory of this remote's name and version.
         integrity:
           type: string
+          description: "The subresource-integrity hash of the entry module, which\
+            \ the shell verifies before it mounts it."
         sdkMajor:
           type: integer
           format: int32
+          description: The major version of the console SDK the remote was built against.
         registeredAt:
           type: string
+          description: When CI registered the version.
         registeredBy:
           type: string
+          description: Who registered the version.
     EntitlementRequest:
       type: object
+      description: The state to set.
       properties:
         enabled:
           type: boolean
+          description: Whether the tenant may use the app. Required.
     EntitlementResponse:
       type: object
+      description: A tenant's entitlement to one app.
       properties:
         tenantId:
           type: string
           format: uuid
+          description: The id of the tenant.
         appCode:
           type: string
+          description: The code of the app.
         enabled:
           type: boolean
+          description: Whether it is enabled.
         version:
           type: integer
           format: int64
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
     RenameRequest:
       type: object
+      description: The new name.
       properties:
         name:
           type: string
+          description: The new name.
     TenantResponse:
       type: object
+      description: A tenant of the suite.
       properties:
         id:
           type: string
           format: uuid
+          description: The id.
         code:
           type: string
+          description: "The tenant's unique code, which also names its hostname."
         name:
           type: string
+          description: The display name.
         status:
           type: string
+          description: '`ACTIVE` or `DEACTIVATED`.'
         createdAt:
           type: string
+          description: When the record was created.
         version:
           type: integer
           format: int64
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
     UpdateSystemRequest:
       type: object
+      description: The change to apply to a tenant system.
       properties:
         action:
           type: string
+          description: '`RENAME` or `DISABLE`.'
         name:
           type: string
+          description: "The new name, for `RENAME`."
     SystemResponse:
       type: object
+      description: "A tenant system: a machine caller of one tenant."
       properties:
         id:
           type: string
+          description: The id.
         name:
           type: string
+          description: The display name.
         purpose:
           type: string
+          description: "What the system is for: `GENERIC` or `WORKFLOW`."
         status:
           type: string
+          description: '`ACTIVE` or `DISABLED`.'
         createdAt:
           type: string
           format: date-time
+          description: When the record was created.
         version:
           type: integer
           format: int64
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
     RoleResponse:
       type: object
+      description: A role and the permissions it grants.
       properties:
         id:
           type: string
           format: uuid
+          description: The id.
         tenantId:
           type: string
           format: uuid
+          description: "The id of the tenant it belongs to, or null for a Platform-scope\
+            \ record."
         scope:
           type: string
+          description: "The scope: `PLATFORM` for the suite's own staff, `TENANT`\
+            \ for one tenant's people."
         name:
           type: string
+          description: The display name.
         system:
           type: boolean
+          description: Whether the role is a built-in one that cannot be edited.
         permissions:
           type: array
+          description: The permission codes the role grants.
           items:
             type: string
           uniqueItems: true
         version:
           type: integer
           format: int64
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
     PermissionsRequest:
       type: object
+      description: "The role's new permission set, replacing the stored one."
       properties:
         permissions:
           type: array
+          description: The permission codes the role grants.
           items:
             type: string
           uniqueItems: true
     CreateRequest:
       type: object
+      description: The user to create.
       properties:
         tenantCode:
           type: string
+          description: The code of the tenant the user belongs to.
         email:
           type: string
+          description: The email address.
         displayName:
           type: string
+          description: The name shown for the user.
         temporaryPassword:
           type: string
+          description: The user's initial password.
     RegisterRequest:
       type: object
+      description: The version CI registers.
       properties:
         version:
           type: string
+          description: The version string. A registered version is immutable.
         entryPath:
           type: string
+          description: The path of the remote's entry module. It is same-origin and
+            inside the published directory of this remote's name and version.
         integrity:
           type: string
+          description: "The subresource-integrity hash of the entry module, which\
+            \ the shell verifies before it mounts it."
         sdkMajor:
           type: integer
           format: int32
+          description: The major version of the console SDK the remote was built against.
         appCode:
           type: string
+          description: The app the remote belongs to. Used when this call creates
+            the remote.
         title:
           type: string
+          description: The title to show. Used when this call creates the remote.
         audiences:
           type: array
+          description: "The shells the remote may be mounted in: the platform shell,\
+            \ the tenant shell, or both. Used when this call creates the remote."
           items:
             type: string
         navOrder:
           type: integer
           format: int32
+          description: The navigation position. Used when this call creates the remote.
     ProvisionRequest:
       type: object
+      description: The tenant to provision.
       properties:
         code:
           type: string
+          description: The tenant's unique code. It cannot change afterwards.
         name:
           type: string
+          description: The tenant's display name.
         adminEmail:
           type: string
+          description: "The email of the first administrator. When omitted, no administrator\
+            \ is created."
         adminTemporaryPassword:
           type: string
+          description: The first administrator's initial password.
     ProvisionedResponse:
       type: object
+      description: The tenant that was provisioned.
       properties:
         tenantId:
           type: string
           format: uuid
+          description: The id of the new tenant.
         adminEmail:
           type: string
+          description: "The email of the administrator that was created, or null."
     DomainRequest:
       type: object
+      description: The hostname to map to the tenant.
       properties:
         hostname:
           type: string
+          description: "The hostname, such as `acme.example.com`."
     CreateSystemRequest:
       type: object
+      description: The tenant system to register.
       properties:
         name:
           type: string
+          description: The system's name.
         purpose:
           type: string
+          description: "What the system is for: `GENERIC` or `WORKFLOW`. Defaults\
+            \ to `GENERIC`."
     CreateCredentialRequest:
       type: object
+      description: The credential to issue.
       properties:
         label:
           type: string
+          description: A label that tells the credentials of a system apart.
         scopes:
           type: array
+          description: The permission codes the credential may use.
           items:
             type: string
     CredentialResponse:
       type: object
+      description: An API credential. The secret is never part of it.
       properties:
         id:
           type: string
+          description: The credential's id.
         keyId:
           type: string
+          description: The public part of the API key. It identifies the credential
+            without revealing the secret.
         label:
           type: string
+          description: The credential's label.
         scopes:
           type: array
+          description: The permission codes the credential may use.
           items:
             type: string
           uniqueItems: true
         status:
           type: string
+          description: '`ACTIVE` or `REVOKED`.'
         createdAt:
           type: string
           format: date-time
+          description: When the record was created.
         expiresAt:
           type: string
           format: date-time
+          description: "When the credential stops working, or null. A rotated credential\
+            \ expires at the end of its overlap."
         revokedAt:
           type: string
           format: date-time
+          description: "When the credential was revoked, or null."
     IssuedCredentialResponse:
       type: object
+      description: A newly issued credential with its secret.
       properties:
         credential:
           $ref: "#/components/schemas/CredentialResponse"
+          description: The credential.
         key:
           type: string
+          description: The API key. It is shown only in this response and is never
+            available again.
     RotateRequest:
       type: object
+      description: How the old credential is retired.
       properties:
         overlapMinutes:
           type: integer
           format: int64
+          description: "How long the previous credential keeps working, in minutes.\
+            \ Defaults to 1440 (24 hours)."
     CreateRoleRequest:
       type: object
+      description: The role to create.
       properties:
         name:
           type: string
+          description: The role's name.
         permissions:
           type: array
+          description: The permission codes the role grants. Each must be in the catalog
+            and valid in the role's scope.
           items:
             type: string
           uniqueItems: true
     UpdateRequest:
       type: object
+      description: The change to apply to a user.
       properties:
         action:
           type: string
+          description: "`ENABLE`, `DISABLE` or `RENAME`."
         name:
           type: string
+          description: "The new display name, for `RENAME`."
     PageInfo:
       type: object
+      description: "The paging facts of a list answer, present when the request asked\
+        \ for them with `page_info`."
       properties:
         limit:
           type: integer
           format: int32
+          description: The page size that was applied.
         offset:
           type:
           - integer
           - "null"
           format: int32
+          description: "The number of rows that were skipped, or null when a cursor\
+            \ positioned the page."
         total:
           type:
           - integer
           - "null"
           format: int64
+          description: "The number of rows that match the filter, or null when the\
+            \ request asked only for the cursor."
         next_cursor:
           type:
           - string
           - "null"
+          description: "The cursor of the following page, or null on the last page.\
+            \ Pass it as `cursor` with the same filter and sort."
     PageUserResponse:
       type: object
+      description: "A page of user response rows, with the paging facts when the request\
+        \ asked for them."
       properties:
         data:
           type: array
+          description: The rows of this page.
           items:
             $ref: "#/components/schemas/UserResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
     PageRemoteResponse:
       type: object
+      description: "A page of remote response rows, with the paging facts when the\
+        \ request asked for them."
       properties:
         data:
           type: array
+          description: The rows of this page.
           items:
             $ref: "#/components/schemas/RemoteResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
     PageTenantResponse:
       type: object
+      description: "A page of tenant response rows, with the paging facts when the\
+        \ request asked for them."
       properties:
         data:
           type: array
+          description: The rows of this page.
           items:
             $ref: "#/components/schemas/TenantResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
     AppResponse:
       type: object
+      description: One app of the suite and this tenant's state of it.
       properties:
         appCode:
           type: string
+          description: The code of the app.
         enabled:
           type: boolean
+          description: Whether the tenant may use the app. An app the tenant never
+            changed is disabled.
         version:
           type: integer
           format: int64
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
     PageSystemResponse:
       type: object
+      description: "A page of system response rows, with the paging facts when the\
+        \ request asked for them."
       properties:
         data:
           type: array
+          description: The rows of this page.
           items:
             $ref: "#/components/schemas/SystemResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
     PageCredentialResponse:
       type: object
+      description: "A page of credential response rows, with the paging facts when\
+        \ the request asked for them."
       properties:
         data:
           type: array
+          description: The rows of this page.
           items:
             $ref: "#/components/schemas/CredentialResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
     PageRoleResponse:
       type: object
+      description: "A page of role response rows, with the paging facts when the request\
+        \ asked for them."
       properties:
         data:
           type: array
+          description: The rows of this page.
           items:
             $ref: "#/components/schemas/RoleResponse"
         page:
+          description: "The paging facts, or null when the request did not ask for\
+            \ them with `page_info`."
           oneOf:
           - $ref: "#/components/schemas/PageInfo"
           - type: "null"
     MeResponse:
       type: object
+      description: The signed-in user.
       properties:
         id:
           type: string
           format: uuid
+          description: The id.
         tenantId:
           type: string
           format: uuid
+          description: "The id of the tenant it belongs to, or null for a Platform-scope\
+            \ record."
         scope:
           type: string
+          description: "The scope: `PLATFORM` for the suite's own staff, `TENANT`\
+            \ for one tenant's people."
         email:
           type: string
+          description: The email address.
         displayName:
           type: string
+          description: The name shown for the user.
         status:
           type: string
+          description: The current status.
         permissions:
           type: array
+          description: "The permission codes the user holds across the suite, through\
+            \ roles and directly."
           items:
             type: string
     ConsoleRemoteResponse:
       type: object
+      description: "A remote the caller may mount, with the one version an operator\
+        \ activated."
       properties:
         name:
           type: string
+          description: The display name.
         title:
           type: string
+          description: The title shown in the console.
         appCode:
           type: string
+          description: The code of the app.
         navOrder:
           type: integer
           format: int32
+          description: The position in the console's navigation; lower comes first.
         version:
           type: string
+          description: The active version.
         entryPath:
           type: string
+          description: The path of the remote's entry module. It is same-origin and
+            inside the published directory of this remote's name and version.
         integrity:
           type: string
+          description: "The subresource-integrity hash of the entry module, which\
+            \ the shell verifies before it mounts it."
         sdkMajor:
           type: integer
           format: int32
+          description: The major version of the console SDK the remote was built against.
+    ProblemDetail:
+      type: object
+      description: "The body of every error: an RFC 9457 problem."
+      properties:
+        type:
+          type: string
+          description: A URI reference that identifies the kind of problem. It is
+            `about:blank` when the status says it all.
+        title:
+          type: string
+          description: "A short, human-readable summary of the kind of problem. It\
+            \ is the status's reason phrase unless a more specific one applies."
+        status:
+          type: integer
+          format: int32
+          description: The HTTP status of the response.
+        detail:
+          type: string
+          description: A sentence that explains this occurrence.
+        instance:
+          type: string
+          description: "A URI reference that identifies this occurrence, when there\
+            \ is one."
+  responses:
+    BadRequest:
+      description: "The request is malformed: a body, query parameter or header is\
+        \ missing, unknown, or not valid for its type."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Unauthenticated:
+      description: The request carries no valid token.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    Forbidden:
+      description: "The token does not carry the permission this operation requires,\
+        \ or the tenant has not enabled the app."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotEntitled:
+      description: "The tenant has not enabled this app, or the caller may not act\
+        \ here."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    NotFound:
+      description: Nothing with that id exists for this tenant. A resource of another
+        tenant answers the same.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    IdempotencyConflict:
+      description: "The `Idempotency-Key` was already used with a different body,\
+        \ or the request clashes with the current state of the data."
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    PreconditionFailed:
+      description: The `If-Match` tag does not match the resource's current version.
+        The response carries the current `ETag`; read the resource again and retry.
+      headers:
+        ETag:
+          description: The current version of the resource.
+          schema:
+            type: string
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"

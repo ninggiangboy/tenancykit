@@ -18,6 +18,8 @@ import dev.ngb.platform.access.application.role.query.RoleView;
 import dev.ngb.platform.access.domain.role.Role;
 import dev.ngb.platform.access.domain.role.RoleId;
 import dev.ngb.platform.access.domain.user.UserId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -35,6 +37,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Platform administration of roles and their assignments. */
+@Tag(
+        name = "Roles",
+        description =
+                "Platform administration of roles: their permissions, names and assignment to users.")
 @RestController
 @RequestMapping("/api/v1/roles")
 class RoleController {
@@ -71,6 +77,12 @@ class RoleController {
         this.currentActor = currentActor;
     }
 
+    @Operation(
+            summary = "Create a custom role",
+            description =
+                    "Creates a role with a name and a set of permission codes. Every code must be in the permission "
+                    + "catalog and valid in the role's scope, and a role can never be wider than the caller's own scope. "
+                    + "Answers `201` with the role. Requires `platform:role:manage`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(PlatformPermissions.ROLE_MANAGE)
@@ -86,6 +98,11 @@ class RoleController {
      * Filter, sort and paging follow the list-query contract; the documented parameters come from {@link RoleListing}.
      * {@code tenant_id} is a filter rather than a parameter, and a Tenant-scope caller never sees another Tenant.
      */
+    @Operation(
+            summary = "List roles",
+            description =
+                    "Pages through roles, with the list-query contract's filtering, sorting and paging. `tenant_id` is a "
+                    + "filter, and a Tenant-scope caller never sees another Tenant's roles. Requires `platform:role:read`.")
     @GetMapping
     @Listing(RoleListing.class)
     @RequiresPermission(PlatformPermissions.ROLE_READ)
@@ -103,6 +120,12 @@ class RoleController {
         return actor.scope() == PermissionScope.TENANT ? actor.tenantId().value() : null;
     }
 
+    @Operation(
+            summary = "Replace a role's permissions",
+            description =
+                    "Replaces the role's whole permission set with `permissions`. Every holder of the role has its "
+                    + "effective access recomputed. Pass the role's `ETag` in `If-Match`; a stale version is refused. "
+                    + "Requires `platform:role:manage`.")
     @PutMapping("/{id}/permissions")
     @RequiresPermission(PlatformPermissions.ROLE_MANAGE)
     ResponseEntity<RoleResponse> replacePermissions(
@@ -115,6 +138,11 @@ class RoleController {
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(role.version())).body(RoleResponse.of(role));
     }
 
+    @Operation(
+            summary = "Rename a role",
+            description =
+                    "Changes the role's name. Pass the role's `ETag` in `If-Match`; a stale version is refused. Requires "
+                    + "`platform:role:manage`.")
     @PutMapping("/{id}")
     @RequiresPermission(PlatformPermissions.ROLE_MANAGE)
     ResponseEntity<RoleResponse> rename(
@@ -127,6 +155,11 @@ class RoleController {
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(role.version())).body(RoleResponse.of(role));
     }
 
+    @Operation(
+            summary = "Assign a role to a user",
+            description =
+                    "Gives the user the role, so the user holds every permission the role carries. Answers the role. "
+                    + "Requires `platform:role:manage`.")
     @PostMapping("/{id}/users/{userId}")
     @RequiresPermission(PlatformPermissions.ROLE_MANAGE)
     RoleResponse assign(
@@ -136,6 +169,11 @@ class RoleController {
                 new RoleId(id), ManageRoleUseCase.Action.ASSIGN, Set.of(), null, new UserId(userId), ExpectedVersion.any())));
     }
 
+    @Operation(
+            summary = "Remove a role from a user",
+            description =
+                    "Takes the role away from the user, so the user loses the permissions only that role carried. Answers "
+                    + "the role. Requires `platform:role:manage`.")
     @DeleteMapping("/{id}/users/{userId}")
     @RequiresPermission(PlatformPermissions.ROLE_MANAGE)
     RoleResponse unassign(

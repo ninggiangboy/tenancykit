@@ -16,6 +16,8 @@ import dev.ngb.platform.tenancy.application.tenant.query.TenantListing;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantQueries;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantView;
 import dev.ngb.platform.tenancy.domain.tenant.Tenant;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +32,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Platform administration of tenants. */
+@Tag(
+        name = "Tenants",
+        description =
+                "Platform administration of tenants: list, rename, deactivate and map hostnames.")
 @RestController
 @RequestMapping("/api/v1/tenants")
 class TenantController {
@@ -69,6 +75,11 @@ class TenantController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link TenantListing}. */
+    @Operation(
+            summary = "List tenants",
+            description =
+                    "Pages through the suite's Tenants, with the list-query contract's filtering, sorting and paging. "
+                    + "Requires `platform:tenant:read`.")
     @GetMapping
     @Listing(TenantListing.class)
     @RequiresPermission(PlatformPermissions.TENANT_READ)
@@ -76,6 +87,12 @@ class TenantController {
         return queries.list(query).map(TenantResponse::ofView);
     }
 
+    @Operation(
+            summary = "Rename a tenant",
+            description =
+                    "Changes the Tenant's display name; its code does not change. The version is bumped and the new state "
+                    + "is published. Pass the tenant's `ETag` in `If-Match`; a stale version is refused. Requires "
+                    + "`platform:tenant:rename`.")
     @PutMapping("/{id}")
     @RequiresPermission(PlatformPermissions.TENANT_RENAME)
     ResponseEntity<TenantResponse> rename(
@@ -87,6 +104,12 @@ class TenantController {
         return conditional(tenant, TenantResponse.of(tenant));
     }
 
+    @Operation(
+            summary = "Deactivate a tenant",
+            description =
+                    "Deactivates the Tenant. Deactivating a Tenant that is already inactive changes nothing and publishes "
+                    + "nothing. Pass the tenant's `ETag` in `If-Match`; a stale version is refused. Requires "
+                    + "`platform:tenant:deactivate`.")
     @PostMapping("/{id}/deactivate")
     @RequiresPermission(PlatformPermissions.TENANT_DEACTIVATE)
     ResponseEntity<TenantResponse> deactivate(
@@ -98,6 +121,12 @@ class TenantController {
         return conditional(tenant, TenantResponse.of(tenant));
     }
 
+    @Operation(
+            summary = "Add a hostname to a tenant",
+            description =
+                    "Maps one more hostname to the Tenant, so its people reach the console on that host. The host also "
+                    + "becomes a sign-in redirect target; if that registration fails the request still succeeds and a "
+                    + "reconciler repairs it. Answers `201` with no body. Requires `platform:tenant-domain:manage`.")
     @PostMapping("/{id}/domains")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(PlatformPermissions.TENANT_DOMAIN_MANAGE)

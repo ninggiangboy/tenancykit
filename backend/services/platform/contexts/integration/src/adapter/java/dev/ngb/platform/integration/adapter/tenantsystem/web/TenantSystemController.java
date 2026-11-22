@@ -22,6 +22,8 @@ import dev.ngb.platform.integration.domain.credential.ApiCredential;
 import dev.ngb.platform.integration.domain.credential.ApiCredentialId;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystem;
 import dev.ngb.platform.integration.domain.tenantsystem.TenantSystemPurpose;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -40,6 +42,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Tenant Systems of the current Tenant and the API credentials they authenticate with. */
+@Tag(
+        name = "Tenant systems",
+        description =
+                "A tenant's machine callers and the API credentials they authenticate with: issue, rotate and revoke.")
 @RestController
 @RequestMapping("/api/v1/tenant-systems")
 class TenantSystemController {
@@ -113,6 +119,13 @@ class TenantSystemController {
         this.currentActor = currentActor;
     }
 
+    @Operation(
+            summary = "Register a tenant system",
+            description =
+                    "Registers a Tenant System of the current Tenant: a named machine caller with a stated `purpose` that "
+                    + "authenticates with API credentials instead of a user sign-in. It has no credential yet; issue one "
+                    + "with `POST /api/v1/tenant-systems/{id}/credentials`. Answers `201`. Requires "
+                    + "`platform:tenant-system:manage`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(PlatformPermissions.TENANT_SYSTEM_MANAGE)
@@ -124,6 +137,11 @@ class TenantSystemController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link TenantSystemListing}. */
+    @Operation(
+            summary = "List tenant systems",
+            description =
+                    "Pages through the current Tenant's Tenant Systems, with the list-query contract's filtering, sorting "
+                    + "and paging. Requires `platform:tenant-system:read`.")
     @GetMapping
     @Listing(TenantSystemListing.class)
     @RequiresPermission(PlatformPermissions.TENANT_SYSTEM_READ)
@@ -131,6 +149,11 @@ class TenantSystemController {
         return systemQueries.list(query).map(SystemResponse::ofView);
     }
 
+    @Operation(
+            summary = "Get a tenant system",
+            description =
+                    "Returns one Tenant System of the current Tenant with its purpose, status and version; the version is "
+                    + "also the response's `ETag`. An unknown id answers `404`. Requires `platform:tenant-system:read`.")
     @GetMapping("/{id}")
     @RequiresPermission(PlatformPermissions.TENANT_SYSTEM_READ)
     ResponseEntity<SystemResponse> get(@PathVariable String id) {
@@ -138,6 +161,12 @@ class TenantSystemController {
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(system.version())).body(system);
     }
 
+    @Operation(
+            summary = "Rename or disable a tenant system",
+            description =
+                    "Applies one `action` to the system: `RENAME` with the new `name`, or `DISABLE`. Each change "
+                    + "publishes the system's state. Pass the system's `ETag` in `If-Match`; a stale version is refused. "
+                    + "Requires `platform:tenant-system:manage`.")
     @PutMapping("/{id}")
     @RequiresPermission(PlatformPermissions.TENANT_SYSTEM_MANAGE)
     ResponseEntity<SystemResponse> update(
@@ -153,6 +182,12 @@ class TenantSystemController {
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(body.version())).body(body);
     }
 
+    @Operation(
+            summary = "Issue an API credential",
+            description =
+                    "Issues a credential for the Tenant System with a `label` and the `scopes` it may use. The secret "
+                    + "`key` is in the response and is never shown again; storage keeps only a digest. Answers `201`. "
+                    + "Requires `platform:credential:manage`.")
     @PostMapping("/{id}/credentials")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(PlatformPermissions.CREDENTIAL_MANAGE)
@@ -167,6 +202,12 @@ class TenantSystemController {
      * Filter, sort and paging follow the list-query contract; the documented parameters come from
      * {@link CredentialListing}. The path fixes the system, so its credentials are the only rows the page can hold.
      */
+    @Operation(
+            summary = "List a tenant system's credentials",
+            description =
+                    "Pages through the credentials of the Tenant System named in the path, with the list-query contract's "
+                    + "filtering, sorting and paging. The secrets are never returned. Requires "
+                    + "`platform:credential:manage`.")
     @GetMapping("/{id}/credentials")
     @Listing(CredentialListing.class)
     @RequiresPermission(PlatformPermissions.CREDENTIAL_MANAGE)
@@ -174,6 +215,12 @@ class TenantSystemController {
         return credentialQueries.list(query, TenantSystemId.of(id)).map(CredentialResponse::ofView);
     }
 
+    @Operation(
+            summary = "Rotate a tenant system's credential",
+            description =
+                    "Issues a new credential and lets the previous one keep working for `overlapMinutes` (24 hours when "
+                    + "the body is omitted), so the Tenant System can switch over without downtime. The new secret `key` is "
+                    + "in the response and is never shown again. Requires `platform:credential:manage`.")
     @PostMapping("/{id}/credentials/rotate")
     @RequiresPermission(PlatformPermissions.CREDENTIAL_MANAGE)
     IssuedCredentialResponse rotate(
@@ -183,6 +230,11 @@ class TenantSystemController {
         return issued(credentials.rotate(caller(requestId), TenantSystemId.of(id), Duration.ofMinutes(minutes)));
     }
 
+    @Operation(
+            summary = "Revoke an API credential",
+            description =
+                    "Revokes one credential of the Tenant System at once; a token request with it is refused from then "
+                    + "on. Answers the credential with its new state. Requires `platform:credential:manage`.")
     @DeleteMapping("/{systemId}/credentials/{credentialId}")
     @RequiresPermission(PlatformPermissions.CREDENTIAL_MANAGE)
     CredentialResponse revoke(

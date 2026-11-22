@@ -12,6 +12,8 @@ import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementView;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantDomainView;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantQueries;
 import dev.ngb.platform.tenancy.application.tenant.query.TenantView;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,6 +31,11 @@ import org.springframework.web.server.ResponseStatusException;
  * items carry the same JSON as the matching {@code *.changed} event plus {@code version}, so a replica can merge
  * snapshot rows and live events in any order.
  */
+@Tag(
+        name = "Replica snapshots",
+        description =
+                "Internal paged snapshots of Platform state that a replica rebuilds from, merged with live change "
+                + "events.")
 @RestController
 class SnapshotController {
 
@@ -45,6 +52,15 @@ class SnapshotController {
         this.tenantSystems = tenantSystems;
     }
 
+    @Operation(
+            summary = "Page through a replica snapshot stream",
+            description =
+                    "Internal endpoint a replica rebuilds its copy of Platform state from. `stream` names the stream: "
+                    + "`tenants`, `tenant-domains`, `tenant-systems`, `entitlements` or `user-access`; an unknown name "
+                    + "answers `404`. Pass the previous answer's `next` as `after` to read the following page; `limit` is "
+                    + "clamped to 1 to 500 and defaults to 100. Each item carries the same JSON as the matching `*.changed` "
+                    + "event plus its `version`, so a replica can merge snapshot rows and live events in any order. "
+                    + "Requires `platform:replica:read`.")
     @GetMapping("/internal/replica/{stream}")
     @RequiresPermission(PlatformPermissions.REPLICA_READ)
     Map<String, Object> page(

@@ -18,6 +18,8 @@ import dev.ngb.platform.access.api.user.UserQueries;
 import dev.ngb.platform.access.api.user.UserView;
 import dev.ngb.platform.access.domain.user.User;
 import dev.ngb.platform.access.domain.user.UserId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +36,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Platform administration of users and their direct permissions. */
+@Tag(
+        name = "Users",
+        description =
+                "Platform administration of users: create, enable, disable, rename and grant direct permissions.")
 @RestController
 @RequestMapping("/api/v1/users")
 class UserController {
@@ -72,6 +78,12 @@ class UserController {
         this.currentActor = currentActor;
     }
 
+    @Operation(
+            summary = "Create a user",
+            description =
+                    "Creates the user's sign-in identity and the Platform user for `tenantCode`, with a temporary "
+                    + "password. A Tenant-scope caller cannot create a Platform-scope user. Answers `201` with the user. "
+                    + "Requires `platform:user:manage`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(PlatformPermissions.USER_MANAGE)
@@ -88,6 +100,11 @@ class UserController {
      * Filter, sort and paging follow the list-query contract; the documented parameters come from {@link UserListing}.
      * {@code tenant_id} is a filter rather than a parameter, and a Tenant-scope caller never sees another Tenant.
      */
+    @Operation(
+            summary = "List users",
+            description =
+                    "Pages through users, with the list-query contract's filtering, sorting and paging. `tenant_id` is a "
+                    + "filter, and a Tenant-scope caller never sees another Tenant's users. Requires `platform:user:read`.")
     @GetMapping
     @Listing(UserListing.class)
     @RequiresPermission(PlatformPermissions.USER_READ)
@@ -105,6 +122,12 @@ class UserController {
         return actor.scope() == PermissionScope.TENANT ? actor.tenantId().value() : null;
     }
 
+    @Operation(
+            summary = "Enable, disable or rename a user",
+            description =
+                    "Applies one `action` to the user: `ENABLE`, `DISABLE`, or `RENAME` with the new `name`. Every "
+                    + "effective change publishes the user's new access and is audited. Pass the user's `ETag` in "
+                    + "`If-Match`; a stale version is refused. Requires `platform:user:manage`.")
     @PatchMapping("/{id}")
     @RequiresPermission(PlatformPermissions.USER_MANAGE)
     ResponseEntity<UserResponse> update(
@@ -117,6 +140,12 @@ class UserController {
         return ResponseEntity.ok().eTag(ExpectedVersion.etag(user.version())).body(UserResponse.of(user));
     }
 
+    @Operation(
+            summary = "Grant or revoke a direct permission",
+            description =
+                    "Grants (`grant=true`) or revokes (`grant=false`) one permission `code` directly on the user, outside "
+                    + "any role. Each effective change is audited. Pass the user's `ETag` in `If-Match`; a stale version is "
+                    + "refused. Requires `platform:user:manage`.")
     @PutMapping("/{id}/permissions/{code}")
     @RequiresPermission(PlatformPermissions.USER_MANAGE)
     ResponseEntity<UserResponse> setPermission(

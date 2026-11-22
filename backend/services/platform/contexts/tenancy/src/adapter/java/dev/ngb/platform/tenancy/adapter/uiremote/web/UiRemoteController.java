@@ -16,6 +16,8 @@ import dev.ngb.platform.tenancy.application.uiremote.query.UiRemoteQueries;
 import dev.ngb.platform.tenancy.application.uiremote.query.UiRemoteVersionView;
 import dev.ngb.platform.tenancy.application.uiremote.query.UiRemoteView;
 import dev.ngb.platform.tenancy.domain.uiremote.UiRemote;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +34,11 @@ import org.springframework.web.bind.annotation.RestController;
  * The console's UI remote registry as Platform Administration drives it: CI registers a version, an operator enables,
  * disables and points a remote at one of its versions.
  */
+@Tag(
+        name = "UI remotes",
+        description =
+                "The console's UI remote registry: CI registers versions; an operator enables, disables and activates "
+                + "them.")
 @RestController
 @RequestMapping("/api/v1/ui-remotes")
 class UiRemoteController {
@@ -79,6 +86,11 @@ class UiRemoteController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link UiRemoteListing}. */
+    @Operation(
+            summary = "List UI remotes",
+            description =
+                    "Pages through the console's UI remotes, with the list-query contract's filtering, sorting and "
+                    + "paging. Requires `platform:ui-remote:read`.")
     @GetMapping
     @Listing(UiRemoteListing.class)
     @RequiresPermission(PlatformPermissions.UI_REMOTE_READ)
@@ -90,6 +102,15 @@ class UiRemoteController {
      * CI registers a version; the first call also creates the remote, disabled and with no active version. A repeated
      * call with the same content answers 200 instead of 201, and never activates anything.
      */
+    @Operation(
+            summary = "Register a UI remote version",
+            description =
+                    "Called by CI after it publishes a build. The first call also creates the remote, disabled and with "
+                    + "no active version; registering never enables a remote or changes its active version, so a deploy "
+                    + "cannot reach a browser until an operator activates it. Repeating the same version with the same "
+                    + "content answers `200` instead of `201`; the same version with different content is a conflict, "
+                    + "because a version is immutable once a shell may have verified it. Requires "
+                    + "`platform:ui-remote:register`.")
     @PostMapping("/{name}/versions")
     @RequiresPermission(PlatformPermissions.UI_REMOTE_REGISTER)
     ResponseEntity<VersionResponse> registerVersion(
@@ -109,6 +130,13 @@ class UiRemoteController {
     }
 
     /** The operator's one write: enable, disable, activate a version, retitle or reorder. */
+    @Operation(
+            summary = "Change a UI remote",
+            description =
+                    "The operator's one write on a remote: enable or disable it, point it at a registered version with "
+                    + "`activeVersion` (a rollback is the same call with an older version), and edit its `title` and "
+                    + "`navOrder`. `enabled` is required. Pass the remote's `ETag` in `If-Match`; a stale version is "
+                    + "refused. Requires `platform:ui-remote:manage`.")
     @PutMapping("/{name}")
     @RequiresPermission(PlatformPermissions.UI_REMOTE_MANAGE)
     ResponseEntity<RemoteResponse> setState(

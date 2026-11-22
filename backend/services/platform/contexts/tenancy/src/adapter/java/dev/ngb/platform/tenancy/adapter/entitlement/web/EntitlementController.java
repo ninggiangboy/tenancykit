@@ -10,6 +10,8 @@ import dev.ngb.platform.tenancy.application.entitlement.command.SetAppEntitlemen
 import dev.ngb.platform.tenancy.application.entitlement.query.AppEntitlementView;
 import dev.ngb.platform.tenancy.application.entitlement.query.EntitlementQueries;
 import dev.ngb.platform.tenancy.domain.entitlement.AppEntitlement;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Platform administration of app entitlements. */
+@Tag(
+        name = "App entitlements",
+        description =
+                "Which apps of the suite each tenant may use.")
 @RestController
 @RequestMapping("/api/v1/tenants/{tenantId}/apps")
 class EntitlementController {
@@ -54,12 +60,24 @@ class EntitlementController {
     }
 
     /** Every app of the suite with this Tenant's state of it; an app the tenant never changed is disabled at 0. */
+    @Operation(
+            summary = "List a tenant's apps",
+            description =
+                    "Returns every app of the suite with this Tenant's state of it; an app the Tenant never changed is "
+                    + "reported as disabled at version 0. Requires `platform:tenant:read`.")
     @GetMapping
     @RequiresPermission(PlatformPermissions.TENANT_READ)
     List<AppResponse> apps(@PathVariable UUID tenantId) {
         return queries.appsForTenant(new TenantId(tenantId)).stream().map(AppResponse::of).toList();
     }
 
+    @Operation(
+            summary = "Enable or disable an app for a tenant",
+            description =
+                    "Sets whether the Tenant may use the app `appCode`. Setting the state it already has changes nothing "
+                    + "and publishes nothing; the audit entry names the action asked for. `enabled` is required. Pass the "
+                    + "entitlement's `ETag` in `If-Match`; a stale version is refused. Requires "
+                    + "`platform:entitlement:manage`.")
     @PutMapping("/{appCode}")
     @RequiresPermission(PlatformPermissions.ENTITLEMENT_MANAGE)
     ResponseEntity<EntitlementResponse> set(
