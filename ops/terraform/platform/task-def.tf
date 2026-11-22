@@ -10,7 +10,7 @@ locals {
     { name = "PLATFORM_RABBITMQ_USER", value = "platform" },
     { name = "SPRING_RABBITMQ_SSL_ENABLED", value = "true" },
     { name = "PLATFORM_KEYCLOAK_URL", value = var.keycloak_internal_url },
-    { name = "PLATFORM_KEYCLOAK_REALM", value = "billing" },
+    { name = "PLATFORM_KEYCLOAK_REALM", value = "tenancykit" },
     { name = "PLATFORM_KEYCLOAK_ADMIN_CLIENT_ID", value = "platform-admin" },
     { name = "PLATFORM_BASE_DOMAIN", value = var.base_domain },
     { name = "PLATFORM_HOSTNAME", value = var.public_host },
@@ -34,6 +34,15 @@ locals {
     { name = "PLATFORM_TOKEN_SIGNING_KEY", valueFrom = var.secret_arns["PLATFORM_TOKEN_SIGNING_KEY"] },
     { name = "PLATFORM_SERVICE_CLIENT_SECRET_HASH", valueFrom = var.secret_arns["PLATFORM_SERVICE_CLIENT_SECRET_HASH"] },
     { name = "PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH", valueFrom = var.secret_arns["PLATFORM_NOTIFICATION_SERVICE_CLIENT_SECRET_HASH"] },
+    # One replica client per app. Platform's client ids default to the app's name, so only the hash needs to arrive; an
+    # app whose hash is missing here cannot authenticate its replica, and its readiness never turns UP.
+    { name = "PLATFORM_MAILROOM_SERVICE_CLIENT_SECRET_HASH", valueFrom = var.secret_arns["PLATFORM_MAILROOM_SERVICE_CLIENT_SECRET_HASH"] },
+    { name = "PLATFORM_CUSTOMER_SERVICE_CLIENT_SECRET_HASH", valueFrom = var.secret_arns["PLATFORM_CUSTOMER_SERVICE_CLIENT_SECRET_HASH"] },
+    { name = "PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH", valueFrom = var.secret_arns["PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH"] },
+    { name = "PLATFORM_SURVEY_SERVICE_CLIENT_SECRET_HASH", valueFrom = var.secret_arns["PLATFORM_SURVEY_SERVICE_CLIENT_SECRET_HASH"] },
+    { name = "PLATFORM_BOOKING_SERVICE_CLIENT_SECRET_HASH", valueFrom = var.secret_arns["PLATFORM_BOOKING_SERVICE_CLIENT_SECRET_HASH"] },
+    { name = "PLATFORM_WORKFLOW_SERVICE_CLIENT_SECRET_HASH", valueFrom = var.secret_arns["PLATFORM_WORKFLOW_SERVICE_CLIENT_SECRET_HASH"] },
+    { name = "PLATFORM_ATTRIBUTION_SERVICE_CLIENT_SECRET_HASH", valueFrom = var.secret_arns["PLATFORM_ATTRIBUTION_SERVICE_CLIENT_SECRET_HASH"] },
     { name = "PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD", valueFrom = var.secret_arns["PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD"] },
   ]
 }

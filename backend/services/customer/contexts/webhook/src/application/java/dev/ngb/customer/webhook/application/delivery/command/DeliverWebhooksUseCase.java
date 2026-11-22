@@ -46,7 +46,7 @@ public class DeliverWebhooksUseCase {
         public static final Round NONE = new Round(0, 0, 0, 0);
     }
 
-    private static final WebhookHeaderSet HEADERS = CustomerWebhookHeaders.CRM;
+    private static final WebhookHeaderSet HEADERS = CustomerWebhookHeaders.CUSTOMER;
 
     private final UnitOfWork unitOfWork;
     private final WebhookDeliveryRepository deliveries;

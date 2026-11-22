@@ -88,7 +88,7 @@ class SuiteJwtDecodersTest {
         SuiteJwtDecoders decoders = decoders();
 
         assertThat(decoders.isPlatformIssuer("http://platform.test")).isTrue();
-        assertThat(decoders.isPlatformIssuer("http://keycloak.test/realms/billing")).isFalse();
+        assertThat(decoders.isPlatformIssuer("http://keycloak.test/realms/tenancykit")).isFalse();
         assertThat(decoders.appCode()).isEqualTo("billing");
     }
 
@@ -108,7 +108,7 @@ class SuiteJwtDecodersTest {
     private SuiteJwtDecoders decoders() {
         return new SuiteJwtDecoders(
                 new SuiteJwtDecoders.Issuer("http://platform.test", "http://127.0.0.1:" + jwks.getAddress().getPort() + "/jwks"),
-                new SuiteJwtDecoders.Issuer("http://keycloak.test/realms/billing", "http://keycloak.test/certs"),
+                new SuiteJwtDecoders.Issuer("http://keycloak.test/realms/tenancykit", "http://keycloak.test/certs"),
                 "billing");
     }
 

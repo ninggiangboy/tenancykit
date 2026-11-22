@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class WebhookReceiver implements AutoCloseable {
 
-    /** One request as it arrived: the Crm-* headers and the exact body bytes. */
+    /** One request as it arrived: the Customer-* headers and the exact body bytes. */
     public record Call(
             String path,
             String eventId,

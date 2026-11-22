@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-SECRET = os.environ["FORWARDER_CRM_SECRET"]
+SECRET = os.environ["FORWARDER_CUSTOMER_SECRET"]
 LOYALTY = os.environ.get("FORWARDER_LOYALTY_URL", "http://loyalty-api:8080")
 TOKEN = os.environ["FORWARDER_LOYALTY_TOKEN"]
 # The app resolves the Tenant from the host, exactly as its public edge does; the forwarder replays that host.

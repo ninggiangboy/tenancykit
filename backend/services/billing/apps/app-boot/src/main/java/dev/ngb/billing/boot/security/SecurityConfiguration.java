@@ -52,7 +52,7 @@ class SecurityConfiguration {
                 .cors(cors -> cors.configurationSource(portalCors))
                 .sessionManagement(sessions -> sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/actuator/health", "/actuator/health/**")
+                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/scalar", "/scalar/**", "/actuator/health", "/actuator/health/**")
                         .permitAll()
                         // Tests publish a local JWKS here; production points the decoder at the real issuers.
                         .requestMatchers("/test-jwks")

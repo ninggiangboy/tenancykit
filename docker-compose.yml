@@ -21,8 +21,8 @@ x-billing-environment: &billing-environment
   BILLING_RABBITMQ_PASSWORD: ${BILLING_RABBITMQ_PASSWORD:?set it in .env}
   # The issuer must equal what Keycloak writes into a token, which is the address the user signs in at (the published
   # one); the JWKS URI is fetched server-to-server and uses the internal container name.
-  BILLING_OIDC_ISSUER_URI: ${BILLING_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
-  BILLING_OIDC_JWK_SET_URI: ${BILLING_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  BILLING_OIDC_ISSUER_URI: ${BILLING_OIDC_ISSUER_URI:-http://localhost:8081/realms/tenancykit}
+  BILLING_OIDC_JWK_SET_URI: ${BILLING_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/tenancykit/protocol/openid-connect/certs}
   BILLING_PLATFORM_BASE_URL: http://platform.localhost:8080
   BILLING_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
   BILLING_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
@@ -70,8 +70,8 @@ x-notification-environment: &notification-environment
   NOTIFICATION_RABBITMQ_USER: notification
   NOTIFICATION_RABBITMQ_PASSWORD: ${NOTIFICATION_RABBITMQ_PASSWORD:?set it in .env}
   # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
-  NOTIFICATION_OIDC_ISSUER_URI: ${NOTIFICATION_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
-  NOTIFICATION_OIDC_JWK_SET_URI: ${NOTIFICATION_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  NOTIFICATION_OIDC_ISSUER_URI: ${NOTIFICATION_OIDC_ISSUER_URI:-http://localhost:8081/realms/tenancykit}
+  NOTIFICATION_OIDC_JWK_SET_URI: ${NOTIFICATION_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/tenancykit/protocol/openid-connect/certs}
   NOTIFICATION_PLATFORM_BASE_URL: http://platform.localhost:8080
   NOTIFICATION_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
   NOTIFICATION_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
@@ -93,8 +93,8 @@ x-mailroom-environment: &mailroom-environment
   MAILROOM_RABBITMQ_USER: mailroom
   MAILROOM_RABBITMQ_PASSWORD: ${MAILROOM_RABBITMQ_PASSWORD:?set it in .env}
   # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
-  MAILROOM_OIDC_ISSUER_URI: ${MAILROOM_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
-  MAILROOM_OIDC_JWK_SET_URI: ${MAILROOM_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  MAILROOM_OIDC_ISSUER_URI: ${MAILROOM_OIDC_ISSUER_URI:-http://localhost:8081/realms/tenancykit}
+  MAILROOM_OIDC_JWK_SET_URI: ${MAILROOM_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/tenancykit/protocol/openid-connect/certs}
   MAILROOM_PLATFORM_BASE_URL: http://platform.localhost:8080
   MAILROOM_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
   MAILROOM_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
@@ -118,8 +118,8 @@ x-survey-environment: &survey-environment
   SURVEY_RABBITMQ_USER: survey
   SURVEY_RABBITMQ_PASSWORD: ${SURVEY_RABBITMQ_PASSWORD:?set it in .env}
   # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
-  SURVEY_OIDC_ISSUER_URI: ${SURVEY_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
-  SURVEY_OIDC_JWK_SET_URI: ${SURVEY_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  SURVEY_OIDC_ISSUER_URI: ${SURVEY_OIDC_ISSUER_URI:-http://localhost:8081/realms/tenancykit}
+  SURVEY_OIDC_JWK_SET_URI: ${SURVEY_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/tenancykit/protocol/openid-connect/certs}
   SURVEY_PLATFORM_BASE_URL: http://platform.localhost:8080
   SURVEY_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
   SURVEY_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
@@ -153,8 +153,8 @@ x-booking-environment: &booking-environment
   BOOKING_RABBITMQ_USER: booking
   BOOKING_RABBITMQ_PASSWORD: ${BOOKING_RABBITMQ_PASSWORD:?set it in .env}
   # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
-  BOOKING_OIDC_ISSUER_URI: ${BOOKING_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
-  BOOKING_OIDC_JWK_SET_URI: ${BOOKING_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  BOOKING_OIDC_ISSUER_URI: ${BOOKING_OIDC_ISSUER_URI:-http://localhost:8081/realms/tenancykit}
+  BOOKING_OIDC_JWK_SET_URI: ${BOOKING_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/tenancykit/protocol/openid-connect/certs}
   BOOKING_PLATFORM_BASE_URL: http://platform.localhost:8080
   BOOKING_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
   BOOKING_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
@@ -185,8 +185,8 @@ x-customer-environment: &customer-environment
   CUSTOMER_RABBITMQ_USER: customer
   CUSTOMER_RABBITMQ_PASSWORD: ${CUSTOMER_RABBITMQ_PASSWORD:?set it in .env}
   # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
-  CUSTOMER_OIDC_ISSUER_URI: ${CUSTOMER_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
-  CUSTOMER_OIDC_JWK_SET_URI: ${CUSTOMER_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  CUSTOMER_OIDC_ISSUER_URI: ${CUSTOMER_OIDC_ISSUER_URI:-http://localhost:8081/realms/tenancykit}
+  CUSTOMER_OIDC_JWK_SET_URI: ${CUSTOMER_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/tenancykit/protocol/openid-connect/certs}
   CUSTOMER_PLATFORM_BASE_URL: http://platform.localhost:8080
   CUSTOMER_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
   CUSTOMER_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
@@ -212,8 +212,8 @@ x-loyalty-environment: &loyalty-environment
   LOYALTY_RABBITMQ_USER: loyalty
   LOYALTY_RABBITMQ_PASSWORD: ${LOYALTY_RABBITMQ_PASSWORD:?set it in .env}
   # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
-  LOYALTY_OIDC_ISSUER_URI: ${LOYALTY_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
-  LOYALTY_OIDC_JWK_SET_URI: ${LOYALTY_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  LOYALTY_OIDC_ISSUER_URI: ${LOYALTY_OIDC_ISSUER_URI:-http://localhost:8081/realms/tenancykit}
+  LOYALTY_OIDC_JWK_SET_URI: ${LOYALTY_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/tenancykit/protocol/openid-connect/certs}
   LOYALTY_PLATFORM_BASE_URL: http://platform.localhost:8080
   LOYALTY_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
   LOYALTY_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
@@ -248,8 +248,8 @@ x-workflow-environment: &workflow-environment
   WORKFLOW_RABBITMQ_HOST: rabbitmq
   WORKFLOW_RABBITMQ_USER: workflow
   WORKFLOW_RABBITMQ_PASSWORD: ${WORKFLOW_RABBITMQ_PASSWORD:?set it in .env}
-  WORKFLOW_OIDC_ISSUER_URI: ${WORKFLOW_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
-  WORKFLOW_OIDC_JWK_SET_URI: ${WORKFLOW_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  WORKFLOW_OIDC_ISSUER_URI: ${WORKFLOW_OIDC_ISSUER_URI:-http://localhost:8081/realms/tenancykit}
+  WORKFLOW_OIDC_JWK_SET_URI: ${WORKFLOW_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/tenancykit/protocol/openid-connect/certs}
   WORKFLOW_PLATFORM_BASE_URL: http://platform.localhost:8080
   WORKFLOW_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
   WORKFLOW_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
@@ -279,8 +279,8 @@ x-attribution-environment: &attribution-environment
   ATTRIBUTION_RABBITMQ_USER: attribution
   ATTRIBUTION_RABBITMQ_PASSWORD: ${ATTRIBUTION_RABBITMQ_PASSWORD:?set it in .env}
   # The issuer must equal what Keycloak writes into a token; the JWKS URI is fetched server-to-server.
-  ATTRIBUTION_OIDC_ISSUER_URI: ${ATTRIBUTION_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
-  ATTRIBUTION_OIDC_JWK_SET_URI: ${ATTRIBUTION_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+  ATTRIBUTION_OIDC_ISSUER_URI: ${ATTRIBUTION_OIDC_ISSUER_URI:-http://localhost:8081/realms/tenancykit}
+  ATTRIBUTION_OIDC_JWK_SET_URI: ${ATTRIBUTION_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/tenancykit/protocol/openid-connect/certs}
   ATTRIBUTION_PLATFORM_BASE_URL: http://platform.localhost:8080
   ATTRIBUTION_PLATFORM_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
   ATTRIBUTION_PLATFORM_JWK_SET_URI: http://platform.localhost:8080/.well-known/jwks.json
@@ -452,7 +452,7 @@ services:
       PLATFORM_RABBITMQ_USER: platform
       PLATFORM_RABBITMQ_PASSWORD: ${PLATFORM_RABBITMQ_PASSWORD:?set it in .env}
       PLATFORM_KEYCLOAK_URL: http://keycloak:8080
-      PLATFORM_KEYCLOAK_REALM: ${KEYCLOAK_REALM:-billing}
+      PLATFORM_KEYCLOAK_REALM: ${KEYCLOAK_REALM:-tenancykit}
       PLATFORM_KEYCLOAK_ADMIN_CLIENT_ID: platform-admin
       PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET: ${PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET:?set it in .env}
       PLATFORM_KEYCLOAK_CONSOLE_CLIENT_ID: ${PLATFORM_KEYCLOAK_CONSOLE_CLIENT_ID:-suite-console}
@@ -466,8 +466,8 @@ services:
       PLATFORM_TOKEN_ISSUER: ${PLATFORM_TOKEN_ISSUER:-http://platform.localhost:8080}
       PLATFORM_TOKEN_SIGNING_KEY: ${PLATFORM_TOKEN_SIGNING_KEY:-}
       PLATFORM_TOKEN_ALLOW_EPHEMERAL_KEY: ${PLATFORM_TOKEN_ALLOW_EPHEMERAL_KEY:-true}
-      PLATFORM_OIDC_ISSUER_URI: ${PLATFORM_OIDC_ISSUER_URI:-http://localhost:8081/realms/billing}
-      PLATFORM_OIDC_JWK_SET_URI: ${PLATFORM_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/billing/protocol/openid-connect/certs}
+      PLATFORM_OIDC_ISSUER_URI: ${PLATFORM_OIDC_ISSUER_URI:-http://localhost:8081/realms/tenancykit}
+      PLATFORM_OIDC_JWK_SET_URI: ${PLATFORM_OIDC_JWK_SET_URI:-http://keycloak:8080/realms/tenancykit/protocol/openid-connect/certs}
       PLATFORM_BOOTSTRAP_ADMIN_EMAIL: ${PLATFORM_BOOTSTRAP_ADMIN_EMAIL:-}
       PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD: ${PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD:-}
       PLATFORM_SERVICE_CLIENT_ID: ${PLATFORM_SERVICE_CLIENT_ID:-billing}
@@ -834,7 +834,7 @@ services:
     image: caddy:2.9
     restart: unless-stopped
     environment:
-      KEYCLOAK_AUTHORITY: ${CONSOLE_KEYCLOAK_AUTHORITY:-http://localhost:8081/realms/billing}
+      KEYCLOAK_AUTHORITY: ${CONSOLE_KEYCLOAK_AUTHORITY:-http://localhost:8081/realms/tenancykit}
       KEYCLOAK_CLIENT_ID: ${CONSOLE_KEYCLOAK_CLIENT_ID:-suite-console}
       KEYCLOAK_PUBLIC_ORIGIN: ${CONSOLE_KEYCLOAK_ORIGIN:-http://localhost:8081}
       PLATFORM_HOSTNAME: ${PLATFORM_HOSTNAME:-platform.localhost}

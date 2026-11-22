@@ -77,7 +77,7 @@ class WebhookHttpSenderTest {
 
     private static WebhookHttpSender sender(boolean allowNonPublic, Duration readTimeout) {
         return new WebhookHttpSender(
-                allowNonPublic, "CoreBilling-Webhooks/1", 100, 25, Duration.ofSeconds(2), Duration.ofSeconds(2), readTimeout,
+                allowNonPublic, "Billing-Webhooks/1", 100, 25, Duration.ofSeconds(2), Duration.ofSeconds(2), readTimeout,
                 Duration.ofSeconds(5));
     }
 
@@ -93,7 +93,7 @@ class WebhookHttpSenderTest {
             WebhookHttpSender.Result result = sender.send(post(base() + "/ok"));
             assertThat(result.statusCode()).isEqualTo(204);
             assertThat(result.error()).isNull();
-            assertThat(received).isEqualTo("{\"a\":1}|whk_1|CoreBilling-Webhooks/1");
+            assertThat(received).isEqualTo("{\"a\":1}|whk_1|Billing-Webhooks/1");
         }
     }
 
@@ -168,7 +168,7 @@ class WebhookHttpSenderTest {
     @Test
     void aSaturatedPerRoutePoolFailsFastWithTimeout() throws Exception {
         try (WebhookHttpSender sender = new WebhookHttpSender(
-                true, "CoreBilling-Webhooks/1", 20, 1, Duration.ofSeconds(2), Duration.ofMillis(200), Duration.ofSeconds(10),
+                true, "Billing-Webhooks/1", 20, 1, Duration.ofSeconds(2), Duration.ofMillis(200), Duration.ofSeconds(10),
                 Duration.ofSeconds(15));
              java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(2)) {
             java.util.concurrent.Future<WebhookHttpSender.Result> holding = pool.submit(() -> sender.send(post(base() + "/slow")));

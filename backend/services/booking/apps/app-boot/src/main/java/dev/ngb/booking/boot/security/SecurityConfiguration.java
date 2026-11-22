@@ -42,7 +42,7 @@ class SecurityConfiguration {
                         .requestMatchers("/actuator/health", "/actuator/health/**")
                         .permitAll()
                         // The generated contract is what a client reads; it exposes no data.
-                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml")
+                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/scalar", "/scalar/**")
                         .permitAll()
                         // The public gate: a customer's browser has no suite token. The short-lived customer token is
                         // the credential and the tenant scope comes from the host. Both spellings are permitted because

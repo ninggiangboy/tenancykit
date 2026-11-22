@@ -1,5 +1,5 @@
-import { env, expect, test } from '../support/fixtures'
 import { signIn } from '../support/console'
+import { env, expect, test } from '../support/fixtures'
 import { linkInMailTo, mailCount } from '../support/mail'
 import { provisionTenantFixture } from '../support/stack'
 

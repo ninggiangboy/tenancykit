@@ -3,7 +3,7 @@
 # Keycloak authority and the public client id are all a browser needs to start a sign-in.
 set -eu
 
-: "${KEYCLOAK_AUTHORITY:=http://localhost:8081/realms/billing}"
+: "${KEYCLOAK_AUTHORITY:=http://localhost:8081/realms/tenancykit}"
 : "${KEYCLOAK_CLIENT_ID:=suite-console}"
 
 sed \

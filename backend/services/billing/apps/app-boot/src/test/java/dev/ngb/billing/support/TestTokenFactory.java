@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 public final class TestTokenFactory {
 
     public static final String PLATFORM_ISSUER = "http://platform.test";
-    public static final String USER_ISSUER = "http://keycloak.test/realms/billing";
+    public static final String USER_ISSUER = "http://keycloak.test/realms/tenancykit";
 
     private static final ECKey KEY = generate();
     private static final String KEY_ID = thumbprint();

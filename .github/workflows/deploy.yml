@@ -77,6 +77,10 @@ jobs:
           mailroom_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .mailroom)"
           customer_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .customer)"
           loyalty_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .loyalty)"
+          survey_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .survey)"
+          booking_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .booking)"
+          workflow_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .workflow)"
+          attribution_repo="$(terraform -chdir=ops/terraform output -json ecr_repository_urls | jq -r .attribution)"
 
           docker build -f backend/services/platform/apps/app-boot/Dockerfile -t "${platform_repo}:${TAG}" .
           docker push "${platform_repo}:${TAG}"
@@ -101,6 +105,18 @@ jobs:
 
           docker build -f backend/services/loyalty/apps/app-boot/Dockerfile -t "${loyalty_repo}:${TAG}" .
           docker push "${loyalty_repo}:${TAG}"
+
+          docker build -f backend/services/survey/apps/app-boot/Dockerfile -t "${survey_repo}:${TAG}" .
+          docker push "${survey_repo}:${TAG}"
+
+          docker build -f backend/services/booking/apps/app-boot/Dockerfile -t "${booking_repo}:${TAG}" .
+          docker push "${booking_repo}:${TAG}"
+
+          docker build -f backend/services/workflow/apps/app-boot/Dockerfile -t "${workflow_repo}:${TAG}" .
+          docker push "${workflow_repo}:${TAG}"
+
+          docker build -f backend/services/attribution/apps/app-boot/Dockerfile -t "${attribution_repo}:${TAG}" .
+          docker push "${attribution_repo}:${TAG}"
 
       - name: Bootstrap the database and broker (first deploy only)
         if: ${{ inputs.bootstrap_data }}
@@ -273,6 +289,34 @@ jobs:
             exit 1
           fi
 
+      # The four apps added after the first seven share one step: each runs its migrate to completion and the step stops
+      # at the first one that exits non-zero, so nothing rolls onto a schema that did not finish.
+      - name: Migrate Survey, Booking, Workflow and Attribution
+        run: |
+          set -euo pipefail
+          cluster="$(terraform output -raw cluster_name)"
+          subnets="$(terraform output -json private_subnet_ids | jq -r 'join(",")')"
+          security_group="$(terraform output -raw task_security_group_id)"
+
+          for key in survey_migrate booking_migrate workflow_migrate attribution_migrate; do
+            definition="$(terraform output -json task_definition_arns | jq -r --arg key "$key" '.[$key]')"
+            task="$(aws ecs run-task \
+              --cluster "$cluster" \
+              --task-definition "$definition" \
+              --launch-type FARGATE \
+              --network-configuration "awsvpcConfiguration={subnets=[$subnets],securityGroups=[$security_group],assignPublicIp=DISABLED}" \
+              --query 'tasks[0].taskArn' --output text)"
+            aws ecs wait tasks-stopped --cluster "$cluster" --tasks "$task"
+            exit_code="$(aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+              --query 'tasks[0].containers[0].exitCode' --output text)"
+            if [ "$exit_code" != "0" ]; then
+              echo "$key exited $exit_code" >&2
+              aws ecs describe-tasks --cluster "$cluster" --tasks "$task" \
+                --query 'tasks[0].containers[0].reason' --output text
+              exit 1
+            fi
+          done
+
       - name: Roll the services
         run: |
           set -euo pipefail
@@ -300,3 +344,11 @@ jobs:
           roll customer_worker customer_worker
           roll loyalty_api loyalty_api
           roll loyalty_worker loyalty_worker
+          roll survey_api survey_api
+          roll survey_worker survey_worker
+          roll booking_api booking_api
+          roll booking_worker booking_worker
+          roll workflow_api workflow_api
+          roll workflow_worker workflow_worker
+          roll attribution_api attribution_api
+          roll attribution_worker attribution_worker

@@ -34,7 +34,7 @@ import tools.jackson.databind.json.JsonMapper;
  *
  * <p>The second endpoint is the point of the case: it is a consumer that customer knows nothing about, and it receives the
  * same deliveries with its own secret, so a new Tenant-side consumer needs no change here. Both are asserted against
- * the committed contracts — the {@code Crm-*} header set, a signature that verifies with that endpoint's own secret,
+ * the committed contracts — the {@code Customer-*} header set, a signature that verifies with that endpoint's own secret,
  * the canonical envelope body, and an {@code order.refunded} that carries the {@code return} block a forwarder needs.
  * A third endpoint belonging to another Tenant receives nothing.
  */
@@ -120,7 +120,7 @@ class WebhookDeliveryContractTest extends CustomerApiTest {
         }
     }
 
-    /** Every delivery of one endpoint: its six {@code Crm-*} headers, its verified signature and its contract. */
+    /** Every delivery of one endpoint: its six {@code Customer-*} headers, its verified signature and its contract. */
     private void assertDeliveries(List<WebhookReceiver.Call> calls, String secret, String keyId) {
         assertThat(calls).allSatisfy(call -> {
             assertThat(call.eventId()).as("Customer-Event-Id is the envelope's id").isNotBlank();

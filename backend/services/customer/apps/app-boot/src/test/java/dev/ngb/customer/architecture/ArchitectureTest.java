@@ -119,7 +119,7 @@ class ArchitectureTest {
                 "customer.events", "loyalty.events", "billing.events", "survey.events", "mailer.events", "mailer.commands");
         List<String> offenders = List.of();
         for (String module : MODULES) {
-            Path sources = RepositoryPaths.crmRoot().resolve(module);
+            Path sources = RepositoryPaths.customerRoot().resolve(module);
             if (!Files.isDirectory(sources)) {
                 continue;
             }

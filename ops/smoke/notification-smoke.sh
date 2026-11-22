@@ -17,7 +17,7 @@ set -euo pipefail
 PROXY="${PROXY_URL:-http://localhost:8090}"
 MAILPIT="${MAILPIT_URL:-http://localhost:8025}"
 KEYCLOAK="${KEYCLOAK_URL:-http://localhost:8081}"
-REALM="${KEYCLOAK_REALM:-billing}"
+REALM="${KEYCLOAK_REALM:-tenancykit}"
 SMOKE_CLIENT_ID="${SMOKE_CLIENT_ID:-suite-smoke}"
 SMOKE_CLIENT_SECRET="${SMOKE_CLIENT_SECRET:?set the smoke client secret}"
 TENANT_CODE="${SMOKE_TENANT_CODE:-acme}"

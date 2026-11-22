@@ -4,29 +4,29 @@ locals {
   # housekeeping. Nothing here sets a webhook destination policy: customer's default is false, and a deployment leaves it so.
   common_environment = [
     { name = "JAVA_TOOL_OPTIONS", value = "-XX:MaxRAMPercentage=50" },
-    { name = "CRM_DB_URL", value = "jdbc:postgresql://${var.db_host}:${var.db_port}/customer?sslmode=require" },
-    { name = "CRM_DB_USER", value = "customer_app" },
-    { name = "CRM_MIGRATION_DB_USER", value = "customer_owner" },
-    { name = "CRM_RABBITMQ_HOST", value = var.broker_host },
-    { name = "CRM_RABBITMQ_PORT", value = tostring(var.broker_port) },
-    { name = "CRM_RABBITMQ_USER", value = "customer" },
+    { name = "CUSTOMER_DB_URL", value = "jdbc:postgresql://${var.db_host}:${var.db_port}/customer?sslmode=require" },
+    { name = "CUSTOMER_DB_USER", value = "customer_app" },
+    { name = "CUSTOMER_MIGRATION_DB_USER", value = "customer_owner" },
+    { name = "CUSTOMER_RABBITMQ_HOST", value = var.broker_host },
+    { name = "CUSTOMER_RABBITMQ_PORT", value = tostring(var.broker_port) },
+    { name = "CUSTOMER_RABBITMQ_USER", value = "customer" },
     { name = "SPRING_RABBITMQ_SSL_ENABLED", value = "true" },
-    { name = "CRM_PLATFORM_BASE_URL", value = var.platform_internal_url },
-    { name = "CRM_PLATFORM_ISSUER", value = var.platform_public_issuer },
-    { name = "CRM_PLATFORM_JWK_SET_URI", value = var.platform_internal_jwks },
-    { name = "CRM_OIDC_ISSUER_URI", value = var.keycloak_public_issuer },
-    { name = "CRM_OIDC_JWK_SET_URI", value = var.keycloak_internal_jwks },
-    { name = "PLATFORM_CRM_SERVICE_CLIENT_ID", value = "customer" },
-    { name = "CRM_PORT", value = "8080" },
-    { name = "CRM_PUBLIC_BASE_URL", value = var.public_base_url },
+    { name = "CUSTOMER_PLATFORM_BASE_URL", value = var.platform_internal_url },
+    { name = "CUSTOMER_PLATFORM_ISSUER", value = var.platform_public_issuer },
+    { name = "CUSTOMER_PLATFORM_JWK_SET_URI", value = var.platform_internal_jwks },
+    { name = "CUSTOMER_OIDC_ISSUER_URI", value = var.keycloak_public_issuer },
+    { name = "CUSTOMER_OIDC_JWK_SET_URI", value = var.keycloak_internal_jwks },
+    { name = "PLATFORM_CUSTOMER_SERVICE_CLIENT_ID", value = "customer" },
+    { name = "CUSTOMER_PORT", value = "8080" },
+    { name = "CUSTOMER_PUBLIC_BASE_URL", value = var.public_base_url },
   ]
 
   common_secrets = [
-    { name = "CRM_DB_PASSWORD", valueFrom = var.secret_arns["CRM_DB_PASSWORD"] },
-    { name = "CRM_MIGRATION_DB_PASSWORD", valueFrom = var.secret_arns["CRM_MIGRATION_DB_PASSWORD"] },
-    { name = "CRM_RABBITMQ_PASSWORD", valueFrom = var.secret_arns["CRM_RABBITMQ_PASSWORD"] },
-    { name = "PLATFORM_CRM_SERVICE_CLIENT_SECRET", valueFrom = var.secret_arns["CRM_REPLICA_CLIENT_SECRET"] },
-    { name = "CRM_SECRETS_MASTER_KEY", valueFrom = var.secret_arns["CRM_SECRETS_MASTER_KEY"] },
+    { name = "CUSTOMER_DB_PASSWORD", valueFrom = var.secret_arns["CUSTOMER_DB_PASSWORD"] },
+    { name = "CUSTOMER_MIGRATION_DB_PASSWORD", valueFrom = var.secret_arns["CUSTOMER_MIGRATION_DB_PASSWORD"] },
+    { name = "CUSTOMER_RABBITMQ_PASSWORD", valueFrom = var.secret_arns["CUSTOMER_RABBITMQ_PASSWORD"] },
+    { name = "PLATFORM_CUSTOMER_SERVICE_CLIENT_SECRET", valueFrom = var.secret_arns["CUSTOMER_REPLICA_CLIENT_SECRET"] },
+    { name = "CUSTOMER_SECRETS_MASTER_KEY", valueFrom = var.secret_arns["CUSTOMER_SECRETS_MASTER_KEY"] },
   ]
 
   ready_probe = ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health/readiness HTTP/1.0\\r\\n\\r\\n' >&3 && head -20 <&3 | grep -q UP"]

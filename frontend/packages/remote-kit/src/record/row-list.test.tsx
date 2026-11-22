@@ -13,7 +13,7 @@ describe('RowList', () => {
     )
     const [button, badge] = screen.getAllByRole('listitem')
     for (const row of [button, badge]) {
-      expect(row).toHaveClass("min-h-14", "items-center")
+      expect(row).toHaveClass('min-h-14', 'items-center')
       expect(row?.querySelector('.min-w-24')).not.toBeNull()
     }
     expect(badge).toHaveClass('bg-selection')

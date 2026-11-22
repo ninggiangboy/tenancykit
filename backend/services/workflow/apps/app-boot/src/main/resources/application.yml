@@ -10,8 +10,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${WORKFLOW_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}
-          jwk-set-uri: ${WORKFLOW_OIDC_JWK_SET_URI:${WORKFLOW_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}/protocol/openid-connect/certs}
+          issuer-uri: ${WORKFLOW_OIDC_ISSUER_URI:http://localhost:8081/realms/tenancykit}
+          jwk-set-uri: ${WORKFLOW_OIDC_JWK_SET_URI:${WORKFLOW_OIDC_ISSUER_URI:http://localhost:8081/realms/tenancykit}/protocol/openid-connect/certs}
           audiences: workflow
   datasource:
     url: ${WORKFLOW_DB_URL:jdbc:postgresql://localhost:5432/workflow}

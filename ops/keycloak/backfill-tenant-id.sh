@@ -14,14 +14,14 @@
 # attribute, and users whose tenant code is not in the mapping, are left alone and reported. Safe to run again.
 #
 #   KEYCLOAK_URL            default http://localhost:8081
-#   KEYCLOAK_REALM          default billing
+#   KEYCLOAK_REALM          default tenancykit
 #   KEYCLOAK_ADMIN_USER     default admin
 #   KEYCLOAK_ADMIN_PASSWORD required (the bootstrap administrator's password)
 #   BACKUP_DIR              default ops/keycloak/.backup (written only with APPLY=1)
 set -euo pipefail
 
 URL="${KEYCLOAK_URL:-http://localhost:8081}"
-REALM="${KEYCLOAK_REALM:-billing}"
+REALM="${KEYCLOAK_REALM:-tenancykit}"
 ADMIN_USER="${KEYCLOAK_ADMIN_USER:-admin}"
 ADMIN_PASSWORD="${KEYCLOAK_ADMIN_PASSWORD:?set the Keycloak administrator password}"
 BACKUP_DIR="${BACKUP_DIR:-ops/keycloak/.backup}"

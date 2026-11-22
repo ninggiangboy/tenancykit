@@ -139,7 +139,7 @@ class WebhookConfiguration {
     /** The catalog is the packaged event schemas themselves, so a type customer does not produce cannot be subscribed to. */
     @Bean
     EventTypeCatalog eventTypeCatalog() {
-        return new CrmEventTypes(packagedEventTypes());
+        return new CustomerEventTypes(packagedEventTypes());
     }
 
     @Bean
@@ -256,5 +256,5 @@ class WebhookConfiguration {
     }
 
     /** The catalog port over the packaged schemas. */
-    record CrmEventTypes(Set<String> eventTypes) implements EventTypeCatalog {}
+    record CustomerEventTypes(Set<String> eventTypes) implements EventTypeCatalog {}
 }

@@ -12,7 +12,7 @@ import java.time.Duration;
  */
 public final class SharedWebhookSender implements WebhookSender, AutoCloseable {
 
-    private static final String USER_AGENT = "Crm-Webhooks/1";
+    private static final String USER_AGENT = "Customer-Webhooks/1";
 
     private final WebhookHttpSender sender;
 

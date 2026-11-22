@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Configuration;
 class MessagingConfiguration {
 
     @Bean
-    Declarables crmTopology(CustomerSettings settings) {
+    Declarables customerTopology(CustomerSettings settings) {
         CustomerSettings.Messaging messaging = settings.messaging();
         String queueName = messaging.queue();
         String deadLetterQueue = queueName + ".dlq";

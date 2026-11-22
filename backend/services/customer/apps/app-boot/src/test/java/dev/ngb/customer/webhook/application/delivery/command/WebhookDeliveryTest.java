@@ -23,7 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * A recorded delivery reaches the endpoint with a signature a verifier holding the endpoint's secret accepts.
  *
  * <p>The receiver is a local HTTP server, and the harness allows insecure targets because that is what a local receiver
- * is. The header set is {@code Crm-*}, so a receiver can tell this app's webhooks apart from another app's.
+ * is. The header set is {@code Customer-*}, so a receiver can tell this app's webhooks apart from another app's.
  */
 class WebhookDeliveryTest extends CustomerIntegrationTest {
 

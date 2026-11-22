@@ -17,7 +17,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 class TenantOnlyGuardTest {
 
     @Test
-    void aTenantScopeMayCallACrmEndpoint() {
+    void aTenantScopeMayCallACustomerEndpoint() {
         assertThatCode(() -> handle(RequestScope.tenant(new TenantId(UUID.randomUUID()))))
                 .doesNotThrowAnyException();
     }

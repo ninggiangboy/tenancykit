@@ -142,9 +142,13 @@ module "mq" {
   mailer_password        = module.secrets.values["MAILER_RABBITMQ_PASSWORD"]
   notification_password  = module.secrets.values["NOTIFICATION_RABBITMQ_PASSWORD"]
   keycloak_password      = module.secrets.values["KEYCLOAK_RABBITMQ_PASSWORD"]
-  mailroom_password         = module.secrets.values["MAILROOM_RABBITMQ_PASSWORD"]
-  customer_password              = module.secrets.values["CRM_RABBITMQ_PASSWORD"]
-  loyalty_password          = module.secrets.values["LOYALTY_RABBITMQ_PASSWORD"]
+  mailroom_password      = module.secrets.values["MAILROOM_RABBITMQ_PASSWORD"]
+  customer_password      = module.secrets.values["CUSTOMER_RABBITMQ_PASSWORD"]
+  loyalty_password       = module.secrets.values["LOYALTY_RABBITMQ_PASSWORD"]
+  survey_password        = module.secrets.values["SURVEY_RABBITMQ_PASSWORD"]
+  booking_password       = module.secrets.values["BOOKING_RABBITMQ_PASSWORD"]
+  workflow_password      = module.secrets.values["WORKFLOW_RABBITMQ_PASSWORD"]
+  attribution_password   = module.secrets.values["ATTRIBUTION_RABBITMQ_PASSWORD"]
   secret_arns            = module.secrets.arns
 }
 
@@ -310,11 +314,211 @@ module "mailroom" {
     worker  = module.ecs.log_group_names["mailroom"]
     migrate = module.ecs.log_group_names["mailroom_migrate"]
   }
-  image                  = "${module.ecs.ecr_repository_urls["mailroom"]}:${var.image_tag}"
-  api_desired_count      = var.mailroom_api_desired_count
-  worker_desired_count   = var.mailroom_worker_desired_count
+  image                    = "${module.ecs.ecr_repository_urls["mailroom"]}:${var.image_tag}"
+  api_desired_count        = var.mailroom_api_desired_count
+  worker_desired_count     = var.mailroom_worker_desired_count
+  listener_arn             = module.alb.listener_arn
+  mailroom_public_base_url = local.mailroom_public_url
+  platform_internal_url    = local.platform_internal_url
+  platform_internal_jwks   = local.platform_internal_jwks
+  platform_public_issuer   = local.platform_public_issuer
+  keycloak_public_issuer   = local.keycloak_public_issuer
+  keycloak_internal_jwks   = local.keycloak_internal_jwks
+  db_host                  = module.rds.address
+  db_port                  = module.rds.port
+  broker_host              = module.mq.amqp_host
+  broker_port              = module.mq.amqp_port
+  secret_arns              = module.secrets.arns
+}
+
+module "customer" {
+  source = "./customer"
+
+  environment                   = var.environment
+  region                        = var.region
+  cluster_arn                   = module.ecs.cluster_arn
+  execution_role_arn            = module.ecs.execution_role_arn
+  private_subnet_ids            = module.network.private_subnet_ids
+  task_security_group_id        = module.network.task_security_group_id
+  vpc_id                        = module.network.vpc_id
+  service_connect_namespace_arn = module.service_discovery.namespace_arn
+  log_group_names = {
+    api     = module.ecs.log_group_names["customer_api"]
+    worker  = module.ecs.log_group_names["customer"]
+    migrate = module.ecs.log_group_names["customer_migrate"]
+  }
+  image                  = "${module.ecs.ecr_repository_urls["customer"]}:${var.image_tag}"
+  api_desired_count      = var.customer_api_desired_count
+  worker_desired_count   = var.customer_worker_desired_count
   listener_arn           = module.alb.listener_arn
-  mailroom_public_base_url  = local.mailroom_public_url
+  public_base_url        = local.customer_public_url
+  platform_internal_url  = local.platform_internal_url
+  platform_internal_jwks = local.platform_internal_jwks
+  platform_public_issuer = local.platform_public_issuer
+  keycloak_public_issuer = local.keycloak_public_issuer
+  keycloak_internal_jwks = local.keycloak_internal_jwks
+  db_host                = module.rds.address
+  db_port                = module.rds.port
+  broker_host            = module.mq.amqp_host
+  broker_port            = module.mq.amqp_port
+  secret_arns            = module.secrets.arns
+}
+
+module "loyalty" {
+  source = "./loyalty"
+
+  environment                   = var.environment
+  region                        = var.region
+  cluster_arn                   = module.ecs.cluster_arn
+  execution_role_arn            = module.ecs.execution_role_arn
+  private_subnet_ids            = module.network.private_subnet_ids
+  task_security_group_id        = module.network.task_security_group_id
+  vpc_id                        = module.network.vpc_id
+  service_connect_namespace_arn = module.service_discovery.namespace_arn
+  log_group_names = {
+    api     = module.ecs.log_group_names["loyalty_api"]
+    worker  = module.ecs.log_group_names["loyalty"]
+    migrate = module.ecs.log_group_names["loyalty_migrate"]
+  }
+  image                  = "${module.ecs.ecr_repository_urls["loyalty"]}:${var.image_tag}"
+  api_desired_count      = var.loyalty_api_desired_count
+  worker_desired_count   = var.loyalty_worker_desired_count
+  listener_arn           = module.alb.listener_arn
+  public_base_url        = local.loyalty_public_url
+  platform_internal_url  = local.platform_internal_url
+  platform_internal_jwks = local.platform_internal_jwks
+  platform_public_issuer = local.platform_public_issuer
+  keycloak_public_issuer = local.keycloak_public_issuer
+  keycloak_internal_jwks = local.keycloak_internal_jwks
+  db_host                = module.rds.address
+  db_port                = module.rds.port
+  broker_host            = module.mq.amqp_host
+  broker_port            = module.mq.amqp_port
+  secret_arns            = module.secrets.arns
+}
+
+module "survey" {
+  source = "./survey"
+
+  environment                   = var.environment
+  region                        = var.region
+  cluster_arn                   = module.ecs.cluster_arn
+  execution_role_arn            = module.ecs.execution_role_arn
+  private_subnet_ids            = module.network.private_subnet_ids
+  task_security_group_id        = module.network.task_security_group_id
+  vpc_id                        = module.network.vpc_id
+  service_connect_namespace_arn = module.service_discovery.namespace_arn
+  log_group_names = {
+    api     = module.ecs.log_group_names["survey_api"]
+    worker  = module.ecs.log_group_names["survey"]
+    migrate = module.ecs.log_group_names["survey_migrate"]
+  }
+  image                  = "${module.ecs.ecr_repository_urls["survey"]}:${var.image_tag}"
+  api_desired_count      = var.survey_api_desired_count
+  worker_desired_count   = var.survey_worker_desired_count
+  listener_arn           = module.alb.listener_arn
+  suite_name             = local.suite_name
+  allowed_origins        = local.survey_upload_origins
+  public_base_url        = local.survey_public_url
+  platform_internal_url  = local.platform_internal_url
+  platform_internal_jwks = local.platform_internal_jwks
+  platform_public_issuer = local.platform_public_issuer
+  keycloak_public_issuer = local.keycloak_public_issuer
+  keycloak_internal_jwks = local.keycloak_internal_jwks
+  db_host                = module.rds.address
+  db_port                = module.rds.port
+  broker_host            = module.mq.amqp_host
+  broker_port            = module.mq.amqp_port
+  secret_arns            = module.secrets.arns
+}
+
+module "booking" {
+  source = "./booking"
+
+  environment                   = var.environment
+  region                        = var.region
+  cluster_arn                   = module.ecs.cluster_arn
+  execution_role_arn            = module.ecs.execution_role_arn
+  private_subnet_ids            = module.network.private_subnet_ids
+  task_security_group_id        = module.network.task_security_group_id
+  vpc_id                        = module.network.vpc_id
+  service_connect_namespace_arn = module.service_discovery.namespace_arn
+  log_group_names = {
+    api     = module.ecs.log_group_names["booking_api"]
+    worker  = module.ecs.log_group_names["booking"]
+    migrate = module.ecs.log_group_names["booking_migrate"]
+  }
+  image                  = "${module.ecs.ecr_repository_urls["booking"]}:${var.image_tag}"
+  api_desired_count      = var.booking_api_desired_count
+  worker_desired_count   = var.booking_worker_desired_count
+  listener_arn           = module.alb.listener_arn
+  platform_internal_url  = local.platform_internal_url
+  platform_internal_jwks = local.platform_internal_jwks
+  platform_public_issuer = local.platform_public_issuer
+  keycloak_public_issuer = local.keycloak_public_issuer
+  keycloak_internal_jwks = local.keycloak_internal_jwks
+  db_host                = module.rds.address
+  db_port                = module.rds.port
+  broker_host            = module.mq.amqp_host
+  broker_port            = module.mq.amqp_port
+  secret_arns            = module.secrets.arns
+}
+
+module "workflow" {
+  source = "./workflow"
+
+  environment                   = var.environment
+  region                        = var.region
+  cluster_arn                   = module.ecs.cluster_arn
+  execution_role_arn            = module.ecs.execution_role_arn
+  private_subnet_ids            = module.network.private_subnet_ids
+  task_security_group_id        = module.network.task_security_group_id
+  vpc_id                        = module.network.vpc_id
+  service_connect_namespace_arn = module.service_discovery.namespace_arn
+  log_group_names = {
+    api     = module.ecs.log_group_names["workflow_api"]
+    worker  = module.ecs.log_group_names["workflow"]
+    migrate = module.ecs.log_group_names["workflow_migrate"]
+  }
+  image                  = "${module.ecs.ecr_repository_urls["workflow"]}:${var.image_tag}"
+  api_desired_count      = var.workflow_api_desired_count
+  worker_desired_count   = var.workflow_worker_desired_count
+  listener_arn           = module.alb.listener_arn
+  token_url              = local.platform_token_url
+  app_urls               = local.workflow_app_urls
+  platform_internal_url  = local.platform_internal_url
+  platform_internal_jwks = local.platform_internal_jwks
+  platform_public_issuer = local.platform_public_issuer
+  keycloak_public_issuer = local.keycloak_public_issuer
+  keycloak_internal_jwks = local.keycloak_internal_jwks
+  db_host                = module.rds.address
+  db_port                = module.rds.port
+  broker_host            = module.mq.amqp_host
+  broker_port            = module.mq.amqp_port
+  secret_arns            = module.secrets.arns
+}
+
+module "attribution" {
+  source = "./attribution"
+
+  environment                   = var.environment
+  region                        = var.region
+  cluster_arn                   = module.ecs.cluster_arn
+  execution_role_arn            = module.ecs.execution_role_arn
+  private_subnet_ids            = module.network.private_subnet_ids
+  task_security_group_id        = module.network.task_security_group_id
+  vpc_id                        = module.network.vpc_id
+  service_connect_namespace_arn = module.service_discovery.namespace_arn
+  log_group_names = {
+    api     = module.ecs.log_group_names["attribution_api"]
+    worker  = module.ecs.log_group_names["attribution"]
+    migrate = module.ecs.log_group_names["attribution_migrate"]
+  }
+  image                  = "${module.ecs.ecr_repository_urls["attribution"]}:${var.image_tag}"
+  api_desired_count      = var.attribution_api_desired_count
+  worker_desired_count   = var.attribution_worker_desired_count
+  listener_arn           = module.alb.listener_arn
+  public_base_url        = local.attribution_public_url
   platform_internal_url  = local.platform_internal_url
   platform_internal_jwks = local.platform_internal_jwks
   platform_public_issuer = local.platform_public_issuer

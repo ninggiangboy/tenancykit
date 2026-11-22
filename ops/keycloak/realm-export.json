@@ -1,5 +1,5 @@
 {
-  "realm": "billing",
+  "realm": "tenancykit",
   "displayName": "TenancyKit",
   "enabled": true,
   "sslRequired": "external",

@@ -17,7 +17,7 @@ fi
 
 PROXY="${PROXY_URL:-http://localhost:8090}"
 KEYCLOAK="${KEYCLOAK_URL:-http://localhost:8081}"
-REALM="${KEYCLOAK_REALM:-billing}"
+REALM="${KEYCLOAK_REALM:-tenancykit}"
 BOOTSTRAP_EMAIL="${PLATFORM_BOOTSTRAP_ADMIN_EMAIL:?set the Platform bootstrap admin}"
 BOOTSTRAP_PASSWORD="${PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD:?set the Platform bootstrap password}"
 SMOKE_CLIENT_SECRET="${SMOKE_CLIENT_SECRET:?set the smoke client secret}"
@@ -208,7 +208,7 @@ start_receiver() {
   local customer_secret="${1:-}" loyalty_token="${2:-}" loyalty_secret="${3:-}"
   # The receiver is rebuilt every run: a cached image would keep an older handler and an older signature check.
   stop_receiver
-  FORWARDER_CRM_SECRET="${customer_secret}" FORWARDER_LOYALTY_TOKEN="${loyalty_token}" \
+  FORWARDER_CUSTOMER_SECRET="${customer_secret}" FORWARDER_LOYALTY_TOKEN="${loyalty_token}" \
     FORWARDER_LOYALTY_SECRET="${loyalty_secret}" FORWARDER_LOYALTY_HOST="${HOST}" \
     docker compose -f docker-compose.yml -f ops/smoke/tenant-forwarder/docker-compose.smoke.yml --profile smoke \
     up -d --build --wait tenant-forwarder > /dev/null

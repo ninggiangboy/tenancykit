@@ -43,8 +43,12 @@ resource "aws_ecs_task_definition" "users" {
         { name = "NOTIFICATION_BROKER_PASSWORD", valueFrom = var.secret_arns["NOTIFICATION_RABBITMQ_PASSWORD"] },
         { name = "KEYCLOAK_BROKER_PASSWORD", valueFrom = var.secret_arns["KEYCLOAK_RABBITMQ_PASSWORD"] },
         { name = "MAILROOM_BROKER_PASSWORD", valueFrom = var.secret_arns["MAILROOM_RABBITMQ_PASSWORD"] },
-        { name = "CRM_BROKER_PASSWORD", valueFrom = var.secret_arns["CRM_RABBITMQ_PASSWORD"] },
+        { name = "CUSTOMER_BROKER_PASSWORD", valueFrom = var.secret_arns["CUSTOMER_RABBITMQ_PASSWORD"] },
         { name = "LOYALTY_BROKER_PASSWORD", valueFrom = var.secret_arns["LOYALTY_RABBITMQ_PASSWORD"] },
+        { name = "SURVEY_BROKER_PASSWORD", valueFrom = var.secret_arns["SURVEY_RABBITMQ_PASSWORD"] },
+        { name = "BOOKING_BROKER_PASSWORD", valueFrom = var.secret_arns["BOOKING_RABBITMQ_PASSWORD"] },
+        { name = "WORKFLOW_BROKER_PASSWORD", valueFrom = var.secret_arns["WORKFLOW_RABBITMQ_PASSWORD"] },
+        { name = "ATTRIBUTION_BROKER_PASSWORD", valueFrom = var.secret_arns["ATTRIBUTION_RABBITMQ_PASSWORD"] },
       ]
 
       logConfiguration = {

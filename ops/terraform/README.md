@@ -18,13 +18,49 @@ same workloads on ECS Fargate, with managed data services instead of containers.
 | `mailroom-api` | Templates, receivers, groups, segments, emails, campaigns, settings and the public tracking paths | Service, 2 replicas, ALB rule priority 50 |
 | `mailroom-worker` | The `platform.events` and `mailroom.mailer-events` listeners, the campaign jobs and housekeeping | Service, 2 replicas, no ALB target |
 | `mailroom-migrate` | Flyway as the table owner, then exits | One-shot task definition, run by the pipeline |
+| `customer-api` | A Tenant's customers, contacts and their signed webhooks | Service, 2 replicas, ALB rule priority 60 |
+| `customer-worker` | The `platform.events` listener, the outbox relay, webhook delivery and housekeeping | Service, 2 replicas, no ALB target |
+| `customer-migrate` | Flyway as the table owner, then exits | One-shot task definition, run by the pipeline |
+| `loyalty-api` | Points, tiers and rewards and their signed webhooks | Service, 2 replicas, ALB rule priority 70 |
+| `loyalty-worker` | The `platform.events` listener, the outbox relay, webhook delivery, the expiry and tier runs and housekeeping | Service, 2 replicas, no ALB target |
+| `loyalty-migrate` | Flyway as the table owner, then exits | One-shot task definition, run by the pipeline |
+| `survey-api` | Surveys, links, the public fill surface, responses and exports | Service, 2 replicas, ALB rule priority 80 |
+| `survey-worker` | The `platform.events` listener, the outbox relay, webhook delivery, export, abandon and housekeeping jobs | Service, 2 replicas, no ALB target |
+| `survey-migrate` | Flyway as the table owner, then exits | One-shot task definition, run by the pipeline |
+| `booking-api` | Resources, availability, holds, bookings and the public gate | Service, 2 replicas, ALB rule priority 90 |
+| `booking-worker` | The `platform.events` listener, the outbox relay, webhook delivery and the hold, offer and waitlist expiry jobs | Service, 2 replicas, no ALB target |
+| `booking-migrate` | Flyway as the table owner, then exits | One-shot task definition, run by the pipeline |
+| `workflow-api` | Definitions, instances, tasks, connections, triggers and endpoints | Service, 2 replicas, ALB rule priority 100 |
+| `workflow-worker` | The claim loop, sweepers, the outbox relay, webhook delivery, task deadlines and retention | Service, 2 replicas, no ALB target |
+| `workflow-migrate` | Flyway as the table owner, then exits | One-shot task definition, run by the pipeline |
+| `attribution-api` | Campaigns, links, goals, reports, and the public redirect and collection paths | Service, 2 replicas, ALB rule priority 110 |
+| `attribution-worker` | The `platform.events` and ingest consumers, the partition, retention, credit and rollup jobs and the relay | Service, 2 replicas, no ALB target |
+| `attribution-migrate` | Flyway as the table owner, then exits | One-shot task definition, run by the pipeline |
 | `rds-init` | Creates databases and roles, then exits | One-shot task definition, run once |
 | `mq-users` | Applies broker permissions, then exits | One-shot task definition, run once |
 
-RDS hosts `platform`, `billing`, `tenant`, `mailer`, `notification`, `mailroom` and `keycloak` databases with the same
-owner/app role split as compose. Amazon MQ hosts the RabbitMQ broker with a user per service; mailer's is limited to
-`mailer.commands`, its dead-letter queue and `suite.dlx`, and mailroom's to `mailer.commands` plus its own queues. Both are
-private; tasks reach them through their security group.
+RDS hosts `platform`, `billing`, `tenant`, `mailer`, `notification`, `mailroom`, `customer`, `loyalty`, `survey`,
+`booking`, `workflow`, `attribution` and `keycloak` databases with the same owner/app role split as compose. Amazon MQ
+hosts the RabbitMQ broker with a user per service; mailer's is limited to `mailer.commands`, its dead-letter queue and
+`suite.dlx`, mailroom's to `mailer.commands` plus its own queues, and customer, loyalty, booking and workflow own no
+exchange at all, only their own queues and a read grant on `platform.events`. Both are private; tasks reach them through
+their security group.
+
+Every app that keeps a replica reaches Platform with its own service client. Terraform generates one secret per client
+and Platform receives only its SHA-256 (`PLATFORM_<APP>_SERVICE_CLIENT_SECRET_HASH`) for mailroom, customer, loyalty,
+survey, booking, workflow and attribution as well as billing and notification. A client whose hash is missing cannot
+authenticate its replica, and that app's readiness never turns `UP`.
+
+## Survey storage
+
+Survey keeps respondent uploads and CSV exports in an S3 bucket the `survey` module creates
+(`<suite>-<environment>-survey-uploads-<account id>`): public access blocked, SSE-S3, and a CORS rule that lets a browser
+on the public domain or a tenant subdomain `PUT` a presigned upload. Its S3 client takes a static access key and has no
+credential-provider chain, so the module also creates a dedicated IAM user allowed only `s3:GetObject`, `PutObject` and
+`DeleteObject` on the bucket's objects and `s3:ListBucket` on the bucket. The access key id goes into the task
+environment and the secret key into Secrets Manager (`tenancykit/<environment>/survey_s3_secret_key`), injected by the
+shared execution role. The key is also in Terraform state, as every generated password is. No GeoIP file is mounted on
+AWS, so a respondent's or a click's country stays null; both apps treat an absent file as allowed.
 
 ## IAM
 
@@ -70,7 +106,7 @@ There is one rule about addresses: an issuer is public, a server-to-server URL i
 
 | Setting | Value | Why |
 |---|---|---|
-| `PLATFORM_TOKEN_ISSUER`, `PLATFORM_OIDC_ISSUER_URI` | `https://platform.<domain>`, `https://auth.<domain>/realms/billing` | These strings are stamped into tokens and compared exactly. |
+| `PLATFORM_TOKEN_ISSUER`, `PLATFORM_OIDC_ISSUER_URI` | `https://platform.<domain>`, `https://auth.<domain>/realms/tenancykit` | These strings are stamped into tokens and compared exactly. |
 | `BILLING_PLATFORM_ISSUER`, `BILLING_OIDC_ISSUER_URI` | the same public addresses | Billing validates what Platform and Keycloak minted. |
 | `PLATFORM_OIDC_JWK_SET_URI`, `BILLING_PLATFORM_JWK_SET_URI` | `http://keycloak.<namespace>:8080/...`, `http://platform.<namespace>:8080/.well-known/jwks.json` | Fetched server-to-server, so no ALB round trip. |
 | `BILLING_PLATFORM_BASE_URL` | `http://platform.<namespace>:8080` | Service Connect name. |
@@ -89,7 +125,18 @@ The internal FQDN is `local.internal_fqdn` in `locals.tf`; no module hardcodes t
 | 30 | host `auth.<domain>` | Keycloak |
 | 40 | path `/notification/*` | Notification api |
 | 50 | path `/mailroom/*` | Mailroom api |
+| 60 | path `/customer/*` | Customer api |
+| 70 | path `/loyalty/*` | Loyalty api |
+| 80 | path `/survey/*` | Survey api |
+| 90 | path `/booking/*` | Booking api |
+| 100 | path `/workflow/*` | Workflow api |
+| 110 | paths `/attribution/*`, `/go/*`, `/t/*` | Attribution api |
 | default | anything else, including every tenant host | Billing api |
+
+Survey's public fill paths (`/survey/p/*`), Mailroom's tracking paths and Workflow's hooks are accepted by the
+application with and without the prefix, so those routes work as forwarded. Attribution's `/go/*` and `/t/*` live at the
+root of a Tenant's domain exactly as they do behind Caddy and need no rewrite. Every other authenticated path under a
+prefix is the same known gap as `/platform/*`.
 
 The Host header is forwarded unchanged; rewriting it would break tenant resolution. ALB cannot strip a path prefix,
 so the path rule forwards `/platform/*` as-is. The admin host is the root route that behaves exactly like compose.
@@ -169,10 +216,13 @@ keycloak_repo="$(terraform output -json ecr_repository_urls | jq -r .keycloak)"
 docker build -f keycloak/Dockerfile -t "$keycloak_repo:$tag" ../..
 docker push "$keycloak_repo:$tag"
 
-# mailer (shared by migrate and worker)
-mailer_repo="$(terraform output -json ecr_repository_urls | jq -r .mailer)"
-docker build -f ../../backend/services/mailer/apps/app-boot/Dockerfile -t "$mailer_repo:$tag" ../..
-docker push "$mailer_repo:$tag"
+# every other app builds the same way, from its own Dockerfile into its own repository: mailer, notification, mailroom,
+# customer, loyalty, survey, booking, workflow and attribution (shared by migrate, api and worker)
+for app in mailer notification mailroom customer loyalty survey booking workflow attribution; do
+  repo="$(terraform output -json ecr_repository_urls | jq -r --arg app "$app" '.[$app]')"
+  docker build -f "../../backend/services/$app/apps/app-boot/Dockerfile" -t "$repo:$tag" ../..
+  docker push "$repo:$tag"
+done
 ```
 
 Run the two one-shot initializers exactly once, before any service starts:
@@ -200,10 +250,16 @@ run_once mq_users
 Then run the migrate task and roll the services. The deploy workflow does this in order; by hand:
 
 ```bash
-run_once billing_migrate
-run_once mailer_migrate
+for key in billing_migrate mailer_migrate notification_migrate mailroom_migrate customer_migrate loyalty_migrate \
+           survey_migrate booking_migrate workflow_migrate attribution_migrate; do
+  run_once "$key"
+done
 
-for key in keycloak platform billing_api billing_worker mailer; do
+for key in keycloak platform billing_api billing_worker mailer \
+           notification_api notification_worker mailroom_api mailroom_worker \
+           customer_api customer_worker loyalty_api loyalty_worker \
+           survey_api survey_worker booking_api booking_worker \
+           workflow_api workflow_worker attribution_api attribution_worker; do
   definition="$(terraform output -json task_definition_arns | jq -r --arg key "$key" '.[$key]')"
   service="$(terraform output -json service_names | jq -r --arg key "$key" '.[$key]')"
   aws ecs update-service --cluster "$cluster" --service "$service" \
@@ -211,9 +267,14 @@ for key in keycloak platform billing_api billing_worker mailer; do
 done
 ```
 
-`billing-migrate` and `mailer-migrate` are task definitions, not services: ECS has no
-`depends_on: service_completed_successfully`. The api, worker and mailer services deliberately ignore task-definition
-changes in Terraform, so they only move after their migrate has exited 0.
+Each `<app>-migrate` is a task definition, not a service: ECS has no `depends_on: service_completed_successfully`. The
+api, worker and mailer services deliberately ignore task-definition changes in Terraform, so they only move after their
+migrate has exited 0.
+
+`rds_init` runs once per database server and fails on a role that already exists. An environment initialised before
+customer, loyalty, survey, booking, workflow or attribution were added needs those roles, databases and grants created by
+hand from the matching blocks of `rds/init-databases.sh`, because re-running the task would stop at the first role it
+finds; `mq_users` is safe to re-run.
 
 Point DNS at `terraform output -raw alb_dns_name`: the apex or tenant wildcard at Billing, `platform.<domain>` at
 Platform, `auth.<domain>` at Keycloak.
@@ -223,8 +284,8 @@ Platform, `auth.<domain>` at Keycloak.
 `terraform.yml` runs `fmt -check`, `init -backend=false` and `validate` on every change under `ops/terraform/`, and
 `plan` when the repository variable `AWS_ROLE_ARN` is set.
 
-`deploy.yml` builds the four images, applies the stack, optionally bootstraps the data services, runs Billing's and
-Mailer's migrate, and rolls the services. It needs `AWS_ROLE_ARN`, `AWS_REGION`, `PUBLIC_DOMAIN`, the optional
+`deploy.yml` builds one image per deployable, applies the stack, optionally bootstraps the data services, runs every
+app's migrate to completion, and rolls the services in order. It needs `AWS_ROLE_ARN`, `AWS_REGION`, `PUBLIC_DOMAIN`, the optional
 `SERVICE_CONNECT_NAMESPACE` / `CERTIFICATE_ARN` variables, and shared state.
 
 ## Verification and known gaps
@@ -254,7 +315,7 @@ Checks that do work as written on a sandbox:
 
 ```bash
 # Public issuer and JWKS
-curl -fsS "https://auth.<domain>/realms/billing/.well-known/openid-configuration" | jq .issuer
+curl -fsS "https://auth.<domain>/realms/tenancykit/.well-known/openid-configuration" | jq .issuer
 
 # Platform admin host root (the route that matches compose)
 curl -fsS "https://platform.<domain>/actuator/health/readiness"

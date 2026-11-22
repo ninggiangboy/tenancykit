@@ -25,6 +25,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security-oauth2-resource-server")
     implementation("org.springframework.boot:spring-boot-starter-amqp")
     implementation(libs.springdoc.webmvc)
+    // The Scalar reference at /scalar, rendered from the same /v3/api-docs document.
+    implementation(libs.springdoc.scalar)
     implementation("tools.jackson.dataformat:jackson-dataformat-yaml")
     implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.flywaydb:flyway-database-postgresql")

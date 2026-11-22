@@ -67,4 +67,27 @@ resource "aws_mq_broker" "this" {
     username = "loyalty"
     password = var.loyalty_password
   }
+
+  # Survey consumes platform.events and publishes its facts to survey.events; booking and workflow are replica consumers
+  # that own no exchange; attribution also owns the attribution.ingest exchange and queue its click publisher writes to.
+  # The one-shot task scopes each to exactly those resources.
+  user {
+    username = "survey"
+    password = var.survey_password
+  }
+
+  user {
+    username = "booking"
+    password = var.booking_password
+  }
+
+  user {
+    username = "workflow"
+    password = var.workflow_password
+  }
+
+  user {
+    username = "attribution"
+    password = var.attribution_password
+  }
 }

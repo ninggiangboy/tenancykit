@@ -37,7 +37,7 @@ class SecurityConfiguration {
                         .requestMatchers("/actuator/health", "/actuator/health/**")
                         .permitAll()
                         // The generated contract is what a client reads; it exposes no data.
-                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml")
+                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/scalar", "/scalar/**")
                         .permitAll()
                         // The public tracking endpoints: the recipient's mail client has no suite token. The signed
                         // token is the credential and the tenant scope comes from it alone. Both spellings are

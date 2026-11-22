@@ -107,6 +107,30 @@ variable "loyalty_password" {
   sensitive   = true
 }
 
+variable "survey_password" {
+  description = "Survey broker user password."
+  type        = string
+  sensitive   = true
+}
+
+variable "booking_password" {
+  description = "Booking broker user password."
+  type        = string
+  sensitive   = true
+}
+
+variable "workflow_password" {
+  description = "Workflow broker user password."
+  type        = string
+  sensitive   = true
+}
+
+variable "attribution_password" {
+  description = "Attribution broker user password."
+  type        = string
+  sensitive   = true
+}
+
 variable "secret_arns" {
   description = "Secret ARNs the broker-users task injects."
   type        = map(string)

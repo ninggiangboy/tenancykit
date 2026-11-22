@@ -27,10 +27,18 @@ psql --set=ON_ERROR_STOP=1 \
   --set=notification_app_password="${NOTIFICATION_DB_PASSWORD:?set the notification app password}" \
   --set=mailroom_owner_password="${MAILROOM_MIGRATION_DB_PASSWORD:?set the mailroom owner password}" \
   --set=mailroom_app_password="${MAILROOM_DB_PASSWORD:?set the mailroom app password}" \
-  --set=customer_owner_password="${CRM_MIGRATION_DB_PASSWORD:?set the customer owner password}" \
-  --set=customer_app_password="${CRM_DB_PASSWORD:?set the customer app password}" \
+  --set=customer_owner_password="${CUSTOMER_MIGRATION_DB_PASSWORD:?set the customer owner password}" \
+  --set=customer_app_password="${CUSTOMER_DB_PASSWORD:?set the customer app password}" \
   --set=loyalty_owner_password="${LOYALTY_MIGRATION_DB_PASSWORD:?set the loyalty owner password}" \
   --set=loyalty_app_password="${LOYALTY_DB_PASSWORD:?set the loyalty app password}" \
+  --set=survey_owner_password="${SURVEY_MIGRATION_DB_PASSWORD:?set the survey owner password}" \
+  --set=survey_app_password="${SURVEY_DB_PASSWORD:?set the survey app password}" \
+  --set=booking_owner_password="${BOOKING_MIGRATION_DB_PASSWORD:?set the booking owner password}" \
+  --set=booking_app_password="${BOOKING_DB_PASSWORD:?set the booking app password}" \
+  --set=workflow_owner_password="${WORKFLOW_MIGRATION_DB_PASSWORD:?set the workflow owner password}" \
+  --set=workflow_app_password="${WORKFLOW_DB_PASSWORD:?set the workflow app password}" \
+  --set=attribution_owner_password="${ATTRIBUTION_MIGRATION_DB_PASSWORD:?set the attribution owner password}" \
+  --set=attribution_app_password="${ATTRIBUTION_DB_PASSWORD:?set the attribution app password}" \
   --set=keycloak_owner_password="${KEYCLOAK_DB_PASSWORD:?set the keycloak owner password}" \
   --dbname postgres <<'SQL'
 create role platform_owner login password :'platform_owner_password' nocreatedb nocreaterole;
@@ -57,6 +65,18 @@ create role customer_app login password :'customer_app_password' nosuperuser noc
 create role loyalty_owner login password :'loyalty_owner_password' nocreatedb nocreaterole;
 create role loyalty_app login password :'loyalty_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
 
+create role survey_owner login password :'survey_owner_password' nocreatedb nocreaterole;
+create role survey_app login password :'survey_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+
+create role booking_owner login password :'booking_owner_password' nocreatedb nocreaterole;
+create role booking_app login password :'booking_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+
+create role workflow_owner login password :'workflow_owner_password' nocreatedb nocreaterole;
+create role workflow_app login password :'workflow_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+
+create role attribution_owner login password :'attribution_owner_password' nocreatedb nocreaterole;
+create role attribution_app login password :'attribution_app_password' nosuperuser nocreatedb nocreaterole nobypassrls;
+
 create role keycloak_owner login password :'keycloak_owner_password' nocreatedb nocreaterole;
 
 create database platform owner platform_owner;
@@ -67,6 +87,10 @@ create database notification owner notification_owner;
 create database mailroom owner mailroom_owner;
 create database customer owner customer_owner;
 create database loyalty owner loyalty_owner;
+create database survey owner survey_owner;
+create database booking owner booking_owner;
+create database workflow owner workflow_owner;
+create database attribution owner attribution_owner;
 create database keycloak owner keycloak_owner;
 
 revoke connect, temporary on database platform from public;
@@ -77,6 +101,10 @@ revoke connect, temporary on database notification from public;
 revoke connect, temporary on database mailroom from public;
 revoke connect, temporary on database customer from public;
 revoke connect, temporary on database loyalty from public;
+revoke connect, temporary on database survey from public;
+revoke connect, temporary on database booking from public;
+revoke connect, temporary on database workflow from public;
+revoke connect, temporary on database attribution from public;
 revoke connect, temporary on database keycloak from public;
 
 grant connect, temporary on database platform to platform_owner, platform_app;
@@ -87,6 +115,10 @@ grant connect, temporary on database notification to notification_owner, notific
 grant connect, temporary on database mailroom to mailroom_owner, mailroom_app;
 grant connect, temporary on database customer to customer_owner, customer_app;
 grant connect, temporary on database loyalty to loyalty_owner, loyalty_app;
+grant connect, temporary on database survey to survey_owner, survey_app;
+grant connect, temporary on database booking to booking_owner, booking_app;
+grant connect, temporary on database workflow to workflow_owner, workflow_app;
+grant connect, temporary on database attribution to attribution_owner, attribution_app;
 grant connect, temporary on database keycloak to keycloak_owner;
 SQL
 
@@ -107,7 +139,11 @@ apply_default_privileges tenant_owner "${TENANT_MIGRATION_DB_PASSWORD}" tenant t
 apply_default_privileges mailer_owner "${MAILER_MIGRATION_DB_PASSWORD}" mailer mailer_app
 apply_default_privileges notification_owner "${NOTIFICATION_MIGRATION_DB_PASSWORD}" notification notification_app
 apply_default_privileges mailroom_owner "${MAILROOM_MIGRATION_DB_PASSWORD}" mailroom mailroom_app
-apply_default_privileges customer_owner "${CRM_MIGRATION_DB_PASSWORD}" customer customer_app
+apply_default_privileges customer_owner "${CUSTOMER_MIGRATION_DB_PASSWORD}" customer customer_app
 apply_default_privileges loyalty_owner "${LOYALTY_MIGRATION_DB_PASSWORD}" loyalty loyalty_app
+apply_default_privileges survey_owner "${SURVEY_MIGRATION_DB_PASSWORD}" survey survey_app
+apply_default_privileges booking_owner "${BOOKING_MIGRATION_DB_PASSWORD}" booking booking_app
+apply_default_privileges workflow_owner "${WORKFLOW_MIGRATION_DB_PASSWORD}" workflow workflow_app
+apply_default_privileges attribution_owner "${ATTRIBUTION_MIGRATION_DB_PASSWORD}" attribution attribution_app
 
-echo "created platform, billing, tenant, mailer, notification, mailroom, customer, loyalty and keycloak databases with their owner and app roles"
+echo "created platform, billing, tenant, mailer, notification, mailroom, customer, loyalty, survey, booking, workflow, attribution and keycloak databases with their owner and app roles"

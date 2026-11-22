@@ -33,7 +33,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 class JooqSchemaTest {
 
     private static final String PACKAGE = "dev.ngb.customer_jooq";
-    private static final Path COMMITTED = RepositoryPaths.crmRoot()
+    private static final Path COMMITTED = RepositoryPaths.customerRoot()
             .resolve(Path.of("libs", "jooq-schema", "src", "main", "java", PACKAGE.replace('.', '/')));
 
     @Test

@@ -130,6 +130,78 @@ variable "mailroom_worker_desired_count" {
   default     = 2
 }
 
+variable "customer_api_desired_count" {
+  description = "Customer api tasks."
+  type        = number
+  default     = 2
+}
+
+variable "customer_worker_desired_count" {
+  description = "Customer worker tasks."
+  type        = number
+  default     = 2
+}
+
+variable "loyalty_api_desired_count" {
+  description = "Loyalty api tasks."
+  type        = number
+  default     = 2
+}
+
+variable "loyalty_worker_desired_count" {
+  description = "Loyalty worker tasks."
+  type        = number
+  default     = 2
+}
+
+variable "survey_api_desired_count" {
+  description = "Survey api tasks."
+  type        = number
+  default     = 2
+}
+
+variable "survey_worker_desired_count" {
+  description = "Survey worker tasks."
+  type        = number
+  default     = 2
+}
+
+variable "booking_api_desired_count" {
+  description = "Booking api tasks."
+  type        = number
+  default     = 2
+}
+
+variable "booking_worker_desired_count" {
+  description = "Booking worker tasks."
+  type        = number
+  default     = 2
+}
+
+variable "workflow_api_desired_count" {
+  description = "Workflow api tasks."
+  type        = number
+  default     = 2
+}
+
+variable "workflow_worker_desired_count" {
+  description = "Workflow worker tasks."
+  type        = number
+  default     = 2
+}
+
+variable "attribution_api_desired_count" {
+  description = "Attribution api tasks."
+  type        = number
+  default     = 2
+}
+
+variable "attribution_worker_desired_count" {
+  description = "Attribution worker tasks."
+  type        = number
+  default     = 2
+}
+
 variable "ses_domain" {
   description = "Domain of the suite's verified SES identity. Mailer sends from noreply@<domain> in SHARED mode."
   type        = string

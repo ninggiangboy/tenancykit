@@ -38,7 +38,7 @@ class SecurityConfiguration {
                 .sessionManagement(sessions -> sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/oauth/token", "/.well-known/jwks.json", "/actuator/health", "/actuator/health/**",
-                                "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml")
+                                "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/scalar", "/scalar/**")
                         .permitAll()
                         .anyRequest()
                         .authenticated())

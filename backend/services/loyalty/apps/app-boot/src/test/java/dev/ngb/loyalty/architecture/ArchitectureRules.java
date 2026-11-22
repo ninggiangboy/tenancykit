@@ -43,7 +43,7 @@ final class ArchitectureRules {
      * The app delivered alongside this one, which this build must never name. Assembled here rather than spelled out so
      * that this rule's own source does not satisfy the grep it enforces; see {@code ArchitectureTest}.
      */
-    private static final String SIBLING_APP = "c" + "rm";
+    private static final String SIBLING_APP = "custom" + "er";
 
     /** Which context owns each generated table. */
     private static final Map<String, String> TABLE_OWNER = new HashMap<>();

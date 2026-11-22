@@ -26,7 +26,7 @@ import tools.jackson.databind.json.JsonMapper;
  */
 class KeycloakConsoleClientTest {
 
-    private static final String REALM = "billing";
+    private static final String REALM = "tenancykit";
     private static final String CLIENT_ID = "suite-console";
 
     private final JsonMapper json = JsonMapper.builder().build();

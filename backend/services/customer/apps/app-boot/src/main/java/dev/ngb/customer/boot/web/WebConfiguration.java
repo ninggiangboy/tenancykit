@@ -73,9 +73,9 @@ class WebConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    OpenAPI crmOpenApi() {
+    OpenAPI customerOpenApi() {
         return new OpenAPI()
-                .info(new Info().title("CRM API").version("v1")
+                .info(new Info().title("Customer API").version("v1")
                         .description("The API a Tenant System uses to keep a Tenant's own customer data: customers, "
                                 + "orders with lines and returns, activities, custom fields, tags, consent, the 360 "
                                 + "profile, the CSV export and erasure, plus the signed webhook endpoints customer delivers "

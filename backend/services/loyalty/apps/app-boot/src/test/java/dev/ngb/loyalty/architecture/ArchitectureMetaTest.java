@@ -66,7 +66,7 @@ class ArchitectureMetaTest {
         CULPRIT_BY_RULE_ID.put("tiers-and-rewards-reach-points-only-through-its-api", "TierReadsPointsDomain");
         CULPRIT_BY_RULE_ID.put("program-reaches-no-other-context", "ProgramReadsPointsDomain");
         // Assembled for the same reason the rule assembles it: the fixture's name is exactly what the app must not say.
-        CULPRIT_BY_RULE_ID.put("no-reference-to-the-sibling-app", "C" + "rmLookup");
+        CULPRIT_BY_RULE_ID.put("no-reference-to-the-sibling-app", "Custom" + "erLookup");
     }
 
     /** The test-package rule, which needs the packages production occupies rather than the whole import. */

@@ -426,7 +426,7 @@ Host ports published by `docker compose`:
 |---|---|
 | 8090 | Caddy, the suite's one entry point |
 | 8080 | Billing |
-| 8081 | Keycloak (realm `billing`; admin user and password from `.env`) |
+| 8081 | Keycloak (realm `tenancykit`; admin user and password from `.env`) |
 | 8082 | Platform |
 | 8083 | Sample tenant |
 | 8084 | Mailer (actuator probe) |
@@ -642,8 +642,8 @@ and `PUBLIC_DOMAIN` and an S3 state backend.
 - **Mail never arrives, or a new tenant never reaches an app.** Both depend on `worker` runtimes, which `make up`
   does not start: run `make up-all`. Locally every email is plain SMTP to Mailpit, at <http://localhost:8025>.
 - **Platform restarts with `Realm does not exist`.** A `KEYCLOAK_REALM` in `.env` that differs from the realm in
-  `ops/keycloak/realm-export.json` (`billing`) sends Platform and the smoke scripts to a realm Keycloak never imported.
-  Remove the line or set it to `billing`.
+  `ops/keycloak/realm-export.json` (`tenancykit`) sends Platform and the smoke scripts to a realm Keycloak never imported.
+  Remove the line or set it to `tenancykit`.
 - **A worker fails at startup on a master key.** Every `*_SECRETS_MASTER_KEY` must decode to exactly 32 bytes.
 
 ## Where to read next

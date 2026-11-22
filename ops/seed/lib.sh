@@ -8,9 +8,9 @@
 # shellcheck disable=SC1091
 . ops/smoke/lib/harness.sh
 
-# The realm the compose stack imports is `billing` (ops/keycloak/realm-export.json). A stale KEYCLOAK_REALM in a
+# The realm the compose stack imports is `tenancykit` (ops/keycloak/realm-export.json). A stale KEYCLOAK_REALM in a
 # developer's environment file would otherwise send every Keycloak call to a realm that does not exist, so it is pinned.
-REALM="${SEED_KEYCLOAK_REALM:-billing}"
+REALM="${SEED_KEYCLOAK_REALM:-tenancykit}"
 SEED_PASSWORD="${SEED_PASSWORD:-Demo-1234}"
 SEED_OUT="${SEED_OUT:-ops/seed/.out}"
 mkdir -p "${SEED_OUT}"

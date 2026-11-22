@@ -17,6 +17,7 @@ spring-modulith-api = { module = "org.springframework.modulith:spring-modulith-a
 spring-modulith-core = { module = "org.springframework.modulith:spring-modulith-core" }
 spring-modulith-docs = { module = "org.springframework.modulith:spring-modulith-docs" }
 springdoc-webmvc = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdoc" }
+springdoc-scalar = { module = "org.springdoc:springdoc-openapi-starter-webmvc-scalar", version.ref = "springdoc" }
 stripe-java = { module = "com.stripe:stripe-java", version.ref = "stripe" }
 json-schema-validator = { module = "com.networknt:json-schema-validator", version.ref = "json-schema-validator" }
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }

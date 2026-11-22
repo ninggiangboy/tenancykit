@@ -40,7 +40,7 @@ export const env = {
   originFor: (host: string) => `http://${host}:${port}`,
   consoleUrl: (host: string) => `http://${host}:${port}/console/`,
   keycloak: process.env.KEYCLOAK_URL ?? 'http://localhost:8081',
-  realm: process.env.KEYCLOAK_REALM ?? 'billing',
+  realm: process.env.KEYCLOAK_REALM ?? 'tenancykit',
   /** The console's public client, whose redirect URIs follow the hosts Platform manages. */
   consoleClientId: process.env.CONSOLE_KEYCLOAK_CLIENT_ID ?? 'suite-console',
   platformAdmin: {

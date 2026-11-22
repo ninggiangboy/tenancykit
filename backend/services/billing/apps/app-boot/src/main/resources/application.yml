@@ -10,8 +10,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${BILLING_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}
-          jwk-set-uri: ${BILLING_OIDC_JWK_SET_URI:${BILLING_OIDC_ISSUER_URI:http://localhost:8081/realms/billing}/protocol/openid-connect/certs}
+          issuer-uri: ${BILLING_OIDC_ISSUER_URI:http://localhost:8081/realms/tenancykit}
+          jwk-set-uri: ${BILLING_OIDC_JWK_SET_URI:${BILLING_OIDC_ISSUER_URI:http://localhost:8081/realms/tenancykit}/protocol/openid-connect/certs}
           audiences: billing
   task:
     scheduling:

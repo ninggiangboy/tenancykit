@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
  */
 class KeycloakIdentityProviderTest {
 
-    private static final String REALM = "billing";
+    private static final String REALM = "tenancykit";
     private static final TenantId TENANT = new TenantId(UUID.fromString("0198c1a0-0000-7000-8000-000000000042"));
 
     private HttpServer server;

@@ -19,7 +19,7 @@ set -euo pipefail
 
 PROXY="${PROXY_URL:-http://localhost:8090}"
 KEYCLOAK="${KEYCLOAK_URL:-http://localhost:8081}"
-REALM="${KEYCLOAK_REALM:-billing}"
+REALM="${KEYCLOAK_REALM:-tenancykit}"
 KC_ADMIN_CLIENT_ID="${PLATFORM_KEYCLOAK_ADMIN_CLIENT_ID:-platform-admin}"
 KC_ADMIN_CLIENT_SECRET="${PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET:?set the platform-admin client secret}"
 SMOKE_CLIENT_ID="${SMOKE_CLIENT_ID:-suite-smoke}"

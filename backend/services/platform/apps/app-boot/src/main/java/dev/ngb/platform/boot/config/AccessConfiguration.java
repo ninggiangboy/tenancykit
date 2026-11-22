@@ -77,7 +77,7 @@ class AccessConfiguration {
     @Bean
     KeycloakAdmin keycloakAdmin(
             @Value("${platform.keycloak.base-url:http://localhost:8081}") String baseUrl,
-            @Value("${platform.keycloak.realm:billing}") String realm,
+            @Value("${platform.keycloak.realm:tenancykit}") String realm,
             @Value("${platform.keycloak.admin-client-id:platform-admin}") String clientId,
             @Value("${platform.keycloak.admin-client-secret:}") String clientSecret) {
         return new KeycloakAdmin(baseUrl, realm, clientId, clientSecret);

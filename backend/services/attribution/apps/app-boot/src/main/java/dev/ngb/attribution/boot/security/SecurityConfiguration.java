@@ -39,7 +39,7 @@ class SecurityConfiguration {
                         .requestMatchers("/actuator/health", "/actuator/health/**")
                         .permitAll()
                         // The generated contract is what a client reads; it exposes no data.
-                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml")
+                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/scalar", "/scalar/**")
                         .permitAll()
                         // The public surface: the redirect a visitor follows, the collection endpoint a browser
                         // calls, the snippet, and the one OAuth callback. None carries a suite token. Both spellings

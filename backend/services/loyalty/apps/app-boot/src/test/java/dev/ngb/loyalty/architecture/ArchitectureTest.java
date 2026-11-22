@@ -37,7 +37,7 @@ class ArchitectureTest {
      * as a template, and the skeleton it was copied from. Assembled at runtime so this gate's own source is clean; the
      * grep in the phase's verification covers the same three words from outside the build.
      */
-    private static final List<String> FOREIGN_APPS = List.of("c" + "rm", "sur" + "vey", "mail" + "room");
+    private static final List<String> FOREIGN_APPS = List.of("custom" + "er", "sur" + "vey", "mail" + "room");
 
     private static final List<String> SCANNED_TREES = List.of("apps", "contexts", "libs");
 

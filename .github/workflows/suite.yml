@@ -80,7 +80,7 @@ jobs:
           sed -i 's/^BOOKING_TOKEN_SECRET=.*/BOOKING_TOKEN_SECRET=ci-booking-token-secret/' .env
           CUSTOMER_HASH=$(printf %s 'ci-customer-replica-secret' | sha256sum | cut -d' ' -f1)
           sed -i "s/^CUSTOMER_REPLICA_CLIENT_SECRET=.*/CUSTOMER_REPLICA_CLIENT_SECRET=ci-customer-replica-secret/" .env
-          sed -i "s/^PLATFORM_CRM_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_CRM_SERVICE_CLIENT_SECRET_HASH=${CUSTOMER_HASH}/" .env
+          sed -i "s/^PLATFORM_CUSTOMER_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_CUSTOMER_SERVICE_CLIENT_SECRET_HASH=${CUSTOMER_HASH}/" .env
           LOYALTY_HASH=$(printf %s 'ci-loyalty-replica-secret' | sha256sum | cut -d' ' -f1)
           sed -i "s/^LOYALTY_REPLICA_CLIENT_SECRET=.*/LOYALTY_REPLICA_CLIENT_SECRET=ci-loyalty-replica-secret/" .env
           sed -i "s/^PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH=.*/PLATFORM_LOYALTY_SERVICE_CLIENT_SECRET_HASH=${LOYALTY_HASH}/" .env
@@ -108,7 +108,7 @@ jobs:
           sed -i "s|^LOYALTY_SECRETS_MASTER_KEY=.*|LOYALTY_SECRETS_MASTER_KEY=${MASTER_KEY}|" .env
           sed -i 's/^PLATFORM_BOOTSTRAP_ADMIN_EMAIL=.*/PLATFORM_BOOTSTRAP_ADMIN_EMAIL=admin@platform.test/' .env
           sed -i 's/^PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD=.*/PLATFORM_BOOTSTRAP_ADMIN_TEMPORARY_PASSWORD=ci-admin-password/' .env
-          sed -i 's/^PLATFORM_OIDC_ISSUER_URI=.*/PLATFORM_OIDC_ISSUER_URI=http:\/\/localhost:8081\/realms\/billing/' .env
+          sed -i 's/^PLATFORM_OIDC_ISSUER_URI=.*/PLATFORM_OIDC_ISSUER_URI=http:\/\/localhost:8081\/realms\/tenancykit/' .env
 
       - name: Start the suite
         run: docker compose up -d --build --wait --wait-timeout 600

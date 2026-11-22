@@ -37,7 +37,7 @@ platform:
     platform-hostname: ${PLATFORM_HOSTNAME:platform.localhost}
   keycloak:
     base-url: ${PLATFORM_KEYCLOAK_URL:http://localhost:8081}
-    realm: ${PLATFORM_KEYCLOAK_REALM:billing}
+    realm: ${PLATFORM_KEYCLOAK_REALM:tenancykit}
     admin-client-id: ${PLATFORM_KEYCLOAK_ADMIN_CLIENT_ID:platform-admin}
     admin-client-secret: ${PLATFORM_KEYCLOAK_ADMIN_CLIENT_SECRET:}
     # The console's public client. Keycloak accepts a wildcard only at the end of a redirect URI, so the client's

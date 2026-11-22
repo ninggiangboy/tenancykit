@@ -1346,7 +1346,7 @@ paths:
       tags:
       - endpoint-controller
       summary: "Create a webhook endpoint"
-      description: "Registers an endpoint that subscribes to a subset of customer's four event types. The signing secret is returned once, in this response. Deliveries are signed with the `Crm-*` headers and retried on the shared schedule until they succeed or go `DEAD`."
+      description: "Registers an endpoint that subscribes to a subset of customer's four event types. The signing secret is returned once, in this response. Deliveries are signed with the `Customer-*` headers and retried on the shared schedule until they succeed or go `DEAD`."
       operationId: createWebhookEndpoint
       parameters:
       - name: X-Request-Id
