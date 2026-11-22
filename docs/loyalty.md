@@ -3,10 +3,10 @@
 The suite's app for running a **Tenant's points program**: a lot-based points ledger, redemption, tiers, point expiry, a
 rewards and voucher catalog, and promotions that multiply points by category, SKU, store, time or tier. It takes orders
 and returns from the Tenant's own system through its own API, and sends signed webhooks of every change to a member's
-points, tier and vouchers so the Tenant can react. It is a separate deployable (`backend/services/loyalty/`) with the suite's three
+points, tier and vouchers so the Tenant can react. It is a separate deployable (`backend/services/apps/loyalty/`) with the suite's three
 runtimes: `migrate`, `api` and `worker`.
 
-**Status: shipped.** `backend/services/loyalty/` builds, migrates and tests green against the suite's own infrastructure, and every
+**Status: shipped.** `backend/services/apps/loyalty/` builds, migrates and tests green against the suite's own infrastructure, and every
 endpoint and webhook below exists in it. This document describes what it is; the
 [API document](../contracts/openapi/loyalty.yaml) and the [event schemas](../contracts/events/loyalty/) are the shapes a
 client builds against.

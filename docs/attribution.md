@@ -3,7 +3,7 @@
 The suite's app for telling a **Tenant which marketing link, channel or ad brought a customer, and what that cost**.
 A Tenant creates campaigns and tracked links, shares them anywhere, and reads clicks, page views, sessions,
 conversions and the credited value next to the advertising spend behind them. It is a separate deployable
-(`backend/services/attribution/`, root package `dev.ngb.attribution`) with three runtimes: `migrate`, `api` and `worker`.
+(`backend/services/apps/attribution/`, root package `dev.ngb.attribution`) with three runtimes: `migrate`, `api` and `worker`.
 
 Attribution measures only traffic that arrived through a tracked link. It is not a web-analytics product: a visitor
 who never met a `/go/` link is invisible to it, and every number it reports is about the campaigns a Tenant chose to
@@ -266,9 +266,9 @@ offered.
 ## Cross-plan coordination
 
 This plan creates `backend/libs/core/core-visitor` (device class, browser family, traffic class, referrer domain, GeoIP country and
-the daily visitor hash) because no such code exists in the repository, and `backend/services/survey/`'s plan would otherwise build the
-same code inside `backend/services/survey/`. If `backend/services/survey/` has already built its own classifier when this module is created, the code is
-extracted here and `backend/services/survey/` is moved onto it in the same change. This plan does not edit the survey plan.
+the daily visitor hash) because no such code exists in the repository, and `backend/services/apps/survey/`'s plan would otherwise build the
+same code inside `backend/services/apps/survey/`. If `backend/services/apps/survey/` has already built its own classifier when this module is created, the code is
+extracted here and `backend/services/apps/survey/` is moved onto it in the same change. This plan does not edit the survey plan.
 
 ## Owner actions for the ad-platform import
 

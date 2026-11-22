@@ -81,7 +81,7 @@ see [payments-and-stripe.md](payments-and-stripe.md) and [webhooks-and-events.md
 | Transaction boundary | An application-owned `UnitOfWork` port in `core-kernel` that use cases wrap themselves. Its Spring implementation, `SpringUnitOfWork` in `core-spring`, takes a `TransactionScopeHook` that runs first in every new transaction and rejects a nested unit of work from another scope. Billing plugs in the hook that sets `app.tenant_id` for row-level security; the sample plugs in none | Money keeps one ACID transaction while the application layer never sees `@Transactional` |
 | Cross-context calls | Synchronous in-process only on the money path, through each context's public `api` package; other flows use domain events through the outbox | Money needs one transaction; the rest can stay decoupled without weakening the ledger |
 | Discounts | `money` owns a discount port, `ChargeDiscounts` (`preview`, `claim`, `consume`), in its `api` source set, implemented by the `coupon` context, so `money` depends on nothing in `coupon` | A discount applies in the one place every charge already passes through, so pricing, the ledger, invoices and replay keep their meaning. Rejected: a discount at the invoice (a Charge and its ledger entry would disagree, and a Prepaid wallet would show the wrong balance); a discount inside `pricing` (usage rating and renewal would each need their own copy, and a standalone or reservation charge has no plan to price against); one apply per caller (four call sites drift, which is the bug the seam exists to prevent); Stripe-side coupons (they would not reach a Prepaid wallet, a reservation or a usage charge, and would put a Tenant's promotion inside Stripe) |
-| Boundary enforcement | Gradle classpath rules first, then ArchUnit and Spring Modulith in the build. Each module declares `api`, `domain`, `application` and `adapter` as Gradle source sets with different classpaths (`api` sees only the kernel and the core, `domain` adds `api`, and so on), so a framework import in the inner layers, or a domain type in the contract, fails to compile. Modulith discovers modules across Gradle modules by their shared root package and treats a sub-package as internal, so a module's `api` package is exposed to it by a `package-info.java` in the `adapter` source set, which keeps the framework annotation out of the plain-Java layers | A violation must fail the build, not depend on review discipline. The convention lives in each build's `build-logic/` (for example `backend/services/billing/build-logic/`) |
+| Boundary enforcement | Gradle classpath rules first, then ArchUnit and Spring Modulith in the build. Each module declares `api`, `domain`, `application` and `adapter` as Gradle source sets with different classpaths (`api` sees only the kernel and the core, `domain` adds `api`, and so on), so a framework import in the inner layers, or a domain type in the contract, fails to compile. Modulith discovers modules across Gradle modules by their shared root package and treats a sub-package as internal, so a module's `api` package is exposed to it by a `package-info.java` in the `adapter` source set, which keeps the framework annotation out of the plain-Java layers | A violation must fail the build, not depend on review discipline. The convention lives in each build's `build-logic/` (for example `backend/services/apps/billing/build-logic/`) |
 | Pattern scope | Tactical DDD with in-process CQRS: a command side (use cases, aggregates, write ports, jOOQ persistence) and a query side (immutable views, read ports, direct SQL projections) over the same database and the same tenant-scoped transaction. No event sourcing, command/query bus, asynchronous projections or separate read store. | Reads stay immediately consistent without a second consistency model; the split keeps a read from driving a write while leaving the money path in one transaction |
 | DDD base types | `AggregateRoot`, `Entity` and `ValueObject` stay in `core-kernel` unchanged, and are adopted by exactly one aggregate: Platform's `TenantSystem` (`backend/services/platform/contexts/integration`). No production code calls `AggregateRoot.register` or `pullEvents` — one domain test asserts `pullEvents()` is empty — so every aggregate that announces a change does it through an injected `EventPublisher`. Every other aggregate (Billing's `Wallet`, `Charge`, `Reservation`, `Customer`, `Payment`, `Refund`, `Subscription`) is a plain class with a static factory and a restore factory and extends no base type. No further adoption and no deletion | The base types are the documented option for an aggregate that must hold its own events until its caller takes them out, and nothing needed it; deleting them would churn code without changing behaviour. The plain class plus `EventPublisher` is the convention a new aggregate follows, and this row records that decision so the one adopter is not read as the norm |
 | Frontend | React, Vite and TanStack (Router and Query) in one monorepo of separate apps with shared packages: Platform Admin, Tenant Admin and Customer Portal | **Delivered as the Suite Console** in `frontend/`: two shells split by hostname (Platform and Tenant), every UI a Module Federation remote behind a registry in Platform, shared packages for the shell contract, auth, the design system and the generated client. v1 ships `remote-platform` and `remote-billing`; the other apps' UIs and the Customer Portal stay out of scope. The TanStack decision stands. See [console.md](console.md) |
@@ -91,7 +91,7 @@ see [payments-and-stripe.md](payments-and-stripe.md) and [webhooks-and-events.md
 | Stripe Connect money flow | Direct charges: the charge is created on the Tenant's connected account, so the Tenant bears fees, refunds and disputes | The specification defers this choice. Direct charges match the rules that each Tenant owns its Stripe account and its data and money stay isolated |
 | Platform data | The Platform owns its own data (administrators, roles, audit entries) as a reserved tenant, so platform-level rows use the same Row-Level Security template and composite foreign keys as every Tenant | Avoids a second isolation model with nullable tenant columns; a Platform-scope request still cannot read another Tenant's rows |
 | Keycloak login identifier | The username `{tenant-code}:{email}`, with duplicate emails allowed in the Realm and a `tenant_code` token claim checked against the hostname | See [authentication-and-authorization.md](authentication-and-authorization.md). Needs no Keycloak extension |
-| Repository layout | One repository with `backend/services/platform/`, `backend/services/billing/`, the other apps, `backend/libs/core/`, `frontend/`, `contracts/` and `ops/`; `frontend/` is the Suite Console monorepo and the console itself is served at `/console/` on every host | `backend/` groups the two kinds of Gradle build: `services/` are deployable products and `libs/` is the shared technical core. Keeps the suite and all frontends together while they deploy separately; `contracts/` holds the documents they share (OpenAPI, event schemas, permission catalogs, the token claim list), never code, and the only code they share is the technical `backend/libs/core/` |
+| Repository layout | One repository with `backend/services/platform/`, the tenant-facing apps in `backend/services/apps/` (`billing` first), the suite's own services in `backend/services/infra/` (`mailer`, `notification`), `backend/libs/core/`, `frontend/`, `contracts/` and `ops/`; `frontend/` is the Suite Console monorepo and the console itself is served at `/console/` on every host | `backend/` groups the two kinds of Gradle build: `services/` are deployable products and `libs/` is the shared technical core. Inside `services/`, `platform` is the suite's foundation, `apps/` holds a product a Tenant uses for its own business data and `infra/` holds a service that exists to serve the suite itself (`mailer` delivers every app's email, `notification` notifies the suite's own users); the group is only a directory, so a service's name, image, database and Java root package do not depend on it. Keeps the suite and all frontends together while they deploy separately; `contracts/` holds the documents they share (OpenAPI, event schemas, permission catalogs, the token claim list), never code, and the only code they share is the technical `backend/libs/core/` |
 | Runtime shape | One jar with `api`, `worker` and `migrate` Spring profiles; `spring.profiles.default` activates `api` and `worker` together for dev and test, and each profile file applies only to a runtime that runs alone | The HTTP edge scales independently of background work, heavy singleton jobs get a lease instead of a second scheduler, and Flyway runs as one step rather than racing a rolling start. See [runtime-profiles.md](runtime-profiles.md) |
 | Ledger and wallet model | Append-only, single-entry Ledger per wallet; the balance is a projection verified by a rebuild job; corrections are reversal entries. A wallet holds one immutable currency, so multi-currency means multiple wallets | The Ledger is the financial source of truth, and recovering from a mistake must not rewrite history; single-entry is enough because the system has no internal account transfers. Details in [wallet-ledger-and-charging.md](wallet-ledger-and-charging.md) |
 | Platform service | Tenancy, users and RBAC, entitlement, Tenant Systems, credentials and token issuance move out of Billing into a `backend/services/platform/` build | Two responsibilities with different lifecycles: identity and access belong to the suite, not to one app, and every app then enforces the same authorities |
@@ -129,7 +129,7 @@ own the dependency rules.
 | `apps/` | `app-boot` | Spring wiring, security and the token issuer, the snapshot API, the JWKS endpoint, jobs, migrations |
 | `testing/` | `arch-fixtures` | Deliberately violating classes that prove each ArchUnit rule can fail |
 
-**Billing** (`backend/services/billing/`) — the suite's first app, grouped by role (each Gradle project path follows its
+**Billing** (`backend/services/apps/billing/`) — the suite's first app, grouped by role (each Gradle project path follows its
 directory: `:contexts:money`, `:libs:jooq-schema`, `:apps:app-boot`):
 
 | Directory | Module | Holds |
@@ -155,7 +155,7 @@ each service's Gradle isolation task, which fails the build when a project decla
 and each service's ArchUnit `otherServiceRoots` rule set, which fails it when a class names another service's
 package. `mailer` is the only service permitted to call an AWS API.
 
-**Notification** (`backend/services/notification/`) — the suite's app for notifying Platform tenant users, in two contexts:
+**Notification** (`backend/services/infra/notification/`) — the suite's app for notifying Platform tenant users, in two contexts:
 
 | Directory | Module | Holds |
 |---|---|---|
@@ -171,7 +171,7 @@ reads no Billing data: recipients are Platform tenant users. The `platform`/`dis
 keeps, and it is what lets `context-uses-only-own-tables` hold while replica tables and notification tables
 coexist in one service. Notification produces `email.send` and no event another app consumes.
 
-**Mailroom** (`backend/services/mailroom/`) — the suite's app for letting a Tenant email its own customers, in four contexts:
+**Mailroom** (`backend/services/apps/mailroom/`) — the suite's app for letting a Tenant email its own customers, in four contexts:
 
 | Directory | Module | Holds |
 |---|---|---|
@@ -190,7 +190,7 @@ notification module. `sending` reaches `content` and `audience` only through the
 `email-delivery.changed` from `mailer.events`; mailer is the only transport. The public `/mailroom/t/*` endpoints are the
 suite's first unauthenticated surface, isolated in one controller and one ArchUnit rule.
 
-**Survey** (`backend/services/survey/`) — the suite's app for asking a Tenant's own customers questions, in four contexts:
+**Survey** (`backend/services/apps/survey/`) — the suite's app for asking a Tenant's own customers questions, in four contexts:
 
 | Directory | Module | Holds |
 |---|---|---|
@@ -211,7 +211,7 @@ It is API only, so the builder UI and the fill UI are a later plan; it never sen
 owns the rows, so `insight` calls it rather than writing a response itself. Its public `/p/*` endpoints are the
 suite's second unauthenticated surface, isolated in one controller and one ArchUnit rule.
 
-**Customer** (`backend/services/customer/`) — the suite's app for keeping a Tenant's own customer data, in six contexts:
+**Customer** (`backend/services/apps/customer/`) — the suite's app for keeping a Tenant's own customer data, in six contexts:
 
 | Directory | Module | Holds |
 |---|---|---|
@@ -233,7 +233,7 @@ which is what keeps `context-uses-only-own-tables` true while six contexts share
 `customers` because it owns the rows; the orders and activity contexts expose an erasure participant the customer use
 case calls in the same transaction.
 
-**Loyalty** (`backend/services/loyalty/`) — the suite's app for running a Tenant's points program, in six contexts:
+**Loyalty** (`backend/services/apps/loyalty/`) — the suite's app for running a Tenant's points program, in six contexts:
 
 | Directory | Module | Holds |
 |---|---|---|
@@ -255,9 +255,10 @@ it declares and app-boot implements. Every flow that changes a member's points l
 makes the balance safe under parallel redemptions; a voucher use locks only the voucher, so it cannot form a cycle.
 
 **The shared core** sits next to the services, in `backend/libs/core/`. It is its own Gradle build that
-`backend/services/platform/`, `backend/services/billing/`, `backend/services/notification/`, `backend/services/mailer/`,
-`backend/services/mailroom/` and `backend/services/survey/` include with
-`includeBuild("../../libs/core")`:
+`backend/services/platform/`, `backend/services/apps/billing/`, `backend/services/infra/notification/`, `backend/services/infra/mailer/`,
+`backend/services/apps/mailroom/` and `backend/services/apps/survey/` include with
+`includeBuild("../../libs/core")` (`platform`) or `includeBuild("../../../libs/core")` (every build under `apps/` and
+`infra/`):
 
 | Module | Holds |
 |---|---|
@@ -305,7 +306,7 @@ Decisions:
   on the tables it owns.
 - A module exposes a public `api` package: an interface or a read model that another module and `app-boot`'s
   non-wiring adapters bind to. Another context may depend only on that package, and only the money path may call
-  another context's business operations synchronously. `backend/services/billing/contexts/invoicing` and `backend/services/billing/contexts/webhook`
+  another context's business operations synchronously. `backend/services/apps/billing/contexts/invoicing` and `backend/services/apps/billing/contexts/webhook`
   are the documented exception: their read models carry the context's domain vocabulary (status enums, money) and the
   pricing api, so moving them behind `api` would either leak the domain into the contract or make the contract layer
   see another module. Their read side stays in `application...query` until the read model is reshaped for its callers.

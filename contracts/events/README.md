@@ -4,13 +4,13 @@ Event schemas are namespaced by the service that produces them:
 
 | Folder | Producer | Delivery |
 |---|---|---|
-| `backend/services/billing/` | Billing | AMQP (`billing.events`) between services, and signed HTTP to Tenant Systems. |
+| `backend/services/apps/billing/` | Billing | AMQP (`billing.events`) between services, and signed HTTP to Tenant Systems. |
 | `backend/services/platform/` | Platform | AMQP (`platform.events`) only: state-transfer `*.changed` events other services replicate. |
-| `backend/services/mailer/` | Mailer | AMQP (`mailer.events`) only: the terminal delivery outcome (`email-delivery.changed`) a producer maps onto its own ledger. |
-| `backend/services/survey/` | Survey | AMQP (`survey.events`) between services, and signed HTTP to Tenant Systems: the three facts a Tenant's own system reacts to. |
-| `backend/services/customer/` | customer | Signed HTTP webhooks to Tenant Systems only: the customer and order facts a Tenant's own system reacts to. No AMQP exchange carries them. |
-| `backend/services/loyalty/` | loyalty | Signed HTTP webhooks to Tenant Systems only: the enrolment, points, tier and voucher facts a Tenant's own system reacts to. No AMQP exchange carries them. |
-| `backend/services/booking/` | booking | Signed HTTP webhooks to Tenant Systems only: the hold, confirmation, reschedule, cancellation, expiry, no-show, waitlist and series facts a Tenant's own system reacts to. No AMQP exchange carries them. |
+| `backend/services/infra/mailer/` | Mailer | AMQP (`mailer.events`) only: the terminal delivery outcome (`email-delivery.changed`) a producer maps onto its own ledger. |
+| `backend/services/apps/survey/` | Survey | AMQP (`survey.events`) between services, and signed HTTP to Tenant Systems: the three facts a Tenant's own system reacts to. |
+| `backend/services/apps/customer/` | customer | Signed HTTP webhooks to Tenant Systems only: the customer and order facts a Tenant's own system reacts to. No AMQP exchange carries them. |
+| `backend/services/apps/loyalty/` | loyalty | Signed HTTP webhooks to Tenant Systems only: the enrolment, points, tier and voucher facts a Tenant's own system reacts to. No AMQP exchange carries them. |
+| `backend/services/apps/booking/` | booking | Signed HTTP webhooks to Tenant Systems only: the hold, confirmation, reschedule, cancellation, expiry, no-show, waitlist and series facts a Tenant's own system reacts to. No AMQP exchange carries them. |
 
 Within a producer folder, the `*.schema.json` files are the source of truth for which event types that service
 publishes and for the shape of each event's `data`. The application packages them and rejects a subscription to a

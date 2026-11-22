@@ -2,7 +2,7 @@
 
 The suite's app for letting a **Tenant ask its own customers something**. A Tenant builds a survey, publishes it as
 an immutable version, hands out links, and reads who answered, where people stopped and what the answers add up to.
-It is a separate deployable (`backend/services/survey/`, root package `dev.ngb.survey`) with three runtimes: `migrate`, `api` and
+It is a separate deployable (`backend/services/apps/survey/`, root package `dev.ngb.survey`) with three runtimes: `migrate`, `api` and
 `worker`.
 
 Survey never sends a message and knows no channel. It issues links; the Tenant puts a link wherever it likes — a

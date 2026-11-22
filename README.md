@@ -40,16 +40,16 @@ build and verify it.
 | Deployable | Directory | What it owns | Reached at |
 |---|---|---|---|
 | **Platform** | `backend/services/platform/` | Tenants and their domains, users, centralized RBAC, app entitlement, Tenant Systems and their credentials, the suite's signed tokens, the snapshot API, the UI remote registry | `platform.<base-domain>`, and `/platform/*` on any host |
-| **Billing** | `backend/services/billing/` | Pricing, usage, Wallet and append-only Ledger, Reservation, Charge, coupons, Invoice, Payment, Refund, Subscription, webhooks, the Billing Session and the Customer Portal, Stripe Direct and Connect | `<tenant-code>.<base-domain>` (`/api/*`, `/portal/*`, `/stripe/*`) |
-| **Mailer** | `backend/services/mailer/` | Delivery only: consumes `email.send` commands, sends through SESv2 or SMTP, keeps a per-recipient delivery ledger and reports `email-delivery.changed` | No business HTTP surface; only the actuator probe |
-| **Notification** | `backend/services/notification/` | The suite's in-app inbox and transactional email for Platform users, suite-wide templates, locale and preferences | `/notification/*` |
-| **Mailroom** | `backend/services/mailroom/` | A Tenant's templates, receivers, groups, segments, suppressions, campaigns and tracking for its own customers | `/mailroom/*`; `/mailroom/t/*` is public for recipients |
-| **Survey** | `backend/services/survey/` | Surveys, immutable versions, links, visits, responses, uploads, analytics, signed webhooks, and the expression language behind branching and scoring | `/survey/*`; `/survey/p/*` is public for respondents |
-| **Attribution** | `backend/services/attribution/` | Campaigns, tracked links, the redirect and its signed click id, clicks, page views, sessions, conversions, per-campaign credit models, advertising cost (manual or imported from Google Ads and Meta Ads) | `/attribution/*`; `/go/*` and `/t/*` are public |
-| **Booking** | `backend/services/booking/` | Resources, weekly hours and exceptions, groups, interval and capacity offerings, two inventory engines behind one `Booking` lifecycle, availability, series, waitlist and waiting room, signed webhooks | `/booking/*`; `/booking/p/*` is public for a Tenant's customers |
-| **Customer** | `backend/services/customer/` | A Tenant's own customers, orders and returns, activities, custom fields, tags, consent, the 360 profile, search, CSV export, four signed webhooks | `/customer/*`; no public surface |
-| **Loyalty** | `backend/services/loyalty/` | A points program: tiers, promotions, members, the lot-based points ledger, redemption and reversal, expiry, rewards and vouchers, twelve signed webhooks | `/loyalty/*`; no public surface |
-| **Workflow** | `backend/services/workflow/` | Versioned JSON workflows, the durable engine, instances, human tasks, connections, triggers and signed events; acts as the Tenant's own system | `/workflow/*`; `/workflow/hooks/*` is public for signed triggers |
+| **Billing** | `backend/services/apps/billing/` | Pricing, usage, Wallet and append-only Ledger, Reservation, Charge, coupons, Invoice, Payment, Refund, Subscription, webhooks, the Billing Session and the Customer Portal, Stripe Direct and Connect | `<tenant-code>.<base-domain>` (`/api/*`, `/portal/*`, `/stripe/*`) |
+| **Mailer** | `backend/services/infra/mailer/` | Delivery only: consumes `email.send` commands, sends through SESv2 or SMTP, keeps a per-recipient delivery ledger and reports `email-delivery.changed` | No business HTTP surface; only the actuator probe |
+| **Notification** | `backend/services/infra/notification/` | The suite's in-app inbox and transactional email for Platform users, suite-wide templates, locale and preferences | `/notification/*` |
+| **Mailroom** | `backend/services/apps/mailroom/` | A Tenant's templates, receivers, groups, segments, suppressions, campaigns and tracking for its own customers | `/mailroom/*`; `/mailroom/t/*` is public for recipients |
+| **Survey** | `backend/services/apps/survey/` | Surveys, immutable versions, links, visits, responses, uploads, analytics, signed webhooks, and the expression language behind branching and scoring | `/survey/*`; `/survey/p/*` is public for respondents |
+| **Attribution** | `backend/services/apps/attribution/` | Campaigns, tracked links, the redirect and its signed click id, clicks, page views, sessions, conversions, per-campaign credit models, advertising cost (manual or imported from Google Ads and Meta Ads) | `/attribution/*`; `/go/*` and `/t/*` are public |
+| **Booking** | `backend/services/apps/booking/` | Resources, weekly hours and exceptions, groups, interval and capacity offerings, two inventory engines behind one `Booking` lifecycle, availability, series, waitlist and waiting room, signed webhooks | `/booking/*`; `/booking/p/*` is public for a Tenant's customers |
+| **Customer** | `backend/services/apps/customer/` | A Tenant's own customers, orders and returns, activities, custom fields, tags, consent, the 360 profile, search, CSV export, four signed webhooks | `/customer/*`; no public surface |
+| **Loyalty** | `backend/services/apps/loyalty/` | A points program: tiers, promotions, members, the lot-based points ledger, redemption and reversal, expiry, rewards and vouchers, twelve signed webhooks | `/loyalty/*`; no public surface |
+| **Workflow** | `backend/services/apps/workflow/` | Versioned JSON workflows, the durable engine, instances, human tasks, connections, triggers and signed events; acts as the Tenant's own system | `/workflow/*`; `/workflow/hooks/*` is public for signed triggers |
 | **Suite Console** | `frontend/` | The web UI: two shells (Platform, Tenant) and every app UI as a Module Federation remote | `/console/` on every host |
 
 Each deployable is a separate Gradle build (or pnpm workspace), with its own database, its own database roles and its
@@ -130,8 +130,11 @@ Details: [docs/architecture.md](docs/architecture.md) (diagram, decision ledger,
 ```text
 backend/
   libs/core/            the shared technical core (the only code services share)
-  services/<name>/      deployable products: platform, billing, mailer, notification, mailroom,
-                        survey, attribution, booking, customer, loyalty, workflow
+  services/              deployable products, each its own Gradle build
+    platform/            the suite's foundation: tenancy, identity, access, tokens
+    apps/<name>/         services a Tenant uses: billing, mailroom, survey, attribution, booking,
+                         customer, loyalty, workflow
+    infra/<name>/        services that serve the suite itself: mailer, notification
 frontend/               the Suite Console: pnpm + Turborepo monorepo
 contracts/              OpenAPI, event schemas, commands, permission catalogs, token claims, test vectors
 ops/                    local runtime scripts, proxy config, Terraform for AWS
@@ -144,7 +147,11 @@ Makefile                shortcuts for the local runtime (`make help`)
 ```
 
 `backend/` separates two kinds of Gradle build: `services/` are deployable products and `libs/` is the shared technical
-core. Only `services/` are deployed, and each is its own Gradle build with its own wrapper.
+core. Only `services/` are deployed, and each is its own Gradle build with its own wrapper. A service belongs in
+`apps/` when it is a product a Tenant uses for its own business data (billing, a customer list, surveys, bookings);
+it belongs in `infra/` when it exists to serve the suite itself (`mailer` delivers every app's email and has no
+business API, and `notification` notifies the suite's own users, not a Tenant's customers). The group is only a
+directory: names, images, databases and Java packages do not depend on it.
 
 ### The shared core: `backend/libs/core/`
 
@@ -473,16 +480,16 @@ Each backend builds on its own and needs JDK 25 and a Docker daemon for Testcont
 ```bash
 cd backend/libs/core && ./gradlew build
 cd backend/services/platform && ./gradlew build
-cd backend/services/billing && ./gradlew build
-cd backend/services/mailer && ./gradlew build
-cd backend/services/notification && ./gradlew build
-cd backend/services/mailroom && ./gradlew build
-cd backend/services/survey && ./gradlew build
-cd backend/services/attribution && ./gradlew build
-cd backend/services/booking && ./gradlew build
-cd backend/services/customer && ./gradlew build
-cd backend/services/loyalty && ./gradlew build
-cd backend/services/workflow && ./gradlew build
+cd backend/services/apps/billing && ./gradlew build
+cd backend/services/infra/mailer && ./gradlew build
+cd backend/services/infra/notification && ./gradlew build
+cd backend/services/apps/mailroom && ./gradlew build
+cd backend/services/apps/survey && ./gradlew build
+cd backend/services/apps/attribution && ./gradlew build
+cd backend/services/apps/booking && ./gradlew build
+cd backend/services/apps/customer && ./gradlew build
+cd backend/services/apps/loyalty && ./gradlew build
+cd backend/services/apps/workflow && ./gradlew build
 ```
 
 `./gradlew check` in a service runs the unit and integration tests together with the gates that keep the architecture
