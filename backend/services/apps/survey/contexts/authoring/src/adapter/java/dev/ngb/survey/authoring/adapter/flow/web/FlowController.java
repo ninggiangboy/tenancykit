@@ -1,5 +1,7 @@
 package dev.ngb.survey.authoring.adapter.flow.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.survey.authoring.api.flow.FlowResult;
 import dev.ngb.survey.authoring.application.flow.query.PreviewQueries;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
                 + "version.")
 @RestController
 @RequestMapping("/api/v1/surveys/{id}")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class FlowController {
 
     private final PreviewQueries previews;
@@ -46,7 +49,7 @@ class FlowController {
             description =
                     "Returns the draft's pages in presentation order as `locale` renders them, with every question, its "
                     + "type and every option label. It is presentation only: nothing is skipped, hidden or substituted, and "
-                    + "piping stays as its stored placeholders. Nothing is stored. Requires `survey:survey:read`.")
+                    + "piping stays as its stored placeholders. Nothing is stored.")
     @PostMapping("/draft/preview")
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
     PreviewView preview(@PathVariable UUID id, @RequestParam(required = false) String locale) {
@@ -58,7 +61,7 @@ class FlowController {
             description =
                     "Runs `answers` through the draft with the same evaluator a respondent's submit uses and reports the "
                     + "path, variables and score. A draft that does not compile answers `errors` naming every offending "
-                    + "pointer. Nothing is stored. Requires `survey:survey:read`.")
+                    + "pointer. Nothing is stored.")
     @PostMapping("/draft/simulate")
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
     FlowResult simulateDraft(@PathVariable UUID id, @RequestBody SimulateRequest request) {
@@ -69,7 +72,7 @@ class FlowController {
             summary = "Simulate answers through a published version",
             description =
                     "Runs `answers` through published version `no` of the survey with the evaluator a respondent's submit "
-                    + "uses. Nothing is stored. An unknown survey or version answers `404`. Requires `survey:survey:read`.")
+                    + "uses. Nothing is stored. An unknown survey or version answers `404`.")
     @PostMapping("/versions/{no}/simulate")
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
     FlowResult simulateVersion(

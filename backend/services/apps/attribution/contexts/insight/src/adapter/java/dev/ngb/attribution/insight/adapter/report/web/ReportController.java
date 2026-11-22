@@ -18,6 +18,8 @@ import dev.ngb.attribution.insight.application.report.query.TrafficClassFilter;
 import dev.ngb.attribution.insight.application.report.service.CsvReportWriter;
 import dev.ngb.attribution.shared.AttributionPermissions;
 import dev.ngb.core.runtime.Clock;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -53,6 +55,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
                 "Time series, breakdowns, funnel, cohorts and cost reports, each as JSON or CSV.")
 @RestController
 @RequestMapping("/api/v1/reports")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class ReportController {
 
     private static final String CSV = "text/csv";
@@ -73,7 +76,7 @@ class ReportController {
                     + "value) per `granularity` (`hour` or `day`) over the `from`/`to` range. Narrow it with `link_id`, "
                     + "`campaign_id`, `destination_id`, `goal_id`, `entry`, `device` and `country`; `include` adds bot or "
                     + "suspect traffic that the default leaves out. Answers `text/csv` instead of JSON when the request "
-                    + "asks for it with `Accept` or with the `.csv` path. Requires `attribution:report:read`.")
+                    + "asks for it with `Accept` or with the `.csv` path.")
     @GetMapping(value = "/timeseries", produces = {MediaType.APPLICATION_JSON_VALUE, CSV})
     @RequiresPermission(AttributionPermissions.REPORT_READ)
     ResponseEntity<?> timeseries(
@@ -101,7 +104,7 @@ class ReportController {
             summary = "Export a time series as CSV",
             description =
                     "The same report as the JSON one, always as `text/csv`; an export is capped at 100,000 rows and a "
-                    + "larger answer is `400`. Requires `attribution:report:read`.")
+                    + "larger answer is `400`.")
     @GetMapping(value = "/timeseries.csv", produces = CSV)
     @RequiresPermission(AttributionPermissions.REPORT_READ)
     ResponseEntity<StreamingResponseBody> timeseriesCsv(
@@ -131,7 +134,7 @@ class ReportController {
                     + "destination or goal. Narrow it with `link_id`, `campaign_id`, `destination_id`, `goal_id`, `entry`, "
                     + "`device` and `country`; `include` adds bot or suspect traffic that the default leaves out. Also "
                     + "filters by `referrer`. Answers `text/csv` instead of JSON when the request asks for it with `Accept` "
-                    + "or with the `.csv` path. Requires `attribution:report:read`.")
+                    + "or with the `.csv` path.")
     @GetMapping(value = "/breakdown", produces = {MediaType.APPLICATION_JSON_VALUE, CSV})
     @RequiresPermission(AttributionPermissions.REPORT_READ)
     ResponseEntity<?> breakdown(
@@ -161,7 +164,7 @@ class ReportController {
             summary = "Export a breakdown as CSV",
             description =
                     "The same report as the JSON one, always as `text/csv`; an export is capped at 100,000 rows and a "
-                    + "larger answer is `400`. Requires `attribution:report:read`.")
+                    + "larger answer is `400`.")
     @GetMapping(value = "/breakdown.csv", produces = CSV)
     @RequiresPermission(AttributionPermissions.REPORT_READ)
     ResponseEntity<StreamingResponseBody> breakdownCsv(
@@ -191,7 +194,7 @@ class ReportController {
             description =
                     "Returns how many clicks became sessions, page views and conversions over the `from`/`to` range, "
                     + "narrowed by `campaign_id`, `link_id` and `goal_id`. Answers `text/csv` instead of JSON when the "
-                    + "request asks for it with `Accept` or with the `.csv` path. Requires `attribution:report:read`.")
+                    + "request asks for it with `Accept` or with the `.csv` path.")
     @GetMapping(value = "/funnel", produces = {MediaType.APPLICATION_JSON_VALUE, CSV})
     @RequiresPermission(AttributionPermissions.REPORT_READ)
     ResponseEntity<?> funnel(
@@ -210,7 +213,7 @@ class ReportController {
             summary = "Export the funnel as CSV",
             description =
                     "The same report as the JSON one, always as `text/csv`; an export is capped at 100,000 rows and a "
-                    + "larger answer is `400`. Requires `attribution:report:read`.")
+                    + "larger answer is `400`.")
     @GetMapping(value = "/funnel.csv", produces = CSV)
     @RequiresPermission(AttributionPermissions.REPORT_READ)
     ResponseEntity<StreamingResponseBody> funnelCsv(
@@ -229,7 +232,7 @@ class ReportController {
             description =
                     "Groups visitors by the week of their first click and reports how they converted over the following "
                     + "`periods` (default 12). `cohort` can only be `week`. Answers `text/csv` instead of JSON when the "
-                    + "request asks for it with `Accept` or with the `.csv` path. Requires `attribution:report:read`.")
+                    + "request asks for it with `Accept` or with the `.csv` path.")
     @GetMapping(value = "/cohorts", produces = {MediaType.APPLICATION_JSON_VALUE, CSV})
     @RequiresPermission(AttributionPermissions.REPORT_READ)
     ResponseEntity<?> cohorts(
@@ -247,7 +250,7 @@ class ReportController {
             summary = "Export cohorts as CSV",
             description =
                     "The same report as the JSON one, always as `text/csv`; an export is capped at 100,000 rows and a "
-                    + "larger answer is `400`. Requires `attribution:report:read`.")
+                    + "larger answer is `400`.")
     @GetMapping(value = "/cohorts.csv", produces = CSV)
     @RequiresPermission(AttributionPermissions.REPORT_READ)
     ResponseEntity<StreamingResponseBody> cohortsCsv(
@@ -265,7 +268,7 @@ class ReportController {
             description =
                     "Returns advertising spend over the `from`/`to` range, optionally for one `campaign_id` and grouped "
                     + "by `group_by`, set against what the same campaigns earned. Answers `text/csv` instead of JSON when "
-                    + "the request asks for it with `Accept` or with the `.csv` path. Requires `attribution:report:read`.")
+                    + "the request asks for it with `Accept` or with the `.csv` path.")
     @GetMapping(value = "/costs", produces = {MediaType.APPLICATION_JSON_VALUE, CSV})
     @RequiresPermission(AttributionPermissions.REPORT_READ)
     ResponseEntity<?> costs(
@@ -282,7 +285,7 @@ class ReportController {
             summary = "Export the cost report as CSV",
             description =
                     "The same report as the JSON one, always as `text/csv`; an export is capped at 100,000 rows and a "
-                    + "larger answer is `400`. Requires `attribution:report:read`.")
+                    + "larger answer is `400`.")
     @GetMapping(value = "/costs.csv", produces = CSV)
     @RequiresPermission(AttributionPermissions.REPORT_READ)
     ResponseEntity<StreamingResponseBody> costsCsv(

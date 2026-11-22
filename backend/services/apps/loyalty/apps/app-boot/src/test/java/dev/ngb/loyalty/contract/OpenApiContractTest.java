@@ -74,9 +74,9 @@ class OpenApiContractTest extends LoyaltyIntegrationTest {
                 assertThat(id).as(path + " " + method + " has no operationId").isNotBlank();
                 assertThat(seen.add(id)).as("operationId " + id + " appears twice").isTrue();
                 JsonNode permission = operation.get("x-required-permission");
-                boolean publicly = operation.path("x-public").asBoolean(false);
-                assertThat(permission != null || publicly)
-                        .as(path + " " + method + " names neither a permission nor is public").isTrue();
+                boolean labelled = operation.get("x-allowed-callers") != null;
+                assertThat(permission != null || labelled)
+                        .as(path + " " + method + " names neither a permission nor a caller").isTrue();
                 if (permission != null) {
                     assertThat(LoyaltyPermissions.CODES)
                             .as(path + " " + method + " names " + permission.asString() + ", which is in no catalog")

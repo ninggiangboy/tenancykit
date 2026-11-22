@@ -18,6 +18,8 @@ import dev.ngb.booking.catalog.domain.calendar.CalendarException;
 import dev.ngb.booking.catalog.domain.calendar.ExceptionKind;
 import dev.ngb.booking.catalog.domain.calendar.WorkingHour;
 import dev.ngb.booking.shared.BookingPermissions;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -51,6 +53,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class CalendarController {
 
     /** One window as the caller sends it: a weekday and two local wall-clock times. */

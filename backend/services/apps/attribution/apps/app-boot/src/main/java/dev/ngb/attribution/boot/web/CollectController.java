@@ -4,6 +4,8 @@ import dev.ngb.attribution.boot.web.CollectRateLimiter;
 import dev.ngb.attribution.tracking.application.collect.command.CollectPageViewsUseCase;
 import dev.ngb.attribution.tracking.application.collect.port.ErasureStore;
 import dev.ngb.core.runtime.Clock;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.core.visitor.UserAgentClassifier;
@@ -35,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The public endpoint a tenant's page snippet posts page views to. Anything unacceptable answers 204 "
                 + "without storing.")
 @RestController
+@Callers(Caller.PUBLIC)
 public class CollectController {
 
     /** The most events one request may carry, matching the snippet's own batch. */

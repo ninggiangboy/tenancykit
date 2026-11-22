@@ -1,5 +1,7 @@
 package dev.ngb.notification.dispatch.adapter.notification.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.notification.dispatch.application.notification.command.GetTenantSettingsUseCase;
 import dev.ngb.notification.dispatch.application.notification.command.SavePreferenceUseCase;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "A tenant's default locale and the notification types it has enabled.")
 @RestController
 @RequestMapping("/api/v1/settings")
+@Callers(Caller.TENANT_USER)
 class TenantSettingsController {
 
     private final GetTenantSettingsUseCase get;
@@ -36,7 +39,7 @@ class TenantSettingsController {
     @Operation(
             summary = "Get the tenant's notification settings",
             description =
-                    "Returns the tenant's default locale and the notification types it has enabled. The tenant is taken from the request host. Requires `notification:config:manage`.")
+                    "Returns the tenant's default locale and the notification types it has enabled. The tenant is taken from the request host.")
     @GetMapping
     @RequiresPermission(NotificationPermissions.CONFIG_MANAGE)
     SettingsResponse current() {
@@ -46,7 +49,7 @@ class TenantSettingsController {
     @Operation(
             summary = "Replace the tenant's notification settings",
             description =
-                    "Stores the tenant's default locale and the full set of enabled notification types, replacing what was stored; a type missing from `enabledTypes` is no longer enabled. A locale the suite does not support, or a notification type it does not know, answers `400`. Answers the stored settings. Requires `notification:config:manage`.")
+                    "Stores the tenant's default locale and the full set of enabled notification types, replacing what was stored; a type missing from `enabledTypes` is no longer enabled. A locale the suite does not support, or a notification type it does not know, answers `400`. Answers the stored settings.")
     @PutMapping
     @RequiresPermission(NotificationPermissions.CONFIG_MANAGE)
     SettingsResponse save(@RequestBody SettingsRequest request) {

@@ -8,6 +8,8 @@ plugins {
 dependencies {
     api(project(":core-spring"))
     api(libs.springdoc.common)
+    // The caller labels and the catalog consistency check read the permission catalogs packaged by each service.
+    implementation("tools.jackson.dataformat:jackson-dataformat-yaml")
     compileOnly("org.springframework:spring-webmvc")
     testImplementation("org.assertj:assertj-core")
     testImplementation(libs.archunit.junit5)

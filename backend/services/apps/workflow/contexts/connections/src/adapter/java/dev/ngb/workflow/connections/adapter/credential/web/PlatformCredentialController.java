@@ -1,5 +1,7 @@
 package dev.ngb.workflow.connections.adapter.credential.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.workflow.connections.application.credential.command.RegisterCredentialUseCase;
 import dev.ngb.workflow.connections.application.credential.query.CredentialQueries;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class PlatformCredentialController {
 
     public record RegisterRequest(String clientId, String secret) {}
@@ -46,7 +49,7 @@ public class PlatformCredentialController {
             description =
                     "Stores the API credential (`clientId` and `secret`) workflow uses to call Platform for the tenant. "
                     + "The secret is write-only: it is encrypted on the way in and never read back. Answers the "
-                    + "credential's status and the key id that wrote it. Requires `workflow:connection:manage`.")
+                    + "credential's status and the key id that wrote it.")
     @PutMapping("/platform-credential")
     @RequiresPermission(WorkflowPermissions.CONNECTION_MANAGE)
     public ResponseEntity<CredentialResponse> register(@RequestBody RegisterRequest request) {

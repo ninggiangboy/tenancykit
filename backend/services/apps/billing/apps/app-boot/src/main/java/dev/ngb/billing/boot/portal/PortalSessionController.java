@@ -1,5 +1,7 @@
 package dev.ngb.billing.boot.portal;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.billing.session.api.portal.CurrentPortalVisitor;
 import dev.ngb.billing.session.api.portal.PortalPermission;
@@ -36,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
 @RequestMapping("/portal/api/session")
+@Callers(Caller.CUSTOMER_SESSION)
 public class PortalSessionController {
 
     public record ExchangeRequest(String token) {}
@@ -64,6 +67,7 @@ public class PortalSessionController {
     }
 
     /** Public on purpose: the single-use token is the proof. A token for another tenant is unknown on this hostname. */
+    @Callers(Caller.PUBLIC)
     @Operation(
             summary = "Exchange a billing-session token",
             description =

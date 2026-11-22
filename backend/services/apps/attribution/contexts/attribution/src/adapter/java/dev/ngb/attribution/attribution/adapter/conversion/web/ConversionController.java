@@ -13,6 +13,8 @@ import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,6 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The postback a tenant's order flow calls and the read side of conversions with their credits.")
 @RestController
 @RequestMapping("/api/v1/conversions")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class ConversionController {
 
     private final RecordConversionUseCase record;
@@ -93,7 +96,7 @@ public class ConversionController {
             summary = "List conversions",
             description =
                     "Pages through the tenant's conversions with their credits, with the list-query contract's filtering, "
-                    + "sorting and paging. Requires `attribution:report:read`.")
+                    + "sorting and paging.")
     @GetMapping
     @Listing(ConversionListing.class)
     @RequiresPermission(AttributionPermissions.REPORT_READ)
@@ -105,7 +108,7 @@ public class ConversionController {
             summary = "Get a conversion",
             description =
                     "Returns one conversion with its chain of touches and the credit each campaign received. An unknown "
-                    + "id answers `404`. Requires `attribution:report:read`.")
+                    + "id answers `404`.")
     @GetMapping("/{id}")
     @RequiresPermission(AttributionPermissions.REPORT_READ)
     ConversionResponse get(@PathVariable UUID id) {

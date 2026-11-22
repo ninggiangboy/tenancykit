@@ -1,6 +1,8 @@
 package dev.ngb.survey.collection.adapter.response.web;
 
 import dev.ngb.core.error.NotFoundException;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.survey.collection.application.response.command.SaveDraftUseCase;
 import dev.ngb.survey.collection.application.response.command.SubmitResponseUseCase;
 import dev.ngb.survey.collection.application.response.exception.AlreadySubmittedException;
@@ -51,6 +53,7 @@ import org.springframework.web.server.ResponseStatusException;
                 + "and submit.")
 @RestController
 @RequestMapping("/p/v/{visitToken}")
+@Callers(Caller.PUBLIC)
 class AnswerController {
 
     private final VisitLookup visitLookup;

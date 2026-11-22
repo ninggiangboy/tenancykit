@@ -1,5 +1,7 @@
 package dev.ngb.survey.insight.adapter.analytics.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.survey.collection.api.response.ResponseReader.Bucket;
 import dev.ngb.survey.collection.api.response.ResponseReader.ResponseFilter;
@@ -35,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Per-question aggregates, cross-tabs, trends and the drop-off funnel.")
 @RestController
 @RequestMapping("/api/v1/surveys/{id}/analytics")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class AnalyticsController {
 
     private final AggregateQueries aggregates;
@@ -58,7 +61,7 @@ class AnalyticsController {
             description =
                     "Returns per-question aggregates of the survey's responses: counts per option for a choice, the "
                     + "distribution of a number and the like. The filter is the one a response list takes: `version`, a "
-                    + "`from`/`to` window, `source` and `externalRef`. Requires `survey:analytics:read`.")
+                    + "`from`/`to` window, `source` and `externalRef`.")
     @PostMapping("/aggregate")
     @RequiresPermission(SurveyPermissions.ANALYTICS_READ)
     AggregateView aggregate(@PathVariable UUID id, @RequestBody FilterRequest request) {
@@ -69,8 +72,7 @@ class AnalyticsController {
             summary = "Cross-tabulate two questions",
             description =
                     "Counts how respondents answered `columnQuestionId` within each answer to `rowQuestionId`. The filter "
-                    + "is the one a response list takes: `version`, a `from`/`to` window, `source` and `externalRef`. "
-                    + "Requires `survey:analytics:read`.")
+                    + "is the one a response list takes: `version`, a `from`/`to` window, `source` and `externalRef`. ")
     @PostMapping("/crosstab")
     @RequiresPermission(SurveyPermissions.ANALYTICS_READ)
     AggregateView.CrossTabView crosstab(@PathVariable UUID id, @RequestBody CrossTabRequest request) {
@@ -95,7 +97,7 @@ class AnalyticsController {
             summary = "Get a survey's drop-off funnel",
             description =
                     "Returns how many visits reached each page and how many completed, optionally split by `group_by`, "
-                    + "within the `from`/`to` window. Requires `survey:analytics:read`.")
+                    + "within the `from`/`to` window.")
     @GetMapping("/funnel")
     @RequiresPermission(SurveyPermissions.ANALYTICS_READ)
     FunnelView funnel(

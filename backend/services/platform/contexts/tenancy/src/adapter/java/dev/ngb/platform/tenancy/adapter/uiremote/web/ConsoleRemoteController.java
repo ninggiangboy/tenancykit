@@ -1,6 +1,8 @@
 package dev.ngb.platform.tenancy.adapter.uiremote.web;
 
 import dev.ngb.core.security.Authenticated;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.platform.tenancy.application.uiremote.query.ConsoleRemoteQueries;
 import dev.ngb.platform.tenancy.application.uiremote.query.ConsoleRemoteView;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The feed a console shell reads on load: the UI remotes the caller may mount.")
 @RestController
 @RequestMapping("/api/v1/console")
+@Callers({Caller.PLATFORM_USER, Caller.TENANT_USER})
 class ConsoleRemoteController {
 
     record ConsoleRemoteResponse(

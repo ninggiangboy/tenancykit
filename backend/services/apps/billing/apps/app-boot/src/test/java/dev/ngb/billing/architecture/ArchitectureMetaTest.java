@@ -60,6 +60,7 @@ class ArchitectureMetaTest {
         CULPRIT_BY_RULE_ID.put("query-side-uses-no-domain-aggregates", "QueryReachesAggregate");
         CULPRIT_BY_RULE_ID.put("write-ports-serve-no-reads", "WritePort");
         CULPRIT_BY_RULE_ID.put("domain-events-live-in-an-events-holder", "StandaloneEvent");
+        CULPRIT_BY_RULE_ID.put("every-endpoint-declares-a-caller", "UnlabelledController");
         CULPRIT_BY_RULE_ID.put("ledger-repository-is-append-only", "LedgerRepository");
         CULPRIT_BY_RULE_ID.put("datasource-and-transactions-only-in-infrastructure", "TouchesDataSource");
         CULPRIT_BY_RULE_ID.put("outbound-http-only-through-the-guarded-sender", "OpensItsOwnHttpConnection");

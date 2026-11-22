@@ -12,6 +12,8 @@ import dev.ngb.attribution.shared.AttributionPermissions;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ConditionalUpdate;
@@ -43,6 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "A tenant's campaigns, their attribution model and window.")
 @RestController
 @RequestMapping("/api/v1/campaigns")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class CampaignController {
 
     private final CreateCampaignUseCase create;
@@ -65,8 +68,7 @@ class CampaignController {
     @Operation(
             summary = "List campaigns",
             description =
-                    "Pages through the tenant's campaigns, with the list-query contract's filtering, sorting and paging. "
-                    + "Requires `attribution:campaign:read`.")
+                    "Pages through the tenant's campaigns, with the list-query contract's filtering, sorting and paging. ")
     @GetMapping
     @Listing(CampaignListing.class)
     @RequiresPermission(AttributionPermissions.CAMPAIGN_READ)
@@ -79,7 +81,7 @@ class CampaignController {
             description =
                     "Creates a campaign with a name, a channel, an attribution model, a window in days, a currency and "
                     + "optional start and end dates. The `slug` can be omitted; one is derived from the name, and a "
-                    + "collision falls back to a generated one. Answers `201`. Requires `attribution:campaign:manage`.")
+                    + "collision falls back to a generated one. Answers `201`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(AttributionPermissions.CAMPAIGN_MANAGE)
@@ -98,8 +100,7 @@ class CampaignController {
     @Operation(
             summary = "Get a campaign",
             description =
-                    "Returns one campaign; its version is also the response's `ETag`. An unknown id answers `404`. "
-                    + "Requires `attribution:campaign:read`.")
+                    "Returns one campaign; its version is also the response's `ETag`. An unknown id answers `404`. ")
     @GetMapping("/{id}")
     @RequiresPermission(AttributionPermissions.CAMPAIGN_READ)
     ResponseEntity<CampaignResponse> get(@PathVariable UUID id) {
@@ -139,7 +140,7 @@ class CampaignController {
     @Operation(
             summary = "Archive a campaign",
             description =
-                    "Archives the campaign. Archiving is terminal. Answers `204`. Requires `attribution:campaign:manage`.")
+                    "Archives the campaign. Archiving is terminal. Answers `204`.")
     @PostMapping("/{id}/archive")
     @RequiresPermission(AttributionPermissions.CAMPAIGN_MANAGE)
     @ResponseStatus(HttpStatus.NO_CONTENT)

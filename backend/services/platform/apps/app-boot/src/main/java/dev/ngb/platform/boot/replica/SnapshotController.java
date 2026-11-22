@@ -1,6 +1,8 @@
 package dev.ngb.platform.boot.replica;
 
 import dev.ngb.core.replica.ReplicaStream;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.platform.access.api.user.UserAccessView;
 import dev.ngb.platform.access.api.user.UserQueries;
@@ -37,6 +39,7 @@ import org.springframework.web.server.ResponseStatusException;
                 "Internal paged snapshots of Platform state that a replica rebuilds from, merged with live change "
                 + "events.")
 @RestController
+@Callers(Caller.INTERNAL)
 class SnapshotController {
 
     private final TenantQueries tenants;
@@ -59,8 +62,7 @@ class SnapshotController {
                     + "`tenants`, `tenant-domains`, `tenant-systems`, `entitlements` or `user-access`; an unknown name "
                     + "answers `404`. Pass the previous answer's `next` as `after` to read the following page; `limit` is "
                     + "clamped to 1 to 500 and defaults to 100. Each item carries the same JSON as the matching `*.changed` "
-                    + "event plus its `version`, so a replica can merge snapshot rows and live events in any order. "
-                    + "Requires `platform:replica:read`.")
+                    + "event plus its `version`, so a replica can merge snapshot rows and live events in any order. ")
     @GetMapping("/internal/replica/{stream}")
     @RequiresPermission(PlatformPermissions.REPLICA_READ)
     Map<String, Object> page(

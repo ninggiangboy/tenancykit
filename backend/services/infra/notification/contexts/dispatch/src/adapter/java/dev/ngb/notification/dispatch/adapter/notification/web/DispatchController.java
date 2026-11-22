@@ -2,6 +2,8 @@ package dev.ngb.notification.dispatch.adapter.notification.web;
 
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.notification.dispatch.application.notification.query.DispatchListing;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
                 + "sent.")
 @RestController
 @RequestMapping("/api/v1/email-dispatches")
+@Callers(Caller.TENANT_USER)
 class DispatchController {
 
     /** One ledger row for the auditor; the recipient is returned only to a caller holding the dispatch permission. */
@@ -71,7 +74,7 @@ class DispatchController {
     @Operation(
             summary = "List email dispatches",
             description =
-                    "Pages through the tenant's dispatch ledger, newest first by default: one row per email the suite decided on, with its status, the reason when it was not sent, and the template, version and locale used. It answers why a user did not receive an email. Requires `notification:dispatch:read`.")
+                    "Pages through the tenant's dispatch ledger, newest first by default: one row per email the suite decided on, with its status, the reason when it was not sent, and the template, version and locale used. It answers why a user did not receive an email.")
     @GetMapping
     @Listing(DispatchListing.class)
     @RequiresPermission(NotificationPermissions.DISPATCH_READ)

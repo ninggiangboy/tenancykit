@@ -1,5 +1,7 @@
 package dev.ngb.survey.authoring.adapter.settings.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.survey.authoring.application.settings.command.UpdateSurveySettingsUseCase;
 
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The tenant's survey defaults: abandonment window, upload limit, public rate limit and time zone.")
 @RestController
 @RequestMapping("/api/v1/settings")
+@Callers(Caller.TENANT_USER)
 class SettingsController {
 
     private final SurveySettingsQueries queries;
@@ -42,7 +45,7 @@ class SettingsController {
             description =
                     "Returns the tenant's survey defaults: default locale, abandonment window, upload limit, public rate "
                     + "limit and time zone. Before the tenant changed any, it answers the configured defaults, so a "
-                    + "settings screen always has something to show. Requires `survey:settings:manage`.")
+                    + "settings screen always has something to show.")
     @GetMapping
     @RequiresPermission(SurveyPermissions.SETTINGS_MANAGE)
     SettingsResponse get() {

@@ -9,6 +9,8 @@ import dev.ngb.billing.coupon.domain.redemption.Redemption;
 import dev.ngb.billing.coupon.domain.redemption.RedemptionId;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.billing.sharedkernel.id.WalletId;
 import dev.ngb.core.audit.Audit;
@@ -47,6 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class RedemptionController {
 
     /** A redemption names a {@code code} or a {@code couponId}, never both. */

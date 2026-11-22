@@ -109,7 +109,7 @@ public class ErrorResponsesOpenApiCustomizer implements OpenApiCustomizer {
 
     private void document(String path, String method, Operation operation) {
         Map<String, ApiResponse> derived = new LinkedHashMap<>();
-        boolean isPublic = operation.getExtensions() != null && operation.getExtensions().containsKey("x-public");
+        boolean isPublic = isAnonymousOrWebhook(operation);
         boolean needsPermission = operation.getExtensions() != null && operation.getExtensions().containsKey("x-required-permission");
         boolean mayBeMalformed = operation.getRequestBody() != null
                 || (operation.getParameters() != null && operation.getParameters().stream().anyMatch(ErrorResponsesOpenApiCustomizer::mayBeMalformed));
@@ -185,6 +185,22 @@ public class ErrorResponsesOpenApiCustomizer implements OpenApiCustomizer {
 
     private static boolean isError(String status) {
         return status.length() == 3 && (status.startsWith("4") || status.startsWith("5"));
+    }
+
+    /**
+     * Whether the operation's callers present no suite token at all: an anonymous browser or a signed webhook. Such an
+     * operation cannot answer {@code 401} or {@code 403} for a Keycloak or suite token, and a path parameter is not a
+     * resource the caller can be forbidden from. A customer-session operation still answers both, because the portal
+     * cookie carries a permission set.
+     */
+    private static boolean isAnonymousOrWebhook(Operation operation) {
+        Object labels = operation.getExtensions() == null ? null : operation.getExtensions().get(CallerLabelCustomizer.X_ALLOWED_CALLERS);
+        if (!(labels instanceof List<?> callers) || callers.isEmpty()) {
+            return false;
+        }
+        return callers.stream()
+                .map(String::valueOf)
+                .allMatch(caller -> caller.equals("public") || caller.equals("provider"));
     }
 
     private static boolean hasHeader(Operation operation, String name) {

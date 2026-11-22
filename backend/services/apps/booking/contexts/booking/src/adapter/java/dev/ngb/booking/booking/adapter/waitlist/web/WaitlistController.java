@@ -5,6 +5,8 @@ import dev.ngb.booking.booking.application.waitlist.command.LeaveWaitlistUseCase
 import dev.ngb.booking.booking.application.waitlist.query.WaitlistQueries;
 import dev.ngb.booking.booking.application.waitlist.query.WaitlistView;
 import dev.ngb.booking.shared.BookingPermissions;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import java.time.Instant;
 import java.util.List;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class WaitlistController {
 
     public record WaitlistJoinRequest(

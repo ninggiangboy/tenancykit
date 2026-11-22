@@ -1,6 +1,8 @@
 package dev.ngb.platform.tenancy.adapter.entitlement.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.core.id.TenantId;
 import dev.ngb.core.security.CurrentActor;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Which apps of the suite each tenant may use.")
 @RestController
 @RequestMapping("/api/v1/tenants/{tenantId}/apps")
+@Callers(Caller.PLATFORM_USER)
 class EntitlementController {
 
     record EntitlementRequest(Boolean enabled) {}
@@ -64,7 +67,7 @@ class EntitlementController {
             summary = "List a tenant's apps",
             description =
                     "Returns every app of the suite with this Tenant's state of it; an app the Tenant never changed is "
-                    + "reported as disabled at version 0. Requires `platform:tenant:read`.")
+                    + "reported as disabled at version 0.")
     @GetMapping
     @RequiresPermission(PlatformPermissions.TENANT_READ)
     List<AppResponse> apps(@PathVariable UUID tenantId) {

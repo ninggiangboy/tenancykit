@@ -10,6 +10,8 @@ import dev.ngb.billing.coupon.application.coupon.query.PromotionCodeListing;
 import dev.ngb.billing.coupon.application.coupon.query.PromotionCodeView;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.billing.coupon.domain.coupon.Benefit;
 import dev.ngb.billing.coupon.domain.coupon.ChargeKind;
@@ -59,6 +61,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class CouponController {
 
     /** The benefit as a request spells it: one of the three shapes, with the fields that shape uses. */

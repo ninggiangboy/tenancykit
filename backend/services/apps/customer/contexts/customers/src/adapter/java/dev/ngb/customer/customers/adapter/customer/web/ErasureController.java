@@ -1,5 +1,7 @@
 package dev.ngb.customer.customers.adapter.customer.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.customer.customers.application.customer.command.EraseCustomerUseCase;
 import dev.ngb.customer.shared.CustomerPermissions;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class ErasureController {
 
     /** @param outcome {@code ERASED} for the call that erased the data, {@code REPLAYED} for a retry of that call */

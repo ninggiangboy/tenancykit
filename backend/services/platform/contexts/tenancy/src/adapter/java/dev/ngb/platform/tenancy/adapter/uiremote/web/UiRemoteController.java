@@ -3,6 +3,8 @@ package dev.ngb.platform.tenancy.adapter.uiremote.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
@@ -41,6 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
                 + "them.")
 @RestController
 @RequestMapping("/api/v1/ui-remotes")
+@Callers(Caller.PLATFORM_USER)
 class UiRemoteController {
 
     record RegisterRequest(
@@ -90,7 +93,7 @@ class UiRemoteController {
             summary = "List UI remotes",
             description =
                     "Pages through the console's UI remotes, with the list-query contract's filtering, sorting and "
-                    + "paging. Requires `platform:ui-remote:read`.")
+                    + "paging.")
     @GetMapping
     @Listing(UiRemoteListing.class)
     @RequiresPermission(PlatformPermissions.UI_REMOTE_READ)
@@ -102,6 +105,7 @@ class UiRemoteController {
      * CI registers a version; the first call also creates the remote, disabled and with no active version. A repeated
      * call with the same content answers 200 instead of 201, and never activates anything.
      */
+    @Callers(Caller.INTERNAL)
     @Operation(
             summary = "Register a UI remote version",
             description =
@@ -136,7 +140,7 @@ class UiRemoteController {
                     "The operator's one write on a remote: enable or disable it, point it at a registered version with "
                     + "`activeVersion` (a rollback is the same call with an older version), and edit its `title` and "
                     + "`navOrder`. `enabled` is required. Pass the remote's `ETag` in `If-Match`; a stale version is "
-                    + "refused. Requires `platform:ui-remote:manage`.")
+                    + "refused.")
     @PutMapping("/{name}")
     @RequiresPermission(PlatformPermissions.UI_REMOTE_MANAGE)
     ResponseEntity<RemoteResponse> setState(

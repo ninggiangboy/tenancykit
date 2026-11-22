@@ -7,6 +7,8 @@ import dev.ngb.billing.usage.application.usage.query.UsageEventListing;
 import dev.ngb.billing.usage.application.usage.query.UsageEventView;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.spring.query.Listing;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
 @RequestMapping("/portal/api/usage")
+@Callers(Caller.CUSTOMER_SESSION)
 public class PortalUsageController {
 
     public record UsageEventResponse(String id, String metric, String quantity, String unit, Instant occurredAt, String resourceRef) {

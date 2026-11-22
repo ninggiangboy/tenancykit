@@ -2,6 +2,8 @@ package dev.ngb.billing.pricing.adapter.rating.web;
 
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.billing.money.api.reservation.ReservationResult;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -48,6 +50,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class RatingController {
 
     /** Expected usage of one metric; {@code events} defaults to 1 and only matters to workload prices. */

@@ -1,5 +1,7 @@
 package dev.ngb.billing.payment.adapter.stripe.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.context.annotation.Profile;
@@ -29,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Where Stripe delivers events. No login: the signature of the raw body is the proof.")
 @Profile("api")
 @RestController
+@Callers(Caller.PROVIDER)
 public class StripeWebhookController {
 
     /** Stripe events are a few kilobytes; anything near this is not one, and is refused before any work is done. */
@@ -48,7 +51,7 @@ public class StripeWebhookController {
                     + "its own Stripe Dashboard. The signature of the raw body is the proof and is checked before anything "
                     + "in the body is read. Public: no suite token is needed.")
     @PostMapping("/stripe/webhooks/direct/{configurationId}")
-    @PublicEndpoint
+    @PublicEndpoint(caller = Caller.PROVIDER)
     public Map<String, String> direct(
             @PathVariable String configurationId, @RequestHeader(value = HttpHeaders.STRIPE_SIGNATURE, required = false) String signature,
             HttpServletRequest request) throws IOException {
@@ -69,7 +72,7 @@ public class StripeWebhookController {
                     + "Billing's own routing table, never from the request. The signature of the raw body is the proof. "
                     + "Public: no suite token is needed.")
     @PostMapping("/stripe/webhooks/connect")
-    @PublicEndpoint
+    @PublicEndpoint(caller = Caller.PROVIDER)
     public Map<String, String> connect(@RequestHeader(value = HttpHeaders.STRIPE_SIGNATURE, required = false) String signature, HttpServletRequest request)
             throws IOException {
         return answer(receive.receiveConnect(text(request), signature));

@@ -1,5 +1,7 @@
 package dev.ngb.notification.dispatch.adapter.notification.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.notification.dispatch.application.notification.command.ResolveTemplateUseCase;
 import dev.ngb.notification.dispatch.application.notification.command.SaveTemplateOverrideUseCase;
@@ -33,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
                 + "scope only, because one row serves every tenant.")
 @RestController
 @RequestMapping("/api/v1/templates")
+@Callers(Caller.PLATFORM_USER)
 class TemplateController {
 
     private final ResolveTemplateUseCase resolve;
@@ -46,7 +49,7 @@ class TemplateController {
     @Operation(
             summary = "List the notification templates",
             description =
-                    "Returns one entry per notification type with the template key that renders it. Reachable at platform scope only, because a template is suite content shared by every tenant. Requires `notification:template:read`.")
+                    "Returns one entry per notification type with the template key that renders it. Reachable at platform scope only, because a template is suite content shared by every tenant.")
     @GetMapping
     @RequiresPermission(NotificationPermissions.TEMPLATE_READ)
     List<TemplateSummary> list() {
@@ -58,7 +61,7 @@ class TemplateController {
     @Operation(
             summary = "Get the resolved template for a key",
             description =
-                    "Returns the variant the suite renders for template `key` in `locale`: each part the suite-wide override defines, and the packaged default for every part it leaves out. `overridden` says whether an override exists. A blank `locale` means the fallback locale. A key no notification type owns, or a locale the suite does not support, answers `404`. Requires `notification:template:read`.")
+                    "Returns the variant the suite renders for template `key` in `locale`: each part the suite-wide override defines, and the packaged default for every part it leaves out. `overridden` says whether an override exists. A blank `locale` means the fallback locale. A key no notification type owns, or a locale the suite does not support, answers `404`.")
     @GetMapping("/{key}")
     @RequiresPermission(NotificationPermissions.TEMPLATE_READ)
     ResolveTemplateUseCase.Resolved resolved(
@@ -69,7 +72,7 @@ class TemplateController {
     @Operation(
             summary = "Save a template override",
             description =
-                    "Creates or replaces the suite-wide override of template `key` for `locale` with the subject, HTML, text, in-app title and in-app body given; a part left out keeps the packaged default. The override applies to every tenant. A part the template policy refuses, or an unsupported locale, answers `400`, and a key no notification type owns answers `404`. Answers `204`. Requires `notification:template:manage`.")
+                    "Creates or replaces the suite-wide override of template `key` for `locale` with the subject, HTML, text, in-app title and in-app body given; a part left out keeps the packaged default. The override applies to every tenant. A part the template policy refuses, or an unsupported locale, answers `400`, and a key no notification type owns answers `404`. Answers `204`.")
     @PutMapping("/{key}/{locale}")
     @RequiresPermission(NotificationPermissions.TEMPLATE_MANAGE)
     ResponseEntity<Void> save(
@@ -82,7 +85,7 @@ class TemplateController {
     @Operation(
             summary = "Delete a template override",
             description =
-                    "Removes the suite-wide override of template `key` for `locale`, so the packaged default is used again. Answers `204`. When there is no such override, or the key is unknown, it answers `404`; an unsupported locale answers `400`. Requires `notification:template:manage`.")
+                    "Removes the suite-wide override of template `key` for `locale`, so the packaged default is used again. Answers `204`. When there is no such override, or the key is unknown, it answers `404`; an unsupported locale answers `400`.")
     @DeleteMapping("/{key}/{locale}")
     @RequiresPermission(NotificationPermissions.TEMPLATE_MANAGE)
     ResponseEntity<Void> delete(@PathVariable String key, @PathVariable String locale) {

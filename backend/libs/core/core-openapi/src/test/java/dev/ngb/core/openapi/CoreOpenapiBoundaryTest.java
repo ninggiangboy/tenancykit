@@ -30,7 +30,7 @@ class CoreOpenapiBoundaryTest {
     @Test
     void theBridgeSeesOnlyTheCoreTheFrameworkAndSpringdoc() {
         classes().should().onlyDependOnClassesThat()
-                .resideInAnyPackage("java..", "javax..", "jakarta..", "dev.ngb.core..", "org.springframework..", "org.springdoc..", "io.swagger..")
+                .resideInAnyPackage("java..", "javax..", "jakarta..", "dev.ngb.core..", "org.springframework..", "org.springdoc..", "io.swagger..", "tools.jackson..")
                 .check(openapi());
     }
 }

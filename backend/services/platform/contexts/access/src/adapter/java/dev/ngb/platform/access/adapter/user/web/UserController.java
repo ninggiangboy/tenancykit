@@ -3,6 +3,8 @@ package dev.ngb.platform.access.adapter.user.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.core.security.Actor;
@@ -42,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Platform administration of users: create, enable, disable, rename and grant direct permissions.")
 @RestController
 @RequestMapping("/api/v1/users")
+@Callers({Caller.PLATFORM_USER, Caller.TENANT_USER})
 class UserController {
 
     record CreateRequest(String tenantCode, String email, String displayName, String temporaryPassword) {}
@@ -82,8 +85,7 @@ class UserController {
             summary = "Create a user",
             description =
                     "Creates the user's sign-in identity and the Platform user for `tenantCode`, with a temporary "
-                    + "password. A Tenant-scope caller cannot create a Platform-scope user. Answers `201` with the user. "
-                    + "Requires `platform:user:manage`.")
+                    + "password. A Tenant-scope caller cannot create a Platform-scope user. Answers `201` with the user. ")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(PlatformPermissions.USER_MANAGE)
@@ -104,7 +106,7 @@ class UserController {
             summary = "List users",
             description =
                     "Pages through users, with the list-query contract's filtering, sorting and paging. `tenant_id` is a "
-                    + "filter, and a Tenant-scope caller never sees another Tenant's users. Requires `platform:user:read`.")
+                    + "filter, and a Tenant-scope caller never sees another Tenant's users.")
     @GetMapping
     @Listing(UserListing.class)
     @RequiresPermission(PlatformPermissions.USER_READ)
@@ -127,7 +129,7 @@ class UserController {
             description =
                     "Applies one `action` to the user: `ENABLE`, `DISABLE`, or `RENAME` with the new `name`. Every "
                     + "effective change publishes the user's new access and is audited. Pass the user's `ETag` in "
-                    + "`If-Match`; a stale version is refused. Requires `platform:user:manage`.")
+                    + "`If-Match`; a stale version is refused.")
     @PatchMapping("/{id}")
     @RequiresPermission(PlatformPermissions.USER_MANAGE)
     ResponseEntity<UserResponse> update(
@@ -145,7 +147,7 @@ class UserController {
             description =
                     "Grants (`grant=true`) or revokes (`grant=false`) one permission `code` directly on the user, outside "
                     + "any role. Each effective change is audited. Pass the user's `ETag` in `If-Match`; a stale version is "
-                    + "refused. Requires `platform:user:manage`.")
+                    + "refused.")
     @PutMapping("/{id}/permissions/{code}")
     @RequiresPermission(PlatformPermissions.USER_MANAGE)
     ResponseEntity<UserResponse> setPermission(

@@ -1,6 +1,8 @@
 package dev.ngb.mailroom.content.adapter.template.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
@@ -49,6 +51,7 @@ import org.springframework.web.bind.annotation.RestController;
                 + "campaigns never change.")
 @RestController
 @RequestMapping("/api/v1/templates")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class TemplateController {
 
     private final CreateTemplateUseCase create;
@@ -74,8 +77,7 @@ class TemplateController {
     @Operation(
             summary = "List email templates",
             description =
-                    "Pages through the tenant's templates, with the list-query contract's filtering, sorting and paging. "
-                    + "Requires `mailroom:template:read`.")
+                    "Pages through the tenant's templates, with the list-query contract's filtering, sorting and paging. ")
     @GetMapping
     @Listing(TemplateListing.class)
     @RequiresPermission(MailroomPermissions.TEMPLATE_READ)
@@ -87,7 +89,7 @@ class TemplateController {
             summary = "Get an email template",
             description =
                     "Returns one template at its current revision; its version is also the response's `ETag`. An unknown "
-                    + "id answers `404`. Requires `mailroom:template:read`.")
+                    + "id answers `404`.")
     @GetMapping("/{id}")
     @RequiresPermission(MailroomPermissions.TEMPLATE_READ)
     ResponseEntity<TemplateResponse> get(@PathVariable UUID id) {
@@ -100,7 +102,7 @@ class TemplateController {
             description =
                     "Creates a template with a `key`, a name, a subject and an HTML and text body, as its first immutable "
                     + "revision. The `key` can never change afterwards. A hostile or oversize body is refused before it is "
-                    + "stored. Answers `201`. Requires `mailroom:template:manage`.")
+                    + "stored. Answers `201`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(MailroomPermissions.TEMPLATE_MANAGE)
@@ -115,7 +117,7 @@ class TemplateController {
             description =
                     "Appends a new immutable revision with the name, subject and bodies given and moves the template's "
                     + "pointer to it. A revision an email or campaign already recorded is never rewritten. Pass the current "
-                    + "`ETag` in `If-Match`; a stale version is refused. Requires `mailroom:template:manage`.")
+                    + "`ETag` in `If-Match`; a stale version is refused.")
     @PutMapping("/{id}")
     @ConditionalUpdate
     @RequiresPermission(MailroomPermissions.TEMPLATE_MANAGE)
@@ -153,7 +155,7 @@ class TemplateController {
             summary = "List a template's revisions",
             description =
                     "Pages through the immutable revisions of the template named by the path, with the list-query "
-                    + "contract's filtering, sorting and paging. Requires `mailroom:template:read`.")
+                    + "contract's filtering, sorting and paging.")
     @GetMapping("/{id}/revisions")
     @Listing(TemplateRevisionListing.class)
     @RequiresPermission(MailroomPermissions.TEMPLATE_READ)
@@ -165,7 +167,7 @@ class TemplateController {
             summary = "Preview a rendered template",
             description =
                     "Renders the template's current revision with the `variables` given, under the same limits a real "
-                    + "send obeys, and returns the result without sending anything. Requires `mailroom:template:read`.")
+                    + "send obeys, and returns the result without sending anything.")
     @PostMapping("/{id}/preview")
     @RequiresPermission(MailroomPermissions.TEMPLATE_READ)
     RenderedResponse preview(@PathVariable UUID id, @RequestBody(required = false) PreviewRequest request) {

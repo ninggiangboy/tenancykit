@@ -11,6 +11,8 @@ import dev.ngb.billing.invoicing.application.subscription.query.SubscriptionView
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
 import dev.ngb.billing.sharedkernel.money.MoneyDto;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
@@ -37,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
 @RequestMapping("/portal/api")
+@Callers(Caller.CUSTOMER_SESSION)
 public class PortalInvoicingController {
 
     public record InvoiceResponse(

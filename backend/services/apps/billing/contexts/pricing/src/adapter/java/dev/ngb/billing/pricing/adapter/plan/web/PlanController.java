@@ -1,6 +1,8 @@
 package dev.ngb.billing.pricing.adapter.plan.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -48,6 +50,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers(Caller.TENANT_USER)
 public class PlanController {
 
     public record VersionRequest(
@@ -114,6 +117,7 @@ public class PlanController {
     }
 
     /** Tenant systems list the plans they may offer; filter, sort and paging follow the list-query contract. */
+    @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
     @Operation(
             summary = "List pricing plans",
             description =
@@ -126,6 +130,7 @@ public class PlanController {
         return planQueries.list(query).map(view -> PlanResponse.ofView(view, json));
     }
 
+    @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
     @Operation(
             summary = "Get a pricing plan",
             description =

@@ -13,6 +13,8 @@ import dev.ngb.billing.payment.domain.payment.PaymentStatus;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.billing.session.api.portal.PortalPermission;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
@@ -46,6 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
 @RequestMapping("/portal/api")
+@Callers(Caller.CUSTOMER_SESSION)
 public class PortalMoneyController {
 
     public record WalletResponse(

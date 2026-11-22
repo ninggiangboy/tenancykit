@@ -2,6 +2,8 @@ package dev.ngb.platform.access.adapter.auth.web;
 
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.security.Authenticated;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.platform.access.api.user.MeQueries;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "The signed-in user and the permissions they hold across the suite.")
 @RestController
+@Callers({Caller.PLATFORM_USER, Caller.TENANT_USER})
 class MeController {
 
     record MeResponse(

@@ -1,5 +1,7 @@
 package dev.ngb.loyalty.points.adapter.member.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.loyalty.points.application.member.command.EraseMemberUseCase;
 import dev.ngb.loyalty.shared.LoyaltyPermissions;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class ErasureController {
 
     /** @param vouchersVoided the member's unused vouchers that the erasure stopped */

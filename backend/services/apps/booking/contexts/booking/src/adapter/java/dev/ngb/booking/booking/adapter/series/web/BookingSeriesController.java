@@ -11,6 +11,8 @@ import dev.ngb.booking.booking.domain.booking.Booking;
 import dev.ngb.booking.booking.domain.series.BookingSeries;
 import dev.ngb.booking.booking.domain.series.SeriesMode;
 import dev.ngb.booking.shared.BookingPermissions;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import java.time.Instant;
 import java.util.List;
@@ -34,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class BookingSeriesController {
 
     /** A series as the caller sends it; the rule is expanded in the zone of {@code dtstart}. */

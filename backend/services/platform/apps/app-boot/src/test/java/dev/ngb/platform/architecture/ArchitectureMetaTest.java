@@ -58,6 +58,7 @@ class ArchitectureMetaTest {
         CULPRIT_BY_RULE_ID.put("query-side-uses-no-domain-aggregates", "QueryReachesAggregate");
         CULPRIT_BY_RULE_ID.put("write-ports-serve-no-reads", "WritePort");
         CULPRIT_BY_RULE_ID.put("domain-events-live-in-an-events-holder", "StandaloneEvent");
+        CULPRIT_BY_RULE_ID.put("every-endpoint-declares-a-caller", "UnlabelledController");
     }
 
     /** The test-package rule, which needs the packages production occupies rather than the whole import. */

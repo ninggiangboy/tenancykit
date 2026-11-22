@@ -3,6 +3,8 @@ package dev.ngb.survey.collection.adapter.link.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.survey.collection.application.link.command.CreatePersonalLinksUseCase;
@@ -39,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Public and personal links that open a survey, and revoking them.")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class LinkController {
 
     private final CreatePublicLinkUseCase createPublic;
@@ -63,8 +66,7 @@ class LinkController {
                     "Issues the one public link for `source`. A second link for the same source is refused rather than "
                     + "merged, because two links would split one campaign's visits into rows a tenant cannot tell apart; a "
                     + "survey that is not open is refused too, both with `409`. The answer carries the URL to hand out. "
-                    + "Answers `201`. "
-                    + "Requires `survey:link:manage`.")
+                    + "Answers `201`. ")
     @PostMapping("/surveys/{id}/links")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(SurveyPermissions.LINK_MANAGE)
@@ -78,8 +80,7 @@ class LinkController {
                     "Issues one personal link per recipient in `links`, each with its own `externalRef`, optional "
                     + "`source` and optional `expiresAt`; `source` is the default for entries that name none. It is how an "
                     + "imported mailroom segment becomes links. A duplicate `externalRef` in the request answers `422` before "
-                    + "anything is written, and a survey that is not open answers `409`. Answers `201` with the links. "
-                    + "Requires `survey:link:manage`.")
+                    + "anything is written, and a survey that is not open answers `409`. Answers `201` with the links. ")
     @PostMapping("/surveys/{id}/links/personal")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(SurveyPermissions.LINK_MANAGE)
@@ -112,7 +113,7 @@ class LinkController {
             summary = "Get a link",
             description =
                     "Returns one link with its URL, which is rebuilt from the link id and so is always current. An "
-                    + "unknown id answers `404`. Requires `survey:link:manage`.")
+                    + "unknown id answers `404`.")
     @GetMapping("/links/{linkId}")
     @RequiresPermission(SurveyPermissions.LINK_MANAGE)
     LinkResponse get(@PathVariable UUID linkId) {
@@ -123,7 +124,7 @@ class LinkController {
             summary = "Revoke a link",
             description =
                     "Revokes the link, the only way to stop a link already handed out from opening the survey. "
-                    + "Idempotent: a link that is already revoked answers its current state. Requires `survey:link:manage`.")
+                    + "Idempotent: a link that is already revoked answers its current state.")
     @PostMapping("/links/{linkId}/revoke")
     @RequiresPermission(SurveyPermissions.LINK_MANAGE)
     LinkResponse revoke(@PathVariable UUID linkId) {

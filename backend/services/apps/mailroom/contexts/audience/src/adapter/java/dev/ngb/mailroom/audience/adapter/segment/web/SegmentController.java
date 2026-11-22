@@ -1,6 +1,8 @@
 package dev.ngb.mailroom.audience.adapter.segment.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
@@ -43,6 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Saved filters over receiver attributes, with a preview of the audience they match.")
 @RestController
 @RequestMapping("/api/v1/segments")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class SegmentController {
 
     private final CreateSegmentUseCase create;
@@ -69,7 +72,7 @@ class SegmentController {
             summary = "List segments",
             description =
                     "Pages through the tenant's saved segments, with the list-query contract's filtering, sorting and "
-                    + "paging. Requires `mailroom:receiver:read`.")
+                    + "paging.")
     @GetMapping
     @Listing(SegmentListing.class)
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
@@ -81,7 +84,7 @@ class SegmentController {
             summary = "Create a segment",
             description =
                     "Saves a named filter over receiver attributes. The filter language is closed and the filter is "
-                    + "validated before it is stored. Answers `201`. Requires `mailroom:receiver:manage`.")
+                    + "validated before it is stored. Answers `201`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
@@ -93,7 +96,7 @@ class SegmentController {
             summary = "Get a segment",
             description =
                     "Returns one segment with its filter; its version is also the response's `ETag`. An unknown id "
-                    + "answers `404`. Requires `mailroom:receiver:read`.")
+                    + "answers `404`.")
     @GetMapping("/{id}")
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
     ResponseEntity<SegmentResponse> get(@PathVariable UUID id) {
@@ -105,7 +108,7 @@ class SegmentController {
             summary = "Replace a segment",
             description =
                     "Replaces the segment's name and filter; the new filter is validated first. Pass the current `ETag` "
-                    + "in `If-Match`; a stale version is refused. Requires `mailroom:receiver:manage`.")
+                    + "in `If-Match`; a stale version is refused.")
     @PutMapping("/{id}")
     @ConditionalUpdate
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
@@ -139,7 +142,7 @@ class SegmentController {
             summary = "Preview a segment's audience",
             description =
                     "Answers how many receivers the segment matches now, with a sample, without loading the whole "
-                    + "audience. Requires `mailroom:receiver:read`.")
+                    + "audience.")
     @PostMapping("/{id}/preview")
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
     PreviewSegmentUseCase.Preview preview(@PathVariable UUID id) {

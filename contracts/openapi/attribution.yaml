@@ -47,11 +47,10 @@ paths:
       tags:
       - Attribution settings
       summary: Get the tenant's attribution settings
-      description: "Returns the click parameter name, the origins allowed to post\
-        \ to the collection endpoint and the default attribution window in days. Reading\
-        \ needs `attribution:settings:manage`, the same code as changing them, because\
-        \ the three values decide how the tenant's links behave and who may post to\
-        \ its collection endpoint."
+      description: |-
+        Returns the click parameter name, the origins allowed to post to the collection endpoint and the default attribution window in days. Reading needs `attribution:settings:manage`, the same code as changing them, because the three values decide how the tenant's links behave and who may post to its collection endpoint.
+
+        Callers: tenant-user. Requires `attribution:settings:manage`.
       operationId: get
       responses:
         "200":
@@ -65,15 +64,16 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:settings:manage
+      x-allowed-callers:
+      - tenant-user
     put:
       tags:
       - Attribution settings
       summary: Replace the tenant's attribution settings
-      description: "Stores `click_param`, `allowed_origins` and `default_window_days`.\
-        \ Each origin must be an absolute `https` origin (or `http://localhost` for\
-        \ development); a wildcard, a path or a bare host answers `400`, because a\
-        \ collection endpoint that accepted a wildcard would let any page post another\
-        \ visitor's events. Requires `attribution:settings:manage`."
+      description: |-
+        Stores `click_param`, `allowed_origins` and `default_window_days`. Each origin must be an absolute `https` origin (or `http://localhost` for development); a wildcard, a path or a bare host answers `400`, because a collection endpoint that accepted a wildcard would let any page post another visitor's events.
+
+        Callers: tenant-user. Requires `attribution:settings:manage`.
       operationId: put
       requestBody:
         description: The settings to store.
@@ -96,14 +96,17 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:settings:manage
+      x-allowed-callers:
+      - tenant-user
   /api/v1/campaigns/{campaignId}/spend/{day}:
     put:
       tags:
       - Campaign spend
       summary: Set a campaign's spend for one day
-      description: "Sets the manual advertising cost of the campaign on `day`, with\
-        \ optional impressions and clicks. A currency the campaign does not use is\
-        \ refused. Requires `attribution:spend:manage`."
+      description: |-
+        Sets the manual advertising cost of the campaign on `day`, with optional impressions and clicks. A currency the campaign does not use is refused.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:spend:manage`.
       operationId: set
       parameters:
       - name: campaignId
@@ -143,12 +146,17 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:spend:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     delete:
       tags:
       - Campaign spend
       summary: Delete a campaign's manual spend for one day
-      description: "Deletes only the manual cost of the campaign on `day`, leaving\
-        \ any imported row in place. Answers `204`. Requires `attribution:spend:manage`."
+      description: |-
+        Deletes only the manual cost of the campaign on `day`, leaving any imported row in place. Answers `204`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:spend:manage`.
       operationId: delete
       parameters:
       - name: campaignId
@@ -177,18 +185,18 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:spend:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /t/v1/events:
     post:
       tags:
       - Page-view collection
       summary: Collect page views from a tenant's site
-      description: "The public endpoint a tenant's page snippet posts a batch of page\
-        \ views, a session and a `consent` flag to. Everything not acceptable (a bad\
-        \ signature, a foreign origin, an oversize body, a batch over the limit, a\
-        \ rate refusal) answers the same `204` without storing anything, so a probe\
-        \ learns nothing. With `consent=false` the server drops the visitor and session\
-        \ ids, so no identifier reaches a row. An event is stored only when its click\
-        \ id is a token this app signed. Public: no suite token is needed."
+      description: |-
+        The public endpoint a tenant's page snippet posts a batch of page views, a session and a `consent` flag to. Everything not acceptable (a bad signature, a foreign origin, an oversize body, a batch over the limit, a rate refusal) answers the same `204` without storing anything, so a probe learns nothing. With `consent=false` the server drops the visitor and session ids, so no identifier reaches a row. An event is stored only when its click id is a token this app signed. Public: no suite token is needed.
+
+        Callers: public.
       operationId: collect
       requestBody:
         description: A batch of page views from a tenant's page.
@@ -200,19 +208,17 @@ paths:
         "204":
           description: "Always, whether or not the batch was stored, so a probe learns\
             \ nothing."
-      x-public: true
+      x-allowed-callers:
+      - public
   /go/{slug}:
     get:
       tags:
       - Link redirects
       summary: Follow a tracked link
-      description: "The public redirect of a tracked link. It resolves the link `slug`,\
-        \ applies its rules and answers `302` to the destination with a signed click\
-        \ id appended, recording one click; `e` names the entry point. Refusals reveal\
-        \ as little as possible: an unknown, archived, paused or not-entitled link\
-        \ answers `404`, an expired or capped link `410`, and a password-protected\
-        \ link `401`, which takes its password by `POST`. Measurement never fails\
-        \ or slows the redirect. Public: no suite token is needed."
+      description: |-
+        The public redirect of a tracked link. It resolves the link `slug`, applies its rules and answers `302` to the destination with a signed click id appended, recording one click; `e` names the entry point. Refusals reveal as little as possible: an unknown, archived, paused or not-entitled link answers `404`, an expired or capped link `410`, and a password-protected link `401`, which takes its password by `POST`. Measurement never fails or slows the redirect. Public: no suite token is needed.
+
+        Callers: public.
       operationId: redirect
       parameters:
       - name: slug
@@ -251,14 +257,16 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
-      x-public: true
+      x-allowed-callers:
+      - public
     post:
       tags:
       - Link redirects
       summary: Unlock a password-protected link
-      description: "Takes the link's `password` as JSON and answers `302` to the destination,\
-        \ with the click recorded, when it is right, and `403` otherwise. Public:\
-        \ no suite token is needed."
+      description: |-
+        Takes the link's `password` as JSON and answers `302` to the destination, with the click recorded, when it is right, and `403` otherwise. Public: no suite token is needed.
+
+        Callers: public.
       operationId: unlock
       parameters:
       - name: slug
@@ -304,14 +312,16 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
-      x-public: true
+      x-allowed-callers:
+      - public
     head:
       tags:
       - Link redirects
       summary: Probe a tracked link
-      description: "Answers like `GET /go/{slug}` without recording a click, so a\
-        \ link preview's probe spends nothing, including a capped link's budget. Public:\
-        \ no suite token is needed."
+      description: |-
+        Answers like `GET /go/{slug}` without recording a click, so a link preview's probe spends nothing, including a capped link's budget. Public: no suite token is needed.
+
+        Callers: public.
       operationId: head
       parameters:
       - name: slug
@@ -342,16 +352,19 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
-      x-public: true
+      x-allowed-callers:
+      - public
   /api/v1/links:
     get:
       tags:
       - Tracked links
       summary: List links
       description: |-
-        Pages through the tenant's tracked links, with the list-query contract's filtering, sorting and paging. Requires `attribution:link:read`.
+        Pages through the tenant's tracked links, with the list-query contract's filtering, sorting and paging.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:link:read`.
       operationId: list
       parameters:
       - name: "filter[campaign_id][eq]"
@@ -851,16 +864,17 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:link:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     post:
       tags:
       - Tracked links
       summary: Create a tracked link
-      description: "Creates a link under a campaign with one or more destinations,\
-        \ UTM parameters, an optional expiry, click cap and password. Every destination\
-        \ is validated at save: one that points at the suite or a private address\
-        \ is refused, because that check is what stops a link becoming a phishing\
-        \ relay. The password is stored as a hash and never returned. The link's public\
-        \ URL works at once. Answers `201`. Requires `attribution:link:manage`."
+      description: |-
+        Creates a link under a campaign with one or more destinations, UTM parameters, an optional expiry, click cap and password. Every destination is validated at save: one that points at the suite or a private address is refused, because that check is what stops a link becoming a phishing relay. The password is stored as a hash and never returned. The link's public URL works at once. Answers `201`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:link:manage`.
       operationId: create
       requestBody:
         description: "The link to create, or its new properties."
@@ -883,12 +897,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:link:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/links/{id}/resume:
     post:
       tags:
       - Tracked links
       summary: Resume a link
-      description: Makes a paused link redirect again. Answers `204`. Requires `attribution:link:manage`.
+      description: |-
+        Makes a paused link redirect again. Answers `204`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:link:manage`.
       operationId: resume
       parameters:
       - name: id
@@ -910,13 +930,18 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:link:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/links/{id}/pause:
     post:
       tags:
       - Tracked links
       summary: Pause a link
-      description: Stops the link redirecting at once; only an active link redirects.
-        Answers `204`. Requires `attribution:link:manage`.
+      description: |-
+        Stops the link redirecting at once; only an active link redirects. Answers `204`. Requires `attribution:link:manage`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:link:manage`.
       operationId: pause
       parameters:
       - name: id
@@ -938,13 +963,18 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:link:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/links/{id}/archive:
     post:
       tags:
       - Tracked links
       summary: Archive a link
-      description: Archives the link so it no longer redirects. Answers `204`. Requires
-        `attribution:link:manage`.
+      description: |-
+        Archives the link so it no longer redirects. Answers `204`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:link:manage`.
       operationId: archive
       parameters:
       - name: id
@@ -966,16 +996,18 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:link:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/links/bulk:
     post:
       tags:
       - Tracked links
       summary: Create personal links in bulk
-      description: "Mints one personal link per row against a shared destination and\
-        \ UTM, in one transaction: every row produces a link or none does. A replay\
-        \ of the same `Idempotency-Key` with the same body returns the links already\
-        \ created; the same key with a different body is refused. Answers `201`. Requires\
-        \ `attribution:link:manage`."
+      description: |-
+        Mints one personal link per row against a shared destination and UTM, in one transaction: every row produces a link or none does. A replay of the same `Idempotency-Key` with the same body returns the links already created; the same key with a different body is refused. Answers `201`. Requires `attribution:link:manage`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:link:manage`.
       operationId: bulk
       parameters:
       - name: Idempotency-Key
@@ -1011,15 +1043,27 @@ paths:
         "409":
           $ref: "#/components/responses/IdempotencyConflict"
       x-required-permission: attribution:link:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/goals:
     get:
       tags:
       - Goals
       summary: List goals
-      description: |-
-        Pages through the tenant's goals, with the list-query contract's filtering, sorting and paging. Requires `attribution:goal:read`.
-
-        **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+      description: "Pages through the tenant's goals, with the list-query contract's\
+        \ filtering, sorting and paging. \n\n**Filtering, sorting and paging** follow\
+        \ the list-query contract. Conditions in `filter[field][op]` are combined\
+        \ with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the\
+        \ index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20\
+        \ predicates in all, 100 values in an `in` list). `neq` and `nin` do not match\
+        \ rows where the field is null. Send `limit` with either `offset` (at most\
+        \ 10000) or the `cursor` taken from a previous page, never both. The body\
+        \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
+        \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
+        \ with `limit` and `next_cursor` alone, without counting the matching rows;\
+        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `attribution:goal:read`."
       operationId: list_1
       parameters:
       - name: "filter[created_at][eq]"
@@ -1406,13 +1450,17 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:goal:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     post:
       tags:
       - Goals
       summary: Create a goal
-      description: "Creates a goal: a conversion `key` the tenant's site and backend\
-        \ both report, a name, and an optional default value and currency. Two goals\
-        \ in one tenant cannot share a key. Answers `201`. Requires `attribution:goal:manage`."
+      description: |-
+        Creates a goal: a conversion `key` the tenant's site and backend both report, a name, and an optional default value and currency. Two goals in one tenant cannot share a key. Answers `201`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:goal:manage`.
       operationId: create_1
       requestBody:
         description: "The goal to create, or its new properties."
@@ -1435,15 +1483,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:goal:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/data-subjects/erasure:
     post:
       tags:
       - Data subjects
       summary: Erase a visitor's collected data
-      description: "Erases one visitor's (`visitor_id`) collected rows: page events,\
-        \ sessions, bindings and the clicks only that visitor was bound to, and answers\
-        \ how many of each were removed. Rollups hold aggregates only, so a report's\
-        \ totals stay and the person does not. Requires `attribution:data:erase`."
+      description: |-
+        Erases one visitor's (`visitor_id`) collected rows: page events, sessions, bindings and the clicks only that visitor was bound to, and answers how many of each were removed. Rollups hold aggregates only, so a report's totals stay and the person does not.
+
+        Callers: tenant-user. Requires `attribution:data:erase`.
       operationId: erase
       requestBody:
         description: The visitor to erase.
@@ -1466,15 +1517,19 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:data:erase
+      x-allowed-callers:
+      - tenant-user
   /api/v1/conversions:
     get:
       tags:
       - Conversions
       summary: List conversions
       description: |-
-        Pages through the tenant's conversions with their credits, with the list-query contract's filtering, sorting and paging. Requires `attribution:report:read`.
+        Pages through the tenant's conversions with their credits, with the list-query contract's filtering, sorting and paging.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:report:read`.
       operationId: list_2
       parameters:
       - name: "filter[click_id][eq]"
@@ -1912,17 +1967,17 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     post:
       tags:
       - Conversions
       summary: Record a conversion
-      description: "The postback a tenant's own order flow calls when a goal (`goalKey`)\
-        \ was reached, with the `clickId` or `visitorId`, the `value`, `currency`\
-        \ and `occurredAt`. It answers `201` the first time and `200` on a replay\
-        \ of the same `Idempotency-Key` and body. A forged or foreign click token\
-        \ is stored as `UNATTRIBUTED` rather than rejected, because the tenant's order\
-        \ flow must not fail when its own reporting is imperfect; a request with neither\
-        \ a click nor a visitor is `400`. Requires `attribution:conversion:write`."
+      description: |-
+        The postback a tenant's own order flow calls when a goal (`goalKey`) was reached, with the `clickId` or `visitorId`, the `value`, `currency` and `occurredAt`. It answers `201` the first time and `200` on a replay of the same `Idempotency-Key` and body. A forged or foreign click token is stored as `UNATTRIBUTED` rather than rejected, because the tenant's order flow must not fail when its own reporting is imperfect; a request with neither a click nor a visitor is `400`. Requires `attribution:conversion:write`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:conversion:write`.
       operationId: create_2
       parameters:
       - name: Idempotency-Key
@@ -1963,15 +2018,27 @@ paths:
         "409":
           $ref: "#/components/responses/IdempotencyConflict"
       x-required-permission: attribution:conversion:write
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/campaigns:
     get:
       tags:
       - Campaigns
       summary: List campaigns
-      description: |-
-        Pages through the tenant's campaigns, with the list-query contract's filtering, sorting and paging. Requires `attribution:campaign:read`.
-
-        **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+      description: "Pages through the tenant's campaigns, with the list-query contract's\
+        \ filtering, sorting and paging. \n\n**Filtering, sorting and paging** follow\
+        \ the list-query contract. Conditions in `filter[field][op]` are combined\
+        \ with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the\
+        \ index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20\
+        \ predicates in all, 100 values in an `in` list). `neq` and `nin` do not match\
+        \ rows where the field is null. Send `limit` with either `offset` (at most\
+        \ 10000) or the `cursor` taken from a previous page, never both. The body\
+        \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
+        \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
+        \ with `limit` and `next_cursor` alone, without counting the matching rows;\
+        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `attribution:campaign:read`."
       operationId: list_3
       parameters:
       - name: "filter[attribution_model][eq]"
@@ -2368,14 +2435,17 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:campaign:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     post:
       tags:
       - Campaigns
       summary: Create a campaign
-      description: "Creates a campaign with a name, a channel, an attribution model,\
-        \ a window in days, a currency and optional start and end dates. The `slug`\
-        \ can be omitted; one is derived from the name, and a collision falls back\
-        \ to a generated one. Answers `201`. Requires `attribution:campaign:manage`."
+      description: |-
+        Creates a campaign with a name, a channel, an attribution model, a window in days, a currency and optional start and end dates. The `slug` can be omitted; one is derived from the name, and a collision falls back to a generated one. Answers `201`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:campaign:manage`.
       operationId: create_3
       requestBody:
         description: "The campaign to create, or its new properties."
@@ -2398,13 +2468,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:campaign:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/campaigns/{id}/archive:
     post:
       tags:
       - Campaigns
       summary: Archive a campaign
-      description: Archives the campaign. Archiving is terminal. Answers `204`. Requires
-        `attribution:campaign:manage`.
+      description: |-
+        Archives the campaign. Archiving is terminal. Answers `204`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:campaign:manage`.
       operationId: archive_1
       parameters:
       - name: id
@@ -2426,13 +2501,18 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:campaign:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/campaigns/{campaignId}/spend:
     get:
       tags:
       - Campaign spend
       summary: List a campaign's spend
-      description: "Returns the campaign's cost rows with their source, so a double\
-        \ entry of a manual and an imported row is visible. Requires `attribution:spend:read`."
+      description: |-
+        Returns the campaign's cost rows with their source, so a double entry of a manual and an imported row is visible.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:spend:read`.
       operationId: list_4
       parameters:
       - name: campaignId
@@ -2474,12 +2554,17 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:spend:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     post:
       tags:
       - Campaign spend
       summary: Set a campaign's spend for several days
-      description: Sets the manual cost for up to 366 days of the campaign in one
-        transaction. Requires `attribution:spend:manage`.
+      description: |-
+        Sets the manual cost for up to 366 days of the campaign in one transaction. Requires `attribution:spend:manage`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:spend:manage`.
       operationId: bulk_1
       parameters:
       - name: campaignId
@@ -2514,14 +2599,18 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:spend:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/links/{id}:
     get:
       tags:
       - Tracked links
       summary: Get a link
-      description: Returns one link with its public URL; its version is also the response's
-        `ETag`. The password is never returned. An unknown id answers `404`. Requires
-        `attribution:link:read`.
+      description: |-
+        Returns one link with its public URL; its version is also the response's `ETag`. The password is never returned. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:link:read`.
       operationId: get_1
       parameters:
       - name: id
@@ -2547,14 +2636,17 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:link:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     patch:
       tags:
       - Tracked links
       summary: Edit a link
-      description: "Changes the link's destinations, limits and metadata. A blank\
-        \ `password` keeps the stored hash, so a caller that never knew the password\
-        \ can still edit the link. Pass the current `ETag` in `If-Match`; a stale\
-        \ version is refused with `412`. Requires `attribution:link:manage`."
+      description: |-
+        Changes the link's destinations, limits and metadata. A blank `password` keeps the stored hash, so a caller that never knew the password can still edit the link. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:link:manage`.
       operationId: update
       parameters:
       - name: id
@@ -2596,13 +2688,18 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: attribution:link:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/goals/{id}:
     get:
       tags:
       - Goals
       summary: Get a goal
-      description: Returns one goal; its version is also the response's `ETag`. An
-        unknown id answers `404`. Requires `attribution:goal:read`.
+      description: |-
+        Returns one goal; its version is also the response's `ETag`. An unknown id answers `404`. Requires `attribution:goal:read`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:goal:read`.
       operationId: get_2
       parameters:
       - name: id
@@ -2628,13 +2725,17 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:goal:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     patch:
       tags:
       - Goals
       summary: Edit a goal
-      description: "Changes the goal's name, default value and currency. Pass the\
-        \ current `ETag` in `If-Match`; a stale version is refused with `412`. Requires\
-        \ `attribution:goal:manage`."
+      description: |-
+        Changes the goal's name, default value and currency. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:goal:manage`.
       operationId: update_1
       parameters:
       - name: id
@@ -2676,13 +2777,18 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: attribution:goal:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/campaigns/{id}:
     get:
       tags:
       - Campaigns
       summary: Get a campaign
-      description: Returns one campaign; its version is also the response's `ETag`.
-        An unknown id answers `404`. Requires `attribution:campaign:read`.
+      description: |-
+        Returns one campaign; its version is also the response's `ETag`. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:campaign:read`.
       operationId: get_3
       parameters:
       - name: id
@@ -2708,14 +2814,17 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:campaign:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
     patch:
       tags:
       - Campaigns
       summary: Edit a campaign
-      description: Changes the campaign's properties. A change of the attribution
-        model or the window is stored at once and starts a recompute of its conversions.
-        The currency is fixed once spend or a conversion exists. Pass the current
-        `ETag` in `If-Match`; a stale version is refused with `412`. Requires `attribution:campaign:manage`.
+      description: |-
+        Changes the campaign's properties. A change of the attribution model or the window is stored at once and starts a recompute of its conversions. The currency is fixed once spend or a conversion exists. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`. Requires `attribution:campaign:manage`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:campaign:manage`.
       operationId: update_2
       parameters:
       - name: id
@@ -2757,18 +2866,18 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: attribution:campaign:manage
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/reports/timeseries:
     get:
       tags:
       - Reports
       summary: Get a time series
-      description: "Returns the chosen `metrics` (clicks, page views, sessions, visitor\
-        \ days, conversions, credited value) per `granularity` (`hour` or `day`) over\
-        \ the `from`/`to` range. Narrow it with `link_id`, `campaign_id`, `destination_id`,\
-        \ `goal_id`, `entry`, `device` and `country`; `include` adds bot or suspect\
-        \ traffic that the default leaves out. Answers `text/csv` instead of JSON\
-        \ when the request asks for it with `Accept` or with the `.csv` path. Requires\
-        \ `attribution:report:read`."
+      description: |-
+        Returns the chosen `metrics` (clicks, page views, sessions, visitor days, conversions, credited value) per `granularity` (`hour` or `day`) over the `from`/`to` range. Narrow it with `link_id`, `campaign_id`, `destination_id`, `goal_id`, `entry`, `device` and `country`; `include` adds bot or suspect traffic that the default leaves out. Answers `text/csv` instead of JSON when the request asks for it with `Accept` or with the `.csv` path.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:report:read`.
       operationId: timeseries
       parameters:
       - name: from
@@ -2873,13 +2982,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/reports/timeseries.csv:
     get:
       tags:
       - Reports
       summary: Export a time series as CSV
-      description: "The same report as the JSON one, always as `text/csv`; an export\
-        \ is capped at 100,000 rows and a larger answer is `400`. Requires `attribution:report:read`."
+      description: |-
+        The same report as the JSON one, always as `text/csv`; an export is capped at 100,000 rows and a larger answer is `400`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:report:read`.
       operationId: timeseriesCsv
       parameters:
       - name: from
@@ -2981,15 +3095,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/reports/funnel:
     get:
       tags:
       - Reports
       summary: Get the conversion funnel
-      description: "Returns how many clicks became sessions, page views and conversions\
-        \ over the `from`/`to` range, narrowed by `campaign_id`, `link_id` and `goal_id`.\
-        \ Answers `text/csv` instead of JSON when the request asks for it with `Accept`\
-        \ or with the `.csv` path. Requires `attribution:report:read`."
+      description: |-
+        Returns how many clicks became sessions, page views and conversions over the `from`/`to` range, narrowed by `campaign_id`, `link_id` and `goal_id`. Answers `text/csv` instead of JSON when the request asks for it with `Accept` or with the `.csv` path.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:report:read`.
       operationId: funnel
       parameters:
       - name: from
@@ -3056,13 +3173,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/reports/funnel.csv:
     get:
       tags:
       - Reports
       summary: Export the funnel as CSV
-      description: "The same report as the JSON one, always as `text/csv`; an export\
-        \ is capped at 100,000 rows and a larger answer is `400`. Requires `attribution:report:read`."
+      description: |-
+        The same report as the JSON one, always as `text/csv`; an export is capped at 100,000 rows and a larger answer is `400`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:report:read`.
       operationId: funnelCsv
       parameters:
       - name: from
@@ -3126,15 +3248,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/reports/costs:
     get:
       tags:
       - Reports
       summary: Get the cost report
-      description: "Returns advertising spend over the `from`/`to` range, optionally\
-        \ for one `campaign_id` and grouped by `group_by`, set against what the same\
-        \ campaigns earned. Answers `text/csv` instead of JSON when the request asks\
-        \ for it with `Accept` or with the `.csv` path. Requires `attribution:report:read`."
+      description: |-
+        Returns advertising spend over the `from`/`to` range, optionally for one `campaign_id` and grouped by `group_by`, set against what the same campaigns earned. Answers `text/csv` instead of JSON when the request asks for it with `Accept` or with the `.csv` path.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:report:read`.
       operationId: costs
       parameters:
       - name: from
@@ -3186,13 +3311,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/reports/costs.csv:
     get:
       tags:
       - Reports
       summary: Export the cost report as CSV
-      description: "The same report as the JSON one, always as `text/csv`; an export\
-        \ is capped at 100,000 rows and a larger answer is `400`. Requires `attribution:report:read`."
+      description: |-
+        The same report as the JSON one, always as `text/csv`; an export is capped at 100,000 rows and a larger answer is `400`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:report:read`.
       operationId: costsCsv
       parameters:
       - name: from
@@ -3241,15 +3371,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/reports/cohorts:
     get:
       tags:
       - Reports
       summary: Get cohorts
-      description: Groups visitors by the week of their first click and reports how
-        they converted over the following `periods` (default 12). `cohort` can only
-        be `week`. Answers `text/csv` instead of JSON when the request asks for it
-        with `Accept` or with the `.csv` path. Requires `attribution:report:read`.
+      description: |-
+        Groups visitors by the week of their first click and reports how they converted over the following `periods` (default 12). `cohort` can only be `week`. Answers `text/csv` instead of JSON when the request asks for it with `Accept` or with the `.csv` path.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:report:read`.
       operationId: cohorts
       parameters:
       - name: from
@@ -3310,13 +3443,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/reports/cohorts.csv:
     get:
       tags:
       - Reports
       summary: Export cohorts as CSV
-      description: "The same report as the JSON one, always as `text/csv`; an export\
-        \ is capped at 100,000 rows and a larger answer is `400`. Requires `attribution:report:read`."
+      description: |-
+        The same report as the JSON one, always as `text/csv`; an export is capped at 100,000 rows and a larger answer is `400`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:report:read`.
       operationId: cohortsCsv
       parameters:
       - name: from
@@ -3374,17 +3512,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/reports/breakdown:
     get:
       tags:
       - Reports
       summary: Get a breakdown
-      description: "Splits the chosen `metrics` by one `dimension`: link, campaign,\
-        \ entry, device, country, referrer, destination or goal. Narrow it with `link_id`,\
-        \ `campaign_id`, `destination_id`, `goal_id`, `entry`, `device` and `country`;\
-        \ `include` adds bot or suspect traffic that the default leaves out. Also\
-        \ filters by `referrer`. Answers `text/csv` instead of JSON when the request\
-        \ asks for it with `Accept` or with the `.csv` path. Requires `attribution:report:read`."
+      description: |-
+        Splits the chosen `metrics` by one `dimension`: link, campaign, entry, device, country, referrer, destination or goal. Narrow it with `link_id`, `campaign_id`, `destination_id`, `goal_id`, `entry`, `device` and `country`; `include` adds bot or suspect traffic that the default leaves out. Also filters by `referrer`. Answers `text/csv` instead of JSON when the request asks for it with `Accept` or with the `.csv` path.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:report:read`.
       operationId: breakdown
       parameters:
       - name: dimension
@@ -3502,13 +3641,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/reports/breakdown.csv:
     get:
       tags:
       - Reports
       summary: Export a breakdown as CSV
-      description: "The same report as the JSON one, always as `text/csv`; an export\
-        \ is capped at 100,000 rows and a larger answer is `400`. Requires `attribution:report:read`."
+      description: |-
+        The same report as the JSON one, always as `text/csv`; an export is capped at 100,000 rows and a larger answer is `400`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:report:read`.
       operationId: breakdownCsv
       parameters:
       - name: dimension
@@ -3623,15 +3767,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:report:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/ping:
     get:
       tags:
       - Health check
       summary: Check the caller's tenant
-      description: "Answers the caller's own tenant identity and nothing else. It\
-        \ proves that the suite token, the tenant scope and the permission check are\
-        \ wired; a platform-scope caller is refused even when it holds the code. Requires\
-        \ `attribution:link:read`."
+      description: |-
+        Answers the caller's own tenant identity and nothing else. It proves that the suite token, the tenant scope and the permission check are wired; a platform-scope caller is refused even when it holds the code.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:link:read`.
       operationId: ping
       responses:
         "200":
@@ -3646,15 +3793,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: attribution:link:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/links/{id}/stats:
     get:
       tags:
       - Link statistics
       summary: Get a link's statistics
-      description: "Returns the link's click total, its clicks per day for the last\
-        \ thirty days, the bot clicks the default leaves out, and its status and click\
-        \ cap. The numbers come from rollups, so `dataThrough` says how fresh they\
-        \ are. Requires `attribution:link:read`."
+      description: |-
+        Returns the link's click total, its clicks per day for the last thirty days, the bot clicks the default leaves out, and its status and click cap. The numbers come from rollups, so `dataThrough` says how fresh they are.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:link:read`.
       operationId: stats
       parameters:
       - name: id
@@ -3680,13 +3830,18 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:link:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/links/{id}/qr:
     get:
       tags:
       - Tracked links
       summary: Get a link's QR code
-      description: "Returns a QR code of the link's public URL as `png` (the default)\
-        \ or `svg`, `size` pixels wide (default 256). Requires `attribution:link:read`."
+      description: |-
+        Returns a QR code of the link's public URL as `png` (the default) or `svg`, `size` pixels wide (default 256).
+
+        Callers: tenant-user, tenant-system. Requires `attribution:link:read`.
       operationId: qr
       parameters:
       - name: id
@@ -3728,13 +3883,18 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:link:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
   /api/v1/conversions/{id}:
     get:
       tags:
       - Conversions
       summary: Get a conversion
-      description: Returns one conversion with its chain of touches and the credit
-        each campaign received. An unknown id answers `404`. Requires `attribution:report:read`.
+      description: |-
+        Returns one conversion with its chain of touches and the credit each campaign received. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `attribution:report:read`.
       operationId: get_4
       parameters:
       - name: id
@@ -3760,6 +3920,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: attribution:report:read
+      x-allowed-callers:
+      - tenant-user
+      - tenant-system
 components:
   schemas:
     SettingsRequest:

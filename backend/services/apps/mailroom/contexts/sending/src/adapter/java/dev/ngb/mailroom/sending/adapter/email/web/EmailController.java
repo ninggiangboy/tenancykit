@@ -3,6 +3,8 @@ package dev.ngb.mailroom.sending.adapter.email.web;
 import dev.ngb.core.error.BadRequestException;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.mailroom.sending.application.email.command.SendEmailUseCase;
@@ -38,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Sending one email or a batch, and reading the email ledger.")
 @RestController
 @RequestMapping("/api/v1/emails")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class EmailController {
 
     private final SendEmailUseCase send;
@@ -73,7 +76,7 @@ class EmailController {
             description =
                     "Sends a list of `items`, each shaped like a single send, and reports a result per item by `index`: "
                     + "the email id and its status, or the reason that item was refused. One bad item does not fail the "
-                    + "others. Requires `mailroom:email:send`.")
+                    + "others.")
     @PostMapping("/batch")
     @RequiresPermission(MailroomPermissions.EMAIL_SEND)
     List<BatchResultResponse> batch(@RequestBody BatchRequest request) {
@@ -102,7 +105,7 @@ class EmailController {
             summary = "List emails",
             description =
                     "Pages through the tenant's email ledger, with the list-query contract's filtering, sorting and "
-                    + "paging. Requires `mailroom:email:read`.")
+                    + "paging.")
     @GetMapping
     @Listing(EmailListing.class)
     @RequiresPermission(MailroomPermissions.EMAIL_READ)
@@ -114,8 +117,7 @@ class EmailController {
             summary = "Get an email",
             description =
                     "Returns one email from the ledger with its status and delivery outcome. After the tenant's retention "
-                    + "the rendered body is purged and the email reads `bodyPurged: true`. An unknown id answers `404`. "
-                    + "Requires `mailroom:email:read`.")
+                    + "the rendered body is purged and the email reads `bodyPurged: true`. An unknown id answers `404`. ")
     @GetMapping("/{id}")
     @RequiresPermission(MailroomPermissions.EMAIL_READ)
     EmailResponse get(@PathVariable UUID id) {

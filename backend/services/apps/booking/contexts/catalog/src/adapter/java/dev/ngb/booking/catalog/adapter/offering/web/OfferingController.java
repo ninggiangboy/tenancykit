@@ -22,6 +22,8 @@ import dev.ngb.booking.shared.ConditionalRequests;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ConditionalUpdate;
@@ -52,6 +54,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class OfferingController {
 
     public record OfferingCreateRequest(

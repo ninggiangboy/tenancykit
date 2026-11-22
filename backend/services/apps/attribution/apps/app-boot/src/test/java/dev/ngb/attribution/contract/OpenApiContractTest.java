@@ -101,7 +101,7 @@ class OpenApiContractTest {
                 assertThat(id).as(path + " " + method + " has no operationId").isNotBlank();
                 assertThat(seen.add(id)).as("operationId " + id + " appears twice").isTrue();
                 JsonNode permission = operation.get("x-required-permission");
-                if (permission == null && !operation.path("x-public").asBoolean(false)) {
+                if (permission == null && operation.get("x-allowed-callers") == null) {
                     unmarked.add(method.toUpperCase() + " " + path);
                 }
                 if (permission != null) {
@@ -111,7 +111,7 @@ class OpenApiContractTest {
                 }
             }
         }
-        assertThat(unmarked).as("an operation must name a permission or be marked x-public").isEmpty();
+        assertThat(unmarked).as("an operation must name a permission or a caller").isEmpty();
     }
 
     private static JsonNode contract() {

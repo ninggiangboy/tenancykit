@@ -1,12 +1,12 @@
 package dev.ngb.notification.boot.web;
 
+import dev.ngb.core.openapi.CallerLabelCustomizer;
 import dev.ngb.core.openapi.DescriptionsOpenApiCustomizer;
 import dev.ngb.core.openapi.ErrorResponsesOpenApiCustomizer;
 import dev.ngb.core.openapi.ListingOpenApiCustomizer;
-import dev.ngb.core.security.Authenticated;
+import dev.ngb.core.openapi.PermissionCatalogs;
 import dev.ngb.core.security.Authorizer;
 import dev.ngb.core.security.CurrentActor;
-import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.ListQueryResolver;
 import dev.ngb.core.spring.security.PermissionInterceptor;
 import dev.ngb.core.tenancy.TenantContext;
@@ -16,11 +16,9 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.List;
-import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -91,33 +89,12 @@ class WebConfiguration implements WebMvcConfigurer {
     }
 
     /**
-     * Documents which principal may call each operation, from the same handlers {@link TenantScopeAndUserGuard} gates.
-     *
-     * <p>Template operations are platform-only because a template is the suite's content; the inbox and the caller's own
+     * Derives every operation's caller label from its declaration and checks it against the permission catalog.
+     * Template operations are platform-only because a template is the suite's content; the inbox and the caller's own
      * preference are either scope, because a Platform user has an inbox too; everything else is tenant-only.
      */
     @Bean
-    OperationCustomizer allowedCallers() {
-        return (operation, handlerMethod) -> {
-            RequiresPermission required = handlerMethod.getMethodAnnotation(RequiresPermission.class);
-            if (required != null) {
-                operation.addExtension("x-required-permission", required.value());
-            }
-            if (handlerMethod.hasMethodAnnotation(RequiresPermission.class)
-                    || handlerMethod.hasMethodAnnotation(Authenticated.class)) {
-                operation.addExtension("x-allowed-callers", callersOf(handlerMethod));
-            }
-            return operation;
-        };
-    }
-
-    private static List<String> callersOf(HandlerMethod method) {
-        String controller = method.getBeanType().getSimpleName();
-        return switch (controller) {
-            case "TemplateController" -> List.of("platform-user");
-            case "NotificationController", "NotificationPreferenceController" ->
-                    List.of("tenant-user", "platform-user");
-            default -> List.of("tenant-user");
-        };
+    CallerLabelCustomizer callerLabels() {
+        return new CallerLabelCustomizer(PermissionCatalogs.fromClasspath());
     }
 }

@@ -1,5 +1,7 @@
 package dev.ngb.customer.profile.adapter.profile.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.customer.activity.api.activity.ActivitySnapshot;
 import dev.ngb.customer.customers.api.customer.ConsentState;
@@ -33,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class ProfileController {
 
     /** The current state of one consent topic: the status of its latest record and when that record happened. */

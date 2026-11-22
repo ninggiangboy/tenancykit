@@ -1,5 +1,7 @@
 package dev.ngb.billing.usage.adapter.usage.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.context.annotation.Profile;
@@ -47,6 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class UsageController {
 
     public record UsageEventRequest(

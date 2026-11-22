@@ -3,6 +3,8 @@ package dev.ngb.booking.inventory.adapter.availability.web;
 import dev.ngb.booking.inventory.application.availability.query.AvailabilityQueries;
 import dev.ngb.booking.inventory.application.availability.query.AvailabilitySlot;
 import dev.ngb.booking.shared.BookingPermissions;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import java.time.Instant;
 import java.util.List;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class AvailabilityController {
 
     /** One free start; {@code resourceIds} holds one resource per requirement, in requirement order. */

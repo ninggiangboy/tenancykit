@@ -4,6 +4,8 @@ import dev.ngb.booking.gate.application.settings.service.GateSettings;
 import dev.ngb.booking.gate.application.settings.service.GateSettingsService;
 import dev.ngb.booking.gate.application.settings.query.GateTimingView;
 import dev.ngb.booking.shared.BookingPermissions;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import java.util.List;
 import org.springframework.context.annotation.Profile;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class SettingsController {
 
     public record GateSettingsRequest(List<String> allowedOrigins, Integer maxTokenTtlSeconds) {}
@@ -37,6 +40,7 @@ public class SettingsController {
         return timings;
     }
 
+    @Callers(Caller.TENANT_USER)
     @PutMapping("/settings/gate")
     @RequiresPermission(BookingPermissions.SETTINGS_MANAGE)
     public GateSettingsResponse putGate(@RequestBody GateSettingsRequest request) {

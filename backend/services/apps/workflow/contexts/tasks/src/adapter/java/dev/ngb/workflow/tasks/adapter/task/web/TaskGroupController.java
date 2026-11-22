@@ -1,6 +1,8 @@
 package dev.ngb.workflow.tasks.adapter.task.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.workflow.shared.WorkflowPermissions;
@@ -34,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class TaskGroupController {
 
     public record GroupRequest(String code, String name, Set<UUID> members) {}
@@ -69,7 +72,7 @@ public class TaskGroupController {
             summary = "Create a task group",
             description =
                     "Creates a group with a `code`, a name and its `members`. Members must be active users when they are "
-                    + "added. Answers `201`. Requires `workflow:task:manage`.")
+                    + "added. Answers `201`.")
     @PostMapping("/task-groups")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(WorkflowPermissions.TASK_MANAGE)
@@ -84,7 +87,7 @@ public class TaskGroupController {
             description =
                     "Replaces the group's name and members. A member disabled later keeps the group membership but loses "
                     + "access to the tasks, because every action re-reads the user's state. Pass the current `ETag` in "
-                    + "`If-Match`; a stale version is refused with `412`. Requires `workflow:task:manage`.")
+                    + "`If-Match`; a stale version is refused with `412`.")
     @PutMapping("/task-groups/{code}")
     @RequiresPermission(WorkflowPermissions.TASK_MANAGE)
     public ResponseEntity<GroupResponse> update(
@@ -105,7 +108,7 @@ public class TaskGroupController {
             summary = "Delete a task group",
             description =
                     "Deletes the group. A workflow node that is assigned to it fails with a readable reason rather than "
-                    + "creating a task nobody can see. Answers `204`. Requires `workflow:task:manage`.")
+                    + "creating a task nobody can see. Answers `204`.")
     @DeleteMapping("/task-groups/{code}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequiresPermission(WorkflowPermissions.TASK_MANAGE)

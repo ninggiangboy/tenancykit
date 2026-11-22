@@ -2,6 +2,8 @@ package dev.ngb.survey.authoring.adapter.survey.web;
 
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ExpectedVersion;
@@ -37,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "A tenant's surveys and their lifecycle: create, read, close and reopen.")
 @RestController
 @RequestMapping("/api/v1/surveys")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class SurveyController {
 
     private final CreateSurveyUseCase create;
@@ -59,7 +62,7 @@ class SurveyController {
             summary = "List surveys",
             description =
                     "Pages through the tenant's surveys, newest first by default, with the list-query contract's "
-                    + "filtering, sorting and paging. Requires `survey:survey:read`.")
+                    + "filtering, sorting and paging.")
     @GetMapping
     @Listing(SurveyListing.class)
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
@@ -84,7 +87,7 @@ class SurveyController {
             summary = "Create a survey",
             description =
                     "Creates a survey with a `name` and the one empty draft a builder starts from, in one transaction. "
-                    + "Answers `201`. Requires `survey:survey:manage`.")
+                    + "Answers `201`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(SurveyPermissions.SURVEY_MANAGE)
@@ -96,8 +99,7 @@ class SurveyController {
             summary = "Close a survey",
             description =
                     "Withdraws every version from the public surface, so its links stop collecting responses. Closing a "
-                    + "survey that is already closed changes nothing and announces nothing, so a retry is harmless. "
-                    + "Requires `survey:survey:manage`.")
+                    + "survey that is already closed changes nothing and announces nothing, so a retry is harmless. ")
     @PostMapping("/{id}/close")
     @RequiresPermission(SurveyPermissions.SURVEY_MANAGE)
     ResponseEntity<SurveyResponse> close(@PathVariable UUID id) {
@@ -109,7 +111,7 @@ class SurveyController {
             summary = "Reopen a survey",
             description =
                     "Opens a closed survey again. A survey closed before its first publish returns to `DRAFT`, because "
-                    + "there is no version to serve. Requires `survey:survey:manage`.")
+                    + "there is no version to serve.")
     @PostMapping("/{id}/reopen")
     @RequiresPermission(SurveyPermissions.SURVEY_MANAGE)
     ResponseEntity<SurveyResponse> reopen(@PathVariable UUID id) {

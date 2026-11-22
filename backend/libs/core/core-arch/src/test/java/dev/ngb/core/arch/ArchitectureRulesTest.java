@@ -42,7 +42,8 @@ class ArchitectureRulesTest {
             "read-side-does-not-depend-on-write",
             "query-side-uses-no-domain-aggregates",
             "write-ports-serve-no-reads",
-            "domain-events-live-in-an-events-holder");
+            "domain-events-live-in-an-events-holder",
+            "every-endpoint-declares-a-caller");
 
     private static final List<String> CORE_RULE_IDS = List.of(
             "core-feign-is-self-contained",

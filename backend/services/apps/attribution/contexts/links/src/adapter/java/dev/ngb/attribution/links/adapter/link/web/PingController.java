@@ -1,6 +1,8 @@
 package dev.ngb.attribution.links.adapter.link.web;
 
 import dev.ngb.attribution.shared.AttributionPermissions;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
                 + "wired.")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class PingController {
 
     @Operation(
@@ -30,7 +33,7 @@ class PingController {
             description =
                     "Answers the caller's own tenant identity and nothing else. It proves that the suite token, the "
                     + "tenant scope and the permission check are wired; a platform-scope caller is refused even when it "
-                    + "holds the code. Requires `attribution:link:read`.")
+                    + "holds the code.")
     @GetMapping("/ping")
     @RequiresPermission(AttributionPermissions.LINK_READ)
     Map<String, Object> ping() {

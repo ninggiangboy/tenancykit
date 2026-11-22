@@ -2,6 +2,8 @@ package dev.ngb.mailroom.audience.adapter.suppression.web;
 
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.mailroom.audience.application.audience.query.AudienceQueries;
@@ -35,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Addresses the tenant must not mail. Removing one is the only action that re-subscribes an address.")
 @RestController
 @RequestMapping("/api/v1/suppressions")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class SuppressionController {
 
     private final AddSuppressionUseCase add;
@@ -53,7 +56,7 @@ class SuppressionController {
             summary = "List suppressions",
             description =
                     "Pages through the addresses the tenant must not mail, with the list-query contract's filtering, "
-                    + "sorting and paging. Requires `mailroom:receiver:read`.")
+                    + "sorting and paging.")
     @GetMapping
     @Listing(SuppressionListing.class)
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
@@ -65,7 +68,7 @@ class SuppressionController {
             summary = "Suppress an address",
             description =
                     "Blocks an `email` address on the tenant's instruction. A suppression with scope `ALL` stops "
-                    + "transactional mail too. Requires `mailroom:receiver:manage`.")
+                    + "transactional mail too.")
     @PostMapping
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
     SuppressionResponse add(@RequestBody SuppressionRequest request) {
@@ -79,7 +82,7 @@ class SuppressionController {
             description =
                     "Removes the suppression of `email` and, when the address is a known receiver, subscribes it again. "
                     + "This is the tenant's explicit statement that the customer consented again, and the only action that "
-                    + "re-subscribes an address. Answers `204`. Requires `mailroom:receiver:manage`.")
+                    + "re-subscribes an address. Answers `204`.")
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)

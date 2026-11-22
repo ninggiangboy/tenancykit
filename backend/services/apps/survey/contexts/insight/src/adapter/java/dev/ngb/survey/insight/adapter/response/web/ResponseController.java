@@ -2,6 +2,8 @@ package dev.ngb.survey.insight.adapter.response.web;
 
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.survey.collection.api.response.ResponseDeleter;
@@ -36,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Reading and deleting completed responses.")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class ResponseController {
 
     private final ResponseQueries responses;
@@ -50,7 +53,7 @@ class ResponseController {
             summary = "List a survey's responses",
             description =
                     "Pages through the survey's completed responses, with the list-query contract's filtering, sorting "
-                    + "and paging. Requires `survey:response:read`.")
+                    + "and paging.")
     @GetMapping("/surveys/{id}/responses")
     @Listing(ResponseListing.class)
     @RequiresPermission(SurveyPermissions.RESPONSE_READ)
@@ -75,7 +78,7 @@ class ResponseController {
             description =
                     "Deletes the response and everything that belongs to it, including uploaded files, so it disappears "
                     + "from every report. The visit's source and device facts survive, and the survey's submission counter "
-                    + "is not decremented. Answers `204`. Requires `survey:response:delete`.")
+                    + "is not decremented. Answers `204`.")
     @DeleteMapping("/responses/{responseId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequiresPermission(SurveyPermissions.RESPONSE_DELETE)

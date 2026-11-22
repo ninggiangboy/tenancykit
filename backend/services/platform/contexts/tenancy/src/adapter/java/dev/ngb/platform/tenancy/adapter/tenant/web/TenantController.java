@@ -3,6 +3,8 @@ package dev.ngb.platform.tenancy.adapter.tenant.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.core.id.TenantId;
@@ -38,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Platform administration of tenants: list, rename, deactivate and map hostnames.")
 @RestController
 @RequestMapping("/api/v1/tenants")
+@Callers(Caller.PLATFORM_USER)
 class TenantController {
 
     record RenameRequest(String name) {}
@@ -78,8 +81,7 @@ class TenantController {
     @Operation(
             summary = "List tenants",
             description =
-                    "Pages through the suite's Tenants, with the list-query contract's filtering, sorting and paging. "
-                    + "Requires `platform:tenant:read`.")
+                    "Pages through the suite's Tenants, with the list-query contract's filtering, sorting and paging. ")
     @GetMapping
     @Listing(TenantListing.class)
     @RequiresPermission(PlatformPermissions.TENANT_READ)
@@ -126,7 +128,7 @@ class TenantController {
             description =
                     "Maps one more hostname to the Tenant, so its people reach the console on that host. The host also "
                     + "becomes a sign-in redirect target; if that registration fails the request still succeeds and a "
-                    + "reconciler repairs it. Answers `201` with no body. Requires `platform:tenant-domain:manage`.")
+                    + "reconciler repairs it. Answers `201` with no body.")
     @PostMapping("/{id}/domains")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(PlatformPermissions.TENANT_DOMAIN_MANAGE)

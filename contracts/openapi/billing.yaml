@@ -83,8 +83,10 @@ paths:
       tags:
       - Stripe configuration
       summary: Set the Stripe webhook signing secret
-      description: Stores the signing secret of the webhook the tenant created in
-        its own Stripe Dashboard. It is never returned.
+      description: |-
+        Stores the signing secret of the webhook the tenant created in its own Stripe Dashboard. It is never returned.
+
+        Callers: tenant-user. Requires `billing:stripe:manage`.
       operationId: setWebhookSecret
       parameters:
       - name: X-Request-Id
@@ -122,10 +124,10 @@ paths:
       tags:
       - Stripe configuration
       summary: Connect the tenant's own Stripe account
-      description: "Replaces any current configuration with a Direct one built on\
-        \ the tenant's own Stripe keys (`secretKey`, `publishableKey` and `webhookSecret`).\
-        \ Stripe is asked first and the secrets are stored encrypted; they are never\
-        \ returned, and the configuration only says whether a webhook secret is set."
+      description: |-
+        Replaces any current configuration with a Direct one built on the tenant's own Stripe keys (`secretKey`, `publishableKey` and `webhookSecret`). Stripe is asked first and the secrets are stored encrypted; they are never returned, and the configuration only says whether a webhook secret is set.
+
+        Callers: tenant-user. Requires `billing:stripe:manage`.
       operationId: connectDirect
       parameters:
       - name: X-Request-Id
@@ -175,8 +177,10 @@ paths:
       tags:
       - Portal settings
       summary: List the portal return URLs
-      description: Returns the tenant's allowlist of URLs a billing session may send
-        the customer back to.
+      description: |-
+        Returns the tenant's allowlist of URLs a billing session may send the customer back to.
+
+        Callers: tenant-user. Requires `billing:portal-settings:manage`.
       operationId: list
       responses:
         "200":
@@ -198,7 +202,10 @@ paths:
       tags:
       - Portal settings
       summary: Replace the portal return URLs
-      description: Replaces the whole allowlist of return URLs with `urls`.
+      description: |-
+        Replaces the whole allowlist of return URLs with `urls`.
+
+        Callers: tenant-user. Requires `billing:portal-settings:manage`.
       operationId: replace
       parameters:
       - name: X-Request-Id
@@ -238,8 +245,10 @@ paths:
       tags:
       - Customers
       summary: Get a customer
-      description: Returns one customer; its version is also the response's `ETag`.
-        An unknown id answers `404`.
+      description: |-
+        Returns one customer; its version is also the response's `ETag`. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:customer:read`.
       operationId: get
       parameters:
       - name: id
@@ -269,8 +278,10 @@ paths:
       tags:
       - Customers
       summary: Update a customer
-      description: Changes the customer's display name and email. Pass the current
-        `ETag` in `If-Match`; a stale version is refused with `412`.
+      description: |-
+        Changes the customer's display name and email. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:customer:write`.
       operationId: update
       parameters:
       - name: id
@@ -343,10 +354,10 @@ paths:
       tags:
       - Stripe webhooks
       summary: Receive a direct Stripe webhook
-      description: "Where Stripe delivers events for a tenant's own Stripe account;\
-        \ the tenant creates this endpoint in its own Stripe Dashboard. The signature\
-        \ of the raw body is the proof and is checked before anything in the body\
-        \ is read. Public: no suite token is needed."
+      description: |-
+        Where Stripe delivers events for a tenant's own Stripe account; the tenant creates this endpoint in its own Stripe Dashboard. The signature of the raw body is the proof and is checked before anything in the body is read. Public: no suite token is needed.
+
+        Callers: provider.
       operationId: direct
       parameters:
       - name: configurationId
@@ -379,23 +390,17 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-        "403":
-          $ref: "#/components/responses/NotEntitled"
-        "404":
-          $ref: "#/components/responses/NotFound"
       x-allowed-callers:
-      - public
+      - provider
   /stripe/webhooks/connect:
     post:
       tags:
       - Stripe webhooks
       summary: Receive a Stripe Connect webhook
-      description: "The platform's Connect webhook, one endpoint for every connected\
-        \ account; the tenant comes from Billing's own routing table, never from the\
-        \ request. The signature of the raw body is the proof. Public: no suite token\
-        \ is needed."
+      description: |-
+        The platform's Connect webhook, one endpoint for every connected account; the tenant comes from Billing's own routing table, never from the request. The signature of the raw body is the proof. Public: no suite token is needed.
+
+        Callers: provider.
       operationId: connect
       parameters:
       - name: Stripe-Signature
@@ -421,22 +426,17 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-        "403":
-          $ref: "#/components/responses/NotEntitled"
       x-allowed-callers:
-      - public
+      - provider
   /portal/api/top-ups:
     post:
       tags:
       - "Portal: wallets and charges"
       summary: Start a wallet top-up
-      description: Starts a top-up of one of the customer's wallets through the Tenant's
-        Stripe configuration and answers the Stripe-hosted page where the customer
-        pays. The wallet is credited only when a verified Stripe event confirms the
-        money arrived. Requires an `Idempotency-Key`; a repeat answers the first top-up
-        with `200`.
+      description: |-
+        Starts a top-up of one of the customer's wallets through the Tenant's Stripe configuration and answers the Stripe-hosted page where the customer pays. The wallet is credited only when a verified Stripe event confirms the money arrived. Requires an `Idempotency-Key`; a repeat answers the first top-up with `200`.
+
+        Callers: customer-session.
       operationId: topUp
       parameters:
       - name: Idempotency-Key
@@ -498,16 +498,16 @@ paths:
                 $ref: "#/components/schemas/ProblemDetail"
       x-required-portal-permission: top-up:create
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/session/exchange:
     post:
       tags:
       - "Portal: session"
       summary: Exchange a billing-session token
-      description: "Exchanges the single-use token the portal read from its URL fragment\
-        \ for an HttpOnly session cookie and a readable CSRF cookie. The token cannot\
-        \ be used again; a token for another tenant is unknown on this hostname. Public:\
-        \ the token is the proof, and no suite token is needed."
+      description: |-
+        Exchanges the single-use token the portal read from its URL fragment for an HttpOnly session cookie and a readable CSRF cookie. The token cannot be used again; a token for another tenant is unknown on this hostname. Public: the token is the proof, and no suite token is needed.
+
+        Callers: public.
       operationId: exchange
       parameters:
       - name: X-Request-Id
@@ -540,8 +540,6 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
-        "403":
-          $ref: "#/components/responses/NotEntitled"
       x-allowed-callers:
       - public
   /portal/api/payment-methods:
@@ -549,9 +547,10 @@ paths:
       tags:
       - "Portal: payments"
       summary: Open the payment-methods page
-      description: "Opens Stripe's hosted page where the customer manages payment\
-        \ methods, in the Tenant's own Stripe account. The Stripe customer is created\
-        \ once per billing customer and Stripe configuration and reused afterwards."
+      description: |-
+        Opens Stripe's hosted page where the customer manages payment methods, in the Tenant's own Stripe account. The Stripe customer is created once per billing customer and Stripe configuration and reused afterwards.
+
+        Callers: customer-session.
       operationId: paymentMethods
       responses:
         "200":
@@ -578,7 +577,7 @@ paths:
                 $ref: "#/components/schemas/ProblemDetail"
       x-required-portal-permission: payment-method:manage
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /api/v1/webhook-endpoints:
     get:
       tags:
@@ -588,6 +587,8 @@ paths:
         Pages through the tenant's webhook endpoints, with the list-query contract's filtering, sorting and paging.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:webhook:read`.
       operationId: listEndpoints
       parameters:
       - name: "filter[created_at][eq]"
@@ -994,9 +995,10 @@ paths:
       tags:
       - Webhook endpoints
       summary: Create a webhook endpoint
-      description: "Registers an HTTPS endpoint that subscribes to a subset of Billing's\
-        \ event types. The signing secret is returned once, in this response, and\
-        \ never again. Answers `201`."
+      description: |-
+        Registers an HTTPS endpoint that subscribes to a subset of Billing's event types. The signing secret is returned once, in this response, and never again. Answers `201`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:webhook:manage`.
       operationId: createEndpoint
       parameters:
       - name: X-Request-Id
@@ -1035,8 +1037,10 @@ paths:
       tags:
       - Webhook endpoints
       summary: Rotate a webhook endpoint's secret
-      description: "Replaces the endpoint's signing secret and returns the new one\
-        \ once, never again."
+      description: |-
+        Replaces the endpoint's signing secret and returns the new one once, never again.
+
+        Callers: tenant-user, tenant-system. Requires `billing:webhook:manage`.
       operationId: rotateSecret
       parameters:
       - name: id
@@ -1074,9 +1078,10 @@ paths:
       tags:
       - Webhook deliveries
       summary: Resend a webhook delivery
-      description: "Queues a fresh delivery of the same stored event to the same endpoint\
-        \ and answers `202`: sending happens asynchronously. The original keeps its\
-        \ history."
+      description: |-
+        Queues a fresh delivery of the same stored event to the same endpoint and answers `202`: sending happens asynchronously. The original keeps its history.
+
+        Callers: tenant-user, tenant-system. Requires `billing:webhook:manage`.
       operationId: resend
       parameters:
       - name: id
@@ -1118,6 +1123,8 @@ paths:
         Pages through the tenant's wallets, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:wallet:read`.
       operationId: wallets
       parameters:
       - name: "filter[balance][eq]"
@@ -1578,11 +1585,10 @@ paths:
       tags:
       - Wallets
       summary: Open a wallet
-      description: "Opens a customer's wallet in one `currency`, as prepaid or postpaid\
-        \ (`mode`, with a `creditLimit` for postpaid). Amounts are integers in minor\
-        \ units. Asking again with the same settings answers the existing wallet;\
-        \ different settings are a conflict, because a wallet's currency and mode\
-        \ never change."
+      description: |-
+        Opens a customer's wallet in one `currency`, as prepaid or postpaid (`mode`, with a `creditLimit` for postpaid). Amounts are integers in minor units. Asking again with the same settings answers the existing wallet; different settings are a conflict, because a wallet's currency and mode never change.
+
+        Callers: tenant-user, tenant-system. Requires `billing:wallet:manage`.
       operationId: openWallet
       parameters:
       - name: X-Request-Id
@@ -1639,6 +1645,8 @@ paths:
         Pages through the redemptions on the wallet named by the path, with the list-query contract's filtering, sorting and paging.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:coupon:read`.
       operationId: redemptionsOfWallet
       parameters:
       - name: walletId
@@ -2370,10 +2378,10 @@ paths:
       tags:
       - Coupon redemptions
       summary: Redeem a promotion code
-      description: "Redeems the promotion `code` onto a wallet. Send an `Idempotency-Key`;\
-        \ a repeat of the same key and body answers the first result with `200`. Every\
-        \ refusal answers `404`, so a caller cannot learn whether a code exists, is\
-        \ inactive, expired or exhausted. Answers `201` for a new redemption."
+      description: |-
+        Redeems the promotion `code` onto a wallet. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`. Every refusal answers `404`, so a caller cannot learn whether a code exists, is inactive, expired or exhausted. Answers `201` for a new redemption.
+
+        Callers: tenant-user, tenant-system. Requires `billing:coupon:redeem`.
       operationId: redeemByCode
       parameters:
       - name: walletId
@@ -2444,11 +2452,10 @@ paths:
       tags:
       - Coupon redemptions
       summary: Attach a coupon to a wallet
-      description: "Attaches a coupon to a wallet by its `couponId`, which skips a\
-        \ code's own limits and so needs the coupon manage permission rather than\
-        \ the redeem one. A Tenant System uses it to grant a coupon it chose itself.\
-        \ Send an `Idempotency-Key`; a repeat of the same key and body answers the\
-        \ first result with `200`."
+      description: |-
+        Attaches a coupon to a wallet by its `couponId`, which skips a code's own limits and so needs the coupon manage permission rather than the redeem one. A Tenant System uses it to grant a coupon it chose itself. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:coupon:manage`.
       operationId: attach
       parameters:
       - name: walletId
@@ -2517,6 +2524,8 @@ paths:
         Pages through the recorded usage events, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:usage:read`.
       operationId: history
       parameters:
       - name: "filter[customer_id][eq]"
@@ -2986,12 +2995,10 @@ paths:
       tags:
       - Usage
       summary: Record a usage event
-      description: "Reports one usage event for a customer: the `metric`, a `quantity`\
-        \ with up to six decimal places in the unit the metric's plan defines, and\
-        \ when it `occurredAt`. Each event carries its own `idempotencyKey`, so a\
-        \ retry never records anything twice: `201` for a new event, `200` with the\
-        \ recorded event when it was already recorded, and `409` when the key arrives\
-        \ with different content."
+      description: |-
+        Reports one usage event for a customer: the `metric`, a `quantity` with up to six decimal places in the unit the metric's plan defines, and when it `occurredAt`. Each event carries its own `idempotencyKey`, so a retry never records anything twice: `201` for a new event, `200` with the recorded event when it was already recorded, and `409` when the key arrives with different content.
+
+        Callers: tenant-user, tenant-system. Requires `billing:usage:record`.
       operationId: recordOne
       requestBody:
         description: One usage event to record.
@@ -3035,8 +3042,10 @@ paths:
       tags:
       - Usage
       summary: Record usage events in a batch
-      description: "Reports up to 500 usage events at once, all-or-nothing: if any\
-        \ event is invalid or conflicts, none is stored."
+      description: |-
+        Reports up to 500 usage events at once, all-or-nothing: if any event is invalid or conflicts, none is stored.
+
+        Callers: tenant-user, tenant-system. Requires `billing:usage:record`.
       operationId: recordBatch
       requestBody:
         description: "The usage events to record, at most 500, all or none."
@@ -3071,6 +3080,8 @@ paths:
         Pages through the tenant's subscriptions, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:subscription:read`.
       operationId: subscriptions
       parameters:
       - name: "filter[anchor][eq]"
@@ -3755,12 +3766,10 @@ paths:
       tags:
       - Subscriptions
       summary: Subscribe a wallet to a plan
-      description: Subscribes a customer's wallet (`walletId`) to a plan (`planId`)
-        and charges the first period at once. The cycle and currency come from the
-        plan and stay fixed for the life of the subscription. A first period the wallet
-        cannot pay leaves the subscription `PAST_DUE` rather than rejecting it. Send
-        an `Idempotency-Key`; a repeat of the same key and body answers the first
-        result with `200`.
+      description: |-
+        Subscribes a customer's wallet (`walletId`) to a plan (`planId`) and charges the first period at once. The cycle and currency come from the plan and stay fixed for the life of the subscription. A first period the wallet cannot pay leaves the subscription `PAST_DUE` rather than rejecting it. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:subscription:manage`.
       operationId: subscribe
       parameters:
       - name: Idempotency-Key
@@ -3816,10 +3825,10 @@ paths:
       tags:
       - Subscriptions
       summary: Cancel a subscription
-      description: "Cancels at the end of the period already paid, so the customer\
-        \ keeps what was paid for, or at once when no paid period is running. Repeating\
-        \ it changes nothing. Billing stops no resource: the Tenant System decides\
-        \ what the end means for it."
+      description: |-
+        Cancels at the end of the period already paid, so the customer keeps what was paid for, or at once when no paid period is running. Repeating it changes nothing. Billing stops no resource: the Tenant System decides what the end means for it.
+
+        Callers: tenant-user, tenant-system. Requires `billing:subscription:manage`.
       operationId: cancel
       parameters:
       - name: id
@@ -3857,10 +3866,10 @@ paths:
       tags:
       - Stripe configuration
       summary: Reconcile payments with Stripe
-      description: "Compares recent payments and refunds with what Stripe holds now,\
-        \ instead of waiting for the scheduled run. A disagreement is recorded as\
-        \ an incident; where Stripe is authoritative and ahead, the correction goes\
-        \ through the same path as a verified event."
+      description: |-
+        Compares recent payments and refunds with what Stripe holds now, instead of waiting for the scheduled run. A disagreement is recorded as an incident; where Stripe is authoritative and ahead, the correction goes through the same path as a verified event.
+
+        Callers: tenant-user. Requires `billing:stripe:manage`.
       operationId: reconcile
       responses:
         "200":
@@ -3881,7 +3890,10 @@ paths:
       tags:
       - Stripe incidents
       summary: Resolve a Stripe incident
-      description: Closes an incident once a person has dealt with it. Answers `204`.
+      description: |-
+        Closes an incident once a person has dealt with it. Answers `204`.
+
+        Callers: tenant-user. Requires `billing:stripe:manage`.
       operationId: resolveIncident
       parameters:
       - name: id
@@ -3914,7 +3926,10 @@ paths:
       tags:
       - Stripe configuration
       summary: Retry a Stripe event
-      description: "Tries an event that failed or gave up again, now."
+      description: |-
+        Tries an event that failed or gave up again, now.
+
+        Callers: tenant-user. Requires `billing:stripe:manage`.
       operationId: retry
       parameters:
       - name: id
@@ -3951,8 +3966,10 @@ paths:
       tags:
       - Stripe configuration
       summary: Refresh the Stripe account status
-      description: Asks Stripe what the connected account can do now. Call it when
-        the tenant returns from onboarding.
+      description: |-
+        Asks Stripe what the connected account can do now. Call it when the tenant returns from onboarding.
+
+        Callers: tenant-user. Requires `billing:stripe:manage`.
       operationId: refresh
       parameters:
       - name: X-Request-Id
@@ -3987,9 +4004,10 @@ paths:
       tags:
       - Stripe configuration
       summary: Start Stripe Connect onboarding
-      description: Starts linking a Stripe account through the platform's Connect
-        application and answers the Stripe-hosted onboarding page the tenant finishes.
-        Repeating it while onboarding is open answers a fresh link.
+      description: |-
+        Starts linking a Stripe account through the platform's Connect application and answers the Stripe-hosted onboarding page the tenant finishes. Repeating it while onboarding is open answers a fresh link.
+
+        Callers: tenant-user. Requires `billing:stripe:manage`.
       operationId: startConnect
       parameters:
       - name: X-Request-Id
@@ -4039,8 +4057,10 @@ paths:
       tags:
       - Stripe configuration
       summary: Get a new Stripe onboarding link
-      description: "Answers a fresh onboarding link, for when the earlier one has\
-        \ expired."
+      description: |-
+        Answers a fresh onboarding link, for when the earlier one has expired.
+
+        Callers: tenant-user. Requires `billing:stripe:manage`.
       operationId: onboardingLink
       responses:
         "200":
@@ -4071,6 +4091,8 @@ paths:
         Pages through the tenant's reservations, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:wallet:read`.
       operationId: reservations
       parameters:
       - name: "filter[amount][eq]"
@@ -4575,11 +4597,10 @@ paths:
       tags:
       - Reservations
       summary: Reserve part of a wallet's balance
-      description: "Holds `amount` of the wallet for a bounded time (`ttlSeconds`)\
-        \ for a later charge, after checking the wallet can cover it or its postpaid\
-        \ limit. Nothing is posted to the ledger until the reservation is captured.\
-        \ Send an `Idempotency-Key`; a repeat of the same key and body answers the\
-        \ first result with `200`."
+      description: |-
+        Holds `amount` of the wallet for a bounded time (`ttlSeconds`) for a later charge, after checking the wallet can cover it or its postpaid limit. Nothing is posted to the ledger until the reservation is captured. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:reservation:manage`.
       operationId: reserve
       parameters:
       - name: Idempotency-Key
@@ -4634,8 +4655,10 @@ paths:
       tags:
       - Reservations
       summary: Release a reservation
-      description: Gives the held amount back to the wallet. Releasing a reservation
-        that is already released changes nothing.
+      description: |-
+        Gives the held amount back to the wallet. Releasing a reservation that is already released changes nothing.
+
+        Callers: tenant-user, tenant-system. Requires `billing:reservation:manage`.
       operationId: release
       parameters:
       - name: id
@@ -4666,9 +4689,10 @@ paths:
       tags:
       - Charges
       summary: Capture a reservation
-      description: Charges the actual cost against the reservation and releases whatever
-        was not used. Send an `Idempotency-Key`; a repeat of the same key and body
-        answers the first result with `200`.
+      description: |-
+        Charges the actual cost against the reservation and releases whatever was not used. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:charge:create`.
       operationId: capture
       parameters:
       - name: id
@@ -4725,8 +4749,10 @@ paths:
       tags:
       - Coupons
       summary: Deactivate a promotion code
-      description: Stops a promotion code being redeemed; the coupon and its other
-        codes are unaffected.
+      description: |-
+        Stops a promotion code being redeemed; the coupon and its other codes are unaffected.
+
+        Callers: tenant-user, tenant-system. Requires `billing:coupon:manage`.
       operationId: deactivateCode
       parameters:
       - name: id
@@ -4764,10 +4790,10 @@ paths:
       tags:
       - Rating
       summary: Charge a customer's usage
-      description: "Prices the customer's not-yet-rated usage in `[from, to)` against\
-        \ the plan and charges the wallet, exactly once per usage event. Answers `201`\
-        \ when charged, `200` when repeated or when there was nothing to charge, and\
-        \ `402` when the wallet could not pay; the same request succeeds after a top-up."
+      description: |-
+        Prices the customer's not-yet-rated usage in `[from, to)` against the plan and charges the wallet, exactly once per usage event. Answers `201` when charged, `200` when repeated or when there was nothing to charge, and `402` when the wallet could not pay; the same request succeeds after a top-up.
+
+        Callers: tenant-user, tenant-system. Requires `billing:charge:create`.
       operationId: chargeUsage
       requestBody:
         description: The usage period to price and charge.
@@ -4812,9 +4838,10 @@ paths:
       tags:
       - Rating
       summary: Reserve an estimated cost
-      description: "Holds the estimated cost of a resource on the wallet before it\
-        \ runs. Answers `201` for a new reservation, `200` when the `Idempotency-Key`\
-        \ replays one, and `402` when the wallet cannot cover it."
+      description: |-
+        Holds the estimated cost of a resource on the wallet before it runs. Answers `201` for a new reservation, `200` when the `Idempotency-Key` replays one, and `402` when the wallet cannot cover it.
+
+        Callers: tenant-user, tenant-system. Requires `billing:reservation:manage`.
       operationId: reserveEstimate
       parameters:
       - name: Idempotency-Key
@@ -4869,10 +4896,10 @@ paths:
       tags:
       - Rating
       summary: Estimate a cost
-      description: "A pure calculation: prices expected `usage` against a plan version\
-        \ with the same rules and the same single rounding as the real charge, and\
-        \ stores nothing. When `walletId` is named, it also shows what that wallet\
-        \ would pay after its coupons."
+      description: |-
+        A pure calculation: prices expected `usage` against a plan version with the same rules and the same single rounding as the real charge, and stores nothing. When `walletId` is named, it also shows what that wallet would pay after its coupons.
+
+        Callers: tenant-user, tenant-system. Requires `billing:pricing:read`.
       operationId: estimate
       requestBody:
         description: The expected usage to price.
@@ -4907,6 +4934,8 @@ paths:
         Pages through the plans a tenant system may offer, with the list-query contract's filtering, sorting and paging.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:pricing:read`.
       operationId: listPlans
       parameters:
       - name: "filter[code][eq]"
@@ -5290,10 +5319,10 @@ paths:
       tags:
       - Pricing plans
       summary: Create a pricing plan
-      description: "Creates a plan with a `code`, a name, a currency, a pricing `model`\
-        \ and its first version. Prices are decimals in minor units of the plan's\
-        \ currency. Creating a plan fixes the unit of each metric it prices; a later\
-        \ plan that measures the same metric in another unit is refused. Answers `201`."
+      description: |-
+        Creates a plan with a `code`, a name, a currency, a pricing `model` and its first version. Prices are decimals in minor units of the plan's currency. Creating a plan fixes the unit of each metric it prices; a later plan that measures the same metric in another unit is refused. Answers `201`.
+
+        Callers: tenant-user. Requires `billing:pricing:manage`.
       operationId: createPlan
       parameters:
       - name: X-Request-Id
@@ -5331,8 +5360,10 @@ paths:
       tags:
       - Pricing plans
       summary: Publish a plan version
-      description: "Adds the next version of the plan. Earlier versions, and every\
-        \ charge that used them, are unchanged. Answers `201`."
+      description: |-
+        Adds the next version of the plan. Earlier versions, and every charge that used them, are unchanged. Answers `201`.
+
+        Callers: tenant-user. Requires `billing:pricing:manage`.
       operationId: publishVersion
       parameters:
       - name: id
@@ -5379,8 +5410,10 @@ paths:
       tags:
       - Pricing plans
       summary: Retire a pricing plan
-      description: Retires the plan so it can no longer be offered; existing versions
-        and the charges that used them stay.
+      description: |-
+        Retires the plan so it can no longer be offered; existing versions and the charges that used them stay.
+
+        Callers: tenant-user. Requires `billing:pricing:manage`.
       operationId: retire
       parameters:
       - name: id
@@ -5417,12 +5450,10 @@ paths:
       tags:
       - Refunds
       summary: Refund a payment
-      description: "Sends money back to the customer's card, in full when `amount`\
-        \ is omitted. The unspent balance is held at once, Stripe is asked, and the\
-        \ wallet is debited only when Stripe confirms. Answers `409` when the amount\
-        \ exceeds what is left to refund or the wallet has already spent it. Send\
-        \ an `Idempotency-Key`; a repeat of the same key and body answers the first\
-        \ result with `200`."
+      description: |-
+        Sends money back to the customer's card, in full when `amount` is omitted. The unspent balance is held at once, Stripe is asked, and the wallet is debited only when Stripe confirms. Answers `409` when the amount exceeds what is left to refund or the wallet has already spent it. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:refund:create`.
       operationId: requestRefund
       parameters:
       - name: id
@@ -5504,11 +5535,10 @@ paths:
       tags:
       - Payments
       summary: Start a wallet top-up
-      description: "Starts a top-up of a wallet and answers the Stripe-hosted page\
-        \ where the customer pays. Creating a payment never changes a balance: the\
-        \ wallet is credited only when a verified Stripe event says the money arrived.\
-        \ Send an `Idempotency-Key`; a repeat of the same key and body answers the\
-        \ first result with `200`."
+      description: |-
+        Starts a top-up of a wallet and answers the Stripe-hosted page where the customer pays. Creating a payment never changes a balance: the wallet is credited only when a verified Stripe event says the money arrived. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:payment:create`.
       operationId: createTopUp
       parameters:
       - name: Idempotency-Key
@@ -5577,10 +5607,10 @@ paths:
       tags:
       - Ledger
       summary: Reverse a ledger entry
-      description: "The only way to correct the ledger: posts an entry that negates\
-        \ an earlier one on the same wallet and, optionally, a `replacement` with\
-        \ the right amount. The original is never touched. Reversing the same entry\
-        \ twice answers the first reversal, with `replayed` set."
+      description: |-
+        The only way to correct the ledger: posts an entry that negates an earlier one on the same wallet and, optionally, a `replacement` with the right amount. The original is never touched. Reversing the same entry twice answers the first reversal, with `replayed` set.
+
+        Callers: tenant-user. Requires `billing:ledger:reverse`.
       operationId: reverse
       parameters:
       - name: id
@@ -5623,6 +5653,8 @@ paths:
         Pages through the tenant's invoices, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:invoice:read`.
       operationId: invoices
       parameters:
       - name: "filter[created_at][eq]"
@@ -6358,11 +6390,10 @@ paths:
       tags:
       - Invoices
       summary: Invoice a charge
-      description: "Issues an invoice for one succeeded charge, with the same numbering\
-        \ as a cycle invoice. A charge is billed on one line at most, so asking again\
-        \ answers the existing invoice with `200` and needs no key. A postpaid charge\
-        \ opens for payment; a prepaid charge was paid from the wallet, so its invoice\
-        \ is a paid record. Answers `201`."
+      description: |-
+        Issues an invoice for one succeeded charge, with the same numbering as a cycle invoice. A charge is billed on one line at most, so asking again answers the existing invoice with `200` and needs no key. A postpaid charge opens for payment; a prepaid charge was paid from the wallet, so its invoice is a paid record. Answers `201`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:invoice:create`.
       operationId: invoiceCharge
       parameters:
       - name: X-Request-Id
@@ -6407,9 +6438,10 @@ paths:
       tags:
       - Invoices
       summary: Void an invoice
-      description: "Cancels the request for payment, with a `reason`. The wallet is\
-        \ not touched: what was charged stays charged, and correcting the ledger is\
-        \ a reversal, not a void. A paid invoice cannot be voided and answers `409`."
+      description: |-
+        Cancels the request for payment, with a `reason`. The wallet is not touched: what was charged stays charged, and correcting the ledger is a reversal, not a void. A paid invoice cannot be voided and answers `409`.
+
+        Callers: tenant-user. Requires `billing:invoice:manage`.
       operationId: voidInvoice
       parameters:
       - name: id
@@ -6461,8 +6493,10 @@ paths:
       tags:
       - Invoices
       summary: Write an invoice off
-      description: Writes an open invoice off as unlikely to be paid. It can still
-        be paid later.
+      description: |-
+        Writes an open invoice off as unlikely to be paid. It can still be paid later.
+
+        Callers: tenant-user. Requires `billing:invoice:manage`.
       operationId: markUncollectible
       parameters:
       - name: id
@@ -6499,10 +6533,10 @@ paths:
       tags:
       - Invoices
       summary: Pay an invoice
-      description: "Starts a payment of an open invoice and answers Stripe's hosted\
-        \ page where the customer pays. The invoice is paid, and the debt paid off,\
-        \ only when Stripe's verified result arrives. Send an `Idempotency-Key`; a\
-        \ repeat of the same key and body answers the first result with `200`."
+      description: |-
+        Starts a payment of an open invoice and answers Stripe's hosted page where the customer pays. The invoice is paid, and the debt paid off, only when Stripe's verified result arrives. Send an `Idempotency-Key`; a repeat of the same key and body answers the first result with `200`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:payment:create`.
       operationId: pay
       parameters:
       - name: id
@@ -6576,6 +6610,8 @@ paths:
         Pages through the tenant's customers, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:customer:read`.
       operationId: list_1
       parameters:
       - name: "filter[created_at][eq]"
@@ -6834,12 +6870,10 @@ paths:
       tags:
       - Customers
       summary: Create a customer
-      description: "Creates a billing customer, optionally mapped to a Tenant System\
-        \ user through `tenantSystemId` and `externalUserId`. A Tenant System maps\
-        \ its own users; a Tenant User names the tenant system explicitly. Safe to\
-        \ retry: the same `Idempotency-Key` returns the same customer (`201` for a\
-        \ new one, `200` for a replay), and the same key with a different body answers\
-        \ `409`."
+      description: |-
+        Creates a billing customer, optionally mapped to a Tenant System user through `tenantSystemId` and `externalUserId`. A Tenant System maps its own users; a Tenant User names the tenant system explicitly. Safe to retry: the same `Idempotency-Key` returns the same customer (`201` for a new one, `200` for a replay), and the same key with a different body answers `409`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:customer:write`.
       operationId: create
       parameters:
       - name: Idempotency-Key
@@ -6899,8 +6933,10 @@ paths:
       tags:
       - Customers
       summary: Deactivate a customer
-      description: Deactivates the customer. Pass the current `ETag` in `If-Match`;
-        a stale version is refused with `412`.
+      description: |-
+        Deactivates the customer. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:customer:write`.
       operationId: deactivate
       parameters:
       - name: id
@@ -6968,6 +7004,8 @@ paths:
         Pages through the tenant's coupons, with the list-query contract's filtering, sorting and paging.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:coupon:read`.
       operationId: coupons
       parameters:
       - name: "filter[benefit_type][eq]"
@@ -7588,12 +7626,10 @@ paths:
       tags:
       - Coupons
       summary: Create a coupon
-      description: "Creates a coupon with immutable terms: a benefit (a percentage\
-        \ in basis points or a fixed amount), an optional window, limits and scope,\
-        \ and optionally its first promotion code. A coupon without a total bound,\
-        \ a benefit out of range or a currency mismatch is refused before anything\
-        \ is stored. An Administrator and a Tenant System both create coupons, and\
-        \ the creating actor is stored on the coupon. Answers `201`."
+      description: |-
+        Creates a coupon with immutable terms: a benefit (a percentage in basis points or a fixed amount), an optional window, limits and scope, and optionally its first promotion code. A coupon without a total bound, a benefit out of range or a currency mismatch is refused before anything is stored. An Administrator and a Tenant System both create coupons, and the creating actor is stored on the coupon. Answers `201`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:coupon:manage`.
       operationId: createCoupon
       parameters:
       - name: X-Request-Id
@@ -7632,10 +7668,10 @@ paths:
       tags:
       - Coupons
       summary: Deactivate a coupon
-      description: "Final: stops new redemptions of the coupon and deactivates its\
-        \ codes. A running redemption keeps working unless `revokeRedemptions` is\
-        \ set, which pulls a bad coupon without invalidating a charge that already\
-        \ used it."
+      description: |-
+        Final: stops new redemptions of the coupon and deactivates its codes. A running redemption keeps working unless `revokeRedemptions` is set, which pulls a bad coupon without invalidating a charge that already used it.
+
+        Callers: tenant-user, tenant-system. Requires `billing:coupon:manage`.
       operationId: deactivateCoupon
       parameters:
       - name: id
@@ -7685,6 +7721,8 @@ paths:
         Pages through the promotion codes of the coupon named by the path, with the list-query contract's filtering, sorting and paging.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:coupon:read`.
       operationId: codes
       parameters:
       - name: id
@@ -8095,9 +8133,10 @@ paths:
       tags:
       - Coupons
       summary: Add a promotion code
-      description: "Adds a promotion code to a coupon, with an optional redemption\
-        \ limit and `redeemBy` date. A code never outlives its coupon's terms. Answers\
-        \ `201`."
+      description: |-
+        Adds a promotion code to a coupon, with an optional redemption limit and `redeemBy` date. A code never outlives its coupon's terms. Answers `201`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:coupon:manage`.
       operationId: addCode
       parameters:
       - name: id
@@ -8144,9 +8183,10 @@ paths:
       tags:
       - Coupon redemptions
       summary: Revoke a coupon redemption
-      description: "Ends the redemption early. Nothing is released or refunded: discounts\
-        \ already given were charged correctly at the time. Idempotent: revoking again\
-        \ changes nothing and announces nothing."
+      description: |-
+        Ends the redemption early. Nothing is released or refunded: discounts already given were charged correctly at the time. Idempotent: revoking again changes nothing and announces nothing.
+
+        Callers: tenant-user, tenant-system. Requires `billing:coupon:manage`.
       operationId: revoke
       parameters:
       - name: id
@@ -8188,6 +8228,8 @@ paths:
         Pages through the tenant's charges, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:wallet:read`.
       operationId: charges
       parameters:
       - name: "filter[amount][eq]"
@@ -8657,10 +8699,10 @@ paths:
       tags:
       - Charges
       summary: Charge a wallet
-      description: "Records the actual cost incurred against a wallet (`walletId`,\
-        \ `amount` in minor units, `currency`), once per `Idempotency-Key`. A wallet\
-        \ that cannot pay yields a recorded `insufficient_funds` failure rather than\
-        \ an error. A repeat answers the first charge with `200`."
+      description: |-
+        Records the actual cost incurred against a wallet (`walletId`, `amount` in minor units, `currency`), once per `Idempotency-Key`. A wallet that cannot pay yields a recorded `insufficient_funds` failure rather than an error. A repeat answers the first charge with `200`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:charge:create`.
       operationId: charge
       parameters:
       - name: Idempotency-Key
@@ -8709,11 +8751,10 @@ paths:
       tags:
       - Billing sessions
       summary: Create a billing session
-      description: "Issues a portal session for one customer (`customerId`) to the\
-        \ Tenant System that asked, with a `returnUrl` from the tenant's allowlist,\
-        \ the `permissions` it grants and a lifetime. The answer carries the `portalUrl`\
-        \ to open in the customer's browser; its single-use exchange token is shown\
-        \ once there, and only its digest is stored."
+      description: |-
+        Issues a portal session for one customer (`customerId`) to the Tenant System that asked, with a `returnUrl` from the tenant's allowlist, the `permissions` it grants and a lifetime. The answer carries the `portalUrl` to open in the customer's browser; its single-use exchange token is shown once there, and only its digest is stored.
+
+        Callers: tenant-user, tenant-system. Requires `billing:billing-session:create`.
       operationId: create_1
       parameters:
       - name: X-Request-Id
@@ -8752,8 +8793,10 @@ paths:
       tags:
       - Billing sessions
       summary: Revoke a billing session
-      description: Revokes the session at once. A Tenant System may revoke only the
-        sessions it issued; a Tenant User may revoke any.
+      description: |-
+        Revokes the session at once. A Tenant System may revoke only the sessions it issued; a Tenant User may revoke any.
+
+        Callers: tenant-user, tenant-system. Requires `billing:billing-session:create`.
       operationId: revoke_1
       parameters:
       - name: id
@@ -8787,8 +8830,10 @@ paths:
       tags:
       - Webhook endpoints
       summary: Get a webhook endpoint
-      description: Returns one endpoint; its version is also the response's `ETag`.
-        The secret is not returned. An unknown id answers `404`.
+      description: |-
+        Returns one endpoint; its version is also the response's `ETag`. The secret is not returned. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:webhook:read`.
       operationId: getEndpoint
       parameters:
       - name: id
@@ -8818,10 +8863,10 @@ paths:
       tags:
       - Webhook endpoints
       summary: Update a webhook endpoint
-      description: "Changes only the fields that are present: url, description, subscribed\
-        \ event types or `status`. Setting `status` to `DISABLED` pauses delivery\
-        \ without losing queued events. Pass the current `ETag` in `If-Match`; a stale\
-        \ version is refused with `412`."
+      description: |-
+        Changes only the fields that are present: url, description, subscribed event types or `status`. Setting `status` to `DISABLED` pauses delivery without losing queued events. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:webhook:manage`.
       operationId: updateEndpoint
       parameters:
       - name: id
@@ -8893,6 +8938,7 @@ paths:
     get:
       tags:
       - jwks-endpoint
+      description: "Callers: public."
       operationId: jwks
       responses:
         "200":
@@ -8902,10 +8948,8 @@ paths:
               schema:
                 type: object
                 additionalProperties: {}
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-        "403":
-          $ref: "#/components/responses/NotEntitled"
+      x-allowed-callers:
+      - public
   /portal/api/wallets:
     get:
       tags:
@@ -8915,6 +8959,8 @@ paths:
         Pages through the wallets of the portal session's customer, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: customer-session.
       operationId: wallets_1
       parameters:
       - name: "filter[balance][eq]"
@@ -9369,14 +9415,16 @@ paths:
           $ref: "#/components/responses/NotEntitled"
       x-required-portal-permission: wallet:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/wallets/{id}:
     get:
       tags:
       - "Portal: wallets and charges"
       summary: Get one of the customer's wallets
-      description: "Returns a wallet of the portal session's customer with its balance,\
-        \ held amount and available amount. A wallet of another customer answers `404`."
+      description: |-
+        Returns a wallet of the portal session's customer with its balance, held amount and available amount. A wallet of another customer answers `404`.
+
+        Callers: customer-session.
       operationId: wallet
       parameters:
       - name: id
@@ -9400,7 +9448,7 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-portal-permission: wallet:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/wallets/{id}/ledger:
     get:
       tags:
@@ -9410,6 +9458,8 @@ paths:
         Pages through the append-only ledger of one of the customer's wallets, with the list-query contract's filtering, sorting and paging.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: customer-session.
       operationId: ledger
       parameters:
       - name: id
@@ -9912,15 +9962,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-portal-permission: ledger:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/usage/totals:
     get:
       tags:
       - "Portal: usage"
       summary: Get the customer's usage totals
-      description: "Returns the quantity and number of events per metric over `[from,\
-        \ to)`, optionally for one `metric`. The customer is fixed by the portal session,\
-        \ so no other customer's data is reachable."
+      description: |-
+        Returns the quantity and number of events per metric over `[from, to)`, optionally for one `metric`. The customer is fixed by the portal session, so no other customer's data is reachable.
+
+        Callers: customer-session.
       operationId: totals
       parameters:
       - name: metric
@@ -9960,7 +10011,7 @@ paths:
           $ref: "#/components/responses/NotEntitled"
       x-required-portal-permission: usage:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/usage/history:
     get:
       tags:
@@ -9970,6 +10021,8 @@ paths:
         Pages through the usage reported for the portal session's customer, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: customer-session.
       operationId: history_1
       parameters:
       - name: "filter[customer_id][eq]"
@@ -10433,7 +10486,7 @@ paths:
           $ref: "#/components/responses/NotEntitled"
       x-required-portal-permission: usage:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/subscriptions:
     get:
       tags:
@@ -10443,6 +10496,8 @@ paths:
         Pages through the subscriptions of the portal session's customer, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: customer-session.
       operationId: subscriptions_1
       parameters:
       - name: "filter[anchor][eq]"
@@ -11121,14 +11176,16 @@ paths:
           $ref: "#/components/responses/NotEntitled"
       x-required-portal-permission: subscription:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/subscriptions/{id}:
     get:
       tags:
       - "Portal: invoices and subscriptions"
       summary: Get one of the customer's subscriptions
-      description: Returns a subscription of the portal session's customer with its
-        history. A subscription of another customer answers `404`.
+      description: |-
+        Returns a subscription of the portal session's customer with its history. A subscription of another customer answers `404`.
+
+        Callers: customer-session.
       operationId: subscription
       parameters:
       - name: id
@@ -11152,14 +11209,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-portal-permission: subscription:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/session:
     get:
       tags:
       - "Portal: session"
       summary: Get the portal session
-      description: "Returns what the portal may show, the permissions the session\
-        \ carries, and when the visit expires."
+      description: |-
+        Returns what the portal may show, the permissions the session carries, and when the visit expires.
+
+        Callers: customer-session.
       operationId: session
       responses:
         "200":
@@ -11174,7 +11233,7 @@ paths:
           $ref: "#/components/responses/NotEntitled"
       x-required-portal-permission: session:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/refunds:
     get:
       tags:
@@ -11184,6 +11243,8 @@ paths:
         Pages through the refunds of the portal session's customer's payments, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: customer-session.
       operationId: refunds
       parameters:
       - name: "filter[amount][eq]"
@@ -11605,7 +11666,7 @@ paths:
           $ref: "#/components/responses/NotEntitled"
       x-required-portal-permission: refund:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/payments:
     get:
       tags:
@@ -11615,6 +11676,8 @@ paths:
         Pages through the payments of the portal session's customer, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: customer-session.
       operationId: payments
       parameters:
       - name: "filter[amount][eq]"
@@ -12167,14 +12230,16 @@ paths:
           $ref: "#/components/responses/NotEntitled"
       x-required-portal-permission: payment:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/payments/{id}:
     get:
       tags:
       - "Portal: payments"
       summary: Get one of the customer's payments
-      description: Returns a payment of the portal session's customer with its status.
-        A payment of another customer answers `404`.
+      description: |-
+        Returns a payment of the portal session's customer with its status. A payment of another customer answers `404`.
+
+        Callers: customer-session.
       operationId: payment
       parameters:
       - name: id
@@ -12198,7 +12263,7 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-portal-permission: payment:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/invoices:
     get:
       tags:
@@ -12208,6 +12273,8 @@ paths:
         Pages through the invoices of the portal session's customer, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: customer-session.
       operationId: invoices_1
       parameters:
       - name: "filter[created_at][eq]"
@@ -12937,14 +13004,16 @@ paths:
           $ref: "#/components/responses/NotEntitled"
       x-required-portal-permission: invoice:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/invoices/{id}:
     get:
       tags:
       - "Portal: invoices and subscriptions"
       summary: Get one of the customer's invoices
-      description: Returns an invoice of the portal session's customer with its lines.
-        An invoice of another customer answers `404`.
+      description: |-
+        Returns an invoice of the portal session's customer with its lines. An invoice of another customer answers `404`.
+
+        Callers: customer-session.
       operationId: invoice
       parameters:
       - name: id
@@ -12968,15 +13037,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-portal-permission: invoice:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/customer:
     get:
       tags:
       - "Portal: customer"
       summary: Get the portal customer
-      description: "Returns the customer the portal session was issued for, and nothing\
-        \ else. The customer is fixed by the portal session, so no other customer's\
-        \ data is reachable."
+      description: |-
+        Returns the customer the portal session was issued for, and nothing else. The customer is fixed by the portal session, so no other customer's data is reachable.
+
+        Callers: customer-session.
       operationId: customer
       responses:
         "200":
@@ -12991,7 +13061,7 @@ paths:
           $ref: "#/components/responses/NotEntitled"
       x-required-portal-permission: customer:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /portal/api/charges:
     get:
       tags:
@@ -13001,6 +13071,8 @@ paths:
         Pages through the charges made against the portal session's customer's wallets, with the list-query contract's filtering, sorting and paging. The customer is fixed by the portal session, so no other customer's data is reachable.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: customer-session.
       operationId: charges_1
       parameters:
       - name: "filter[amount][eq]"
@@ -13464,7 +13536,7 @@ paths:
           $ref: "#/components/responses/NotEntitled"
       x-required-portal-permission: charge:view
       x-allowed-callers:
-      - portal-session
+      - customer-session
   /api/v1/webhook-deliveries:
     get:
       tags:
@@ -13474,6 +13546,8 @@ paths:
         Lists the attempts Billing made to report an event to an endpoint, with the list-query contract's filtering, sorting and paging. A delivery that exhausted its attempts is `DEAD` and stays visible here so it can be resent.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:webhook:read`.
       operationId: listDeliveries
       parameters:
       - name: "filter[attempts][eq]"
@@ -14052,8 +14126,10 @@ paths:
       tags:
       - Webhook deliveries
       summary: Get a webhook delivery
-      description: "Returns one delivery with its state and every attempt: the status\
-        \ code, error, response excerpt and latency. An unknown id answers `404`."
+      description: |-
+        Returns one delivery with its state and every attempt: the status code, error, response excerpt and latency. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:webhook:read`.
       operationId: getDelivery
       parameters:
       - name: id
@@ -14084,8 +14160,10 @@ paths:
       tags:
       - Wallets
       summary: Get a wallet
-      description: "Returns one wallet with its balance, the amount held by reservations\
-        \ and the amount available to spend. An unknown id answers `404`."
+      description: |-
+        Returns one wallet with its balance, the amount held by reservations and the amount available to spend. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:wallet:read`.
       operationId: wallet_1
       parameters:
       - name: id
@@ -14120,6 +14198,8 @@ paths:
         Pages through the append-only ledger of the wallet named by the path, with the list-query contract's filtering, sorting and paging.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:wallet:read`.
       operationId: ledger_1
       parameters:
       - name: id
@@ -14629,9 +14709,10 @@ paths:
       tags:
       - Usage
       summary: Get usage aggregates
-      description: "Returns the quantity and the number of events per metric for a\
-        \ customer over `[from, to)`, optionally for the `metric` values given. Rating\
-        \ and invoices read the same totals."
+      description: |-
+        Returns the quantity and the number of events per metric for a customer over `[from, to)`, optionally for the `metric` values given. Rating and invoices read the same totals.
+
+        Callers: tenant-user, tenant-system. Requires `billing:usage:read`.
       operationId: aggregates
       parameters:
       - name: customerId
@@ -14686,8 +14767,10 @@ paths:
       tags:
       - Subscriptions
       summary: Get a subscription
-      description: Returns one subscription with its history of periods. An unknown
-        id answers `404`.
+      description: |-
+        Returns one subscription with its history of periods. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:subscription:read`.
       operationId: subscription_1
       parameters:
       - name: id
@@ -14722,6 +14805,8 @@ paths:
         Pages through the problems that need a person to look, such as a payment that disagrees with Stripe, with the list-query contract's filtering, sorting and paging.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user. Requires `billing:stripe:read`.
       operationId: incidents
       parameters:
       - name: "filter[created_at][eq]"
@@ -15117,6 +15202,8 @@ paths:
         Pages through the Stripe webhook events received for the tenant, newest first by default, with the list-query contract's filtering, sorting and paging.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user. Requires `billing:stripe:read`.
       operationId: events
       parameters:
       - name: "filter[attempts][eq]"
@@ -15590,8 +15677,10 @@ paths:
       tags:
       - Stripe configuration
       summary: Get a Stripe event
-      description: Returns one received Stripe event with how its processing went.
-        An unknown id answers `404`.
+      description: |-
+        Returns one received Stripe event with how its processing went. An unknown id answers `404`.
+
+        Callers: tenant-user. Requires `billing:stripe:read`.
       operationId: event
       parameters:
       - name: id
@@ -15621,9 +15710,10 @@ paths:
       tags:
       - Stripe configuration
       summary: Get the Stripe configuration
-      description: "Returns the tenant's Stripe connection: mode, account, environment,\
-        \ status, whether card payments are active and the webhook URL. No secret\
-        \ is returned."
+      description: |-
+        Returns the tenant's Stripe connection: mode, account, environment, status, whether card payments are active and the webhook URL. No secret is returned.
+
+        Callers: tenant-user. Requires `billing:stripe:read`.
       operationId: getConfiguration
       responses:
         "200":
@@ -15643,7 +15733,10 @@ paths:
       tags:
       - Stripe configuration
       summary: Disconnect Stripe
-      description: Removes the tenant's Stripe configuration. Answers `204`.
+      description: |-
+        Removes the tenant's Stripe configuration. Answers `204`.
+
+        Callers: tenant-user. Requires `billing:stripe:manage`.
       operationId: disconnect
       parameters:
       - name: X-Request-Id
@@ -15668,8 +15761,10 @@ paths:
       tags:
       - Reservations
       summary: Get a reservation
-      description: "Returns one reservation with its status, amount, what was captured\
-        \ and when it expires. An unknown id answers `404`."
+      description: |-
+        Returns one reservation with its status, amount, what was captured and when it expires. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:wallet:read`.
       operationId: reservation
       parameters:
       - name: id
@@ -15704,6 +15799,8 @@ paths:
         Pages through the tenant's refunds, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:payment:read`.
       operationId: refunds_1
       parameters:
       - name: "filter[amount][eq]"
@@ -16132,8 +16229,10 @@ paths:
       tags:
       - Refunds
       summary: Get a refund
-      description: Returns one refund with its status and failure reason. An unknown
-        id answers `404`.
+      description: |-
+        Returns one refund with its status and failure reason. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:payment:read`.
       operationId: getRefund
       parameters:
       - name: id
@@ -16164,8 +16263,10 @@ paths:
       tags:
       - Rating
       summary: Get a usage rating
-      description: "Returns one rating with its lines, the period it covers and the\
-        \ charge it produced. An unknown id answers `404`."
+      description: |-
+        Returns one rating with its lines, the period it covers and the charge it produced. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:pricing:read`.
       operationId: getRating
       parameters:
       - name: id
@@ -16196,8 +16297,10 @@ paths:
       tags:
       - Pricing plans
       summary: Get a pricing plan
-      description: Returns one plan with its current version. An unknown id answers
-        `404`.
+      description: |-
+        Returns one plan with its current version. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:pricing:read`.
       operationId: getPlan
       parameters:
       - name: id
@@ -16232,6 +16335,8 @@ paths:
         Pages through the tenant's payments, with the list-query contract's filtering, sorting and paging. A Tenant System sees and acts on the customers mapped to it only.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user, tenant-system. Requires `billing:payment:read`.
       operationId: payments_1
       parameters:
       - name: "filter[amount][eq]"
@@ -16791,8 +16896,10 @@ paths:
       tags:
       - Payments
       summary: Get a payment
-      description: Returns one payment with its status and the amount refunded so
-        far. An unknown id answers `404`.
+      description: |-
+        Returns one payment with its status and the amount refunded so far. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:payment:read`.
       operationId: payment_1
       parameters:
       - name: id
@@ -16823,9 +16930,10 @@ paths:
       tags:
       - Invoices
       summary: Get an invoice
-      description: "Returns one invoice with its lines. An invoice becomes paid only\
-        \ from a verified payment, or because the wallet already paid the charge it\
-        \ documents; no request marks one paid. An unknown id answers `404`."
+      description: |-
+        Returns one invoice with its lines. An invoice becomes paid only from a verified payment, or because the wallet already paid the charge it documents; no request marks one paid. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:invoice:read`.
       operationId: invoice_1
       parameters:
       - name: id
@@ -16856,9 +16964,10 @@ paths:
       tags:
       - Customers
       summary: Find a customer by external user id
-      description: "Returns the customer mapped to `externalUserId`, which is how\
-        \ a Tenant System finds a customer by its own user reference. A Tenant User\
-        \ also passes `tenantSystemId`. An unmapped user answers `404`."
+      description: |-
+        Returns the customer mapped to `externalUserId`, which is how a Tenant System finds a customer by its own user reference. A Tenant User also passes `tenantSystemId`. An unmapped user answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:customer:read`.
       operationId: byExternalUser
       parameters:
       - name: externalUserId
@@ -16897,8 +17006,10 @@ paths:
       tags:
       - Coupons
       summary: Get a coupon
-      description: Returns one coupon with its terms and how much has been redeemed.
-        An unknown id answers `404`.
+      description: |-
+        Returns one coupon with its terms and how much has been redeemed. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:coupon:read`.
       operationId: coupon
       parameters:
       - name: id
@@ -16929,8 +17040,10 @@ paths:
       tags:
       - Coupon redemptions
       summary: Get a coupon redemption
-      description: "Returns one redemption with its coupon, code and wallet. An unknown\
-        \ id answers `404`."
+      description: |-
+        Returns one redemption with its coupon, code and wallet. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:coupon:read`.
       operationId: redemption
       parameters:
       - name: id
@@ -16961,8 +17074,10 @@ paths:
       tags:
       - Charges
       summary: Get a charge
-      description: Returns one charge with the discounts applied to it. An unknown
-        id answers `404`.
+      description: |-
+        Returns one charge with the discounts applied to it. An unknown id answers `404`.
+
+        Callers: tenant-user, tenant-system. Requires `billing:wallet:read`.
       operationId: getCharge
       parameters:
       - name: id

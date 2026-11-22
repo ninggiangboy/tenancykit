@@ -65,8 +65,8 @@ dependencies {
 // subscription to a type the app does not send cannot be created. A schema added there needs no code change.
 tasks.processResources {
     from(layout.projectDirectory.dir("../../../../../../contracts/permissions")) {
-        // Only this app's catalog: another app's codes are neither its contract nor its business.
-        include("loyalty.yaml")
+        // Every catalog, because the shared caller-label reader resolves any code the app documents, not only its own.
+        include("*.yaml")
         into("permissions")
     }
     from(layout.projectDirectory.dir("../../../../../../contracts/events/loyalty")) {

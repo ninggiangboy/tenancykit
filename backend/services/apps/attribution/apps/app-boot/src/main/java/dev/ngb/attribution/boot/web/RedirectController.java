@@ -14,6 +14,8 @@ import dev.ngb.attribution.links.domain.link.Link;
 import dev.ngb.attribution.links.domain.redirect.RedirectLocation;
 import dev.ngb.attribution.tracking.api.ingest.ClickIngest;
 import dev.ngb.core.runtime.Clock;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.core.tenancy.TenantContext;
 import dev.ngb.core.visitor.DeviceClass;
@@ -53,6 +55,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The public redirect of a tracked link: records a click and answers 302, with refusals that reveal "
                 + "little.")
 @RestController
+@Callers(Caller.PUBLIC)
 public class RedirectController {
 
     private static final String NO_STORE = "no-store";

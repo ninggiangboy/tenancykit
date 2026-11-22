@@ -50,7 +50,8 @@ paths:
       - "Webhook endpoints"
       summary: "Get a webhook endpoint"
       description: "Returns one endpoint; its version is also the response's `ETag`.\
-        \ The secret is not returned. An unknown id answers `404`. Requires `workflow:webhook:manage`."
+        \ The secret is not returned. An unknown id answers `404`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `workflow:webhook:manage`."
       operationId: "getEndpoint"
       parameters:
       - name: "id"
@@ -73,6 +74,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
     put:
       tags:
       - "Webhook endpoints"
@@ -80,7 +84,8 @@ paths:
       description: "Changes only the fields that are present: url, description, subscribed\
         \ event types or `status`. Setting `status` to `DISABLED` pauses delivery\
         \ without losing queued events. Pass the current `ETag` in `If-Match`; a stale\
-        \ version is refused with `412`. Requires `workflow:webhook:manage`."
+        \ version is refused with `412`.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `workflow:webhook:manage`."
       operationId: "updateEndpoint"
       parameters:
       - name: "id"
@@ -128,13 +133,17 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
     delete:
       tags:
       - "Webhook endpoints"
       summary: "Delete a webhook endpoint"
       description: "Deletes the endpoint: it stops receiving and leaves every list,\
         \ while its delivery history stays readable. Pass the current `ETag` in `If-Match`;\
-        \ a stale version is refused with `412`. Requires `workflow:webhook:manage`."
+        \ a stale version is refused with `412`. Requires `workflow:webhook:manage`.\n\
+        \nCallers: tenant-user, tenant-system. Requires `workflow:webhook:manage`."
       operationId: "deleteEndpoint"
       parameters:
       - name: "id"
@@ -169,13 +178,17 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/triggers/{id}:
     get:
       tags:
       - "Triggers"
       summary: "Get a trigger"
       description: "Returns one trigger without its secret; its version is also the\
-        \ response's `ETag`. An unknown id answers `404`. Requires `workflow:trigger:manage`."
+        \ response's `ETag`. An unknown id answers `404`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `workflow:trigger:manage`."
       operationId: "getTrigger"
       parameters:
       - name: "id"
@@ -199,13 +212,17 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:trigger:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
     put:
       tags:
       - "Triggers"
       summary: "Update or disable a trigger"
       description: "Changes the trigger's name, event type, filter, correlation or\
         \ input, or disables it with `enabled=false`. Pass the current `ETag` in `If-Match`;\
-        \ a stale version is refused with `412`. Requires `workflow:trigger:manage`."
+        \ a stale version is refused with `412`.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `workflow:trigger:manage`."
       operationId: "updateTrigger"
       parameters:
       - name: "id"
@@ -254,6 +271,9 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:trigger:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/task-groups/{code}:
     put:
       tags:
@@ -262,7 +282,8 @@ paths:
       description: "Replaces the group's name and members. A member disabled later\
         \ keeps the group membership but loses access to the tasks, because every\
         \ action re-reads the user's state. Pass the current `ETag` in `If-Match`;\
-        \ a stale version is refused with `412`. Requires `workflow:task:manage`."
+        \ a stale version is refused with `412`.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `workflow:task:manage`."
       operationId: "update"
       parameters:
       - name: "code"
@@ -303,13 +324,16 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:task:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
     delete:
       tags:
       - "Task groups"
       summary: "Delete a task group"
       description: "Deletes the group. A workflow node that is assigned to it fails\
         \ with a readable reason rather than creating a task nobody can see. Answers\
-        \ `204`. Requires `workflow:task:manage`."
+        \ `204`.\n\nCallers: tenant-user, tenant-system. Requires `workflow:task:manage`."
       operationId: "delete"
       parameters:
       - name: "code"
@@ -328,6 +352,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:task:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/platform-credential:
     get:
       tags:
@@ -335,7 +362,8 @@ paths:
       summary: "Get the Platform credential's status"
       description: "Returns the credential's `clientId`, the key id that wrote its\
         \ envelope, when it was last updated and whether Platform still accepts it.\
-        \ The secret is never returned. Requires `workflow:connection:manage`."
+        \ The secret is never returned. Requires `workflow:connection:manage`.\n\n\
+        Callers: tenant-user, tenant-system. Requires `workflow:connection:manage`."
       operationId: "status"
       responses:
         "200":
@@ -350,6 +378,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:connection:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
     put:
       tags:
       - "Platform credential"
@@ -357,7 +388,7 @@ paths:
       description: "Stores the API credential (`clientId` and `secret`) workflow uses\
         \ to call Platform for the tenant. The secret is write-only: it is encrypted\
         \ on the way in and never read back. Answers the credential's status and the\
-        \ key id that wrote it. Requires `workflow:connection:manage`."
+        \ key id that wrote it.\n\nCallers: tenant-user, tenant-system. Requires `workflow:connection:manage`."
       operationId: "register"
       requestBody:
         description: "The credential to store."
@@ -381,6 +412,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:connection:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/definitions/{id}/draft:
     put:
       tags:
@@ -389,7 +423,8 @@ paths:
       description: "Replaces the whole draft `graph`. A structurally wrong draft is\
         \ stored as sent and its problems are returned, because a draft is what an\
         \ author is still writing; only publish refuses one. Pass the current `ETag`\
-        \ in `If-Match`; a stale version is refused with `412`. Requires `workflow:definition:manage`."
+        \ in `If-Match`; a stale version is refused with `412`. Requires `workflow:definition:manage`.\n\
+        \nCallers: tenant-user, tenant-system. Requires `workflow:definition:manage`."
       operationId: "putDraft"
       parameters:
       - name: "id"
@@ -437,13 +472,17 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:definition:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/connections/{id}:
     get:
       tags:
       - "Connections"
       summary: "Get a connection"
       description: "Returns one connection without its secret; its version is also\
-        \ the response's `ETag`. An unknown id answers `404`. Requires `workflow:connection:manage`."
+        \ the response's `ETag`. An unknown id answers `404`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `workflow:connection:manage`."
       operationId: "get"
       parameters:
       - name: "id"
@@ -466,13 +505,17 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:connection:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
     put:
       tags:
       - "Connections"
       summary: "Update a connection"
       description: "Replaces the connection's name, kind, allowed host and headers,\
         \ and its secret when one is sent. Pass the current `ETag` in `If-Match`;\
-        \ a stale version is refused with `412`. Requires `workflow:connection:manage`."
+        \ a stale version is refused with `412`. Requires `workflow:connection:manage`.\n\
+        \nCallers: tenant-user, tenant-system. Requires `workflow:connection:manage`."
       operationId: "update_1"
       parameters:
       - name: "id"
@@ -513,6 +556,9 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:connection:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /hooks/{triggerId}:
     post:
       tags:
@@ -523,7 +569,7 @@ paths:
         \ from the host. A new event starts every matching trigger and is answered\
         \ with how many started; a duplicate event id is answered as accepted and\
         \ starts nothing. A bad signature, a stale timestamp, an unknown trigger and\
-        \ a tampered body all answer the same `401`."
+        \ a tampered body all answer the same `401`.\n\nCallers: provider."
       operationId: "receive"
       parameters:
       - name: "triggerId"
@@ -555,24 +601,26 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
-      x-public: true
+      x-allowed-callers:
+      - "provider"
   /api/v1/webhook-endpoints:
     get:
       tags:
       - "Webhook endpoints"
       summary: "List webhook endpoints"
       description: "Pages through the tenant's webhook endpoints, with the list-query\
-        \ contract's filtering, sorting and paging. Requires `workflow:webhook:manage`.\n\
-        \n**Filtering, sorting and paging** follow the list-query contract. Conditions\
-        \ in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+        \ contract's filtering, sorting and paging.\n\n**Filtering, sorting and paging**\
+        \ follow the list-query contract. Conditions in `filter[field][op]` are combined\
+        \ with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the\
+        \ index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20\
+        \ predicates in all, 100 values in an `in` list). `neq` and `nin` do not match\
+        \ rows where the field is null. Send `limit` with either `offset` (at most\
+        \ 10000) or the `cursor` taken from a previous page, never both. The body\
+        \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
+        \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
+        \ with `limit` and `next_cursor` alone, without counting the matching rows;\
+        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `workflow:webhook:manage`."
       operationId: "listEndpoints"
       parameters:
       - name: "filter[created_at][eq]"
@@ -974,6 +1022,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
     post:
       tags:
       - "Webhook endpoints"
@@ -982,6 +1033,7 @@ paths:
         \ four event types. The signing secret is returned once, in this response,\
         \ and never again. A url that is not https or does not resolve to a public\
         \ address, or an unknown event type, answers `422`. Answers `201`. Requires\
+        \ `workflow:webhook:manage`.\n\nCallers: tenant-user, tenant-system. Requires\
         \ `workflow:webhook:manage`."
       operationId: "createEndpoint"
       parameters:
@@ -1020,13 +1072,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/webhook-endpoints/{id}/rotate-secret:
     post:
       tags:
       - "Webhook endpoints"
       summary: "Rotate a webhook endpoint's secret"
       description: "Replaces the endpoint's signing secret and returns the new one\
-        \ once, never again. Requires `workflow:webhook:manage`."
+        \ once, never again. Requires `workflow:webhook:manage`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `workflow:webhook:manage`."
       operationId: "rotateSecret"
       parameters:
       - name: "id"
@@ -1056,6 +1112,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/webhook-deliveries/{id}/retry:
     post:
       tags:
@@ -1064,7 +1123,8 @@ paths:
       description: "Queues a fresh delivery of the same stored event to the same endpoint,\
         \ with a new attempt budget, and answers `202`: sending happens asynchronously.\
         \ The original keeps its history. Only a finished delivery can be retried;\
-        \ one still being attempted is already on its way. Requires `workflow:webhook:manage`."
+        \ one still being attempted is already on its way. Requires `workflow:webhook:manage`.\n\
+        \nCallers: tenant-user, tenant-system. Requires `workflow:webhook:manage`."
       operationId: "retry"
       parameters:
       - name: "id"
@@ -1094,23 +1154,27 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/triggers:
     get:
       tags:
       - "Triggers"
       summary: "List triggers"
       description: "Pages through the tenant's triggers, with the list-query contract's\
-        \ filtering, sorting and paging. Requires `workflow:trigger:manage`.\n\n**Filtering,\
-        \ sorting and paging** follow the list-query contract. Conditions in `filter[field][op]`\
-        \ are combined with AND. For OR, use `filter[or][i][field][op]`: predicates\
-        \ sharing the index `i` are AND-ed and the branches are OR-ed (at most 10\
-        \ branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin`\
-        \ do not match rows where the field is null. Send `limit` with either `offset`\
-        \ (at most 10000) or the `cursor` taken from a previous page, never both.\
-        \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
-        \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+        \ filtering, sorting and paging. \n\n**Filtering, sorting and paging** follow\
+        \ the list-query contract. Conditions in `filter[field][op]` are combined\
+        \ with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the\
+        \ index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20\
+        \ predicates in all, 100 values in an `in` list). `neq` and `nin` do not match\
+        \ rows where the field is null. Send `limit` with either `offset` (at most\
+        \ 10000) or the `cursor` taken from a previous page, never both. The body\
+        \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
+        \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
+        \ with `limit` and `next_cursor` alone, without counting the matching rows;\
+        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `workflow:trigger:manage`."
       operationId: "listTriggers"
       parameters:
       - name: "filter[created_at][eq]"
@@ -1464,6 +1528,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:trigger:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
     post:
       tags:
       - "Triggers"
@@ -1474,7 +1541,8 @@ paths:
         \ to start, an optional `filter`, `correlation` and `input`. A signed trigger's\
         \ secret is in this response and never again. A schedule trigger's first tick\
         \ is after now, so one created while the worker was down does not fire every\
-        \ missed tick. Requires `workflow:trigger:manage`."
+        \ missed tick. Requires `workflow:trigger:manage`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `workflow:trigger:manage`."
       operationId: "createTrigger"
       parameters:
       - name: "X-Request-Id"
@@ -1505,6 +1573,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:trigger:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/tasks/{id}/reassign:
     post:
       tags:
@@ -1512,7 +1583,8 @@ paths:
       summary: "Reassign a task"
       description: "Moves an open task to another `user` or `group`; the new group's\
         \ members are copied onto it. Pass the current `ETag` in `If-Match`; a stale\
-        \ version is refused with `412`. Requires `workflow:task:complete`."
+        \ version is refused with `412`. Requires `workflow:task:complete`.\n\nCallers:\
+        \ tenant-user, tenant-system. Requires `workflow:task:complete`."
       operationId: "reassign"
       parameters:
       - name: "id"
@@ -1554,6 +1626,9 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:task:complete"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/tasks/{id}/complete:
     post:
       tags:
@@ -1564,7 +1639,8 @@ paths:
         \ transaction. A person acts on their own task; a Tenant System acts on any\
         \ task of its tenant and must name the person it speaks for in `completedBy`,\
         \ which is recorded as stated. Pass the current `ETag` in `If-Match`; a stale\
-        \ version is refused with `412`. Requires `workflow:task:complete`."
+        \ version is refused with `412`. Requires `workflow:task:complete`.\n\nCallers:\
+        \ tenant-user, tenant-system. Requires `workflow:task:complete`."
       operationId: "complete"
       parameters:
       - name: "id"
@@ -1606,6 +1682,9 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:task:complete"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/tasks/{id}/claim:
     post:
       tags:
@@ -1613,7 +1692,8 @@ paths:
       summary: "Claim a task"
       description: "A person takes an open task. Claiming a task that is already claimed\
         \ is a conflict, and a Tenant System may not claim at all. Pass the current\
-        \ `ETag` in `If-Match`; a stale version is refused with `412`. Requires `workflow:task:complete`."
+        \ `ETag` in `If-Match`; a stale version is refused with `412`.\n\nCallers:\
+        \ tenant-user, tenant-system. Requires `workflow:task:complete`."
       operationId: "claim"
       parameters:
       - name: "id"
@@ -1652,13 +1732,17 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:task:complete"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/task-groups:
     get:
       tags:
       - "Task groups"
       summary: "List task groups"
       description: "Returns the named lists a task may be assigned to, with their\
-        \ members. Requires `workflow:task:read`."
+        \ members. Requires `workflow:task:read`.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `workflow:task:read`."
       operationId: "list"
       responses:
         "200":
@@ -1674,12 +1758,16 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:task:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
     post:
       tags:
       - "Task groups"
       summary: "Create a task group"
       description: "Creates a group with a `code`, a name and its `members`. Members\
-        \ must be active users when they are added. Answers `201`. Requires `workflow:task:manage`."
+        \ must be active users when they are added. Answers `201`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `workflow:task:manage`."
       operationId: "create"
       requestBody:
         description: "The task group to store."
@@ -1702,6 +1790,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:task:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/instances:
     get:
       tags:
@@ -1709,8 +1800,8 @@ paths:
       summary: "List workflow instances"
       description: "Returns the instances the tenant's flows started, narrowed by\
         \ `status`, `definition` code and `correlationKey`, paged with `limit` (default\
-        \ 50) and `offset`. No answer carries the trigger input or a secret. Requires\
-        \ `workflow:instance:read`."
+        \ 50) and `offset`. No answer carries the trigger input or a secret.\n\nCallers:\
+        \ tenant-user, tenant-system. Requires `workflow:instance:read`."
       operationId: "list_1"
       parameters:
       - name: "status"
@@ -1764,6 +1855,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:instance:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
     post:
       tags:
       - "Manual start"
@@ -1772,7 +1866,8 @@ paths:
         \ with `input` and an optional `correlationKey`. The tenant comes from the\
         \ request, so a caller can never start another tenant's workflow. A repeated\
         \ call with the same `Idempotency-Key` returns the first instance; the same\
-        \ key with another body answers `409`. Answers `201`. Requires `workflow:instance:manage`."
+        \ key with another body answers `409`. Answers `201`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `workflow:instance:manage`."
       operationId: "startInstance"
       parameters:
       - name: "X-Request-Id"
@@ -1813,6 +1908,9 @@ paths:
         "409":
           $ref: "#/components/responses/IdempotencyConflict"
       x-required-permission: "workflow:instance:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/instances/{id}/retry:
     post:
       tags:
@@ -1821,7 +1919,8 @@ paths:
       description: "Retries an instance that dead-lettered: the failed step becomes\
         \ ready again with the same id and attempt, so it sends the same idempotency\
         \ key, and the instance goes back to `RUNNING` with no failure reason. `nodeId`\
-        \ names the step when needed. Requires `workflow:instance:manage`."
+        \ names the step when needed.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `workflow:instance:manage`."
       operationId: "retry_1"
       parameters:
       - name: "id"
@@ -1852,6 +1951,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:instance:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/instances/{id}/replay:
     post:
       tags:
@@ -1859,7 +1961,8 @@ paths:
       summary: "Replay a finished instance"
       description: "Starts a new instance from the same input and the same pinned\
         \ version, and records the instance it was replayed from. The old instance\
-        \ stays as it was, so the pair is the comparison. Requires `workflow:instance:manage`."
+        \ stays as it was, so the pair is the comparison. Requires `workflow:instance:manage`.\n\
+        \nCallers: tenant-user, tenant-system. Requires `workflow:instance:manage`."
       operationId: "replay"
       parameters:
       - name: "id"
@@ -1882,6 +1985,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:instance:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/instances/{id}/cancel:
     post:
       tags:
@@ -1890,7 +1996,8 @@ paths:
       description: "Cancels an instance an operator no longer wants: its live steps\
         \ are cancelled, no timer or event can resume it, its open tasks are cancelled\
         \ and it finishes `CANCELLED`. With `compensate=true` the completed steps\
-        \ are rolled back first. Requires `workflow:instance:manage`."
+        \ are rolled back first.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `workflow:instance:manage`."
       operationId: "cancel"
       parameters:
       - name: "id"
@@ -1923,23 +2030,27 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:instance:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/definitions:
     get:
       tags:
       - "Workflow definitions"
       summary: "List workflow definitions"
       description: "Pages through the tenant's definitions, with the list-query contract's\
-        \ filtering, sorting and paging. Requires `workflow:definition:read`.\n\n\
-        **Filtering, sorting and paging** follow the list-query contract. Conditions\
-        \ in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
-        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
-        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
-        \ and `nin` do not match rows where the field is null. Send `limit` with either\
-        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
-        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
-        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
-        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+        \ filtering, sorting and paging.\n\n**Filtering, sorting and paging** follow\
+        \ the list-query contract. Conditions in `filter[field][op]` are combined\
+        \ with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the\
+        \ index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20\
+        \ predicates in all, 100 values in an `in` list). `neq` and `nin` do not match\
+        \ rows where the field is null. Send `limit` with either `offset` (at most\
+        \ 10000) or the `cursor` taken from a previous page, never both. The body\
+        \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
+        \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
+        \ with `limit` and `next_cursor` alone, without counting the matching rows;\
+        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `workflow:definition:read`."
       operationId: "listDefinitions"
       parameters:
       - name: "filter[code][eq]"
@@ -2294,12 +2405,16 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:definition:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
     post:
       tags:
       - "Workflow definitions"
       summary: "Create a workflow definition"
       description: "Creates a definition with a `code` and a name and an empty draft;\
-        \ the graph arrives through the draft endpoint. Requires `workflow:definition:manage`."
+        \ the graph arrives through the draft endpoint.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `workflow:definition:manage`."
       operationId: "createDefinition"
       parameters:
       - name: "X-Request-Id"
@@ -2330,6 +2445,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:definition:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/definitions/{id}/simulate:
     post:
       tags:
@@ -2337,7 +2455,8 @@ paths:
       summary: "Simulate a draft"
       description: "Walks the draft over a sample `input` and canned step outputs\
         \ (`steps`) and reports the path, the decisions and the variables. It calls\
-        \ nothing out and writes nothing. Requires `workflow:definition:read`."
+        \ nothing out and writes nothing. Requires `workflow:definition:read`.\n\n\
+        Callers: tenant-user, tenant-system. Requires `workflow:definition:read`."
       operationId: "simulateDefinition"
       parameters:
       - name: "id"
@@ -2368,6 +2487,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:definition:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/definitions/{id}/retire:
     post:
       tags:
@@ -2375,7 +2497,8 @@ paths:
       summary: "Retire a definition"
       description: "Stops new instances from starting. The published versions and\
         \ the instances pinned to them are untouched and keep running. Pass the current\
-        \ `ETag` in `If-Match`; a stale version is refused with `412`. Requires `workflow:definition:manage`."
+        \ `ETag` in `If-Match`; a stale version is refused with `412`.\n\nCallers:\
+        \ tenant-user, tenant-system. Requires `workflow:definition:manage`."
       operationId: "retireDefinition"
       parameters:
       - name: "id"
@@ -2414,6 +2537,9 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "workflow:definition:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/definitions/{id}/publish:
     post:
       tags:
@@ -2421,7 +2547,8 @@ paths:
       summary: "Publish a definition"
       description: "Freezes the draft into the next immutable version number. An invalid\
         \ draft answers `422` with every problem by pointer. Pass the current `ETag`\
-        \ in `If-Match`; a stale version is refused with `412`. Requires `workflow:definition:manage`."
+        \ in `If-Match`; a stale version is refused with `412`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `workflow:definition:manage`."
       operationId: "publishDefinition"
       parameters:
       - name: "id"
@@ -2466,13 +2593,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "workflow:definition:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/connections:
     get:
       tags:
       - "Connections"
       summary: "List connections"
-      description: "Returns the tenant's connections without their secrets. Requires\
-        \ `workflow:connection:manage`."
+      description: "Returns the tenant's connections without their secrets.\n\nCallers:\
+        \ tenant-user, tenant-system. Requires `workflow:connection:manage`."
       operationId: "list_2"
       responses:
         "200":
@@ -2488,6 +2618,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:connection:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
     post:
       tags:
       - "Connections"
@@ -2495,8 +2628,8 @@ paths:
       description: "Registers a connection a workflow step may call: a name, a `kind`,\
         \ the one `allowedHost` it may reach, optional `headers` and a `secret`. The\
         \ secret goes in as plaintext, is stored as an encrypted envelope and is never\
-        \ returned; every response names the key id that wrote the envelope instead.\
-        \ Requires `workflow:connection:manage`."
+        \ returned; every response names the key id that wrote the envelope instead.\n\
+        \nCallers: tenant-user, tenant-system. Requires `workflow:connection:manage`."
       operationId: "create_1"
       requestBody:
         description: "The connection to store."
@@ -2519,6 +2652,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:connection:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/webhook-deliveries:
     get:
       tags:
@@ -2527,17 +2663,17 @@ paths:
       description: "Lists the attempts workflow made to report an event to an endpoint,\
         \ with the list-query contract's filtering, sorting and paging. A delivery\
         \ that exhausted its attempts is `DEAD` and stays visible here so it can be\
-        \ retried. Requires `workflow:webhook:manage`.\n\n**Filtering, sorting and\
-        \ paging** follow the list-query contract. Conditions in `filter[field][op]`\
-        \ are combined with AND. For OR, use `filter[or][i][field][op]`: predicates\
-        \ sharing the index `i` are AND-ed and the branches are OR-ed (at most 10\
-        \ branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin`\
-        \ do not match rows where the field is null. Send `limit` with either `offset`\
-        \ (at most 10000) or the `cursor` taken from a previous page, never both.\
-        \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
-        \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ retried.\n\n**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `workflow:webhook:manage`."
       operationId: "listDeliveries"
       parameters:
       - name: "filter[attempts][eq]"
@@ -3075,6 +3211,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/tasks:
     get:
       tags:
@@ -3082,7 +3221,7 @@ paths:
       summary: "List the caller's tasks"
       description: "Returns the human tasks the caller may see: those that name the\
         \ caller and those assigned to a group the caller belongs to, optionally narrowed\
-        \ by `status`. Requires `workflow:task:read`."
+        \ by `status`.\n\nCallers: tenant-user, tenant-system. Requires `workflow:task:read`."
       operationId: "inbox"
       parameters:
       - name: "status"
@@ -3106,14 +3245,17 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "workflow:task:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/tasks/{id}:
     get:
       tags:
       - "Human tasks"
       summary: "Get a task"
       description: "Returns one task with its form and decisions. A task the caller\
-        \ may not see answers `404`, because a `403` would confirm that it exists.\
-        \ Requires `workflow:task:read`."
+        \ may not see answers `404`, because a `403` would confirm that it exists.\n\
+        \nCallers: tenant-user, tenant-system. Requires `workflow:task:read`."
       operationId: "get_1"
       parameters:
       - name: "id"
@@ -3142,13 +3284,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "workflow:task:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/instances/{id}:
     get:
       tags:
       - "Workflow instances"
       summary: "Get a workflow instance"
       description: "Returns one instance with its state and, when it failed, the reason.\
-        \ An unknown id answers `404`. Requires `workflow:instance:read`."
+        \ An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `workflow:instance:read`."
       operationId: "get_2"
       parameters:
       - name: "id"
@@ -3172,6 +3318,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:instance:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/instances/{id}/steps:
     get:
       tags:
@@ -3179,7 +3328,7 @@ paths:
       summary: "List an instance's steps"
       description: "Returns the recorded timeline of the instance, one entry per step\
         \ run. Requests and responses are redacted: a step's request never leaves\
-        \ this API. Requires `workflow:instance:read`."
+        \ this API.\n\nCallers: tenant-user, tenant-system. Requires `workflow:instance:read`."
       operationId: "steps"
       parameters:
       - name: "id"
@@ -3204,13 +3353,17 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:instance:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/definitions/{id}:
     get:
       tags:
       - "Workflow definitions"
       summary: "Get a workflow definition"
       description: "Returns one definition; its version is also the response's `ETag`.\
-        \ An unknown id answers `404`. Requires `workflow:definition:read`."
+        \ An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `workflow:definition:read`."
       operationId: "getDefinition"
       parameters:
       - name: "id"
@@ -3233,12 +3386,16 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:definition:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/definitions/{id}/versions:
     get:
       tags:
       - "Workflow definitions"
       summary: "List a definition's versions"
-      description: "Returns the definition's published versions. Requires `workflow:definition:read`."
+      description: "Returns the definition's published versions.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `workflow:definition:read`."
       operationId: "listVersions"
       parameters:
       - name: "id"
@@ -3263,6 +3420,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:definition:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
   /api/v1/definitions/{id}/versions/{version}:
     get:
       tags:
@@ -3270,7 +3430,7 @@ paths:
       summary: "Get a published version"
       description: "Returns published version `version` of the definition with its\
         \ graph. A published version never changes. An unknown definition or version\
-        \ answers `404`. Requires `workflow:definition:read`."
+        \ answers `404`.\n\nCallers: tenant-user, tenant-system. Requires `workflow:definition:read`."
       operationId: "getVersion"
       parameters:
       - name: "id"
@@ -3302,6 +3462,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "workflow:definition:read"
+      x-allowed-callers:
+      - "tenant-user"
+      - "tenant-system"
 components:
   schemas:
     UpdateEndpointRequest:

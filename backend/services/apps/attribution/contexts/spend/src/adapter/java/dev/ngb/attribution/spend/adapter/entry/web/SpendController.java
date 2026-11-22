@@ -7,6 +7,8 @@ import dev.ngb.attribution.spend.application.entry.command.SetManualSpendUseCase
 import dev.ngb.attribution.spend.application.entry.query.SpendQueries;
 import dev.ngb.attribution.spend.application.entry.query.SpendView;
 import dev.ngb.attribution.spend.domain.entry.SpendEntry;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "A campaign's advertising cost: set manual days, bulk set, delete a manual day and read the rows.")
 @RestController
 @RequestMapping("/api/v1/campaigns/{campaignId}/spend")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class SpendController {
 
     private final SetManualSpendUseCase set;
@@ -59,7 +62,7 @@ public class SpendController {
             summary = "Set a campaign's spend for one day",
             description =
                     "Sets the manual advertising cost of the campaign on `day`, with optional impressions and clicks. A "
-                    + "currency the campaign does not use is refused. Requires `attribution:spend:manage`.")
+                    + "currency the campaign does not use is refused.")
     @PutMapping("/{day}")
     @RequiresPermission(AttributionPermissions.SPEND_MANAGE)
     SpendResponse set(
@@ -95,7 +98,7 @@ public class SpendController {
             summary = "Delete a campaign's manual spend for one day",
             description =
                     "Deletes only the manual cost of the campaign on `day`, leaving any imported row in place. Answers "
-                    + "`204`. Requires `attribution:spend:manage`.")
+                    + "`204`.")
     @DeleteMapping("/{day}")
     @RequiresPermission(AttributionPermissions.SPEND_MANAGE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -109,7 +112,7 @@ public class SpendController {
             summary = "List a campaign's spend",
             description =
                     "Returns the campaign's cost rows with their source, so a double entry of a manual and an imported "
-                    + "row is visible. Requires `attribution:spend:read`.")
+                    + "row is visible.")
     @GetMapping
     @RequiresPermission(AttributionPermissions.SPEND_READ)
     List<SpendView> list(

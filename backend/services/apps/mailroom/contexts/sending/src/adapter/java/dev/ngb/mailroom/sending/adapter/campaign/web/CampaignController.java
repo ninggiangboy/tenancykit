@@ -1,6 +1,8 @@
 package dev.ngb.mailroom.sending.adapter.campaign.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
@@ -47,6 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
                 + "statistics.")
 @RestController
 @RequestMapping("/api/v1/campaigns")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class CampaignController {
 
     private final CreateCampaignUseCase create;
@@ -81,8 +84,7 @@ class CampaignController {
     @Operation(
             summary = "List campaigns",
             description =
-                    "Pages through the tenant's campaigns, with the list-query contract's filtering, sorting and paging. "
-                    + "Requires `mailroom:campaign:read`.")
+                    "Pages through the tenant's campaigns, with the list-query contract's filtering, sorting and paging. ")
     @GetMapping
     @Listing(CampaignListing.class)
     @RequiresPermission(MailroomPermissions.CAMPAIGN_READ)
@@ -95,7 +97,7 @@ class CampaignController {
             description =
                     "Creates a campaign in `DRAFT` that targets a group or segment (`targetType`, `targetId`) with the "
                     + "template `templateKey` and the sender `fromKey`; it pins the template revision it will send. Answers "
-                    + "`201`. Requires `mailroom:campaign:manage`.")
+                    + "`201`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
@@ -112,7 +114,7 @@ class CampaignController {
             summary = "Get a campaign",
             description =
                     "Returns one campaign with its state; its version is also the response's `ETag`. An unknown id "
-                    + "answers `404`. Requires `mailroom:campaign:read`.")
+                    + "answers `404`.")
     @GetMapping("/{id}")
     @RequiresPermission(MailroomPermissions.CAMPAIGN_READ)
     ResponseEntity<CampaignResponse> get(@PathVariable UUID id) {
@@ -124,7 +126,7 @@ class CampaignController {
             summary = "Edit a draft campaign",
             description =
                     "Edits a campaign that is still in `DRAFT` and re-pins the template revision it will send. Pass the "
-                    + "current `ETag` in `If-Match`; a stale version is refused. Requires `mailroom:campaign:manage`.")
+                    + "current `ETag` in `If-Match`; a stale version is refused.")
     @PutMapping("/{id}")
     @ConditionalUpdate
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
@@ -151,7 +153,7 @@ class CampaignController {
             description =
                     "Schedules a `DRAFT` campaign to start at `scheduledAt`, which must be in the future. When the time "
                     + "comes the campaign enters `SENDING` and its audience is snapshotted once. Pass the current `ETag` in "
-                    + "`If-Match`; a stale version is refused. Requires `mailroom:campaign:manage`.")
+                    + "`If-Match`; a stale version is refused.")
     @PostMapping("/{id}/schedule")
     @ConditionalUpdate
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
@@ -169,7 +171,7 @@ class CampaignController {
             summary = "Send a campaign now",
             description =
                     "Starts the campaign immediately: it enters `SENDING` and its audience is snapshotted once. "
-                    + "Recipients are then published at the tenant's campaign rate. Requires `mailroom:campaign:manage`.")
+                    + "Recipients are then published at the tenant's campaign rate.")
     @PostMapping("/{id}/send")
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
     CampaignResponse send(@PathVariable UUID id) {
@@ -180,7 +182,7 @@ class CampaignController {
             summary = "Pause a campaign",
             description =
                     "Pauses a sending campaign so no further recipients are published. A campaign in a state that cannot "
-                    + "be paused answers `409`. Requires `mailroom:campaign:manage`.")
+                    + "be paused answers `409`.")
     @PostMapping("/{id}/pause")
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
     CampaignResponse pause(@PathVariable UUID id) {
@@ -202,7 +204,7 @@ class CampaignController {
             summary = "Cancel a campaign",
             description =
                     "Cancels the campaign so it sends no more. A campaign in a state that cannot be cancelled answers "
-                    + "`409`. Requires `mailroom:campaign:manage`.")
+                    + "`409`.")
     @PostMapping("/{id}/cancel")
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
     CampaignResponse cancel(@PathVariable UUID id) {
@@ -214,7 +216,7 @@ class CampaignController {
             description =
                     "Sends a sample of the campaign to up to five explicit `addresses` as transactional mail. A test send "
                     + "stores no campaign or receiver id, so it never counts in the campaign's statistics and never touches "
-                    + "its snapshot. Requires `mailroom:campaign:manage`.")
+                    + "its snapshot.")
     @PostMapping("/{id}/test")
     @RequiresPermission(MailroomPermissions.CAMPAIGN_MANAGE)
     List<TestCampaignUseCase.Result> test(@PathVariable UUID id, @RequestBody TestRequest request) {
@@ -224,7 +226,7 @@ class CampaignController {
     @Operation(
             summary = "Get a campaign's statistics",
             description =
-                    "Returns the campaign's delivery and engagement counts. Requires `mailroom:campaign:read`.")
+                    "Returns the campaign's delivery and engagement counts.")
     @GetMapping("/{id}/stats")
     @RequiresPermission(MailroomPermissions.CAMPAIGN_READ)
     CampaignStatsView stats(@PathVariable UUID id) {

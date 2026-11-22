@@ -3,6 +3,8 @@ package dev.ngb.notification.dispatch.adapter.notification.web;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
 import dev.ngb.core.security.Authenticated;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.notification.dispatch.application.notification.command.MarkNotificationReadUseCase;
 import dev.ngb.notification.dispatch.application.notification.query.ListNotificationsQuery;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
                 + "token.")
 @RestController
 @RequestMapping("/api/v1/notifications")
+@Callers({Caller.PLATFORM_USER, Caller.TENANT_USER})
 class NotificationController {
 
     /** One row of the caller's inbox. */

@@ -6,6 +6,8 @@ import dev.ngb.attribution.links.application.settings.query.SettingsReadReposito
 import dev.ngb.attribution.links.application.settings.query.SettingsView;
 import dev.ngb.attribution.shared.AttributionPermissions;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The click parameter, the origins allowed to collect and the default attribution window.")
 @RestController
 @RequestMapping("/api/v1/settings")
+@Callers(Caller.TENANT_USER)
 public class SettingsController {
 
     private final UpdateSettingsUseCase update;
@@ -66,7 +69,7 @@ public class SettingsController {
                     "Stores `click_param`, `allowed_origins` and `default_window_days`. Each origin must be an absolute "
                     + "`https` origin (or `http://localhost` for development); a wildcard, a path or a bare host answers "
                     + "`400`, because a collection endpoint that accepted a wildcard would let any page post another "
-                    + "visitor's events. Requires `attribution:settings:manage`.")
+                    + "visitor's events.")
     @PutMapping
     @RequiresPermission(AttributionPermissions.SETTINGS_MANAGE)
     SettingsView put(@RequestBody SettingsRequest request) {

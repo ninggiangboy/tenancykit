@@ -3,6 +3,8 @@ package dev.ngb.workflow.webhook.adapter.delivery.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.workflow.shared.WorkflowPermissions;
@@ -39,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class DeliveryController {
 
     public record DeliveryResponse(
@@ -74,7 +77,7 @@ public class DeliveryController {
             description =
                     "Lists the attempts workflow made to report an event to an endpoint, with the list-query contract's "
                     + "filtering, sorting and paging. A delivery that exhausted its attempts is `DEAD` and stays visible "
-                    + "here so it can be retried. Requires `workflow:webhook:manage`.")
+                    + "here so it can be retried.")
     @GetMapping("/webhook-deliveries")
     @Listing(DeliveryListing.class)
     @RequiresPermission(WorkflowPermissions.WEBHOOK_MANAGE)

@@ -64,6 +64,11 @@ tasks.processResources {
         include("*.schema.json")
         into("commands")
     }
+    // The caller labels are derived from the permission catalog, so the shared reader needs it on the classpath.
+    from(layout.projectDirectory.dir("../../../../../../contracts/permissions")) {
+        include("*.yaml")
+        into("permissions")
+    }
 }
 
 tasks.test {

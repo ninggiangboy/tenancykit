@@ -1,5 +1,7 @@
 package dev.ngb.platform.access.adapter.tenant.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.platform.access.application.tenant.command.ProvisionTenantUseCase;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "Creates a tenant together with its Tenant Administrator role and first administrator in one call.")
 @RestController
+@Callers(Caller.PLATFORM_USER)
 class ProvisionTenantController {
 
     record ProvisionRequest(String code, String name, String adminEmail, String adminTemporaryPassword) {}

@@ -1,6 +1,8 @@
 package dev.ngb.workflow.tasks.adapter.task.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.workflow.shared.WorkflowPermissions;
@@ -37,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class TaskController {
 
     public record CompleteRequest(String decision, Object output, String completedBy) {}
@@ -63,7 +66,7 @@ public class TaskController {
             summary = "List the caller's tasks",
             description =
                     "Returns the human tasks the caller may see: those that name the caller and those assigned to a group "
-                    + "the caller belongs to, optionally narrowed by `status`. Requires `workflow:task:read`.")
+                    + "the caller belongs to, optionally narrowed by `status`.")
     @GetMapping("/tasks")
     @RequiresPermission(WorkflowPermissions.TASK_READ)
     public List<TaskView> inbox(@RequestParam(value = "status", required = false) String status) {
@@ -74,7 +77,7 @@ public class TaskController {
             summary = "Get a task",
             description =
                     "Returns one task with its form and decisions. A task the caller may not see answers `404`, because a "
-                    + "`403` would confirm that it exists. Requires `workflow:task:read`.")
+                    + "`403` would confirm that it exists.")
     @GetMapping("/tasks/{id}")
     @RequiresPermission(WorkflowPermissions.TASK_READ)
     public ResponseEntity<TaskView> get(@PathVariable String id) {
@@ -87,7 +90,7 @@ public class TaskController {
             description =
                     "A person takes an open task. Claiming a task that is already claimed is a conflict, and a Tenant "
                     + "System may not claim at all. Pass the current `ETag` in `If-Match`; a stale version is refused with "
-                    + "`412`. Requires `workflow:task:complete`.")
+                    + "`412`.")
     @PostMapping("/tasks/{id}/claim")
     @RequiresPermission(WorkflowPermissions.TASK_COMPLETE)
     public ResponseEntity<TaskView> claim(

@@ -3,6 +3,8 @@ package dev.ngb.loyalty.program.adapter.promotion.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ConditionalUpdate;
@@ -48,6 +50,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class PromotionController {
 
     /** A new promotion: its name and multiplier are required, everything else defaults or is absent. */
@@ -167,6 +170,7 @@ public class PromotionController {
         return queries.list(query, active).map(PromotionResponse::ofView);
     }
 
+    @Callers(Caller.TENANT_USER)
     @PostMapping("/promotions")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(LoyaltyPermissions.PROGRAM_MANAGE)
@@ -203,6 +207,7 @@ public class PromotionController {
                 .body(PromotionResponse.ofView(promotion));
     }
 
+    @Callers(Caller.TENANT_USER)
     @PatchMapping("/promotions/{id}")
     @RequiresPermission(LoyaltyPermissions.PROGRAM_MANAGE)
     @ConditionalUpdate

@@ -3,6 +3,8 @@ package dev.ngb.survey.webhook.adapter.delivery.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.survey.shared.SurveyPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -37,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class DeliveryController {
 
     public record DeliveryResponse(
@@ -75,7 +78,7 @@ public class DeliveryController {
             description =
                     "Lists the attempts survey made to report an event to an endpoint, with the list-query contract's "
                     + "filtering, sorting and paging. A delivery that exhausted its attempts is `DEAD` and stays visible "
-                    + "here so it can be resent. Requires `survey:webhook:manage`.")
+                    + "here so it can be resent.")
     @GetMapping("/webhook-deliveries")
     @Listing(DeliveryListing.class)
     @RequiresPermission(SurveyPermissions.WEBHOOK_MANAGE)
@@ -87,7 +90,7 @@ public class DeliveryController {
             summary = "Get a webhook delivery",
             description =
                     "Returns one delivery with its state and every attempt: the status code, error, response excerpt and "
-                    + "latency. An unknown id answers `404`. Requires `survey:webhook:manage`.")
+                    + "latency. An unknown id answers `404`.")
     @GetMapping("/webhook-deliveries/{id}")
     @RequiresPermission(SurveyPermissions.WEBHOOK_MANAGE)
     public DeliveryDetailResponse getDelivery(@PathVariable String id) {
@@ -101,7 +104,7 @@ public class DeliveryController {
             summary = "Resend a webhook delivery",
             description =
                     "Queues a fresh delivery of the same stored event to the same endpoint and answers `202`: sending "
-                    + "happens asynchronously. The original keeps its history. Requires `survey:webhook:manage`.")
+                    + "happens asynchronously. The original keeps its history.")
     @PostMapping("/webhook-deliveries/{id}/resend")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @RequiresPermission(SurveyPermissions.WEBHOOK_MANAGE)

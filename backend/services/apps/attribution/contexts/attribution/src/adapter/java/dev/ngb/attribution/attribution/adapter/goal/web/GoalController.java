@@ -11,6 +11,8 @@ import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ConditionalUpdate;
@@ -38,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The conversion keys a tenant's site and backend report.")
 @RestController
 @RequestMapping("/api/v1/goals")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class GoalController {
 
     private final CreateGoalUseCase create;
@@ -56,8 +59,7 @@ public class GoalController {
     @Operation(
             summary = "List goals",
             description =
-                    "Pages through the tenant's goals, with the list-query contract's filtering, sorting and paging. "
-                    + "Requires `attribution:goal:read`.")
+                    "Pages through the tenant's goals, with the list-query contract's filtering, sorting and paging. ")
     @GetMapping
     @Listing(GoalListing.class)
     @RequiresPermission(AttributionPermissions.GOAL_READ)
@@ -69,8 +71,7 @@ public class GoalController {
             summary = "Create a goal",
             description =
                     "Creates a goal: a conversion `key` the tenant's site and backend both report, a name, and an "
-                    + "optional default value and currency. Two goals in one tenant cannot share a key. Answers `201`. "
-                    + "Requires `attribution:goal:manage`.")
+                    + "optional default value and currency. Two goals in one tenant cannot share a key. Answers `201`. ")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(AttributionPermissions.GOAL_MANAGE)
@@ -95,7 +96,7 @@ public class GoalController {
             summary = "Edit a goal",
             description =
                     "Changes the goal's name, default value and currency. Pass the current `ETag` in `If-Match`; a stale "
-                    + "version is refused with `412`. Requires `attribution:goal:manage`.")
+                    + "version is refused with `412`.")
     @PatchMapping("/{id}")
     @ConditionalUpdate
     @RequiresPermission(AttributionPermissions.GOAL_MANAGE)

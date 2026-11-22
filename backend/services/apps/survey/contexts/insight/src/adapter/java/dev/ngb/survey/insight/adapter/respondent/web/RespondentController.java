@@ -2,6 +2,8 @@ package dev.ngb.survey.insight.adapter.respondent.web;
 
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.survey.collection.api.response.RespondentListing;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The respondents of a survey, for importing into a mailroom group for a reminder.")
 @RestController
 @RequestMapping("/api/v1/surveys/{id}/respondents")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class RespondentController {
 
     private final RespondentQueries respondents;

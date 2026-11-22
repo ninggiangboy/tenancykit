@@ -1,6 +1,8 @@
 package dev.ngb.notification.dispatch.adapter.notification.web;
 
 import dev.ngb.core.security.Authenticated;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.notification.dispatch.application.notification.command.GetPreferenceUseCase;
 import dev.ngb.notification.dispatch.application.notification.command.SavePreferenceUseCase;
 import dev.ngb.notification.dispatch.application.notification.service.PreferenceView;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The caller's own locale and muted notification types.")
 @RestController
 @RequestMapping("/api/v1/notifications/preferences")
+@Callers({Caller.PLATFORM_USER, Caller.TENANT_USER})
 class NotificationPreferenceController {
 
     private final GetPreferenceUseCase get;

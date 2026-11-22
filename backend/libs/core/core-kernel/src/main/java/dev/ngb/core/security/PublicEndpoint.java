@@ -13,4 +13,8 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface PublicEndpoint {}
+public @interface PublicEndpoint {
+
+    /** Who calls it: {@link Caller#PUBLIC} for an anonymous browser, {@link Caller#PROVIDER} for a signed webhook. */
+    Caller caller() default Caller.PUBLIC;
+}

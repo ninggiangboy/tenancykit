@@ -57,8 +57,8 @@ class ErrorResponsesOpenApiCustomizerTest {
                 .addParametersItem(header("Idempotency-Key"))
                 .addParametersItem(new Parameter().name("id").in("path").schema(new StringSchema()))
                 .requestBody(new RequestBody().content(new Content().addMediaType("application/json", new MediaType())));
-        Operation list = with(success(), "x-allowed-callers", "tenant-user");
-        Operation publicRead = with(success(), "x-public", true)
+        Operation list = with(success(), "x-allowed-callers", List.of("tenant-user"));
+        Operation publicRead = with(success(), "x-allowed-callers", List.of("public"))
                 .addParametersItem(new Parameter().name("token").in("path").schema(new StringSchema()));
         OpenAPI api = document(update, list, publicRead);
         customizer.customise(api);

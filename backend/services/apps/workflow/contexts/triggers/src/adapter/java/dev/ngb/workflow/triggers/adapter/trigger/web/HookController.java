@@ -1,5 +1,7 @@
 package dev.ngb.workflow.triggers.adapter.trigger.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.workflow.triggers.application.trigger.command.ReceiveEventUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/hooks")
+@Callers(Caller.PROVIDER)
 public class HookController {
 
     public record ReceiptResponse(String eventId, int started, boolean duplicate) {}
@@ -47,7 +50,7 @@ public class HookController {
                     + "nothing. A bad signature, a stale timestamp, an unknown trigger and a tampered body all answer the "
                     + "same `401`.")
     @PostMapping("/{triggerId}")
-    @PublicEndpoint
+    @PublicEndpoint(caller = Caller.PROVIDER)
     public ReceiptResponse receive(
             @PathVariable String triggerId,
             @RequestHeader Map<String, String> headers,

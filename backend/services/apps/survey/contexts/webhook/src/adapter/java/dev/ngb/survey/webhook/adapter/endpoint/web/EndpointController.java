@@ -3,6 +3,8 @@ package dev.ngb.survey.webhook.adapter.endpoint.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.survey.shared.SurveyPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -44,6 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class EndpointController {
 
     public record CreateEndpointRequest(String url, String description, List<String> eventTypes) {}
@@ -102,7 +105,7 @@ public class EndpointController {
             summary = "List webhook endpoints",
             description =
                     "Pages through the tenant's webhook endpoints, with the list-query contract's filtering, sorting and "
-                    + "paging. Requires `survey:webhook:manage`.")
+                    + "paging.")
     @GetMapping("/webhook-endpoints")
     @Listing(EndpointListing.class)
     @RequiresPermission(SurveyPermissions.WEBHOOK_MANAGE)
@@ -114,7 +117,7 @@ public class EndpointController {
             summary = "Get a webhook endpoint",
             description =
                     "Returns one endpoint; its version is also the response's `ETag`. An unknown id answers `404`. The "
-                    + "secret is not returned. Requires `survey:webhook:manage`.")
+                    + "secret is not returned.")
     @GetMapping("/webhook-endpoints/{id}")
     @RequiresPermission(SurveyPermissions.WEBHOOK_MANAGE)
     public ResponseEntity<EndpointResponse> getEndpoint(@PathVariable String id) {
@@ -128,7 +131,7 @@ public class EndpointController {
             description =
                     "Changes only the fields that are present: url, description, subscribed event types or `status`. "
                     + "Setting `status` to `DISABLED` pauses delivery without losing queued events. Pass the current `ETag` "
-                    + "in `If-Match`; a stale version is refused. Requires `survey:webhook:manage`.")
+                    + "in `If-Match`; a stale version is refused.")
     @PatchMapping("/webhook-endpoints/{id}")
     @RequiresPermission(SurveyPermissions.WEBHOOK_MANAGE)
     @ConditionalUpdate

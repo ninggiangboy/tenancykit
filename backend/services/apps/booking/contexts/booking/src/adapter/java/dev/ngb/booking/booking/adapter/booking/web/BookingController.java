@@ -17,6 +17,8 @@ import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ExpectedVersion;
@@ -45,6 +47,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class BookingController {
 
     /** A hold as the caller sends it; the offering's kind decides which optional fields are read. */

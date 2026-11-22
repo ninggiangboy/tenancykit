@@ -1,5 +1,7 @@
 package dev.ngb.mailroom.sending.adapter.tracking.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.mailroom.sending.application.tracking.command.RecordClickUseCase;
 import dev.ngb.mailroom.sending.application.tracking.command.RecordOpenUseCase;
@@ -36,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
                 + "unsubscribe.")
 @RestController
 @RequestMapping({"/t", "/mailroom/t"})
+@Callers(Caller.PUBLIC)
 class PublicTrackingController {
 
     /** A 1x1 transparent GIF. */

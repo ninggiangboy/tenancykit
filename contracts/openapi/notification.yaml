@@ -25,12 +25,10 @@ paths:
       tags:
       - Notification templates
       summary: Save a template override
-      description: "Creates or replaces the suite-wide override of template `key`\
-        \ for `locale` with the subject, HTML, text, in-app title and in-app body\
-        \ given; a part left out keeps the packaged default. The override applies\
-        \ to every tenant. A part the template policy refuses, or an unsupported locale,\
-        \ answers `400`, and a key no notification type owns answers `404`. Answers\
-        \ `204`. Requires `notification:template:manage`."
+      description: |-
+        Creates or replaces the suite-wide override of template `key` for `locale` with the subject, HTML, text, in-app title and in-app body given; a part left out keeps the packaged default. The override applies to every tenant. A part the template policy refuses, or an unsupported locale, answers `400`, and a key no notification type owns answers `404`. Answers `204`.
+
+        Callers: platform-user. Requires `notification:template:manage`.
       operationId: save
       parameters:
       - name: key
@@ -71,10 +69,10 @@ paths:
       tags:
       - Notification templates
       summary: Delete a template override
-      description: "Removes the suite-wide override of template `key` for `locale`,\
-        \ so the packaged default is used again. Answers `204`. When there is no such\
-        \ override, or the key is unknown, it answers `404`; an unsupported locale\
-        \ answers `400`. Requires `notification:template:manage`."
+      description: |-
+        Removes the suite-wide override of template `key` for `locale`, so the packaged default is used again. Answers `204`. When there is no such override, or the key is unknown, it answers `404`; an unsupported locale answers `400`.
+
+        Callers: platform-user. Requires `notification:template:manage`.
       operationId: delete
       parameters:
       - name: key
@@ -107,8 +105,10 @@ paths:
       tags:
       - Notification settings
       summary: Get the tenant's notification settings
-      description: Returns the tenant's default locale and the notification types
-        it has enabled. The tenant is taken from the request host. Requires `notification:config:manage`.
+      description: |-
+        Returns the tenant's default locale and the notification types it has enabled. The tenant is taken from the request host.
+
+        Callers: tenant-user. Requires `notification:config:manage`.
       operationId: current
       responses:
         "200":
@@ -128,11 +128,10 @@ paths:
       tags:
       - Notification settings
       summary: Replace the tenant's notification settings
-      description: "Stores the tenant's default locale and the full set of enabled\
-        \ notification types, replacing what was stored; a type missing from `enabledTypes`\
-        \ is no longer enabled. A locale the suite does not support, or a notification\
-        \ type it does not know, answers `400`. Answers the stored settings. Requires\
-        \ `notification:config:manage`."
+      description: |-
+        Stores the tenant's default locale and the full set of enabled notification types, replacing what was stored; a type missing from `enabledTypes` is no longer enabled. A locale the suite does not support, or a notification type it does not know, answers `400`. Answers the stored settings.
+
+        Callers: tenant-user. Requires `notification:config:manage`.
       operationId: save_1
       requestBody:
         description: "The tenant's notification settings to store, replacing the stored\
@@ -163,9 +162,10 @@ paths:
       tags:
       - Notification preferences
       summary: Get the caller's notification preferences
-      description: Returns the caller's own locale and the notification types they
-        have muted. The user comes from the token. Any authenticated caller may read
-        their own preferences.
+      description: |-
+        Returns the caller's own locale and the notification types they have muted. The user comes from the token. Any authenticated caller may read their own preferences.
+
+        Callers: platform-user, tenant-user.
       operationId: current_1
       responses:
         "200":
@@ -179,16 +179,16 @@ paths:
         "403":
           $ref: "#/components/responses/NotEntitled"
       x-allowed-callers:
-      - tenant-user
       - platform-user
+      - tenant-user
     put:
       tags:
       - Notification preferences
       summary: Replace the caller's notification preferences
-      description: "Stores the caller's locale and the full set of muted notification\
-        \ types, replacing what was stored. A blank locale clears the caller's locale\
-        \ preference. A locale the suite does not support, or an unknown notification\
-        \ type, answers `400`. Answers the stored preferences."
+      description: |-
+        Stores the caller's locale and the full set of muted notification types, replacing what was stored. A blank locale clears the caller's locale preference. A locale the suite does not support, or an unknown notification type, answers `400`. Answers the stored preferences.
+
+        Callers: platform-user, tenant-user.
       operationId: save_2
       requestBody:
         description: "The caller's preferences to store, replacing the stored ones."
@@ -211,16 +211,17 @@ paths:
         "403":
           $ref: "#/components/responses/NotEntitled"
       x-allowed-callers:
-      - tenant-user
       - platform-user
+      - tenant-user
   /api/v1/notifications/{id}/read:
     post:
       tags:
       - Notification inbox
       summary: Mark one notification as read
-      description: "Sets `readAt` on one of the caller's own notifications. Answers\
-        \ `204` with no body. An id that does not exist, or that belongs to another\
-        \ user, answers `404`."
+      description: |-
+        Sets `readAt` on one of the caller's own notifications. Answers `204` with no body. An id that does not exist, or that belongs to another user, answers `404`.
+
+        Callers: platform-user, tenant-user.
       operationId: read
       parameters:
       - name: id
@@ -242,15 +243,17 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-allowed-callers:
-      - tenant-user
       - platform-user
+      - tenant-user
   /api/v1/notifications/read-all:
     post:
       tags:
       - Notification inbox
       summary: Mark every notification as read
-      description: Sets `readAt` on all of the caller's notifications in one call.
-        Answers `204` with no body.
+      description: |-
+        Sets `readAt` on all of the caller's notifications in one call. Answers `204` with no body.
+
+        Callers: platform-user, tenant-user.
       operationId: readAll
       responses:
         "204":
@@ -260,16 +263,17 @@ paths:
         "403":
           $ref: "#/components/responses/NotEntitled"
       x-allowed-callers:
-      - tenant-user
       - platform-user
+      - tenant-user
   /api/v1/templates:
     get:
       tags:
       - Notification templates
       summary: List the notification templates
-      description: "Returns one entry per notification type with the template key\
-        \ that renders it. Reachable at platform scope only, because a template is\
-        \ suite content shared by every tenant. Requires `notification:template:read`."
+      description: |-
+        Returns one entry per notification type with the template key that renders it. Reachable at platform scope only, because a template is suite content shared by every tenant.
+
+        Callers: platform-user. Requires `notification:template:read`.
       operationId: list
       responses:
         "200":
@@ -292,11 +296,10 @@ paths:
       tags:
       - Notification templates
       summary: Get the resolved template for a key
-      description: "Returns the variant the suite renders for template `key` in `locale`:\
-        \ each part the suite-wide override defines, and the packaged default for\
-        \ every part it leaves out. `overridden` says whether an override exists.\
-        \ A blank `locale` means the fallback locale. A key no notification type owns,\
-        \ or a locale the suite does not support, answers `404`. Requires `notification:template:read`."
+      description: |-
+        Returns the variant the suite renders for template `key` in `locale`: each part the suite-wide override defines, and the packaged default for every part it leaves out. `overridden` says whether an override exists. A blank `locale` means the fallback locale. A key no notification type owns, or a locale the suite does not support, answers `404`.
+
+        Callers: platform-user. Requires `notification:template:read`.
       operationId: resolved
       parameters:
       - name: key
@@ -337,6 +340,8 @@ paths:
         Pages through the caller's own in-app inbox. The user comes from the token, so no other user's notifications are reachable. Unread rows are `filter[read_at][is_null]=true`. Any authenticated caller may read their own inbox.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: platform-user, tenant-user.
       operationId: list_1
       parameters:
       - name: "filter[created_at][eq]"
@@ -681,17 +686,19 @@ paths:
         "403":
           $ref: "#/components/responses/NotEntitled"
       x-allowed-callers:
-      - tenant-user
       - platform-user
+      - tenant-user
   /api/v1/email-dispatches:
     get:
       tags:
       - Email dispatches
       summary: List email dispatches
       description: |-
-        Pages through the tenant's dispatch ledger, newest first by default: one row per email the suite decided on, with its status, the reason when it was not sent, and the template, version and locale used. It answers why a user did not receive an email. Requires `notification:dispatch:read`.
+        Pages through the tenant's dispatch ledger, newest first by default: one row per email the suite decided on, with its status, the reason when it was not sent, and the template, version and locale used. It answers why a user did not receive an email.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user. Requires `notification:dispatch:read`.
       operationId: list_2
       parameters:
       - name: "filter[created_at][eq]"

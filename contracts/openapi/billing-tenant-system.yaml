@@ -98,7 +98,8 @@ paths:
       - "Customers"
       summary: "Get a customer"
       description: "Returns one customer; its version is also the response's `ETag`.\
-        \ An unknown id answers `404`."
+        \ An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:customer:read`."
       operationId: "get"
       parameters:
       - name: "id"
@@ -131,7 +132,8 @@ paths:
       - "Customers"
       summary: "Update a customer"
       description: "Changes the customer's display name and email. Pass the current\
-        \ `ETag` in `If-Match`; a stale version is refused with `412`."
+        \ `ETag` in `If-Match`; a stale version is refused with `412`.\n\nCallers:\
+        \ tenant-user, tenant-system. Requires `billing:customer:write`."
       operationId: "update"
       parameters:
       - name: "id"
@@ -217,7 +219,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone."
+        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:webhook:read`."
       operationId: "listEndpoints"
       parameters:
       - name: "filter[created_at][eq]"
@@ -628,7 +631,8 @@ paths:
       summary: "Create a webhook endpoint"
       description: "Registers an HTTPS endpoint that subscribes to a subset of Billing's\
         \ event types. The signing secret is returned once, in this response, and\
-        \ never again. Answers `201`."
+        \ never again. Answers `201`.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:webhook:manage`."
       operationId: "createEndpoint"
       parameters:
       - name: "X-Request-Id"
@@ -670,7 +674,7 @@ paths:
       - "Webhook endpoints"
       summary: "Rotate a webhook endpoint's secret"
       description: "Replaces the endpoint's signing secret and returns the new one\
-        \ once, never again."
+        \ once, never again.\n\nCallers: tenant-user, tenant-system. Requires `billing:webhook:manage`."
       operationId: "rotateSecret"
       parameters:
       - name: "id"
@@ -712,7 +716,7 @@ paths:
       summary: "Resend a webhook delivery"
       description: "Queues a fresh delivery of the same stored event to the same endpoint\
         \ and answers `202`: sending happens asynchronously. The original keeps its\
-        \ history."
+        \ history.\n\nCallers: tenant-user, tenant-system. Requires `billing:webhook:manage`."
       operationId: "resend"
       parameters:
       - name: "id"
@@ -763,7 +767,8 @@ paths:
         \ taken from a previous page, never both. The body is `{\"data\": [...], \"\
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
-        \ alone, without counting the matching rows; omit it for the rows alone."
+        \ alone, without counting the matching rows; omit it for the rows alone.\n\
+        \nCallers: tenant-user, tenant-system. Requires `billing:wallet:read`."
       operationId: "wallets"
       parameters:
       - name: "filter[balance][eq]"
@@ -1230,7 +1235,7 @@ paths:
         \ (`mode`, with a `creditLimit` for postpaid). Amounts are integers in minor\
         \ units. Asking again with the same settings answers the existing wallet;\
         \ different settings are a conflict, because a wallet's currency and mode\
-        \ never change."
+        \ never change.\n\nCallers: tenant-user, tenant-system. Requires `billing:wallet:manage`."
       operationId: "openWallet"
       parameters:
       - name: "X-Request-Id"
@@ -1296,7 +1301,8 @@ paths:
         \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
         \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `billing:coupon:read`."
       operationId: "redemptionsOfWallet"
       parameters:
       - name: "walletId"
@@ -2033,7 +2039,8 @@ paths:
       description: "Redeems the promotion `code` onto a wallet. Send an `Idempotency-Key`;\
         \ a repeat of the same key and body answers the first result with `200`. Every\
         \ refusal answers `404`, so a caller cannot learn whether a code exists, is\
-        \ inactive, expired or exhausted. Answers `201` for a new redemption."
+        \ inactive, expired or exhausted. Answers `201` for a new redemption.\n\n\
+        Callers: tenant-user, tenant-system. Requires `billing:coupon:redeem`."
       operationId: "redeemByCode"
       parameters:
       - name: "walletId"
@@ -2110,7 +2117,8 @@ paths:
         \ code's own limits and so needs the coupon manage permission rather than\
         \ the redeem one. A Tenant System uses it to grant a coupon it chose itself.\
         \ Send an `Idempotency-Key`; a repeat of the same key and body answers the\
-        \ first result with `200`."
+        \ first result with `200`.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:coupon:manage`."
       operationId: "attach"
       parameters:
       - name: "walletId"
@@ -2188,7 +2196,8 @@ paths:
         \ taken from a previous page, never both. The body is `{\"data\": [...], \"\
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
-        \ alone, without counting the matching rows; omit it for the rows alone."
+        \ alone, without counting the matching rows; omit it for the rows alone.\n\
+        \nCallers: tenant-user, tenant-system. Requires `billing:usage:read`."
       operationId: "history"
       parameters:
       - name: "filter[customer_id][eq]"
@@ -2665,7 +2674,8 @@ paths:
         \ when it `occurredAt`. Each event carries its own `idempotencyKey`, so a\
         \ retry never records anything twice: `201` for a new event, `200` with the\
         \ recorded event when it was already recorded, and `409` when the key arrives\
-        \ with different content."
+        \ with different content.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:usage:record`."
       operationId: "recordOne"
       requestBody:
         description: "One usage event to record."
@@ -2712,7 +2722,8 @@ paths:
       - "Usage"
       summary: "Record usage events in a batch"
       description: "Reports up to 500 usage events at once, all-or-nothing: if any\
-        \ event is invalid or conflicts, none is stored."
+        \ event is invalid or conflicts, none is stored.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `billing:usage:record`."
       operationId: "recordBatch"
       requestBody:
         description: "The usage events to record, at most 500, all or none."
@@ -2757,7 +2768,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone."
+        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:subscription:read`."
       operationId: "subscriptions"
       parameters:
       - name: "filter[anchor][eq]"
@@ -3449,7 +3461,8 @@ paths:
         \ plan and stay fixed for the life of the subscription. A first period the\
         \ wallet cannot pay leaves the subscription `PAST_DUE` rather than rejecting\
         \ it. Send an `Idempotency-Key`; a repeat of the same key and body answers\
-        \ the first result with `200`."
+        \ the first result with `200`.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:subscription:manage`."
       operationId: "subscribe"
       parameters:
       - name: "Idempotency-Key"
@@ -3510,7 +3523,8 @@ paths:
       description: "Cancels at the end of the period already paid, so the customer\
         \ keeps what was paid for, or at once when no paid period is running. Repeating\
         \ it changes nothing. Billing stops no resource: the Tenant System decides\
-        \ what the end means for it."
+        \ what the end means for it.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:subscription:manage`."
       operationId: "cancel"
       parameters:
       - name: "id"
@@ -3561,7 +3575,8 @@ paths:
         \ taken from a previous page, never both. The body is `{\"data\": [...], \"\
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
-        \ alone, without counting the matching rows; omit it for the rows alone."
+        \ alone, without counting the matching rows; omit it for the rows alone.\n\
+        \nCallers: tenant-user, tenant-system. Requires `billing:wallet:read`."
       operationId: "reservations"
       parameters:
       - name: "filter[amount][eq]"
@@ -4072,7 +4087,8 @@ paths:
         \ for a later charge, after checking the wallet can cover it or its postpaid\
         \ limit. Nothing is posted to the ledger until the reservation is captured.\
         \ Send an `Idempotency-Key`; a repeat of the same key and body answers the\
-        \ first result with `200`."
+        \ first result with `200`.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:reservation:manage`."
       operationId: "reserve"
       parameters:
       - name: "Idempotency-Key"
@@ -4130,7 +4146,8 @@ paths:
       - "Reservations"
       summary: "Release a reservation"
       description: "Gives the held amount back to the wallet. Releasing a reservation\
-        \ that is already released changes nothing."
+        \ that is already released changes nothing.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `billing:reservation:manage`."
       operationId: "release"
       parameters:
       - name: "id"
@@ -4165,7 +4182,8 @@ paths:
       summary: "Capture a reservation"
       description: "Charges the actual cost against the reservation and releases whatever\
         \ was not used. Send an `Idempotency-Key`; a repeat of the same key and body\
-        \ answers the first result with `200`."
+        \ answers the first result with `200`.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `billing:charge:create`."
       operationId: "capture"
       parameters:
       - name: "id"
@@ -4225,7 +4243,7 @@ paths:
       - "Coupons"
       summary: "Deactivate a promotion code"
       description: "Stops a promotion code being redeemed; the coupon and its other\
-        \ codes are unaffected."
+        \ codes are unaffected.\n\nCallers: tenant-user, tenant-system. Requires `billing:coupon:manage`."
       operationId: "deactivateCode"
       parameters:
       - name: "id"
@@ -4268,7 +4286,8 @@ paths:
       description: "Prices the customer's not-yet-rated usage in `[from, to)` against\
         \ the plan and charges the wallet, exactly once per usage event. Answers `201`\
         \ when charged, `200` when repeated or when there was nothing to charge, and\
-        \ `402` when the wallet could not pay; the same request succeeds after a top-up."
+        \ `402` when the wallet could not pay; the same request succeeds after a top-up.\n\
+        \nCallers: tenant-user, tenant-system. Requires `billing:charge:create`."
       operationId: "chargeUsage"
       requestBody:
         description: "The usage period to price and charge."
@@ -4317,7 +4336,8 @@ paths:
       summary: "Reserve an estimated cost"
       description: "Holds the estimated cost of a resource on the wallet before it\
         \ runs. Answers `201` for a new reservation, `200` when the `Idempotency-Key`\
-        \ replays one, and `402` when the wallet cannot cover it."
+        \ replays one, and `402` when the wallet cannot cover it.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `billing:reservation:manage`."
       operationId: "reserveEstimate"
       parameters:
       - name: "Idempotency-Key"
@@ -4377,7 +4397,8 @@ paths:
       description: "A pure calculation: prices expected `usage` against a plan version\
         \ with the same rules and the same single rounding as the real charge, and\
         \ stores nothing. When `walletId` is named, it also shows what that wallet\
-        \ would pay after its coupons."
+        \ would pay after its coupons.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:pricing:read`."
       operationId: "estimate"
       requestBody:
         description: "The expected usage to price."
@@ -4421,7 +4442,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone."
+        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:pricing:read`."
       operationId: "listPlans"
       parameters:
       - name: "filter[code][eq]"
@@ -4813,7 +4835,7 @@ paths:
         \ wallet is debited only when Stripe confirms. Answers `409` when the amount\
         \ exceeds what is left to refund or the wallet has already spent it. Send\
         \ an `Idempotency-Key`; a repeat of the same key and body answers the first\
-        \ result with `200`."
+        \ result with `200`.\n\nCallers: tenant-user, tenant-system. Requires `billing:refund:create`."
       operationId: "requestRefund"
       parameters:
       - name: "id"
@@ -4901,7 +4923,8 @@ paths:
         \ where the customer pays. Creating a payment never changes a balance: the\
         \ wallet is credited only when a verified Stripe event says the money arrived.\
         \ Send an `Idempotency-Key`; a repeat of the same key and body answers the\
-        \ first result with `200`."
+        \ first result with `200`.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:payment:create`."
       operationId: "createTopUp"
       parameters:
       - name: "Idempotency-Key"
@@ -4983,7 +5006,8 @@ paths:
         \ taken from a previous page, never both. The body is `{\"data\": [...], \"\
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
-        \ alone, without counting the matching rows; omit it for the rows alone."
+        \ alone, without counting the matching rows; omit it for the rows alone.\n\
+        \nCallers: tenant-user, tenant-system. Requires `billing:invoice:read`."
       operationId: "invoices"
       parameters:
       - name: "filter[created_at][eq]"
@@ -5725,7 +5749,8 @@ paths:
         \ as a cycle invoice. A charge is billed on one line at most, so asking again\
         \ answers the existing invoice with `200` and needs no key. A postpaid charge\
         \ opens for payment; a prepaid charge was paid from the wallet, so its invoice\
-        \ is a paid record. Answers `201`."
+        \ is a paid record. Answers `201`.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `billing:invoice:create`."
       operationId: "invoiceCharge"
       parameters:
       - name: "X-Request-Id"
@@ -5775,7 +5800,8 @@ paths:
       description: "Starts a payment of an open invoice and answers Stripe's hosted\
         \ page where the customer pays. The invoice is paid, and the debt paid off,\
         \ only when Stripe's verified result arrives. Send an `Idempotency-Key`; a\
-        \ repeat of the same key and body answers the first result with `200`."
+        \ repeat of the same key and body answers the first result with `200`.\n\n\
+        Callers: tenant-user, tenant-system. Requires `billing:payment:create`."
       operationId: "pay"
       parameters:
       - name: "id"
@@ -5858,7 +5884,8 @@ paths:
         \ taken from a previous page, never both. The body is `{\"data\": [...], \"\
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
-        \ alone, without counting the matching rows; omit it for the rows alone."
+        \ alone, without counting the matching rows; omit it for the rows alone.\n\
+        \nCallers: tenant-user, tenant-system. Requires `billing:customer:read`."
       operationId: "list_1"
       parameters:
       - name: "filter[created_at][eq]"
@@ -6124,7 +6151,7 @@ paths:
         \ its own users; a Tenant User names the tenant system explicitly. Safe to\
         \ retry: the same `Idempotency-Key` returns the same customer (`201` for a\
         \ new one, `200` for a replay), and the same key with a different body answers\
-        \ `409`."
+        \ `409`.\n\nCallers: tenant-user, tenant-system. Requires `billing:customer:write`."
       operationId: "create"
       parameters:
       - name: "Idempotency-Key"
@@ -6187,7 +6214,8 @@ paths:
       - "Customers"
       summary: "Deactivate a customer"
       description: "Deactivates the customer. Pass the current `ETag` in `If-Match`;\
-        \ a stale version is refused with `412`."
+        \ a stale version is refused with `412`.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `billing:customer:write`."
       operationId: "deactivate"
       parameters:
       - name: "id"
@@ -6264,7 +6292,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone."
+        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:coupon:read`."
       operationId: "coupons"
       parameters:
       - name: "filter[benefit_type][eq]"
@@ -6892,7 +6921,8 @@ paths:
         \ and optionally its first promotion code. A coupon without a total bound,\
         \ a benefit out of range or a currency mismatch is refused before anything\
         \ is stored. An Administrator and a Tenant System both create coupons, and\
-        \ the creating actor is stored on the coupon. Answers `201`."
+        \ the creating actor is stored on the coupon. Answers `201`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `billing:coupon:manage`."
       operationId: "createCoupon"
       parameters:
       - name: "X-Request-Id"
@@ -6936,7 +6966,7 @@ paths:
       description: "Final: stops new redemptions of the coupon and deactivates its\
         \ codes. A running redemption keeps working unless `revokeRedemptions` is\
         \ set, which pulls a bad coupon without invalidating a charge that already\
-        \ used it."
+        \ used it.\n\nCallers: tenant-user, tenant-system. Requires `billing:coupon:manage`."
       operationId: "deactivateCoupon"
       parameters:
       - name: "id"
@@ -6995,7 +7025,8 @@ paths:
         \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
         \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `billing:coupon:read`."
       operationId: "codes"
       parameters:
       - name: "id"
@@ -7410,7 +7441,7 @@ paths:
       summary: "Add a promotion code"
       description: "Adds a promotion code to a coupon, with an optional redemption\
         \ limit and `redeemBy` date. A code never outlives its coupon's terms. Answers\
-        \ `201`."
+        \ `201`.\n\nCallers: tenant-user, tenant-system. Requires `billing:coupon:manage`."
       operationId: "addCode"
       parameters:
       - name: "id"
@@ -7461,7 +7492,8 @@ paths:
       summary: "Revoke a coupon redemption"
       description: "Ends the redemption early. Nothing is released or refunded: discounts\
         \ already given were charged correctly at the time. Idempotent: revoking again\
-        \ changes nothing and announces nothing."
+        \ changes nothing and announces nothing.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `billing:coupon:manage`."
       operationId: "revoke"
       parameters:
       - name: "id"
@@ -7512,7 +7544,8 @@ paths:
         \ taken from a previous page, never both. The body is `{\"data\": [...], \"\
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
-        \ alone, without counting the matching rows; omit it for the rows alone."
+        \ alone, without counting the matching rows; omit it for the rows alone.\n\
+        \nCallers: tenant-user, tenant-system. Requires `billing:wallet:read`."
       operationId: "charges"
       parameters:
       - name: "filter[amount][eq]"
@@ -7987,7 +8020,8 @@ paths:
       description: "Records the actual cost incurred against a wallet (`walletId`,\
         \ `amount` in minor units, `currency`), once per `Idempotency-Key`. A wallet\
         \ that cannot pay yields a recorded `insufficient_funds` failure rather than\
-        \ an error. A repeat answers the first charge with `200`."
+        \ an error. A repeat answers the first charge with `200`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `billing:charge:create`."
       operationId: "charge"
       parameters:
       - name: "Idempotency-Key"
@@ -8042,7 +8076,8 @@ paths:
         \ Tenant System that asked, with a `returnUrl` from the tenant's allowlist,\
         \ the `permissions` it grants and a lifetime. The answer carries the `portalUrl`\
         \ to open in the customer's browser; its single-use exchange token is shown\
-        \ once there, and only its digest is stored."
+        \ once there, and only its digest is stored.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `billing:billing-session:create`."
       operationId: "create_1"
       parameters:
       - name: "X-Request-Id"
@@ -8084,7 +8119,8 @@ paths:
       - "Billing sessions"
       summary: "Revoke a billing session"
       description: "Revokes the session at once. A Tenant System may revoke only the\
-        \ sessions it issued; a Tenant User may revoke any."
+        \ sessions it issued; a Tenant User may revoke any.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `billing:billing-session:create`."
       operationId: "revoke_1"
       parameters:
       - name: "id"
@@ -8121,7 +8157,8 @@ paths:
       - "Webhook endpoints"
       summary: "Get a webhook endpoint"
       description: "Returns one endpoint; its version is also the response's `ETag`.\
-        \ The secret is not returned. An unknown id answers `404`."
+        \ The secret is not returned. An unknown id answers `404`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `billing:webhook:read`."
       operationId: "getEndpoint"
       parameters:
       - name: "id"
@@ -8156,7 +8193,8 @@ paths:
       description: "Changes only the fields that are present: url, description, subscribed\
         \ event types or `status`. Setting `status` to `DISABLED` pauses delivery\
         \ without losing queued events. Pass the current `ETag` in `If-Match`; a stale\
-        \ version is refused with `412`."
+        \ version is refused with `412`.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:webhook:manage`."
       operationId: "updateEndpoint"
       parameters:
       - name: "id"
@@ -8243,7 +8281,8 @@ paths:
         \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
         \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `billing:webhook:read`."
       operationId: "listDeliveries"
       parameters:
       - name: "filter[attempts][eq]"
@@ -8825,7 +8864,8 @@ paths:
       - "Webhook deliveries"
       summary: "Get a webhook delivery"
       description: "Returns one delivery with its state and every attempt: the status\
-        \ code, error, response excerpt and latency. An unknown id answers `404`."
+        \ code, error, response excerpt and latency. An unknown id answers `404`.\n\
+        \nCallers: tenant-user, tenant-system. Requires `billing:webhook:read`."
       operationId: "getDelivery"
       parameters:
       - name: "id"
@@ -8859,7 +8899,8 @@ paths:
       - "Wallets"
       summary: "Get a wallet"
       description: "Returns one wallet with its balance, the amount held by reservations\
-        \ and the amount available to spend. An unknown id answers `404`."
+        \ and the amount available to spend. An unknown id answers `404`.\n\nCallers:\
+        \ tenant-user, tenant-system. Requires `billing:wallet:read`."
       operationId: "wallet_1"
       parameters:
       - name: "id"
@@ -8903,7 +8944,8 @@ paths:
         \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
         \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone."
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `billing:wallet:read`."
       operationId: "ledger_1"
       parameters:
       - name: "id"
@@ -9417,7 +9459,8 @@ paths:
       summary: "Get usage aggregates"
       description: "Returns the quantity and the number of events per metric for a\
         \ customer over `[from, to)`, optionally for the `metric` values given. Rating\
-        \ and invoices read the same totals."
+        \ and invoices read the same totals.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `billing:usage:read`."
       operationId: "aggregates"
       parameters:
       - name: "customerId"
@@ -9475,7 +9518,7 @@ paths:
       - "Subscriptions"
       summary: "Get a subscription"
       description: "Returns one subscription with its history of periods. An unknown\
-        \ id answers `404`."
+        \ id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires `billing:subscription:read`."
       operationId: "subscription_1"
       parameters:
       - name: "id"
@@ -9509,7 +9552,8 @@ paths:
       - "Reservations"
       summary: "Get a reservation"
       description: "Returns one reservation with its status, amount, what was captured\
-        \ and when it expires. An unknown id answers `404`."
+        \ and when it expires. An unknown id answers `404`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `billing:wallet:read`."
       operationId: "reservation"
       parameters:
       - name: "id"
@@ -9553,7 +9597,8 @@ paths:
         \ taken from a previous page, never both. The body is `{\"data\": [...], \"\
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
-        \ alone, without counting the matching rows; omit it for the rows alone."
+        \ alone, without counting the matching rows; omit it for the rows alone.\n\
+        \nCallers: tenant-user, tenant-system. Requires `billing:payment:read`."
       operationId: "refunds_1"
       parameters:
       - name: "filter[amount][eq]"
@@ -9985,7 +10030,7 @@ paths:
       - "Refunds"
       summary: "Get a refund"
       description: "Returns one refund with its status and failure reason. An unknown\
-        \ id answers `404`."
+        \ id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires `billing:payment:read`."
       operationId: "getRefund"
       parameters:
       - name: "id"
@@ -10019,7 +10064,8 @@ paths:
       - "Rating"
       summary: "Get a usage rating"
       description: "Returns one rating with its lines, the period it covers and the\
-        \ charge it produced. An unknown id answers `404`."
+        \ charge it produced. An unknown id answers `404`.\n\nCallers: tenant-user,\
+        \ tenant-system. Requires `billing:pricing:read`."
       operationId: "getRating"
       parameters:
       - name: "id"
@@ -10053,7 +10099,7 @@ paths:
       - "Pricing plans"
       summary: "Get a pricing plan"
       description: "Returns one plan with its current version. An unknown id answers\
-        \ `404`."
+        \ `404`.\n\nCallers: tenant-user, tenant-system. Requires `billing:pricing:read`."
       operationId: "getPlan"
       parameters:
       - name: "id"
@@ -10097,7 +10143,8 @@ paths:
         \ taken from a previous page, never both. The body is `{\"data\": [...], \"\
         page\": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total`\
         \ and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor`\
-        \ alone, without counting the matching rows; omit it for the rows alone."
+        \ alone, without counting the matching rows; omit it for the rows alone.\n\
+        \nCallers: tenant-user, tenant-system. Requires `billing:payment:read`."
       operationId: "payments_1"
       parameters:
       - name: "filter[amount][eq]"
@@ -10660,7 +10707,8 @@ paths:
       - "Payments"
       summary: "Get a payment"
       description: "Returns one payment with its status and the amount refunded so\
-        \ far. An unknown id answers `404`."
+        \ far. An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system.\
+        \ Requires `billing:payment:read`."
       operationId: "payment_1"
       parameters:
       - name: "id"
@@ -10695,7 +10743,8 @@ paths:
       summary: "Get an invoice"
       description: "Returns one invoice with its lines. An invoice becomes paid only\
         \ from a verified payment, or because the wallet already paid the charge it\
-        \ documents; no request marks one paid. An unknown id answers `404`."
+        \ documents; no request marks one paid. An unknown id answers `404`.\n\nCallers:\
+        \ tenant-user, tenant-system. Requires `billing:invoice:read`."
       operationId: "invoice_1"
       parameters:
       - name: "id"
@@ -10730,7 +10779,8 @@ paths:
       summary: "Find a customer by external user id"
       description: "Returns the customer mapped to `externalUserId`, which is how\
         \ a Tenant System finds a customer by its own user reference. A Tenant User\
-        \ also passes `tenantSystemId`. An unmapped user answers `404`."
+        \ also passes `tenantSystemId`. An unmapped user answers `404`.\n\nCallers:\
+        \ tenant-user, tenant-system. Requires `billing:customer:read`."
       operationId: "byExternalUser"
       parameters:
       - name: "externalUserId"
@@ -10772,7 +10822,8 @@ paths:
       - "Coupons"
       summary: "Get a coupon"
       description: "Returns one coupon with its terms and how much has been redeemed.\
-        \ An unknown id answers `404`."
+        \ An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires\
+        \ `billing:coupon:read`."
       operationId: "coupon"
       parameters:
       - name: "id"
@@ -10806,7 +10857,7 @@ paths:
       - "Coupon redemptions"
       summary: "Get a coupon redemption"
       description: "Returns one redemption with its coupon, code and wallet. An unknown\
-        \ id answers `404`."
+        \ id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires `billing:coupon:read`."
       operationId: "redemption"
       parameters:
       - name: "id"
@@ -10840,7 +10891,7 @@ paths:
       - "Charges"
       summary: "Get a charge"
       description: "Returns one charge with the discounts applied to it. An unknown\
-        \ id answers `404`."
+        \ id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires `billing:wallet:read`."
       operationId: "getCharge"
       parameters:
       - name: "id"

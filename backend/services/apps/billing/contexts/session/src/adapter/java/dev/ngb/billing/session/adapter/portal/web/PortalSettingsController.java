@@ -1,6 +1,8 @@
 package dev.ngb.billing.session.adapter.portal.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
 @RequestMapping("/api/v1/portal/return-urls")
+@Callers(Caller.TENANT_USER)
 public class PortalSettingsController {
 
     public record ReplaceRequest(List<String> urls) {}

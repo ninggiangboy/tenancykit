@@ -1,5 +1,7 @@
 package dev.ngb.platform.boot.security;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.PublicEndpoint;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "The public halves of the keys Platform signs suite tokens with, so every app can verify a token.")
 @RestController
+@Callers(value = Caller.PUBLIC, prefix = Callers.Prefix.NONE)
 class JwksController {
 
     private final SuiteTokenIssuer issuer;

@@ -3,6 +3,8 @@ package dev.ngb.workflow.triggers.adapter.trigger.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ConditionalUpdate;
@@ -42,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class TriggerController {
 
     public record CreateTriggerRequest(
@@ -150,8 +153,7 @@ public class TriggerController {
     @Operation(
             summary = "List triggers",
             description =
-                    "Pages through the tenant's triggers, with the list-query contract's filtering, sorting and paging. "
-                    + "Requires `workflow:trigger:manage`.")
+                    "Pages through the tenant's triggers, with the list-query contract's filtering, sorting and paging. ")
     @GetMapping("/triggers")
     @Listing(TriggerListing.class)
     @RequiresPermission(WorkflowPermissions.TRIGGER_MANAGE)
@@ -163,7 +165,7 @@ public class TriggerController {
             summary = "Get a trigger",
             description =
                     "Returns one trigger without its secret; its version is also the response's `ETag`. An unknown id "
-                    + "answers `404`. Requires `workflow:trigger:manage`.")
+                    + "answers `404`.")
     @GetMapping("/triggers/{id}")
     @RequiresPermission(WorkflowPermissions.TRIGGER_MANAGE)
     public ResponseEntity<TriggerResponse> getTrigger(@PathVariable String id) {
@@ -177,8 +179,7 @@ public class TriggerController {
             summary = "Update or disable a trigger",
             description =
                     "Changes the trigger's name, event type, filter, correlation or input, or disables it with "
-                    + "`enabled=false`. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`. "
-                    + "Requires `workflow:trigger:manage`.")
+                    + "`enabled=false`. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`. ")
     @PutMapping("/triggers/{id}")
     @ConditionalUpdate
     @RequiresPermission(WorkflowPermissions.TRIGGER_MANAGE)

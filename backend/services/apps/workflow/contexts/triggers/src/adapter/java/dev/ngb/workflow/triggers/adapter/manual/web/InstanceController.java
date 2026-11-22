@@ -1,6 +1,8 @@
 package dev.ngb.workflow.triggers.adapter.manual.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.workflow.shared.WorkflowPermissions;
@@ -32,6 +34,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class InstanceController {
 
     public record StartInstanceRequest(UUID definition, Object input, String correlationKey) {}
@@ -54,7 +57,7 @@ public class InstanceController {
                     "Starts an instance of `definition` from its newest published version, with `input` and an optional "
                     + "`correlationKey`. The tenant comes from the request, so a caller can never start another tenant's "
                     + "workflow. A repeated call with the same `Idempotency-Key` returns the first instance; the same key "
-                    + "with another body answers `409`. Answers `201`. Requires `workflow:instance:manage`.")
+                    + "with another body answers `409`. Answers `201`.")
     @PostMapping("/instances")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(WorkflowPermissions.INSTANCE_MANAGE)

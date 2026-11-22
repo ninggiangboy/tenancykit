@@ -2,6 +2,8 @@ package dev.ngb.booking.gate.adapter.token.web;
 
 import dev.ngb.booking.gate.application.token.command.IssueCustomerTokenUseCase;
 import dev.ngb.booking.shared.BookingPermissions;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import java.time.Instant;
 import java.util.List;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class CustomerTokenController {
 
     public record IssueTokenRequest(String customerRef, List<String> scopes, UUID offeringId, Integer ttlSeconds) {}

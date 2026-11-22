@@ -1,9 +1,9 @@
 package dev.ngb.loyalty.boot.web;
 
+import dev.ngb.core.openapi.CallerLabelCustomizer;
+import dev.ngb.core.openapi.PermissionCatalogs;
 import dev.ngb.core.openapi.ListingOpenApiCustomizer;
 import dev.ngb.core.security.Authorizer;
-import dev.ngb.core.security.PublicEndpoint;
-import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.ListQueryResolver;
 import dev.ngb.core.spring.security.PermissionInterceptor;
 import dev.ngb.core.tenancy.TenantContext;
@@ -13,7 +13,6 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.List;
-import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,19 +56,10 @@ class WebConfiguration implements WebMvcConfigurer {
         return new ListingOpenApiCustomizer();
     }
 
-    /** Documents the permission an operation requires, and marks the public paths that need no token. */
+    /** Derives every operation's caller label from its declaration and checks it against the permission catalog. */
     @Bean
-    OperationCustomizer documentedAccess() {
-        return (operation, handlerMethod) -> {
-            RequiresPermission required = handlerMethod.getMethodAnnotation(RequiresPermission.class);
-            if (required != null) {
-                operation.addExtension("x-required-permission", required.value());
-            }
-            if (handlerMethod.hasMethodAnnotation(PublicEndpoint.class)) {
-                operation.addExtension("x-public", true);
-            }
-            return operation;
-        };
+    CallerLabelCustomizer callerLabels() {
+        return new CallerLabelCustomizer(PermissionCatalogs.fromClasspath());
     }
 
     @Bean

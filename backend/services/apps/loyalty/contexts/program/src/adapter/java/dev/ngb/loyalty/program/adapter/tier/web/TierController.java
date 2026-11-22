@@ -1,6 +1,8 @@
 package dev.ngb.loyalty.program.adapter.tier.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
@@ -32,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class TierController {
 
     public record TierEntryRequest(String code, String name, Long minSpend, BigDecimal earnMultiplier) {}
@@ -69,6 +72,7 @@ public class TierController {
                 .body(TierListResponse.of(tiers));
     }
 
+    @Callers(Caller.TENANT_USER)
     @PutMapping("/tiers")
     @RequiresPermission(LoyaltyPermissions.PROGRAM_MANAGE)
     @ConditionalUpdate

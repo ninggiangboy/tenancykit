@@ -103,6 +103,7 @@ public final class TestTokenFactory {
     public static class JwksEndpoint {
 
         @GetMapping(path = "/test-jwks", produces = MediaType.APPLICATION_JSON_VALUE)
+        @dev.ngb.core.security.PublicEndpoint
         Map<String, Object> jwks() {
             return TestTokenFactory.jwks();
         }

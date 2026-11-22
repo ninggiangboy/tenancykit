@@ -12,6 +12,8 @@ import dev.ngb.billing.invoicing.application.invoice.query.InvoiceView;
 import dev.ngb.billing.invoicing.domain.invoice.Invoice;
 import dev.ngb.billing.invoicing.domain.invoice.InvoiceId;
 import dev.ngb.billing.money.api.charge.ChargeId;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -45,6 +47,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class InvoiceController {
 
     public record ItemResponse(
@@ -179,6 +182,7 @@ public class InvoiceController {
     }
 
     /** Cancels the request for payment. The wallet is not touched and a paid invoice cannot be voided (409). */
+    @Callers(Caller.TENANT_USER)
     @Operation(
             summary = "Void an invoice",
             description =
@@ -194,6 +198,7 @@ public class InvoiceController {
     }
 
     /** Writes an open invoice off as unlikely to be paid. It can still be paid later. */
+    @Callers(Caller.TENANT_USER)
     @Operation(
             summary = "Write an invoice off",
             description =

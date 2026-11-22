@@ -3,6 +3,8 @@ package dev.ngb.customer.orders.adapter.order.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.customer.orders.application.order.command.RecordOrderUseCase;
@@ -46,6 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class OrderController {
 
     /** One line as the Tenant sends it. A line's number is its position, so it is not sent. */

@@ -1,5 +1,7 @@
 package dev.ngb.mailroom.sending.adapter.settings.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.mailroom.sending.application.email.port.EmailSettingsView;
 import dev.ngb.mailroom.sending.application.settings.command.SaveEmailSettingsUseCase;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The tenant's default sender, reply-to, body retention and campaign publish rate.")
 @RestController
 @RequestMapping("/api/v1/settings")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class SettingsController {
 
     private final SettingsReader settings;
@@ -34,19 +37,20 @@ class SettingsController {
             summary = "Get the tenant's mail settings",
             description =
                     "Returns the tenant's default sender, reply-to, body retention in days and campaign publish rate per "
-                    + "minute, with the settings' version. Requires `mailroom:email:read`.")
+                    + "minute, with the settings' version.")
     @GetMapping
     @RequiresPermission(MailroomPermissions.EMAIL_READ)
     SettingsResponse current() {
         return SettingsResponse.of(settings.current());
     }
 
+    @Callers(Caller.TENANT_USER)
     @Operation(
             summary = "Replace the tenant's mail settings",
             description =
                     "Stores the default sender (`fromKey`, `fromName`), `replyTo`, `bodyRetentionDays` and "
                     + "`campaignPublishPerMinute`, each bounded as the schema states. The publish rate is the tenant's "
-                    + "total across all its campaigns. Requires `mailroom:settings:manage`.")
+                    + "total across all its campaigns.")
     @PutMapping
     @RequiresPermission(MailroomPermissions.SETTINGS_MANAGE)
     SettingsResponse save(@RequestBody SettingsRequest request) {

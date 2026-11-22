@@ -2,6 +2,8 @@ package dev.ngb.loyalty.points.adapter.member.web;
 
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.loyalty.points.application.ledger.query.LedgerEntryView;
@@ -37,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class MemberController {
 
     /** The optional profile of an enrolment; nothing else about a member is a caller's to set. */

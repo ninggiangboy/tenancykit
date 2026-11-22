@@ -2,6 +2,8 @@ package dev.ngb.survey.insight.adapter.export.web;
 
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
@@ -35,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Queued CSV exports of responses and reading their state.")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class ExportController {
 
     private final RequestExportUseCase request;
@@ -52,7 +55,7 @@ class ExportController {
             description =
                     "Queues an export of the survey's responses narrowed by `filter` and answers its state at once; a "
                     + "worker produces the CSV. Poll the export until it finishes, then use its download link, which "
-                    + "expires in fifteen minutes. Answers `201`. Requires `survey:export:manage`.")
+                    + "expires in fifteen minutes. Answers `201`.")
     @PostMapping("/surveys/{id}/exports")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(SurveyPermissions.EXPORT_MANAGE)
@@ -68,7 +71,7 @@ class ExportController {
             summary = "List a survey's exports",
             description =
                     "Pages through the exports requested for the survey named by the path, with the list-query contract's "
-                    + "filtering, sorting and paging. Requires `survey:export:manage`.")
+                    + "filtering, sorting and paging.")
     @GetMapping("/surveys/{id}/exports")
     @Listing(ExportListing.class)
     @RequiresPermission(SurveyPermissions.EXPORT_MANAGE)
@@ -80,7 +83,7 @@ class ExportController {
             summary = "Get an export",
             description =
                     "Returns one export with its state; a finished export carries a presigned download that expires in "
-                    + "fifteen minutes. An unknown id answers `404`. Requires `survey:export:manage`.")
+                    + "fifteen minutes. An unknown id answers `404`.")
     @GetMapping("/exports/{exportId}")
     @RequiresPermission(SurveyPermissions.EXPORT_MANAGE)
     ExportQueries.ExportView get(@PathVariable UUID exportId) {

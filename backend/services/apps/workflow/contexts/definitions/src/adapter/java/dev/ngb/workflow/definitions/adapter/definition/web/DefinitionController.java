@@ -3,6 +3,8 @@ package dev.ngb.workflow.definitions.adapter.definition.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
@@ -55,6 +57,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class DefinitionController {
 
     public record CreateDefinitionRequest(String code, String name) {}
@@ -166,7 +169,7 @@ public class DefinitionController {
             summary = "Create a workflow definition",
             description =
                     "Creates a definition with a `code` and a name and an empty draft; the graph arrives through the "
-                    + "draft endpoint. Requires `workflow:definition:manage`.")
+                    + "draft endpoint.")
     @PostMapping("/definitions")
     @RequiresPermission(WorkflowPermissions.DEFINITION_MANAGE)
     public ResponseEntity<DefinitionResponse> createDefinition(
@@ -183,7 +186,7 @@ public class DefinitionController {
             summary = "List workflow definitions",
             description =
                     "Pages through the tenant's definitions, with the list-query contract's filtering, sorting and "
-                    + "paging. Requires `workflow:definition:read`.")
+                    + "paging.")
     @GetMapping("/definitions")
     @Listing(DefinitionListing.class)
     @RequiresPermission(WorkflowPermissions.DEFINITION_READ)
@@ -194,8 +197,7 @@ public class DefinitionController {
     @Operation(
             summary = "Get a workflow definition",
             description =
-                    "Returns one definition; its version is also the response's `ETag`. An unknown id answers `404`. "
-                    + "Requires `workflow:definition:read`.")
+                    "Returns one definition; its version is also the response's `ETag`. An unknown id answers `404`. ")
     @GetMapping("/definitions/{id}")
     @RequiresPermission(WorkflowPermissions.DEFINITION_READ)
     public ResponseEntity<DefinitionResponse> getDefinition(@PathVariable String id) {
@@ -235,8 +237,7 @@ public class DefinitionController {
             summary = "Publish a definition",
             description =
                     "Freezes the draft into the next immutable version number. An invalid draft answers `422` with every "
-                    + "problem by pointer. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`. "
-                    + "Requires `workflow:definition:manage`.")
+                    + "problem by pointer. Pass the current `ETag` in `If-Match`; a stale version is refused with `412`. ")
     @PostMapping("/definitions/{id}/publish")
     @ConditionalUpdate
     @RequiresPermission(WorkflowPermissions.DEFINITION_MANAGE)
@@ -264,7 +265,7 @@ public class DefinitionController {
             description =
                     "Stops new instances from starting. The published versions and the instances pinned to them are "
                     + "untouched and keep running. Pass the current `ETag` in `If-Match`; a stale version is refused with "
-                    + "`412`. Requires `workflow:definition:manage`.")
+                    + "`412`.")
     @PostMapping("/definitions/{id}/retire")
     @ConditionalUpdate
     @RequiresPermission(WorkflowPermissions.DEFINITION_MANAGE)
@@ -281,7 +282,7 @@ public class DefinitionController {
     @Operation(
             summary = "List a definition's versions",
             description =
-                    "Returns the definition's published versions. Requires `workflow:definition:read`.")
+                    "Returns the definition's published versions.")
     @GetMapping("/definitions/{id}/versions")
     @RequiresPermission(WorkflowPermissions.DEFINITION_READ)
     public List<VersionResponse> listVersions(@PathVariable String id) {
@@ -292,7 +293,7 @@ public class DefinitionController {
             summary = "Get a published version",
             description =
                     "Returns published version `version` of the definition with its graph. A published version never "
-                    + "changes. An unknown definition or version answers `404`. Requires `workflow:definition:read`.")
+                    + "changes. An unknown definition or version answers `404`.")
     @GetMapping("/definitions/{id}/versions/{version}")
     @RequiresPermission(WorkflowPermissions.DEFINITION_READ)
     public VersionResponse getVersion(@PathVariable String id, @PathVariable int version) {

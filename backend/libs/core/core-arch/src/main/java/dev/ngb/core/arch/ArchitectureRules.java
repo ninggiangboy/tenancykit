@@ -7,6 +7,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.CompositeArchRule;
@@ -110,7 +111,8 @@ public final class ArchitectureRules {
                 new NamedRule("read-side-does-not-depend-on-write", readSideDoesNotDependOnWrite(profile)),
                 new NamedRule("query-side-uses-no-domain-aggregates", querySideUsesNoDomainAggregates(profile)),
                 new NamedRule("write-ports-serve-no-reads", writePortsServeNoReads(profile)),
-                new NamedRule("domain-events-live-in-an-events-holder", domainEventsLiveInAnEventsHolder(profile)));
+                new NamedRule("domain-events-live-in-an-events-holder", domainEventsLiveInAnEventsHolder(profile)),
+                new NamedRule("every-endpoint-declares-a-caller", everyEndpointDeclaresACaller(profile)));
     }
 
     /**
@@ -743,6 +745,54 @@ public final class ArchitectureRules {
             name.append(part.charAt(0)).append(part.substring(1).toLowerCase());
         }
         return name.toString();
+    }
+
+    /**
+     * Every endpoint names who may call it: {@code @Callers} on the method or the class, {@code @PublicEndpoint}, or an
+     * annotation that implies a caller (Billing's portal permission). The OpenAPI label derivation reads the same
+     * sources, so a route that would document as unknown fails here before it ships.
+     */
+    private static ArchRule everyEndpointDeclaresACaller(Profile profile) {
+        String root = profile.root();
+        return classes().that().resideInAPackage(root + "..")
+                .and().areAnnotatedWith("org.springframework.web.bind.annotation.RestController")
+                .should(new ArchCondition<>("declare a caller on every endpoint") {
+                    @Override
+                    public void check(JavaClass type, ConditionEvents events) {
+                        boolean onClass = type.isAnnotatedWith("dev.ngb.core.security.Callers")
+                                || type.isMetaAnnotatedWith("dev.ngb.core.security.Callers");
+                        for (JavaMethod method : type.getMethods()) {
+                            if (!isEndpoint(method)) {
+                                continue;
+                            }
+                            boolean onMethod = method.isAnnotatedWith("dev.ngb.core.security.Callers")
+                                    || method.isMetaAnnotatedWith("dev.ngb.core.security.Callers")
+                                    || method.isAnnotatedWith("dev.ngb.core.security.PublicEndpoint")
+                                    || impliesACaller(method);
+                            if (!onClass && !onMethod) {
+                                events.add(SimpleConditionEvent.violated(
+                                        method, method.getFullName() + " declares no caller"));
+                            }
+                        }
+                    }
+                })
+                .because("a route's caller decides its prefix and its label, so every endpoint must name one")
+                .allowEmptyShould(true);
+    }
+
+    private static boolean isEndpoint(JavaMethod method) {
+        return method.isAnnotatedWith("org.springframework.web.bind.annotation.GetMapping")
+                || method.isAnnotatedWith("org.springframework.web.bind.annotation.PostMapping")
+                || method.isAnnotatedWith("org.springframework.web.bind.annotation.PutMapping")
+                || method.isAnnotatedWith("org.springframework.web.bind.annotation.PatchMapping")
+                || method.isAnnotatedWith("org.springframework.web.bind.annotation.DeleteMapping")
+                || method.isAnnotatedWith("org.springframework.web.bind.annotation.RequestMapping");
+    }
+
+    /** A portal permission is the one caller-implying annotation a service owns; the core names no service. */
+    private static boolean impliesACaller(JavaMethod method) {
+        return method.getAnnotations().stream()
+                .anyMatch(annotation -> annotation.getRawType().getSimpleName().equals("RequiresPortalPermission"));
     }
 
     private static String contextOf(Profile profile, String packageName) {

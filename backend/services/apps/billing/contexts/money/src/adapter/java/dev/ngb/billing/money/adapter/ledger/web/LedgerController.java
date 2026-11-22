@@ -9,6 +9,8 @@ import dev.ngb.billing.money.application.wallet.query.WalletQueries;
 import dev.ngb.billing.money.domain.ledger.LedgerEntry;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.CurrentActor;
@@ -37,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class LedgerController {
 
     public record LedgerEntryResponse(
@@ -86,6 +89,7 @@ public class LedgerController {
         return queries.ledger(WalletId.of(id), query, currentActor.caller()).map(LedgerEntryResponse::ofView);
     }
 
+    @Callers(Caller.TENANT_USER)
     @Operation(
             summary = "Reverse a ledger entry",
             description =

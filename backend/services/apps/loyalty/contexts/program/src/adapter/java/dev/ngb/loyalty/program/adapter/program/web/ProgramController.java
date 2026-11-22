@@ -1,6 +1,8 @@
 package dev.ngb.loyalty.program.adapter.program.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class ProgramController {
 
     /** The contract's names for the program's fields: {@code currencyUnit} is the minor units that earn one point. */
@@ -88,6 +91,7 @@ public class ProgramController {
                 .body(ProgramResponse.ofView(program));
     }
 
+    @Callers(Caller.TENANT_USER)
     @PutMapping("/program")
     @RequiresPermission(LoyaltyPermissions.PROGRAM_MANAGE)
     @ConditionalUpdate

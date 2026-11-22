@@ -4,6 +4,8 @@ import dev.ngb.attribution.shared.AttributionPermissions;
 import dev.ngb.attribution.tracking.api.erasure.ConversionPersonEraser;
 import dev.ngb.attribution.tracking.application.collect.port.ErasureStore;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.tenancy.TenantContext;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Erasing one visitor's collected data.")
 @RestController
 @RequestMapping("/api/v1/data-subjects")
+@Callers(Caller.TENANT_USER)
 public class DataSubjectController {
 
     private final ErasureStore erasure;
@@ -48,7 +51,7 @@ public class DataSubjectController {
             description =
                     "Erases one visitor's (`visitor_id`) collected rows: page events, sessions, bindings and the clicks "
                     + "only that visitor was bound to, and answers how many of each were removed. Rollups hold aggregates "
-                    + "only, so a report's totals stay and the person does not. Requires `attribution:data:erase`.")
+                    + "only, so a report's totals stay and the person does not.")
     @PostMapping("/erasure")
     @RequiresPermission(AttributionPermissions.DATA_ERASE)
     ErasureView erase(@RequestBody ErasureRequest request) {

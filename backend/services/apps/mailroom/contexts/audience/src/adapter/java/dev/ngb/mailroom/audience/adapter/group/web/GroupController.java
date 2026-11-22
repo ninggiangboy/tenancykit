@@ -1,6 +1,8 @@
 package dev.ngb.mailroom.audience.adapter.group.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.core.version.ExpectedVersion;
@@ -44,6 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Static groups of receivers and their membership.")
 @RestController
 @RequestMapping("/api/v1/groups")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class GroupController {
 
     private final CreateGroupUseCase create;
@@ -70,7 +73,7 @@ class GroupController {
             summary = "List receiver groups",
             description =
                     "Pages through the tenant's static receiver groups, with the list-query contract's filtering, sorting "
-                    + "and paging. Requires `mailroom:receiver:read`.")
+                    + "and paging.")
     @GetMapping
     @Listing(GroupListing.class)
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
@@ -82,7 +85,7 @@ class GroupController {
             summary = "Create a receiver group",
             description =
                     "Creates an empty static group with a name. Add receivers to it with `POST "
-                    + "/api/v1/groups/{id}/members`. Answers `201`. Requires `mailroom:receiver:manage`.")
+                    + "/api/v1/groups/{id}/members`. Answers `201`.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
@@ -105,8 +108,7 @@ class GroupController {
     @Operation(
             summary = "Rename a receiver group",
             description =
-                    "Changes the group's name. Pass the current `ETag` in `If-Match`; a stale version is refused. "
-                    + "Requires `mailroom:receiver:manage`.")
+                    "Changes the group's name. Pass the current `ETag` in `If-Match`; a stale version is refused. ")
     @PutMapping("/{id}")
     @ConditionalUpdate
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
@@ -124,7 +126,7 @@ class GroupController {
             summary = "Delete a receiver group",
             description =
                     "Deletes the group and its memberships; the receivers themselves stay. Pass the current `ETag` in "
-                    + "`If-Match`; a stale version is refused. Answers `204`. Requires `mailroom:receiver:manage`.")
+                    + "`If-Match`; a stale version is refused. Answers `204`.")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
@@ -139,7 +141,7 @@ class GroupController {
             summary = "List the members of a receiver group",
             description =
                     "Pages through the receivers in the group named by the path, with the list-query contract's "
-                    + "filtering, sorting and paging. Requires `mailroom:receiver:read`.")
+                    + "filtering, sorting and paging.")
     @GetMapping("/{id}/members")
     @Listing(ReceiverListing.class)
     @RequiresPermission(MailroomPermissions.RECEIVER_READ)
@@ -151,7 +153,7 @@ class GroupController {
             summary = "Add receivers to a group",
             description =
                     "Adds up to 1,000 receivers, named by `receiverIds`, to the group. A receiver that belongs to another "
-                    + "tenant is refused. Answers how many memberships changed. Requires `mailroom:receiver:manage`.")
+                    + "tenant is refused. Answers how many memberships changed.")
     @PostMapping("/{id}/members")
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
     MemberChange addMembers(@PathVariable UUID id, @RequestBody MemberIds request) {
@@ -162,7 +164,7 @@ class GroupController {
             summary = "Remove receivers from a group",
             description =
                     "Removes up to 1,000 receivers, named by `receiverIds`, from the group; the receivers themselves "
-                    + "stay. Answers how many memberships changed. Requires `mailroom:receiver:manage`.")
+                    + "stay. Answers how many memberships changed.")
     @DeleteMapping("/{id}/members")
     @RequiresPermission(MailroomPermissions.RECEIVER_MANAGE)
     MemberChange removeMembers(@PathVariable UUID id, @RequestBody MemberIds request) {

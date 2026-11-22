@@ -15,6 +15,8 @@ import dev.ngb.attribution.shared.AttributionPermissions;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.version.ConditionalUpdate;
@@ -53,6 +55,7 @@ import org.springframework.web.bind.annotation.RestController;
                 + "code.")
 @RestController
 @RequestMapping("/api/v1/links")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class LinkController {
 
     private static final String PNG = "image/png";
@@ -88,7 +91,7 @@ class LinkController {
             summary = "List links",
             description =
                     "Pages through the tenant's tracked links, with the list-query contract's filtering, sorting and "
-                    + "paging. Requires `attribution:link:read`.")
+                    + "paging.")
     @GetMapping
     @Listing(LinkListing.class)
     @RequiresPermission(AttributionPermissions.LINK_READ)
@@ -102,8 +105,7 @@ class LinkController {
                     "Creates a link under a campaign with one or more destinations, UTM parameters, an optional expiry, "
                     + "click cap and password. Every destination is validated at save: one that points at the suite or a "
                     + "private address is refused, because that check is what stops a link becoming a phishing relay. The "
-                    + "password is stored as a hash and never returned. The link's public URL works at once. Answers `201`. "
-                    + "Requires `attribution:link:manage`.")
+                    + "password is stored as a hash and never returned. The link's public URL works at once. Answers `201`. ")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(AttributionPermissions.LINK_MANAGE)
@@ -151,7 +153,7 @@ class LinkController {
             summary = "Get a link",
             description =
                     "Returns one link with its public URL; its version is also the response's `ETag`. The password is "
-                    + "never returned. An unknown id answers `404`. Requires `attribution:link:read`.")
+                    + "never returned. An unknown id answers `404`.")
     @GetMapping("/{id}")
     @RequiresPermission(AttributionPermissions.LINK_READ)
     ResponseEntity<LinkResponse> get(@PathVariable UUID id) {
@@ -166,7 +168,7 @@ class LinkController {
             description =
                     "Changes the link's destinations, limits and metadata. A blank `password` keeps the stored hash, so a "
                     + "caller that never knew the password can still edit the link. Pass the current `ETag` in `If-Match`; "
-                    + "a stale version is refused with `412`. Requires `attribution:link:manage`.")
+                    + "a stale version is refused with `412`.")
     @PatchMapping("/{id}")
     @ConditionalUpdate
     @RequiresPermission(AttributionPermissions.LINK_MANAGE)
@@ -205,7 +207,7 @@ class LinkController {
     @Operation(
             summary = "Resume a link",
             description =
-                    "Makes a paused link redirect again. Answers `204`. Requires `attribution:link:manage`.")
+                    "Makes a paused link redirect again. Answers `204`.")
     @PostMapping("/{id}/resume")
     @RequiresPermission(AttributionPermissions.LINK_MANAGE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -216,7 +218,7 @@ class LinkController {
     @Operation(
             summary = "Archive a link",
             description =
-                    "Archives the link so it no longer redirects. Answers `204`. Requires `attribution:link:manage`.")
+                    "Archives the link so it no longer redirects. Answers `204`.")
     @PostMapping("/{id}/archive")
     @RequiresPermission(AttributionPermissions.LINK_MANAGE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -228,7 +230,7 @@ class LinkController {
             summary = "Get a link's QR code",
             description =
                     "Returns a QR code of the link's public URL as `png` (the default) or `svg`, `size` pixels wide "
-                    + "(default 256). Requires `attribution:link:read`.")
+                    + "(default 256).")
     @GetMapping("/{id}/qr")
     @RequiresPermission(AttributionPermissions.LINK_READ)
     ResponseEntity<byte[]> qr(

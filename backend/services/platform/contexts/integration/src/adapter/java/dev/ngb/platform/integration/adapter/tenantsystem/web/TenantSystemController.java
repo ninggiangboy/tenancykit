@@ -3,6 +3,8 @@ package dev.ngb.platform.integration.adapter.tenantsystem.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.platform.sharedkernel.security.PlatformPermissions;
 import dev.ngb.core.audit.Audit;
@@ -48,6 +50,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "A tenant's machine callers and the API credentials they authenticate with: issue, rotate and revoke.")
 @RestController
 @RequestMapping("/api/v1/tenant-systems")
+@Callers(Caller.TENANT_USER)
 class TenantSystemController {
 
     record CreateSystemRequest(String name, String purpose) {}
@@ -141,7 +144,7 @@ class TenantSystemController {
             summary = "List tenant systems",
             description =
                     "Pages through the current Tenant's Tenant Systems, with the list-query contract's filtering, sorting "
-                    + "and paging. Requires `platform:tenant-system:read`.")
+                    + "and paging.")
     @GetMapping
     @Listing(TenantSystemListing.class)
     @RequiresPermission(PlatformPermissions.TENANT_SYSTEM_READ)
@@ -153,7 +156,7 @@ class TenantSystemController {
             summary = "Get a tenant system",
             description =
                     "Returns one Tenant System of the current Tenant with its purpose, status and version; the version is "
-                    + "also the response's `ETag`. An unknown id answers `404`. Requires `platform:tenant-system:read`.")
+                    + "also the response's `ETag`. An unknown id answers `404`.")
     @GetMapping("/{id}")
     @RequiresPermission(PlatformPermissions.TENANT_SYSTEM_READ)
     ResponseEntity<SystemResponse> get(@PathVariable String id) {
@@ -165,8 +168,7 @@ class TenantSystemController {
             summary = "Rename or disable a tenant system",
             description =
                     "Applies one `action` to the system: `RENAME` with the new `name`, or `DISABLE`. Each change "
-                    + "publishes the system's state. Pass the system's `ETag` in `If-Match`; a stale version is refused. "
-                    + "Requires `platform:tenant-system:manage`.")
+                    + "publishes the system's state. Pass the system's `ETag` in `If-Match`; a stale version is refused. ")
     @PutMapping("/{id}")
     @RequiresPermission(PlatformPermissions.TENANT_SYSTEM_MANAGE)
     ResponseEntity<SystemResponse> update(
@@ -186,8 +188,7 @@ class TenantSystemController {
             summary = "Issue an API credential",
             description =
                     "Issues a credential for the Tenant System with a `label` and the `scopes` it may use. The secret "
-                    + "`key` is in the response and is never shown again; storage keeps only a digest. Answers `201`. "
-                    + "Requires `platform:credential:manage`.")
+                    + "`key` is in the response and is never shown again; storage keeps only a digest. Answers `201`. ")
     @PostMapping("/{id}/credentials")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(PlatformPermissions.CREDENTIAL_MANAGE)
@@ -220,7 +221,7 @@ class TenantSystemController {
             description =
                     "Issues a new credential and lets the previous one keep working for `overlapMinutes` (24 hours when "
                     + "the body is omitted), so the Tenant System can switch over without downtime. The new secret `key` is "
-                    + "in the response and is never shown again. Requires `platform:credential:manage`.")
+                    + "in the response and is never shown again.")
     @PostMapping("/{id}/credentials/rotate")
     @RequiresPermission(PlatformPermissions.CREDENTIAL_MANAGE)
     IssuedCredentialResponse rotate(
@@ -234,7 +235,7 @@ class TenantSystemController {
             summary = "Revoke an API credential",
             description =
                     "Revokes one credential of the Tenant System at once; a token request with it is refused from then "
-                    + "on. Answers the credential with its new state. Requires `platform:credential:manage`.")
+                    + "on. Answers the credential with its new state.")
     @DeleteMapping("/{systemId}/credentials/{credentialId}")
     @RequiresPermission(PlatformPermissions.CREDENTIAL_MANAGE)
     CredentialResponse revoke(

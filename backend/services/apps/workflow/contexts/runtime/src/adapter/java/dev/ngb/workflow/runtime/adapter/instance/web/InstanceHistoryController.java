@@ -1,5 +1,7 @@
 package dev.ngb.workflow.runtime.adapter.instance.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.workflow.runtime.application.runtime.query.InstanceQueries;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class InstanceHistoryController {
 
     private final InstanceQueries instances;
@@ -41,7 +44,7 @@ public class InstanceHistoryController {
             description =
                     "Returns the instances the tenant's flows started, narrowed by `status`, `definition` code and "
                     + "`correlationKey`, paged with `limit` (default 50) and `offset`. No answer carries the trigger input "
-                    + "or a secret. Requires `workflow:instance:read`.")
+                    + "or a secret.")
     @GetMapping("/instances")
     @RequiresPermission(WorkflowPermissions.INSTANCE_READ)
     public List<InstanceView> list(
@@ -56,8 +59,7 @@ public class InstanceHistoryController {
     @Operation(
             summary = "Get a workflow instance",
             description =
-                    "Returns one instance with its state and, when it failed, the reason. An unknown id answers `404`. "
-                    + "Requires `workflow:instance:read`.")
+                    "Returns one instance with its state and, when it failed, the reason. An unknown id answers `404`. ")
     @GetMapping("/instances/{id}")
     @RequiresPermission(WorkflowPermissions.INSTANCE_READ)
     public ResponseEntity<InstanceView> get(@PathVariable String id) {

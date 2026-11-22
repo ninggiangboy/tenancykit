@@ -1,5 +1,7 @@
 package dev.ngb.survey.collection.adapter.visit.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.survey.authoring.api.flow.SurveyFlow;
 import dev.ngb.survey.collection.application.guard.service.Honeypot;
 import dev.ngb.survey.collection.application.visit.exception.AlreadyCompletedException;
@@ -44,6 +46,7 @@ import org.springframework.web.server.ResponseStatusException;
                 "The unauthenticated endpoints a respondent's browser uses to open a link and read the survey.")
 @RestController
 @RequestMapping("/p")
+@Callers(Caller.PUBLIC)
 class PublicController {
 
     private final OpenLinkUseCase openLink;

@@ -46,10 +46,10 @@ paths:
       tags:
       - Users
       summary: Grant or revoke a direct permission
-      description: "Grants (`grant=true`) or revokes (`grant=false`) one permission\
-        \ `code` directly on the user, outside any role. Each effective change is\
-        \ audited. Pass the user's `ETag` in `If-Match`; a stale version is refused.\
-        \ Requires `platform:user:manage`."
+      description: |-
+        Grants (`grant=true`) or revokes (`grant=false`) one permission `code` directly on the user, outside any role. Each effective change is audited. Pass the user's `ETag` in `If-Match`; a stale version is refused.
+
+        Callers: platform-user, tenant-user. Requires `platform:user:manage`.
       operationId: setPermission
       parameters:
       - name: id
@@ -110,16 +110,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:user:manage
+      x-allowed-callers:
+      - platform-user
+      - tenant-user
   /api/v1/ui-remotes/{name}:
     put:
       tags:
       - UI remotes
       summary: Change a UI remote
-      description: "The operator's one write on a remote: enable or disable it, point\
-        \ it at a registered version with `activeVersion` (a rollback is the same\
-        \ call with an older version), and edit its `title` and `navOrder`. `enabled`\
-        \ is required. Pass the remote's `ETag` in `If-Match`; a stale version is\
-        \ refused. Requires `platform:ui-remote:manage`."
+      description: |-
+        The operator's one write on a remote: enable or disable it, point it at a registered version with `activeVersion` (a rollback is the same call with an older version), and edit its `title` and `navOrder`. `enabled` is required. Pass the remote's `ETag` in `If-Match`; a stale version is refused.
+
+        Callers: platform-user. Requires `platform:ui-remote:manage`.
       operationId: setState
       parameters:
       - name: name
@@ -167,15 +169,17 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: platform:ui-remote:manage
+      x-allowed-callers:
+      - platform-user
   /api/v1/tenants/{tenantId}/apps/{appCode}:
     put:
       tags:
       - App entitlements
       summary: Enable or disable an app for a tenant
-      description: Sets whether the Tenant may use the app `appCode`. Setting the
-        state it already has changes nothing and publishes nothing; the audit entry
-        names the action asked for. `enabled` is required. Pass the entitlement's
-        `ETag` in `If-Match`; a stale version is refused. Requires `platform:entitlement:manage`.
+      description: |-
+        Sets whether the Tenant may use the app `appCode`. Setting the state it already has changes nothing and publishes nothing; the audit entry names the action asked for. `enabled` is required. Pass the entitlement's `ETag` in `If-Match`; a stale version is refused. Requires `platform:entitlement:manage`.
+
+        Callers: platform-user. Requires `platform:entitlement:manage`.
       operationId: set
       parameters:
       - name: tenantId
@@ -236,14 +240,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:entitlement:manage
+      x-allowed-callers:
+      - platform-user
   /api/v1/tenants/{id}:
     put:
       tags:
       - Tenants
       summary: Rename a tenant
-      description: Changes the Tenant's display name; its code does not change. The
-        version is bumped and the new state is published. Pass the tenant's `ETag`
-        in `If-Match`; a stale version is refused. Requires `platform:tenant:rename`.
+      description: |-
+        Changes the Tenant's display name; its code does not change. The version is bumped and the new state is published. Pass the tenant's `ETag` in `If-Match`; a stale version is refused. Requires `platform:tenant:rename`.
+
+        Callers: platform-user. Requires `platform:tenant:rename`.
       operationId: rename
       parameters:
       - name: id
@@ -292,14 +299,17 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: platform:tenant:rename
+      x-allowed-callers:
+      - platform-user
   /api/v1/tenant-systems/{id}:
     get:
       tags:
       - Tenant systems
       summary: Get a tenant system
-      description: "Returns one Tenant System of the current Tenant with its purpose,\
-        \ status and version; the version is also the response's `ETag`. An unknown\
-        \ id answers `404`. Requires `platform:tenant-system:read`."
+      description: |-
+        Returns one Tenant System of the current Tenant with its purpose, status and version; the version is also the response's `ETag`. An unknown id answers `404`.
+
+        Callers: tenant-user. Requires `platform:tenant-system:read`.
       operationId: get
       parameters:
       - name: id
@@ -322,13 +332,16 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: platform:tenant-system:read
+      x-allowed-callers:
+      - tenant-user
     put:
       tags:
       - Tenant systems
       summary: Rename or disable a tenant system
-      description: "Applies one `action` to the system: `RENAME` with the new `name`,\
-        \ or `DISABLE`. Each change publishes the system's state. Pass the system's\
-        \ `ETag` in `If-Match`; a stale version is refused. Requires `platform:tenant-system:manage`."
+      description: |-
+        Applies one `action` to the system: `RENAME` with the new `name`, or `DISABLE`. Each change publishes the system's state. Pass the system's `ETag` in `If-Match`; a stale version is refused.
+
+        Callers: tenant-user. Requires `platform:tenant-system:manage`.
       operationId: update
       parameters:
       - name: id
@@ -376,13 +389,17 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: platform:tenant-system:manage
+      x-allowed-callers:
+      - tenant-user
   /api/v1/roles/{id}:
     put:
       tags:
       - Roles
       summary: Rename a role
-      description: Changes the role's name. Pass the role's `ETag` in `If-Match`;
-        a stale version is refused. Requires `platform:role:manage`.
+      description: |-
+        Changes the role's name. Pass the role's `ETag` in `If-Match`; a stale version is refused. Requires `platform:role:manage`.
+
+        Callers: platform-user, tenant-user. Requires `platform:role:manage`.
       operationId: rename_1
       parameters:
       - name: id
@@ -431,14 +448,18 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: platform:role:manage
+      x-allowed-callers:
+      - platform-user
+      - tenant-user
   /api/v1/roles/{id}/permissions:
     put:
       tags:
       - Roles
       summary: Replace a role's permissions
-      description: Replaces the role's whole permission set with `permissions`. Every
-        holder of the role has its effective access recomputed. Pass the role's `ETag`
-        in `If-Match`; a stale version is refused. Requires `platform:role:manage`.
+      description: |-
+        Replaces the role's whole permission set with `permissions`. Every holder of the role has its effective access recomputed. Pass the role's `ETag` in `If-Match`; a stale version is refused.
+
+        Callers: platform-user, tenant-user. Requires `platform:role:manage`.
       operationId: replacePermissions
       parameters:
       - name: id
@@ -493,18 +514,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:role:manage
+      x-allowed-callers:
+      - platform-user
+      - tenant-user
   /oauth/token:
     post:
       tags:
       - Access tokens
       summary: Get an access token with client credentials
-      description: "The OAuth client-credentials grant for Tenant Systems and service\
-        \ clients. Authenticate with HTTP Basic using the credential's id and secret,\
-        \ send `grant_type=client_credentials` and the `audience` of the app to call\
-        \ as a form, and receive a short-lived `Bearer` token (`access_token`, `token_type`,\
-        \ `expires_in`). An unsupported grant or audience answers `400`; a missing\
-        \ or wrong credential answers `401` with no detail on which half was wrong;\
-        \ too many attempts answer `429` with `Retry-After`. Public: no token is needed."
+      description: |-
+        The OAuth client-credentials grant for Tenant Systems and service clients. Authenticate with HTTP Basic using the credential's id and secret, send `grant_type=client_credentials` and the `audience` of the app to call as a form, and receive a short-lived `Bearer` token (`access_token`, `token_type`, `expires_in`). An unsupported grant or audience answers `400`; a missing or wrong credential answers `401` with no detail on which half was wrong; too many attempts answer `429` with `Retry-After`. Public: no token is needed.
+
+        Callers: tenant-system, internal.
       operationId: token
       parameters:
       - name: Authorization
@@ -561,22 +582,28 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
+        "403":
+          $ref: "#/components/responses/NotEntitled"
         "429":
           description: Too many attempts. Repeat after the number of seconds in `Retry-After`.
           content:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
-      x-public: true
+      x-allowed-callers:
+      - tenant-system
+      - internal
   /api/v1/users:
     get:
       tags:
       - Users
       summary: List users
       description: |-
-        Pages through users, with the list-query contract's filtering, sorting and paging. `tenant_id` is a filter, and a Tenant-scope caller never sees another Tenant's users. Requires `platform:user:read`.
+        Pages through users, with the list-query contract's filtering, sorting and paging. `tenant_id` is a filter, and a Tenant-scope caller never sees another Tenant's users.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: platform-user, tenant-user. Requires `platform:user:read`.
       operationId: list
       parameters:
       - name: "filter[created_at][eq]"
@@ -938,13 +965,17 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:user:read
+      x-allowed-callers:
+      - platform-user
+      - tenant-user
     post:
       tags:
       - Users
       summary: Create a user
-      description: "Creates the user's sign-in identity and the Platform user for\
-        \ `tenantCode`, with a temporary password. A Tenant-scope caller cannot create\
-        \ a Platform-scope user. Answers `201` with the user. Requires `platform:user:manage`."
+      description: |-
+        Creates the user's sign-in identity and the Platform user for `tenantCode`, with a temporary password. A Tenant-scope caller cannot create a Platform-scope user. Answers `201` with the user.
+
+        Callers: platform-user, tenant-user. Requires `platform:user:manage`.
       operationId: create
       parameters:
       - name: X-Request-Id
@@ -975,18 +1006,18 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:user:manage
+      x-allowed-callers:
+      - platform-user
+      - tenant-user
   /api/v1/ui-remotes/{name}/versions:
     post:
       tags:
       - UI remotes
       summary: Register a UI remote version
-      description: "Called by CI after it publishes a build. The first call also creates\
-        \ the remote, disabled and with no active version; registering never enables\
-        \ a remote or changes its active version, so a deploy cannot reach a browser\
-        \ until an operator activates it. Repeating the same version with the same\
-        \ content answers `200` instead of `201`; the same version with different\
-        \ content is a conflict, because a version is immutable once a shell may have\
-        \ verified it. Requires `platform:ui-remote:register`."
+      description: |-
+        Called by CI after it publishes a build. The first call also creates the remote, disabled and with no active version; registering never enables a remote or changes its active version, so a deploy cannot reach a browser until an operator activates it. Repeating the same version with the same content answers `200` instead of `201`; the same version with different content is a conflict, because a version is immutable once a shell may have verified it. Requires `platform:ui-remote:register`.
+
+        Callers: internal. Requires `platform:ui-remote:register`.
       operationId: registerVersion
       parameters:
       - name: name
@@ -1040,15 +1071,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:ui-remote:register
+      x-allowed-callers:
+      - internal
   /api/v1/tenants:
     get:
       tags:
       - Tenants
       summary: List tenants
-      description: |-
-        Pages through the suite's Tenants, with the list-query contract's filtering, sorting and paging. Requires `platform:tenant:read`.
-
-        **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+      description: "Pages through the suite's Tenants, with the list-query contract's\
+        \ filtering, sorting and paging. \n\n**Filtering, sorting and paging** follow\
+        \ the list-query contract. Conditions in `filter[field][op]` are combined\
+        \ with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the\
+        \ index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20\
+        \ predicates in all, 100 values in an `in` list). `neq` and `nin` do not match\
+        \ rows where the field is null. Send `limit` with either `offset` (at most\
+        \ 10000) or the `cursor` taken from a previous page, never both. The body\
+        \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
+        \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
+        \ with `limit` and `next_cursor` alone, without counting the matching rows;\
+        \ omit it for the rows alone.\n\nCallers: platform-user. Requires `platform:tenant:read`."
       operationId: list_1
       parameters:
       - name: "filter[code][eq]"
@@ -1354,16 +1395,16 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:tenant:read
+      x-allowed-callers:
+      - platform-user
     post:
       tags:
       - Tenant provisioning
       summary: Provision a tenant with its first administrator
-      description: "Creates a Tenant, seeds its Tenant Administrator role with every\
-        \ tenant-scope permission and, when `adminEmail` is given, creates the first\
-        \ administrator with `adminTemporaryPassword` and assigns that role, all in\
-        \ one call. A failure leaves neither a Tenant without its role nor an administrator\
-        \ without the Tenant. Answers `201` with the tenant id and the administrator's\
-        \ email. Requires `platform:tenant:create`."
+      description: |-
+        Creates a Tenant, seeds its Tenant Administrator role with every tenant-scope permission and, when `adminEmail` is given, creates the first administrator with `adminTemporaryPassword` and assigns that role, all in one call. A failure leaves neither a Tenant without its role nor an administrator without the Tenant. Answers `201` with the tenant id and the administrator's email. Requires `platform:tenant:create`.
+
+        Callers: platform-user. Requires `platform:tenant:create`.
       operationId: create_1
       requestBody:
         description: The tenant to provision.
@@ -1392,15 +1433,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:tenant:create
+      x-allowed-callers:
+      - platform-user
   /api/v1/tenants/{id}/domains:
     post:
       tags:
       - Tenants
       summary: Add a hostname to a tenant
-      description: "Maps one more hostname to the Tenant, so its people reach the\
-        \ console on that host. The host also becomes a sign-in redirect target; if\
-        \ that registration fails the request still succeeds and a reconciler repairs\
-        \ it. Answers `201` with no body. Requires `platform:tenant-domain:manage`."
+      description: |-
+        Maps one more hostname to the Tenant, so its people reach the console on that host. The host also becomes a sign-in redirect target; if that registration fails the request still succeeds and a reconciler repairs it. Answers `201` with no body.
+
+        Callers: platform-user. Requires `platform:tenant-domain:manage`.
       operationId: addDomain
       parameters:
       - name: id
@@ -1442,14 +1485,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:tenant-domain:manage
+      x-allowed-callers:
+      - platform-user
   /api/v1/tenants/{id}/deactivate:
     post:
       tags:
       - Tenants
       summary: Deactivate a tenant
-      description: Deactivates the Tenant. Deactivating a Tenant that is already inactive
-        changes nothing and publishes nothing. Pass the tenant's `ETag` in `If-Match`;
-        a stale version is refused. Requires `platform:tenant:deactivate`.
+      description: |-
+        Deactivates the Tenant. Deactivating a Tenant that is already inactive changes nothing and publishes nothing. Pass the tenant's `ETag` in `If-Match`; a stale version is refused. Requires `platform:tenant:deactivate`.
+
+        Callers: platform-user. Requires `platform:tenant:deactivate`.
       operationId: deactivate
       parameters:
       - name: id
@@ -1491,15 +1537,19 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: platform:tenant:deactivate
+      x-allowed-callers:
+      - platform-user
   /api/v1/tenant-systems:
     get:
       tags:
       - Tenant systems
       summary: List tenant systems
       description: |-
-        Pages through the current Tenant's Tenant Systems, with the list-query contract's filtering, sorting and paging. Requires `platform:tenant-system:read`.
+        Pages through the current Tenant's Tenant Systems, with the list-query contract's filtering, sorting and paging.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user. Requires `platform:tenant-system:read`.
       operationId: list_2
       parameters:
       - name: "filter[created_at][eq]"
@@ -1798,14 +1848,16 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:tenant-system:read
+      x-allowed-callers:
+      - tenant-user
     post:
       tags:
       - Tenant systems
       summary: Register a tenant system
-      description: "Registers a Tenant System of the current Tenant: a named machine\
-        \ caller with a stated `purpose` that authenticates with API credentials instead\
-        \ of a user sign-in. It has no credential yet; issue one with `POST /api/v1/tenant-systems/{id}/credentials`.\
-        \ Answers `201`. Requires `platform:tenant-system:manage`."
+      description: |-
+        Registers a Tenant System of the current Tenant: a named machine caller with a stated `purpose` that authenticates with API credentials instead of a user sign-in. It has no credential yet; issue one with `POST /api/v1/tenant-systems/{id}/credentials`. Answers `201`. Requires `platform:tenant-system:manage`.
+
+        Callers: tenant-user. Requires `platform:tenant-system:manage`.
       operationId: create_2
       parameters:
       - name: X-Request-Id
@@ -1836,6 +1888,8 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:tenant-system:manage
+      x-allowed-callers:
+      - tenant-user
   /api/v1/tenant-systems/{id}/credentials:
     get:
       tags:
@@ -1845,6 +1899,8 @@ paths:
         Pages through the credentials of the Tenant System named in the path, with the list-query contract's filtering, sorting and paging. The secrets are never returned. Requires `platform:credential:manage`.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: tenant-user. Requires `platform:credential:manage`.
       operationId: listCredentials
       parameters:
       - name: id
@@ -2280,13 +2336,16 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: platform:credential:manage
+      x-allowed-callers:
+      - tenant-user
     post:
       tags:
       - Tenant systems
       summary: Issue an API credential
-      description: Issues a credential for the Tenant System with a `label` and the
-        `scopes` it may use. The secret `key` is in the response and is never shown
-        again; storage keeps only a digest. Answers `201`. Requires `platform:credential:manage`.
+      description: |-
+        Issues a credential for the Tenant System with a `label` and the `scopes` it may use. The secret `key` is in the response and is never shown again; storage keeps only a digest. Answers `201`.
+
+        Callers: tenant-user. Requires `platform:credential:manage`.
       operationId: createCredential
       parameters:
       - name: id
@@ -2325,15 +2384,17 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: platform:credential:manage
+      x-allowed-callers:
+      - tenant-user
   /api/v1/tenant-systems/{id}/credentials/rotate:
     post:
       tags:
       - Tenant systems
       summary: Rotate a tenant system's credential
-      description: "Issues a new credential and lets the previous one keep working\
-        \ for `overlapMinutes` (24 hours when the body is omitted), so the Tenant\
-        \ System can switch over without downtime. The new secret `key` is in the\
-        \ response and is never shown again. Requires `platform:credential:manage`."
+      description: |-
+        Issues a new credential and lets the previous one keep working for `overlapMinutes` (24 hours when the body is omitted), so the Tenant System can switch over without downtime. The new secret `key` is in the response and is never shown again.
+
+        Callers: tenant-user. Requires `platform:credential:manage`.
       operationId: rotate
       parameters:
       - name: id
@@ -2371,15 +2432,19 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: platform:credential:manage
+      x-allowed-callers:
+      - tenant-user
   /api/v1/roles:
     get:
       tags:
       - Roles
       summary: List roles
       description: |-
-        Pages through roles, with the list-query contract's filtering, sorting and paging. `tenant_id` is a filter, and a Tenant-scope caller never sees another Tenant's roles. Requires `platform:role:read`.
+        Pages through roles, with the list-query contract's filtering, sorting and paging. `tenant_id` is a filter, and a Tenant-scope caller never sees another Tenant's roles.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: platform-user, tenant-user. Requires `platform:role:read`.
       operationId: list_3
       parameters:
       - name: "filter[created_at][eq]"
@@ -2690,14 +2755,17 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:role:read
+      x-allowed-callers:
+      - platform-user
+      - tenant-user
     post:
       tags:
       - Roles
       summary: Create a custom role
-      description: "Creates a role with a name and a set of permission codes. Every\
-        \ code must be in the permission catalog and valid in the role's scope, and\
-        \ a role can never be wider than the caller's own scope. Answers `201` with\
-        \ the role. Requires `platform:role:manage`."
+      description: |-
+        Creates a role with a name and a set of permission codes. Every code must be in the permission catalog and valid in the role's scope, and a role can never be wider than the caller's own scope. Answers `201` with the role.
+
+        Callers: platform-user, tenant-user. Requires `platform:role:manage`.
       operationId: create_3
       parameters:
       - name: X-Request-Id
@@ -2734,13 +2802,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:role:manage
+      x-allowed-callers:
+      - platform-user
+      - tenant-user
   /api/v1/roles/{id}/users/{userId}:
     post:
       tags:
       - Roles
       summary: Assign a role to a user
-      description: "Gives the user the role, so the user holds every permission the\
-        \ role carries. Answers the role. Requires `platform:role:manage`."
+      description: |-
+        Gives the user the role, so the user holds every permission the role carries. Answers the role.
+
+        Callers: platform-user, tenant-user. Requires `platform:role:manage`.
       operationId: assign
       parameters:
       - name: id
@@ -2780,12 +2853,17 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: platform:role:manage
+      x-allowed-callers:
+      - platform-user
+      - tenant-user
     delete:
       tags:
       - Roles
       summary: Remove a role from a user
-      description: "Takes the role away from the user, so the user loses the permissions\
-        \ only that role carried. Answers the role. Requires `platform:role:manage`."
+      description: |-
+        Takes the role away from the user, so the user loses the permissions only that role carried. Answers the role.
+
+        Callers: platform-user, tenant-user. Requires `platform:role:manage`.
       operationId: unassign
       parameters:
       - name: id
@@ -2825,15 +2903,18 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: platform:role:manage
+      x-allowed-callers:
+      - platform-user
+      - tenant-user
   /api/v1/users/{id}:
     patch:
       tags:
       - Users
       summary: "Enable, disable or rename a user"
-      description: "Applies one `action` to the user: `ENABLE`, `DISABLE`, or `RENAME`\
-        \ with the new `name`. Every effective change publishes the user's new access\
-        \ and is audited. Pass the user's `ETag` in `If-Match`; a stale version is\
-        \ refused. Requires `platform:user:manage`."
+      description: |-
+        Applies one `action` to the user: `ENABLE`, `DISABLE`, or `RENAME` with the new `name`. Every effective change publishes the user's new access and is audited. Pass the user's `ETag` in `If-Match`; a stale version is refused.
+
+        Callers: platform-user, tenant-user. Requires `platform:user:manage`.
       operationId: update_1
       parameters:
       - name: id
@@ -2882,18 +2963,18 @@ paths:
         "412":
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: platform:user:manage
+      x-allowed-callers:
+      - platform-user
+      - tenant-user
   /internal/replica/{stream}:
     get:
       tags:
       - Replica snapshots
       summary: Page through a replica snapshot stream
-      description: "Internal endpoint a replica rebuilds its copy of Platform state\
-        \ from. `stream` names the stream: `tenants`, `tenant-domains`, `tenant-systems`,\
-        \ `entitlements` or `user-access`; an unknown name answers `404`. Pass the\
-        \ previous answer's `next` as `after` to read the following page; `limit`\
-        \ is clamped to 1 to 500 and defaults to 100. Each item carries the same JSON\
-        \ as the matching `*.changed` event plus its `version`, so a replica can merge\
-        \ snapshot rows and live events in any order. Requires `platform:replica:read`."
+      description: |-
+        Internal endpoint a replica rebuilds its copy of Platform state from. `stream` names the stream: `tenants`, `tenant-domains`, `tenant-systems`, `entitlements` or `user-access`; an unknown name answers `404`. Pass the previous answer's `next` as `after` to read the following page; `limit` is clamped to 1 to 500 and defaults to 100. Each item carries the same JSON as the matching `*.changed` event plus its `version`, so a replica can merge snapshot rows and live events in any order.
+
+        Callers: internal. Requires `platform:replica:read`.
       operationId: page
       parameters:
       - name: stream
@@ -2939,15 +3020,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: platform:replica:read
+      x-allowed-callers:
+      - internal
   /api/v1/ui-remotes:
     get:
       tags:
       - UI remotes
       summary: List UI remotes
       description: |-
-        Pages through the console's UI remotes, with the list-query contract's filtering, sorting and paging. Requires `platform:ui-remote:read`.
+        Pages through the console's UI remotes, with the list-query contract's filtering, sorting and paging.
 
         **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
+
+        Callers: platform-user. Requires `platform:ui-remote:read`.
       operationId: listRemotes
       parameters:
       - name: "filter[app_code][eq]"
@@ -3263,14 +3348,17 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: platform:ui-remote:read
+      x-allowed-callers:
+      - platform-user
   /api/v1/tenants/{tenantId}/apps:
     get:
       tags:
       - App entitlements
       summary: List a tenant's apps
-      description: Returns every app of the suite with this Tenant's state of it;
-        an app the Tenant never changed is reported as disabled at version 0. Requires
-        `platform:tenant:read`.
+      description: |-
+        Returns every app of the suite with this Tenant's state of it; an app the Tenant never changed is reported as disabled at version 0.
+
+        Callers: platform-user. Requires `platform:tenant:read`.
       operationId: apps
       parameters:
       - name: tenantId
@@ -3298,15 +3386,17 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: platform:tenant:read
+      x-allowed-callers:
+      - platform-user
   /api/v1/me:
     get:
       tags:
       - Current user
       summary: Get the signed-in user
-      description: "Returns the caller's own user record (id, tenant, scope, email,\
-        \ display name, status) and the permission codes the caller holds across the\
-        \ suite. The console reads it to decide what to show. Any authenticated user\
-        \ may call it; a token whose user no longer exists answers `404`."
+      description: |-
+        Returns the caller's own user record (id, tenant, scope, email, display name, status) and the permission codes the caller holds across the suite. The console reads it to decide what to show. Any authenticated user may call it; a token whose user no longer exists answers `404`.
+
+        Callers: platform-user, tenant-user.
       operationId: me
       responses:
         "200":
@@ -3319,14 +3409,18 @@ paths:
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/NotEntitled"
+      x-allowed-callers:
+      - platform-user
+      - tenant-user
   /api/v1/console/remotes:
     get:
       tags:
       - Console feed
       summary: Get the console's UI remotes
-      description: "The feed a console shell reads on load: only the remotes the caller\
-        \ may mount, each with the one version an operator activated, filtered on\
-        \ the server. Any authenticated user may call it."
+      description: |-
+        The feed a console shell reads on load: only the remotes the caller may mount, each with the one version an operator activated, filtered on the server. Any authenticated user may call it.
+
+        Callers: platform-user, tenant-user.
       operationId: feed
       responses:
         "200":
@@ -3341,14 +3435,18 @@ paths:
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/NotEntitled"
+      x-allowed-callers:
+      - platform-user
+      - tenant-user
   /.well-known/jwks.json:
     get:
       tags:
       - Signing keys
       summary: Get the suite's public signing keys
-      description: "Publishes the public halves of the keys Platform signs suite tokens\
-        \ with, as a JSON Web Key Set, so every app can verify a token without calling\
-        \ Platform. Public: no token is needed."
+      description: |-
+        Publishes the public halves of the keys Platform signs suite tokens with, as a JSON Web Key Set, so every app can verify a token without calling Platform. Public: no token is needed.
+
+        Callers: public.
       operationId: jwks
       responses:
         "200":
@@ -3358,15 +3456,17 @@ paths:
               schema:
                 type: object
                 additionalProperties: {}
-      x-public: true
+      x-allowed-callers:
+      - public
   /api/v1/tenant-systems/{systemId}/credentials/{credentialId}:
     delete:
       tags:
       - Tenant systems
       summary: Revoke an API credential
-      description: Revokes one credential of the Tenant System at once; a token request
-        with it is refused from then on. Answers the credential with its new state.
-        Requires `platform:credential:manage`.
+      description: |-
+        Revokes one credential of the Tenant System at once; a token request with it is refused from then on. Answers the credential with its new state.
+
+        Callers: tenant-user. Requires `platform:credential:manage`.
       operationId: revoke
       parameters:
       - name: systemId
@@ -3402,6 +3502,8 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: platform:credential:manage
+      x-allowed-callers:
+      - tenant-user
 components:
   schemas:
     UserResponse:

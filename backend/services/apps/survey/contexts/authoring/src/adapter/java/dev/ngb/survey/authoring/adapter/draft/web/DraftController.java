@@ -1,6 +1,8 @@
 package dev.ngb.survey.authoring.adapter.draft.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ConditionalUpdate;
@@ -41,6 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "A survey's one editable document: read, save under If-Match, and validate.")
 @RestController
 @RequestMapping("/api/v1/surveys/{id}/draft")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class DraftController {
 
     private final SaveDraftUseCase saveDraft;
@@ -63,7 +66,7 @@ class DraftController {
             summary = "Get a survey's draft",
             description =
                     "Returns the survey's one editable document with its `ETag`, the tag the next save has to carry. An "
-                    + "unknown survey answers `404`. Requires `survey:survey:read`.")
+                    + "unknown survey answers `404`.")
     @GetMapping
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
     ResponseEntity<DraftResponse> get(@PathVariable UUID id) {
@@ -80,7 +83,7 @@ class DraftController {
                     + "overwrite each other silently. The server gives an id to every structural node that arrived without "
                     + "one and answers the stored document, so a builder that never invents ids keeps them across saves. "
                     + "Only the shape is enforced: a draft in progress may be incomplete, and translations and jumps are "
-                    + "checked on validate and publish. Requires `survey:survey:manage`.")
+                    + "checked on validate and publish.")
     @PutMapping
     @ConditionalUpdate
     @RequiresPermission(SurveyPermissions.SURVEY_MANAGE)
@@ -100,7 +103,7 @@ class DraftController {
             description =
                     "Reports every reason the `document` sent would not publish, without storing it: the schema's shape "
                     + "check, the semantic rules and the expression budgets, all in one answer so a builder fixes them in "
-                    + "one round. The same check runs again at publish. Requires `survey:survey:manage`.")
+                    + "one round. The same check runs again at publish.")
     @PostMapping("/validate")
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
     ValidationResult validate(@PathVariable UUID id, @RequestBody DraftRequest request) {

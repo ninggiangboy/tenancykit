@@ -1,16 +1,16 @@
 package dev.ngb.billing.boot.web;
 
-import dev.ngb.core.security.Authenticated;
+import dev.ngb.core.security.Caller;
 import dev.ngb.core.security.Authorizer;
 import dev.ngb.core.security.CurrentActor;
-import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.openapi.CallerLabelCustomizer;
 import dev.ngb.core.openapi.DescriptionsOpenApiCustomizer;
 import dev.ngb.core.openapi.ErrorResponsesOpenApiCustomizer;
 import dev.ngb.core.openapi.ListingOpenApiCustomizer;
+import dev.ngb.core.openapi.PermissionCatalogs;
 import dev.ngb.core.spring.query.ListQueryResolver;
 import dev.ngb.core.spring.security.PermissionInterceptor;
-import dev.ngb.billing.boot.catalog.BillingPermissionCatalog;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.core.version.ConditionalUpdate;
 import dev.ngb.billing.session.api.portal.PortalAuthorizer;
@@ -25,9 +25,8 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
@@ -42,12 +41,10 @@ class WebConfiguration implements WebMvcConfigurer {
 
     private final Authorizer authorizer;
     private final PortalAuthorizer portalAuthorizer;
-    private final BillingPermissionCatalog catalog;
 
-    WebConfiguration(Authorizer authorizer, PortalAuthorizer portalAuthorizer, BillingPermissionCatalog catalog) {
+    WebConfiguration(Authorizer authorizer, PortalAuthorizer portalAuthorizer) {
         this.authorizer = authorizer;
         this.portalAuthorizer = portalAuthorizer;
-        this.catalog = catalog;
     }
 
     @Override
@@ -167,35 +164,14 @@ class WebConfiguration implements WebMvcConfigurer {
         return new Header().description(description).schema(new StringSchema().example("\"3\""));
     }
 
-    /** Documents which principal may call each operation, derived from the same Permission the interceptor enforces. */
+    /**
+     * Derives every operation's caller label from its declaration and checks it against the permission catalog. A
+     * portal permission is Billing's spelling of the customer-session caller.
+     */
     @Bean
-    OperationCustomizer allowedCallers() {
-        return (operation, handlerMethod) -> {
-            if (handlerMethod.hasMethodAnnotation(RequiresPortalPermission.class)) {
-                operation.addExtension("x-allowed-callers", List.of("portal-session"));
-                return operation;
-            }
-            RequiresPermission required = handlerMethod.getMethodAnnotation(RequiresPermission.class);
-            if (required != null) {
-                BillingPermissionCatalog.Entry entry = catalog.find(required.value()).orElse(
-                        new BillingPermissionCatalog.Entry(required.value(), Set.of(), false));
-                List<String> callers = new ArrayList<>();
-                if (entry.scopes().contains("platform")) {
-                    callers.add("platform-user");
-                }
-                if (entry.scopes().contains("tenant")) {
-                    callers.add("tenant-user");
-                }
-                if (entry.grantableToTenantSystem()) {
-                    callers.add("tenant-system");
-                }
-                operation.addExtension("x-allowed-callers", callers);
-            } else if (handlerMethod.hasMethodAnnotation(Authenticated.class)) {
-                operation.addExtension("x-allowed-callers", List.of("platform-user", "tenant-user", "tenant-system"));
-            } else if (handlerMethod.hasMethodAnnotation(PublicEndpoint.class)) {
-                operation.addExtension("x-allowed-callers", List.of("public"));
-            }
-            return operation;
-        };
+    CallerLabelCustomizer callerLabels() {
+        return new CallerLabelCustomizer(
+                PermissionCatalogs.fromClasspath(),
+                Map.of(RequiresPortalPermission.class, Caller.CUSTOMER_SESSION));
     }
 }

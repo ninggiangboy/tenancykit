@@ -16,6 +16,8 @@ import dev.ngb.billing.payment.domain.stripe.IntegrationMode;
 import dev.ngb.billing.payment.domain.stripe.StripeEventId;
 import dev.ngb.billing.payment.domain.stripe.StripeConfiguration;
 import dev.ngb.billing.payment.domain.stripe.StripeConfigurationId;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
 import dev.ngb.core.security.RequiresPermission;
@@ -51,6 +53,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers(Caller.TENANT_USER)
 public class StripeController {
 
     /** Carries Stripe secrets, so it never prints them (a request logger would otherwise). */

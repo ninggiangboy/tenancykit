@@ -3,6 +3,8 @@ package dev.ngb.survey.authoring.adapter.version.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.spring.query.Listing;
@@ -37,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Publishing the draft as an immutable version and reading the version history.")
 @RestController
 @RequestMapping("/api/v1/surveys/{id}")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class VersionController {
 
     private final PublishSurveyUseCase publish;
@@ -55,7 +58,7 @@ class VersionController {
                     "Freezes the draft as the next immutable version and makes it the survey's current one. Requires "
                     + "`If-Match` with the draft's tag; an edit that landed in between is refused with `412` rather than "
                     + "published under an older read. A document that does not validate answers `422` with every problem. A "
-                    + "question whose type changed is given a new id. Answers `201`. Requires `survey:survey:manage`.")
+                    + "question whose type changed is given a new id. Answers `201`.")
     @PostMapping("/publish")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(SurveyPermissions.SURVEY_MANAGE)
@@ -71,7 +74,7 @@ class VersionController {
             description =
                     "Pages through the survey's published versions, newest first by default, with the list-query "
                     + "contract's filtering, sorting and paging. The documents are not listed; read one version for its "
-                    + "questions. Requires `survey:survey:read`.")
+                    + "questions.")
     @GetMapping("/versions")
     @Listing(VersionListing.class)
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
@@ -83,7 +86,7 @@ class VersionController {
             summary = "Get a published version",
             description =
                     "Returns published version `no` of the survey with its document. A published version never changes. "
-                    + "An unknown survey or version answers `404`. Requires `survey:survey:read`.")
+                    + "An unknown survey or version answers `404`.")
     @GetMapping("/versions/{no}")
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
     VersionResponse get(@PathVariable UUID id, @PathVariable int no) {

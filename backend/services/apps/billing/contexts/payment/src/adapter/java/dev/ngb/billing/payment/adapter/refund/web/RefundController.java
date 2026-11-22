@@ -9,6 +9,8 @@ import dev.ngb.billing.payment.domain.payment.PaymentId;
 import dev.ngb.billing.payment.domain.refund.Refund;
 import dev.ngb.core.query.ListQuery;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.spring.query.Listing;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.billing.sharedkernel.security.BillingPermissions;
@@ -41,6 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class RefundController {
 
     public record RefundRequest(Long amount, String currency, String reason) {}

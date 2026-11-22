@@ -3,6 +3,8 @@ package dev.ngb.customer.activity.adapter.activity.web;
 import dev.ngb.core.http.HttpHeaders;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.core.query.Page;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.customer.activity.application.activity.command.RecordActivitiesBatchUseCase;
 import dev.ngb.customer.activity.application.activity.command.RecordActivityUseCase;
@@ -39,6 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class ActivityController {
 
     /**

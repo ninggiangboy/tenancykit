@@ -1,6 +1,8 @@
 package dev.ngb.platform.integration.adapter.token.web;
 
 import dev.ngb.core.http.HttpHeaders;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.platform.integration.application.auth.exception.RateLimitExceededException;
 import dev.ngb.platform.integration.application.token.command.IssueTokenUseCase;
@@ -32,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The OAuth client-credentials grant a Tenant System or service client exchanges its credential for a "
                 + "token.")
 @RestController
+@Callers(value = {Caller.TENANT_SYSTEM, Caller.INTERNAL}, prefix = Callers.Prefix.NONE)
 class TokenEndpointController {
 
     private static final String RETRY_AFTER = "1";

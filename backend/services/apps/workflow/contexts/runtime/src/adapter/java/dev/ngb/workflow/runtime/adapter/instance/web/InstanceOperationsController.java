@@ -1,5 +1,7 @@
 package dev.ngb.workflow.runtime.adapter.instance.web;
 
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.version.ExpectedVersion;
 import dev.ngb.workflow.runtime.application.runtime.command.CancelInstanceUseCase;
@@ -35,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
+@Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class InstanceOperationsController {
 
     public record RetryRequest(String nodeId) {}
@@ -68,7 +71,7 @@ public class InstanceOperationsController {
             description =
                     "Retries an instance that dead-lettered: the failed step becomes ready again with the same id and "
                     + "attempt, so it sends the same idempotency key, and the instance goes back to `RUNNING` with no "
-                    + "failure reason. `nodeId` names the step when needed. Requires `workflow:instance:manage`.")
+                    + "failure reason. `nodeId` names the step when needed.")
     @PostMapping("/instances/{id}/retry")
     @RequiresPermission(WorkflowPermissions.INSTANCE_MANAGE)
     public ResponseEntity<InstanceStateResponse> retry(
@@ -100,7 +103,7 @@ public class InstanceOperationsController {
             description =
                     "Cancels an instance an operator no longer wants: its live steps are cancelled, no timer or event can "
                     + "resume it, its open tasks are cancelled and it finishes `CANCELLED`. With `compensate=true` the "
-                    + "completed steps are rolled back first. Requires `workflow:instance:manage`.")
+                    + "completed steps are rolled back first.")
     @PostMapping("/instances/{id}/cancel")
     @RequiresPermission(WorkflowPermissions.INSTANCE_MANAGE)
     public ResponseEntity<InstanceStateResponse> cancel(
@@ -115,7 +118,7 @@ public class InstanceOperationsController {
             summary = "List an instance's steps",
             description =
                     "Returns the recorded timeline of the instance, one entry per step run. Requests and responses are "
-                    + "redacted: a step's request never leaves this API. Requires `workflow:instance:read`.")
+                    + "redacted: a step's request never leaves this API.")
     @GetMapping("/instances/{id}/steps")
     @RequiresPermission(WorkflowPermissions.INSTANCE_READ)
     public List<StepRunView> steps(@PathVariable String id) {

@@ -26,6 +26,8 @@ import dev.ngb.booking.inventory.application.availability.query.AvailabilitySlot
 import dev.ngb.core.error.NotFoundException;
 import dev.ngb.core.runtime.Clock;
 import dev.ngb.core.runtime.UnitOfWork;
+import dev.ngb.core.security.Caller;
+import dev.ngb.core.security.Callers;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.List;
@@ -51,6 +53,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @RestController
 @RequestMapping("/p")
+@Callers(Caller.PUBLIC)
 public class PublicController {
 
     public record PublicOffering(
