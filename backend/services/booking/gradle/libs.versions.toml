@@ -8,6 +8,8 @@ archunit = "1.5.1"
 json-schema-validator = "3.0.7"
 jmustache = "1.16"
 springdoc = "3.2.0"
+# Scalar API reference UI bundled by scalar-core; newer than the version springdoc manages.
+scalar = "0.9.1"
 aws-sdk = "2.57.11"
 lib-recur = "0.17.1"
 jdk = "25"
@@ -24,6 +26,8 @@ archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref
 jmustache = { module = "com.samskivert:jmustache", version.ref = "jmustache" }
 springdoc-webmvc = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdoc" }
 springdoc-scalar = { module = "org.springdoc:springdoc-openapi-starter-webmvc-scalar", version.ref = "springdoc" }
+scalar-core = { module = "com.scalar.maven:scalar-core", version.ref = "scalar" }
+scalar-webmvc = { module = "com.scalar.maven:scalar-webmvc", version.ref = "scalar" }
 aws-sdk-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws-sdk" }
 aws-s3 = { module = "software.amazon.awssdk:s3" }
 lib-recur = { module = "org.dmfs:lib-recur", version.ref = "lib-recur" }

@@ -6,6 +6,8 @@ spring-modulith = "2.1.2"
 archunit = "1.5.1"
 json-schema-validator = "3.0.7"
 springdoc = "3.2.0"
+# Scalar API reference UI bundled by scalar-core; newer than the version springdoc manages.
+scalar = "0.9.1"
 zxing = "3.5.3"
 maxmind-db = "4.2.1"
 jdk = "25"
@@ -21,6 +23,8 @@ json-schema-validator = { module = "com.networknt:json-schema-validator", versio
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 springdoc-webmvc = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdoc" }
 springdoc-scalar = { module = "org.springdoc:springdoc-openapi-starter-webmvc-scalar", version.ref = "springdoc" }
+scalar-core = { module = "com.scalar.maven:scalar-core", version.ref = "scalar" }
+scalar-webmvc = { module = "com.scalar.maven:scalar-webmvc", version.ref = "scalar" }
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 zxing-javase = { module = "com.google.zxing:javase", version.ref = "zxing" }
 maxmind-db = { module = "com.maxmind.db:maxmind-db", version.ref = "maxmind-db" }

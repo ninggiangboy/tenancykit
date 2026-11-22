@@ -27,6 +27,9 @@ dependencies {
     implementation(libs.springdoc.webmvc)
     // The Scalar reference at /scalar, rendered from the same /v3/api-docs document.
     implementation(libs.springdoc.scalar)
+    // Pinned above the version springdoc manages so /scalar serves the current Scalar UI.
+    implementation(libs.scalar.core)
+    implementation(libs.scalar.webmvc)
     implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
