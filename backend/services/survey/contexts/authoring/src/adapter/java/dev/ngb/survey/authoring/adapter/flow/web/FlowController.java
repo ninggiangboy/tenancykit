@@ -6,6 +6,8 @@ import dev.ngb.survey.authoring.application.flow.query.PreviewQueries;
 import dev.ngb.survey.authoring.application.flow.query.PreviewView;
 import dev.ngb.survey.authoring.application.flow.query.SimulateQueries;
 import dev.ngb.survey.shared.SurveyPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>Both read; neither stores anything. A draft that does not compile answers a {@link FlowResult} whose
  * {@code errors} name every offending pointer, so a builder sees its mistakes without publishing first.
  */
+@Tag(
+        name = "Survey preview and simulation",
+        description =
+                "Try a draft's logic without publishing: preview a locale, or simulate answers through the draft or a "
+                + "version.")
 @RestController
 @RequestMapping("/api/v1/surveys/{id}")
 class FlowController {
@@ -34,18 +41,35 @@ class FlowController {
         this.simulations = simulations;
     }
 
+    @Operation(
+            summary = "Preview the draft in one locale",
+            description =
+                    "Returns the draft's pages in presentation order as `locale` renders them, with every question, its "
+                    + "type and every option label. It is presentation only: nothing is skipped, hidden or substituted, and "
+                    + "piping stays as its stored placeholders. Nothing is stored. Requires `survey:survey:read`.")
     @PostMapping("/draft/preview")
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
     PreviewView preview(@PathVariable UUID id, @RequestParam(required = false) String locale) {
         return previews.draft(id, locale);
     }
 
+    @Operation(
+            summary = "Simulate answers through the draft",
+            description =
+                    "Runs `answers` through the draft with the same evaluator a respondent's submit uses and reports the "
+                    + "path, variables and score. A draft that does not compile answers `errors` naming every offending "
+                    + "pointer. Nothing is stored. Requires `survey:survey:read`.")
     @PostMapping("/draft/simulate")
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
     FlowResult simulateDraft(@PathVariable UUID id, @RequestBody SimulateRequest request) {
         return simulations.draft(id, request.answers() == null ? Map.of() : request.answers());
     }
 
+    @Operation(
+            summary = "Simulate answers through a published version",
+            description =
+                    "Runs `answers` through published version `no` of the survey with the evaluator a respondent's submit "
+                    + "uses. Nothing is stored. An unknown survey or version answers `404`. Requires `survey:survey:read`.")
     @PostMapping("/versions/{no}/simulate")
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
     FlowResult simulateVersion(

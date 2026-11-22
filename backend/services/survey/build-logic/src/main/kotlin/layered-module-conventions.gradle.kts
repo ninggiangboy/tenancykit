@@ -51,6 +51,8 @@ dependencies {
     // `@NamedInterface` meta-annotates with spring-core's @AliasFor, so the adapter layer needs spring-core even
     // in a module with no web/jdbc adapter dependency of its own (e.g. the execution worker).
     add(adapter.implementationConfigurationName, "org.springframework:spring-core")
+    // Controllers name and describe their operations with @Operation, which springdoc reads into the OpenAPI document.
+    add(adapter.implementationConfigurationName, catalog.findLibrary("swagger-annotations").get())
 }
 
 // Test configurations inherit the adapter's framework dependencies so adapter tests compile.

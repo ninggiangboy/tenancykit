@@ -15,6 +15,8 @@ import dev.ngb.survey.collection.domain.response.Response;
 import dev.ngb.survey.collection.domain.visit.Visit;
 import dev.ngb.survey.collection.domain.link.SurveyLink;
 import dev.ngb.survey.collection.domain.visit.VisitToken;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,6 +44,11 @@ import org.springframework.web.server.ResponseStatusException;
  * <p>A validation refusal answers {@code 422} with the field and code of every problem, never the value: the browser
  * sent it, and a bot learns nothing it did not already send.
  */
+@Tag(
+        name = "Respondent answers",
+        description =
+                "The respondent's own surface, authorised by the visit token: save and resume a draft, sign an upload "
+                + "and submit.")
 @RestController
 @RequestMapping("/p/v/{visitToken}")
 class AnswerController {
@@ -68,6 +75,13 @@ class AnswerController {
         this.links = links;
     }
 
+    @Operation(
+            summary = "Save a respondent's draft",
+            description =
+                    "Saves the respondent's partial `answers`, creating the in-progress response on the first save and "
+                    + "moving the visit to `STARTED`. The response records the version the visit opened, so a resume after "
+                    + "a newer publish keeps its questions. A visit that already completed answers `409`. Public: the visit "
+                    + "token in the path is the credential, and no suite token is needed.")
     @PublicEndpoint
     @PutMapping("/draft")
     ResponseEntity<DraftResponse> saveDraft(
@@ -77,6 +91,13 @@ class AnswerController {
         return ResponseEntity.ok(new DraftResponse(draft.status(), draft.answers()));
     }
 
+    @Operation(
+            summary = "Resume a respondent's draft",
+            description =
+                    "Returns the answers the visit saved so far, so a browser can resume; before the first save the "
+                    + "answers are empty. It reads only this visit's own draft; a completed response answers `409` rather "
+                    + "than a document. Public: the visit token in the path is the credential, and no suite token is "
+                    + "needed.")
     @PublicEndpoint
     @GetMapping("/draft")
     ResponseEntity<DraftResponse> readDraft(@PathVariable String visitToken) {
@@ -92,6 +113,13 @@ class AnswerController {
         return ResponseEntity.ok(new DraftResponse(view.status(), view.answers()));
     }
 
+    @Operation(
+            summary = "Request a file upload",
+            description =
+                    "Asks to upload a file for question `questionId`, declaring `filename`, `size` and `mime`, and "
+                    + "answers `201` with a signed upload (`uploadId`, `url` and the `headers` to send) the browser then "
+                    + "uses. A file the question does not accept, or one over the size limit, is refused. Public: the visit "
+                    + "token in the path is the credential, and no suite token is needed.")
     @PublicEndpoint
     @PostMapping("/uploads")
     ResponseEntity<PresignUploadUseCase.Signed> upload(
@@ -105,6 +133,14 @@ class AnswerController {
                 .body(new PresignUploadUseCase.Signed(signed.uploadId(), signed.url(), signed.headers()));
     }
 
+    @Operation(
+            summary = "Submit a respondent's answers",
+            description =
+                    "Completes the response: validates `answers`, recomputes the variables and score, and enforces the "
+                    + "survey's window, cap, single use and idempotency in one transaction. Without an `Idempotency-Key` "
+                    + "header it answers `428`, and a repeated key returns the first result. A validation failure answers "
+                    + "`422` with the field and code of every problem, never the value. A completed visit answers `409`. "
+                    + "Public: the visit token in the path is the credential, and no suite token is needed.")
     @PublicEndpoint
     @PostMapping("/submit")
     ResponseEntity<SubmitResult> submit(

@@ -5,6 +5,8 @@ import dev.ngb.survey.authoring.application.settings.command.UpdateSurveySetting
 
 import dev.ngb.survey.authoring.application.settings.query.SurveySettingsQueries;
 import dev.ngb.survey.shared.SurveyPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Duration;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -19,6 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
  * something to show. `settings:manage` is the one permission a Tenant System credential never holds, because a
  * machine that changes its own limits could lift them.
  */
+@Tag(
+        name = "Survey settings",
+        description =
+                "The tenant's survey defaults: abandonment window, upload limit, public rate limit and time zone.")
 @RestController
 @RequestMapping("/api/v1/settings")
 class SettingsController {
@@ -31,12 +37,25 @@ class SettingsController {
         this.update = update;
     }
 
+    @Operation(
+            summary = "Get the tenant's survey settings",
+            description =
+                    "Returns the tenant's survey defaults: default locale, abandonment window, upload limit, public rate "
+                    + "limit and time zone. Before the tenant changed any, it answers the configured defaults, so a "
+                    + "settings screen always has something to show. Requires `survey:settings:manage`.")
     @GetMapping
     @RequiresPermission(SurveyPermissions.SETTINGS_MANAGE)
     SettingsResponse get() {
         return SettingsResponse.of(queries.get());
     }
 
+    @Operation(
+            summary = "Change the tenant's survey settings",
+            description =
+                    "Changes the defaults that are present in the body; a field left out keeps its current value. A new "
+                    + "version inherits the default locale and the public endpoints read the limits. Requires "
+                    + "`survey:settings:manage`, which no Tenant System credential holds, because a machine that changes "
+                    + "its own limits could lift them.")
     @PatchMapping
     @RequiresPermission(SurveyPermissions.SETTINGS_MANAGE)
     SettingsResponse change(@RequestBody ChangeRequest request) {

@@ -13,6 +13,8 @@ import dev.ngb.survey.authoring.application.version.query.VersionView;
 import dev.ngb.survey.authoring.domain.version.SurveyVersion;
 import dev.ngb.survey.shared.ConditionalRequests;
 import dev.ngb.survey.shared.SurveyPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
@@ -29,6 +31,10 @@ import org.springframework.web.bind.annotation.RestController;
  * Publishing the draft and reading the immutable history. A publish compares the tag of the draft it is about to
  * freeze, so an edit that landed in between is refused with {@code 412} rather than published under an older read.
  */
+@Tag(
+        name = "Survey versions",
+        description =
+                "Publishing the draft as an immutable version and reading the version history.")
 @RestController
 @RequestMapping("/api/v1/surveys/{id}")
 class VersionController {
@@ -43,6 +49,13 @@ class VersionController {
         this.currentActor = currentActor;
     }
 
+    @Operation(
+            summary = "Publish the draft as a new version",
+            description =
+                    "Freezes the draft as the next immutable version and makes it the survey's current one. Requires "
+                    + "`If-Match` with the draft's tag; an edit that landed in between is refused with `412` rather than "
+                    + "published under an older read. A document that does not validate answers `422` with every problem. A "
+                    + "question whose type changed is given a new id. Answers `201`. Requires `survey:survey:manage`.")
     @PostMapping("/publish")
     @ResponseStatus(HttpStatus.CREATED)
     @RequiresPermission(SurveyPermissions.SURVEY_MANAGE)
@@ -53,6 +66,12 @@ class VersionController {
                 id, ConditionalRequests.requireIfMatch(ifMatch), currentActor.get().auditName()));
     }
 
+    @Operation(
+            summary = "List a survey's versions",
+            description =
+                    "Pages through the survey's published versions, newest first by default, with the list-query "
+                    + "contract's filtering, sorting and paging. The documents are not listed; read one version for its "
+                    + "questions. Requires `survey:survey:read`.")
     @GetMapping("/versions")
     @Listing(VersionListing.class)
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
@@ -60,6 +79,11 @@ class VersionController {
         return queries.list(id, query).map(VersionSummary::of);
     }
 
+    @Operation(
+            summary = "Get a published version",
+            description =
+                    "Returns published version `no` of the survey with its document. A published version never changes. "
+                    + "An unknown survey or version answers `404`. Requires `survey:survey:read`.")
     @GetMapping("/versions/{no}")
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
     VersionResponse get(@PathVariable UUID id, @PathVariable int no) {

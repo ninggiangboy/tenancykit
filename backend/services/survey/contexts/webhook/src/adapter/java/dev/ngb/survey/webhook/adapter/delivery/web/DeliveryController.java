@@ -13,6 +13,8 @@ import dev.ngb.survey.webhook.application.delivery.query.DeliveryQueries;
 import dev.ngb.survey.webhook.application.delivery.query.WebhookDeliveryView;
 import dev.ngb.survey.webhook.domain.delivery.WebhookDelivery;
 import dev.ngb.survey.webhook.domain.delivery.WebhookDeliveryId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +29,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /** Webhook delivery history and resending. */
+@Tag(
+        name = "Webhook deliveries",
+        description =
+                "The history of attempts to deliver an event to an endpoint, and resending one that finished. A "
+                + "delivery that exhausted its attempts is DEAD and stays visible so it can be resent.")
 @Profile("api")
 @RestController
 @RequestMapping("/api/v1")
@@ -63,6 +70,12 @@ public class DeliveryController {
     }
 
     /** Filter, sort and paging follow the list-query contract; the documented parameters come from {@link DeliveryListing}. */
+    @Operation(
+            summary = "List webhook deliveries",
+            description =
+                    "Lists the attempts survey made to report an event to an endpoint, with the list-query contract's "
+                    + "filtering, sorting and paging. A delivery that exhausted its attempts is `DEAD` and stays visible "
+                    + "here so it can be resent. Requires `survey:webhook:manage`.")
     @GetMapping("/webhook-deliveries")
     @Listing(DeliveryListing.class)
     @RequiresPermission(SurveyPermissions.WEBHOOK_MANAGE)
@@ -70,6 +83,11 @@ public class DeliveryController {
         return deliveryQueries.list(query).map(DeliveryResponse::ofView);
     }
 
+    @Operation(
+            summary = "Get a webhook delivery",
+            description =
+                    "Returns one delivery with its state and every attempt: the status code, error, response excerpt and "
+                    + "latency. An unknown id answers `404`. Requires `survey:webhook:manage`.")
     @GetMapping("/webhook-deliveries/{id}")
     @RequiresPermission(SurveyPermissions.WEBHOOK_MANAGE)
     public DeliveryDetailResponse getDelivery(@PathVariable String id) {
@@ -79,6 +97,11 @@ public class DeliveryController {
     }
 
     /** Queues a fresh delivery of the same stored event to the same endpoint. Answers 202: sending happens asynchronously. */
+    @Operation(
+            summary = "Resend a webhook delivery",
+            description =
+                    "Queues a fresh delivery of the same stored event to the same endpoint and answers `202`: sending "
+                    + "happens asynchronously. The original keeps its history. Requires `survey:webhook:manage`.")
     @PostMapping("/webhook-deliveries/{id}/resend")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @RequiresPermission(SurveyPermissions.WEBHOOK_MANAGE)

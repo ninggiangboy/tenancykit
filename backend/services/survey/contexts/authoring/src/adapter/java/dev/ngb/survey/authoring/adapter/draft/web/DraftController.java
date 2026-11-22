@@ -13,6 +13,8 @@ import dev.ngb.survey.authoring.application.draft.query.DraftView;
 import dev.ngb.survey.authoring.domain.draft.SurveyDraft;
 import dev.ngb.survey.shared.ConditionalRequests;
 import dev.ngb.survey.shared.SurveyPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
@@ -33,6 +35,10 @@ import org.springframework.web.bind.annotation.RestController;
  * The answer carries the stored document, ids the server assigned included, so a builder that never invents ids still
  * keeps them across saves.
  */
+@Tag(
+        name = "Survey drafts",
+        description =
+                "A survey's one editable document: read, save under If-Match, and validate.")
 @RestController
 @RequestMapping("/api/v1/surveys/{id}/draft")
 class DraftController {
@@ -53,6 +59,11 @@ class DraftController {
         this.currentActor = currentActor;
     }
 
+    @Operation(
+            summary = "Get a survey's draft",
+            description =
+                    "Returns the survey's one editable document with its `ETag`, the tag the next save has to carry. An "
+                    + "unknown survey answers `404`. Requires `survey:survey:read`.")
     @GetMapping
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
     ResponseEntity<DraftResponse> get(@PathVariable UUID id) {
@@ -62,6 +73,14 @@ class DraftController {
                 .body(new DraftResponse(view.document(), String.valueOf(view.etag()), view.updatedAt()));
     }
 
+    @Operation(
+            summary = "Save a survey's draft",
+            description =
+                    "Replaces the draft with `document`. Requires `If-Match` with the draft's tag, so two builders cannot "
+                    + "overwrite each other silently. The server gives an id to every structural node that arrived without "
+                    + "one and answers the stored document, so a builder that never invents ids keeps them across saves. "
+                    + "Only the shape is enforced: a draft in progress may be incomplete, and translations and jumps are "
+                    + "checked on validate and publish. Requires `survey:survey:manage`.")
     @PutMapping
     @ConditionalUpdate
     @RequiresPermission(SurveyPermissions.SURVEY_MANAGE)
@@ -76,6 +95,12 @@ class DraftController {
                 .body(new DraftResponse(draft.document(), String.valueOf(draft.etag()), draft.updatedAt()));
     }
 
+    @Operation(
+            summary = "Validate a draft document",
+            description =
+                    "Reports every reason the `document` sent would not publish, without storing it: the schema's shape "
+                    + "check, the semantic rules and the expression budgets, all in one answer so a builder fixes them in "
+                    + "one round. The same check runs again at publish. Requires `survey:survey:manage`.")
     @PostMapping("/validate")
     @RequiresPermission(SurveyPermissions.SURVEY_READ)
     ValidationResult validate(@PathVariable UUID id, @RequestBody DraftRequest request) {

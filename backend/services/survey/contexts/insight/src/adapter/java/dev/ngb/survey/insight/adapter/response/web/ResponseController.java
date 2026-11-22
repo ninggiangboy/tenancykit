@@ -9,6 +9,8 @@ import dev.ngb.survey.collection.api.response.ResponseListing;
 import dev.ngb.survey.collection.api.response.ResponseReader;
 import dev.ngb.survey.insight.application.response.query.ResponseQueries;
 import dev.ngb.survey.shared.SurveyPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
@@ -28,6 +30,10 @@ import org.springframework.web.bind.annotation.RestController;
  * and {@code insight} writes nothing but its export ledger. Everything else here is a read over collection's api, so a
  * deleted response disappears from every report without a second copy to keep in step.
  */
+@Tag(
+        name = "Survey responses",
+        description =
+                "Reading and deleting completed responses.")
 @RestController
 @RequestMapping("/api/v1")
 class ResponseController {
@@ -40,6 +46,11 @@ class ResponseController {
         this.deleter = deleter;
     }
 
+    @Operation(
+            summary = "List a survey's responses",
+            description =
+                    "Pages through the survey's completed responses, with the list-query contract's filtering, sorting "
+                    + "and paging. Requires `survey:response:read`.")
     @GetMapping("/surveys/{id}/responses")
     @Listing(ResponseListing.class)
     @RequiresPermission(SurveyPermissions.RESPONSE_READ)
@@ -47,12 +58,24 @@ class ResponseController {
         return responses.page(id, query).map(ResponseRow::of);
     }
 
+    @Operation(
+            summary = "Get a response",
+            description =
+                    "Returns one response with its answers as submitted, and the variables and score the server computed "
+                    + "at submit. It carries no address, token or user agent. An unknown id answers `404`. Requires "
+                    + "`survey:response:read`.")
     @GetMapping("/responses/{responseId}")
     @RequiresPermission(SurveyPermissions.RESPONSE_READ)
     ResponseRow get(@PathVariable UUID responseId) {
         return ResponseRow.of(responses.get(responseId));
     }
 
+    @Operation(
+            summary = "Delete a response",
+            description =
+                    "Deletes the response and everything that belongs to it, including uploaded files, so it disappears "
+                    + "from every report. The visit's source and device facts survive, and the survey's submission counter "
+                    + "is not decremented. Answers `204`. Requires `survey:response:delete`.")
     @DeleteMapping("/responses/{responseId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequiresPermission(SurveyPermissions.RESPONSE_DELETE)

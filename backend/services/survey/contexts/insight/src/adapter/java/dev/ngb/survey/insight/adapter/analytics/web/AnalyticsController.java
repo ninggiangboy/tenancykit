@@ -11,6 +11,8 @@ import dev.ngb.survey.insight.application.analytics.query.TrendQueries;
 import dev.ngb.survey.insight.application.funnel.query.FunnelView;
 import dev.ngb.survey.insight.application.funnel.query.FunnelQueries;
 import dev.ngb.survey.shared.SurveyPermissions;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,6 +29,10 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>Every body takes the same filter a response list does, so a Tenant narrows an aggregate exactly as it narrows the
  * list it drilled into from it.
  */
+@Tag(
+        name = "Survey analytics",
+        description =
+                "Per-question aggregates, cross-tabs, trends and the drop-off funnel.")
 @RestController
 @RequestMapping("/api/v1/surveys/{id}/analytics")
 class AnalyticsController {
@@ -47,12 +53,24 @@ class AnalyticsController {
         this.funnels = funnels;
     }
 
+    @Operation(
+            summary = "Aggregate a survey's answers",
+            description =
+                    "Returns per-question aggregates of the survey's responses: counts per option for a choice, the "
+                    + "distribution of a number and the like. The filter is the one a response list takes: `version`, a "
+                    + "`from`/`to` window, `source` and `externalRef`. Requires `survey:analytics:read`.")
     @PostMapping("/aggregate")
     @RequiresPermission(SurveyPermissions.ANALYTICS_READ)
     AggregateView aggregate(@PathVariable UUID id, @RequestBody FilterRequest request) {
         return aggregates.aggregate(id, request.filter());
     }
 
+    @Operation(
+            summary = "Cross-tabulate two questions",
+            description =
+                    "Counts how respondents answered `columnQuestionId` within each answer to `rowQuestionId`. The filter "
+                    + "is the one a response list takes: `version`, a `from`/`to` window, `source` and `externalRef`. "
+                    + "Requires `survey:analytics:read`.")
     @PostMapping("/crosstab")
     @RequiresPermission(SurveyPermissions.ANALYTICS_READ)
     AggregateView.CrossTabView crosstab(@PathVariable UUID id, @RequestBody CrossTabRequest request) {
@@ -60,6 +78,12 @@ class AnalyticsController {
                 id, request.filter(), request.rowQuestionId(), request.columnQuestionId());
     }
 
+    @Operation(
+            summary = "Get a survey's response trend",
+            description =
+                    "Returns the number of responses per time `bucket` in `timezone`. The filter is the one a response "
+                    + "list takes: `version`, a `from`/`to` window, `source` and `externalRef`. Requires "
+                    + "`survey:analytics:read`.")
     @PostMapping("/trend")
     @RequiresPermission(SurveyPermissions.ANALYTICS_READ)
     TrendView trend(@PathVariable UUID id, @RequestBody TrendRequest request) {
@@ -67,6 +91,11 @@ class AnalyticsController {
         return trends.trend(id, request.filter(), bucket, request.timezone());
     }
 
+    @Operation(
+            summary = "Get a survey's drop-off funnel",
+            description =
+                    "Returns how many visits reached each page and how many completed, optionally split by `group_by`, "
+                    + "within the `from`/`to` window. Requires `survey:analytics:read`.")
     @GetMapping("/funnel")
     @RequiresPermission(SurveyPermissions.ANALYTICS_READ)
     FunnelView funnel(

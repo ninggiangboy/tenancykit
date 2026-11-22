@@ -11,6 +11,8 @@ import dev.ngb.survey.collection.application.visit.service.OpenedLink;
 import dev.ngb.survey.collection.domain.link.LinkTokens;
 import dev.ngb.survey.collection.domain.visit.Visit;
 import dev.ngb.survey.collection.domain.visit.VisitToken;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +38,10 @@ import org.springframework.web.server.ResponseStatusException;
  * <p>The rate limit and the body limit are applied by a filter in front of this controller, because they must cost
  * less than parsing a request and the stock Caddy image has no rate-limit directive.
  */
+@Tag(
+        name = "Public fill surface",
+        description =
+                "The unauthenticated endpoints a respondent's browser uses to open a link and read the survey.")
 @RestController
 @RequestMapping("/p")
 class PublicController {
@@ -59,6 +65,13 @@ class PublicController {
         this.linkKeys = linkKeys;
     }
 
+    @Operation(
+            summary = "Open a survey link",
+            description =
+                    "Starts a visit from a link's signed `token`, recording the referrer, user agent and query's source "
+                    + "facts, and answers the visit token the browser uses from then on. Every failure answers the same "
+                    + "`404` body, whether the token is malformed, unknown, revoked, expired or another tenant's, so a "
+                    + "caller cannot probe for live links. Public: no suite token is needed.")
     @PublicEndpoint
     @PostMapping("/l/{token}/open")
     OpenedResponse open(
@@ -89,6 +102,11 @@ class PublicController {
         }
     }
 
+    @Operation(
+            summary = "Get the survey a visit fills",
+            description =
+                    "Returns the published version the visit pinned, as `locale` renders it, with the decoy field a bot "
+                    + "would fill. Public: the visit token in the path is the credential.")
     @PublicEndpoint
     @GetMapping("/v/{visitToken}/schema")
     SchemaResponse schema(@PathVariable String visitToken, @RequestParam(required = false) String locale) {
@@ -98,6 +116,11 @@ class PublicController {
                 version.versionNo(), locale, version.document(), Honeypot.nameFor(visit.id()));
     }
 
+    @Operation(
+            summary = "Record a page view",
+            description =
+                    "Records that the respondent saw page `pageId`, which feeds the drop-off funnel. Answers no body. "
+                    + "Public: the visit token in the path is the credential.")
     @PublicEndpoint
     @PostMapping("/v/{visitToken}/pages/{pageId}/view")
     void pageViewed(@PathVariable String visitToken, @PathVariable UUID pageId) {
