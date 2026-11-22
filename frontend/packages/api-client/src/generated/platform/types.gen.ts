@@ -4,254 +4,807 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+/**
+ * A user of the suite.
+ */
 export type UserResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The id of the tenant it belongs to, or null for a Platform-scope record.
+     */
     tenantId?: string;
+    /**
+     * The scope: `PLATFORM` for the suite's own staff, `TENANT` for one tenant's people.
+     */
     scope?: string;
+    /**
+     * The email address.
+     */
     email?: string;
+    /**
+     * The name shown for the user.
+     */
     displayName?: string;
+    /**
+     * `ACTIVE` or `DISABLED`.
+     */
     status?: string;
+    /**
+     * The version of the record. It is also the `ETag`, which a conditional change sends as `If-Match`.
+     */
     version?: number;
 };
 
+/**
+ * The change an operator makes to a remote.
+ */
 export type StateRequest = {
+    /**
+     * Whether the remote is offered to the console. Required.
+     */
     enabled?: boolean;
+    /**
+     * The registered version to activate; an older one is a rollback.
+     */
     activeVersion?: string;
+    /**
+     * The new title, or null to keep it.
+     */
     title?: string;
+    /**
+     * The new navigation position, or null to keep it.
+     */
     navOrder?: number;
 };
 
+/**
+ * A UI remote of the console and its registered versions.
+ */
 export type RemoteResponse = {
+    /**
+     * The remote's unique name.
+     */
     name?: string;
+    /**
+     * The app the remote belongs to.
+     */
     appCode?: string;
+    /**
+     * The title shown in the console.
+     */
     title?: string;
+    /**
+     * The position in the console's navigation; lower comes first.
+     */
     navOrder?: number;
+    /**
+     * The shells the remote may be mounted in: the platform shell, the tenant shell, or both.
+     */
     audiences?: Array<string>;
+    /**
+     * Whether it is enabled.
+     */
     enabled?: boolean;
+    /**
+     * The version the console mounts, or null while none is activated.
+     */
     activeVersion?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * The version of the record. It is also the `ETag`, which a conditional change sends as `If-Match`.
+     */
     version?: number;
+    /**
+     * The versions CI has registered.
+     */
     versions?: Array<VersionResponse>;
 };
 
+/**
+ * One registered version of a UI remote.
+ */
 export type VersionResponse = {
+    /**
+     * The version string CI registered.
+     */
     version?: string;
+    /**
+     * The path of the remote's entry module. It is same-origin and inside the published directory of this remote's name and version.
+     */
     entryPath?: string;
+    /**
+     * The subresource-integrity hash of the entry module, which the shell verifies before it mounts it.
+     */
     integrity?: string;
+    /**
+     * The major version of the console SDK the remote was built against.
+     */
     sdkMajor?: number;
+    /**
+     * When CI registered the version.
+     */
     registeredAt?: string;
+    /**
+     * Who registered the version.
+     */
     registeredBy?: string;
 };
 
+/**
+ * The state to set.
+ */
 export type EntitlementRequest = {
+    /**
+     * Whether the tenant may use the app. Required.
+     */
     enabled?: boolean;
 };
 
+/**
+ * A tenant's entitlement to one app.
+ */
 export type EntitlementResponse = {
+    /**
+     * The id of the tenant.
+     */
     tenantId?: string;
+    /**
+     * The code of the app.
+     */
     appCode?: string;
+    /**
+     * Whether it is enabled.
+     */
     enabled?: boolean;
+    /**
+     * The version of the record. It is also the `ETag`, which a conditional change sends as `If-Match`.
+     */
     version?: number;
 };
 
+/**
+ * The new name.
+ */
 export type RenameRequest = {
+    /**
+     * The new name.
+     */
     name?: string;
 };
 
+/**
+ * A tenant of the suite.
+ */
 export type TenantResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The tenant's unique code, which also names its hostname.
+     */
     code?: string;
+    /**
+     * The display name.
+     */
     name?: string;
+    /**
+     * `ACTIVE` or `DEACTIVATED`.
+     */
     status?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * The version of the record. It is also the `ETag`, which a conditional change sends as `If-Match`.
+     */
     version?: number;
 };
 
+/**
+ * The change to apply to a tenant system.
+ */
 export type UpdateSystemRequest = {
+    /**
+     * `RENAME` or `DISABLE`.
+     */
     action?: string;
+    /**
+     * The new name, for `RENAME`.
+     */
     name?: string;
 };
 
+/**
+ * A tenant system: a machine caller of one tenant.
+ */
 export type SystemResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The display name.
+     */
     name?: string;
+    /**
+     * What the system is for: `GENERIC` or `WORKFLOW`.
+     */
     purpose?: string;
+    /**
+     * `ACTIVE` or `DISABLED`.
+     */
     status?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * The version of the record. It is also the `ETag`, which a conditional change sends as `If-Match`.
+     */
     version?: number;
 };
 
+/**
+ * A role and the permissions it grants.
+ */
 export type RoleResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The id of the tenant it belongs to, or null for a Platform-scope record.
+     */
     tenantId?: string;
+    /**
+     * The scope: `PLATFORM` for the suite's own staff, `TENANT` for one tenant's people.
+     */
     scope?: string;
+    /**
+     * The display name.
+     */
     name?: string;
+    /**
+     * Whether the role is a built-in one that cannot be edited.
+     */
     system?: boolean;
+    /**
+     * The permission codes the role grants.
+     */
     permissions?: Array<string>;
+    /**
+     * The version of the record. It is also the `ETag`, which a conditional change sends as `If-Match`.
+     */
     version?: number;
 };
 
+/**
+ * The role's new permission set, replacing the stored one.
+ */
 export type PermissionsRequest = {
+    /**
+     * The permission codes the role grants.
+     */
     permissions?: Array<string>;
 };
 
+/**
+ * The user to create.
+ */
 export type CreateRequest = {
+    /**
+     * The code of the tenant the user belongs to.
+     */
     tenantCode?: string;
+    /**
+     * The email address.
+     */
     email?: string;
+    /**
+     * The name shown for the user.
+     */
     displayName?: string;
+    /**
+     * The user's initial password.
+     */
     temporaryPassword?: string;
 };
 
+/**
+ * The version CI registers.
+ */
 export type RegisterRequest = {
+    /**
+     * The version string. A registered version is immutable.
+     */
     version?: string;
+    /**
+     * The path of the remote's entry module. It is same-origin and inside the published directory of this remote's name and version.
+     */
     entryPath?: string;
+    /**
+     * The subresource-integrity hash of the entry module, which the shell verifies before it mounts it.
+     */
     integrity?: string;
+    /**
+     * The major version of the console SDK the remote was built against.
+     */
     sdkMajor?: number;
+    /**
+     * The app the remote belongs to. Used when this call creates the remote.
+     */
     appCode?: string;
+    /**
+     * The title to show. Used when this call creates the remote.
+     */
     title?: string;
+    /**
+     * The shells the remote may be mounted in: the platform shell, the tenant shell, or both. Used when this call creates the remote.
+     */
     audiences?: Array<string>;
+    /**
+     * The navigation position. Used when this call creates the remote.
+     */
     navOrder?: number;
 };
 
+/**
+ * The tenant to provision.
+ */
 export type ProvisionRequest = {
+    /**
+     * The tenant's unique code. It cannot change afterwards.
+     */
     code?: string;
+    /**
+     * The tenant's display name.
+     */
     name?: string;
+    /**
+     * The email of the first administrator. When omitted, no administrator is created.
+     */
     adminEmail?: string;
+    /**
+     * The first administrator's initial password.
+     */
     adminTemporaryPassword?: string;
 };
 
+/**
+ * The tenant that was provisioned.
+ */
 export type ProvisionedResponse = {
+    /**
+     * The id of the new tenant.
+     */
     tenantId?: string;
+    /**
+     * The email of the administrator that was created, or null.
+     */
     adminEmail?: string;
 };
 
+/**
+ * The hostname to map to the tenant.
+ */
 export type DomainRequest = {
+    /**
+     * The hostname, such as `acme.example.com`.
+     */
     hostname?: string;
 };
 
+/**
+ * The tenant system to register.
+ */
 export type CreateSystemRequest = {
+    /**
+     * The system's name.
+     */
     name?: string;
+    /**
+     * What the system is for: `GENERIC` or `WORKFLOW`. Defaults to `GENERIC`.
+     */
     purpose?: string;
 };
 
+/**
+ * The credential to issue.
+ */
 export type CreateCredentialRequest = {
+    /**
+     * A label that tells the credentials of a system apart.
+     */
     label?: string;
+    /**
+     * The permission codes the credential may use.
+     */
     scopes?: Array<string>;
 };
 
+/**
+ * An API credential. The secret is never part of it.
+ */
 export type CredentialResponse = {
+    /**
+     * The credential's id.
+     */
     id?: string;
+    /**
+     * The public part of the API key. It identifies the credential without revealing the secret.
+     */
     keyId?: string;
+    /**
+     * The credential's label.
+     */
     label?: string;
+    /**
+     * The permission codes the credential may use.
+     */
     scopes?: Array<string>;
+    /**
+     * `ACTIVE` or `REVOKED`.
+     */
     status?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * When the credential stops working, or null. A rotated credential expires at the end of its overlap.
+     */
     expiresAt?: string;
+    /**
+     * When the credential was revoked, or null.
+     */
     revokedAt?: string;
 };
 
+/**
+ * A newly issued credential with its secret.
+ */
 export type IssuedCredentialResponse = {
+    /**
+     * The credential.
+     */
     credential?: CredentialResponse;
+    /**
+     * The API key. It is shown only in this response and is never available again.
+     */
     key?: string;
 };
 
+/**
+ * How the old credential is retired.
+ */
 export type RotateRequest = {
+    /**
+     * How long the previous credential keeps working, in minutes. Defaults to 1440 (24 hours).
+     */
     overlapMinutes?: number;
 };
 
+/**
+ * The role to create.
+ */
 export type CreateRoleRequest = {
+    /**
+     * The role's name.
+     */
     name?: string;
+    /**
+     * The permission codes the role grants. Each must be in the catalog and valid in the role's scope.
+     */
     permissions?: Array<string>;
 };
 
+/**
+ * The change to apply to a user.
+ */
 export type UpdateRequest = {
+    /**
+     * `ENABLE`, `DISABLE` or `RENAME`.
+     */
     action?: string;
+    /**
+     * The new display name, for `RENAME`.
+     */
     name?: string;
 };
 
+/**
+ * The paging facts of a list answer, present when the request asked for them with `page_info`.
+ */
 export type PageInfo = {
+    /**
+     * The page size that was applied.
+     */
     limit?: number;
+    /**
+     * The number of rows that were skipped, or null when a cursor positioned the page.
+     */
     offset?: number | null;
+    /**
+     * The number of rows that match the filter, or null when the request asked only for the cursor.
+     */
     total?: number | null;
+    /**
+     * The cursor of the following page, or null on the last page. Pass it as `cursor` with the same filter and sort.
+     */
     next_cursor?: string | null;
 };
 
+/**
+ * A page of user response rows, with the paging facts when the request asked for them.
+ */
 export type PageUserResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<UserResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of remote response rows, with the paging facts when the request asked for them.
+ */
 export type PageRemoteResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<RemoteResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of tenant response rows, with the paging facts when the request asked for them.
+ */
 export type PageTenantResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<TenantResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * One app of the suite and this tenant's state of it.
+ */
 export type AppResponse = {
+    /**
+     * The code of the app.
+     */
     appCode?: string;
+    /**
+     * Whether the tenant may use the app. An app the tenant never changed is disabled.
+     */
     enabled?: boolean;
+    /**
+     * The version of the record. It is also the `ETag`, which a conditional change sends as `If-Match`.
+     */
     version?: number;
 };
 
+/**
+ * A page of system response rows, with the paging facts when the request asked for them.
+ */
 export type PageSystemResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<SystemResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of credential response rows, with the paging facts when the request asked for them.
+ */
 export type PageCredentialResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<CredentialResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of role response rows, with the paging facts when the request asked for them.
+ */
 export type PageRoleResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<RoleResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * The signed-in user.
+ */
 export type MeResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The id of the tenant it belongs to, or null for a Platform-scope record.
+     */
     tenantId?: string;
+    /**
+     * The scope: `PLATFORM` for the suite's own staff, `TENANT` for one tenant's people.
+     */
     scope?: string;
+    /**
+     * The email address.
+     */
     email?: string;
+    /**
+     * The name shown for the user.
+     */
     displayName?: string;
+    /**
+     * The current status.
+     */
     status?: string;
+    /**
+     * The permission codes the user holds across the suite, through roles and directly.
+     */
     permissions?: Array<string>;
 };
 
+/**
+ * A remote the caller may mount, with the one version an operator activated.
+ */
 export type ConsoleRemoteResponse = {
+    /**
+     * The display name.
+     */
     name?: string;
+    /**
+     * The title shown in the console.
+     */
     title?: string;
+    /**
+     * The code of the app.
+     */
     appCode?: string;
+    /**
+     * The position in the console's navigation; lower comes first.
+     */
     navOrder?: number;
+    /**
+     * The active version.
+     */
     version?: string;
+    /**
+     * The path of the remote's entry module. It is same-origin and inside the published directory of this remote's name and version.
+     */
     entryPath?: string;
+    /**
+     * The subresource-integrity hash of the entry module, which the shell verifies before it mounts it.
+     */
     integrity?: string;
+    /**
+     * The major version of the console SDK the remote was built against.
+     */
     sdkMajor?: number;
+};
+
+/**
+ * The body of every error: an RFC 9457 problem.
+ */
+export type ProblemDetail = {
+    /**
+     * A URI reference that identifies the kind of problem. It is `about:blank` when the status says it all.
+     */
+    type?: string;
+    /**
+     * A short, human-readable summary of the kind of problem. It is the status's reason phrase unless a more specific one applies.
+     */
+    title?: string;
+    /**
+     * The HTTP status of the response.
+     */
+    status?: number;
+    /**
+     * A sentence that explains this occurrence.
+     */
+    detail?: string;
+    /**
+     * A URI reference that identifies this occurrence, when there is one.
+     */
+    instance?: string;
 };
 
 export type SetPermissionData = {
     body?: never;
     headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
         'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the user.
+         */
         id: string;
+        /**
+         * The permission code, such as `platform:tenant:read`.
+         */
         code: string;
     };
     query: {
+        /**
+         * `true` to grant the permission to the user, `false` to revoke it.
+         */
         grant: boolean;
     };
     url: '/api/v1/users/{id}/permissions/{code}';
 };
 
+export type SetPermissionErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `If-Match` tag does not match the resource's current version. The response carries the current `ETag`; read the resource again and retry.
+     */
+    412: ProblemDetail;
+    /**
+     * The permission code is not in the catalog.
+     */
+    422: ProblemDetail;
+};
+
+export type SetPermissionError = SetPermissionErrors[keyof SetPermissionErrors];
+
 export type SetPermissionResponses = {
     /**
-     * OK
+     * A user of the suite.
      */
     200: UserResponse;
 };
@@ -259,21 +812,58 @@ export type SetPermissionResponses = {
 export type SetPermissionResponse = SetPermissionResponses[keyof SetPermissionResponses];
 
 export type SetStateData = {
+    /**
+     * The change an operator makes to a remote.
+     */
     body: StateRequest;
     headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
         'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The name of the UI remote.
+         */
         name: string;
     };
     query?: never;
     url: '/api/v1/ui-remotes/{name}';
 };
 
+export type SetStateErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `If-Match` tag does not match the resource's current version. The response carries the current `ETag`; read the resource again and retry.
+     */
+    412: ProblemDetail;
+};
+
+export type SetStateError = SetStateErrors[keyof SetStateErrors];
+
 export type SetStateResponses = {
     /**
-     * OK
+     * A UI remote of the console and its registered versions.
      */
     200: RemoteResponse;
 };
@@ -281,22 +871,66 @@ export type SetStateResponses = {
 export type SetStateResponse = SetStateResponses[keyof SetStateResponses];
 
 export type SetData = {
+    /**
+     * The state to set.
+     */
     body: EntitlementRequest;
     headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
         'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the tenant.
+         */
         tenantId: string;
+        /**
+         * The code of the app, such as `billing`.
+         */
         appCode: string;
     };
     query?: never;
     url: '/api/v1/tenants/{tenantId}/apps/{appCode}';
 };
 
+export type SetErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `If-Match` tag does not match the resource's current version. The response carries the current `ETag`; read the resource again and retry.
+     */
+    412: ProblemDetail;
+    /**
+     * The app code is not one of the suite's apps.
+     */
+    422: ProblemDetail;
+};
+
+export type SetError = SetErrors[keyof SetErrors];
+
 export type SetResponses = {
     /**
-     * OK
+     * A tenant's entitlement to one app.
      */
     200: EntitlementResponse;
 };
@@ -304,21 +938,58 @@ export type SetResponses = {
 export type SetResponse = SetResponses[keyof SetResponses];
 
 export type RenameData = {
+    /**
+     * The new name.
+     */
     body: RenameRequest;
     headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
         'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the tenant.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/tenants/{id}';
 };
 
+export type RenameErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `If-Match` tag does not match the resource's current version. The response carries the current `ETag`; read the resource again and retry.
+     */
+    412: ProblemDetail;
+};
+
+export type RenameError = RenameErrors[keyof RenameErrors];
+
 export type RenameResponses = {
     /**
-     * OK
+     * A tenant of the suite.
      */
     200: TenantResponse;
 };
@@ -328,15 +999,35 @@ export type RenameResponse = RenameResponses[keyof RenameResponses];
 export type GetData = {
     body?: never;
     path: {
+        /**
+         * The id of the tenant system.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/tenant-systems/{id}';
 };
 
+export type GetErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetError = GetErrors[keyof GetErrors];
+
 export type GetResponses = {
     /**
-     * OK
+     * A tenant system: a machine caller of one tenant.
      */
     200: SystemResponse;
 };
@@ -344,21 +1035,58 @@ export type GetResponses = {
 export type GetResponse = GetResponses[keyof GetResponses];
 
 export type UpdateData = {
+    /**
+     * The change to apply to a tenant system.
+     */
     body: UpdateSystemRequest;
     headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
         'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the tenant system.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/tenant-systems/{id}';
 };
 
+export type UpdateErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `If-Match` tag does not match the resource's current version. The response carries the current `ETag`; read the resource again and retry.
+     */
+    412: ProblemDetail;
+};
+
+export type UpdateError = UpdateErrors[keyof UpdateErrors];
+
 export type UpdateResponses = {
     /**
-     * OK
+     * A tenant system: a machine caller of one tenant.
      */
     200: SystemResponse;
 };
@@ -366,21 +1094,58 @@ export type UpdateResponses = {
 export type UpdateResponse = UpdateResponses[keyof UpdateResponses];
 
 export type Rename1Data = {
+    /**
+     * The new name.
+     */
     body: RenameRequest;
     headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
         'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the role.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/roles/{id}';
 };
 
+export type Rename1Errors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `If-Match` tag does not match the resource's current version. The response carries the current `ETag`; read the resource again and retry.
+     */
+    412: ProblemDetail;
+};
+
+export type Rename1Error = Rename1Errors[keyof Rename1Errors];
+
 export type Rename1Responses = {
     /**
-     * OK
+     * A role and the permissions it grants.
      */
     200: RoleResponse;
 };
@@ -388,21 +1153,62 @@ export type Rename1Responses = {
 export type Rename1Response = Rename1Responses[keyof Rename1Responses];
 
 export type ReplacePermissionsData = {
+    /**
+     * The role's new permission set, replacing the stored one.
+     */
     body: PermissionsRequest;
     headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
         'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the role.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/roles/{id}/permissions';
 };
 
+export type ReplacePermissionsErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `If-Match` tag does not match the resource's current version. The response carries the current `ETag`; read the resource again and retry.
+     */
+    412: ProblemDetail;
+    /**
+     * A permission code is not in the catalog.
+     */
+    422: ProblemDetail;
+};
+
+export type ReplacePermissionsError = ReplacePermissionsErrors[keyof ReplacePermissionsErrors];
+
 export type ReplacePermissionsResponses = {
     /**
-     * OK
+     * A role and the permissions it grants.
      */
     200: RoleResponse;
 };
@@ -410,18 +1216,50 @@ export type ReplacePermissionsResponses = {
 export type ReplacePermissionsResponse = ReplacePermissionsResponses[keyof ReplacePermissionsResponses];
 
 export type TokenData = {
+    /**
+     * The token request, sent as an `application/x-www-form-urlencoded` form.
+     */
     body?: {
+        /**
+         * The grant type. It must be `client_credentials`.
+         */
         grant_type: string;
+        /**
+         * The app the token is for. An audience the suite does not offer answers `400`.
+         */
         audience: string;
     };
     headers?: {
+        /**
+         * The credential of the Tenant System: `Basic` followed by the base64 of `clientId:secret`.
+         */
         Authorization?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
     query?: never;
     url: '/oauth/token';
 };
+
+export type TokenErrors = {
+    /**
+     * The `grant_type` is not `client_credentials`, or the `audience` is not one the suite offers.
+     */
+    400: ProblemDetail;
+    /**
+     * The credential is missing or wrong. The answer never says which half was wrong.
+     */
+    401: ProblemDetail;
+    /**
+     * Too many attempts. Repeat after the number of seconds in `Retry-After`.
+     */
+    429: ProblemDetail;
+};
+
+export type TokenError = TokenErrors[keyof TokenErrors];
 
 export type TokenResponses = {
     /**
@@ -638,12 +1476,22 @@ export type ListErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type ListError = ListErrors[keyof ListErrors];
 
 export type ListResponses = {
     /**
-     * OK
+     * A page of user response rows, with the paging facts when the request asked for them.
      */
     200: PageUserResponse;
 };
@@ -651,8 +1499,14 @@ export type ListResponses = {
 export type ListResponse = ListResponses[keyof ListResponses];
 
 export type CreateData = {
+    /**
+     * The user to create.
+     */
     body: CreateRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -660,9 +1514,26 @@ export type CreateData = {
     url: '/api/v1/users';
 };
 
+export type CreateErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type CreateError = CreateErrors[keyof CreateErrors];
+
 export type CreateResponses = {
     /**
-     * Created
+     * A user of the suite.
      */
     201: UserResponse;
 };
@@ -670,22 +1541,60 @@ export type CreateResponses = {
 export type CreateResponse = CreateResponses[keyof CreateResponses];
 
 export type RegisterVersionData = {
+    /**
+     * The version CI registers.
+     */
     body: RegisterRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The name of the UI remote the version belongs to.
+         */
         name: string;
     };
     query?: never;
     url: '/api/v1/ui-remotes/{name}/versions';
 };
 
+export type RegisterVersionErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The version is already registered with different content. A registered version is immutable.
+     */
+    409: ProblemDetail;
+};
+
+export type RegisterVersionError = RegisterVersionErrors[keyof RegisterVersionErrors];
+
 export type RegisterVersionResponses = {
     /**
-     * OK
+     * The same version with the same content was already registered, so nothing changed.
      */
     200: VersionResponse;
+    /**
+     * The version was registered. A first call also created the remote, disabled and with no active version.
+     */
+    201: VersionResponse;
 };
 
 export type RegisterVersionResponse = RegisterVersionResponses[keyof RegisterVersionResponses];
@@ -862,12 +1771,22 @@ export type List1Errors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type List1Error = List1Errors[keyof List1Errors];
 
 export type List1Responses = {
     /**
-     * OK
+     * A page of tenant response rows, with the paging facts when the request asked for them.
      */
     200: PageTenantResponse;
 };
@@ -875,15 +1794,39 @@ export type List1Responses = {
 export type List1Response = List1Responses[keyof List1Responses];
 
 export type Create1Data = {
+    /**
+     * The tenant to provision.
+     */
     body: ProvisionRequest;
     path?: never;
     query?: never;
     url: '/api/v1/tenants';
 };
 
+export type Create1Errors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The tenant code is already used.
+     */
+    409: ProblemDetail;
+};
+
+export type Create1Error = Create1Errors[keyof Create1Errors];
+
 export type Create1Responses = {
     /**
-     * Created
+     * The tenant that was provisioned.
      */
     201: ProvisionedResponse;
 };
@@ -891,16 +1834,50 @@ export type Create1Responses = {
 export type Create1Response = Create1Responses[keyof Create1Responses];
 
 export type AddDomainData = {
+    /**
+     * The hostname to map to the tenant.
+     */
     body: DomainRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the tenant.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/tenants/{id}/domains';
 };
+
+export type AddDomainErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The hostname is already mapped to a tenant.
+     */
+    409: ProblemDetail;
+};
+
+export type AddDomainError = AddDomainErrors[keyof AddDomainErrors];
 
 export type AddDomainResponses = {
     /**
@@ -912,19 +1889,53 @@ export type AddDomainResponses = {
 export type DeactivateData = {
     body?: never;
     headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
         'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the tenant.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/tenants/{id}/deactivate';
 };
 
+export type DeactivateErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `If-Match` tag does not match the resource's current version. The response carries the current `ETag`; read the resource again and retry.
+     */
+    412: ProblemDetail;
+};
+
+export type DeactivateError = DeactivateErrors[keyof DeactivateErrors];
+
 export type DeactivateResponses = {
     /**
-     * OK
+     * A tenant of the suite.
      */
     200: TenantResponse;
 };
@@ -1099,12 +2110,22 @@ export type List2Errors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type List2Error = List2Errors[keyof List2Errors];
 
 export type List2Responses = {
     /**
-     * OK
+     * A page of system response rows, with the paging facts when the request asked for them.
      */
     200: PageSystemResponse;
 };
@@ -1112,8 +2133,14 @@ export type List2Responses = {
 export type List2Response = List2Responses[keyof List2Responses];
 
 export type Create2Data = {
+    /**
+     * The tenant system to register.
+     */
     body: CreateSystemRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -1121,9 +2148,26 @@ export type Create2Data = {
     url: '/api/v1/tenant-systems';
 };
 
+export type Create2Errors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type Create2Error = Create2Errors[keyof Create2Errors];
+
 export type Create2Responses = {
     /**
-     * Created
+     * A tenant system: a machine caller of one tenant.
      */
     201: SystemResponse;
 };
@@ -1133,6 +2177,9 @@ export type Create2Response = Create2Responses[keyof Create2Responses];
 export type ListCredentialsData = {
     body?: never;
     path: {
+        /**
+         * The id of the tenant system.
+         */
         id: string;
     };
     query?: {
@@ -1376,12 +2423,26 @@ export type ListCredentialsErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
 };
+
+export type ListCredentialsError = ListCredentialsErrors[keyof ListCredentialsErrors];
 
 export type ListCredentialsResponses = {
     /**
-     * OK
+     * A page of credential response rows, with the paging facts when the request asked for them.
      */
     200: PageCredentialResponse;
 };
@@ -1389,20 +2450,50 @@ export type ListCredentialsResponses = {
 export type ListCredentialsResponse = ListCredentialsResponses[keyof ListCredentialsResponses];
 
 export type CreateCredentialData = {
+    /**
+     * The credential to issue.
+     */
     body: CreateCredentialRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the tenant system.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/tenant-systems/{id}/credentials';
 };
 
+export type CreateCredentialErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type CreateCredentialError = CreateCredentialErrors[keyof CreateCredentialErrors];
+
 export type CreateCredentialResponses = {
     /**
-     * Created
+     * A newly issued credential with its secret.
      */
     201: IssuedCredentialResponse;
 };
@@ -1410,20 +2501,50 @@ export type CreateCredentialResponses = {
 export type CreateCredentialResponse = CreateCredentialResponses[keyof CreateCredentialResponses];
 
 export type RotateData = {
+    /**
+     * How the old credential is retired.
+     */
     body?: RotateRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the tenant system.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/tenant-systems/{id}/credentials/rotate';
 };
 
+export type RotateErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type RotateError = RotateErrors[keyof RotateErrors];
+
 export type RotateResponses = {
     /**
-     * OK
+     * A newly issued credential with its secret.
      */
     200: IssuedCredentialResponse;
 };
@@ -1606,12 +2727,22 @@ export type List3Errors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type List3Error = List3Errors[keyof List3Errors];
 
 export type List3Responses = {
     /**
-     * OK
+     * A page of role response rows, with the paging facts when the request asked for them.
      */
     200: PageRoleResponse;
 };
@@ -1619,8 +2750,14 @@ export type List3Responses = {
 export type List3Response = List3Responses[keyof List3Responses];
 
 export type Create3Data = {
+    /**
+     * The role to create.
+     */
     body: CreateRoleRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -1628,9 +2765,30 @@ export type Create3Data = {
     url: '/api/v1/roles';
 };
 
+export type Create3Errors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * A permission code is not in the catalog.
+     */
+    422: ProblemDetail;
+};
+
+export type Create3Error = Create3Errors[keyof Create3Errors];
+
 export type Create3Responses = {
     /**
-     * Created
+     * A role and the permissions it grants.
      */
     201: RoleResponse;
 };
@@ -1640,19 +2798,49 @@ export type Create3Response = Create3Responses[keyof Create3Responses];
 export type UnassignData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the role.
+         */
         id: string;
+        /**
+         * The id of the user to give the role to or take it from.
+         */
         userId: string;
     };
     query?: never;
     url: '/api/v1/roles/{id}/users/{userId}';
 };
 
+export type UnassignErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type UnassignError = UnassignErrors[keyof UnassignErrors];
+
 export type UnassignResponses = {
     /**
-     * OK
+     * A role and the permissions it grants.
      */
     200: RoleResponse;
 };
@@ -1662,19 +2850,49 @@ export type UnassignResponse = UnassignResponses[keyof UnassignResponses];
 export type AssignData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the role.
+         */
         id: string;
+        /**
+         * The id of the user to give the role to or take it from.
+         */
         userId: string;
     };
     query?: never;
     url: '/api/v1/roles/{id}/users/{userId}';
 };
 
+export type AssignErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type AssignError = AssignErrors[keyof AssignErrors];
+
 export type AssignResponses = {
     /**
-     * OK
+     * A role and the permissions it grants.
      */
     200: RoleResponse;
 };
@@ -1682,21 +2900,58 @@ export type AssignResponses = {
 export type AssignResponse = AssignResponses[keyof AssignResponses];
 
 export type Update1Data = {
+    /**
+     * The change to apply to a user.
+     */
     body: UpdateRequest;
     headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
         'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the user.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/users/{id}';
 };
 
+export type Update1Errors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `If-Match` tag does not match the resource's current version. The response carries the current `ETag`; read the resource again and retry.
+     */
+    412: ProblemDetail;
+};
+
+export type Update1Error = Update1Errors[keyof Update1Errors];
+
 export type Update1Responses = {
     /**
-     * OK
+     * A user of the suite.
      */
     200: UserResponse;
 };
@@ -1706,14 +2961,44 @@ export type Update1Response = Update1Responses[keyof Update1Responses];
 export type PageData = {
     body?: never;
     path: {
+        /**
+         * The replica stream to read: `tenants`, `tenant-domains`, `tenant-systems`, `entitlements` or `user-access`.
+         */
         stream: string;
     };
     query?: {
+        /**
+         * The `next` of the previous page; omit it to start from the beginning.
+         */
         after?: string;
+        /**
+         * The page size, clamped to 1 to 500. Defaults to 100.
+         */
         limit?: number;
     };
     url: '/internal/replica/{stream}';
 };
+
+export type PageErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The stream is not one of the replica streams.
+     */
+    404: ProblemDetail;
+};
+
+export type PageError = PageErrors[keyof PageErrors];
 
 export type PageResponses = {
     /**
@@ -1906,12 +3191,22 @@ export type ListRemotesErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type ListRemotesError = ListRemotesErrors[keyof ListRemotesErrors];
 
 export type ListRemotesResponses = {
     /**
-     * OK
+     * A page of remote response rows, with the paging facts when the request asked for them.
      */
     200: PageRemoteResponse;
 };
@@ -1921,11 +3216,35 @@ export type ListRemotesResponse = ListRemotesResponses[keyof ListRemotesResponse
 export type AppsData = {
     body?: never;
     path: {
+        /**
+         * The id of the tenant.
+         */
         tenantId: string;
     };
     query?: never;
     url: '/api/v1/tenants/{tenantId}/apps';
 };
+
+export type AppsErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type AppsError = AppsErrors[keyof AppsErrors];
 
 export type AppsResponses = {
     /**
@@ -1943,9 +3262,22 @@ export type MeData = {
     url: '/api/v1/me';
 };
 
+export type MeErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+};
+
+export type MeError = MeErrors[keyof MeErrors];
+
 export type MeResponses = {
     /**
-     * OK
+     * The signed-in user.
      */
     200: MeResponse;
 };
@@ -1958,6 +3290,19 @@ export type FeedData = {
     query?: never;
     url: '/api/v1/console/remotes';
 };
+
+export type FeedErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+};
+
+export type FeedError = FeedErrors[keyof FeedErrors];
 
 export type FeedResponses = {
     /**
@@ -1989,19 +3334,45 @@ export type JwksResponse = JwksResponses[keyof JwksResponses];
 export type RevokeData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the tenant system the credential belongs to.
+         */
         systemId: string;
+        /**
+         * The id of the credential to revoke.
+         */
         credentialId: string;
     };
     query?: never;
     url: '/api/v1/tenant-systems/{systemId}/credentials/{credentialId}';
 };
 
+export type RevokeErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type RevokeError = RevokeErrors[keyof RevokeErrors];
+
 export type RevokeResponses = {
     /**
-     * OK
+     * An API credential. The secret is never part of it.
      */
     200: CredentialResponse;
 };

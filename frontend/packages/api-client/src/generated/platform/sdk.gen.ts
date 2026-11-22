@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, type Options as Options2, type RequestResult, type TDataShape, urlSearchParamsBodySerializer } from './client';
 import { client } from './client.gen';
-import type { AddDomainData, AddDomainResponses, AppsData, AppsResponses, AssignData, AssignResponses, Create1Data, Create1Responses, Create2Data, Create2Responses, Create3Data, Create3Responses, CreateCredentialData, CreateCredentialResponses, CreateData, CreateResponses, DeactivateData, DeactivateResponses, FeedData, FeedResponses, GetData, GetResponses, JwksData, JwksResponses, List1Data, List1Errors, List1Responses, List2Data, List2Errors, List2Responses, List3Data, List3Errors, List3Responses, ListCredentialsData, ListCredentialsErrors, ListCredentialsResponses, ListData, ListErrors, ListRemotesData, ListRemotesErrors, ListRemotesResponses, ListResponses, MeData, MeResponses, PageData, PageResponses, RegisterVersionData, RegisterVersionResponses, Rename1Data, Rename1Responses, RenameData, RenameResponses, ReplacePermissionsData, ReplacePermissionsResponses, RevokeData, RevokeResponses, RotateData, RotateResponses, SetData, SetPermissionData, SetPermissionResponses, SetResponses, SetStateData, SetStateResponses, TokenData, TokenResponses, UnassignData, UnassignResponses, Update1Data, Update1Responses, UpdateData, UpdateResponses } from './types.gen';
+import type { AddDomainData, AddDomainErrors, AddDomainResponses, AppsData, AppsErrors, AppsResponses, AssignData, AssignErrors, AssignResponses, Create1Data, Create1Errors, Create1Responses, Create2Data, Create2Errors, Create2Responses, Create3Data, Create3Errors, Create3Responses, CreateCredentialData, CreateCredentialErrors, CreateCredentialResponses, CreateData, CreateErrors, CreateResponses, DeactivateData, DeactivateErrors, DeactivateResponses, FeedData, FeedErrors, FeedResponses, GetData, GetErrors, GetResponses, JwksData, JwksResponses, List1Data, List1Errors, List1Responses, List2Data, List2Errors, List2Responses, List3Data, List3Errors, List3Responses, ListCredentialsData, ListCredentialsErrors, ListCredentialsResponses, ListData, ListErrors, ListRemotesData, ListRemotesErrors, ListRemotesResponses, ListResponses, MeData, MeErrors, MeResponses, PageData, PageErrors, PageResponses, RegisterVersionData, RegisterVersionErrors, RegisterVersionResponses, Rename1Data, Rename1Errors, Rename1Responses, RenameData, RenameErrors, RenameResponses, ReplacePermissionsData, ReplacePermissionsErrors, ReplacePermissionsResponses, RevokeData, RevokeErrors, RevokeResponses, RotateData, RotateErrors, RotateResponses, SetData, SetErrors, SetPermissionData, SetPermissionErrors, SetPermissionResponses, SetResponses, SetStateData, SetStateErrors, SetStateResponses, TokenData, TokenErrors, TokenResponses, UnassignData, UnassignErrors, UnassignResponses, Update1Data, Update1Errors, Update1Responses, UpdateData, UpdateErrors, UpdateResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -18,9 +18,19 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
     meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
 
-export const setPermission = <ThrowOnError extends boolean = false>(options: Options<SetPermissionData, ThrowOnError>): RequestResult<SetPermissionResponses, unknown, ThrowOnError> => (options.client ?? client).put<SetPermissionResponses, unknown, ThrowOnError>({ url: '/api/v1/users/{id}/permissions/{code}', ...options });
+/**
+ * Grant or revoke a direct permission
+ *
+ * Grants (`grant=true`) or revokes (`grant=false`) one permission `code` directly on the user, outside any role. Each effective change is audited. Pass the user's `ETag` in `If-Match`; a stale version is refused. Requires `platform:user:manage`.
+ */
+export const setPermission = <ThrowOnError extends boolean = false>(options: Options<SetPermissionData, ThrowOnError>): RequestResult<SetPermissionResponses, SetPermissionErrors, ThrowOnError> => (options.client ?? client).put<SetPermissionResponses, SetPermissionErrors, ThrowOnError>({ url: '/api/v1/users/{id}/permissions/{code}', ...options });
 
-export const setState = <ThrowOnError extends boolean = false>(options: Options<SetStateData, ThrowOnError>): RequestResult<SetStateResponses, unknown, ThrowOnError> => (options.client ?? client).put<SetStateResponses, unknown, ThrowOnError>({
+/**
+ * Change a UI remote
+ *
+ * The operator's one write on a remote: enable or disable it, point it at a registered version with `activeVersion` (a rollback is the same call with an older version), and edit its `title` and `navOrder`. `enabled` is required. Pass the remote's `ETag` in `If-Match`; a stale version is refused. Requires `platform:ui-remote:manage`.
+ */
+export const setState = <ThrowOnError extends boolean = false>(options: Options<SetStateData, ThrowOnError>): RequestResult<SetStateResponses, SetStateErrors, ThrowOnError> => (options.client ?? client).put<SetStateResponses, SetStateErrors, ThrowOnError>({
     url: '/api/v1/ui-remotes/{name}',
     ...options,
     headers: {
@@ -29,7 +39,12 @@ export const setState = <ThrowOnError extends boolean = false>(options: Options<
     }
 });
 
-export const set = <ThrowOnError extends boolean = false>(options: Options<SetData, ThrowOnError>): RequestResult<SetResponses, unknown, ThrowOnError> => (options.client ?? client).put<SetResponses, unknown, ThrowOnError>({
+/**
+ * Enable or disable an app for a tenant
+ *
+ * Sets whether the Tenant may use the app `appCode`. Setting the state it already has changes nothing and publishes nothing; the audit entry names the action asked for. `enabled` is required. Pass the entitlement's `ETag` in `If-Match`; a stale version is refused. Requires `platform:entitlement:manage`.
+ */
+export const set = <ThrowOnError extends boolean = false>(options: Options<SetData, ThrowOnError>): RequestResult<SetResponses, SetErrors, ThrowOnError> => (options.client ?? client).put<SetResponses, SetErrors, ThrowOnError>({
     url: '/api/v1/tenants/{tenantId}/apps/{appCode}',
     ...options,
     headers: {
@@ -38,7 +53,12 @@ export const set = <ThrowOnError extends boolean = false>(options: Options<SetDa
     }
 });
 
-export const rename = <ThrowOnError extends boolean = false>(options: Options<RenameData, ThrowOnError>): RequestResult<RenameResponses, unknown, ThrowOnError> => (options.client ?? client).put<RenameResponses, unknown, ThrowOnError>({
+/**
+ * Rename a tenant
+ *
+ * Changes the Tenant's display name; its code does not change. The version is bumped and the new state is published. Pass the tenant's `ETag` in `If-Match`; a stale version is refused. Requires `platform:tenant:rename`.
+ */
+export const rename = <ThrowOnError extends boolean = false>(options: Options<RenameData, ThrowOnError>): RequestResult<RenameResponses, RenameErrors, ThrowOnError> => (options.client ?? client).put<RenameResponses, RenameErrors, ThrowOnError>({
     url: '/api/v1/tenants/{id}',
     ...options,
     headers: {
@@ -47,9 +67,19 @@ export const rename = <ThrowOnError extends boolean = false>(options: Options<Re
     }
 });
 
-export const get = <ThrowOnError extends boolean = false>(options: Options<GetData, ThrowOnError>): RequestResult<GetResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetResponses, unknown, ThrowOnError>({ url: '/api/v1/tenant-systems/{id}', ...options });
+/**
+ * Get a tenant system
+ *
+ * Returns one Tenant System of the current Tenant with its purpose, status and version; the version is also the response's `ETag`. An unknown id answers `404`. Requires `platform:tenant-system:read`.
+ */
+export const get = <ThrowOnError extends boolean = false>(options: Options<GetData, ThrowOnError>): RequestResult<GetResponses, GetErrors, ThrowOnError> => (options.client ?? client).get<GetResponses, GetErrors, ThrowOnError>({ url: '/api/v1/tenant-systems/{id}', ...options });
 
-export const update = <ThrowOnError extends boolean = false>(options: Options<UpdateData, ThrowOnError>): RequestResult<UpdateResponses, unknown, ThrowOnError> => (options.client ?? client).put<UpdateResponses, unknown, ThrowOnError>({
+/**
+ * Rename or disable a tenant system
+ *
+ * Applies one `action` to the system: `RENAME` with the new `name`, or `DISABLE`. Each change publishes the system's state. Pass the system's `ETag` in `If-Match`; a stale version is refused. Requires `platform:tenant-system:manage`.
+ */
+export const update = <ThrowOnError extends boolean = false>(options: Options<UpdateData, ThrowOnError>): RequestResult<UpdateResponses, UpdateErrors, ThrowOnError> => (options.client ?? client).put<UpdateResponses, UpdateErrors, ThrowOnError>({
     url: '/api/v1/tenant-systems/{id}',
     ...options,
     headers: {
@@ -58,7 +88,12 @@ export const update = <ThrowOnError extends boolean = false>(options: Options<Up
     }
 });
 
-export const rename1 = <ThrowOnError extends boolean = false>(options: Options<Rename1Data, ThrowOnError>): RequestResult<Rename1Responses, unknown, ThrowOnError> => (options.client ?? client).put<Rename1Responses, unknown, ThrowOnError>({
+/**
+ * Rename a role
+ *
+ * Changes the role's name. Pass the role's `ETag` in `If-Match`; a stale version is refused. Requires `platform:role:manage`.
+ */
+export const rename1 = <ThrowOnError extends boolean = false>(options: Options<Rename1Data, ThrowOnError>): RequestResult<Rename1Responses, Rename1Errors, ThrowOnError> => (options.client ?? client).put<Rename1Responses, Rename1Errors, ThrowOnError>({
     url: '/api/v1/roles/{id}',
     ...options,
     headers: {
@@ -67,7 +102,12 @@ export const rename1 = <ThrowOnError extends boolean = false>(options: Options<R
     }
 });
 
-export const replacePermissions = <ThrowOnError extends boolean = false>(options: Options<ReplacePermissionsData, ThrowOnError>): RequestResult<ReplacePermissionsResponses, unknown, ThrowOnError> => (options.client ?? client).put<ReplacePermissionsResponses, unknown, ThrowOnError>({
+/**
+ * Replace a role's permissions
+ *
+ * Replaces the role's whole permission set with `permissions`. Every holder of the role has its effective access recomputed. Pass the role's `ETag` in `If-Match`; a stale version is refused. Requires `platform:role:manage`.
+ */
+export const replacePermissions = <ThrowOnError extends boolean = false>(options: Options<ReplacePermissionsData, ThrowOnError>): RequestResult<ReplacePermissionsResponses, ReplacePermissionsErrors, ThrowOnError> => (options.client ?? client).put<ReplacePermissionsResponses, ReplacePermissionsErrors, ThrowOnError>({
     url: '/api/v1/roles/{id}/permissions',
     ...options,
     headers: {
@@ -76,7 +116,12 @@ export const replacePermissions = <ThrowOnError extends boolean = false>(options
     }
 });
 
-export const token = <ThrowOnError extends boolean = false>(options?: Options<TokenData, ThrowOnError>): RequestResult<TokenResponses, unknown, ThrowOnError> => (options?.client ?? client).post<TokenResponses, unknown, ThrowOnError>({
+/**
+ * Get an access token with client credentials
+ *
+ * The OAuth client-credentials grant for Tenant Systems and service clients. Authenticate with HTTP Basic using the credential's id and secret, send `grant_type=client_credentials` and the `audience` of the app to call as a form, and receive a short-lived `Bearer` token (`access_token`, `token_type`, `expires_in`). An unsupported grant or audience answers `400`; a missing or wrong credential answers `401` with no detail on which half was wrong; too many attempts answer `429` with `Retry-After`. Public: no token is needed.
+ */
+export const token = <ThrowOnError extends boolean = false>(options?: Options<TokenData, ThrowOnError>): RequestResult<TokenResponses, TokenErrors, ThrowOnError> => (options?.client ?? client).post<TokenResponses, TokenErrors, ThrowOnError>({
     ...urlSearchParamsBodySerializer,
     url: '/oauth/token',
     ...options,
@@ -87,11 +132,20 @@ export const token = <ThrowOnError extends boolean = false>(options?: Options<To
 });
 
 /**
+ * List users
+ *
+ * Pages through users, with the list-query contract's filtering, sorting and paging. `tenant_id` is a filter, and a Tenant-scope caller never sees another Tenant's users. Requires `platform:user:read`.
+ *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
  */
 export const list = <ThrowOnError extends boolean = false>(options?: Options<ListData, ThrowOnError>): RequestResult<ListResponses, ListErrors, ThrowOnError> => (options?.client ?? client).get<ListResponses, ListErrors, ThrowOnError>({ url: '/api/v1/users', ...options });
 
-export const create = <ThrowOnError extends boolean = false>(options: Options<CreateData, ThrowOnError>): RequestResult<CreateResponses, unknown, ThrowOnError> => (options.client ?? client).post<CreateResponses, unknown, ThrowOnError>({
+/**
+ * Create a user
+ *
+ * Creates the user's sign-in identity and the Platform user for `tenantCode`, with a temporary password. A Tenant-scope caller cannot create a Platform-scope user. Answers `201` with the user. Requires `platform:user:manage`.
+ */
+export const create = <ThrowOnError extends boolean = false>(options: Options<CreateData, ThrowOnError>): RequestResult<CreateResponses, CreateErrors, ThrowOnError> => (options.client ?? client).post<CreateResponses, CreateErrors, ThrowOnError>({
     url: '/api/v1/users',
     ...options,
     headers: {
@@ -100,7 +154,12 @@ export const create = <ThrowOnError extends boolean = false>(options: Options<Cr
     }
 });
 
-export const registerVersion = <ThrowOnError extends boolean = false>(options: Options<RegisterVersionData, ThrowOnError>): RequestResult<RegisterVersionResponses, unknown, ThrowOnError> => (options.client ?? client).post<RegisterVersionResponses, unknown, ThrowOnError>({
+/**
+ * Register a UI remote version
+ *
+ * Called by CI after it publishes a build. The first call also creates the remote, disabled and with no active version; registering never enables a remote or changes its active version, so a deploy cannot reach a browser until an operator activates it. Repeating the same version with the same content answers `200` instead of `201`; the same version with different content is a conflict, because a version is immutable once a shell may have verified it. Requires `platform:ui-remote:register`.
+ */
+export const registerVersion = <ThrowOnError extends boolean = false>(options: Options<RegisterVersionData, ThrowOnError>): RequestResult<RegisterVersionResponses, RegisterVersionErrors, ThrowOnError> => (options.client ?? client).post<RegisterVersionResponses, RegisterVersionErrors, ThrowOnError>({
     url: '/api/v1/ui-remotes/{name}/versions',
     ...options,
     headers: {
@@ -110,11 +169,20 @@ export const registerVersion = <ThrowOnError extends boolean = false>(options: O
 });
 
 /**
+ * List tenants
+ *
+ * Pages through the suite's Tenants, with the list-query contract's filtering, sorting and paging. Requires `platform:tenant:read`.
+ *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
  */
 export const list1 = <ThrowOnError extends boolean = false>(options?: Options<List1Data, ThrowOnError>): RequestResult<List1Responses, List1Errors, ThrowOnError> => (options?.client ?? client).get<List1Responses, List1Errors, ThrowOnError>({ url: '/api/v1/tenants', ...options });
 
-export const create1 = <ThrowOnError extends boolean = false>(options: Options<Create1Data, ThrowOnError>): RequestResult<Create1Responses, unknown, ThrowOnError> => (options.client ?? client).post<Create1Responses, unknown, ThrowOnError>({
+/**
+ * Provision a tenant with its first administrator
+ *
+ * Creates a Tenant, seeds its Tenant Administrator role with every tenant-scope permission and, when `adminEmail` is given, creates the first administrator with `adminTemporaryPassword` and assigns that role, all in one call. A failure leaves neither a Tenant without its role nor an administrator without the Tenant. Answers `201` with the tenant id and the administrator's email. Requires `platform:tenant:create`.
+ */
+export const create1 = <ThrowOnError extends boolean = false>(options: Options<Create1Data, ThrowOnError>): RequestResult<Create1Responses, Create1Errors, ThrowOnError> => (options.client ?? client).post<Create1Responses, Create1Errors, ThrowOnError>({
     url: '/api/v1/tenants',
     ...options,
     headers: {
@@ -123,7 +191,12 @@ export const create1 = <ThrowOnError extends boolean = false>(options: Options<C
     }
 });
 
-export const addDomain = <ThrowOnError extends boolean = false>(options: Options<AddDomainData, ThrowOnError>): RequestResult<AddDomainResponses, unknown, ThrowOnError> => (options.client ?? client).post<AddDomainResponses, unknown, ThrowOnError>({
+/**
+ * Add a hostname to a tenant
+ *
+ * Maps one more hostname to the Tenant, so its people reach the console on that host. The host also becomes a sign-in redirect target; if that registration fails the request still succeeds and a reconciler repairs it. Answers `201` with no body. Requires `platform:tenant-domain:manage`.
+ */
+export const addDomain = <ThrowOnError extends boolean = false>(options: Options<AddDomainData, ThrowOnError>): RequestResult<AddDomainResponses, AddDomainErrors, ThrowOnError> => (options.client ?? client).post<AddDomainResponses, AddDomainErrors, ThrowOnError>({
     url: '/api/v1/tenants/{id}/domains',
     ...options,
     headers: {
@@ -132,14 +205,28 @@ export const addDomain = <ThrowOnError extends boolean = false>(options: Options
     }
 });
 
-export const deactivate = <ThrowOnError extends boolean = false>(options: Options<DeactivateData, ThrowOnError>): RequestResult<DeactivateResponses, unknown, ThrowOnError> => (options.client ?? client).post<DeactivateResponses, unknown, ThrowOnError>({ url: '/api/v1/tenants/{id}/deactivate', ...options });
+/**
+ * Deactivate a tenant
+ *
+ * Deactivates the Tenant. Deactivating a Tenant that is already inactive changes nothing and publishes nothing. Pass the tenant's `ETag` in `If-Match`; a stale version is refused. Requires `platform:tenant:deactivate`.
+ */
+export const deactivate = <ThrowOnError extends boolean = false>(options: Options<DeactivateData, ThrowOnError>): RequestResult<DeactivateResponses, DeactivateErrors, ThrowOnError> => (options.client ?? client).post<DeactivateResponses, DeactivateErrors, ThrowOnError>({ url: '/api/v1/tenants/{id}/deactivate', ...options });
 
 /**
+ * List tenant systems
+ *
+ * Pages through the current Tenant's Tenant Systems, with the list-query contract's filtering, sorting and paging. Requires `platform:tenant-system:read`.
+ *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
  */
 export const list2 = <ThrowOnError extends boolean = false>(options?: Options<List2Data, ThrowOnError>): RequestResult<List2Responses, List2Errors, ThrowOnError> => (options?.client ?? client).get<List2Responses, List2Errors, ThrowOnError>({ url: '/api/v1/tenant-systems', ...options });
 
-export const create2 = <ThrowOnError extends boolean = false>(options: Options<Create2Data, ThrowOnError>): RequestResult<Create2Responses, unknown, ThrowOnError> => (options.client ?? client).post<Create2Responses, unknown, ThrowOnError>({
+/**
+ * Register a tenant system
+ *
+ * Registers a Tenant System of the current Tenant: a named machine caller with a stated `purpose` that authenticates with API credentials instead of a user sign-in. It has no credential yet; issue one with `POST /api/v1/tenant-systems/{id}/credentials`. Answers `201`. Requires `platform:tenant-system:manage`.
+ */
+export const create2 = <ThrowOnError extends boolean = false>(options: Options<Create2Data, ThrowOnError>): RequestResult<Create2Responses, Create2Errors, ThrowOnError> => (options.client ?? client).post<Create2Responses, Create2Errors, ThrowOnError>({
     url: '/api/v1/tenant-systems',
     ...options,
     headers: {
@@ -149,11 +236,20 @@ export const create2 = <ThrowOnError extends boolean = false>(options: Options<C
 });
 
 /**
+ * List a tenant system's credentials
+ *
+ * Pages through the credentials of the Tenant System named in the path, with the list-query contract's filtering, sorting and paging. The secrets are never returned. Requires `platform:credential:manage`.
+ *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
  */
 export const listCredentials = <ThrowOnError extends boolean = false>(options: Options<ListCredentialsData, ThrowOnError>): RequestResult<ListCredentialsResponses, ListCredentialsErrors, ThrowOnError> => (options.client ?? client).get<ListCredentialsResponses, ListCredentialsErrors, ThrowOnError>({ url: '/api/v1/tenant-systems/{id}/credentials', ...options });
 
-export const createCredential = <ThrowOnError extends boolean = false>(options: Options<CreateCredentialData, ThrowOnError>): RequestResult<CreateCredentialResponses, unknown, ThrowOnError> => (options.client ?? client).post<CreateCredentialResponses, unknown, ThrowOnError>({
+/**
+ * Issue an API credential
+ *
+ * Issues a credential for the Tenant System with a `label` and the `scopes` it may use. The secret `key` is in the response and is never shown again; storage keeps only a digest. Answers `201`. Requires `platform:credential:manage`.
+ */
+export const createCredential = <ThrowOnError extends boolean = false>(options: Options<CreateCredentialData, ThrowOnError>): RequestResult<CreateCredentialResponses, CreateCredentialErrors, ThrowOnError> => (options.client ?? client).post<CreateCredentialResponses, CreateCredentialErrors, ThrowOnError>({
     url: '/api/v1/tenant-systems/{id}/credentials',
     ...options,
     headers: {
@@ -162,7 +258,12 @@ export const createCredential = <ThrowOnError extends boolean = false>(options: 
     }
 });
 
-export const rotate = <ThrowOnError extends boolean = false>(options: Options<RotateData, ThrowOnError>): RequestResult<RotateResponses, unknown, ThrowOnError> => (options.client ?? client).post<RotateResponses, unknown, ThrowOnError>({
+/**
+ * Rotate a tenant system's credential
+ *
+ * Issues a new credential and lets the previous one keep working for `overlapMinutes` (24 hours when the body is omitted), so the Tenant System can switch over without downtime. The new secret `key` is in the response and is never shown again. Requires `platform:credential:manage`.
+ */
+export const rotate = <ThrowOnError extends boolean = false>(options: Options<RotateData, ThrowOnError>): RequestResult<RotateResponses, RotateErrors, ThrowOnError> => (options.client ?? client).post<RotateResponses, RotateErrors, ThrowOnError>({
     url: '/api/v1/tenant-systems/{id}/credentials/rotate',
     ...options,
     headers: {
@@ -172,11 +273,20 @@ export const rotate = <ThrowOnError extends boolean = false>(options: Options<Ro
 });
 
 /**
+ * List roles
+ *
+ * Pages through roles, with the list-query contract's filtering, sorting and paging. `tenant_id` is a filter, and a Tenant-scope caller never sees another Tenant's roles. Requires `platform:role:read`.
+ *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
  */
 export const list3 = <ThrowOnError extends boolean = false>(options?: Options<List3Data, ThrowOnError>): RequestResult<List3Responses, List3Errors, ThrowOnError> => (options?.client ?? client).get<List3Responses, List3Errors, ThrowOnError>({ url: '/api/v1/roles', ...options });
 
-export const create3 = <ThrowOnError extends boolean = false>(options: Options<Create3Data, ThrowOnError>): RequestResult<Create3Responses, unknown, ThrowOnError> => (options.client ?? client).post<Create3Responses, unknown, ThrowOnError>({
+/**
+ * Create a custom role
+ *
+ * Creates a role with a name and a set of permission codes. Every code must be in the permission catalog and valid in the role's scope, and a role can never be wider than the caller's own scope. Answers `201` with the role. Requires `platform:role:manage`.
+ */
+export const create3 = <ThrowOnError extends boolean = false>(options: Options<Create3Data, ThrowOnError>): RequestResult<Create3Responses, Create3Errors, ThrowOnError> => (options.client ?? client).post<Create3Responses, Create3Errors, ThrowOnError>({
     url: '/api/v1/roles',
     ...options,
     headers: {
@@ -185,11 +295,26 @@ export const create3 = <ThrowOnError extends boolean = false>(options: Options<C
     }
 });
 
-export const unassign = <ThrowOnError extends boolean = false>(options: Options<UnassignData, ThrowOnError>): RequestResult<UnassignResponses, unknown, ThrowOnError> => (options.client ?? client).delete<UnassignResponses, unknown, ThrowOnError>({ url: '/api/v1/roles/{id}/users/{userId}', ...options });
+/**
+ * Remove a role from a user
+ *
+ * Takes the role away from the user, so the user loses the permissions only that role carried. Answers the role. Requires `platform:role:manage`.
+ */
+export const unassign = <ThrowOnError extends boolean = false>(options: Options<UnassignData, ThrowOnError>): RequestResult<UnassignResponses, UnassignErrors, ThrowOnError> => (options.client ?? client).delete<UnassignResponses, UnassignErrors, ThrowOnError>({ url: '/api/v1/roles/{id}/users/{userId}', ...options });
 
-export const assign = <ThrowOnError extends boolean = false>(options: Options<AssignData, ThrowOnError>): RequestResult<AssignResponses, unknown, ThrowOnError> => (options.client ?? client).post<AssignResponses, unknown, ThrowOnError>({ url: '/api/v1/roles/{id}/users/{userId}', ...options });
+/**
+ * Assign a role to a user
+ *
+ * Gives the user the role, so the user holds every permission the role carries. Answers the role. Requires `platform:role:manage`.
+ */
+export const assign = <ThrowOnError extends boolean = false>(options: Options<AssignData, ThrowOnError>): RequestResult<AssignResponses, AssignErrors, ThrowOnError> => (options.client ?? client).post<AssignResponses, AssignErrors, ThrowOnError>({ url: '/api/v1/roles/{id}/users/{userId}', ...options });
 
-export const update1 = <ThrowOnError extends boolean = false>(options: Options<Update1Data, ThrowOnError>): RequestResult<Update1Responses, unknown, ThrowOnError> => (options.client ?? client).patch<Update1Responses, unknown, ThrowOnError>({
+/**
+ * Enable, disable or rename a user
+ *
+ * Applies one `action` to the user: `ENABLE`, `DISABLE`, or `RENAME` with the new `name`. Every effective change publishes the user's new access and is audited. Pass the user's `ETag` in `If-Match`; a stale version is refused. Requires `platform:user:manage`.
+ */
+export const update1 = <ThrowOnError extends boolean = false>(options: Options<Update1Data, ThrowOnError>): RequestResult<Update1Responses, Update1Errors, ThrowOnError> => (options.client ?? client).patch<Update1Responses, Update1Errors, ThrowOnError>({
     url: '/api/v1/users/{id}',
     ...options,
     headers: {
@@ -198,19 +323,53 @@ export const update1 = <ThrowOnError extends boolean = false>(options: Options<U
     }
 });
 
-export const page = <ThrowOnError extends boolean = false>(options: Options<PageData, ThrowOnError>): RequestResult<PageResponses, unknown, ThrowOnError> => (options.client ?? client).get<PageResponses, unknown, ThrowOnError>({ url: '/internal/replica/{stream}', ...options });
+/**
+ * Page through a replica snapshot stream
+ *
+ * Internal endpoint a replica rebuilds its copy of Platform state from. `stream` names the stream: `tenants`, `tenant-domains`, `tenant-systems`, `entitlements` or `user-access`; an unknown name answers `404`. Pass the previous answer's `next` as `after` to read the following page; `limit` is clamped to 1 to 500 and defaults to 100. Each item carries the same JSON as the matching `*.changed` event plus its `version`, so a replica can merge snapshot rows and live events in any order. Requires `platform:replica:read`.
+ */
+export const page = <ThrowOnError extends boolean = false>(options: Options<PageData, ThrowOnError>): RequestResult<PageResponses, PageErrors, ThrowOnError> => (options.client ?? client).get<PageResponses, PageErrors, ThrowOnError>({ url: '/internal/replica/{stream}', ...options });
 
 /**
+ * List UI remotes
+ *
+ * Pages through the console's UI remotes, with the list-query contract's filtering, sorting and paging. Requires `platform:ui-remote:read`.
+ *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
  */
 export const listRemotes = <ThrowOnError extends boolean = false>(options?: Options<ListRemotesData, ThrowOnError>): RequestResult<ListRemotesResponses, ListRemotesErrors, ThrowOnError> => (options?.client ?? client).get<ListRemotesResponses, ListRemotesErrors, ThrowOnError>({ url: '/api/v1/ui-remotes', ...options });
 
-export const apps = <ThrowOnError extends boolean = false>(options: Options<AppsData, ThrowOnError>): RequestResult<AppsResponses, unknown, ThrowOnError> => (options.client ?? client).get<AppsResponses, unknown, ThrowOnError>({ url: '/api/v1/tenants/{tenantId}/apps', ...options });
+/**
+ * List a tenant's apps
+ *
+ * Returns every app of the suite with this Tenant's state of it; an app the Tenant never changed is reported as disabled at version 0. Requires `platform:tenant:read`.
+ */
+export const apps = <ThrowOnError extends boolean = false>(options: Options<AppsData, ThrowOnError>): RequestResult<AppsResponses, AppsErrors, ThrowOnError> => (options.client ?? client).get<AppsResponses, AppsErrors, ThrowOnError>({ url: '/api/v1/tenants/{tenantId}/apps', ...options });
 
-export const me = <ThrowOnError extends boolean = false>(options?: Options<MeData, ThrowOnError>): RequestResult<MeResponses, unknown, ThrowOnError> => (options?.client ?? client).get<MeResponses, unknown, ThrowOnError>({ url: '/api/v1/me', ...options });
+/**
+ * Get the signed-in user
+ *
+ * Returns the caller's own user record (id, tenant, scope, email, display name, status) and the permission codes the caller holds across the suite. The console reads it to decide what to show. Any authenticated user may call it; a token whose user no longer exists answers `404`.
+ */
+export const me = <ThrowOnError extends boolean = false>(options?: Options<MeData, ThrowOnError>): RequestResult<MeResponses, MeErrors, ThrowOnError> => (options?.client ?? client).get<MeResponses, MeErrors, ThrowOnError>({ url: '/api/v1/me', ...options });
 
-export const feed = <ThrowOnError extends boolean = false>(options?: Options<FeedData, ThrowOnError>): RequestResult<FeedResponses, unknown, ThrowOnError> => (options?.client ?? client).get<FeedResponses, unknown, ThrowOnError>({ url: '/api/v1/console/remotes', ...options });
+/**
+ * Get the console's UI remotes
+ *
+ * The feed a console shell reads on load: only the remotes the caller may mount, each with the one version an operator activated, filtered on the server. Any authenticated user may call it.
+ */
+export const feed = <ThrowOnError extends boolean = false>(options?: Options<FeedData, ThrowOnError>): RequestResult<FeedResponses, FeedErrors, ThrowOnError> => (options?.client ?? client).get<FeedResponses, FeedErrors, ThrowOnError>({ url: '/api/v1/console/remotes', ...options });
 
+/**
+ * Get the suite's public signing keys
+ *
+ * Publishes the public halves of the keys Platform signs suite tokens with, as a JSON Web Key Set, so every app can verify a token without calling Platform. Public: no token is needed.
+ */
 export const jwks = <ThrowOnError extends boolean = false>(options?: Options<JwksData, ThrowOnError>): RequestResult<JwksResponses, unknown, ThrowOnError> => (options?.client ?? client).get<JwksResponses, unknown, ThrowOnError>({ url: '/.well-known/jwks.json', ...options });
 
-export const revoke = <ThrowOnError extends boolean = false>(options: Options<RevokeData, ThrowOnError>): RequestResult<RevokeResponses, unknown, ThrowOnError> => (options.client ?? client).delete<RevokeResponses, unknown, ThrowOnError>({ url: '/api/v1/tenant-systems/{systemId}/credentials/{credentialId}', ...options });
+/**
+ * Revoke an API credential
+ *
+ * Revokes one credential of the Tenant System at once; a token request with it is refused from then on. Answers the credential with its new state. Requires `platform:credential:manage`.
+ */
+export const revoke = <ThrowOnError extends boolean = false>(options: Options<RevokeData, ThrowOnError>): RequestResult<RevokeResponses, RevokeErrors, ThrowOnError> => (options.client ?? client).delete<RevokeResponses, RevokeErrors, ThrowOnError>({ url: '/api/v1/tenant-systems/{systemId}/credentials/{credentialId}', ...options });

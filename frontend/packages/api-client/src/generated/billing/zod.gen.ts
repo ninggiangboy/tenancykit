@@ -2,10 +2,16 @@
 
 import * as z from 'zod';
 
+/**
+ * The webhook signing secret.
+ */
 export const zWebhookSecretRequest = z.object({
     webhookSecret: z.string().optional()
 });
 
+/**
+ * The tenant's Stripe configuration. No secret is part of it.
+ */
 export const zConfigurationResponse = z.object({
     id: z.string().optional(),
     mode: z.string().optional(),
@@ -22,26 +28,41 @@ export const zConfigurationResponse = z.object({
     lastVerifiedAt: z.iso.datetime().optional()
 });
 
+/**
+ * The tenant's own Stripe keys.
+ */
 export const zDirectRequest = z.object({
     secretKey: z.string().optional(),
     publishableKey: z.string().optional(),
     webhookSecret: z.string().optional()
 });
 
+/**
+ * The allowlist to store.
+ */
 export const zReplaceRequest = z.object({
     urls: z.array(z.string()).optional()
 });
 
+/**
+ * The customer properties to store.
+ */
 export const zUpdateCustomerRequest = z.object({
     displayName: z.string().optional(),
     email: z.string().optional()
 });
 
+/**
+ * A Tenant System user a customer is mapped to.
+ */
 export const zIdentityResponse = z.object({
     tenantSystemId: z.string().optional(),
     externalUserId: z.string().optional()
 });
 
+/**
+ * A billing customer.
+ */
 export const zCustomerResponse = z.object({
     id: z.string().optional(),
     displayName: z.string().optional(),
@@ -51,17 +72,26 @@ export const zCustomerResponse = z.object({
     identities: z.array(zIdentityResponse).optional()
 });
 
+/**
+ * The top-up to start.
+ */
 export const zTopUpRequest = z.object({
     walletId: z.string().optional(),
     amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     currency: z.string().optional()
 });
 
+/**
+ * An amount of money.
+ */
 export const zMoneyDto = z.object({
     amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     currency: z.string().optional()
 });
 
+/**
+ * A top-up that was started.
+ */
 export const zTopUpResponse = z.object({
     id: z.string().optional(),
     status: z.string().optional(),
@@ -69,10 +99,16 @@ export const zTopUpResponse = z.object({
     checkoutUrl: z.string().optional()
 });
 
+/**
+ * The token to exchange.
+ */
 export const zExchangeRequest = z.object({
     token: z.string().optional()
 });
 
+/**
+ * A portal session.
+ */
 export const zSessionResponse = z.object({
     sessionId: z.string().optional(),
     customerId: z.string().optional(),
@@ -80,22 +116,34 @@ export const zSessionResponse = z.object({
     expiresAt: z.iso.datetime().optional()
 });
 
+/**
+ * The portal session the exchange opened.
+ */
 export const zExchangeResponse = z.object({
     session: zSessionResponse.optional(),
     csrfToken: z.string().optional(),
     returnUrl: z.string().optional()
 });
 
+/**
+ * A Stripe-hosted page.
+ */
 export const zHostedPageResponse = z.object({
     url: z.string().optional()
 });
 
+/**
+ * The endpoint to register.
+ */
 export const zCreateEndpointRequest = z.object({
     url: z.string().optional(),
     description: z.string().optional(),
     eventTypes: z.array(z.string()).optional()
 });
 
+/**
+ * A webhook endpoint. The signing secret is not part of it.
+ */
 export const zEndpointResponse = z.object({
     id: z.string().optional(),
     url: z.string().optional(),
@@ -108,11 +156,17 @@ export const zEndpointResponse = z.object({
     secretRotatedAt: z.iso.datetime().optional()
 });
 
+/**
+ * An endpoint with its signing secret, shown once.
+ */
 export const zEndpointWithSecretResponse = z.object({
     endpoint: zEndpointResponse.optional(),
     signingSecret: z.string().optional()
 });
 
+/**
+ * One delivery of an event to an endpoint.
+ */
 export const zDeliveryResponse = z.object({
     id: z.string().optional(),
     endpointId: z.string().optional(),
@@ -128,6 +182,9 @@ export const zDeliveryResponse = z.object({
     completedAt: z.iso.datetime().optional()
 });
 
+/**
+ * The wallet to open.
+ */
 export const zOpenWalletRequest = z.object({
     customerId: z.string().optional(),
     currency: z.string().optional(),
@@ -135,6 +192,9 @@ export const zOpenWalletRequest = z.object({
     creditLimit: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * A customer's wallet in one currency.
+ */
 export const zWalletResponse = z.object({
     id: z.string().optional(),
     customerId: z.string().optional(),
@@ -149,11 +209,17 @@ export const zWalletResponse = z.object({
     createdAt: z.iso.datetime().optional()
 });
 
+/**
+ * The coupon to redeem. Give a `code`, or a `couponId` to attach it directly.
+ */
 export const zRedeemRequest = z.object({
     code: z.string().optional(),
     couponId: z.string().optional()
 });
 
+/**
+ * A coupon redeemed onto a wallet.
+ */
 export const zRedemptionResponse = z.object({
     id: z.string().optional(),
     couponId: z.string().optional(),
@@ -173,6 +239,9 @@ export const zRedemptionResponse = z.object({
     endedAt: z.iso.datetime().optional()
 });
 
+/**
+ * One usage event to record.
+ */
 export const zUsageEventRequest = z.object({
     customerId: z.string().optional(),
     metric: z.string().optional(),
@@ -184,6 +253,9 @@ export const zUsageEventRequest = z.object({
     sourceEventId: z.string().optional()
 });
 
+/**
+ * A recorded usage event.
+ */
 export const zUsageEventResponse = z.object({
     id: z.string().optional(),
     customerId: z.string().optional(),
@@ -198,24 +270,39 @@ export const zUsageEventResponse = z.object({
     sourceEventId: z.string().optional()
 });
 
+/**
+ * The result of recording one usage event.
+ */
 export const zRecordedResponse = z.object({
     event: zUsageEventResponse.optional(),
     replayed: z.boolean().optional()
 });
 
+/**
+ * The usage events to record, at most 500, all or none.
+ */
 export const zBatchRequest = z.object({
     events: z.array(zUsageEventRequest).optional()
 });
 
+/**
+ * The result per event, in request order.
+ */
 export const zBatchResponse = z.object({
     results: z.array(zRecordedResponse).optional()
 });
 
+/**
+ * The subscription to start.
+ */
 export const zSubscribeRequest = z.object({
     walletId: z.string().optional(),
     planId: z.string().optional()
 });
 
+/**
+ * One event of a subscription's history.
+ */
 export const zSubscriptionEventResponse = z.object({
     id: z.string().optional(),
     type: z.string().optional(),
@@ -229,6 +316,9 @@ export const zSubscriptionEventResponse = z.object({
     occurredAt: z.iso.datetime().optional()
 });
 
+/**
+ * A subscription of a wallet to a plan.
+ */
 export const zSubscriptionResponse = z.object({
     id: z.string().optional(),
     customerId: z.string().optional(),
@@ -248,17 +338,26 @@ export const zSubscriptionResponse = z.object({
     createdAt: z.iso.datetime().optional()
 });
 
+/**
+ * A subscription with its history.
+ */
 export const zSubscriptionDetailResponse = z.object({
     subscription: zSubscriptionResponse.optional(),
     history: z.array(zSubscriptionEventResponse).optional()
 });
 
+/**
+ * What a reconciliation found.
+ */
 export const zReconcileResponse = z.object({
     checked: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     corrected: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     mismatches: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
 });
 
+/**
+ * One attempt to process a Stripe event.
+ */
 export const zEventAttemptResponse = z.object({
     attempt: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     outcome: z.string().optional(),
@@ -266,6 +365,9 @@ export const zEventAttemptResponse = z.object({
     attemptedAt: z.iso.datetime().optional()
 });
 
+/**
+ * A Stripe event that was received.
+ */
 export const zEventResponse = z.object({
     id: z.string().optional(),
     stripeEventId: z.string().optional(),
@@ -278,21 +380,33 @@ export const zEventResponse = z.object({
     processedAt: z.iso.datetime().optional()
 });
 
+/**
+ * A Stripe event with how its processing went.
+ */
 export const zEventDetailResponse = z.object({
     event: zEventResponse.optional(),
     history: z.array(zEventAttemptResponse).optional()
 });
 
+/**
+ * The tenant's details for Stripe Connect onboarding.
+ */
 export const zConnectRequest = z.object({
     displayName: z.string().optional(),
     contactEmail: z.string().optional()
 });
 
+/**
+ * The Stripe connection and the onboarding page.
+ */
 export const zConnectionResponse = z.object({
     configuration: zConfigurationResponse.optional(),
     onboardingUrl: z.string().optional()
 });
 
+/**
+ * The hold to place on a wallet.
+ */
 export const zReserveRequest = z.object({
     walletId: z.string().optional(),
     amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
@@ -301,6 +415,9 @@ export const zReserveRequest = z.object({
     reference: z.string().optional()
 });
 
+/**
+ * A hold on part of a wallet's balance.
+ */
 export const zReservationResponse = z.object({
     id: z.string().optional(),
     walletId: z.string().optional(),
@@ -313,12 +430,18 @@ export const zReservationResponse = z.object({
     closedAt: z.iso.datetime().optional()
 });
 
+/**
+ * The actual cost to charge against a reservation.
+ */
 export const zCaptureRequest = z.object({
     amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     currency: z.string().optional(),
     reference: z.string().optional()
 });
 
+/**
+ * One coupon discount applied to a charge.
+ */
 export const zDiscountLineResponse = z.object({
     redemptionId: z.string().optional(),
     couponId: z.string().optional(),
@@ -327,6 +450,9 @@ export const zDiscountLineResponse = z.object({
     amount: zMoneyDto.optional()
 });
 
+/**
+ * A charge made against a wallet.
+ */
 export const zChargeResponse = z.object({
     id: z.string().optional(),
     status: z.string().optional(),
@@ -340,6 +466,9 @@ export const zChargeResponse = z.object({
     reference: z.string().optional()
 });
 
+/**
+ * A promotion code.
+ */
 export const zPromotionCodeResponse = z.object({
     id: z.string().optional(),
     code: z.string().optional(),
@@ -351,6 +480,9 @@ export const zPromotionCodeResponse = z.object({
     createdAt: z.iso.datetime().optional()
 });
 
+/**
+ * The usage period to price and charge.
+ */
 export const zChargeUsageRequest = z.object({
     customerId: z.string().optional(),
     walletId: z.string().optional(),
@@ -360,6 +492,9 @@ export const zChargeUsageRequest = z.object({
     to: z.iso.datetime().optional()
 });
 
+/**
+ * One line of a price.
+ */
 export const zLineResponse = z.object({
     description: z.string().optional(),
     metric: z.string().optional(),
@@ -367,6 +502,9 @@ export const zLineResponse = z.object({
     amount: z.string().optional()
 });
 
+/**
+ * The result of rating a period's usage.
+ */
 export const zRatingResponse = z.object({
     outcome: z.string().optional(),
     id: z.string().optional(),
@@ -382,12 +520,18 @@ export const zRatingResponse = z.object({
     replayed: z.boolean().optional()
 });
 
+/**
+ * The expected usage of one metric.
+ */
 export const zUsageInput = z.object({
     metric: z.string().optional(),
     quantity: z.string().optional(),
     events: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * One coupon discount applied to an estimate.
+ */
 export const zDiscountLineDto = z.object({
     redemptionId: z.string().optional(),
     couponId: z.string().optional(),
@@ -396,6 +540,9 @@ export const zDiscountLineDto = z.object({
     amount: zMoneyDto.optional()
 });
 
+/**
+ * The estimated cost.
+ */
 export const zEstimateResponse = z.object({
     planId: z.string().optional(),
     planCode: z.string().optional(),
@@ -408,6 +555,9 @@ export const zEstimateResponse = z.object({
     lines: z.array(zLineResponse).optional()
 });
 
+/**
+ * A hold on a wallet.
+ */
 export const zReservationDto = z.object({
     id: z.string().optional(),
     status: z.string().optional(),
@@ -416,11 +566,17 @@ export const zReservationDto = z.object({
     replayed: z.boolean().optional()
 });
 
+/**
+ * The estimate and the reservation that holds it.
+ */
 export const zReserveResponse = z.object({
     estimate: zEstimateResponse.optional(),
     reservation: zReservationDto.optional()
 });
 
+/**
+ * The expected usage to price.
+ */
 export const zEstimateRequest = z.object({
     planId: z.string().optional(),
     version: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
@@ -429,11 +585,17 @@ export const zEstimateRequest = z.object({
     walletId: z.string().optional()
 });
 
+/**
+ * One price tier.
+ */
 export const zTierDto = z.object({
     upTo: z.string().optional(),
     unitPrice: z.string().optional()
 });
 
+/**
+ * A pricing strategy: how a quantity of usage becomes an amount. Prices are decimals in minor units, and rounding to whole minor units happens once, on the total.
+ */
 export const zRuleDto = z.object({
     model: z.string().optional(),
     metric: z.string().optional(),
@@ -447,6 +609,9 @@ export const zRuleDto = z.object({
     components: z.array(z.lazy((): any => zRuleDto)).optional()
 });
 
+/**
+ * A version of a plan.
+ */
 export const zVersionRequest = z.object({
     rule: zRuleDto.optional(),
     billingCycle: z.string().optional(),
@@ -457,6 +622,9 @@ export const zVersionRequest = z.object({
     validUntil: z.iso.datetime().optional()
 });
 
+/**
+ * The plan to create, with its first version.
+ */
 export const zCreatePlanRequest = z.object({
     code: z.string().optional(),
     name: z.string().optional(),
@@ -465,6 +633,9 @@ export const zCreatePlanRequest = z.object({
     version: zVersionRequest.optional()
 });
 
+/**
+ * One version of a pricing plan. Earlier versions, and every charge that used them, are unchanged.
+ */
 export const zVersionResponse = z.object({
     version: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     rule: zRuleDto.optional(),
@@ -478,6 +649,9 @@ export const zVersionResponse = z.object({
     createdBy: z.string().optional()
 });
 
+/**
+ * A pricing plan and its versions.
+ */
 export const zPlanResponse = z.object({
     id: z.string().optional(),
     code: z.string().optional(),
@@ -490,12 +664,18 @@ export const zPlanResponse = z.object({
     versions: z.array(zVersionResponse).optional()
 });
 
+/**
+ * The refund to request.
+ */
 export const zRefundRequest = z.object({
     amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     currency: z.string().optional(),
     reason: z.string().optional()
 });
 
+/**
+ * A refund of a payment.
+ */
 export const zRefundResponse = z.object({
     id: z.string().optional(),
     paymentId: z.string().optional(),
@@ -508,6 +688,9 @@ export const zRefundResponse = z.object({
     completedAt: z.iso.datetime().optional()
 });
 
+/**
+ * A payment of a top-up or an invoice.
+ */
 export const zPaymentResponse = z.object({
     id: z.string().optional(),
     walletId: z.string().optional(),
@@ -523,6 +706,9 @@ export const zPaymentResponse = z.object({
     completedAt: z.iso.datetime().optional()
 });
 
+/**
+ * The entry that replaces a reversed one.
+ */
 export const zReplacementRequest = z.object({
     type: z.string().optional(),
     amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
@@ -530,11 +716,17 @@ export const zReplacementRequest = z.object({
     reference: z.string().optional()
 });
 
+/**
+ * The correction to post.
+ */
 export const zReverseRequest = z.object({
     reason: z.string().optional(),
     replacement: zReplacementRequest.optional()
 });
 
+/**
+ * One entry of a wallet's append-only ledger.
+ */
 export const zLedgerEntryResponse = z.object({
     id: z.string().optional(),
     sequence: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
@@ -549,16 +741,25 @@ export const zLedgerEntryResponse = z.object({
     createdAt: z.iso.datetime().optional()
 });
 
+/**
+ * The entries a reversal posted.
+ */
 export const zReversalResponse = z.object({
     reversal: zLedgerEntryResponse.optional(),
     replacement: zLedgerEntryResponse.optional(),
     replayed: z.boolean().optional()
 });
 
+/**
+ * The charge to invoice.
+ */
 export const zInvoiceChargeRequest = z.object({
     chargeId: z.string().optional()
 });
 
+/**
+ * One payment of an invoice.
+ */
 export const zInvoicePaymentResponse = z.object({
     paymentId: z.string().optional(),
     amount: zMoneyDto.optional(),
@@ -569,6 +770,9 @@ export const zInvoicePaymentResponse = z.object({
     settledAt: z.iso.datetime().optional()
 });
 
+/**
+ * An invoice.
+ */
 export const zInvoiceResponse = z.object({
     id: z.string().optional(),
     number: z.string().optional(),
@@ -587,6 +791,9 @@ export const zInvoiceResponse = z.object({
     voidedAt: z.iso.datetime().optional()
 });
 
+/**
+ * One line of an invoice.
+ */
 export const zItemResponse = z.object({
     id: z.string().optional(),
     source: z.string().optional(),
@@ -599,27 +806,42 @@ export const zItemResponse = z.object({
     incurredAt: z.iso.datetime().optional()
 });
 
+/**
+ * An invoice with its items and payments.
+ */
 export const zInvoiceDetailResponse = z.object({
     invoice: zInvoiceResponse.optional(),
     items: z.array(zItemResponse).optional(),
     payments: z.array(zInvoicePaymentResponse).optional()
 });
 
+/**
+ * Why the invoice is voided.
+ */
 export const zVoidRequest = z.object({
     reason: z.string().optional()
 });
 
+/**
+ * A payment that was started.
+ */
 export const zStartedPaymentResponse = z.object({
     id: z.string().optional(),
     status: z.string().optional(),
     checkoutUrl: z.string().optional()
 });
 
+/**
+ * The invoice and the payment that was started.
+ */
 export const zPayInvoiceResponse = z.object({
     invoice: zInvoiceDetailResponse.optional(),
     payment: zStartedPaymentResponse.optional()
 });
 
+/**
+ * The customer to create.
+ */
 export const zCreateCustomerRequest = z.object({
     tenantSystemId: z.string().optional(),
     externalUserId: z.string().optional(),
@@ -627,12 +849,18 @@ export const zCreateCustomerRequest = z.object({
     email: z.string().optional()
 });
 
+/**
+ * What a coupon gives.
+ */
 export const zBenefitRequest = z.object({
     type: z.string().optional(),
     basisPoints: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * Limits on a coupon.
+ */
 export const zLimitsRequest = z.object({
     redeemBy: z.iso.datetime().optional(),
     maxRedemptions: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
@@ -642,17 +870,26 @@ export const zLimitsRequest = z.object({
     budget: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * What a coupon applies to.
+ */
 export const zScopeRequest = z.object({
     kinds: z.array(z.string()).optional(),
     planIds: z.array(z.uuid()).optional(),
     metrics: z.array(z.string()).optional()
 });
 
+/**
+ * How long a redemption lasts.
+ */
 export const zWindowRequest = z.object({
     count: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     unit: z.string().optional()
 });
 
+/**
+ * The coupon to create. Its terms are immutable.
+ */
 export const zCreateCouponRequest = z.object({
     name: z.string().optional(),
     currency: z.string().optional(),
@@ -667,6 +904,9 @@ export const zCreateCouponRequest = z.object({
     codeMaxRedemptions: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * A coupon.
+ */
 export const zCouponResponse = z.object({
     id: z.string().optional(),
     name: z.string().optional(),
@@ -689,6 +929,9 @@ export const zCouponResponse = z.object({
     planIds: z.array(z.uuid()).optional()
 });
 
+/**
+ * A promotion code.
+ */
 export const zPromotionCodeView = z.object({
     id: z.uuid().optional(),
     code: z.string().optional(),
@@ -700,21 +943,33 @@ export const zPromotionCodeView = z.object({
     createdAt: z.iso.datetime().optional()
 });
 
+/**
+ * The coupon and its first promotion code.
+ */
 export const zCreateCouponResponse = z.object({
     coupon: zCouponResponse.optional(),
     code: zPromotionCodeView.optional()
 });
 
+/**
+ * How to deactivate the coupon.
+ */
 export const zDeactivateCouponRequest = z.object({
     revokeRedemptions: z.boolean().optional()
 });
 
+/**
+ * The promotion code to add.
+ */
 export const zAddCodeRequest = z.object({
     code: z.string().optional(),
     maxRedemptions: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     redeemBy: z.iso.datetime().optional()
 });
 
+/**
+ * The cost to charge to a wallet.
+ */
 export const zChargeRequest = z.object({
     walletId: z.string().optional(),
     amount: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
@@ -723,6 +978,9 @@ export const zChargeRequest = z.object({
     reference: z.string().optional()
 });
 
+/**
+ * The billing session to create.
+ */
 export const zCreateRequest = z.object({
     customerId: z.string().optional(),
     returnUrl: z.string().optional(),
@@ -730,6 +988,9 @@ export const zCreateRequest = z.object({
     expiresInSeconds: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * The billing session that was created.
+ */
 export const zCreateResponse = z.object({
     id: z.string().optional(),
     customerId: z.string().optional(),
@@ -738,6 +999,9 @@ export const zCreateResponse = z.object({
     expiresAt: z.iso.datetime().optional()
 });
 
+/**
+ * The fields to change. A field that is left out keeps its value.
+ */
 export const zUpdateEndpointRequest = z.object({
     url: z.string().optional(),
     description: z.string().optional(),
@@ -745,6 +1009,9 @@ export const zUpdateEndpointRequest = z.object({
     status: z.string().optional()
 });
 
+/**
+ * The paging facts of a list answer, present when the request asked for them with `page_info`.
+ */
 export const zPageInfo = z.object({
     limit: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     offset: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullish(),
@@ -752,16 +1019,25 @@ export const zPageInfo = z.object({
     next_cursor: z.string().nullish()
 });
 
+/**
+ * A page of wallet response rows, with the paging facts when the request asked for them.
+ */
 export const zPageWalletResponse = z.object({
     data: z.array(zWalletResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of ledger entry response rows, with the paging facts when the request asked for them.
+ */
 export const zPageLedgerEntryResponse = z.object({
     data: z.array(zLedgerEntryResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * The usage of one metric over a period.
+ */
 export const zUsageTotalResponse = z.object({
     metric: z.string().optional(),
     unit: z.string().optional(),
@@ -769,69 +1045,108 @@ export const zUsageTotalResponse = z.object({
     events: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * A page of usage event response rows, with the paging facts when the request asked for them.
+ */
 export const zPageUsageEventResponse = z.object({
     data: z.array(zUsageEventResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of subscription response rows, with the paging facts when the request asked for them.
+ */
 export const zPageSubscriptionResponse = z.object({
     data: z.array(zSubscriptionResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of refund response rows, with the paging facts when the request asked for them.
+ */
 export const zPageRefundResponse = z.object({
     data: z.array(zRefundResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of payment response rows, with the paging facts when the request asked for them.
+ */
 export const zPagePaymentResponse = z.object({
     data: z.array(zPaymentResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * One attempt: a failed attempt to pay, or an attempt to deliver a webhook event.
+ */
 export const zAttemptResponse = z.object({
     failureCode: z.string().optional(),
     failureMessage: z.string().optional(),
     occurredAt: z.iso.datetime().optional()
 });
 
+/**
+ * A payment with its refunds and failed attempts.
+ */
 export const zPaymentDetailResponse = z.object({
     payment: zPaymentResponse.optional(),
     refunds: z.array(zRefundResponse).optional(),
     failedAttempts: z.array(zAttemptResponse).optional()
 });
 
+/**
+ * A page of invoice response rows, with the paging facts when the request asked for them.
+ */
 export const zPageInvoiceResponse = z.object({
     data: z.array(zInvoiceResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of charge response rows, with the paging facts when the request asked for them.
+ */
 export const zPageChargeResponse = z.object({
     data: z.array(zChargeResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of endpoint response rows, with the paging facts when the request asked for them.
+ */
 export const zPageEndpointResponse = z.object({
     data: z.array(zEndpointResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of delivery response rows, with the paging facts when the request asked for them.
+ */
 export const zPageDeliveryResponse = z.object({
     data: z.array(zDeliveryResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A delivery with the body that was sent and every attempt.
+ */
 export const zDeliveryDetailResponse = z.object({
     delivery: zDeliveryResponse.optional(),
     body: z.string().optional(),
     attempts: z.array(zAttemptResponse).optional()
 });
 
+/**
+ * A page of redemption response rows, with the paging facts when the request asked for them.
+ */
 export const zPageRedemptionResponse = z.object({
     data: z.array(zRedemptionResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * The usage of one metric over a period.
+ */
 export const zTotalResponse = z.object({
     metric: z.string().optional(),
     unit: z.string().optional(),
@@ -839,6 +1154,9 @@ export const zTotalResponse = z.object({
     events: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * A problem with Stripe that needs a person to look.
+ */
 export const zIncidentResponse = z.object({
     id: z.string().optional(),
     kind: z.string().optional(),
@@ -850,41 +1168,76 @@ export const zIncidentResponse = z.object({
     resolvedAt: z.iso.datetime().optional()
 });
 
+/**
+ * A page of incident response rows, with the paging facts when the request asked for them.
+ */
 export const zPageIncidentResponse = z.object({
     data: z.array(zIncidentResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of event response rows, with the paging facts when the request asked for them.
+ */
 export const zPageEventResponse = z.object({
     data: z.array(zEventResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of reservation response rows, with the paging facts when the request asked for them.
+ */
 export const zPageReservationResponse = z.object({
     data: z.array(zReservationResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of plan response rows, with the paging facts when the request asked for them.
+ */
 export const zPagePlanResponse = z.object({
     data: z.array(zPlanResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of customer response rows, with the paging facts when the request asked for them.
+ */
 export const zPageCustomerResponse = z.object({
     data: z.array(zCustomerResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of coupon response rows, with the paging facts when the request asked for them.
+ */
 export const zPageCouponResponse = z.object({
     data: z.array(zCouponResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of promotion code response rows, with the paging facts when the request asked for them.
+ */
 export const zPagePromotionCodeResponse = z.object({
     data: z.array(zPromotionCodeResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * The body of every error: an RFC 9457 problem.
+ */
+export const zProblemDetail = z.object({
+    type: z.string().optional(),
+    title: z.string().optional(),
+    status: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    detail: z.string().optional(),
+    instance: z.string().optional()
+});
+
+/**
+ * The webhook signing secret.
+ */
 export const zSetWebhookSecretBody = zWebhookSecretRequest;
 
 export const zSetWebhookSecretHeaders = z.object({
@@ -892,10 +1245,13 @@ export const zSetWebhookSecretHeaders = z.object({
 });
 
 /**
- * OK
+ * The tenant's Stripe configuration. No secret is part of it.
  */
 export const zSetWebhookSecretResponse = zConfigurationResponse;
 
+/**
+ * The tenant's own Stripe keys.
+ */
 export const zConnectDirectBody = zDirectRequest;
 
 export const zConnectDirectHeaders = z.object({
@@ -903,7 +1259,7 @@ export const zConnectDirectHeaders = z.object({
 });
 
 /**
- * OK
+ * The tenant's Stripe configuration. No secret is part of it.
  */
 export const zConnectDirectResponse = zConfigurationResponse;
 
@@ -912,6 +1268,9 @@ export const zConnectDirectResponse = zConfigurationResponse;
  */
 export const zListResponse = z.array(z.string());
 
+/**
+ * The allowlist to store.
+ */
 export const zReplaceBody = zReplaceRequest;
 
 export const zReplaceHeaders = z.object({
@@ -928,10 +1287,13 @@ export const zGetPath = z.object({
 });
 
 /**
- * OK
+ * A billing customer.
  */
 export const zGetResponse = zCustomerResponse;
 
+/**
+ * The customer properties to store.
+ */
 export const zUpdateBody = zUpdateCustomerRequest;
 
 export const zUpdateHeaders = z.object({
@@ -944,7 +1306,7 @@ export const zUpdatePath = z.object({
 });
 
 /**
- * OK
+ * A billing customer.
  */
 export const zUpdateResponse = zCustomerResponse;
 
@@ -970,6 +1332,9 @@ export const zConnectHeaders = z.object({
  */
 export const zConnectResponse = z.record(z.string(), z.string());
 
+/**
+ * The top-up to start.
+ */
 export const zTopUpBody = zTopUpRequest;
 
 export const zTopUpHeaders = z.object({
@@ -982,6 +1347,9 @@ export const zTopUpHeaders = z.object({
  */
 export const zTopUpResponse2 = zTopUpResponse;
 
+/**
+ * The token to exchange.
+ */
 export const zExchangeBody = zExchangeRequest;
 
 export const zExchangeHeaders = z.object({
@@ -989,12 +1357,12 @@ export const zExchangeHeaders = z.object({
 });
 
 /**
- * OK
+ * The portal session the exchange opened.
  */
 export const zExchangeResponse2 = zExchangeResponse;
 
 /**
- * OK
+ * A Stripe-hosted page.
  */
 export const zPaymentMethodsResponse = zHostedPageResponse;
 
@@ -1056,10 +1424,13 @@ export const zListEndpointsQuery = z.object({
 });
 
 /**
- * OK
+ * A page of endpoint response rows, with the paging facts when the request asked for them.
  */
 export const zListEndpointsResponse = zPageEndpointResponse;
 
+/**
+ * The endpoint to register.
+ */
 export const zCreateEndpointBody = zCreateEndpointRequest;
 
 export const zCreateEndpointHeaders = z.object({
@@ -1067,7 +1438,7 @@ export const zCreateEndpointHeaders = z.object({
 });
 
 /**
- * Created
+ * An endpoint with its signing secret, shown once.
  */
 export const zCreateEndpointResponse = zEndpointWithSecretResponse;
 
@@ -1080,7 +1451,7 @@ export const zRotateSecretPath = z.object({
 });
 
 /**
- * OK
+ * An endpoint with its signing secret, shown once.
  */
 export const zRotateSecretResponse = zEndpointWithSecretResponse;
 
@@ -1093,7 +1464,7 @@ export const zResendPath = z.object({
 });
 
 /**
- * Accepted
+ * One delivery of an event to an endpoint.
  */
 export const zResendResponse = zDeliveryResponse;
 
@@ -1163,10 +1534,13 @@ export const zWalletsQuery = z.object({
 });
 
 /**
- * OK
+ * A page of wallet response rows, with the paging facts when the request asked for them.
  */
 export const zWalletsResponse = zPageWalletResponse;
 
+/**
+ * The wallet to open.
+ */
 export const zOpenWalletBody = zOpenWalletRequest;
 
 export const zOpenWalletHeaders = z.object({
@@ -1174,7 +1548,7 @@ export const zOpenWalletHeaders = z.object({
 });
 
 /**
- * OK
+ * The customer already had this wallet with the same settings, so it is returned.
  */
 export const zOpenWalletResponse = zWalletResponse;
 
@@ -1295,10 +1669,13 @@ export const zRedemptionsOfWalletQuery = z.object({
 });
 
 /**
- * OK
+ * A page of redemption response rows, with the paging facts when the request asked for them.
  */
 export const zRedemptionsOfWalletResponse = zPageRedemptionResponse;
 
+/**
+ * The coupon to redeem. Give a `code`, or a `couponId` to attach it directly.
+ */
 export const zRedeemByCodeBody = zRedeemRequest;
 
 export const zRedeemByCodeHeaders = z.object({
@@ -1315,6 +1692,9 @@ export const zRedeemByCodePath = z.object({
  */
 export const zRedeemByCodeResponse = zRedemptionResponse;
 
+/**
+ * The coupon to redeem. Give a `code`, or a `couponId` to attach it directly.
+ */
 export const zAttachBody = zRedeemRequest;
 
 export const zAttachHeaders = z.object({
@@ -1400,10 +1780,13 @@ export const zHistoryQuery = z.object({
 });
 
 /**
- * OK
+ * A page of usage event response rows, with the paging facts when the request asked for them.
  */
 export const zHistoryResponse = zPageUsageEventResponse;
 
+/**
+ * One usage event to record.
+ */
 export const zRecordOneBody = zUsageEventRequest;
 
 /**
@@ -1411,10 +1794,13 @@ export const zRecordOneBody = zUsageEventRequest;
  */
 export const zRecordOneResponse = zRecordedResponse;
 
+/**
+ * The usage events to record, at most 500, all or none.
+ */
 export const zRecordBatchBody = zBatchRequest;
 
 /**
- * OK
+ * The result per event, in request order.
  */
 export const zRecordBatchResponse = zBatchResponse;
 
@@ -1536,10 +1922,13 @@ export const zSubscriptionsQuery = z.object({
 });
 
 /**
- * OK
+ * A page of subscription response rows, with the paging facts when the request asked for them.
  */
 export const zSubscriptionsResponse = zPageSubscriptionResponse;
 
+/**
+ * The subscription to start.
+ */
 export const zSubscribeBody = zSubscribeRequest;
 
 export const zSubscribeHeaders = z.object({
@@ -1561,12 +1950,12 @@ export const zCancelPath = z.object({
 });
 
 /**
- * OK
+ * A subscription with its history.
  */
 export const zCancelResponse = zSubscriptionDetailResponse;
 
 /**
- * OK
+ * What a reconciliation found.
  */
 export const zReconcileResponse2 = zReconcileResponse;
 
@@ -1592,7 +1981,7 @@ export const zRetryPath = z.object({
 });
 
 /**
- * OK
+ * A Stripe event with how its processing went.
  */
 export const zRetryResponse = zEventDetailResponse;
 
@@ -1601,10 +1990,13 @@ export const zRefreshHeaders = z.object({
 });
 
 /**
- * OK
+ * The tenant's Stripe configuration. No secret is part of it.
  */
 export const zRefreshResponse = zConfigurationResponse;
 
+/**
+ * The tenant's details for Stripe Connect onboarding.
+ */
 export const zStartConnectBody = zConnectRequest;
 
 export const zStartConnectHeaders = z.object({
@@ -1612,12 +2004,12 @@ export const zStartConnectHeaders = z.object({
 });
 
 /**
- * OK
+ * The Stripe connection and the onboarding page.
  */
 export const zStartConnectResponse = zConnectionResponse;
 
 /**
- * OK
+ * The Stripe connection and the onboarding page.
  */
 export const zOnboardingLinkResponse = zConnectionResponse;
 
@@ -1703,10 +2095,13 @@ export const zReservationsQuery = z.object({
 });
 
 /**
- * OK
+ * A page of reservation response rows, with the paging facts when the request asked for them.
  */
 export const zReservationsResponse = zPageReservationResponse;
 
+/**
+ * The hold to place on a wallet.
+ */
 export const zReserveBody = zReserveRequest;
 
 export const zReserveHeaders = z.object({
@@ -1723,10 +2118,13 @@ export const zReleasePath = z.object({
 });
 
 /**
- * OK
+ * A hold on part of a wallet's balance.
  */
 export const zReleaseResponse = zReservationResponse;
 
+/**
+ * The actual cost to charge against a reservation.
+ */
 export const zCaptureBody = zCaptureRequest;
 
 export const zCaptureHeaders = z.object({
@@ -1751,10 +2149,13 @@ export const zDeactivateCodePath = z.object({
 });
 
 /**
- * OK
+ * A promotion code.
  */
 export const zDeactivateCodeResponse = zPromotionCodeResponse;
 
+/**
+ * The usage period to price and charge.
+ */
 export const zChargeUsageBody = zChargeUsageRequest;
 
 /**
@@ -1762,6 +2163,9 @@ export const zChargeUsageBody = zChargeUsageRequest;
  */
 export const zChargeUsageResponse = zRatingResponse;
 
+/**
+ * The hold to place on a wallet.
+ */
 export const zReserveEstimateBody = zReserveRequest;
 
 export const zReserveEstimateHeaders = z.object({
@@ -1773,10 +2177,13 @@ export const zReserveEstimateHeaders = z.object({
  */
 export const zReserveEstimateResponse = zReserveResponse;
 
+/**
+ * The expected usage to price.
+ */
 export const zEstimateBody = zEstimateRequest;
 
 /**
- * OK
+ * The estimated cost.
  */
 export const zEstimateResponse2 = zEstimateResponse;
 
@@ -1847,10 +2254,13 @@ export const zListPlansQuery = z.object({
 });
 
 /**
- * OK
+ * A page of plan response rows, with the paging facts when the request asked for them.
  */
 export const zListPlansResponse = zPagePlanResponse;
 
+/**
+ * The plan to create, with its first version.
+ */
 export const zCreatePlanBody = zCreatePlanRequest;
 
 export const zCreatePlanHeaders = z.object({
@@ -1858,10 +2268,13 @@ export const zCreatePlanHeaders = z.object({
 });
 
 /**
- * Created
+ * A pricing plan and its versions.
  */
 export const zCreatePlanResponse = zPlanResponse;
 
+/**
+ * A version of a plan.
+ */
 export const zPublishVersionBody = zVersionRequest;
 
 export const zPublishVersionHeaders = z.object({
@@ -1873,7 +2286,7 @@ export const zPublishVersionPath = z.object({
 });
 
 /**
- * Created
+ * One version of a pricing plan. Earlier versions, and every charge that used them, are unchanged.
  */
 export const zPublishVersionResponse = zVersionResponse;
 
@@ -1886,10 +2299,13 @@ export const zRetirePath = z.object({
 });
 
 /**
- * OK
+ * A pricing plan and its versions.
  */
 export const zRetireResponse = zPlanResponse;
 
+/**
+ * The refund to request.
+ */
 export const zRequestRefundBody = zRefundRequest;
 
 export const zRequestRefundHeaders = z.object({
@@ -1906,6 +2322,9 @@ export const zRequestRefundPath = z.object({
  */
 export const zRequestRefundResponse = zRefundResponse;
 
+/**
+ * The top-up to start.
+ */
 export const zCreateTopUpBody = zTopUpRequest;
 
 export const zCreateTopUpHeaders = z.object({
@@ -1918,6 +2337,9 @@ export const zCreateTopUpHeaders = z.object({
  */
 export const zCreateTopUpResponse = zPaymentResponse;
 
+/**
+ * The correction to post.
+ */
 export const zReverseBody = zReverseRequest;
 
 export const zReversePath = z.object({
@@ -1925,7 +2347,7 @@ export const zReversePath = z.object({
 });
 
 /**
- * OK
+ * The entries a reversal posted.
  */
 export const zReverseResponse = zReversalResponse;
 
@@ -2046,10 +2468,13 @@ export const zInvoicesQuery = z.object({
 });
 
 /**
- * OK
+ * A page of invoice response rows, with the paging facts when the request asked for them.
  */
 export const zInvoicesResponse = zPageInvoiceResponse;
 
+/**
+ * The charge to invoice.
+ */
 export const zInvoiceChargeBody = zInvoiceChargeRequest;
 
 export const zInvoiceChargeHeaders = z.object({
@@ -2061,6 +2486,9 @@ export const zInvoiceChargeHeaders = z.object({
  */
 export const zInvoiceChargeResponse = zInvoiceDetailResponse;
 
+/**
+ * Why the invoice is voided.
+ */
 export const zVoidInvoiceBody = zVoidRequest;
 
 export const zVoidInvoiceHeaders = z.object({
@@ -2072,7 +2500,7 @@ export const zVoidInvoicePath = z.object({
 });
 
 /**
- * OK
+ * An invoice with its items and payments.
  */
 export const zVoidInvoiceResponse = zInvoiceDetailResponse;
 
@@ -2085,7 +2513,7 @@ export const zMarkUncollectiblePath = z.object({
 });
 
 /**
- * OK
+ * An invoice with its items and payments.
  */
 export const zMarkUncollectibleResponse = zInvoiceDetailResponse;
 
@@ -2139,10 +2567,13 @@ export const zList1Query = z.object({
 });
 
 /**
- * OK
+ * A page of customer response rows, with the paging facts when the request asked for them.
  */
 export const zList1Response = zPageCustomerResponse;
 
+/**
+ * The customer to create.
+ */
 export const zCreateBody = zCreateCustomerRequest;
 
 export const zCreateHeaders = z.object({
@@ -2165,7 +2596,7 @@ export const zDeactivatePath = z.object({
 });
 
 /**
- * OK
+ * A billing customer.
  */
 export const zDeactivateResponse = zCustomerResponse;
 
@@ -2259,10 +2690,13 @@ export const zCouponsQuery = z.object({
 });
 
 /**
- * OK
+ * A page of coupon response rows, with the paging facts when the request asked for them.
  */
 export const zCouponsResponse = zPageCouponResponse;
 
+/**
+ * The coupon to create. Its terms are immutable.
+ */
 export const zCreateCouponBody = zCreateCouponRequest;
 
 export const zCreateCouponHeaders = z.object({
@@ -2270,10 +2704,13 @@ export const zCreateCouponHeaders = z.object({
 });
 
 /**
- * Created
+ * The coupon and its first promotion code.
  */
 export const zCreateCouponResponse2 = zCreateCouponResponse;
 
+/**
+ * How to deactivate the coupon.
+ */
 export const zDeactivateCouponBody = zDeactivateCouponRequest;
 
 export const zDeactivateCouponHeaders = z.object({
@@ -2285,7 +2722,7 @@ export const zDeactivateCouponPath = z.object({
 });
 
 /**
- * OK
+ * A coupon.
  */
 export const zDeactivateCouponResponse = zCouponResponse;
 
@@ -2351,10 +2788,13 @@ export const zCodesQuery = z.object({
 });
 
 /**
- * OK
+ * A page of promotion code response rows, with the paging facts when the request asked for them.
  */
 export const zCodesResponse = zPagePromotionCodeResponse;
 
+/**
+ * The promotion code to add.
+ */
 export const zAddCodeBody = zAddCodeRequest;
 
 export const zAddCodeHeaders = z.object({
@@ -2366,7 +2806,7 @@ export const zAddCodePath = z.object({
 });
 
 /**
- * Created
+ * A promotion code.
  */
 export const zAddCodeResponse = zPromotionCodeResponse;
 
@@ -2379,7 +2819,7 @@ export const zRevokePath = z.object({
 });
 
 /**
- * OK
+ * A coupon redeemed onto a wallet.
  */
 export const zRevokeResponse = zRedemptionResponse;
 
@@ -2458,10 +2898,13 @@ export const zChargesQuery = z.object({
 });
 
 /**
- * OK
+ * A page of charge response rows, with the paging facts when the request asked for them.
  */
 export const zChargesResponse = zPageChargeResponse;
 
+/**
+ * The cost to charge to a wallet.
+ */
 export const zChargeBody = zChargeRequest;
 
 export const zChargeHeaders = z.object({
@@ -2473,6 +2916,9 @@ export const zChargeHeaders = z.object({
  */
 export const zChargeResponse2 = zChargeResponse;
 
+/**
+ * The billing session to create.
+ */
 export const zCreate1Body = zCreateRequest;
 
 export const zCreate1Headers = z.object({
@@ -2480,7 +2926,7 @@ export const zCreate1Headers = z.object({
 });
 
 /**
- * Created
+ * The billing session that was created.
  */
 export const zCreate1Response = zCreateResponse;
 
@@ -2492,15 +2938,23 @@ export const zRevoke1Path = z.object({
     id: z.string()
 });
 
+/**
+ * The session was revoked.
+ */
+export const zRevoke1Response = z.void();
+
 export const zGetEndpointPath = z.object({
     id: z.string()
 });
 
 /**
- * OK
+ * A webhook endpoint. The signing secret is not part of it.
  */
 export const zGetEndpointResponse = zEndpointResponse;
 
+/**
+ * The fields to change. A field that is left out keeps its value.
+ */
 export const zUpdateEndpointBody = zUpdateEndpointRequest;
 
 export const zUpdateEndpointHeaders = z.object({
@@ -2513,7 +2967,7 @@ export const zUpdateEndpointPath = z.object({
 });
 
 /**
- * OK
+ * A webhook endpoint. The signing secret is not part of it.
  */
 export const zUpdateEndpointResponse = zEndpointResponse;
 
@@ -2588,7 +3042,7 @@ export const zWallets1Query = z.object({
 });
 
 /**
- * OK
+ * A page of wallet response rows, with the paging facts when the request asked for them.
  */
 export const zWallets1Response = zPageWalletResponse;
 
@@ -2597,7 +3051,7 @@ export const zWalletPath = z.object({
 });
 
 /**
- * OK
+ * A customer's wallet in one currency.
  */
 export const zWalletResponse2 = zWalletResponse;
 
@@ -2685,7 +3139,7 @@ export const zLedgerQuery = z.object({
 });
 
 /**
- * OK
+ * A page of ledger entry response rows, with the paging facts when the request asked for them.
  */
 export const zLedgerResponse = zPageLedgerEntryResponse;
 
@@ -2769,7 +3223,7 @@ export const zHistory1Query = z.object({
 });
 
 /**
- * OK
+ * A page of usage event response rows, with the paging facts when the request asked for them.
  */
 export const zHistory1Response = zPageUsageEventResponse;
 
@@ -2891,7 +3345,7 @@ export const zSubscriptions1Query = z.object({
 });
 
 /**
- * OK
+ * A page of subscription response rows, with the paging facts when the request asked for them.
  */
 export const zSubscriptions1Response = zPageSubscriptionResponse;
 
@@ -2900,12 +3354,12 @@ export const zSubscriptionPath = z.object({
 });
 
 /**
- * OK
+ * A subscription with its history.
  */
 export const zSubscriptionResponse2 = zSubscriptionDetailResponse;
 
 /**
- * OK
+ * A portal session.
  */
 export const zSessionResponse2 = zSessionResponse;
 
@@ -2978,7 +3432,7 @@ export const zRefundsQuery = z.object({
 });
 
 /**
- * OK
+ * A page of refund response rows, with the paging facts when the request asked for them.
  */
 export const zRefundsResponse = zPageRefundResponse;
 
@@ -3074,7 +3528,7 @@ export const zPaymentsQuery = z.object({
 });
 
 /**
- * OK
+ * A page of payment response rows, with the paging facts when the request asked for them.
  */
 export const zPaymentsResponse = zPagePaymentResponse;
 
@@ -3083,7 +3537,7 @@ export const zPaymentPath = z.object({
 });
 
 /**
- * OK
+ * A payment with its refunds and failed attempts.
  */
 export const zPaymentResponse2 = zPaymentDetailResponse;
 
@@ -3204,7 +3658,7 @@ export const zInvoices1Query = z.object({
 });
 
 /**
- * OK
+ * A page of invoice response rows, with the paging facts when the request asked for them.
  */
 export const zInvoices1Response = zPageInvoiceResponse;
 
@@ -3213,12 +3667,12 @@ export const zInvoicePath = z.object({
 });
 
 /**
- * OK
+ * An invoice with its items and payments.
  */
 export const zInvoiceResponse2 = zInvoiceDetailResponse;
 
 /**
- * OK
+ * A billing customer.
  */
 export const zCustomerResponse2 = zCustomerResponse;
 
@@ -3297,7 +3751,7 @@ export const zCharges1Query = z.object({
 });
 
 /**
- * OK
+ * A page of charge response rows, with the paging facts when the request asked for them.
  */
 export const zCharges1Response = zPageChargeResponse;
 
@@ -3394,7 +3848,7 @@ export const zListDeliveriesQuery = z.object({
 });
 
 /**
- * OK
+ * A page of delivery response rows, with the paging facts when the request asked for them.
  */
 export const zListDeliveriesResponse = zPageDeliveryResponse;
 
@@ -3403,7 +3857,7 @@ export const zGetDeliveryPath = z.object({
 });
 
 /**
- * OK
+ * A delivery with the body that was sent and every attempt.
  */
 export const zGetDeliveryResponse = zDeliveryDetailResponse;
 
@@ -3412,7 +3866,7 @@ export const zWallet1Path = z.object({
 });
 
 /**
- * OK
+ * A customer's wallet in one currency.
  */
 export const zWallet1Response = zWalletResponse;
 
@@ -3500,7 +3954,7 @@ export const zLedger1Query = z.object({
 });
 
 /**
- * OK
+ * A page of ledger entry response rows, with the paging facts when the request asked for them.
  */
 export const zLedger1Response = zPageLedgerEntryResponse;
 
@@ -3521,7 +3975,7 @@ export const zSubscription1Path = z.object({
 });
 
 /**
- * OK
+ * A subscription with its history.
  */
 export const zSubscription1Response = zSubscriptionDetailResponse;
 
@@ -3590,7 +4044,7 @@ export const zIncidentsQuery = z.object({
 });
 
 /**
- * OK
+ * A page of incident response rows, with the paging facts when the request asked for them.
  */
 export const zIncidentsResponse = zPageIncidentResponse;
 
@@ -3673,7 +4127,7 @@ export const zEventsQuery = z.object({
 });
 
 /**
- * OK
+ * A page of event response rows, with the paging facts when the request asked for them.
  */
 export const zEventsResponse = zPageEventResponse;
 
@@ -3682,7 +4136,7 @@ export const zEventPath = z.object({
 });
 
 /**
- * OK
+ * A Stripe event with how its processing went.
  */
 export const zEventResponse2 = zEventDetailResponse;
 
@@ -3696,7 +4150,7 @@ export const zDisconnectHeaders = z.object({
 export const zDisconnectResponse = z.void();
 
 /**
- * OK
+ * The tenant's Stripe configuration. No secret is part of it.
  */
 export const zGetConfigurationResponse = zConfigurationResponse;
 
@@ -3705,7 +4159,7 @@ export const zReservationPath = z.object({
 });
 
 /**
- * OK
+ * A hold on part of a wallet's balance.
  */
 export const zReservationResponse2 = zReservationResponse;
 
@@ -3778,7 +4232,7 @@ export const zRefunds1Query = z.object({
 });
 
 /**
- * OK
+ * A page of refund response rows, with the paging facts when the request asked for them.
  */
 export const zRefunds1Response = zPageRefundResponse;
 
@@ -3787,7 +4241,7 @@ export const zGetRefundPath = z.object({
 });
 
 /**
- * OK
+ * A refund of a payment.
  */
 export const zGetRefundResponse = zRefundResponse;
 
@@ -3796,7 +4250,7 @@ export const zGetRatingPath = z.object({
 });
 
 /**
- * OK
+ * The result of rating a period's usage.
  */
 export const zGetRatingResponse = zRatingResponse;
 
@@ -3805,7 +4259,7 @@ export const zGetPlanPath = z.object({
 });
 
 /**
- * OK
+ * A pricing plan and its versions.
  */
 export const zGetPlanResponse = zPlanResponse;
 
@@ -3901,7 +4355,7 @@ export const zPayments1Query = z.object({
 });
 
 /**
- * OK
+ * A page of payment response rows, with the paging facts when the request asked for them.
  */
 export const zPayments1Response = zPagePaymentResponse;
 
@@ -3910,7 +4364,7 @@ export const zPayment1Path = z.object({
 });
 
 /**
- * OK
+ * A payment with its refunds and failed attempts.
  */
 export const zPayment1Response = zPaymentDetailResponse;
 
@@ -3919,7 +4373,7 @@ export const zInvoice1Path = z.object({
 });
 
 /**
- * OK
+ * An invoice with its items and payments.
  */
 export const zInvoice1Response = zInvoiceDetailResponse;
 
@@ -3932,7 +4386,7 @@ export const zByExternalUserQuery = z.object({
 });
 
 /**
- * OK
+ * A billing customer.
  */
 export const zByExternalUserResponse = zCustomerResponse;
 
@@ -3941,7 +4395,7 @@ export const zCouponPath = z.object({
 });
 
 /**
- * OK
+ * A coupon.
  */
 export const zCouponResponse2 = zCouponResponse;
 
@@ -3950,7 +4404,7 @@ export const zRedemptionPath = z.object({
 });
 
 /**
- * OK
+ * A coupon redeemed onto a wallet.
  */
 export const zRedemptionResponse2 = zRedemptionResponse;
 
@@ -3959,6 +4413,6 @@ export const zGetChargePath = z.object({
 });
 
 /**
- * OK
+ * A charge made against a wallet.
  */
 export const zGetChargeResponse = zChargeResponse;

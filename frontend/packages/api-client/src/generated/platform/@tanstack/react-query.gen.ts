@@ -4,10 +4,15 @@ import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanst
 
 import { client } from '../client.gen';
 import { addDomain, apps, assign, create, create1, create2, create3, createCredential, deactivate, feed, get, jwks, list, list1, list2, list3, listCredentials, listRemotes, me, type Options, page, registerVersion, rename, rename1, replacePermissions, revoke, rotate, set, setPermission, setState, token, unassign, update, update1 } from '../sdk.gen';
-import type { AddDomainData, AppsData, AppsResponse, AssignData, AssignResponse, Create1Data, Create1Response, Create2Data, Create2Response, Create3Data, Create3Response, CreateCredentialData, CreateCredentialResponse, CreateData, CreateResponse, DeactivateData, DeactivateResponse, FeedData, FeedResponse, GetData, GetResponse, JwksData, JwksResponse, List1Data, List1Response, List2Data, List2Response, List3Data, List3Response, ListCredentialsData, ListCredentialsResponse, ListData, ListRemotesData, ListRemotesResponse, ListResponse, MeData, MeResponse2, PageData, PageResponse, RegisterVersionData, RegisterVersionResponse, Rename1Data, Rename1Response, RenameData, RenameResponse, ReplacePermissionsData, ReplacePermissionsResponse, RevokeData, RevokeResponse, RotateData, RotateResponse, SetData, SetPermissionData, SetPermissionResponse, SetResponse, SetStateData, SetStateResponse, TokenData, TokenResponse, UnassignData, UnassignResponse, Update1Data, Update1Response, UpdateData, UpdateResponse } from '../types.gen';
+import type { AddDomainData, AddDomainError, AppsData, AppsError, AppsResponse, AssignData, AssignError, AssignResponse, Create1Data, Create1Error, Create1Response, Create2Data, Create2Error, Create2Response, Create3Data, Create3Error, Create3Response, CreateCredentialData, CreateCredentialError, CreateCredentialResponse, CreateData, CreateError, CreateResponse, DeactivateData, DeactivateError, DeactivateResponse, FeedData, FeedError, FeedResponse, GetData, GetError, GetResponse, JwksData, JwksResponse, List1Data, List1Error, List1Response, List2Data, List2Error, List2Response, List3Data, List3Error, List3Response, ListCredentialsData, ListCredentialsError, ListCredentialsResponse, ListData, ListError, ListRemotesData, ListRemotesError, ListRemotesResponse, ListResponse, MeData, MeError, MeResponse2, PageData, PageError, PageResponse, RegisterVersionData, RegisterVersionError, RegisterVersionResponse, Rename1Data, Rename1Error, Rename1Response, RenameData, RenameError, RenameResponse, ReplacePermissionsData, ReplacePermissionsError, ReplacePermissionsResponse, RevokeData, RevokeError, RevokeResponse, RotateData, RotateError, RotateResponse, SetData, SetError, SetPermissionData, SetPermissionError, SetPermissionResponse, SetResponse, SetStateData, SetStateError, SetStateResponse, TokenData, TokenError, TokenResponse, UnassignData, UnassignError, UnassignResponse, Update1Data, Update1Error, Update1Response, UpdateData, UpdateError, UpdateResponse } from '../types.gen';
 
-export const setPermissionMutation = (options?: Partial<Options<SetPermissionData>>): UseMutationOptions<SetPermissionResponse, DefaultError, Options<SetPermissionData>> => {
-    const mutationOptions: UseMutationOptions<SetPermissionResponse, DefaultError, Options<SetPermissionData>> = {
+/**
+ * Grant or revoke a direct permission
+ *
+ * Grants (`grant=true`) or revokes (`grant=false`) one permission `code` directly on the user, outside any role. Each effective change is audited. Pass the user's `ETag` in `If-Match`; a stale version is refused. Requires `platform:user:manage`.
+ */
+export const setPermissionMutation = (options?: Partial<Options<SetPermissionData>>): UseMutationOptions<SetPermissionResponse, SetPermissionError, Options<SetPermissionData>> => {
+    const mutationOptions: UseMutationOptions<SetPermissionResponse, SetPermissionError, Options<SetPermissionData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await setPermission({
                 ...options,
@@ -20,8 +25,13 @@ export const setPermissionMutation = (options?: Partial<Options<SetPermissionDat
     return mutationOptions;
 };
 
-export const setStateMutation = (options?: Partial<Options<SetStateData>>): UseMutationOptions<SetStateResponse, DefaultError, Options<SetStateData>> => {
-    const mutationOptions: UseMutationOptions<SetStateResponse, DefaultError, Options<SetStateData>> = {
+/**
+ * Change a UI remote
+ *
+ * The operator's one write on a remote: enable or disable it, point it at a registered version with `activeVersion` (a rollback is the same call with an older version), and edit its `title` and `navOrder`. `enabled` is required. Pass the remote's `ETag` in `If-Match`; a stale version is refused. Requires `platform:ui-remote:manage`.
+ */
+export const setStateMutation = (options?: Partial<Options<SetStateData>>): UseMutationOptions<SetStateResponse, SetStateError, Options<SetStateData>> => {
+    const mutationOptions: UseMutationOptions<SetStateResponse, SetStateError, Options<SetStateData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await setState({
                 ...options,
@@ -34,8 +44,13 @@ export const setStateMutation = (options?: Partial<Options<SetStateData>>): UseM
     return mutationOptions;
 };
 
-export const setMutation = (options?: Partial<Options<SetData>>): UseMutationOptions<SetResponse, DefaultError, Options<SetData>> => {
-    const mutationOptions: UseMutationOptions<SetResponse, DefaultError, Options<SetData>> = {
+/**
+ * Enable or disable an app for a tenant
+ *
+ * Sets whether the Tenant may use the app `appCode`. Setting the state it already has changes nothing and publishes nothing; the audit entry names the action asked for. `enabled` is required. Pass the entitlement's `ETag` in `If-Match`; a stale version is refused. Requires `platform:entitlement:manage`.
+ */
+export const setMutation = (options?: Partial<Options<SetData>>): UseMutationOptions<SetResponse, SetError, Options<SetData>> => {
+    const mutationOptions: UseMutationOptions<SetResponse, SetError, Options<SetData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await set({
                 ...options,
@@ -48,8 +63,13 @@ export const setMutation = (options?: Partial<Options<SetData>>): UseMutationOpt
     return mutationOptions;
 };
 
-export const renameMutation = (options?: Partial<Options<RenameData>>): UseMutationOptions<RenameResponse, DefaultError, Options<RenameData>> => {
-    const mutationOptions: UseMutationOptions<RenameResponse, DefaultError, Options<RenameData>> = {
+/**
+ * Rename a tenant
+ *
+ * Changes the Tenant's display name; its code does not change. The version is bumped and the new state is published. Pass the tenant's `ETag` in `If-Match`; a stale version is refused. Requires `platform:tenant:rename`.
+ */
+export const renameMutation = (options?: Partial<Options<RenameData>>): UseMutationOptions<RenameResponse, RenameError, Options<RenameData>> => {
+    const mutationOptions: UseMutationOptions<RenameResponse, RenameError, Options<RenameData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await rename({
                 ...options,
@@ -97,7 +117,12 @@ const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions
 
 export const getQueryKey = (options: Options<GetData>) => createQueryKey('get', options);
 
-export const getOptions = (options: Options<GetData>) => queryOptions<GetResponse, DefaultError, GetResponse, ReturnType<typeof getQueryKey>>({
+/**
+ * Get a tenant system
+ *
+ * Returns one Tenant System of the current Tenant with its purpose, status and version; the version is also the response's `ETag`. An unknown id answers `404`. Requires `platform:tenant-system:read`.
+ */
+export const getOptions = (options: Options<GetData>) => queryOptions<GetResponse, GetError, GetResponse, ReturnType<typeof getQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await get({
             ...options,
@@ -110,8 +135,13 @@ export const getOptions = (options: Options<GetData>) => queryOptions<GetRespons
     queryKey: getQueryKey(options)
 });
 
-export const updateMutation = (options?: Partial<Options<UpdateData>>): UseMutationOptions<UpdateResponse, DefaultError, Options<UpdateData>> => {
-    const mutationOptions: UseMutationOptions<UpdateResponse, DefaultError, Options<UpdateData>> = {
+/**
+ * Rename or disable a tenant system
+ *
+ * Applies one `action` to the system: `RENAME` with the new `name`, or `DISABLE`. Each change publishes the system's state. Pass the system's `ETag` in `If-Match`; a stale version is refused. Requires `platform:tenant-system:manage`.
+ */
+export const updateMutation = (options?: Partial<Options<UpdateData>>): UseMutationOptions<UpdateResponse, UpdateError, Options<UpdateData>> => {
+    const mutationOptions: UseMutationOptions<UpdateResponse, UpdateError, Options<UpdateData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await update({
                 ...options,
@@ -124,8 +154,13 @@ export const updateMutation = (options?: Partial<Options<UpdateData>>): UseMutat
     return mutationOptions;
 };
 
-export const rename1Mutation = (options?: Partial<Options<Rename1Data>>): UseMutationOptions<Rename1Response, DefaultError, Options<Rename1Data>> => {
-    const mutationOptions: UseMutationOptions<Rename1Response, DefaultError, Options<Rename1Data>> = {
+/**
+ * Rename a role
+ *
+ * Changes the role's name. Pass the role's `ETag` in `If-Match`; a stale version is refused. Requires `platform:role:manage`.
+ */
+export const rename1Mutation = (options?: Partial<Options<Rename1Data>>): UseMutationOptions<Rename1Response, Rename1Error, Options<Rename1Data>> => {
+    const mutationOptions: UseMutationOptions<Rename1Response, Rename1Error, Options<Rename1Data>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await rename1({
                 ...options,
@@ -138,8 +173,13 @@ export const rename1Mutation = (options?: Partial<Options<Rename1Data>>): UseMut
     return mutationOptions;
 };
 
-export const replacePermissionsMutation = (options?: Partial<Options<ReplacePermissionsData>>): UseMutationOptions<ReplacePermissionsResponse, DefaultError, Options<ReplacePermissionsData>> => {
-    const mutationOptions: UseMutationOptions<ReplacePermissionsResponse, DefaultError, Options<ReplacePermissionsData>> = {
+/**
+ * Replace a role's permissions
+ *
+ * Replaces the role's whole permission set with `permissions`. Every holder of the role has its effective access recomputed. Pass the role's `ETag` in `If-Match`; a stale version is refused. Requires `platform:role:manage`.
+ */
+export const replacePermissionsMutation = (options?: Partial<Options<ReplacePermissionsData>>): UseMutationOptions<ReplacePermissionsResponse, ReplacePermissionsError, Options<ReplacePermissionsData>> => {
+    const mutationOptions: UseMutationOptions<ReplacePermissionsResponse, ReplacePermissionsError, Options<ReplacePermissionsData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await replacePermissions({
                 ...options,
@@ -152,8 +192,13 @@ export const replacePermissionsMutation = (options?: Partial<Options<ReplacePerm
     return mutationOptions;
 };
 
-export const tokenMutation = (options?: Partial<Options<TokenData>>): UseMutationOptions<TokenResponse, DefaultError, Options<TokenData>> => {
-    const mutationOptions: UseMutationOptions<TokenResponse, DefaultError, Options<TokenData>> = {
+/**
+ * Get an access token with client credentials
+ *
+ * The OAuth client-credentials grant for Tenant Systems and service clients. Authenticate with HTTP Basic using the credential's id and secret, send `grant_type=client_credentials` and the `audience` of the app to call as a form, and receive a short-lived `Bearer` token (`access_token`, `token_type`, `expires_in`). An unsupported grant or audience answers `400`; a missing or wrong credential answers `401` with no detail on which half was wrong; too many attempts answer `429` with `Retry-After`. Public: no token is needed.
+ */
+export const tokenMutation = (options?: Partial<Options<TokenData>>): UseMutationOptions<TokenResponse, TokenError, Options<TokenData>> => {
+    const mutationOptions: UseMutationOptions<TokenResponse, TokenError, Options<TokenData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await token({
                 ...options,
@@ -169,9 +214,13 @@ export const tokenMutation = (options?: Partial<Options<TokenData>>): UseMutatio
 export const listQueryKey = (options?: Options<ListData>) => createQueryKey('list', options);
 
 /**
+ * List users
+ *
+ * Pages through users, with the list-query contract's filtering, sorting and paging. `tenant_id` is a filter, and a Tenant-scope caller never sees another Tenant's users. Requires `platform:user:read`.
+ *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
  */
-export const listOptions = (options?: Options<ListData>) => queryOptions<ListResponse, DefaultError, ListResponse, ReturnType<typeof listQueryKey>>({
+export const listOptions = (options?: Options<ListData>) => queryOptions<ListResponse, ListError, ListResponse, ReturnType<typeof listQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await list({
             ...options,
@@ -184,8 +233,13 @@ export const listOptions = (options?: Options<ListData>) => queryOptions<ListRes
     queryKey: listQueryKey(options)
 });
 
-export const createMutation = (options?: Partial<Options<CreateData>>): UseMutationOptions<CreateResponse, DefaultError, Options<CreateData>> => {
-    const mutationOptions: UseMutationOptions<CreateResponse, DefaultError, Options<CreateData>> = {
+/**
+ * Create a user
+ *
+ * Creates the user's sign-in identity and the Platform user for `tenantCode`, with a temporary password. A Tenant-scope caller cannot create a Platform-scope user. Answers `201` with the user. Requires `platform:user:manage`.
+ */
+export const createMutation = (options?: Partial<Options<CreateData>>): UseMutationOptions<CreateResponse, CreateError, Options<CreateData>> => {
+    const mutationOptions: UseMutationOptions<CreateResponse, CreateError, Options<CreateData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await create({
                 ...options,
@@ -198,8 +252,13 @@ export const createMutation = (options?: Partial<Options<CreateData>>): UseMutat
     return mutationOptions;
 };
 
-export const registerVersionMutation = (options?: Partial<Options<RegisterVersionData>>): UseMutationOptions<RegisterVersionResponse, DefaultError, Options<RegisterVersionData>> => {
-    const mutationOptions: UseMutationOptions<RegisterVersionResponse, DefaultError, Options<RegisterVersionData>> = {
+/**
+ * Register a UI remote version
+ *
+ * Called by CI after it publishes a build. The first call also creates the remote, disabled and with no active version; registering never enables a remote or changes its active version, so a deploy cannot reach a browser until an operator activates it. Repeating the same version with the same content answers `200` instead of `201`; the same version with different content is a conflict, because a version is immutable once a shell may have verified it. Requires `platform:ui-remote:register`.
+ */
+export const registerVersionMutation = (options?: Partial<Options<RegisterVersionData>>): UseMutationOptions<RegisterVersionResponse, RegisterVersionError, Options<RegisterVersionData>> => {
+    const mutationOptions: UseMutationOptions<RegisterVersionResponse, RegisterVersionError, Options<RegisterVersionData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await registerVersion({
                 ...options,
@@ -215,9 +274,13 @@ export const registerVersionMutation = (options?: Partial<Options<RegisterVersio
 export const list1QueryKey = (options?: Options<List1Data>) => createQueryKey('list1', options);
 
 /**
+ * List tenants
+ *
+ * Pages through the suite's Tenants, with the list-query contract's filtering, sorting and paging. Requires `platform:tenant:read`.
+ *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
  */
-export const list1Options = (options?: Options<List1Data>) => queryOptions<List1Response, DefaultError, List1Response, ReturnType<typeof list1QueryKey>>({
+export const list1Options = (options?: Options<List1Data>) => queryOptions<List1Response, List1Error, List1Response, ReturnType<typeof list1QueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await list1({
             ...options,
@@ -230,8 +293,13 @@ export const list1Options = (options?: Options<List1Data>) => queryOptions<List1
     queryKey: list1QueryKey(options)
 });
 
-export const create1Mutation = (options?: Partial<Options<Create1Data>>): UseMutationOptions<Create1Response, DefaultError, Options<Create1Data>> => {
-    const mutationOptions: UseMutationOptions<Create1Response, DefaultError, Options<Create1Data>> = {
+/**
+ * Provision a tenant with its first administrator
+ *
+ * Creates a Tenant, seeds its Tenant Administrator role with every tenant-scope permission and, when `adminEmail` is given, creates the first administrator with `adminTemporaryPassword` and assigns that role, all in one call. A failure leaves neither a Tenant without its role nor an administrator without the Tenant. Answers `201` with the tenant id and the administrator's email. Requires `platform:tenant:create`.
+ */
+export const create1Mutation = (options?: Partial<Options<Create1Data>>): UseMutationOptions<Create1Response, Create1Error, Options<Create1Data>> => {
+    const mutationOptions: UseMutationOptions<Create1Response, Create1Error, Options<Create1Data>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await create1({
                 ...options,
@@ -244,8 +312,13 @@ export const create1Mutation = (options?: Partial<Options<Create1Data>>): UseMut
     return mutationOptions;
 };
 
-export const addDomainMutation = (options?: Partial<Options<AddDomainData>>): UseMutationOptions<unknown, DefaultError, Options<AddDomainData>> => {
-    const mutationOptions: UseMutationOptions<unknown, DefaultError, Options<AddDomainData>> = {
+/**
+ * Add a hostname to a tenant
+ *
+ * Maps one more hostname to the Tenant, so its people reach the console on that host. The host also becomes a sign-in redirect target; if that registration fails the request still succeeds and a reconciler repairs it. Answers `201` with no body. Requires `platform:tenant-domain:manage`.
+ */
+export const addDomainMutation = (options?: Partial<Options<AddDomainData>>): UseMutationOptions<unknown, AddDomainError, Options<AddDomainData>> => {
+    const mutationOptions: UseMutationOptions<unknown, AddDomainError, Options<AddDomainData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await addDomain({
                 ...options,
@@ -258,8 +331,13 @@ export const addDomainMutation = (options?: Partial<Options<AddDomainData>>): Us
     return mutationOptions;
 };
 
-export const deactivateMutation = (options?: Partial<Options<DeactivateData>>): UseMutationOptions<DeactivateResponse, DefaultError, Options<DeactivateData>> => {
-    const mutationOptions: UseMutationOptions<DeactivateResponse, DefaultError, Options<DeactivateData>> = {
+/**
+ * Deactivate a tenant
+ *
+ * Deactivates the Tenant. Deactivating a Tenant that is already inactive changes nothing and publishes nothing. Pass the tenant's `ETag` in `If-Match`; a stale version is refused. Requires `platform:tenant:deactivate`.
+ */
+export const deactivateMutation = (options?: Partial<Options<DeactivateData>>): UseMutationOptions<DeactivateResponse, DeactivateError, Options<DeactivateData>> => {
+    const mutationOptions: UseMutationOptions<DeactivateResponse, DeactivateError, Options<DeactivateData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await deactivate({
                 ...options,
@@ -275,9 +353,13 @@ export const deactivateMutation = (options?: Partial<Options<DeactivateData>>): 
 export const list2QueryKey = (options?: Options<List2Data>) => createQueryKey('list2', options);
 
 /**
+ * List tenant systems
+ *
+ * Pages through the current Tenant's Tenant Systems, with the list-query contract's filtering, sorting and paging. Requires `platform:tenant-system:read`.
+ *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
  */
-export const list2Options = (options?: Options<List2Data>) => queryOptions<List2Response, DefaultError, List2Response, ReturnType<typeof list2QueryKey>>({
+export const list2Options = (options?: Options<List2Data>) => queryOptions<List2Response, List2Error, List2Response, ReturnType<typeof list2QueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await list2({
             ...options,
@@ -290,8 +372,13 @@ export const list2Options = (options?: Options<List2Data>) => queryOptions<List2
     queryKey: list2QueryKey(options)
 });
 
-export const create2Mutation = (options?: Partial<Options<Create2Data>>): UseMutationOptions<Create2Response, DefaultError, Options<Create2Data>> => {
-    const mutationOptions: UseMutationOptions<Create2Response, DefaultError, Options<Create2Data>> = {
+/**
+ * Register a tenant system
+ *
+ * Registers a Tenant System of the current Tenant: a named machine caller with a stated `purpose` that authenticates with API credentials instead of a user sign-in. It has no credential yet; issue one with `POST /api/v1/tenant-systems/{id}/credentials`. Answers `201`. Requires `platform:tenant-system:manage`.
+ */
+export const create2Mutation = (options?: Partial<Options<Create2Data>>): UseMutationOptions<Create2Response, Create2Error, Options<Create2Data>> => {
+    const mutationOptions: UseMutationOptions<Create2Response, Create2Error, Options<Create2Data>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await create2({
                 ...options,
@@ -307,9 +394,13 @@ export const create2Mutation = (options?: Partial<Options<Create2Data>>): UseMut
 export const listCredentialsQueryKey = (options: Options<ListCredentialsData>) => createQueryKey('listCredentials', options);
 
 /**
+ * List a tenant system's credentials
+ *
+ * Pages through the credentials of the Tenant System named in the path, with the list-query contract's filtering, sorting and paging. The secrets are never returned. Requires `platform:credential:manage`.
+ *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
  */
-export const listCredentialsOptions = (options: Options<ListCredentialsData>) => queryOptions<ListCredentialsResponse, DefaultError, ListCredentialsResponse, ReturnType<typeof listCredentialsQueryKey>>({
+export const listCredentialsOptions = (options: Options<ListCredentialsData>) => queryOptions<ListCredentialsResponse, ListCredentialsError, ListCredentialsResponse, ReturnType<typeof listCredentialsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await listCredentials({
             ...options,
@@ -322,8 +413,13 @@ export const listCredentialsOptions = (options: Options<ListCredentialsData>) =>
     queryKey: listCredentialsQueryKey(options)
 });
 
-export const createCredentialMutation = (options?: Partial<Options<CreateCredentialData>>): UseMutationOptions<CreateCredentialResponse, DefaultError, Options<CreateCredentialData>> => {
-    const mutationOptions: UseMutationOptions<CreateCredentialResponse, DefaultError, Options<CreateCredentialData>> = {
+/**
+ * Issue an API credential
+ *
+ * Issues a credential for the Tenant System with a `label` and the `scopes` it may use. The secret `key` is in the response and is never shown again; storage keeps only a digest. Answers `201`. Requires `platform:credential:manage`.
+ */
+export const createCredentialMutation = (options?: Partial<Options<CreateCredentialData>>): UseMutationOptions<CreateCredentialResponse, CreateCredentialError, Options<CreateCredentialData>> => {
+    const mutationOptions: UseMutationOptions<CreateCredentialResponse, CreateCredentialError, Options<CreateCredentialData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await createCredential({
                 ...options,
@@ -336,8 +432,13 @@ export const createCredentialMutation = (options?: Partial<Options<CreateCredent
     return mutationOptions;
 };
 
-export const rotateMutation = (options?: Partial<Options<RotateData>>): UseMutationOptions<RotateResponse, DefaultError, Options<RotateData>> => {
-    const mutationOptions: UseMutationOptions<RotateResponse, DefaultError, Options<RotateData>> = {
+/**
+ * Rotate a tenant system's credential
+ *
+ * Issues a new credential and lets the previous one keep working for `overlapMinutes` (24 hours when the body is omitted), so the Tenant System can switch over without downtime. The new secret `key` is in the response and is never shown again. Requires `platform:credential:manage`.
+ */
+export const rotateMutation = (options?: Partial<Options<RotateData>>): UseMutationOptions<RotateResponse, RotateError, Options<RotateData>> => {
+    const mutationOptions: UseMutationOptions<RotateResponse, RotateError, Options<RotateData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await rotate({
                 ...options,
@@ -353,9 +454,13 @@ export const rotateMutation = (options?: Partial<Options<RotateData>>): UseMutat
 export const list3QueryKey = (options?: Options<List3Data>) => createQueryKey('list3', options);
 
 /**
+ * List roles
+ *
+ * Pages through roles, with the list-query contract's filtering, sorting and paging. `tenant_id` is a filter, and a Tenant-scope caller never sees another Tenant's roles. Requires `platform:role:read`.
+ *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
  */
-export const list3Options = (options?: Options<List3Data>) => queryOptions<List3Response, DefaultError, List3Response, ReturnType<typeof list3QueryKey>>({
+export const list3Options = (options?: Options<List3Data>) => queryOptions<List3Response, List3Error, List3Response, ReturnType<typeof list3QueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await list3({
             ...options,
@@ -368,8 +473,13 @@ export const list3Options = (options?: Options<List3Data>) => queryOptions<List3
     queryKey: list3QueryKey(options)
 });
 
-export const create3Mutation = (options?: Partial<Options<Create3Data>>): UseMutationOptions<Create3Response, DefaultError, Options<Create3Data>> => {
-    const mutationOptions: UseMutationOptions<Create3Response, DefaultError, Options<Create3Data>> = {
+/**
+ * Create a custom role
+ *
+ * Creates a role with a name and a set of permission codes. Every code must be in the permission catalog and valid in the role's scope, and a role can never be wider than the caller's own scope. Answers `201` with the role. Requires `platform:role:manage`.
+ */
+export const create3Mutation = (options?: Partial<Options<Create3Data>>): UseMutationOptions<Create3Response, Create3Error, Options<Create3Data>> => {
+    const mutationOptions: UseMutationOptions<Create3Response, Create3Error, Options<Create3Data>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await create3({
                 ...options,
@@ -382,8 +492,13 @@ export const create3Mutation = (options?: Partial<Options<Create3Data>>): UseMut
     return mutationOptions;
 };
 
-export const unassignMutation = (options?: Partial<Options<UnassignData>>): UseMutationOptions<UnassignResponse, DefaultError, Options<UnassignData>> => {
-    const mutationOptions: UseMutationOptions<UnassignResponse, DefaultError, Options<UnassignData>> = {
+/**
+ * Remove a role from a user
+ *
+ * Takes the role away from the user, so the user loses the permissions only that role carried. Answers the role. Requires `platform:role:manage`.
+ */
+export const unassignMutation = (options?: Partial<Options<UnassignData>>): UseMutationOptions<UnassignResponse, UnassignError, Options<UnassignData>> => {
+    const mutationOptions: UseMutationOptions<UnassignResponse, UnassignError, Options<UnassignData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await unassign({
                 ...options,
@@ -396,8 +511,13 @@ export const unassignMutation = (options?: Partial<Options<UnassignData>>): UseM
     return mutationOptions;
 };
 
-export const assignMutation = (options?: Partial<Options<AssignData>>): UseMutationOptions<AssignResponse, DefaultError, Options<AssignData>> => {
-    const mutationOptions: UseMutationOptions<AssignResponse, DefaultError, Options<AssignData>> = {
+/**
+ * Assign a role to a user
+ *
+ * Gives the user the role, so the user holds every permission the role carries. Answers the role. Requires `platform:role:manage`.
+ */
+export const assignMutation = (options?: Partial<Options<AssignData>>): UseMutationOptions<AssignResponse, AssignError, Options<AssignData>> => {
+    const mutationOptions: UseMutationOptions<AssignResponse, AssignError, Options<AssignData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await assign({
                 ...options,
@@ -410,8 +530,13 @@ export const assignMutation = (options?: Partial<Options<AssignData>>): UseMutat
     return mutationOptions;
 };
 
-export const update1Mutation = (options?: Partial<Options<Update1Data>>): UseMutationOptions<Update1Response, DefaultError, Options<Update1Data>> => {
-    const mutationOptions: UseMutationOptions<Update1Response, DefaultError, Options<Update1Data>> = {
+/**
+ * Enable, disable or rename a user
+ *
+ * Applies one `action` to the user: `ENABLE`, `DISABLE`, or `RENAME` with the new `name`. Every effective change publishes the user's new access and is audited. Pass the user's `ETag` in `If-Match`; a stale version is refused. Requires `platform:user:manage`.
+ */
+export const update1Mutation = (options?: Partial<Options<Update1Data>>): UseMutationOptions<Update1Response, Update1Error, Options<Update1Data>> => {
+    const mutationOptions: UseMutationOptions<Update1Response, Update1Error, Options<Update1Data>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await update1({
                 ...options,
@@ -426,7 +551,12 @@ export const update1Mutation = (options?: Partial<Options<Update1Data>>): UseMut
 
 export const pageQueryKey = (options: Options<PageData>) => createQueryKey('page', options);
 
-export const pageOptions = (options: Options<PageData>) => queryOptions<PageResponse, DefaultError, PageResponse, ReturnType<typeof pageQueryKey>>({
+/**
+ * Page through a replica snapshot stream
+ *
+ * Internal endpoint a replica rebuilds its copy of Platform state from. `stream` names the stream: `tenants`, `tenant-domains`, `tenant-systems`, `entitlements` or `user-access`; an unknown name answers `404`. Pass the previous answer's `next` as `after` to read the following page; `limit` is clamped to 1 to 500 and defaults to 100. Each item carries the same JSON as the matching `*.changed` event plus its `version`, so a replica can merge snapshot rows and live events in any order. Requires `platform:replica:read`.
+ */
+export const pageOptions = (options: Options<PageData>) => queryOptions<PageResponse, PageError, PageResponse, ReturnType<typeof pageQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await page({
             ...options,
@@ -442,9 +572,13 @@ export const pageOptions = (options: Options<PageData>) => queryOptions<PageResp
 export const listRemotesQueryKey = (options?: Options<ListRemotesData>) => createQueryKey('listRemotes', options);
 
 /**
+ * List UI remotes
+ *
+ * Pages through the console's UI remotes, with the list-query contract's filtering, sorting and paging. Requires `platform:ui-remote:read`.
+ *
  * **Filtering, sorting and paging** follow the list-query contract. Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq` and `nin` do not match rows where the field is null. Send `limit` with either `offset` (at most 10000) or the `cursor` taken from a previous page, never both. The body is `{"data": [...], "page": null}`. `page_info=full` fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it with `limit` and `next_cursor` alone, without counting the matching rows; omit it for the rows alone.
  */
-export const listRemotesOptions = (options?: Options<ListRemotesData>) => queryOptions<ListRemotesResponse, DefaultError, ListRemotesResponse, ReturnType<typeof listRemotesQueryKey>>({
+export const listRemotesOptions = (options?: Options<ListRemotesData>) => queryOptions<ListRemotesResponse, ListRemotesError, ListRemotesResponse, ReturnType<typeof listRemotesQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await listRemotes({
             ...options,
@@ -459,7 +593,12 @@ export const listRemotesOptions = (options?: Options<ListRemotesData>) => queryO
 
 export const appsQueryKey = (options: Options<AppsData>) => createQueryKey('apps', options);
 
-export const appsOptions = (options: Options<AppsData>) => queryOptions<AppsResponse, DefaultError, AppsResponse, ReturnType<typeof appsQueryKey>>({
+/**
+ * List a tenant's apps
+ *
+ * Returns every app of the suite with this Tenant's state of it; an app the Tenant never changed is reported as disabled at version 0. Requires `platform:tenant:read`.
+ */
+export const appsOptions = (options: Options<AppsData>) => queryOptions<AppsResponse, AppsError, AppsResponse, ReturnType<typeof appsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await apps({
             ...options,
@@ -474,7 +613,12 @@ export const appsOptions = (options: Options<AppsData>) => queryOptions<AppsResp
 
 export const meQueryKey = (options?: Options<MeData>) => createQueryKey('me', options);
 
-export const meOptions = (options?: Options<MeData>) => queryOptions<MeResponse2, DefaultError, MeResponse2, ReturnType<typeof meQueryKey>>({
+/**
+ * Get the signed-in user
+ *
+ * Returns the caller's own user record (id, tenant, scope, email, display name, status) and the permission codes the caller holds across the suite. The console reads it to decide what to show. Any authenticated user may call it; a token whose user no longer exists answers `404`.
+ */
+export const meOptions = (options?: Options<MeData>) => queryOptions<MeResponse2, MeError, MeResponse2, ReturnType<typeof meQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await me({
             ...options,
@@ -489,7 +633,12 @@ export const meOptions = (options?: Options<MeData>) => queryOptions<MeResponse2
 
 export const feedQueryKey = (options?: Options<FeedData>) => createQueryKey('feed', options);
 
-export const feedOptions = (options?: Options<FeedData>) => queryOptions<FeedResponse, DefaultError, FeedResponse, ReturnType<typeof feedQueryKey>>({
+/**
+ * Get the console's UI remotes
+ *
+ * The feed a console shell reads on load: only the remotes the caller may mount, each with the one version an operator activated, filtered on the server. Any authenticated user may call it.
+ */
+export const feedOptions = (options?: Options<FeedData>) => queryOptions<FeedResponse, FeedError, FeedResponse, ReturnType<typeof feedQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await feed({
             ...options,
@@ -504,6 +653,11 @@ export const feedOptions = (options?: Options<FeedData>) => queryOptions<FeedRes
 
 export const jwksQueryKey = (options?: Options<JwksData>) => createQueryKey('jwks', options);
 
+/**
+ * Get the suite's public signing keys
+ *
+ * Publishes the public halves of the keys Platform signs suite tokens with, as a JSON Web Key Set, so every app can verify a token without calling Platform. Public: no token is needed.
+ */
 export const jwksOptions = (options?: Options<JwksData>) => queryOptions<JwksResponse, DefaultError, JwksResponse, ReturnType<typeof jwksQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await jwks({
@@ -517,8 +671,13 @@ export const jwksOptions = (options?: Options<JwksData>) => queryOptions<JwksRes
     queryKey: jwksQueryKey(options)
 });
 
-export const revokeMutation = (options?: Partial<Options<RevokeData>>): UseMutationOptions<RevokeResponse, DefaultError, Options<RevokeData>> => {
-    const mutationOptions: UseMutationOptions<RevokeResponse, DefaultError, Options<RevokeData>> = {
+/**
+ * Revoke an API credential
+ *
+ * Revokes one credential of the Tenant System at once; a token request with it is refused from then on. Answers the credential with its new state. Requires `platform:credential:manage`.
+ */
+export const revokeMutation = (options?: Partial<Options<RevokeData>>): UseMutationOptions<RevokeResponse, RevokeError, Options<RevokeData>> => {
+    const mutationOptions: UseMutationOptions<RevokeResponse, RevokeError, Options<RevokeData>> = {
         mutationFn: async (fnOptions) => {
             const { data } = await revoke({
                 ...options,

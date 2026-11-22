@@ -4,892 +4,2895 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+/**
+ * The webhook signing secret.
+ */
 export type WebhookSecretRequest = {
+    /**
+     * The signing secret of the webhook endpoint created in the tenant's own Stripe Dashboard. It is stored encrypted and never returned.
+     */
     webhookSecret?: string;
 };
 
+/**
+ * The tenant's Stripe configuration. No secret is part of it.
+ */
 export type ConfigurationResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * How Stripe is connected: `DIRECT` with the tenant's own API key, or `CONNECT` through the platform's Connect application.
+     */
     mode?: string;
+    /**
+     * The Stripe account id.
+     */
     accountId?: string;
+    /**
+     * `TEST` or `LIVE`.
+     */
     environment?: string;
+    /**
+     * `PENDING`, `ACTIVE` or `RESTRICTED`.
+     */
     status?: string;
+    /**
+     * The Stripe publishable key.
+     */
     publishableKey?: string;
+    /**
+     * Whether a webhook signing secret is stored.
+     */
     webhookSecretSet?: boolean;
+    /**
+     * Whether the account can take card payments.
+     */
     cardPaymentsActive?: boolean;
+    /**
+     * The URL Stripe delivers events to.
+     */
     webhookUrl?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * When the record was last changed.
+     */
     updatedAt?: string;
+    /**
+     * When the account was connected, or null.
+     */
     connectedAt?: string;
+    /**
+     * When Stripe last confirmed the account's state, or null.
+     */
     lastVerifiedAt?: string;
 };
 
+/**
+ * The tenant's own Stripe keys.
+ */
 export type DirectRequest = {
+    /**
+     * The Stripe secret key. It is stored encrypted and never returned.
+     */
     secretKey?: string;
+    /**
+     * The Stripe publishable key.
+     */
     publishableKey?: string;
+    /**
+     * The signing secret of the webhook endpoint created in the tenant's own Stripe Dashboard. It is stored encrypted and never returned.
+     */
     webhookSecret?: string;
 };
 
+/**
+ * The allowlist to store.
+ */
 export type ReplaceRequest = {
+    /**
+     * The URLs a billing session may return the customer to, replacing the stored list.
+     */
     urls?: Array<string>;
 };
 
+/**
+ * The customer properties to store.
+ */
 export type UpdateCustomerRequest = {
+    /**
+     * The name shown for the customer.
+     */
     displayName?: string;
+    /**
+     * The customer's email address.
+     */
     email?: string;
 };
 
+/**
+ * A billing customer.
+ */
 export type CustomerResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The name shown for the customer.
+     */
     displayName?: string;
+    /**
+     * The customer's email address.
+     */
     email?: string;
+    /**
+     * `ACTIVE` or `DEACTIVATED`.
+     */
     status?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * The Tenant System users the customer is mapped to.
+     */
     identities?: Array<IdentityResponse>;
 };
 
+/**
+ * A Tenant System user a customer is mapped to.
+ */
 export type IdentityResponse = {
+    /**
+     * The tenant system.
+     */
     tenantSystemId?: string;
+    /**
+     * The tenant system's own id of the user.
+     */
     externalUserId?: string;
 };
 
+/**
+ * The top-up to start.
+ */
 export type TopUpRequest = {
+    /**
+     * The wallet to top up.
+     */
     walletId?: string;
+    /**
+     * The amount to add, in minor units.
+     */
     amount?: number;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
     currency?: string;
 };
 
+/**
+ * An amount of money.
+ */
 export type MoneyDto = {
+    /**
+     * The amount in minor units of the currency.
+     */
     amount?: number;
+    /**
+     * The ISO 4217 currency code.
+     */
     currency?: string;
 };
 
+/**
+ * A top-up that was started.
+ */
 export type TopUpResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The payment's status.
+     */
     status?: string;
+    /**
+     * The amount to be paid.
+     */
     amount?: MoneyDto;
+    /**
+     * The Stripe-hosted page where the customer pays. Present only while the customer can still pay.
+     */
     checkoutUrl?: string;
 };
 
+/**
+ * The token to exchange.
+ */
 export type ExchangeRequest = {
+    /**
+     * The single-use token from the portal URL's fragment.
+     */
     token?: string;
 };
 
+/**
+ * The portal session the exchange opened.
+ */
 export type ExchangeResponse = {
+    /**
+     * The session.
+     */
     session?: SessionResponse;
+    /**
+     * The CSRF token the portal sends back with writes.
+     */
     csrfToken?: string;
+    /**
+     * Where the portal sends the customer back to.
+     */
     returnUrl?: string;
 };
 
+/**
+ * A portal session.
+ */
 export type SessionResponse = {
+    /**
+     * The session's id.
+     */
     sessionId?: string;
+    /**
+     * The id of the customer.
+     */
     customerId?: string;
+    /**
+     * What the session may do in the portal.
+     */
     permissions?: Array<string>;
+    /**
+     * When the session expires.
+     */
     expiresAt?: string;
 };
 
+/**
+ * A Stripe-hosted page.
+ */
 export type HostedPageResponse = {
+    /**
+     * The URL of the page to open.
+     */
     url?: string;
 };
 
+/**
+ * The endpoint to register.
+ */
 export type CreateEndpointRequest = {
+    /**
+     * The HTTPS URL events are posted to. It must resolve to a public address.
+     */
     url?: string;
+    /**
+     * A note about the endpoint.
+     */
     description?: string;
+    /**
+     * The event types to subscribe to.
+     */
     eventTypes?: Array<string>;
 };
 
+/**
+ * A webhook endpoint. The signing secret is not part of it.
+ */
 export type EndpointResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The URL.
+     */
     url?: string;
+    /**
+     * A note about the endpoint.
+     */
     description?: string;
+    /**
+     * The event types the endpoint subscribes to.
+     */
     eventTypes?: Array<string>;
+    /**
+     * `ACTIVE` or `DISABLED`.
+     */
     status?: string;
+    /**
+     * The id of the key the secret was written under. The secret itself is never returned.
+     */
     keyId?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * When the record was last changed.
+     */
     updatedAt?: string;
+    /**
+     * When the signing secret was last rotated, or null.
+     */
     secretRotatedAt?: string;
 };
 
+/**
+ * An endpoint with its signing secret, shown once.
+ */
 export type EndpointWithSecretResponse = {
+    /**
+     * The endpoint.
+     */
     endpoint?: EndpointResponse;
+    /**
+     * The secret that signs deliveries. It is shown only in this response and is never available again.
+     */
     signingSecret?: string;
 };
 
+/**
+ * One delivery of an event to an endpoint.
+ */
 export type DeliveryResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The id of the endpoint.
+     */
     endpointId?: string;
+    /**
+     * The id of the event. A receiver should treat a repeated event id as a duplicate.
+     */
     eventId?: string;
+    /**
+     * The event's type.
+     */
     eventType?: string;
+    /**
+     * `PENDING`, `IN_PROGRESS`, `SUCCEEDED` or `DEAD`. `DEAD` means it exhausted its attempts.
+     */
     status?: string;
+    /**
+     * How many attempts have been made.
+     */
     attempts?: number;
+    /**
+     * When the next attempt is due, or null.
+     */
     nextAttemptAt?: string;
+    /**
+     * The id of the delivery this one resends, or null.
+     */
     resendOf?: string;
+    /**
+     * The HTTP status the receiver answered last, or null.
+     */
     lastStatusCode?: number;
+    /**
+     * The last error, or null.
+     */
     lastError?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * When it completed, or null.
+     */
     completedAt?: string;
 };
 
+/**
+ * The wallet to open.
+ */
 export type OpenWalletRequest = {
+    /**
+     * The id of the customer.
+     */
     customerId?: string;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
     currency?: string;
+    /**
+     * `PREPAID` (spends its balance) or `POSTPAID` (spends up to its credit limit and is billed later).
+     */
     mode?: string;
+    /**
+     * For a postpaid wallet, how much it may owe at most.
+     */
     creditLimit?: number;
 };
 
+/**
+ * A customer's wallet in one currency.
+ */
 export type WalletResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The id of the customer.
+     */
     customerId?: string;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
     currency?: string;
+    /**
+     * `PREPAID` or `POSTPAID`.
+     */
     mode?: string;
+    /**
+     * The money in the wallet.
+     */
     balance?: MoneyDto;
+    /**
+     * The part of the balance held by active reservations.
+     */
     held?: MoneyDto;
+    /**
+     * The balance less the amount held by active reservations. A postpaid wallet may spend this plus its credit limit.
+     */
     available?: MoneyDto;
+    /**
+     * How much a postpaid wallet may owe at most.
+     */
     creditLimit?: MoneyDto;
+    /**
+     * How much a postpaid wallet owes.
+     */
     outstanding?: MoneyDto;
+    /**
+     * The sequence number of the wallet's last ledger entry.
+     */
     lastSequence?: number;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
 };
 
+/**
+ * The coupon to redeem. Give a `code`, or a `couponId` to attach it directly.
+ */
 export type RedeemRequest = {
+    /**
+     * The promotion code to redeem.
+     */
     code?: string;
+    /**
+     * The coupon to attach, which skips a code's own limits.
+     */
     couponId?: string;
 };
 
+/**
+ * A coupon redeemed onto a wallet.
+ */
 export type RedemptionResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The coupon.
+     */
     couponId?: string;
+    /**
+     * The coupon's name.
+     */
     couponName?: string;
+    /**
+     * The promotion code used, or null when it was attached directly.
+     */
     codeId?: string;
+    /**
+     * The id of the wallet.
+     */
     walletId?: string;
+    /**
+     * The id of the customer.
+     */
     customerId?: string;
+    /**
+     * `ACTIVE`, `ENDED` or `REVOKED`.
+     */
     status?: string;
+    /**
+     * How many charges it may discount, or null.
+     */
     maxApplications?: number;
+    /**
+     * How many charges it has discounted.
+     */
     applicationsUsed?: number;
+    /**
+     * The most it may discount in all, or null.
+     */
     maxTotalDiscount?: number;
+    /**
+     * How much it has discounted so far.
+     */
     discountTotal?: number;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
     currency?: string;
+    /**
+     * When it was redeemed.
+     */
     redeemedAt?: string;
+    /**
+     * When it stops applying, or null.
+     */
     endsAt?: string;
+    /**
+     * Why it ended: `EXHAUSTED`, `REVOKED`, `COUPON_DEACTIVATED` or `GRANTED`.
+     */
     endReason?: string;
+    /**
+     * When it ended, or null.
+     */
     endedAt?: string;
 };
 
+/**
+ * One usage event to record.
+ */
 export type UsageEventRequest = {
+    /**
+     * The id of the customer.
+     */
     customerId?: string;
+    /**
+     * The metric the usage is for.
+     */
     metric?: string;
+    /**
+     * The amount used, in the unit the metric's plan defines.
+     */
     quantity?: string;
+    /**
+     * The unit the metric is measured in.
+     */
     unit?: string;
+    /**
+     * When the usage happened.
+     */
     occurredAt?: string;
+    /**
+     * The key of this event. Repeating it with the same content records nothing twice; with different content it is a conflict.
+     */
     idempotencyKey?: string;
+    /**
+     * A reference to the resource that used it, or null.
+     */
     resourceRef?: string;
+    /**
+     * The id of the event in the reporting system that caused this one, or null.
+     */
     sourceEventId?: string;
 };
 
+/**
+ * The result of recording one usage event.
+ */
 export type RecordedResponse = {
+    /**
+     * The recorded event.
+     */
     event?: UsageEventResponse;
+    /**
+     * Whether the answer is the earlier result of the same request, not a new one.
+     */
     replayed?: boolean;
 };
 
+/**
+ * A recorded usage event.
+ */
 export type UsageEventResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The id of the customer.
+     */
     customerId?: string;
+    /**
+     * The name of the metric.
+     */
     metric?: string;
+    /**
+     * The quantity as a decimal string with up to six decimal places.
+     */
     quantity?: string;
+    /**
+     * The unit the metric is measured in.
+     */
     unit?: string;
+    /**
+     * When it happened.
+     */
     occurredAt?: string;
+    /**
+     * When Billing recorded the event.
+     */
     recordedAt?: string;
+    /**
+     * A key that makes a retry return the same result.
+     */
     idempotencyKey?: string;
+    /**
+     * The tenant system that reported it, or null.
+     */
     tenantSystemId?: string;
+    /**
+     * The resource reference, or null.
+     */
     resourceRef?: string;
+    /**
+     * The id of the event in the reporting system, or null.
+     */
     sourceEventId?: string;
 };
 
+/**
+ * The usage events to record, at most 500, all or none.
+ */
 export type BatchRequest = {
+    /**
+     * The events.
+     */
     events?: Array<UsageEventRequest>;
 };
 
+/**
+ * The result per event, in request order.
+ */
 export type BatchResponse = {
+    /**
+     * The results.
+     */
     results?: Array<RecordedResponse>;
 };
 
+/**
+ * The subscription to start.
+ */
 export type SubscribeRequest = {
+    /**
+     * The id of the wallet.
+     */
     walletId?: string;
+    /**
+     * The plan to subscribe to.
+     */
     planId?: string;
 };
 
+/**
+ * A subscription with its history.
+ */
 export type SubscriptionDetailResponse = {
+    /**
+     * The subscription.
+     */
     subscription?: SubscriptionResponse;
+    /**
+     * What happened to it, oldest first.
+     */
     history?: Array<SubscriptionEventResponse>;
 };
 
+/**
+ * One event of a subscription's history.
+ */
 export type SubscriptionEventResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The kind of event.
+     */
     type?: string;
+    /**
+     * The number of the period it concerns.
+     */
     periodNumber?: number;
+    /**
+     * The start of the period.
+     */
     periodStart?: string;
+    /**
+     * The end of the period.
+     */
     periodEnd?: string;
+    /**
+     * The amount due for the period.
+     */
     amount?: MoneyDto;
+    /**
+     * The amount that was paid.
+     */
     paidAmount?: MoneyDto;
+    /**
+     * The id of the charge.
+     */
     chargeId?: string;
+    /**
+     * Details of what happened.
+     */
     detail?: string;
+    /**
+     * When it happened.
+     */
     occurredAt?: string;
 };
 
+/**
+ * A subscription of a wallet to a plan.
+ */
 export type SubscriptionResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The id of the customer.
+     */
     customerId?: string;
+    /**
+     * The id of the wallet.
+     */
     walletId?: string;
+    /**
+     * The id of the pricing plan.
+     */
     planId?: string;
+    /**
+     * The plan's code.
+     */
     planCode?: string;
+    /**
+     * `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY` or `YEARLY`. Fixed for the life of the subscription.
+     */
     cycle?: string;
+    /**
+     * `ACTIVE`, `PAST_DUE` or `CANCELED`.
+     */
     status?: string;
+    /**
+     * When the subscription's schedule was anchored.
+     */
     anchor?: string;
+    /**
+     * How many periods have been charged.
+     */
     periodsCharged?: number;
+    /**
+     * The start of the period now running.
+     */
     currentPeriodStart?: string;
+    /**
+     * The end of the period now running.
+     */
     currentPeriodEnd?: string;
+    /**
+     * Whether the subscription ends when the paid period does.
+     */
     cancelAtPeriodEnd?: boolean;
+    /**
+     * When it was canceled, or null.
+     */
     canceledAt?: string;
+    /**
+     * When the next period is charged, or null.
+     */
     nextRenewalAt?: string;
+    /**
+     * How many times the current renewal was tried.
+     */
     renewalAttempts?: number;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
 };
 
+/**
+ * What a reconciliation found.
+ */
 export type ReconcileResponse = {
+    /**
+     * How many payments and refunds were compared.
+     */
     checked?: number;
+    /**
+     * How many were corrected from Stripe.
+     */
     corrected?: number;
+    /**
+     * How many disagreements were recorded as incidents.
+     */
     mismatches?: number;
 };
 
+/**
+ * One attempt to process a Stripe event.
+ */
 export type EventAttemptResponse = {
+    /**
+     * The attempt's number, starting at 1.
+     */
     attempt?: number;
+    /**
+     * How the attempt ended.
+     */
     outcome?: string;
+    /**
+     * Details of what happened.
+     */
     detail?: string;
+    /**
+     * When the attempt was made.
+     */
     attemptedAt?: string;
 };
 
+/**
+ * A Stripe event with how its processing went.
+ */
 export type EventDetailResponse = {
+    /**
+     * The event.
+     */
     event?: EventResponse;
+    /**
+     * Every processing attempt.
+     */
     history?: Array<EventAttemptResponse>;
 };
 
+/**
+ * A Stripe event that was received.
+ */
 export type EventResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * Stripe's id of the event.
+     */
     stripeEventId?: string;
+    /**
+     * The Stripe event type.
+     */
     type?: string;
+    /**
+     * `RECEIVED`, `PROCESSED` or `IGNORED`.
+     */
     status?: string;
+    /**
+     * How many times processing was tried.
+     */
     attempts?: number;
+    /**
+     * When the next try is due, or null.
+     */
     nextAttemptAt?: string;
+    /**
+     * The last error, or null.
+     */
     lastError?: string;
+    /**
+     * When the event was received.
+     */
     receivedAt?: string;
+    /**
+     * When it was processed, or null.
+     */
     processedAt?: string;
 };
 
+/**
+ * The tenant's details for Stripe Connect onboarding.
+ */
 export type ConnectRequest = {
+    /**
+     * The name Stripe shows for the account.
+     */
     displayName?: string;
+    /**
+     * The contact email of the account.
+     */
     contactEmail?: string;
 };
 
+/**
+ * The Stripe connection and the onboarding page.
+ */
 export type ConnectionResponse = {
+    /**
+     * The configuration.
+     */
     configuration?: ConfigurationResponse;
+    /**
+     * A Stripe-hosted page, present while the tenant still has onboarding to finish.
+     */
     onboardingUrl?: string;
 };
 
+/**
+ * The hold to place on a wallet.
+ */
 export type ReserveRequest = {
+    /**
+     * The id of the wallet.
+     */
     walletId?: string;
+    /**
+     * The amount to hold, in minor units of the currency.
+     */
     amount?: number;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
     currency?: string;
+    /**
+     * How long the hold lasts, in seconds. After that it is released.
+     */
     ttlSeconds?: number;
+    /**
+     * A reference the caller chose, such as the id of the resource that will run.
+     */
     reference?: string;
 };
 
+/**
+ * A hold on part of a wallet's balance.
+ */
 export type ReservationResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The id of the wallet.
+     */
     walletId?: string;
+    /**
+     * `ACTIVE`, `CAPTURED`, `RELEASED` or `EXPIRED`.
+     */
     status?: string;
+    /**
+     * The amount held.
+     */
     amount?: MoneyDto;
+    /**
+     * The amount charged against the hold so far.
+     */
     captured?: MoneyDto;
+    /**
+     * When it expires.
+     */
     expiresAt?: string;
+    /**
+     * A reference the caller chose, recorded with the record.
+     */
     reference?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * When the hold was captured, released or expired, or null.
+     */
     closedAt?: string;
 };
 
+/**
+ * The actual cost to charge against a reservation.
+ */
 export type CaptureRequest = {
+    /**
+     * The actual cost, in minor units. Whatever the hold was above it is released.
+     */
     amount?: number;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
     currency?: string;
+    /**
+     * A reference the caller chose, recorded with the record.
+     */
     reference?: string;
 };
 
+/**
+ * A charge made against a wallet.
+ */
 export type ChargeResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * `SUCCEEDED` or `FAILED`. A wallet that cannot pay yields a recorded `insufficient_funds` failure.
+     */
     status?: string;
+    /**
+     * Why it failed, or null.
+     */
     failureReason?: string;
+    /**
+     * What the wallet paid after discounts.
+     */
     amount?: MoneyDto;
+    /**
+     * The amount before discounts.
+     */
     grossAmount?: MoneyDto;
+    /**
+     * The coupon discounts applied.
+     */
     discounts?: Array<DiscountLineResponse>;
+    /**
+     * The id of the ledger entry it posted, or null.
+     */
     ledgerEntryId?: string;
+    /**
+     * The reservation it was captured from, or null.
+     */
     reservationId?: string;
+    /**
+     * The usage reference, or null.
+     */
     usageRef?: string;
+    /**
+     * A reference the caller chose, recorded with the record.
+     */
     reference?: string;
 };
 
+/**
+ * One coupon discount applied to a charge.
+ */
 export type DiscountLineResponse = {
+    /**
+     * The redemption that gave the discount.
+     */
     redemptionId?: string;
+    /**
+     * The coupon.
+     */
     couponId?: string;
+    /**
+     * The coupon's name.
+     */
     couponName?: string;
+    /**
+     * The kind of benefit: `PERCENT_OFF`, `AMOUNT_OFF` or `WALLET_CREDIT`.
+     */
     benefitType?: string;
+    /**
+     * The amount taken off.
+     */
     amount?: MoneyDto;
 };
 
+/**
+ * A promotion code.
+ */
 export type PromotionCodeResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The code a customer enters.
+     */
     code?: string;
+    /**
+     * The coupon it redeems.
+     */
     couponId?: string;
+    /**
+     * How many times the code may be redeemed, or null.
+     */
     maxRedemptions?: number;
+    /**
+     * How many times it was redeemed.
+     */
     redeemedCount?: number;
+    /**
+     * The last moment it can be redeemed, or null.
+     */
     redeemBy?: string;
+    /**
+     * Whether it can still be redeemed.
+     */
     active?: boolean;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
 };
 
+/**
+ * The usage period to price and charge.
+ */
 export type ChargeUsageRequest = {
+    /**
+     * The customer whose usage is charged.
+     */
     customerId?: string;
+    /**
+     * The wallet to charge.
+     */
     walletId?: string;
+    /**
+     * The id of the pricing plan.
+     */
     planId?: string;
+    /**
+     * The plan version to price against.
+     */
     version?: number;
+    /**
+     * The start of the period, inclusive.
+     */
     from?: string;
+    /**
+     * The end of the period, exclusive.
+     */
     to?: string;
 };
 
+/**
+ * One line of a price.
+ */
 export type LineResponse = {
+    /**
+     * What the line is for.
+     */
     description?: string;
+    /**
+     * The metric, or null.
+     */
     metric?: string;
+    /**
+     * The quantity priced, as a decimal string.
+     */
     quantity?: string;
+    /**
+     * The line's amount, as a decimal string.
+     */
     amount?: string;
 };
 
+/**
+ * The result of rating a period's usage.
+ */
 export type RatingResponse = {
+    /**
+     * `CHARGED`, `FAILED` or `NO_CHARGE`.
+     */
     outcome?: string;
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The id of the pricing plan.
+     */
     planId?: string;
+    /**
+     * The plan version that was priced.
+     */
     planVersion?: number;
+    /**
+     * The amount charged.
+     */
     amount?: MoneyDto;
+    /**
+     * The id of the charge.
+     */
     chargeId?: string;
+    /**
+     * Why it failed, or null.
+     */
     failureReason?: string;
+    /**
+     * How many usage events were rated.
+     */
     usageCount?: number;
+    /**
+     * The start of the period.
+     */
     periodStart?: string;
+    /**
+     * The end of the period.
+     */
     periodEnd?: string;
+    /**
+     * How the price is made up.
+     */
     lines?: Array<LineResponse>;
+    /**
+     * Whether the answer is the earlier result of the same request, not a new one.
+     */
     replayed?: boolean;
 };
 
+/**
+ * The expected usage of one metric.
+ */
 export type UsageInput = {
+    /**
+     * The name of the metric.
+     */
     metric?: string;
+    /**
+     * The quantity as a decimal string with up to six decimal places.
+     */
     quantity?: string;
+    /**
+     * The number of events, for event-based pricing.
+     */
     events?: number;
 };
 
+/**
+ * One coupon discount applied to an estimate.
+ */
 export type DiscountLineDto = {
+    /**
+     * The redemption that would give the discount.
+     */
     redemptionId?: string;
+    /**
+     * The coupon.
+     */
     couponId?: string;
+    /**
+     * The coupon's name.
+     */
     couponName?: string;
+    /**
+     * The kind of benefit: `PERCENT_OFF`, `AMOUNT_OFF` or `WALLET_CREDIT`.
+     */
     benefitType?: string;
+    /**
+     * The amount taken off.
+     */
     amount?: MoneyDto;
 };
 
+/**
+ * The estimated cost.
+ */
 export type EstimateResponse = {
+    /**
+     * The id of the pricing plan.
+     */
     planId?: string;
+    /**
+     * The plan's code.
+     */
     planCode?: string;
+    /**
+     * The plan version that was priced.
+     */
     planVersion?: number;
+    /**
+     * What the wallet would pay after discounts.
+     */
     amount?: MoneyDto;
+    /**
+     * The amount before discounts.
+     */
     grossAmount?: MoneyDto;
+    /**
+     * The coupon discounts that would apply.
+     */
     discounts?: Array<DiscountLineDto>;
+    /**
+     * The exact price before rounding, as a decimal string.
+     */
     exactAmount?: string;
+    /**
+     * The rounding and min/max adjustment applied, as a decimal string.
+     */
     adjustment?: string;
+    /**
+     * How the price is made up.
+     */
     lines?: Array<LineResponse>;
 };
 
+/**
+ * A hold on a wallet.
+ */
 export type ReservationDto = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * `ACTIVE`, `CAPTURED`, `RELEASED` or `EXPIRED`.
+     */
     status?: string;
+    /**
+     * The amount held.
+     */
     amount?: MoneyDto;
+    /**
+     * When it expires.
+     */
     expiresAt?: string;
+    /**
+     * Whether the answer is the earlier result of the same request, not a new one.
+     */
     replayed?: boolean;
 };
 
+/**
+ * The estimate and the reservation that holds it.
+ */
 export type ReserveResponse = {
+    /**
+     * The estimated cost.
+     */
     estimate?: EstimateResponse;
+    /**
+     * The hold on the wallet.
+     */
     reservation?: ReservationDto;
 };
 
+/**
+ * The expected usage to price.
+ */
 export type EstimateRequest = {
+    /**
+     * The id of the pricing plan.
+     */
     planId?: string;
+    /**
+     * The plan version to price against.
+     */
     version?: number;
+    /**
+     * The moment to price at.
+     */
     at?: string;
+    /**
+     * The expected usage per metric.
+     */
     usage?: Array<UsageInput>;
+    /**
+     * A wallet whose coupons the estimate also applies, or null.
+     */
     walletId?: string;
 };
 
+/**
+ * The plan to create, with its first version.
+ */
 export type CreatePlanRequest = {
+    /**
+     * The plan's code, unique per tenant.
+     */
     code?: string;
+    /**
+     * The name.
+     */
     name?: string;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
     currency?: string;
+    /**
+     * The pricing model: `TIME_BASED`, `USAGE_BASED`, `WORKLOAD_BASED`, `EVENT_BASED`, `SUBSCRIPTION` or `HYBRID`.
+     */
     model?: string;
+    /**
+     * The plan's first version.
+     */
     version?: VersionRequest;
 };
 
+/**
+ * A pricing strategy: how a quantity of usage becomes an amount. Prices are decimals in minor units, and rounding to whole minor units happens once, on the total.
+ */
 export type RuleDto = {
+    /**
+     * The pricing model: `TIME_BASED` (price per unit of time), `USAGE_BASED` (by quantity consumed, with tiers), `WORKLOAD_BASED` (a start fee per execution plus a rate for the work), `EVENT_BASED` (per discrete event), `SUBSCRIPTION` (a fixed amount per cycle) or `HYBRID` (a base amount plus usage components).
+     */
     model?: string;
+    /**
+     * The metric the rule prices. Not used by a fixed price.
+     */
     metric?: string;
+    /**
+     * The unit the metric is measured in. Not used by a fixed price.
+     */
     unit?: string;
+    /**
+     * The price of one unit, as a decimal string. Used by time-based, workload-based and event-based rules.
+     */
     unitPrice?: string;
+    /**
+     * For a time-based rule, the duration is first rounded up to a whole number of increments, such as per started minute. Zero or null means no rounding.
+     */
     increment?: string;
+    /**
+     * For a usage-based rule: `GRADUATED` prices each band of the quantity at its own tier's rate, `VOLUME` prices the whole quantity at the rate of the tier it falls in.
+     */
     mode?: string;
+    /**
+     * For a usage-based rule, the price bands. One tier is a flat rate; a first tier priced at zero is an included allowance.
+     */
     tiers?: Array<TierDto>;
+    /**
+     * For a workload-based rule, the start fee of every execution, as a decimal string.
+     */
     executionFee?: string;
+    /**
+     * The amount for one billing cycle whatever is used, as a decimal string. Used by a subscription rule and as the base of a hybrid.
+     */
     fixedPrice?: string;
+    /**
+     * For a hybrid rule, the usage rules added to the base amount. Each metric appears once.
+     */
     components?: Array<RuleDto>;
 };
 
+/**
+ * One price tier.
+ */
 export type TierDto = {
+    /**
+     * The quantity the band runs up to, as a decimal string, or null when it is unbounded.
+     */
     upTo?: string;
+    /**
+     * The price of one unit in the band, as a decimal string.
+     */
     unitPrice?: string;
 };
 
+/**
+ * A version of a plan.
+ */
 export type VersionRequest = {
+    /**
+     * The price rule.
+     */
     rule?: RuleDto;
+    /**
+     * For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY` or `YEARLY`.
+     */
     billingCycle?: string;
+    /**
+     * The least a charge is rounded up to, in minor units, or null.
+     */
     minCharge?: number;
+    /**
+     * The most a charge is capped at, in minor units, or null.
+     */
     maxCharge?: number;
+    /**
+     * How a fractional amount is rounded: `HALF_UP`, `HALF_EVEN`, `UP` or `DOWN`.
+     */
     rounding?: string;
+    /**
+     * When the version takes effect.
+     */
     validFrom?: string;
+    /**
+     * When the version stops applying, or null.
+     */
     validUntil?: string;
 };
 
+/**
+ * A pricing plan and its versions.
+ */
 export type PlanResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The code, unique per tenant.
+     */
     code?: string;
+    /**
+     * The name.
+     */
     name?: string;
+    /**
+     * The pricing model.
+     */
     model?: string;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
     currency?: string;
+    /**
+     * `ACTIVE` or `RETIRED`.
+     */
     status?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * When the plan was retired, or null.
+     */
     retiredAt?: string;
+    /**
+     * Every version, earlier ones unchanged.
+     */
     versions?: Array<VersionResponse>;
 };
 
+/**
+ * One version of a pricing plan. Earlier versions, and every charge that used them, are unchanged.
+ */
 export type VersionResponse = {
+    /**
+     * The version of the plan.
+     */
     version?: number;
+    /**
+     * The price rule.
+     */
     rule?: RuleDto;
+    /**
+     * For a subscription: `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY` or `YEARLY`.
+     */
     billingCycle?: string;
+    /**
+     * The least a charge is rounded up to, in minor units, or null.
+     */
     minCharge?: number;
+    /**
+     * The most a charge is capped at, in minor units, or null.
+     */
     maxCharge?: number;
+    /**
+     * How a fractional amount is rounded.
+     */
     rounding?: string;
+    /**
+     * When the version takes effect.
+     */
     validFrom?: string;
+    /**
+     * When the version stops applying, or null.
+     */
     validUntil?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * Who published the version.
+     */
     createdBy?: string;
 };
 
+/**
+ * The refund to request.
+ */
 export type RefundRequest = {
+    /**
+     * The amount to refund, in minor units. When omitted, the whole payment.
+     */
     amount?: number;
+    /**
+     * The currency, which must be the payment's.
+     */
     currency?: string;
+    /**
+     * Why the payment is refunded.
+     */
     reason?: string;
 };
 
+/**
+ * A refund of a payment.
+ */
 export type RefundResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The payment that was refunded.
+     */
     paymentId?: string;
+    /**
+     * `PENDING`, `SUCCEEDED` or `FAILED`. The wallet is debited only when Stripe confirms.
+     */
     status?: string;
+    /**
+     * The amount refunded.
+     */
     amount?: MoneyDto;
+    /**
+     * The reason given.
+     */
     reason?: string;
+    /**
+     * Why it failed, or null.
+     */
     failureReason?: string;
+    /**
+     * The id of the ledger entry it posted, or null.
+     */
     ledgerEntryId?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * When it completed, or null.
+     */
     completedAt?: string;
 };
 
+/**
+ * A payment of a top-up or an invoice.
+ */
 export type PaymentResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The id of the wallet.
+     */
     walletId?: string;
+    /**
+     * The id of the customer.
+     */
     customerId?: string;
+    /**
+     * `REQUIRES_ACTION`, `PROCESSING`, `SUCCEEDED`, `FAILED` or `CANCELED`.
+     */
     status?: string;
+    /**
+     * The amount of the payment.
+     */
     amount?: MoneyDto;
+    /**
+     * How much of it has been refunded.
+     */
     refunded?: MoneyDto;
+    /**
+     * The Stripe-hosted page where the customer pays. Present only while the customer can still pay.
+     */
     checkoutUrl?: string;
+    /**
+     * Why it failed, or null.
+     */
     failureReason?: string;
+    /**
+     * The id of the ledger entry it posted, or null.
+     */
     ledgerEntryId?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * When the record was last changed.
+     */
     updatedAt?: string;
+    /**
+     * When it completed, or null.
+     */
     completedAt?: string;
 };
 
+/**
+ * The entry that replaces a reversed one.
+ */
 export type ReplacementRequest = {
+    /**
+     * `CREDIT` or `DEBIT`.
+     */
     type?: string;
+    /**
+     * The amount of the replacement, in minor units.
+     */
     amount?: number;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
     currency?: string;
+    /**
+     * A reference the caller chose, recorded with the record.
+     */
     reference?: string;
 };
 
+/**
+ * The correction to post.
+ */
 export type ReverseRequest = {
+    /**
+     * Why the entry is reversed.
+     */
     reason?: string;
+    /**
+     * An entry to post in its place with the right amount, or null for none.
+     */
     replacement?: ReplacementRequest;
 };
 
+/**
+ * One entry of a wallet's append-only ledger.
+ */
 export type LedgerEntryResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The entry's position in the wallet's ledger.
+     */
     sequence?: number;
+    /**
+     * `CREDIT` or `DEBIT`.
+     */
     type?: string;
+    /**
+     * The amount of the entry.
+     */
     amount?: MoneyDto;
+    /**
+     * A reference the caller chose, recorded with the record.
+     */
     reference?: string;
+    /**
+     * The reservation the entry belongs to, or null.
+     */
     reservationId?: string;
+    /**
+     * The id of the charge.
+     */
     chargeId?: string;
+    /**
+     * The id of the entry this one reverses, or null.
+     */
     reversalOf?: string;
+    /**
+     * Who caused the entry.
+     */
     actor?: string;
+    /**
+     * The reason given.
+     */
     reason?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
 };
 
+/**
+ * The entries a reversal posted.
+ */
 export type ReversalResponse = {
+    /**
+     * The entry that negates the original.
+     */
     reversal?: LedgerEntryResponse;
+    /**
+     * The replacement entry, or null.
+     */
     replacement?: LedgerEntryResponse;
+    /**
+     * Whether the answer is the earlier result of the same request, not a new one.
+     */
     replayed?: boolean;
 };
 
+/**
+ * The charge to invoice.
+ */
 export type InvoiceChargeRequest = {
+    /**
+     * The id of a succeeded charge.
+     */
     chargeId?: string;
 };
 
+/**
+ * An invoice with its items and payments.
+ */
 export type InvoiceDetailResponse = {
+    /**
+     * The invoice.
+     */
     invoice?: InvoiceResponse;
+    /**
+     * The lines of the invoice.
+     */
     items?: Array<ItemResponse>;
+    /**
+     * The payments made against it.
+     */
     payments?: Array<InvoicePaymentResponse>;
 };
 
+/**
+ * One payment of an invoice.
+ */
 export type InvoicePaymentResponse = {
+    /**
+     * The payment's id.
+     */
     paymentId?: string;
+    /**
+     * The amount of the payment.
+     */
     amount?: MoneyDto;
+    /**
+     * The current status.
+     */
     status?: string;
+    /**
+     * Why it failed, or null.
+     */
     failureReason?: string;
+    /**
+     * The id of the ledger entry it posted, or null.
+     */
     ledgerEntryId?: string;
+    /**
+     * When the payment was started.
+     */
     startedAt?: string;
+    /**
+     * When it settled, or null.
+     */
     settledAt?: string;
 };
 
+/**
+ * An invoice.
+ */
 export type InvoiceResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The invoice number.
+     */
     number?: string;
+    /**
+     * The id of the customer.
+     */
     customerId?: string;
+    /**
+     * The id of the wallet.
+     */
     walletId?: string;
+    /**
+     * `DRAFT`, `OPEN`, `PAID`, `VOID` or `UNCOLLECTIBLE`.
+     */
     status?: string;
+    /**
+     * `POSTPAID_CYCLE` for a closed billing cycle, or `CHARGE` for one charge.
+     */
     origin?: string;
+    /**
+     * The total amount.
+     */
     total?: MoneyDto;
+    /**
+     * The start of the period.
+     */
     periodStart?: string;
+    /**
+     * The end of the period.
+     */
     periodEnd?: string;
+    /**
+     * How it is settled: `WALLET` (already paid from the wallet) or `PAYMENT` (paid through Stripe).
+     */
     settlement?: string;
+    /**
+     * Why it was voided, or null.
+     */
     voidReason?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * When it was issued, or null.
+     */
     issuedAt?: string;
+    /**
+     * When it was paid, or null.
+     */
     paidAt?: string;
+    /**
+     * When it was voided, or null.
+     */
     voidedAt?: string;
 };
 
+/**
+ * One line of an invoice.
+ */
 export type ItemResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * `CHARGE` or `SUBSCRIPTION_PERIOD`.
+     */
     source?: string;
+    /**
+     * The id of the charge.
+     */
     chargeId?: string;
+    /**
+     * The subscription the line is for, or null.
+     */
     subscriptionId?: string;
+    /**
+     * The start of the period.
+     */
     periodStart?: string;
+    /**
+     * The end of the period.
+     */
     periodEnd?: string;
+    /**
+     * What the line is for.
+     */
     description?: string;
+    /**
+     * The line's amount.
+     */
     amount?: MoneyDto;
+    /**
+     * When the cost was incurred.
+     */
     incurredAt?: string;
 };
 
+/**
+ * Why the invoice is voided.
+ */
 export type VoidRequest = {
+    /**
+     * Why the request for payment is cancelled.
+     */
     reason?: string;
 };
 
+/**
+ * The invoice and the payment that was started.
+ */
 export type PayInvoiceResponse = {
+    /**
+     * The invoice.
+     */
     invoice?: InvoiceDetailResponse;
+    /**
+     * The payment, with the Stripe-hosted page to pay on.
+     */
     payment?: StartedPaymentResponse;
 };
 
+/**
+ * A payment that was started.
+ */
 export type StartedPaymentResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The payment's status.
+     */
     status?: string;
+    /**
+     * The Stripe-hosted page where the customer pays. Present only while the customer can still pay.
+     */
     checkoutUrl?: string;
 };
 
+/**
+ * The customer to create.
+ */
 export type CreateCustomerRequest = {
+    /**
+     * The tenant system the customer's user belongs to. A Tenant System caller omits it.
+     */
     tenantSystemId?: string;
+    /**
+     * The Tenant System's own id of the user, which maps the customer to it.
+     */
     externalUserId?: string;
+    /**
+     * The name shown for the customer.
+     */
     displayName?: string;
+    /**
+     * The customer's email address.
+     */
     email?: string;
 };
 
+/**
+ * What a coupon gives.
+ */
 export type BenefitRequest = {
+    /**
+     * `PERCENT_OFF`, `AMOUNT_OFF` or `WALLET_CREDIT`.
+     */
     type?: string;
+    /**
+     * For a percentage, in basis points: 1000 is 10%.
+     */
     basisPoints?: number;
+    /**
+     * For a fixed amount or credit, in minor units.
+     */
     amount?: number;
 };
 
+/**
+ * The coupon to create. Its terms are immutable.
+ */
 export type CreateCouponRequest = {
+    /**
+     * The coupon's name.
+     */
     name?: string;
+    /**
+     * The coupon's own currency. It never changes; redeeming the coupon onto a wallet in another currency is refused.
+     */
     currency?: string;
+    /**
+     * What the coupon gives. A coupon needs a total bound, or it is refused.
+     */
     benefit?: BenefitRequest;
+    /**
+     * How long a redemption lasts, or null for no time limit.
+     */
     window?: WindowRequest;
+    /**
+     * How many charges one redemption may discount, or null.
+     */
     maxApplications?: number;
+    /**
+     * The most one redemption may discount in all, in minor units, or null.
+     */
     maxTotalDiscount?: number;
+    /**
+     * Limits on the coupon, or null for none.
+     */
     limits?: LimitsRequest;
+    /**
+     * What the coupon applies to, or null for everything.
+     */
     scope?: ScopeRequest;
+    /**
+     * Whether it may combine with other coupons on one charge.
+     */
     stackable?: boolean;
+    /**
+     * The first promotion code, or null for none.
+     */
     code?: string;
+    /**
+     * How many times the first code may be redeemed, or null.
+     */
     codeMaxRedemptions?: number;
 };
 
+/**
+ * Limits on a coupon.
+ */
 export type LimitsRequest = {
+    /**
+     * The last moment it can be redeemed.
+     */
     redeemBy?: string;
+    /**
+     * How many times it may be redeemed in all.
+     */
     maxRedemptions?: number;
+    /**
+     * How many times one customer may redeem it.
+     */
     maxPerCustomer?: number;
+    /**
+     * The smallest charge it applies to, in minor units.
+     */
     minCharge?: number;
+    /**
+     * The most it takes off one charge, in minor units.
+     */
     maxDiscountPerApplication?: number;
+    /**
+     * The most it may discount across all redemptions, in minor units.
+     */
     budget?: number;
 };
 
+/**
+ * What a coupon applies to.
+ */
 export type ScopeRequest = {
+    /**
+     * The kinds of charge it applies to. Empty means all.
+     */
     kinds?: Array<string>;
+    /**
+     * The plans it applies to. Empty means all.
+     */
     planIds?: Array<string>;
+    /**
+     * The metrics it applies to. Empty means all.
+     */
     metrics?: Array<string>;
 };
 
+/**
+ * How long a redemption lasts.
+ */
 export type WindowRequest = {
+    /**
+     * The number of units.
+     */
     count?: number;
+    /**
+     * `DAYS` or `MONTHS`.
+     */
     unit?: string;
 };
 
+/**
+ * A coupon.
+ */
 export type CouponResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * The name.
+     */
     name?: string;
+    /**
+     * `PERCENT_OFF`, `AMOUNT_OFF` or `WALLET_CREDIT`.
+     */
     benefitType?: string;
+    /**
+     * For a percentage, in basis points, or null.
+     */
     percentBasisPoints?: number;
+    /**
+     * For a fixed amount, in minor units, or null.
+     */
     amountOff?: number;
+    /**
+     * For a wallet credit, in minor units, or null.
+     */
     creditAmount?: number;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
     currency?: string;
+    /**
+     * The last moment it can be redeemed, or null.
+     */
     redeemBy?: string;
+    /**
+     * How many times it may be redeemed in all, or null.
+     */
     maxRedemptions?: number;
+    /**
+     * How many times one customer may redeem it, or null.
+     */
     maxPerCustomer?: number;
+    /**
+     * How many times it was redeemed.
+     */
     redemptionsCount?: number;
+    /**
+     * The most it may discount across all redemptions, or null.
+     */
     budget?: number;
+    /**
+     * How much it has discounted so far.
+     */
     budgetUsed?: number;
+    /**
+     * Whether it may combine with other coupons on one charge.
+     */
     stackable?: boolean;
+    /**
+     * `ACTIVE` or `INACTIVE`.
+     */
     status?: string;
+    /**
+     * The actor that created the coupon.
+     */
     createdBy?: string;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * When it was deactivated, or null.
+     */
     deactivatedAt?: string;
+    /**
+     * The plans it applies to. Empty means all.
+     */
     planIds?: Array<string>;
 };
 
+/**
+ * The coupon and its first promotion code.
+ */
 export type CreateCouponResponse = {
+    /**
+     * The coupon.
+     */
     coupon?: CouponResponse;
+    /**
+     * The first promotion code, or null.
+     */
     code?: PromotionCodeView;
 };
 
+/**
+ * A promotion code.
+ */
 export type PromotionCodeView = {
+    /**
+     * The code's id.
+     */
     id?: string;
+    /**
+     * The code a customer enters.
+     */
     code?: string;
+    /**
+     * The coupon it redeems.
+     */
     couponId?: string;
+    /**
+     * How many times the code may be redeemed, or null.
+     */
     maxRedemptions?: number;
+    /**
+     * How many times it was redeemed.
+     */
     redeemedCount?: number;
+    /**
+     * The last moment it can be redeemed, or null.
+     */
     redeemBy?: string;
+    /**
+     * Whether it can still be redeemed.
+     */
     active?: boolean;
+    /**
+     * When the code was created.
+     */
     createdAt?: string;
 };
 
+/**
+ * How to deactivate the coupon.
+ */
 export type DeactivateCouponRequest = {
+    /**
+     * `true` also ends the running redemptions. By default they keep working.
+     */
     revokeRedemptions?: boolean;
 };
 
+/**
+ * The promotion code to add.
+ */
 export type AddCodeRequest = {
+    /**
+     * The code a customer enters.
+     */
     code?: string;
+    /**
+     * How many times the code may be redeemed, or null.
+     */
     maxRedemptions?: number;
+    /**
+     * The last moment it can be redeemed, or null.
+     */
     redeemBy?: string;
 };
 
+/**
+ * The cost to charge to a wallet.
+ */
 export type ChargeRequest = {
+    /**
+     * The id of the wallet.
+     */
     walletId?: string;
+    /**
+     * The cost, in minor units.
+     */
     amount?: number;
+    /**
+     * The ISO 4217 currency code of the amounts.
+     */
     currency?: string;
+    /**
+     * A reference to the usage the charge is for.
+     */
     usageRef?: string;
+    /**
+     * A reference the caller chose, recorded with the record.
+     */
     reference?: string;
 };
 
+/**
+ * The billing session to create.
+ */
 export type CreateRequest = {
+    /**
+     * The customer the session is for. A Tenant System may name only customers mapped to it.
+     */
     customerId?: string;
+    /**
+     * Where the portal sends the customer back to. It must be in the tenant's allowlist.
+     */
     returnUrl?: string;
+    /**
+     * What the session may do in the portal.
+     */
     permissions?: Array<string>;
+    /**
+     * How long the session lasts, in seconds.
+     */
     expiresInSeconds?: number;
 };
 
+/**
+ * The billing session that was created.
+ */
 export type CreateResponse = {
+    /**
+     * The session's id, which revokes it.
+     */
     id?: string;
+    /**
+     * The id of the customer.
+     */
     customerId?: string;
+    /**
+     * The portal URL to open in the customer's browser. It carries the single-use exchange token, which is shown only here.
+     */
     portalUrl?: string;
+    /**
+     * What the session may do in the portal.
+     */
     permissions?: Array<string>;
+    /**
+     * When the session expires.
+     */
     expiresAt?: string;
 };
 
+/**
+ * The fields to change. A field that is left out keeps its value.
+ */
 export type UpdateEndpointRequest = {
+    /**
+     * The URL.
+     */
     url?: string;
+    /**
+     * A note about the endpoint.
+     */
     description?: string;
+    /**
+     * The event types the endpoint subscribes to.
+     */
     eventTypes?: Array<string>;
+    /**
+     * `ACTIVE`, or `DISABLED` to pause delivery without losing queued events.
+     */
     status?: string;
 };
 
+/**
+ * The paging facts of a list answer, present when the request asked for them with `page_info`.
+ */
 export type PageInfo = {
+    /**
+     * The page size that was applied.
+     */
     limit?: number;
+    /**
+     * The number of rows that were skipped, or null when a cursor positioned the page.
+     */
     offset?: number | null;
+    /**
+     * The number of rows that match the filter, or null when the request asked only for the cursor.
+     */
     total?: number | null;
+    /**
+     * The cursor of the following page, or null on the last page. Pass it as `cursor` with the same filter and sort.
+     */
     next_cursor?: string | null;
 };
 
+/**
+ * A page of wallet response rows, with the paging facts when the request asked for them.
+ */
 export type PageWalletResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<WalletResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of ledger entry response rows, with the paging facts when the request asked for them.
+ */
 export type PageLedgerEntryResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<LedgerEntryResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * The usage of one metric over a period.
+ */
 export type UsageTotalResponse = {
+    /**
+     * The name of the metric.
+     */
     metric?: string;
+    /**
+     * The unit the metric is measured in.
+     */
     unit?: string;
+    /**
+     * The quantity as a decimal string with up to six decimal places.
+     */
     quantity?: string;
+    /**
+     * The number of events counted.
+     */
     events?: number;
 };
 
+/**
+ * A page of usage event response rows, with the paging facts when the request asked for them.
+ */
 export type PageUsageEventResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<UsageEventResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of subscription response rows, with the paging facts when the request asked for them.
+ */
 export type PageSubscriptionResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<SubscriptionResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of refund response rows, with the paging facts when the request asked for them.
+ */
 export type PageRefundResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<RefundResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of payment response rows, with the paging facts when the request asked for them.
+ */
 export type PagePaymentResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<PaymentResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * One attempt: a failed attempt to pay, or an attempt to deliver a webhook event.
+ */
 export type AttemptResponse = {
+    /**
+     * The code of the failure.
+     */
     failureCode?: string;
+    /**
+     * What went wrong.
+     */
     failureMessage?: string;
+    /**
+     * When the attempt happened.
+     */
     occurredAt?: string;
 };
 
+/**
+ * A payment with its refunds and failed attempts.
+ */
 export type PaymentDetailResponse = {
+    /**
+     * The payment.
+     */
     payment?: PaymentResponse;
+    /**
+     * The refunds of the payment.
+     */
     refunds?: Array<RefundResponse>;
+    /**
+     * The attempts that failed.
+     */
     failedAttempts?: Array<AttemptResponse>;
 };
 
+/**
+ * A page of invoice response rows, with the paging facts when the request asked for them.
+ */
 export type PageInvoiceResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<InvoiceResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of charge response rows, with the paging facts when the request asked for them.
+ */
 export type PageChargeResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<ChargeResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of endpoint response rows, with the paging facts when the request asked for them.
+ */
 export type PageEndpointResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<EndpointResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of delivery response rows, with the paging facts when the request asked for them.
+ */
 export type PageDeliveryResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<DeliveryResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A delivery with the body that was sent and every attempt.
+ */
 export type DeliveryDetailResponse = {
+    /**
+     * The delivery.
+     */
     delivery?: DeliveryResponse;
+    /**
+     * The event body that is sent.
+     */
     body?: string;
+    /**
+     * Every attempt, oldest first.
+     */
     attempts?: Array<AttemptResponse>;
 };
 
+/**
+ * A page of redemption response rows, with the paging facts when the request asked for them.
+ */
 export type PageRedemptionResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<RedemptionResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * The usage of one metric over a period.
+ */
 export type TotalResponse = {
+    /**
+     * The name of the metric.
+     */
     metric?: string;
+    /**
+     * The unit the metric is measured in.
+     */
     unit?: string;
+    /**
+     * The quantity as a decimal string with up to six decimal places.
+     */
     quantity?: string;
+    /**
+     * The number of events counted.
+     */
     events?: number;
 };
 
+/**
+ * A problem with Stripe that needs a person to look.
+ */
 export type IncidentResponse = {
+    /**
+     * The id.
+     */
     id?: string;
+    /**
+     * `SIGNATURE_REJECTED`, `UNKNOWN_ACCOUNT`, `EVENT_REJECTED` or `RECONCILIATION_MISMATCH`.
+     */
     kind?: string;
+    /**
+     * What the incident is about.
+     */
     subject?: string;
+    /**
+     * Details of what happened.
+     */
     detail?: string;
+    /**
+     * How many times it happened.
+     */
     occurrences?: number;
+    /**
+     * When the record was created.
+     */
     createdAt?: string;
+    /**
+     * When it last happened.
+     */
     lastSeenAt?: string;
+    /**
+     * When it was resolved, or null.
+     */
     resolvedAt?: string;
 };
 
+/**
+ * A page of incident response rows, with the paging facts when the request asked for them.
+ */
 export type PageIncidentResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<IncidentResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of event response rows, with the paging facts when the request asked for them.
+ */
 export type PageEventResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<EventResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of reservation response rows, with the paging facts when the request asked for them.
+ */
 export type PageReservationResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<ReservationResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of plan response rows, with the paging facts when the request asked for them.
+ */
 export type PagePlanResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<PlanResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of customer response rows, with the paging facts when the request asked for them.
+ */
 export type PageCustomerResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<CustomerResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of coupon response rows, with the paging facts when the request asked for them.
+ */
 export type PageCouponResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<CouponResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
 };
 
+/**
+ * A page of promotion code response rows, with the paging facts when the request asked for them.
+ */
 export type PagePromotionCodeResponse = {
+    /**
+     * The rows of this page.
+     */
     data?: Array<PromotionCodeResponse>;
+    /**
+     * The paging facts, or null when the request did not ask for them with `page_info`.
+     */
     page?: PageInfo | null;
+};
+
+/**
+ * The body of every error: an RFC 9457 problem.
+ */
+export type ProblemDetail = {
+    /**
+     * A URI reference that identifies the kind of problem. It is `about:blank` when the status says it all.
+     */
+    type?: string;
+    /**
+     * A short, human-readable summary of the kind of problem. It is the status's reason phrase unless a more specific one applies.
+     */
+    title?: string;
+    /**
+     * The HTTP status of the response.
+     */
+    status?: number;
+    /**
+     * A sentence that explains this occurrence.
+     */
+    detail?: string;
+    /**
+     * A URI reference that identifies this occurrence, when there is one.
+     */
+    instance?: string;
 };
 
 export type SetWebhookSecretData = {
+    /**
+     * The webhook signing secret.
+     */
     body: WebhookSecretRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -897,9 +2900,26 @@ export type SetWebhookSecretData = {
     url: '/api/v1/stripe/configuration/webhook-secret';
 };
 
+export type SetWebhookSecretErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type SetWebhookSecretError = SetWebhookSecretErrors[keyof SetWebhookSecretErrors];
+
 export type SetWebhookSecretResponses = {
     /**
-     * OK
+     * The tenant's Stripe configuration. No secret is part of it.
      */
     200: ConfigurationResponse;
 };
@@ -907,8 +2927,14 @@ export type SetWebhookSecretResponses = {
 export type SetWebhookSecretResponse = SetWebhookSecretResponses[keyof SetWebhookSecretResponses];
 
 export type ConnectDirectData = {
+    /**
+     * The tenant's own Stripe keys.
+     */
     body: DirectRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -916,9 +2942,34 @@ export type ConnectDirectData = {
     url: '/api/v1/stripe/configuration/direct';
 };
 
+export type ConnectDirectErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Stripe rejected the keys.
+     */
+    422: ProblemDetail;
+    /**
+     * Stripe could not be reached. Repeat the request.
+     */
+    502: ProblemDetail;
+};
+
+export type ConnectDirectError = ConnectDirectErrors[keyof ConnectDirectErrors];
+
 export type ConnectDirectResponses = {
     /**
-     * OK
+     * The tenant's Stripe configuration. No secret is part of it.
      */
     200: ConfigurationResponse;
 };
@@ -932,6 +2983,19 @@ export type ListData = {
     url: '/api/v1/portal/return-urls';
 };
 
+export type ListErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type ListError = ListErrors[keyof ListErrors];
+
 export type ListResponses = {
     /**
      * OK
@@ -942,14 +3006,37 @@ export type ListResponses = {
 export type ListResponse = ListResponses[keyof ListResponses];
 
 export type ReplaceData = {
+    /**
+     * The allowlist to store.
+     */
     body: ReplaceRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
     query?: never;
     url: '/api/v1/portal/return-urls';
 };
+
+export type ReplaceErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type ReplaceError = ReplaceErrors[keyof ReplaceErrors];
 
 export type ReplaceResponses = {
     /**
@@ -963,15 +3050,35 @@ export type ReplaceResponse = ReplaceResponses[keyof ReplaceResponses];
 export type GetData = {
     body?: never;
     path: {
+        /**
+         * The id of the customer.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/customers/{id}';
 };
 
+export type GetErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetError = GetErrors[keyof GetErrors];
+
 export type GetResponses = {
     /**
-     * OK
+     * A billing customer.
      */
     200: CustomerResponse;
 };
@@ -979,12 +3086,24 @@ export type GetResponses = {
 export type GetResponse = GetResponses[keyof GetResponses];
 
 export type UpdateData = {
+    /**
+     * The customer properties to store.
+     */
     body: UpdateCustomerRequest;
     headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
         'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the customer.
+         */
         id: string;
     };
     query?: never;
@@ -993,14 +3112,32 @@ export type UpdateData = {
 
 export type UpdateErrors = {
     /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
      * The resource changed since the caller read it; the current ETag is returned in the header
      */
-    412: unknown;
+    412: ProblemDetail;
 };
+
+export type UpdateError = UpdateErrors[keyof UpdateErrors];
 
 export type UpdateResponses = {
     /**
-     * OK
+     * A billing customer.
      */
     200: CustomerResponse;
 };
@@ -1010,14 +3147,41 @@ export type UpdateResponse = UpdateResponses[keyof UpdateResponses];
 export type DirectData = {
     body?: never;
     headers?: {
+        /**
+         * The signature Stripe computed over the raw body. It is checked before anything in the body is read.
+         */
         'Stripe-Signature'?: string;
     };
     path: {
+        /**
+         * The id of the Stripe configuration the webhook endpoint belongs to.
+         */
         configurationId: string;
     };
     query?: never;
     url: '/stripe/webhooks/direct/{configurationId}';
 };
+
+export type DirectErrors = {
+    /**
+     * The signature of the raw body could not be verified. The answer says nothing about why.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type DirectError = DirectErrors[keyof DirectErrors];
 
 export type DirectResponses = {
     /**
@@ -1033,12 +3197,32 @@ export type DirectResponse = DirectResponses[keyof DirectResponses];
 export type ConnectData = {
     body?: never;
     headers?: {
+        /**
+         * The signature Stripe computed over the raw body. It is checked before anything in the body is read.
+         */
         'Stripe-Signature'?: string;
     };
     path?: never;
     query?: never;
     url: '/stripe/webhooks/connect';
 };
+
+export type ConnectErrors = {
+    /**
+     * The signature of the raw body could not be verified. The answer says nothing about why.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+};
+
+export type ConnectError = ConnectErrors[keyof ConnectErrors];
 
 export type ConnectResponses = {
     /**
@@ -1052,9 +3236,18 @@ export type ConnectResponses = {
 export type ConnectResponse = ConnectResponses[keyof ConnectResponses];
 
 export type TopUpData = {
+    /**
+     * The top-up to start.
+     */
     body: TopUpRequest;
     headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
         'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -1062,13 +3255,42 @@ export type TopUpData = {
     url: '/portal/api/top-ups';
 };
 
+export type TopUpErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+    /**
+     * Stripe rejected the request.
+     */
+    422: ProblemDetail;
+    /**
+     * Stripe could not be reached and the outcome is unknown. Repeat the request with the same `Idempotency-Key`.
+     */
+    502: ProblemDetail;
+};
+
+export type TopUpError = TopUpErrors[keyof TopUpErrors];
+
 export type TopUpResponses = {
     /**
      * An earlier identical request already created it; that resource is returned
      */
     200: TopUpResponse;
     /**
-     * Created
+     * A top-up that was started.
      */
     201: TopUpResponse;
 };
@@ -1076,8 +3298,14 @@ export type TopUpResponses = {
 export type TopUpResponse2 = TopUpResponses[keyof TopUpResponses];
 
 export type ExchangeData = {
+    /**
+     * The token to exchange.
+     */
     body: ExchangeRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -1085,9 +3313,26 @@ export type ExchangeData = {
     url: '/portal/api/session/exchange';
 };
 
+export type ExchangeErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The token is unknown, already used, revoked or expired. The answer does not say which.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+};
+
+export type ExchangeError = ExchangeErrors[keyof ExchangeErrors];
+
 export type ExchangeResponses = {
     /**
-     * OK
+     * The portal session the exchange opened.
      */
     200: ExchangeResponse;
 };
@@ -1101,9 +3346,30 @@ export type PaymentMethodsData = {
     url: '/portal/api/payment-methods';
 };
 
+export type PaymentMethodsErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+    /**
+     * Stripe rejected the request.
+     */
+    422: ProblemDetail;
+    /**
+     * Stripe could not be reached. Repeat the request.
+     */
+    502: ProblemDetail;
+};
+
+export type PaymentMethodsError = PaymentMethodsErrors[keyof PaymentMethodsErrors];
+
 export type PaymentMethodsResponses = {
     /**
-     * OK
+     * A Stripe-hosted page.
      */
     200: HostedPageResponse;
 };
@@ -1338,12 +3604,22 @@ export type ListEndpointsErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type ListEndpointsError = ListEndpointsErrors[keyof ListEndpointsErrors];
 
 export type ListEndpointsResponses = {
     /**
-     * OK
+     * A page of endpoint response rows, with the paging facts when the request asked for them.
      */
     200: PageEndpointResponse;
 };
@@ -1351,8 +3627,14 @@ export type ListEndpointsResponses = {
 export type ListEndpointsResponse = ListEndpointsResponses[keyof ListEndpointsResponses];
 
 export type CreateEndpointData = {
+    /**
+     * The endpoint to register.
+     */
     body: CreateEndpointRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -1360,9 +3642,26 @@ export type CreateEndpointData = {
     url: '/api/v1/webhook-endpoints';
 };
 
+export type CreateEndpointErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type CreateEndpointError = CreateEndpointErrors[keyof CreateEndpointErrors];
+
 export type CreateEndpointResponses = {
     /**
-     * Created
+     * An endpoint with its signing secret, shown once.
      */
     201: EndpointWithSecretResponse;
 };
@@ -1372,18 +3671,41 @@ export type CreateEndpointResponse = CreateEndpointResponses[keyof CreateEndpoin
 export type RotateSecretData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the webhook endpoint.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/webhook-endpoints/{id}/rotate-secret';
 };
 
+export type RotateSecretErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type RotateSecretError = RotateSecretErrors[keyof RotateSecretErrors];
+
 export type RotateSecretResponses = {
     /**
-     * OK
+     * An endpoint with its signing secret, shown once.
      */
     200: EndpointWithSecretResponse;
 };
@@ -1393,18 +3715,41 @@ export type RotateSecretResponse = RotateSecretResponses[keyof RotateSecretRespo
 export type ResendData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the webhook delivery.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/webhook-deliveries/{id}/resend';
 };
 
+export type ResendErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type ResendError = ResendErrors[keyof ResendErrors];
+
 export type ResendResponses = {
     /**
-     * Accepted
+     * One delivery of an event to an endpoint.
      */
     202: DeliveryResponse;
 };
@@ -1671,12 +4016,22 @@ export type WalletsErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type WalletsError = WalletsErrors[keyof WalletsErrors];
 
 export type WalletsResponses = {
     /**
-     * OK
+     * A page of wallet response rows, with the paging facts when the request asked for them.
      */
     200: PageWalletResponse;
 };
@@ -1684,8 +4039,14 @@ export type WalletsResponses = {
 export type WalletsResponse = WalletsResponses[keyof WalletsResponses];
 
 export type OpenWalletData = {
+    /**
+     * The wallet to open.
+     */
     body: OpenWalletRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -1693,11 +4054,36 @@ export type OpenWalletData = {
     url: '/api/v1/wallets';
 };
 
+export type OpenWalletErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The customer already has a wallet in this currency with different settings. A wallet's currency and mode never change.
+     */
+    409: ProblemDetail;
+};
+
+export type OpenWalletError = OpenWalletErrors[keyof OpenWalletErrors];
+
 export type OpenWalletResponses = {
     /**
-     * OK
+     * The customer already had this wallet with the same settings, so it is returned.
      */
     200: WalletResponse;
+    /**
+     * The wallet was opened.
+     */
+    201: WalletResponse;
 };
 
 export type OpenWalletResponse = OpenWalletResponses[keyof OpenWalletResponses];
@@ -1705,6 +4091,9 @@ export type OpenWalletResponse = OpenWalletResponses[keyof OpenWalletResponses];
 export type RedemptionsOfWalletData = {
     body?: never;
     path: {
+        /**
+         * The id of the wallet.
+         */
         walletId: string;
     };
     query?: {
@@ -2120,12 +4509,26 @@ export type RedemptionsOfWalletErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
 };
+
+export type RedemptionsOfWalletError = RedemptionsOfWalletErrors[keyof RedemptionsOfWalletErrors];
 
 export type RedemptionsOfWalletResponses = {
     /**
-     * OK
+     * A page of redemption response rows, with the paging facts when the request asked for them.
      */
     200: PageRedemptionResponse;
 };
@@ -2133,17 +4536,54 @@ export type RedemptionsOfWalletResponses = {
 export type RedemptionsOfWalletResponse = RedemptionsOfWalletResponses[keyof RedemptionsOfWalletResponses];
 
 export type RedeemByCodeData = {
+    /**
+     * The coupon to redeem. Give a `code`, or a `couponId` to attach it directly.
+     */
     body: RedeemRequest;
     headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
         'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the wallet.
+         */
         walletId: string;
     };
     query?: never;
     url: '/api/v1/wallets/{walletId}/coupon-redemptions';
 };
+
+export type RedeemByCodeErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The wallet does not exist, or the code is unknown, inactive, expired or exhausted. Every refusal answers the same, so a caller cannot learn which.
+     */
+    404: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type RedeemByCodeError = RedeemByCodeErrors[keyof RedeemByCodeErrors];
 
 export type RedeemByCodeResponses = {
     /**
@@ -2151,7 +4591,7 @@ export type RedeemByCodeResponses = {
      */
     200: RedemptionResponse;
     /**
-     * Created
+     * A coupon redeemed onto a wallet.
      */
     201: RedemptionResponse;
 };
@@ -2159,17 +4599,54 @@ export type RedeemByCodeResponses = {
 export type RedeemByCodeResponse = RedeemByCodeResponses[keyof RedeemByCodeResponses];
 
 export type AttachData = {
+    /**
+     * The coupon to redeem. Give a `code`, or a `couponId` to attach it directly.
+     */
     body: RedeemRequest;
     headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
         'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the wallet.
+         */
         walletId: string;
     };
     query?: never;
     url: '/api/v1/wallets/{walletId}/coupon-redemptions/attach';
 };
+
+export type AttachErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type AttachError = AttachErrors[keyof AttachErrors];
 
 export type AttachResponses = {
     /**
@@ -2177,7 +4654,7 @@ export type AttachResponses = {
      */
     200: RedemptionResponse;
     /**
-     * Created
+     * A coupon redeemed onto a wallet.
      */
     201: RedemptionResponse;
 };
@@ -2456,12 +4933,22 @@ export type HistoryErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type HistoryError = HistoryErrors[keyof HistoryErrors];
 
 export type HistoryResponses = {
     /**
-     * OK
+     * A page of usage event response rows, with the paging facts when the request asked for them.
      */
     200: PageUsageEventResponse;
 };
@@ -2469,11 +4956,35 @@ export type HistoryResponses = {
 export type HistoryResponse = HistoryResponses[keyof HistoryResponses];
 
 export type RecordOneData = {
+    /**
+     * One usage event to record.
+     */
     body: UsageEventRequest;
     path?: never;
     query?: never;
     url: '/api/v1/usage-events';
 };
+
+export type RecordOneErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The `idempotencyKey` was already used with different content.
+     */
+    409: ProblemDetail;
+};
+
+export type RecordOneError = RecordOneErrors[keyof RecordOneErrors];
 
 export type RecordOneResponses = {
     /**
@@ -2481,7 +4992,7 @@ export type RecordOneResponses = {
      */
     200: RecordedResponse;
     /**
-     * Created
+     * The result of recording one usage event.
      */
     201: RecordedResponse;
 };
@@ -2489,15 +5000,35 @@ export type RecordOneResponses = {
 export type RecordOneResponse = RecordOneResponses[keyof RecordOneResponses];
 
 export type RecordBatchData = {
+    /**
+     * The usage events to record, at most 500, all or none.
+     */
     body: BatchRequest;
     path?: never;
     query?: never;
     url: '/api/v1/usage-events/batch';
 };
 
+export type RecordBatchErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type RecordBatchError = RecordBatchErrors[keyof RecordBatchErrors];
+
 export type RecordBatchResponses = {
     /**
-     * OK
+     * The result per event, in request order.
      */
     200: BatchResponse;
 };
@@ -2892,12 +5423,22 @@ export type SubscriptionsErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type SubscriptionsError = SubscriptionsErrors[keyof SubscriptionsErrors];
 
 export type SubscriptionsResponses = {
     /**
-     * OK
+     * A page of subscription response rows, with the paging facts when the request asked for them.
      */
     200: PageSubscriptionResponse;
 };
@@ -2905,9 +5446,18 @@ export type SubscriptionsResponses = {
 export type SubscriptionsResponse = SubscriptionsResponses[keyof SubscriptionsResponses];
 
 export type SubscribeData = {
+    /**
+     * The subscription to start.
+     */
     body: SubscribeRequest;
     headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
         'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -2915,13 +5465,34 @@ export type SubscribeData = {
     url: '/api/v1/subscriptions';
 };
 
+export type SubscribeErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type SubscribeError = SubscribeErrors[keyof SubscribeErrors];
+
 export type SubscribeResponses = {
     /**
      * An earlier identical request already created it; that resource is returned
      */
     200: SubscriptionDetailResponse;
     /**
-     * Created
+     * A subscription with its history.
      */
     201: SubscriptionDetailResponse;
 };
@@ -2931,18 +5502,41 @@ export type SubscribeResponse = SubscribeResponses[keyof SubscribeResponses];
 export type CancelData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the subscription.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/subscriptions/{id}/cancel';
 };
 
+export type CancelErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type CancelError = CancelErrors[keyof CancelErrors];
+
 export type CancelResponses = {
     /**
-     * OK
+     * A subscription with its history.
      */
     200: SubscriptionDetailResponse;
 };
@@ -2956,9 +5550,22 @@ export type ReconcileData = {
     url: '/api/v1/stripe/reconcile';
 };
 
+export type ReconcileErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type ReconcileError = ReconcileErrors[keyof ReconcileErrors];
+
 export type ReconcileResponses = {
     /**
-     * OK
+     * What a reconciliation found.
      */
     200: ReconcileResponse;
 };
@@ -2968,14 +5575,37 @@ export type ReconcileResponse2 = ReconcileResponses[keyof ReconcileResponses];
 export type ResolveIncidentData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the incident.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/stripe/incidents/{id}/resolve';
 };
+
+export type ResolveIncidentErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type ResolveIncidentError = ResolveIncidentErrors[keyof ResolveIncidentErrors];
 
 export type ResolveIncidentResponses = {
     /**
@@ -2989,18 +5619,41 @@ export type ResolveIncidentResponse = ResolveIncidentResponses[keyof ResolveInci
 export type RetryData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the event.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/stripe/events/{id}/retry';
 };
 
+export type RetryErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type RetryError = RetryErrors[keyof RetryErrors];
+
 export type RetryResponses = {
     /**
-     * OK
+     * A Stripe event with how its processing went.
      */
     200: EventDetailResponse;
 };
@@ -3010,6 +5663,9 @@ export type RetryResponse = RetryResponses[keyof RetryResponses];
 export type RefreshData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -3017,9 +5673,26 @@ export type RefreshData = {
     url: '/api/v1/stripe/configuration/refresh';
 };
 
+export type RefreshErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Stripe could not be reached. Repeat the request.
+     */
+    502: ProblemDetail;
+};
+
+export type RefreshError = RefreshErrors[keyof RefreshErrors];
+
 export type RefreshResponses = {
     /**
-     * OK
+     * The tenant's Stripe configuration. No secret is part of it.
      */
     200: ConfigurationResponse;
 };
@@ -3027,8 +5700,14 @@ export type RefreshResponses = {
 export type RefreshResponse = RefreshResponses[keyof RefreshResponses];
 
 export type StartConnectData = {
+    /**
+     * The tenant's details for Stripe Connect onboarding.
+     */
     body: ConnectRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -3036,9 +5715,34 @@ export type StartConnectData = {
     url: '/api/v1/stripe/configuration/connect';
 };
 
+export type StartConnectErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Stripe rejected the request.
+     */
+    422: ProblemDetail;
+    /**
+     * Stripe could not be reached. Repeat the request.
+     */
+    502: ProblemDetail;
+};
+
+export type StartConnectError = StartConnectErrors[keyof StartConnectErrors];
+
 export type StartConnectResponses = {
     /**
-     * OK
+     * The Stripe connection and the onboarding page.
      */
     200: ConnectionResponse;
 };
@@ -3052,9 +5756,26 @@ export type OnboardingLinkData = {
     url: '/api/v1/stripe/configuration/connect/link';
 };
 
+export type OnboardingLinkErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Stripe could not be reached. Repeat the request.
+     */
+    502: ProblemDetail;
+};
+
+export type OnboardingLinkError = OnboardingLinkErrors[keyof OnboardingLinkErrors];
+
 export type OnboardingLinkResponses = {
     /**
-     * OK
+     * The Stripe connection and the onboarding page.
      */
     200: ConnectionResponse;
 };
@@ -3345,12 +6066,22 @@ export type ReservationsErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type ReservationsError = ReservationsErrors[keyof ReservationsErrors];
 
 export type ReservationsResponses = {
     /**
-     * OK
+     * A page of reservation response rows, with the paging facts when the request asked for them.
      */
     200: PageReservationResponse;
 };
@@ -3358,8 +6089,14 @@ export type ReservationsResponses = {
 export type ReservationsResponse = ReservationsResponses[keyof ReservationsResponses];
 
 export type ReserveData = {
+    /**
+     * The hold to place on a wallet.
+     */
     body: ReserveRequest;
     headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
         'Idempotency-Key': string;
     };
     path?: never;
@@ -3367,13 +6104,38 @@ export type ReserveData = {
     url: '/api/v1/reservations';
 };
 
+export type ReserveErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The wallet cannot cover the amount.
+     */
+    402: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type ReserveError = ReserveErrors[keyof ReserveErrors];
+
 export type ReserveResponses = {
     /**
      * An earlier identical request already created it; that resource is returned
      */
     200: ReservationResponse;
     /**
-     * Created
+     * A hold on part of a wallet's balance.
      */
     201: ReservationResponse;
 };
@@ -3383,15 +6145,35 @@ export type ReserveResponse2 = ReserveResponses[keyof ReserveResponses];
 export type ReleaseData = {
     body?: never;
     path: {
+        /**
+         * The id of the reservation.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/reservations/{id}/release';
 };
 
+export type ReleaseErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type ReleaseError = ReleaseErrors[keyof ReleaseErrors];
+
 export type ReleaseResponses = {
     /**
-     * OK
+     * A hold on part of a wallet's balance.
      */
     200: ReservationResponse;
 };
@@ -3399,16 +6181,50 @@ export type ReleaseResponses = {
 export type ReleaseResponse = ReleaseResponses[keyof ReleaseResponses];
 
 export type CaptureData = {
+    /**
+     * The actual cost to charge against a reservation.
+     */
     body: CaptureRequest;
     headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
         'Idempotency-Key': string;
     };
     path: {
+        /**
+         * The id of the reservation.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/reservations/{id}/capture';
 };
+
+export type CaptureErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type CaptureError = CaptureErrors[keyof CaptureErrors];
 
 export type CaptureResponses = {
     /**
@@ -3416,7 +6232,7 @@ export type CaptureResponses = {
      */
     200: ChargeResponse;
     /**
-     * Created
+     * A charge made against a wallet.
      */
     201: ChargeResponse;
 };
@@ -3426,18 +6242,41 @@ export type CaptureResponse = CaptureResponses[keyof CaptureResponses];
 export type DeactivateCodeData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the promotion code.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/promotion-codes/{id}/deactivate';
 };
 
+export type DeactivateCodeErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type DeactivateCodeError = DeactivateCodeErrors[keyof DeactivateCodeErrors];
+
 export type DeactivateCodeResponses = {
     /**
-     * OK
+     * A promotion code.
      */
     200: PromotionCodeResponse;
 };
@@ -3445,11 +6284,35 @@ export type DeactivateCodeResponses = {
 export type DeactivateCodeResponse = DeactivateCodeResponses[keyof DeactivateCodeResponses];
 
 export type ChargeUsageData = {
+    /**
+     * The usage period to price and charge.
+     */
     body: ChargeUsageRequest;
     path?: never;
     query?: never;
     url: '/api/v1/pricing/usage-charges';
 };
+
+export type ChargeUsageErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The wallet could not pay. The same request succeeds after a top-up.
+     */
+    402: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type ChargeUsageError = ChargeUsageErrors[keyof ChargeUsageErrors];
 
 export type ChargeUsageResponses = {
     /**
@@ -3457,7 +6320,7 @@ export type ChargeUsageResponses = {
      */
     200: RatingResponse;
     /**
-     * Created
+     * The result of rating a period's usage.
      */
     201: RatingResponse;
 };
@@ -3465,8 +6328,14 @@ export type ChargeUsageResponses = {
 export type ChargeUsageResponse = ChargeUsageResponses[keyof ChargeUsageResponses];
 
 export type ReserveEstimateData = {
+    /**
+     * The hold to place on a wallet.
+     */
     body: ReserveRequest;
     headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
         'Idempotency-Key': string;
     };
     path?: never;
@@ -3474,13 +6343,38 @@ export type ReserveEstimateData = {
     url: '/api/v1/pricing/reservations';
 };
 
+export type ReserveEstimateErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The wallet cannot cover the estimated cost.
+     */
+    402: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type ReserveEstimateError = ReserveEstimateErrors[keyof ReserveEstimateErrors];
+
 export type ReserveEstimateResponses = {
     /**
      * An earlier identical request already created it; that resource is returned
      */
     200: ReserveResponse;
     /**
-     * Created
+     * The estimate and the reservation that holds it.
      */
     201: ReserveResponse;
 };
@@ -3488,15 +6382,35 @@ export type ReserveEstimateResponses = {
 export type ReserveEstimateResponse = ReserveEstimateResponses[keyof ReserveEstimateResponses];
 
 export type EstimateData = {
+    /**
+     * The expected usage to price.
+     */
     body: EstimateRequest;
     path?: never;
     query?: never;
     url: '/api/v1/pricing/estimates';
 };
 
+export type EstimateErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type EstimateError = EstimateErrors[keyof EstimateErrors];
+
 export type EstimateResponses = {
     /**
-     * OK
+     * The estimated cost.
      */
     200: EstimateResponse;
 };
@@ -3711,12 +6625,22 @@ export type ListPlansErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type ListPlansError = ListPlansErrors[keyof ListPlansErrors];
 
 export type ListPlansResponses = {
     /**
-     * OK
+     * A page of plan response rows, with the paging facts when the request asked for them.
      */
     200: PagePlanResponse;
 };
@@ -3724,8 +6648,14 @@ export type ListPlansResponses = {
 export type ListPlansResponse = ListPlansResponses[keyof ListPlansResponses];
 
 export type CreatePlanData = {
+    /**
+     * The plan to create, with its first version.
+     */
     body: CreatePlanRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -3733,9 +6663,26 @@ export type CreatePlanData = {
     url: '/api/v1/pricing-plans';
 };
 
+export type CreatePlanErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type CreatePlanError = CreatePlanErrors[keyof CreatePlanErrors];
+
 export type CreatePlanResponses = {
     /**
-     * Created
+     * A pricing plan and its versions.
      */
     201: PlanResponse;
 };
@@ -3743,20 +6690,50 @@ export type CreatePlanResponses = {
 export type CreatePlanResponse = CreatePlanResponses[keyof CreatePlanResponses];
 
 export type PublishVersionData = {
+    /**
+     * A version of a plan.
+     */
     body: VersionRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the pricing plan.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/pricing-plans/{id}/versions';
 };
 
+export type PublishVersionErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type PublishVersionError = PublishVersionErrors[keyof PublishVersionErrors];
+
 export type PublishVersionResponses = {
     /**
-     * Created
+     * One version of a pricing plan. Earlier versions, and every charge that used them, are unchanged.
      */
     201: VersionResponse;
 };
@@ -3766,18 +6743,41 @@ export type PublishVersionResponse = PublishVersionResponses[keyof PublishVersio
 export type RetireData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the pricing plan.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/pricing-plans/{id}/retire';
 };
 
+export type RetireErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type RetireError = RetireErrors[keyof RetireErrors];
+
 export type RetireResponses = {
     /**
-     * OK
+     * A pricing plan and its versions.
      */
     200: PlanResponse;
 };
@@ -3785,17 +6785,62 @@ export type RetireResponses = {
 export type RetireResponse = RetireResponses[keyof RetireResponses];
 
 export type RequestRefundData = {
+    /**
+     * The refund to request.
+     */
     body: RefundRequest;
     headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
         'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the payment.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/payments/{id}/refunds';
 };
+
+export type RequestRefundErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The amount exceeds what is left to refund, or the wallet has already spent it.
+     */
+    409: ProblemDetail;
+    /**
+     * Stripe rejected the refund.
+     */
+    422: ProblemDetail;
+    /**
+     * Stripe could not be reached and the outcome is unknown. Repeat the request with the same `Idempotency-Key`.
+     */
+    502: ProblemDetail;
+};
+
+export type RequestRefundError = RequestRefundErrors[keyof RequestRefundErrors];
 
 export type RequestRefundResponses = {
     /**
@@ -3803,7 +6848,7 @@ export type RequestRefundResponses = {
      */
     200: RefundResponse;
     /**
-     * Created
+     * A refund of a payment.
      */
     201: RefundResponse;
 };
@@ -3811,9 +6856,18 @@ export type RequestRefundResponses = {
 export type RequestRefundResponse = RequestRefundResponses[keyof RequestRefundResponses];
 
 export type CreateTopUpData = {
+    /**
+     * The top-up to start.
+     */
     body: TopUpRequest;
     headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
         'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -3821,13 +6875,42 @@ export type CreateTopUpData = {
     url: '/api/v1/payments/top-ups';
 };
 
+export type CreateTopUpErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+    /**
+     * Stripe rejected the request.
+     */
+    422: ProblemDetail;
+    /**
+     * Stripe could not be reached and the outcome is unknown. Repeat the request with the same `Idempotency-Key`.
+     */
+    502: ProblemDetail;
+};
+
+export type CreateTopUpError = CreateTopUpErrors[keyof CreateTopUpErrors];
+
 export type CreateTopUpResponses = {
     /**
      * An earlier identical request already created it; that resource is returned
      */
     200: PaymentResponse;
     /**
-     * Created
+     * A payment of a top-up or an invoice.
      */
     201: PaymentResponse;
 };
@@ -3835,17 +6918,44 @@ export type CreateTopUpResponses = {
 export type CreateTopUpResponse = CreateTopUpResponses[keyof CreateTopUpResponses];
 
 export type ReverseData = {
+    /**
+     * The correction to post.
+     */
     body: ReverseRequest;
     path: {
+        /**
+         * The id of the ledger entry.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/ledger-entries/{id}/reverse';
 };
 
+export type ReverseErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type ReverseError = ReverseErrors[keyof ReverseErrors];
+
 export type ReverseResponses = {
     /**
-     * OK
+     * The entries a reversal posted.
      */
     200: ReversalResponse;
 };
@@ -4268,12 +7378,22 @@ export type InvoicesErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type InvoicesError = InvoicesErrors[keyof InvoicesErrors];
 
 export type InvoicesResponses = {
     /**
-     * OK
+     * A page of invoice response rows, with the paging facts when the request asked for them.
      */
     200: PageInvoiceResponse;
 };
@@ -4281,8 +7401,14 @@ export type InvoicesResponses = {
 export type InvoicesResponse = InvoicesResponses[keyof InvoicesResponses];
 
 export type InvoiceChargeData = {
+    /**
+     * The charge to invoice.
+     */
     body: InvoiceChargeRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -4290,13 +7416,30 @@ export type InvoiceChargeData = {
     url: '/api/v1/invoices';
 };
 
+export type InvoiceChargeErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type InvoiceChargeError = InvoiceChargeErrors[keyof InvoiceChargeErrors];
+
 export type InvoiceChargeResponses = {
     /**
      * The charge already had an invoice; that invoice is returned
      */
     200: InvoiceDetailResponse;
     /**
-     * Created
+     * An invoice with its items and payments.
      */
     201: InvoiceDetailResponse;
 };
@@ -4304,20 +7447,54 @@ export type InvoiceChargeResponses = {
 export type InvoiceChargeResponse = InvoiceChargeResponses[keyof InvoiceChargeResponses];
 
 export type VoidInvoiceData = {
+    /**
+     * Why the invoice is voided.
+     */
     body: VoidRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the invoice.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/invoices/{id}/void';
 };
 
+export type VoidInvoiceErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The invoice is paid, and a paid invoice cannot be voided.
+     */
+    409: ProblemDetail;
+};
+
+export type VoidInvoiceError = VoidInvoiceErrors[keyof VoidInvoiceErrors];
+
 export type VoidInvoiceResponses = {
     /**
-     * OK
+     * An invoice with its items and payments.
      */
     200: InvoiceDetailResponse;
 };
@@ -4327,18 +7504,41 @@ export type VoidInvoiceResponse = VoidInvoiceResponses[keyof VoidInvoiceResponse
 export type MarkUncollectibleData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the invoice.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/invoices/{id}/uncollectible';
 };
 
+export type MarkUncollectibleErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type MarkUncollectibleError = MarkUncollectibleErrors[keyof MarkUncollectibleErrors];
+
 export type MarkUncollectibleResponses = {
     /**
-     * OK
+     * An invoice with its items and payments.
      */
     200: InvoiceDetailResponse;
 };
@@ -4348,15 +7548,57 @@ export type MarkUncollectibleResponse = MarkUncollectibleResponses[keyof MarkUnc
 export type PayData = {
     body?: never;
     headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
         'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the invoice.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/invoices/{id}/payments';
 };
+
+export type PayErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+    /**
+     * Stripe rejected the request.
+     */
+    422: ProblemDetail;
+    /**
+     * Stripe could not be reached and the outcome is unknown. Repeat the request with the same `Idempotency-Key`.
+     */
+    502: ProblemDetail;
+};
+
+export type PayError = PayErrors[keyof PayErrors];
 
 export type PayResponses = {
     /**
@@ -4364,7 +7606,7 @@ export type PayResponses = {
      */
     200: PayInvoiceResponse;
     /**
-     * Created
+     * The invoice and the payment that was started.
      */
     201: PayInvoiceResponse;
 };
@@ -4511,12 +7753,22 @@ export type List1Errors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type List1Error = List1Errors[keyof List1Errors];
 
 export type List1Responses = {
     /**
-     * OK
+     * A page of customer response rows, with the paging facts when the request asked for them.
      */
     200: PageCustomerResponse;
 };
@@ -4524,9 +7776,18 @@ export type List1Responses = {
 export type List1Response = List1Responses[keyof List1Responses];
 
 export type CreateData = {
+    /**
+     * The customer to create.
+     */
     body: CreateCustomerRequest;
     headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
         'Idempotency-Key': string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -4534,13 +7795,34 @@ export type CreateData = {
     url: '/api/v1/customers';
 };
 
+export type CreateErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body.
+     */
+    409: ProblemDetail;
+};
+
+export type CreateError = CreateErrors[keyof CreateErrors];
+
 export type CreateResponses = {
     /**
      * An earlier identical request already created it; that resource is returned
      */
     200: CustomerResponse;
     /**
-     * Created
+     * A billing customer.
      */
     201: CustomerResponse;
 };
@@ -4550,10 +7832,19 @@ export type CreateResponse2 = CreateResponses[keyof CreateResponses];
 export type DeactivateData = {
     body?: never;
     headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
         'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the customer.
+         */
         id: string;
     };
     query?: never;
@@ -4562,14 +7853,28 @@ export type DeactivateData = {
 
 export type DeactivateErrors = {
     /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
      * The resource changed since the caller read it; the current ETag is returned in the header
      */
-    412: unknown;
+    412: ProblemDetail;
 };
+
+export type DeactivateError = DeactivateErrors[keyof DeactivateErrors];
 
 export type DeactivateResponses = {
     /**
-     * OK
+     * A billing customer.
      */
     200: CustomerResponse;
 };
@@ -4932,12 +8237,22 @@ export type CouponsErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type CouponsError = CouponsErrors[keyof CouponsErrors];
 
 export type CouponsResponses = {
     /**
-     * OK
+     * A page of coupon response rows, with the paging facts when the request asked for them.
      */
     200: PageCouponResponse;
 };
@@ -4945,8 +8260,14 @@ export type CouponsResponses = {
 export type CouponsResponse = CouponsResponses[keyof CouponsResponses];
 
 export type CreateCouponData = {
+    /**
+     * The coupon to create. Its terms are immutable.
+     */
     body: CreateCouponRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -4954,9 +8275,26 @@ export type CreateCouponData = {
     url: '/api/v1/coupons';
 };
 
+export type CreateCouponErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type CreateCouponError = CreateCouponErrors[keyof CreateCouponErrors];
+
 export type CreateCouponResponses = {
     /**
-     * Created
+     * The coupon and its first promotion code.
      */
     201: CreateCouponResponse;
 };
@@ -4964,20 +8302,50 @@ export type CreateCouponResponses = {
 export type CreateCouponResponse2 = CreateCouponResponses[keyof CreateCouponResponses];
 
 export type DeactivateCouponData = {
+    /**
+     * How to deactivate the coupon.
+     */
     body?: DeactivateCouponRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the coupon.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/coupons/{id}/deactivate';
 };
 
+export type DeactivateCouponErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type DeactivateCouponError = DeactivateCouponErrors[keyof DeactivateCouponErrors];
+
 export type DeactivateCouponResponses = {
     /**
-     * OK
+     * A coupon.
      */
     200: CouponResponse;
 };
@@ -4987,6 +8355,9 @@ export type DeactivateCouponResponse = DeactivateCouponResponses[keyof Deactivat
 export type CodesData = {
     body?: never;
     path: {
+        /**
+         * The id of the coupon.
+         */
         id: string;
     };
     query?: {
@@ -5214,12 +8585,26 @@ export type CodesErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
 };
+
+export type CodesError = CodesErrors[keyof CodesErrors];
 
 export type CodesResponses = {
     /**
-     * OK
+     * A page of promotion code response rows, with the paging facts when the request asked for them.
      */
     200: PagePromotionCodeResponse;
 };
@@ -5227,20 +8612,50 @@ export type CodesResponses = {
 export type CodesResponse = CodesResponses[keyof CodesResponses];
 
 export type AddCodeData = {
+    /**
+     * The promotion code to add.
+     */
     body: AddCodeRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the coupon.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/coupons/{id}/codes';
 };
 
+export type AddCodeErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type AddCodeError = AddCodeErrors[keyof AddCodeErrors];
+
 export type AddCodeResponses = {
     /**
-     * Created
+     * A promotion code.
      */
     201: PromotionCodeResponse;
 };
@@ -5250,18 +8665,41 @@ export type AddCodeResponse = AddCodeResponses[keyof AddCodeResponses];
 export type RevokeData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the coupon redemption.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/coupon-redemptions/{id}/revoke';
 };
 
+export type RevokeErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type RevokeError = RevokeErrors[keyof RevokeErrors];
+
 export type RevokeResponses = {
     /**
-     * OK
+     * A coupon redeemed onto a wallet.
      */
     200: RedemptionResponse;
 };
@@ -5532,12 +8970,22 @@ export type ChargesErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type ChargesError = ChargesErrors[keyof ChargesErrors];
 
 export type ChargesResponses = {
     /**
-     * OK
+     * A page of charge response rows, with the paging facts when the request asked for them.
      */
     200: PageChargeResponse;
 };
@@ -5545,8 +8993,14 @@ export type ChargesResponses = {
 export type ChargesResponse = ChargesResponses[keyof ChargesResponses];
 
 export type ChargeData = {
+    /**
+     * The cost to charge to a wallet.
+     */
     body: ChargeRequest;
     headers: {
+        /**
+         * A key the caller chooses so a retry is safe: the same key with the same body answers the first result instead of acting twice, and the same key with a different body is a conflict.
+         */
         'Idempotency-Key': string;
     };
     path?: never;
@@ -5554,13 +9008,34 @@ export type ChargeData = {
     url: '/api/v1/charges';
 };
 
+export type ChargeErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * The `Idempotency-Key` was already used with a different body, or the request clashes with the current state of the data.
+     */
+    409: ProblemDetail;
+};
+
+export type ChargeError = ChargeErrors[keyof ChargeErrors];
+
 export type ChargeResponses = {
     /**
      * An earlier identical request already created it; that resource is returned
      */
     200: ChargeResponse;
     /**
-     * Created
+     * A charge made against a wallet.
      */
     201: ChargeResponse;
 };
@@ -5568,8 +9043,14 @@ export type ChargeResponses = {
 export type ChargeResponse2 = ChargeResponses[keyof ChargeResponses];
 
 export type Create1Data = {
+    /**
+     * The billing session to create.
+     */
     body: CreateRequest;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
@@ -5577,9 +9058,26 @@ export type Create1Data = {
     url: '/api/v1/billing-sessions';
 };
 
+export type Create1Errors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type Create1Error = Create1Errors[keyof Create1Errors];
+
 export type Create1Responses = {
     /**
-     * Created
+     * The billing session that was created.
      */
     201: CreateResponse;
 };
@@ -5589,34 +9087,79 @@ export type Create1Response = Create1Responses[keyof Create1Responses];
 export type Revoke1Data = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the billing session.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/billing-sessions/{id}/revoke';
 };
 
+export type Revoke1Errors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type Revoke1Error = Revoke1Errors[keyof Revoke1Errors];
+
 export type Revoke1Responses = {
     /**
-     * OK
+     * The session was revoked.
      */
-    200: unknown;
+    204: void;
 };
+
+export type Revoke1Response = Revoke1Responses[keyof Revoke1Responses];
 
 export type GetEndpointData = {
     body?: never;
     path: {
+        /**
+         * The id of the webhook endpoint.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/webhook-endpoints/{id}';
 };
 
+export type GetEndpointErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetEndpointError = GetEndpointErrors[keyof GetEndpointErrors];
+
 export type GetEndpointResponses = {
     /**
-     * OK
+     * A webhook endpoint. The signing secret is not part of it.
      */
     200: EndpointResponse;
 };
@@ -5624,12 +9167,24 @@ export type GetEndpointResponses = {
 export type GetEndpointResponse = GetEndpointResponses[keyof GetEndpointResponses];
 
 export type UpdateEndpointData = {
+    /**
+     * The fields to change. A field that is left out keeps its value.
+     */
     body: UpdateEndpointRequest;
     headers?: {
+        /**
+         * The `ETag` of the version the caller last read. The change is refused with `412` when the resource has moved on since.
+         */
         'If-Match'?: string;
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path: {
+        /**
+         * The id of the webhook endpoint.
+         */
         id: string;
     };
     query?: never;
@@ -5638,14 +9193,32 @@ export type UpdateEndpointData = {
 
 export type UpdateEndpointErrors = {
     /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+    /**
      * The resource changed since the caller read it; the current ETag is returned in the header
      */
-    412: unknown;
+    412: ProblemDetail;
 };
+
+export type UpdateEndpointError = UpdateEndpointErrors[keyof UpdateEndpointErrors];
 
 export type UpdateEndpointResponses = {
     /**
-     * OK
+     * A webhook endpoint. The signing secret is not part of it.
      */
     200: EndpointResponse;
 };
@@ -5658,6 +9231,19 @@ export type JwksData = {
     query?: never;
     url: '/test-jwks';
 };
+
+export type JwksErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+};
+
+export type JwksError = JwksErrors[keyof JwksErrors];
 
 export type JwksResponses = {
     /**
@@ -5930,12 +9516,22 @@ export type Wallets1Errors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
 };
+
+export type Wallets1Error = Wallets1Errors[keyof Wallets1Errors];
 
 export type Wallets1Responses = {
     /**
-     * OK
+     * A page of wallet response rows, with the paging facts when the request asked for them.
      */
     200: PageWalletResponse;
 };
@@ -5945,15 +9541,35 @@ export type Wallets1Response = Wallets1Responses[keyof Wallets1Responses];
 export type WalletData = {
     body?: never;
     path: {
+        /**
+         * The id of the wallet.
+         */
         id: string;
     };
     query?: never;
     url: '/portal/api/wallets/{id}';
 };
 
+export type WalletErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type WalletError = WalletErrors[keyof WalletErrors];
+
 export type WalletResponses = {
     /**
-     * OK
+     * A customer's wallet in one currency.
      */
     200: WalletResponse;
 };
@@ -5963,6 +9579,9 @@ export type WalletResponse2 = WalletResponses[keyof WalletResponses];
 export type LedgerData = {
     body?: never;
     path: {
+        /**
+         * The id of the wallet.
+         */
         id: string;
     };
     query?: {
@@ -6246,12 +9865,26 @@ export type LedgerErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
 };
+
+export type LedgerError = LedgerErrors[keyof LedgerErrors];
 
 export type LedgerResponses = {
     /**
-     * OK
+     * A page of ledger entry response rows, with the paging facts when the request asked for them.
      */
     200: PageLedgerEntryResponse;
 };
@@ -6262,12 +9895,38 @@ export type TotalsData = {
     body?: never;
     path?: never;
     query: {
+        /**
+         * Only this metric.
+         */
         metric?: string;
+        /**
+         * The start of the period, inclusive.
+         */
         from: string;
+        /**
+         * The end of the period, exclusive.
+         */
         to: string;
     };
     url: '/portal/api/usage/totals';
 };
+
+export type TotalsErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+};
+
+export type TotalsError = TotalsErrors[keyof TotalsErrors];
 
 export type TotalsResponses = {
     /**
@@ -6550,12 +10209,22 @@ export type History1Errors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
 };
+
+export type History1Error = History1Errors[keyof History1Errors];
 
 export type History1Responses = {
     /**
-     * OK
+     * A page of usage event response rows, with the paging facts when the request asked for them.
      */
     200: PageUsageEventResponse;
 };
@@ -6950,12 +10619,22 @@ export type Subscriptions1Errors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
 };
+
+export type Subscriptions1Error = Subscriptions1Errors[keyof Subscriptions1Errors];
 
 export type Subscriptions1Responses = {
     /**
-     * OK
+     * A page of subscription response rows, with the paging facts when the request asked for them.
      */
     200: PageSubscriptionResponse;
 };
@@ -6965,15 +10644,35 @@ export type Subscriptions1Response = Subscriptions1Responses[keyof Subscriptions
 export type SubscriptionData = {
     body?: never;
     path: {
+        /**
+         * The id of the subscription.
+         */
         id: string;
     };
     query?: never;
     url: '/portal/api/subscriptions/{id}';
 };
 
+export type SubscriptionErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type SubscriptionError = SubscriptionErrors[keyof SubscriptionErrors];
+
 export type SubscriptionResponses = {
     /**
-     * OK
+     * A subscription with its history.
      */
     200: SubscriptionDetailResponse;
 };
@@ -6987,9 +10686,22 @@ export type SessionData = {
     url: '/portal/api/session';
 };
 
+export type SessionErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+};
+
+export type SessionError = SessionErrors[keyof SessionErrors];
+
 export type SessionResponses = {
     /**
-     * OK
+     * A portal session.
      */
     200: SessionResponse;
 };
@@ -7236,12 +10948,22 @@ export type RefundsErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
 };
+
+export type RefundsError = RefundsErrors[keyof RefundsErrors];
 
 export type RefundsResponses = {
     /**
-     * OK
+     * A page of refund response rows, with the paging facts when the request asked for them.
      */
     200: PageRefundResponse;
 };
@@ -7564,12 +11286,22 @@ export type PaymentsErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
 };
+
+export type PaymentsError = PaymentsErrors[keyof PaymentsErrors];
 
 export type PaymentsResponses = {
     /**
-     * OK
+     * A page of payment response rows, with the paging facts when the request asked for them.
      */
     200: PagePaymentResponse;
 };
@@ -7579,15 +11311,35 @@ export type PaymentsResponse = PaymentsResponses[keyof PaymentsResponses];
 export type PaymentData = {
     body?: never;
     path: {
+        /**
+         * The id of the payment.
+         */
         id: string;
     };
     query?: never;
     url: '/portal/api/payments/{id}';
 };
 
+export type PaymentErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type PaymentError = PaymentErrors[keyof PaymentErrors];
+
 export type PaymentResponses = {
     /**
-     * OK
+     * A payment with its refunds and failed attempts.
      */
     200: PaymentDetailResponse;
 };
@@ -8010,12 +11762,22 @@ export type Invoices1Errors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
 };
+
+export type Invoices1Error = Invoices1Errors[keyof Invoices1Errors];
 
 export type Invoices1Responses = {
     /**
-     * OK
+     * A page of invoice response rows, with the paging facts when the request asked for them.
      */
     200: PageInvoiceResponse;
 };
@@ -8025,15 +11787,35 @@ export type Invoices1Response = Invoices1Responses[keyof Invoices1Responses];
 export type InvoiceData = {
     body?: never;
     path: {
+        /**
+         * The id of the invoice.
+         */
         id: string;
     };
     query?: never;
     url: '/portal/api/invoices/{id}';
 };
 
+export type InvoiceErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type InvoiceError = InvoiceErrors[keyof InvoiceErrors];
+
 export type InvoiceResponses = {
     /**
-     * OK
+     * An invoice with its items and payments.
      */
     200: InvoiceDetailResponse;
 };
@@ -8047,9 +11829,22 @@ export type CustomerData = {
     url: '/portal/api/customer';
 };
 
+export type CustomerErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
+};
+
+export type CustomerError = CustomerErrors[keyof CustomerErrors];
+
 export type CustomerResponses = {
     /**
-     * OK
+     * A billing customer.
      */
     200: CustomerResponse;
 };
@@ -8320,12 +12115,22 @@ export type Charges1Errors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The tenant has not enabled this app, or the caller may not act here.
+     */
+    403: ProblemDetail;
 };
+
+export type Charges1Error = Charges1Errors[keyof Charges1Errors];
 
 export type Charges1Responses = {
     /**
-     * OK
+     * A page of charge response rows, with the paging facts when the request asked for them.
      */
     200: PageChargeResponse;
 };
@@ -8660,12 +12465,22 @@ export type ListDeliveriesErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type ListDeliveriesError = ListDeliveriesErrors[keyof ListDeliveriesErrors];
 
 export type ListDeliveriesResponses = {
     /**
-     * OK
+     * A page of delivery response rows, with the paging facts when the request asked for them.
      */
     200: PageDeliveryResponse;
 };
@@ -8675,15 +12490,35 @@ export type ListDeliveriesResponse = ListDeliveriesResponses[keyof ListDeliverie
 export type GetDeliveryData = {
     body?: never;
     path: {
+        /**
+         * The id of the webhook delivery.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/webhook-deliveries/{id}';
 };
 
+export type GetDeliveryErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetDeliveryError = GetDeliveryErrors[keyof GetDeliveryErrors];
+
 export type GetDeliveryResponses = {
     /**
-     * OK
+     * A delivery with the body that was sent and every attempt.
      */
     200: DeliveryDetailResponse;
 };
@@ -8693,15 +12528,35 @@ export type GetDeliveryResponse = GetDeliveryResponses[keyof GetDeliveryResponse
 export type Wallet1Data = {
     body?: never;
     path: {
+        /**
+         * The id of the wallet.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/wallets/{id}';
 };
 
+export type Wallet1Errors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type Wallet1Error = Wallet1Errors[keyof Wallet1Errors];
+
 export type Wallet1Responses = {
     /**
-     * OK
+     * A customer's wallet in one currency.
      */
     200: WalletResponse;
 };
@@ -8711,6 +12566,9 @@ export type Wallet1Response = Wallet1Responses[keyof Wallet1Responses];
 export type Ledger1Data = {
     body?: never;
     path: {
+        /**
+         * The id of the wallet.
+         */
         id: string;
     };
     query?: {
@@ -8994,12 +12852,26 @@ export type Ledger1Errors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
 };
+
+export type Ledger1Error = Ledger1Errors[keyof Ledger1Errors];
 
 export type Ledger1Responses = {
     /**
-     * OK
+     * A page of ledger entry response rows, with the paging facts when the request asked for them.
      */
     200: PageLedgerEntryResponse;
 };
@@ -9010,13 +12882,42 @@ export type AggregatesData = {
     body?: never;
     path?: never;
     query: {
+        /**
+         * The id of the customer whose usage is totalled.
+         */
         customerId: string;
+        /**
+         * Only this metric. Repeat the parameter for several.
+         */
         metric?: Array<string>;
+        /**
+         * The start of the period, inclusive.
+         */
         from: string;
+        /**
+         * The end of the period, exclusive.
+         */
         to: string;
     };
     url: '/api/v1/usage-aggregates';
 };
+
+export type AggregatesErrors = {
+    /**
+     * The request is malformed: a body, query parameter or header is missing, unknown, or not valid for its type.
+     */
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type AggregatesError = AggregatesErrors[keyof AggregatesErrors];
 
 export type AggregatesResponses = {
     /**
@@ -9030,15 +12931,35 @@ export type AggregatesResponse = AggregatesResponses[keyof AggregatesResponses];
 export type Subscription1Data = {
     body?: never;
     path: {
+        /**
+         * The id of the subscription.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/subscriptions/{id}';
 };
 
+export type Subscription1Errors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type Subscription1Error = Subscription1Errors[keyof Subscription1Errors];
+
 export type Subscription1Responses = {
     /**
-     * OK
+     * A subscription with its history.
      */
     200: SubscriptionDetailResponse;
 };
@@ -9261,12 +13182,22 @@ export type IncidentsErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type IncidentsError = IncidentsErrors[keyof IncidentsErrors];
 
 export type IncidentsResponses = {
     /**
-     * OK
+     * A page of incident response rows, with the paging facts when the request asked for them.
      */
     200: PageIncidentResponse;
 };
@@ -9537,12 +13468,22 @@ export type EventsErrors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type EventsError = EventsErrors[keyof EventsErrors];
 
 export type EventsResponses = {
     /**
-     * OK
+     * A page of event response rows, with the paging facts when the request asked for them.
      */
     200: PageEventResponse;
 };
@@ -9552,15 +13493,35 @@ export type EventsResponse = EventsResponses[keyof EventsResponses];
 export type EventData = {
     body?: never;
     path: {
+        /**
+         * The id of the event.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/stripe/events/{id}';
 };
 
+export type EventErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type EventError = EventErrors[keyof EventErrors];
+
 export type EventResponses = {
     /**
-     * OK
+     * A Stripe event with how its processing went.
      */
     200: EventDetailResponse;
 };
@@ -9570,12 +13531,28 @@ export type EventResponse2 = EventResponses[keyof EventResponses];
 export type DisconnectData = {
     body?: never;
     headers?: {
+        /**
+         * An id the caller chooses for this call. It is recorded with the call and its audit entry, so the call can be found again.
+         */
         'X-Request-Id'?: string;
     };
     path?: never;
     query?: never;
     url: '/api/v1/stripe/configuration';
 };
+
+export type DisconnectErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type DisconnectError = DisconnectErrors[keyof DisconnectErrors];
 
 export type DisconnectResponses = {
     /**
@@ -9593,9 +13570,22 @@ export type GetConfigurationData = {
     url: '/api/v1/stripe/configuration';
 };
 
+export type GetConfigurationErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+};
+
+export type GetConfigurationError = GetConfigurationErrors[keyof GetConfigurationErrors];
+
 export type GetConfigurationResponses = {
     /**
-     * OK
+     * The tenant's Stripe configuration. No secret is part of it.
      */
     200: ConfigurationResponse;
 };
@@ -9605,15 +13595,35 @@ export type GetConfigurationResponse = GetConfigurationResponses[keyof GetConfig
 export type ReservationData = {
     body?: never;
     path: {
+        /**
+         * The id of the reservation.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/reservations/{id}';
 };
 
+export type ReservationErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type ReservationError = ReservationErrors[keyof ReservationErrors];
+
 export type ReservationResponses = {
     /**
-     * OK
+     * A hold on part of a wallet's balance.
      */
     200: ReservationResponse;
 };
@@ -9860,12 +13870,22 @@ export type Refunds1Errors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type Refunds1Error = Refunds1Errors[keyof Refunds1Errors];
 
 export type Refunds1Responses = {
     /**
-     * OK
+     * A page of refund response rows, with the paging facts when the request asked for them.
      */
     200: PageRefundResponse;
 };
@@ -9875,15 +13895,35 @@ export type Refunds1Response = Refunds1Responses[keyof Refunds1Responses];
 export type GetRefundData = {
     body?: never;
     path: {
+        /**
+         * The id of the refund.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/refunds/{id}';
 };
 
+export type GetRefundErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetRefundError = GetRefundErrors[keyof GetRefundErrors];
+
 export type GetRefundResponses = {
     /**
-     * OK
+     * A refund of a payment.
      */
     200: RefundResponse;
 };
@@ -9893,15 +13933,35 @@ export type GetRefundResponse = GetRefundResponses[keyof GetRefundResponses];
 export type GetRatingData = {
     body?: never;
     path: {
+        /**
+         * The id of the usage charge.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/pricing/usage-charges/{id}';
 };
 
+export type GetRatingErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetRatingError = GetRatingErrors[keyof GetRatingErrors];
+
 export type GetRatingResponses = {
     /**
-     * OK
+     * The result of rating a period's usage.
      */
     200: RatingResponse;
 };
@@ -9911,15 +13971,35 @@ export type GetRatingResponse = GetRatingResponses[keyof GetRatingResponses];
 export type GetPlanData = {
     body?: never;
     path: {
+        /**
+         * The id of the pricing plan.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/pricing-plans/{id}';
 };
 
+export type GetPlanErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetPlanError = GetPlanErrors[keyof GetPlanErrors];
+
 export type GetPlanResponses = {
     /**
-     * OK
+     * A pricing plan and its versions.
      */
     200: PlanResponse;
 };
@@ -10242,12 +14322,22 @@ export type Payments1Errors = {
     /**
      * A filter, sort, cursor or paging parameter is unknown, not allowed for the field, or not valid for its type.
      */
-    400: unknown;
+    400: ProblemDetail;
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
 };
+
+export type Payments1Error = Payments1Errors[keyof Payments1Errors];
 
 export type Payments1Responses = {
     /**
-     * OK
+     * A page of payment response rows, with the paging facts when the request asked for them.
      */
     200: PagePaymentResponse;
 };
@@ -10257,15 +14347,35 @@ export type Payments1Response = Payments1Responses[keyof Payments1Responses];
 export type Payment1Data = {
     body?: never;
     path: {
+        /**
+         * The id of the payment.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/payments/{id}';
 };
 
+export type Payment1Errors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type Payment1Error = Payment1Errors[keyof Payment1Errors];
+
 export type Payment1Responses = {
     /**
-     * OK
+     * A payment with its refunds and failed attempts.
      */
     200: PaymentDetailResponse;
 };
@@ -10275,15 +14385,35 @@ export type Payment1Response = Payment1Responses[keyof Payment1Responses];
 export type Invoice1Data = {
     body?: never;
     path: {
+        /**
+         * The id of the invoice.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/invoices/{id}';
 };
 
+export type Invoice1Errors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type Invoice1Error = Invoice1Errors[keyof Invoice1Errors];
+
 export type Invoice1Responses = {
     /**
-     * OK
+     * An invoice with its items and payments.
      */
     200: InvoiceDetailResponse;
 };
@@ -10293,17 +14423,40 @@ export type Invoice1Response = Invoice1Responses[keyof Invoice1Responses];
 export type ByExternalUserData = {
     body?: never;
     path: {
+        /**
+         * The Tenant System's own id of the user the customer is mapped to.
+         */
         externalUserId: string;
     };
     query?: {
+        /**
+         * The id of the tenant system the user belongs to. A Tenant System caller omits it.
+         */
         tenantSystemId?: string;
     };
     url: '/api/v1/customers/by-external-user/{externalUserId}';
 };
 
+export type ByExternalUserErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type ByExternalUserError = ByExternalUserErrors[keyof ByExternalUserErrors];
+
 export type ByExternalUserResponses = {
     /**
-     * OK
+     * A billing customer.
      */
     200: CustomerResponse;
 };
@@ -10313,15 +14466,35 @@ export type ByExternalUserResponse = ByExternalUserResponses[keyof ByExternalUse
 export type CouponData = {
     body?: never;
     path: {
+        /**
+         * The id of the coupon.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/coupons/{id}';
 };
 
+export type CouponErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type CouponError = CouponErrors[keyof CouponErrors];
+
 export type CouponResponses = {
     /**
-     * OK
+     * A coupon.
      */
     200: CouponResponse;
 };
@@ -10331,15 +14504,35 @@ export type CouponResponse2 = CouponResponses[keyof CouponResponses];
 export type RedemptionData = {
     body?: never;
     path: {
+        /**
+         * The id of the coupon redemption.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/coupon-redemptions/{id}';
 };
 
+export type RedemptionErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type RedemptionError = RedemptionErrors[keyof RedemptionErrors];
+
 export type RedemptionResponses = {
     /**
-     * OK
+     * A coupon redeemed onto a wallet.
      */
     200: RedemptionResponse;
 };
@@ -10349,15 +14542,35 @@ export type RedemptionResponse2 = RedemptionResponses[keyof RedemptionResponses]
 export type GetChargeData = {
     body?: never;
     path: {
+        /**
+         * The id of the charge.
+         */
         id: string;
     };
     query?: never;
     url: '/api/v1/charges/{id}';
 };
 
+export type GetChargeErrors = {
+    /**
+     * The request carries no valid token.
+     */
+    401: ProblemDetail;
+    /**
+     * The token does not carry the permission this operation requires, or the tenant has not enabled the app.
+     */
+    403: ProblemDetail;
+    /**
+     * Nothing with that id exists for this tenant. A resource of another tenant answers the same.
+     */
+    404: ProblemDetail;
+};
+
+export type GetChargeError = GetChargeErrors[keyof GetChargeErrors];
+
 export type GetChargeResponses = {
     /**
-     * OK
+     * A charge made against a wallet.
      */
     200: ChargeResponse;
 };

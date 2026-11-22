@@ -2,6 +2,9 @@
 
 import * as z from 'zod';
 
+/**
+ * A user of the suite.
+ */
 export const zUserResponse = z.object({
     id: z.uuid().optional(),
     tenantId: z.uuid().optional(),
@@ -12,6 +15,9 @@ export const zUserResponse = z.object({
     version: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * The change an operator makes to a remote.
+ */
 export const zStateRequest = z.object({
     enabled: z.boolean().optional(),
     activeVersion: z.string().optional(),
@@ -19,6 +25,9 @@ export const zStateRequest = z.object({
     navOrder: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
 });
 
+/**
+ * One registered version of a UI remote.
+ */
 export const zVersionResponse = z.object({
     version: z.string().optional(),
     entryPath: z.string().optional(),
@@ -28,6 +37,9 @@ export const zVersionResponse = z.object({
     registeredBy: z.string().optional()
 });
 
+/**
+ * A UI remote of the console and its registered versions.
+ */
 export const zRemoteResponse = z.object({
     name: z.string().optional(),
     appCode: z.string().optional(),
@@ -41,10 +53,16 @@ export const zRemoteResponse = z.object({
     versions: z.array(zVersionResponse).optional()
 });
 
+/**
+ * The state to set.
+ */
 export const zEntitlementRequest = z.object({
     enabled: z.boolean().optional()
 });
 
+/**
+ * A tenant's entitlement to one app.
+ */
 export const zEntitlementResponse = z.object({
     tenantId: z.uuid().optional(),
     appCode: z.string().optional(),
@@ -52,10 +70,16 @@ export const zEntitlementResponse = z.object({
     version: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * The new name.
+ */
 export const zRenameRequest = z.object({
     name: z.string().optional()
 });
 
+/**
+ * A tenant of the suite.
+ */
 export const zTenantResponse = z.object({
     id: z.uuid().optional(),
     code: z.string().optional(),
@@ -65,11 +89,17 @@ export const zTenantResponse = z.object({
     version: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * The change to apply to a tenant system.
+ */
 export const zUpdateSystemRequest = z.object({
     action: z.string().optional(),
     name: z.string().optional()
 });
 
+/**
+ * A tenant system: a machine caller of one tenant.
+ */
 export const zSystemResponse = z.object({
     id: z.string().optional(),
     name: z.string().optional(),
@@ -79,6 +109,9 @@ export const zSystemResponse = z.object({
     version: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * A role and the permissions it grants.
+ */
 export const zRoleResponse = z.object({
     id: z.uuid().optional(),
     tenantId: z.uuid().optional(),
@@ -89,10 +122,16 @@ export const zRoleResponse = z.object({
     version: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * The role's new permission set, replacing the stored one.
+ */
 export const zPermissionsRequest = z.object({
     permissions: z.array(z.string()).optional()
 });
 
+/**
+ * The user to create.
+ */
 export const zCreateRequest = z.object({
     tenantCode: z.string().optional(),
     email: z.string().optional(),
@@ -100,6 +139,9 @@ export const zCreateRequest = z.object({
     temporaryPassword: z.string().optional()
 });
 
+/**
+ * The version CI registers.
+ */
 export const zRegisterRequest = z.object({
     version: z.string().optional(),
     entryPath: z.string().optional(),
@@ -111,6 +153,9 @@ export const zRegisterRequest = z.object({
     navOrder: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
 });
 
+/**
+ * The tenant to provision.
+ */
 export const zProvisionRequest = z.object({
     code: z.string().optional(),
     name: z.string().optional(),
@@ -118,25 +163,40 @@ export const zProvisionRequest = z.object({
     adminTemporaryPassword: z.string().optional()
 });
 
+/**
+ * The tenant that was provisioned.
+ */
 export const zProvisionedResponse = z.object({
     tenantId: z.uuid().optional(),
     adminEmail: z.string().optional()
 });
 
+/**
+ * The hostname to map to the tenant.
+ */
 export const zDomainRequest = z.object({
     hostname: z.string().optional()
 });
 
+/**
+ * The tenant system to register.
+ */
 export const zCreateSystemRequest = z.object({
     name: z.string().optional(),
     purpose: z.string().optional()
 });
 
+/**
+ * The credential to issue.
+ */
 export const zCreateCredentialRequest = z.object({
     label: z.string().optional(),
     scopes: z.array(z.string()).optional()
 });
 
+/**
+ * An API credential. The secret is never part of it.
+ */
 export const zCredentialResponse = z.object({
     id: z.string().optional(),
     keyId: z.string().optional(),
@@ -148,25 +208,40 @@ export const zCredentialResponse = z.object({
     revokedAt: z.iso.datetime().optional()
 });
 
+/**
+ * A newly issued credential with its secret.
+ */
 export const zIssuedCredentialResponse = z.object({
     credential: zCredentialResponse.optional(),
     key: z.string().optional()
 });
 
+/**
+ * How the old credential is retired.
+ */
 export const zRotateRequest = z.object({
     overlapMinutes: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * The role to create.
+ */
 export const zCreateRoleRequest = z.object({
     name: z.string().optional(),
     permissions: z.array(z.string()).optional()
 });
 
+/**
+ * The change to apply to a user.
+ */
 export const zUpdateRequest = z.object({
     action: z.string().optional(),
     name: z.string().optional()
 });
 
+/**
+ * The paging facts of a list answer, present when the request asked for them with `page_info`.
+ */
 export const zPageInfo = z.object({
     limit: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     offset: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).nullish(),
@@ -174,42 +249,66 @@ export const zPageInfo = z.object({
     next_cursor: z.string().nullish()
 });
 
+/**
+ * A page of user response rows, with the paging facts when the request asked for them.
+ */
 export const zPageUserResponse = z.object({
     data: z.array(zUserResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of remote response rows, with the paging facts when the request asked for them.
+ */
 export const zPageRemoteResponse = z.object({
     data: z.array(zRemoteResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of tenant response rows, with the paging facts when the request asked for them.
+ */
 export const zPageTenantResponse = z.object({
     data: z.array(zTenantResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * One app of the suite and this tenant's state of it.
+ */
 export const zAppResponse = z.object({
     appCode: z.string().optional(),
     enabled: z.boolean().optional(),
     version: z.coerce.bigint().min(BigInt('-9223372036854775808'), { error: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { error: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+/**
+ * A page of system response rows, with the paging facts when the request asked for them.
+ */
 export const zPageSystemResponse = z.object({
     data: z.array(zSystemResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of credential response rows, with the paging facts when the request asked for them.
+ */
 export const zPageCredentialResponse = z.object({
     data: z.array(zCredentialResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * A page of role response rows, with the paging facts when the request asked for them.
+ */
 export const zPageRoleResponse = z.object({
     data: z.array(zRoleResponse).optional(),
     page: zPageInfo.nullish()
 });
 
+/**
+ * The signed-in user.
+ */
 export const zMeResponse = z.object({
     id: z.uuid().optional(),
     tenantId: z.uuid().optional(),
@@ -220,6 +319,9 @@ export const zMeResponse = z.object({
     permissions: z.array(z.string()).optional()
 });
 
+/**
+ * A remote the caller may mount, with the one version an operator activated.
+ */
 export const zConsoleRemoteResponse = z.object({
     name: z.string().optional(),
     title: z.string().optional(),
@@ -229,6 +331,17 @@ export const zConsoleRemoteResponse = z.object({
     entryPath: z.string().optional(),
     integrity: z.string().optional(),
     sdkMajor: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
+});
+
+/**
+ * The body of every error: an RFC 9457 problem.
+ */
+export const zProblemDetail = z.object({
+    type: z.string().optional(),
+    title: z.string().optional(),
+    status: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    detail: z.string().optional(),
+    instance: z.string().optional()
 });
 
 export const zSetPermissionHeaders = z.object({
@@ -246,10 +359,13 @@ export const zSetPermissionQuery = z.object({
 });
 
 /**
- * OK
+ * A user of the suite.
  */
 export const zSetPermissionResponse = zUserResponse;
 
+/**
+ * The change an operator makes to a remote.
+ */
 export const zSetStateBody = zStateRequest;
 
 export const zSetStateHeaders = z.object({
@@ -262,10 +378,13 @@ export const zSetStatePath = z.object({
 });
 
 /**
- * OK
+ * A UI remote of the console and its registered versions.
  */
 export const zSetStateResponse = zRemoteResponse;
 
+/**
+ * The state to set.
+ */
 export const zSetBody = zEntitlementRequest;
 
 export const zSetHeaders = z.object({
@@ -279,10 +398,13 @@ export const zSetPath = z.object({
 });
 
 /**
- * OK
+ * A tenant's entitlement to one app.
  */
 export const zSetResponse = zEntitlementResponse;
 
+/**
+ * The new name.
+ */
 export const zRenameBody = zRenameRequest;
 
 export const zRenameHeaders = z.object({
@@ -295,7 +417,7 @@ export const zRenamePath = z.object({
 });
 
 /**
- * OK
+ * A tenant of the suite.
  */
 export const zRenameResponse = zTenantResponse;
 
@@ -304,10 +426,13 @@ export const zGetPath = z.object({
 });
 
 /**
- * OK
+ * A tenant system: a machine caller of one tenant.
  */
 export const zGetResponse = zSystemResponse;
 
+/**
+ * The change to apply to a tenant system.
+ */
 export const zUpdateBody = zUpdateSystemRequest;
 
 export const zUpdateHeaders = z.object({
@@ -320,10 +445,13 @@ export const zUpdatePath = z.object({
 });
 
 /**
- * OK
+ * A tenant system: a machine caller of one tenant.
  */
 export const zUpdateResponse = zSystemResponse;
 
+/**
+ * The new name.
+ */
 export const zRename1Body = zRenameRequest;
 
 export const zRename1Headers = z.object({
@@ -336,10 +464,13 @@ export const zRename1Path = z.object({
 });
 
 /**
- * OK
+ * A role and the permissions it grants.
  */
 export const zRename1Response = zRoleResponse;
 
+/**
+ * The role's new permission set, replacing the stored one.
+ */
 export const zReplacePermissionsBody = zPermissionsRequest;
 
 export const zReplacePermissionsHeaders = z.object({
@@ -352,10 +483,13 @@ export const zReplacePermissionsPath = z.object({
 });
 
 /**
- * OK
+ * A role and the permissions it grants.
  */
 export const zReplacePermissionsResponse = zRoleResponse;
 
+/**
+ * The token request, sent as an `application/x-www-form-urlencoded` form.
+ */
 export const zTokenBody = z.object({
     grant_type: z.string(),
     audience: z.string()
@@ -423,10 +557,13 @@ export const zListQuery = z.object({
 });
 
 /**
- * OK
+ * A page of user response rows, with the paging facts when the request asked for them.
  */
 export const zListResponse = zPageUserResponse;
 
+/**
+ * The user to create.
+ */
 export const zCreateBody = zCreateRequest;
 
 export const zCreateHeaders = z.object({
@@ -434,10 +571,13 @@ export const zCreateHeaders = z.object({
 });
 
 /**
- * Created
+ * A user of the suite.
  */
 export const zCreateResponse = zUserResponse;
 
+/**
+ * The version CI registers.
+ */
 export const zRegisterVersionBody = zRegisterRequest;
 
 export const zRegisterVersionHeaders = z.object({
@@ -449,7 +589,7 @@ export const zRegisterVersionPath = z.object({
 });
 
 /**
- * OK
+ * The same version with the same content was already registered, so nothing changed.
  */
 export const zRegisterVersionResponse = zVersionResponse;
 
@@ -497,17 +637,23 @@ export const zList1Query = z.object({
 });
 
 /**
- * OK
+ * A page of tenant response rows, with the paging facts when the request asked for them.
  */
 export const zList1Response = zPageTenantResponse;
 
+/**
+ * The tenant to provision.
+ */
 export const zCreate1Body = zProvisionRequest;
 
 /**
- * Created
+ * The tenant that was provisioned.
  */
 export const zCreate1Response = zProvisionedResponse;
 
+/**
+ * The hostname to map to the tenant.
+ */
 export const zAddDomainBody = zDomainRequest;
 
 export const zAddDomainHeaders = z.object({
@@ -528,7 +674,7 @@ export const zDeactivatePath = z.object({
 });
 
 /**
- * OK
+ * A tenant of the suite.
  */
 export const zDeactivateResponse = zTenantResponse;
 
@@ -575,10 +721,13 @@ export const zList2Query = z.object({
 });
 
 /**
- * OK
+ * A page of system response rows, with the paging facts when the request asked for them.
  */
 export const zList2Response = zPageSystemResponse;
 
+/**
+ * The tenant system to register.
+ */
 export const zCreate2Body = zCreateSystemRequest;
 
 export const zCreate2Headers = z.object({
@@ -586,7 +735,7 @@ export const zCreate2Headers = z.object({
 });
 
 /**
- * Created
+ * A tenant system: a machine caller of one tenant.
  */
 export const zCreate2Response = zSystemResponse;
 
@@ -656,10 +805,13 @@ export const zListCredentialsQuery = z.object({
 });
 
 /**
- * OK
+ * A page of credential response rows, with the paging facts when the request asked for them.
  */
 export const zListCredentialsResponse = zPageCredentialResponse;
 
+/**
+ * The credential to issue.
+ */
 export const zCreateCredentialBody = zCreateCredentialRequest;
 
 export const zCreateCredentialHeaders = z.object({
@@ -671,10 +823,13 @@ export const zCreateCredentialPath = z.object({
 });
 
 /**
- * Created
+ * A newly issued credential with its secret.
  */
 export const zCreateCredentialResponse = zIssuedCredentialResponse;
 
+/**
+ * How the old credential is retired.
+ */
 export const zRotateBody = zRotateRequest;
 
 export const zRotateHeaders = z.object({
@@ -686,7 +841,7 @@ export const zRotatePath = z.object({
 });
 
 /**
- * OK
+ * A newly issued credential with its secret.
  */
 export const zRotateResponse = zIssuedCredentialResponse;
 
@@ -735,10 +890,13 @@ export const zList3Query = z.object({
 });
 
 /**
- * OK
+ * A page of role response rows, with the paging facts when the request asked for them.
  */
 export const zList3Response = zPageRoleResponse;
 
+/**
+ * The role to create.
+ */
 export const zCreate3Body = zCreateRoleRequest;
 
 export const zCreate3Headers = z.object({
@@ -746,7 +904,7 @@ export const zCreate3Headers = z.object({
 });
 
 /**
- * Created
+ * A role and the permissions it grants.
  */
 export const zCreate3Response = zRoleResponse;
 
@@ -760,7 +918,7 @@ export const zUnassignPath = z.object({
 });
 
 /**
- * OK
+ * A role and the permissions it grants.
  */
 export const zUnassignResponse = zRoleResponse;
 
@@ -774,10 +932,13 @@ export const zAssignPath = z.object({
 });
 
 /**
- * OK
+ * A role and the permissions it grants.
  */
 export const zAssignResponse = zRoleResponse;
 
+/**
+ * The change to apply to a user.
+ */
 export const zUpdate1Body = zUpdateRequest;
 
 export const zUpdate1Headers = z.object({
@@ -790,7 +951,7 @@ export const zUpdate1Path = z.object({
 });
 
 /**
- * OK
+ * A user of the suite.
  */
 export const zUpdate1Response = zUserResponse;
 
@@ -854,7 +1015,7 @@ export const zListRemotesQuery = z.object({
 });
 
 /**
- * OK
+ * A page of remote response rows, with the paging facts when the request asked for them.
  */
 export const zListRemotesResponse = zPageRemoteResponse;
 
@@ -868,7 +1029,7 @@ export const zAppsPath = z.object({
 export const zAppsResponse = z.array(zAppResponse);
 
 /**
- * OK
+ * The signed-in user.
  */
 export const zMeResponse2 = zMeResponse;
 
@@ -892,6 +1053,6 @@ export const zRevokePath = z.object({
 });
 
 /**
- * OK
+ * An API credential. The secret is never part of it.
  */
 export const zRevokeResponse = zCredentialResponse;
