@@ -87,7 +87,7 @@ final class ArchitectureRules {
                 TABLE_OWNER,
                 Set.of(),
                 Set.of(
-                        "dev.ngb.billing..", "dev.ngb.mailer..", "dev.ngb.platform..", "dev.ngb.tenant..",
+                        "dev.ngb.billing..", "dev.ngb.mailer..", "dev.ngb.platform..",
                         "dev.ngb.notification..", "dev.ngb.mailroom.."),
                 Set.of("*.adapter..persistence..", "boot.."),
                 Set.of("dev.ngb.survey_jooq.."),

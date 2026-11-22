@@ -107,7 +107,7 @@ final class ArchitectureRules {
                 TABLE_OWNER,
                 Set.of(),
                 Set.of(
-                        "dev.ngb.billing..", "dev.ngb.mailer..", "dev.ngb.platform..", "dev.ngb.tenant..",
+                        "dev.ngb.billing..", "dev.ngb.mailer..", "dev.ngb.platform..",
                         "dev.ngb.notification..", "dev.ngb.mailroom..", "dev.ngb.survey..", "dev.ngb.attribution..",
                         "dev.ngb.customer..", "dev.ngb.loyalty.."),
                 Set.of("*.adapter..persistence..", "boot.."),

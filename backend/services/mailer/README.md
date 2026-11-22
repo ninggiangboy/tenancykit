@@ -54,7 +54,7 @@ starts". `management.health.mail` is disabled for the same reason.
 
 Each module's `api`, `domain`, `application` and `adapter` layers are separate source sets, so Spring cannot leak into the
 plain-Java inner layers. `./gradlew checkNoForeignServiceDependency` fails if any module declares a dependency on
-Billing, Platform or the sample tenant, on either the project axis or the dependency **group** axis — the second one is
+Billing or Platform, on either the project axis or the dependency **group** axis — the second one is
 what catches a sibling build, which arrives as an external coordinate. `ArchitectureTest`, its fixture meta-test and
 `ModulithVerificationTest` re-check the same boundaries on the classpath.
 

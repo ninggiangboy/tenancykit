@@ -15,9 +15,9 @@ import org.gradle.api.artifacts.ProjectDependency
  * loyalty is in both lists: customer and loyalty are separate deployables that share only `core/` and Platform's events.
  */
 val foreignServices =
-    setOf("billing", "mailer", "platform", "tenant", "mailroom", "survey", "attribution", "notification", "loyalty")
+    setOf("billing", "mailer", "platform", "mailroom", "survey", "attribution", "notification", "loyalty")
 val foreignGroups = setOf(
-    "dev.ngb.billing", "dev.ngb.mailer", "dev.ngb.platform", "dev.ngb.tenant", "dev.ngb.mailroom",
+    "dev.ngb.billing", "dev.ngb.mailer", "dev.ngb.platform", "dev.ngb.mailroom",
     "dev.ngb.survey", "dev.ngb.attribution", "dev.ngb.notification", "dev.ngb.loyalty",
 )
 val serviceOnlyCoreModules = emptySet<String>()

@@ -17,7 +17,7 @@ class FeignBoundaryTest {
     static final ArchRule feignDoesNotDependOnAService = noClasses()
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("dev.ngb.billing..", "dev.ngb.tenant..", "dev.ngb.platform..", "dev.ngb.mailer..")
+            .resideInAnyPackage("dev.ngb.billing..", "dev.ngb.platform..", "dev.ngb.mailer..")
             .because("core-feign is shared by every service, so no service may leak into it");
 
     @ArchTest

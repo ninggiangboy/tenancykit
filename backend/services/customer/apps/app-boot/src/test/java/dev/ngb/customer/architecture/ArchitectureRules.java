@@ -89,7 +89,7 @@ final class ArchitectureRules {
 
     private static Profile profile(String root) {
         List<String> foreign = new ArrayList<>();
-        foreign.addAll(List.of("dev.ngb.billing..", "dev.ngb.mailer..", "dev.ngb.platform..", "dev.ngb.tenant.."));
+        foreign.addAll(List.of("dev.ngb.billing..", "dev.ngb.mailer..", "dev.ngb.platform.."));
         foreign.addAll(List.of(
                 "dev.ngb.mailroom..", "dev.ngb.survey..", "dev.ngb.attribution..", "dev.ngb.notification..",
                 "dev.ngb.loyalty.."));

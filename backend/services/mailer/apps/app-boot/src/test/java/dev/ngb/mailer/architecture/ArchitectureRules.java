@@ -69,7 +69,7 @@ final class ArchitectureRules {
                 "dev.ngb.mailer_jooq",
                 TABLE_OWNER,
                 Set.of(),
-                Set.of("dev.ngb.billing..", "dev.ngb.platform..", "dev.ngb.tenant.."),
+                Set.of("dev.ngb.billing..", "dev.ngb.platform.."),
                 Set.of("*.adapter..persistence..", "boot.."),
                 Set.of("dev.ngb.mailer_jooq.."),
                 NOT_YET_ON_THE_UNIT_OF_WORK,

@@ -14,7 +14,7 @@ class WebhookBoundaryTest {
     static final ArchRule webhookDoesNotDependOnAService = noClasses()
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("dev.ngb.billing..", "dev.ngb.tenant..", "dev.ngb.platform..", "dev.ngb.mailer..",
+            .resideInAnyPackage("dev.ngb.billing..", "dev.ngb.platform..", "dev.ngb.mailer..",
                     "dev.ngb.mailroom..", "dev.ngb.notification..", "dev.ngb.survey..")
             .because("core-webhook is shared by every app that delivers a webhook, so no app may leak into it");
 }

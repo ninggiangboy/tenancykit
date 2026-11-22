@@ -9,9 +9,9 @@ import org.gradle.api.artifacts.ProjectDependency
  * root segment, because this build legitimately owns a `contexts:platform` module and a segment match would flag it.
  * A sibling service reaches this build as an external coordinate, whose only discriminator is the dependency's group.
  */
-val foreignServices = setOf("billing", "mailer", "platform", "tenant", "notification", "mailroom")
+val foreignServices = setOf("billing", "mailer", "platform", "notification", "mailroom")
 val foreignGroups = setOf(
-    "dev.ngb.billing", "dev.ngb.mailer", "dev.ngb.platform", "dev.ngb.tenant",
+    "dev.ngb.billing", "dev.ngb.mailer", "dev.ngb.platform",
     "dev.ngb.notification", "dev.ngb.mailroom",
 )
 // Survey keeps the replica and serves HTTP, so it legitimately needs every shared core module.

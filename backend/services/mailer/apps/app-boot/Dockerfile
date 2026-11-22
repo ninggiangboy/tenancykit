@@ -3,10 +3,10 @@
 # Build context is the repository root, because each service build includes `core/` as a separate Gradle build and
 # mailer packages its command schemas from `contracts/`.
 #
-# This file is based on Billing's, not the sample tenant's, and the difference is the whole point: Billing copies
-# `contracts/`, the tenant does not. Mailer's `processResources` packages `contracts/commands` onto the classpath, so a
-# tenant-shaped Dockerfile produces an image that builds green and then crash-loops on a missing schema resource — and
-# only in ECS, never on a laptop where the resource is on the classpath from the source tree.
+# This file is based on Billing's, and the `contracts/` copy is the whole point: Mailer's `processResources` packages
+# `contracts/commands` onto the classpath, so a Dockerfile that does not copy `contracts/` produces an image that builds
+# green and then crash-loops on a missing schema resource — and only in ECS, never on a laptop where the resource is on
+# the classpath from the source tree.
 #
 # Build: docker build -f backend/services/mailer/apps/app-boot/Dockerfile .
 

@@ -12,8 +12,8 @@ import org.gradle.api.artifacts.ProjectDependency
  * discriminator is the dependency's group. A gate with the project axis alone is decorative: it can never fire on
  * `dev.ngb.billing`, which is the case that matters.
  */
-val foreignServices = setOf("billing", "platform", "tenant")
-val foreignGroups = setOf("dev.ngb.billing", "dev.ngb.platform", "dev.ngb.tenant")
+val foreignServices = setOf("billing", "platform")
+val foreignGroups = setOf("dev.ngb.billing", "dev.ngb.platform")
 val serviceOnlyCoreModules = setOf("core-replica", "core-platform-sync", "core-suite")
 
 val checkNoForeignServiceDependency = tasks.register("checkNoForeignServiceDependency") {

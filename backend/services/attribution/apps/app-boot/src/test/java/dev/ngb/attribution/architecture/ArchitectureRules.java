@@ -96,7 +96,7 @@ final class ArchitectureRules {
                 TABLE_OWNER,
                 Set.of(),
                 Set.of("dev.ngb.billing..", "dev.ngb.mailer..", "dev.ngb.mailroom..", "dev.ngb.platform..",
-                        "dev.ngb.survey..", "dev.ngb.tenant.."),
+                        "dev.ngb.survey.."),
                 Set.of("*.adapter..persistence..", "boot.."),
                 Set.of("dev.ngb.attribution_jooq.."),
                 NOT_YET_ON_THE_UNIT_OF_WORK,

@@ -12,9 +12,9 @@ import org.gradle.api.artifacts.ProjectDependency
  * root segment, because this build legitimately owns a `contexts:platform` module and a segment match would flag it.
  * A sibling service reaches this build as an external coordinate, whose only discriminator is the dependency's group.
  */
-val foreignServices = setOf("billing", "mailer", "mailroom", "platform", "survey", "tenant")
+val foreignServices = setOf("billing", "mailer", "mailroom", "platform", "survey")
 val foreignGroups =
-    setOf("dev.ngb.billing", "dev.ngb.mailer", "dev.ngb.mailroom", "dev.ngb.platform", "dev.ngb.survey", "dev.ngb.tenant")
+    setOf("dev.ngb.billing", "dev.ngb.mailer", "dev.ngb.mailroom", "dev.ngb.platform", "dev.ngb.survey")
 val serviceOnlyCoreModules = emptySet<String>()
 
 val checkNoForeignServiceDependency = tasks.register("checkNoForeignServiceDependency") {

@@ -73,7 +73,7 @@ final class ArchitectureRules {
                 "dev.ngb.notification_jooq",
                 TABLE_OWNER,
                 Set.of(),
-                Set.of("dev.ngb.billing..", "dev.ngb.mailer..", "dev.ngb.platform..", "dev.ngb.tenant.."),
+                Set.of("dev.ngb.billing..", "dev.ngb.mailer..", "dev.ngb.platform.."),
                 Set.of("*.adapter..persistence..", "boot.."),
                 Set.of("dev.ngb.notification_jooq.."),
                 NOT_YET_ON_THE_UNIT_OF_WORK,

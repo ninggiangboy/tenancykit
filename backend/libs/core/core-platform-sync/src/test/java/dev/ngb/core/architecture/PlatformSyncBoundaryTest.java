@@ -17,14 +17,14 @@ class PlatformSyncBoundaryTest {
     static final ArchRule syncDoesNotDependOnAService = noClasses()
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("dev.ngb.billing..", "dev.ngb.tenant..", "dev.ngb.platform..", "dev.ngb.mailer..")
+            .resideInAnyPackage("dev.ngb.billing..", "dev.ngb.platform..", "dev.ngb.mailer..")
             .because("core-platform-sync is shared by every service, so no service may leak into it");
 
     @ArchTest
     static final ArchRule syncDoesNotUseGeneratedSchema = noClasses()
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("dev.ngb.billing_jooq..", "dev.ngb.platform_jooq..", "dev.ngb.tenant_jooq..",
+            .resideInAnyPackage("dev.ngb.billing_jooq..", "dev.ngb.platform_jooq..",
                     "dev.ngb.mailer_jooq..")
             .because("the replica tables belong to the app's schema, so the rebuild writes through core-replica");
 

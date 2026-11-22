@@ -62,10 +62,10 @@ class ArchitectureRulesTest {
     void everyServiceRunsTheSameGenericRuleIds() {
         List<String> billing = ruleIds(ArchitectureRules.all(profile("dev.ngb.billing", "context", "sharedkernel")));
         List<String> platform = ruleIds(ArchitectureRules.all(profile("dev.ngb.platform", "context", "sharedkernel")));
-        List<String> tenant = ruleIds(ArchitectureRules.all(profile("dev.ngb.tenant", "module", "shared")));
+        List<String> moduleLayout = ruleIds(ArchitectureRules.all(profile("dev.ngb.example", "module", "shared")));
 
         assertEquals(billing, platform);
-        assertEquals(billing, tenant);
+        assertEquals(billing, moduleLayout);
     }
 
     @Test

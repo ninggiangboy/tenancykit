@@ -23,7 +23,7 @@ class CoreOpenapiBoundaryTest {
     @Test
     void theBridgeNamesNoService() {
         noClasses().should().dependOnClassesThat()
-                .resideInAnyPackage("dev.ngb.billing..", "dev.ngb.tenant..", "dev.ngb.platform..", "dev.ngb.mailer..")
+                .resideInAnyPackage("dev.ngb.billing..", "dev.ngb.platform..", "dev.ngb.mailer..")
                 .check(openapi());
     }
 

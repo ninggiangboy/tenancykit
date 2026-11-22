@@ -3,11 +3,11 @@ import org.gradle.api.artifacts.ProjectDependency
 
 /*
  * Services meet through the broker, the replica and signed tokens, never through each other's code. This check
- * fails the build when a Platform project declares a Gradle dependency on Billing or the sample tenant. Platform
+ * fails the build when a Platform project declares a Gradle dependency on Billing. Platform
  * shares `core-messaging` and `core-replica` with Billing by design; what a service may not do is reach another
  * service.
  */
-val foreignServices = listOf("billing", "tenant", "mailer")
+val foreignServices = listOf("billing", "mailer")
 
 val checkNoForeignServiceDependency = tasks.register("checkNoForeignServiceDependency") {
     group = "verification"
@@ -22,7 +22,7 @@ val checkNoForeignServiceDependency = tasks.register("checkNoForeignServiceDepen
                                 ?.let { "${project.path}:${configuration.name} -> ${it.path}" }
                         is ExternalModuleDependency ->
                             dependency
-                                .takeIf { it.group in setOf("dev.ngb.billing", "dev.ngb.tenant", "dev.ngb.mailer") }
+                                .takeIf { it.group in setOf("dev.ngb.billing", "dev.ngb.mailer") }
                                 ?.let { "${project.path}:${configuration.name} -> ${it.group}:${it.name}" }
                         else -> null
                     }
