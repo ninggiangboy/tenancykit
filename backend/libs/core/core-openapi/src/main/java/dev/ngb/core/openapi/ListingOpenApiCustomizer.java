@@ -121,6 +121,7 @@ public class ListingOpenApiCustomizer implements OperationCustomizer, OpenApiCus
             Schema<Object> reference = new Schema<>();
             reference.set$ref(given.get$ref());
             Schema<Object> wrapper = new Schema<>();
+            wrapper.setDescription(given.getDescription());
             if (openApi30) {
                 wrapper.setNullable(true);
                 wrapper.setAllOf(List.of(reference));
