@@ -35,15 +35,15 @@ tags:
   description: "A tenant's own customers by email address. Deleting a receiver is\
     \ an erasure, not a soft delete."
 paths:
-  /api/v1/templates/{id}:
+  /system/v1/templates/{id}:
     get:
       tags:
       - "Email templates"
       summary: "Get an email template"
       description: "Returns one template at its current revision; its version is also\
-        \ the response's `ETag`. An unknown id answers `404`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `mailroom:template:read`."
-      operationId: "get"
+        \ the response's `ETag`. An unknown id answers `404`.\n\nCallers: tenant-system.\
+        \ Requires `mailroom:template:read`."
+      operationId: "getAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -69,7 +69,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:template:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     put:
       tags:
@@ -78,9 +77,8 @@ paths:
       description: "Appends a new immutable revision with the name, subject and bodies\
         \ given and moves the template's pointer to it. A revision an email or campaign\
         \ already recorded is never rewritten. Pass the current `ETag` in `If-Match`;\
-        \ a stale version is refused.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `mailroom:template:manage`."
-      operationId: "update"
+        \ a stale version is refused.\n\nCallers: tenant-system. Requires `mailroom:template:manage`."
+      operationId: "updateAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -122,7 +120,6 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "mailroom:template:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     delete:
       tags:
@@ -131,8 +128,8 @@ paths:
       description: "Removes the template. Its revisions are kept, so a campaign that\
         \ pinned one still renders. Pass the current `ETag` in `If-Match`; a stale\
         \ version is refused. Answers `204`. Requires `mailroom:template:manage`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `mailroom:template:manage`."
-      operationId: "delete"
+        \nCallers: tenant-system. Requires `mailroom:template:manage`."
+      operationId: "deleteAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -163,41 +160,16 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "mailroom:template:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/settings:
-    get:
-      tags:
-      - "Mail settings"
-      summary: "Get the tenant's mail settings"
-      description: "Returns the tenant's default sender, reply-to, body retention\
-        \ in days and campaign publish rate per minute, with the settings' version.\n\
-        \nCallers: tenant-user, tenant-system. Requires `mailroom:email:read`."
-      operationId: "current"
-      responses:
-        "200":
-          description: "The tenant's mail settings."
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/SettingsResponse"
-        "401":
-          $ref: "#/components/responses/Unauthenticated"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-      x-required-permission: "mailroom:email:read"
-      x-allowed-callers:
-      - "tenant-user"
-      - "tenant-system"
-  /api/v1/segments/{id}:
+  /system/v1/segments/{id}:
     get:
       tags:
       - "Segments"
       summary: "Get a segment"
       description: "Returns one segment with its filter; its version is also the response's\
-        \ `ETag`. An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `mailroom:receiver:read`."
-      operationId: "get_1"
+        \ `ETag`. An unknown id answers `404`.\n\nCallers: tenant-system. Requires\
+        \ `mailroom:receiver:read`."
+      operationId: "getAsTenantSystem_1"
       parameters:
       - name: "id"
         in: "path"
@@ -223,7 +195,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:receiver:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     put:
       tags:
@@ -231,8 +202,8 @@ paths:
       summary: "Replace a segment"
       description: "Replaces the segment's name and filter; the new filter is validated\
         \ first. Pass the current `ETag` in `If-Match`; a stale version is refused.\n\
-        \nCallers: tenant-user, tenant-system. Requires `mailroom:receiver:manage`."
-      operationId: "update_1"
+        \nCallers: tenant-system. Requires `mailroom:receiver:manage`."
+      operationId: "updateAsTenantSystem_1"
       parameters:
       - name: "id"
         in: "path"
@@ -274,7 +245,6 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     delete:
       tags:
@@ -283,8 +253,8 @@ paths:
       description: "Deletes the saved segment. A campaign that already snapshotted\
         \ it keeps its recipients. Pass the current `ETag` in `If-Match`; a stale\
         \ version is refused. Answers `204`. Requires `mailroom:receiver:manage`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `mailroom:receiver:manage`."
-      operationId: "delete_1"
+        \nCallers: tenant-system. Requires `mailroom:receiver:manage`."
+      operationId: "deleteAsTenantSystem_1"
       parameters:
       - name: "id"
         in: "path"
@@ -315,9 +285,8 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/receivers:
+  /system/v1/receivers:
     get:
       tags:
       - "Receivers"
@@ -333,9 +302,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `mailroom:receiver:read`."
-      operationId: "list"
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `mailroom:receiver:read`."
+      operationId: "listAsTenantSystem"
       parameters:
       - name: "filter[created_at][eq]"
         in: "query"
@@ -735,7 +703,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:receiver:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     put:
       tags:
@@ -744,8 +711,8 @@ paths:
       description: "Upserts a receiver by `email`, the identity of a receiver. A second\
         \ call with the same address updates the names and attributes and never re-subscribes\
         \ the address; removing the suppression is the only way to do that.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `mailroom:receiver:manage`."
-      operationId: "upsert"
+        \ tenant-system. Requires `mailroom:receiver:manage`."
+      operationId: "upsertAsTenantSystem"
       requestBody:
         description: "The receiver to create or update, identified by its email."
         content:
@@ -768,17 +735,16 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/groups/{id}:
+  /system/v1/groups/{id}:
     get:
       tags:
       - "Receiver groups"
       summary: "Get a receiver group"
       description: "Returns one group; its version is also the response's `ETag`.\
         \ An unknown id answers `404`. Requires `mailroom:receiver:read`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `mailroom:receiver:read`."
-      operationId: "get_2"
+        \ tenant-system. Requires `mailroom:receiver:read`."
+      operationId: "getAsTenantSystem_2"
       parameters:
       - name: "id"
         in: "path"
@@ -804,16 +770,14 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:receiver:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     put:
       tags:
       - "Receiver groups"
       summary: "Rename a receiver group"
       description: "Changes the group's name. Pass the current `ETag` in `If-Match`;\
-        \ a stale version is refused.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `mailroom:receiver:manage`."
-      operationId: "update_2"
+        \ a stale version is refused.\n\nCallers: tenant-system. Requires `mailroom:receiver:manage`."
+      operationId: "updateAsTenantSystem_2"
       parameters:
       - name: "id"
         in: "path"
@@ -855,7 +819,6 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     delete:
       tags:
@@ -863,8 +826,8 @@ paths:
       summary: "Delete a receiver group"
       description: "Deletes the group and its memberships; the receivers themselves\
         \ stay. Pass the current `ETag` in `If-Match`; a stale version is refused.\
-        \ Answers `204`.\n\nCallers: tenant-user, tenant-system. Requires `mailroom:receiver:manage`."
-      operationId: "delete_2"
+        \ Answers `204`.\n\nCallers: tenant-system. Requires `mailroom:receiver:manage`."
+      operationId: "deleteAsTenantSystem_2"
       parameters:
       - name: "id"
         in: "path"
@@ -895,17 +858,16 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/campaigns/{id}:
+  /system/v1/campaigns/{id}:
     get:
       tags:
       - "Campaigns"
       summary: "Get a campaign"
       description: "Returns one campaign with its state; its version is also the response's\
-        \ `ETag`. An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `mailroom:campaign:read`."
-      operationId: "get_3"
+        \ `ETag`. An unknown id answers `404`.\n\nCallers: tenant-system. Requires\
+        \ `mailroom:campaign:read`."
+      operationId: "getAsTenantSystem_3"
       parameters:
       - name: "id"
         in: "path"
@@ -931,7 +893,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:campaign:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     put:
       tags:
@@ -939,8 +900,8 @@ paths:
       summary: "Edit a draft campaign"
       description: "Edits a campaign that is still in `DRAFT` and re-pins the template\
         \ revision it will send. Pass the current `ETag` in `If-Match`; a stale version\
-        \ is refused.\n\nCallers: tenant-user, tenant-system. Requires `mailroom:campaign:manage`."
-      operationId: "update_3"
+        \ is refused.\n\nCallers: tenant-system. Requires `mailroom:campaign:manage`."
+      operationId: "updateAsTenantSystem_3"
       parameters:
       - name: "id"
         in: "path"
@@ -982,9 +943,8 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "mailroom:campaign:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/templates:
+  /system/v1/templates:
     get:
       tags:
       - "Email templates"
@@ -1000,9 +960,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `mailroom:template:read`."
-      operationId: "list_1"
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `mailroom:template:read`."
+      operationId: "listAsTenantSystem_1"
       parameters:
       - name: "filter[created_at][eq]"
         in: "query"
@@ -1379,7 +1338,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:template:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
@@ -1388,8 +1346,8 @@ paths:
       description: "Creates a template with a `key`, a name, a subject and an HTML\
         \ and text body, as its first immutable revision. The `key` can never change\
         \ afterwards. A hostile or oversize body is refused before it is stored. Answers\
-        \ `201`.\n\nCallers: tenant-user, tenant-system. Requires `mailroom:template:manage`."
-      operationId: "create"
+        \ `201`.\n\nCallers: tenant-system. Requires `mailroom:template:manage`."
+      operationId: "createAsTenantSystem"
       requestBody:
         description: "The template to create, or the new content of an existing one."
         content:
@@ -1412,17 +1370,16 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:template:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/templates/{id}/preview:
+  /system/v1/templates/{id}/preview:
     post:
       tags:
       - "Email templates"
       summary: "Preview a rendered template"
       description: "Renders the template's current revision with the `variables` given,\
         \ under the same limits a real send obeys, and returns the result without\
-        \ sending anything.\n\nCallers: tenant-user, tenant-system. Requires `mailroom:template:read`."
-      operationId: "preview"
+        \ sending anything.\n\nCallers: tenant-system. Requires `mailroom:template:read`."
+      operationId: "previewAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -1454,9 +1411,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:template:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/suppressions:
+  /system/v1/suppressions:
     get:
       tags:
       - "Suppressions"
@@ -1472,9 +1428,8 @@ paths:
         \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
         \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `mailroom:receiver:read`."
-      operationId: "list_2"
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-system. Requires `mailroom:receiver:read`."
+      operationId: "listAsTenantSystem_2"
       parameters:
       - name: "filter[created_at][eq]"
         in: "query"
@@ -1690,16 +1645,15 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:receiver:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
       - "Suppressions"
       summary: "Suppress an address"
       description: "Blocks an `email` address on the tenant's instruction. A suppression\
-        \ with scope `ALL` stops transactional mail too.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `mailroom:receiver:manage`."
-      operationId: "add"
+        \ with scope `ALL` stops transactional mail too.\n\nCallers: tenant-system.\
+        \ Requires `mailroom:receiver:manage`."
+      operationId: "addAsTenantSystem"
       requestBody:
         description: "The address to block."
         content:
@@ -1722,7 +1676,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     delete:
       tags:
@@ -1731,9 +1684,8 @@ paths:
       description: "Removes the suppression of `email` and, when the address is a\
         \ known receiver, subscribes it again. This is the tenant's explicit statement\
         \ that the customer consented again, and the only action that re-subscribes\
-        \ an address. Answers `204`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `mailroom:receiver:manage`."
-      operationId: "remove"
+        \ an address. Answers `204`.\n\nCallers: tenant-system. Requires `mailroom:receiver:manage`."
+      operationId: "removeAsTenantSystem"
       parameters:
       - name: "email"
         in: "query"
@@ -1750,17 +1702,10 @@ paths:
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/Forbidden"
-        "404":
-          description: "The address has no suppression."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/segments:
+  /system/v1/segments:
     get:
       tags:
       - "Segments"
@@ -1776,9 +1721,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `mailroom:receiver:read`."
-      operationId: "list_3"
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `mailroom:receiver:read`."
+      operationId: "listAsTenantSystem_3"
       parameters:
       - name: "filter[created_at][eq]"
         in: "query"
@@ -2068,7 +2012,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:receiver:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
@@ -2076,8 +2019,8 @@ paths:
       summary: "Create a segment"
       description: "Saves a named filter over receiver attributes. The filter language\
         \ is closed and the filter is validated before it is stored. Answers `201`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `mailroom:receiver:manage`."
-      operationId: "create_1"
+        \nCallers: tenant-system. Requires `mailroom:receiver:manage`."
+      operationId: "createAsTenantSystem_1"
       requestBody:
         description: "The segment to save."
         content:
@@ -2100,17 +2043,16 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/segments/{id}/preview:
+  /system/v1/segments/{id}/preview:
     post:
       tags:
       - "Segments"
       summary: "Preview a segment's audience"
       description: "Answers how many receivers the segment matches now, with a sample,\
-        \ without loading the whole audience.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `mailroom:receiver:read`."
-      operationId: "preview_1"
+        \ without loading the whole audience.\n\nCallers: tenant-system. Requires\
+        \ `mailroom:receiver:read`."
+      operationId: "previewAsTenantSystem_1"
       parameters:
       - name: "id"
         in: "path"
@@ -2136,9 +2078,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:receiver:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/receivers/bulk:
+  /system/v1/receivers/bulk:
     post:
       tags:
       - "Receivers"
@@ -2146,8 +2087,8 @@ paths:
       description: "Upserts up to 1,000 receivers in one call and reports a result\
         \ per item by `index`. One bad address is an error for its own item, not for\
         \ the call, so an import does not lose the rows around a typo.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `mailroom:receiver:manage`."
-      operationId: "bulk"
+        \ tenant-system. Requires `mailroom:receiver:manage`."
+      operationId: "bulkAsTenantSystem"
       requestBody:
         description: "The receivers to upsert, at most 1,000."
         content:
@@ -2172,9 +2113,8 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/groups:
+  /system/v1/groups:
     get:
       tags:
       - "Receiver groups"
@@ -2190,9 +2130,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `mailroom:receiver:read`."
-      operationId: "list_4"
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `mailroom:receiver:read`."
+      operationId: "listAsTenantSystem_4"
       parameters:
       - name: "filter[created_at][eq]"
         in: "query"
@@ -2482,16 +2421,15 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:receiver:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
       - "Receiver groups"
       summary: "Create a receiver group"
       description: "Creates an empty static group with a name. Add receivers to it\
-        \ with `POST /api/v1/groups/{id}/members`. Answers `201`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `mailroom:receiver:manage`."
-      operationId: "create_2"
+        \ with `POST /api/v1/groups/{id}/members`. Answers `201`.\n\nCallers: tenant-system.\
+        \ Requires `mailroom:receiver:manage`."
+      operationId: "createAsTenantSystem_2"
       requestBody:
         description: "The group's name."
         content:
@@ -2514,9 +2452,8 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/groups/{id}/members:
+  /system/v1/groups/{id}/members:
     get:
       tags:
       - "Receiver groups"
@@ -2532,9 +2469,8 @@ paths:
         \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
         \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `mailroom:receiver:read`."
-      operationId: "members"
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-system. Requires `mailroom:receiver:read`."
+      operationId: "membersAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -2943,7 +2879,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:receiver:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
@@ -2951,8 +2886,8 @@ paths:
       summary: "Add receivers to a group"
       description: "Adds up to 1,000 receivers, named by `receiverIds`, to the group.\
         \ A receiver that belongs to another tenant is refused. Answers how many memberships\
-        \ changed.\n\nCallers: tenant-user, tenant-system. Requires `mailroom:receiver:manage`."
-      operationId: "addMembers"
+        \ changed.\n\nCallers: tenant-system. Requires `mailroom:receiver:manage`."
+      operationId: "addMembersAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -2985,7 +2920,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     delete:
       tags:
@@ -2993,8 +2927,8 @@ paths:
       summary: "Remove receivers from a group"
       description: "Removes up to 1,000 receivers, named by `receiverIds`, from the\
         \ group; the receivers themselves stay. Answers how many memberships changed.\n\
-        \nCallers: tenant-user, tenant-system. Requires `mailroom:receiver:manage`."
-      operationId: "removeMembers"
+        \nCallers: tenant-system. Requires `mailroom:receiver:manage`."
+      operationId: "removeMembersAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -3027,9 +2961,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/emails:
+  /system/v1/emails:
     get:
       tags:
       - "Emails"
@@ -3045,9 +2978,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `mailroom:email:read`."
-      operationId: "list_5"
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `mailroom:email:read`."
+      operationId: "listAsTenantSystem_5"
       parameters:
       - name: "filter[body_purged_at][eq]"
         in: "query"
@@ -3742,7 +3674,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:email:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
@@ -3753,9 +3684,8 @@ paths:
         \ it and queues it for delivery. A suppressed address is stored as `SKIPPED`\
         \ and a failed render as `FAILED` with the reason; neither is sent. Send an\
         \ `Idempotency-Key` so a retried call returns the same email. Answers `201`.\
-        \ Requires `mailroom:email:send`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `mailroom:email:send`."
-      operationId: "send"
+        \ Requires `mailroom:email:send`.\n\nCallers: tenant-system. Requires `mailroom:email:send`."
+      operationId: "sendAsTenantSystem"
       parameters:
       - name: "Idempotency-Key"
         in: "header"
@@ -3789,9 +3719,8 @@ paths:
           $ref: "#/components/responses/IdempotencyConflict"
       x-required-permission: "mailroom:email:send"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/emails/batch:
+  /system/v1/emails/batch:
     post:
       tags:
       - "Emails"
@@ -3799,8 +3728,8 @@ paths:
       description: "Sends a list of `items`, each shaped like a single send, and reports\
         \ a result per item by `index`: the email id and its status, or the reason\
         \ that item was refused. One bad item does not fail the others.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `mailroom:email:send`."
-      operationId: "batch"
+        \ tenant-system. Requires `mailroom:email:send`."
+      operationId: "batchAsTenantSystem"
       requestBody:
         description: "The emails to send, each shaped like a single send."
         content:
@@ -3825,9 +3754,8 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:email:send"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/campaigns:
+  /system/v1/campaigns:
     get:
       tags:
       - "Campaigns"
@@ -3843,9 +3771,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `mailroom:campaign:read`."
-      operationId: "list_6"
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `mailroom:campaign:read`."
+      operationId: "listAsTenantSystem_6"
       parameters:
       - name: "filter[completed_at][eq]"
         in: "query"
@@ -4605,7 +4532,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:campaign:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
@@ -4614,8 +4540,8 @@ paths:
       description: "Creates a campaign in `DRAFT` that targets a group or segment\
         \ (`targetType`, `targetId`) with the template `templateKey` and the sender\
         \ `fromKey`; it pins the template revision it will send. Answers `201`.\n\n\
-        Callers: tenant-user, tenant-system. Requires `mailroom:campaign:manage`."
-      operationId: "create_3"
+        Callers: tenant-system. Requires `mailroom:campaign:manage`."
+      operationId: "createAsTenantSystem_3"
       requestBody:
         description: "The campaign to create, or its new properties."
         content:
@@ -4638,9 +4564,8 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "mailroom:campaign:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/campaigns/{id}/test:
+  /system/v1/campaigns/{id}/test:
     post:
       tags:
       - "Campaigns"
@@ -4648,8 +4573,8 @@ paths:
       description: "Sends a sample of the campaign to up to five explicit `addresses`\
         \ as transactional mail. A test send stores no campaign or receiver id, so\
         \ it never counts in the campaign's statistics and never touches its snapshot.\n\
-        \nCallers: tenant-user, tenant-system. Requires `mailroom:campaign:manage`."
-      operationId: "test"
+        \nCallers: tenant-system. Requires `mailroom:campaign:manage`."
+      operationId: "testAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -4684,17 +4609,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:campaign:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/campaigns/{id}/send:
+  /system/v1/campaigns/{id}/send:
     post:
       tags:
       - "Campaigns"
       summary: "Send a campaign now"
       description: "Starts the campaign immediately: it enters `SENDING` and its audience\
         \ is snapshotted once. Recipients are then published at the tenant's campaign\
-        \ rate.\n\nCallers: tenant-user, tenant-system. Requires `mailroom:campaign:manage`."
-      operationId: "send_1"
+        \ rate.\n\nCallers: tenant-system. Requires `mailroom:campaign:manage`."
+      operationId: "sendAsTenantSystem_1"
       parameters:
       - name: "id"
         in: "path"
@@ -4720,9 +4644,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:campaign:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/campaigns/{id}/schedule:
+  /system/v1/campaigns/{id}/schedule:
     post:
       tags:
       - "Campaigns"
@@ -4730,9 +4653,8 @@ paths:
       description: "Schedules a `DRAFT` campaign to start at `scheduledAt`, which\
         \ must be in the future. When the time comes the campaign enters `SENDING`\
         \ and its audience is snapshotted once. Pass the current `ETag` in `If-Match`;\
-        \ a stale version is refused.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `mailroom:campaign:manage`."
-      operationId: "schedule"
+        \ a stale version is refused.\n\nCallers: tenant-system. Requires `mailroom:campaign:manage`."
+      operationId: "scheduleAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -4774,17 +4696,16 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "mailroom:campaign:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/campaigns/{id}/resume:
+  /system/v1/campaigns/{id}/resume:
     post:
       tags:
       - "Campaigns"
       summary: "Resume a campaign"
       description: "Resumes a paused campaign. A campaign in a state that cannot be\
         \ resumed answers `409`. Requires `mailroom:campaign:manage`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `mailroom:campaign:manage`."
-      operationId: "resume"
+        \ tenant-system. Requires `mailroom:campaign:manage`."
+      operationId: "resumeAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -4808,25 +4729,18 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
-        "409":
-          description: "The campaign is not paused, so it cannot be resumed."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "mailroom:campaign:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/campaigns/{id}/pause:
+  /system/v1/campaigns/{id}/pause:
     post:
       tags:
       - "Campaigns"
       summary: "Pause a campaign"
       description: "Pauses a sending campaign so no further recipients are published.\
-        \ A campaign in a state that cannot be paused answers `409`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `mailroom:campaign:manage`."
-      operationId: "pause"
+        \ A campaign in a state that cannot be paused answers `409`.\n\nCallers: tenant-system.\
+        \ Requires `mailroom:campaign:manage`."
+      operationId: "pauseAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -4850,25 +4764,18 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
-        "409":
-          description: "The campaign is not sending, so it cannot be paused."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "mailroom:campaign:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/campaigns/{id}/cancel:
+  /system/v1/campaigns/{id}/cancel:
     post:
       tags:
       - "Campaigns"
       summary: "Cancel a campaign"
       description: "Cancels the campaign so it sends no more. A campaign in a state\
-        \ that cannot be cancelled answers `409`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `mailroom:campaign:manage`."
-      operationId: "cancel"
+        \ that cannot be cancelled answers `409`.\n\nCallers: tenant-system. Requires\
+        \ `mailroom:campaign:manage`."
+      operationId: "cancelAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -4892,25 +4799,17 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
-        "409":
-          description: "The campaign is in a state that cannot be cancelled."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "mailroom:campaign:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/receivers/{id}:
+  /system/v1/receivers/{id}:
     get:
       tags:
       - "Receivers"
       summary: "Get a receiver"
       description: "Returns one receiver; its version is also the response's `ETag`.\
-        \ An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `mailroom:receiver:read`."
-      operationId: "get_4"
+        \ An unknown id answers `404`.\n\nCallers: tenant-system. Requires `mailroom:receiver:read`."
+      operationId: "getAsTenantSystem_4"
       parameters:
       - name: "id"
         in: "path"
@@ -4936,7 +4835,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:receiver:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     delete:
       tags:
@@ -4946,9 +4844,8 @@ paths:
         \ request requires. The suppression row is kept on purpose, so an address\
         \ that is deleted and imported again is still not mailed. Pass the current\
         \ `ETag` in `If-Match`; a stale version is refused. Answers `204`. Requires\
-        \ `mailroom:receiver:manage`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `mailroom:receiver:manage`."
-      operationId: "delete_3"
+        \ `mailroom:receiver:manage`.\n\nCallers: tenant-system. Requires `mailroom:receiver:manage`."
+      operationId: "deleteAsTenantSystem_3"
       parameters:
       - name: "id"
         in: "path"
@@ -4979,7 +4876,6 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     patch:
       tags:
@@ -4988,8 +4884,8 @@ paths:
       description: "Changes the names and attributes of a receiver by id; the properties\
         \ that are present replace the stored ones. The address and the consent status\
         \ are not editable here. Pass the current `ETag` in `If-Match`; a stale version\
-        \ is refused.\n\nCallers: tenant-user, tenant-system. Requires `mailroom:receiver:manage`."
-      operationId: "patch"
+        \ is refused.\n\nCallers: tenant-system. Requires `mailroom:receiver:manage`."
+      operationId: "patchAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -5032,9 +4928,8 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "mailroom:receiver:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/templates/{id}/revisions:
+  /system/v1/templates/{id}/revisions:
     get:
       tags:
       - "Email templates"
@@ -5050,9 +4945,8 @@ paths:
         \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
         \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `mailroom:template:read`."
-      operationId: "revisions"
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-system. Requires `mailroom:template:read`."
+      operationId: "revisionsAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -5297,9 +5191,31 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:template:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/emails/{id}:
+  /system/v1/settings:
+    get:
+      tags:
+      - "Mail settings"
+      summary: "Get the tenant's mail settings"
+      description: "Returns the tenant's default sender, reply-to, body retention\
+        \ in days and campaign publish rate per minute, with the settings' version.\n\
+        \nCallers: tenant-system. Requires `mailroom:email:read`."
+      operationId: "currentAsTenantSystem"
+      responses:
+        "200":
+          description: "The tenant's mail settings."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SettingsResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "mailroom:email:read"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/emails/{id}:
     get:
       tags:
       - "Emails"
@@ -5307,8 +5223,8 @@ paths:
       description: "Returns one email from the ledger with its status and delivery\
         \ outcome. After the tenant's retention the rendered body is purged and the\
         \ email reads `bodyPurged: true`. An unknown id answers `404`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `mailroom:email:read`."
-      operationId: "get_5"
+        \ tenant-system. Requires `mailroom:email:read`."
+      operationId: "getAsTenantSystem_5"
       parameters:
       - name: "id"
         in: "path"
@@ -5334,16 +5250,15 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:email:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/campaigns/{id}/stats:
+  /system/v1/campaigns/{id}/stats:
     get:
       tags:
       - "Campaigns"
       summary: "Get a campaign's statistics"
       description: "Returns the campaign's delivery and engagement counts.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `mailroom:campaign:read`."
-      operationId: "stats"
+        \ tenant-system. Requires `mailroom:campaign:read`."
+      operationId: "statsAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -5369,7 +5284,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "mailroom:campaign:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
 components:
   schemas:
@@ -5412,56 +5326,6 @@ components:
           format: "int32"
           description: "The number of the current immutable revision. Every edit appends\
             \ one."
-        version:
-          type: "integer"
-          format: "int64"
-          description: "The version of the record. It is also the `ETag`, which a\
-            \ conditional change sends as `If-Match`."
-    SettingsRequest:
-      type: "object"
-      description: "The tenant's mail settings to store, each bounded as the schema\
-        \ states."
-      properties:
-        fromKey:
-          type: "string"
-          description: "The key of the default sender identity."
-        fromName:
-          type: "string"
-          description: "The sender's display name."
-        replyTo:
-          type: "string"
-          description: "The reply-to address."
-        bodyRetentionDays:
-          type: "integer"
-          format: "int32"
-          description: "How many days a rendered body is kept before it is purged."
-        campaignPublishPerMinute:
-          type: "integer"
-          format: "int32"
-          description: "How many campaign emails are queued per minute across all\
-            \ of the tenant's campaigns."
-    SettingsResponse:
-      type: "object"
-      description: "The tenant's mail settings."
-      properties:
-        fromKey:
-          type: "string"
-          description: "The key of the default sender identity."
-        fromName:
-          type: "string"
-          description: "The sender's display name."
-        replyTo:
-          type: "string"
-          description: "The reply-to address."
-        bodyRetentionDays:
-          type: "integer"
-          format: "int32"
-          description: "How many days a rendered body is kept before it is purged."
-        campaignPublishPerMinute:
-          type: "integer"
-          format: "int32"
-          description: "How many campaign emails are queued per minute across all\
-            \ of the tenant's campaigns."
         version:
           type: "integer"
           format: "int64"
@@ -5685,6 +5549,56 @@ components:
           type: "string"
           format: "date-time"
           description: "When the record was last changed."
+    SettingsRequest:
+      type: "object"
+      description: "The tenant's mail settings to store, each bounded as the schema\
+        \ states."
+      properties:
+        fromKey:
+          type: "string"
+          description: "The key of the default sender identity."
+        fromName:
+          type: "string"
+          description: "The sender's display name."
+        replyTo:
+          type: "string"
+          description: "The reply-to address."
+        bodyRetentionDays:
+          type: "integer"
+          format: "int32"
+          description: "How many days a rendered body is kept before it is purged."
+        campaignPublishPerMinute:
+          type: "integer"
+          format: "int32"
+          description: "How many campaign emails are queued per minute across all\
+            \ of the tenant's campaigns."
+    SettingsResponse:
+      type: "object"
+      description: "The tenant's mail settings."
+      properties:
+        fromKey:
+          type: "string"
+          description: "The key of the default sender identity."
+        fromName:
+          type: "string"
+          description: "The sender's display name."
+        replyTo:
+          type: "string"
+          description: "The reply-to address."
+        bodyRetentionDays:
+          type: "integer"
+          format: "int32"
+          description: "How many days a rendered body is kept before it is purged."
+        campaignPublishPerMinute:
+          type: "integer"
+          format: "int32"
+          description: "How many campaign emails are queued per minute across all\
+            \ of the tenant's campaigns."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
     PreviewRequest:
       type: "object"
       description: "The values to render the template with."

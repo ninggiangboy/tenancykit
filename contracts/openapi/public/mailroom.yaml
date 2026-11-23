@@ -190,56 +190,6 @@ components:
           format: "int64"
           description: "The version of the record. It is also the `ETag`, which a\
             \ conditional change sends as `If-Match`."
-    SettingsRequest:
-      type: "object"
-      description: "The tenant's mail settings to store, each bounded as the schema\
-        \ states."
-      properties:
-        fromKey:
-          type: "string"
-          description: "The key of the default sender identity."
-        fromName:
-          type: "string"
-          description: "The sender's display name."
-        replyTo:
-          type: "string"
-          description: "The reply-to address."
-        bodyRetentionDays:
-          type: "integer"
-          format: "int32"
-          description: "How many days a rendered body is kept before it is purged."
-        campaignPublishPerMinute:
-          type: "integer"
-          format: "int32"
-          description: "How many campaign emails are queued per minute across all\
-            \ of the tenant's campaigns."
-    SettingsResponse:
-      type: "object"
-      description: "The tenant's mail settings."
-      properties:
-        fromKey:
-          type: "string"
-          description: "The key of the default sender identity."
-        fromName:
-          type: "string"
-          description: "The sender's display name."
-        replyTo:
-          type: "string"
-          description: "The reply-to address."
-        bodyRetentionDays:
-          type: "integer"
-          format: "int32"
-          description: "How many days a rendered body is kept before it is purged."
-        campaignPublishPerMinute:
-          type: "integer"
-          format: "int32"
-          description: "How many campaign emails are queued per minute across all\
-            \ of the tenant's campaigns."
-        version:
-          type: "integer"
-          format: "int64"
-          description: "The version of the record. It is also the `ETag`, which a\
-            \ conditional change sends as `If-Match`."
     SegmentRequest:
       type: "object"
       description: "The segment to save."
@@ -458,6 +408,56 @@ components:
           type: "string"
           format: "date-time"
           description: "When the record was last changed."
+    SettingsRequest:
+      type: "object"
+      description: "The tenant's mail settings to store, each bounded as the schema\
+        \ states."
+      properties:
+        fromKey:
+          type: "string"
+          description: "The key of the default sender identity."
+        fromName:
+          type: "string"
+          description: "The sender's display name."
+        replyTo:
+          type: "string"
+          description: "The reply-to address."
+        bodyRetentionDays:
+          type: "integer"
+          format: "int32"
+          description: "How many days a rendered body is kept before it is purged."
+        campaignPublishPerMinute:
+          type: "integer"
+          format: "int32"
+          description: "How many campaign emails are queued per minute across all\
+            \ of the tenant's campaigns."
+    SettingsResponse:
+      type: "object"
+      description: "The tenant's mail settings."
+      properties:
+        fromKey:
+          type: "string"
+          description: "The key of the default sender identity."
+        fromName:
+          type: "string"
+          description: "The sender's display name."
+        replyTo:
+          type: "string"
+          description: "The reply-to address."
+        bodyRetentionDays:
+          type: "integer"
+          format: "int32"
+          description: "How many days a rendered body is kept before it is purged."
+        campaignPublishPerMinute:
+          type: "integer"
+          format: "int32"
+          description: "How many campaign emails are queued per minute across all\
+            \ of the tenant's campaigns."
+        version:
+          type: "integer"
+          format: "int64"
+          description: "The version of the record. It is also the `ETag`, which a\
+            \ conditional change sends as `If-Match`."
     PreviewRequest:
       type: "object"
       description: "The values to render the template with."

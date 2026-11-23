@@ -45,7 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "Static groups of receivers and their membership.")
 @RestController
-@RequestMapping("/api/v1/groups")
+@RequestMapping("/groups")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class GroupController {
 

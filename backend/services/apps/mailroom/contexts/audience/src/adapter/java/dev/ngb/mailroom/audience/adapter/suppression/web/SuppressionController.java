@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "Addresses the tenant must not mail. Removing one is the only action that re-subscribes an address.")
 @RestController
-@RequestMapping("/api/v1/suppressions")
+@RequestMapping("/suppressions")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class SuppressionController {
 

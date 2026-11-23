@@ -48,7 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Bulk email campaigns and their state machine: draft, schedule, send, pause, resume, cancel, test and "
                 + "statistics.")
 @RestController
-@RequestMapping("/api/v1/campaigns")
+@RequestMapping("/campaigns")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class CampaignController {
 

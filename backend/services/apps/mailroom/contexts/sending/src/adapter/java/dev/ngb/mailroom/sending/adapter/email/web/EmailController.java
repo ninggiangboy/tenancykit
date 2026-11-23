@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "Sending one email or a batch, and reading the email ledger.")
 @RestController
-@RequestMapping("/api/v1/emails")
+@RequestMapping("/emails")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class EmailController {
 

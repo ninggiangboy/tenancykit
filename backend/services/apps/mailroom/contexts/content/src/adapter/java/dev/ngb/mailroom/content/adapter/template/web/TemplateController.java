@@ -50,7 +50,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "A tenant's email templates. Every edit appends an immutable revision, so recorded emails and "
                 + "campaigns never change.")
 @RestController
-@RequestMapping("/api/v1/templates")
+@RequestMapping("/templates")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class TemplateController {
 

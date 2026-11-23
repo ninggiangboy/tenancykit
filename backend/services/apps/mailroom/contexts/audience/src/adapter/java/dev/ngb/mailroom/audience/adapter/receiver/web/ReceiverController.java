@@ -45,7 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "A tenant's own customers by email address. Deleting a receiver is an erasure, not a soft delete.")
 @RestController
-@RequestMapping("/api/v1/receivers")
+@RequestMapping("/receivers")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class ReceiverController {
 

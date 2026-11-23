@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "The tenant's default sender, reply-to, body retention and campaign publish rate.")
 @RestController
-@RequestMapping("/api/v1/settings")
+@RequestMapping("/settings")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class SettingsController {
 

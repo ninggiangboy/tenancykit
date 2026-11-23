@@ -44,7 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "Saved filters over receiver attributes, with a preview of the audience they match.")
 @RestController
-@RequestMapping("/api/v1/segments")
+@RequestMapping("/segments")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class SegmentController {
 
