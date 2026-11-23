@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "A tenant's surveys and their lifecycle: create, read, close and reopen.")
 @RestController
-@RequestMapping("/api/v1/surveys")
+@RequestMapping("/surveys")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class SurveyController {
 

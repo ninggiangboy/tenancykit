@@ -5,13 +5,11 @@ import dev.ngb.core.security.Callers;
 import dev.ngb.core.security.PermissionScope;
 import dev.ngb.core.security.PublicEndpoint;
 import dev.ngb.core.security.RequiresPermission;
+import dev.ngb.core.spring.web.CallerResolver;
 import io.swagger.v3.oas.models.Operation;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,8 +45,8 @@ public final class CallerLabelCustomizer implements OperationCustomizer {
 
     private final CallerCatalog catalog;
 
-    /** Annotations that imply a caller without restating it; the key is matched on the handler method. */
-    private final Map<Class<? extends Annotation>, Caller> implied;
+    /** The one reading of a handler's callers, shared with the route-prefix mechanism. */
+    private final CallerResolver resolver;
 
     public CallerLabelCustomizer(CallerCatalog catalog) {
         this(catalog, Map.of());
@@ -56,7 +54,7 @@ public final class CallerLabelCustomizer implements OperationCustomizer {
 
     public CallerLabelCustomizer(CallerCatalog catalog, Map<Class<? extends Annotation>, Caller> implied) {
         this.catalog = catalog;
-        this.implied = Map.copyOf(implied);
+        this.resolver = new CallerResolver(implied);
     }
 
     @Override
@@ -80,35 +78,10 @@ public final class CallerLabelCustomizer implements OperationCustomizer {
      * compare a hand-written document with the derivation.
      */
     public Set<Caller> resolve(HandlerMethod handlerMethod) {
-        Callers onMethod = AnnotatedElementUtils.findMergedAnnotation(handlerMethod.getMethod(), Callers.class);
-        if (onMethod != null) {
-            return checked(onMethod.value(), handlerMethod, "@Callers on the method");
-        }
-        Callers onClass = AnnotatedElementUtils.findMergedAnnotation(handlerMethod.getBeanType(), Callers.class);
-        if (onClass != null) {
-            return checked(onClass.value(), handlerMethod, "@Callers on the class");
-        }
-        PublicEndpoint open = AnnotatedElementUtils.findMergedAnnotation(handlerMethod.getMethod(), PublicEndpoint.class);
-        if (open != null) {
-            return Set.of(open.caller());
-        }
-        for (Map.Entry<Class<? extends Annotation>, Caller> entry : implied.entrySet()) {
-            if (handlerMethod.hasMethodAnnotation(entry.getKey())) {
-                return Set.of(entry.getValue());
-            }
-        }
-        throw new IllegalStateException("No caller is declared for " + handlerMethod
-                + "; put @Callers on the method or class, or mark it @PublicEndpoint.");
-    }
-
-    private static Set<Caller> checked(Caller[] declared, HandlerMethod handlerMethod, String source) {
-        if (declared.length == 0) {
-            throw new IllegalStateException(source + " names no caller on " + handlerMethod);
-        }
-        EnumSet<Caller> callers = EnumSet.noneOf(Caller.class);
-        Collections.addAll(callers, declared);
-        if (callers.size() != declared.length) {
-            throw new IllegalStateException(source + " repeats a caller on " + handlerMethod);
+        Set<Caller> callers = resolver.resolve(handlerMethod);
+        if (callers.isEmpty()) {
+            throw new IllegalStateException("No caller is declared for " + handlerMethod
+                    + "; put @Callers on the method or class, or mark it @SelfService, @PublicEndpoint.");
         }
         return callers;
     }

@@ -1,6 +1,7 @@
 package dev.ngb.survey.boot.web;
 
 import dev.ngb.core.openapi.CallerLabelCustomizer;
+import dev.ngb.core.openapi.CallerSurfaceOpenApiCustomizer;
 import dev.ngb.core.openapi.PermissionCatalogs;
 import dev.ngb.core.openapi.DescriptionsOpenApiCustomizer;
 import dev.ngb.core.openapi.ErrorResponsesOpenApiCustomizer;
@@ -8,19 +9,23 @@ import dev.ngb.core.openapi.ListingOpenApiCustomizer;
 import dev.ngb.core.security.Authorizer;
 import dev.ngb.core.spring.query.ListQueryResolver;
 import dev.ngb.core.spring.security.PermissionInterceptor;
+import dev.ngb.core.spring.web.CallerPrefixMapping;
 import dev.ngb.core.tenancy.TenantContext;
+import dev.ngb.survey.boot.config.SuiteProperties;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
  * The HTTP edge's guards and its generated contract.
@@ -43,8 +48,19 @@ class WebConfiguration implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new TenantOnlyGuard(tenantContext)).addPathPatterns("/api/v1/**");
-        registry.addInterceptor(new PermissionInterceptor(authorizer)).addPathPatterns("/api/v1/**");
+        // The caller prefixes, not the path a controller declares: both twins of a survey operation are guarded.
+        registry.addInterceptor(new TenantOnlyGuard(tenantContext)).addPathPatterns("/api/v1/**", "/system/v1/**");
+        registry.addInterceptor(new PermissionInterceptor(authorizer)).addPathPatterns("/api/v1/**", "/system/v1/**");
+    }
+
+    /**
+     * Mounts every handler under the prefixes its declared callers imply, so a controller declares only its resource
+     * path. It must be created after the framework has registered its mappings, which the bean dependency guarantees.
+     */
+    @Bean
+    CallerPrefixMapping callerPrefixes(
+            @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping mapping, SuiteProperties suite) {
+        return new CallerPrefixMapping(mapping, suite.appCode(), false);
     }
 
     @Override
@@ -74,6 +90,12 @@ class WebConfiguration implements WebMvcConfigurer {
     @Bean
     CallerLabelCustomizer callerLabels() {
         return new CallerLabelCustomizer(PermissionCatalogs.fromClasspath());
+    }
+
+    /** Narrows a route documented at two prefixes to the one caller each prefix serves, and pins a twin's id. */
+    @Bean
+    CallerSurfaceOpenApiCustomizer callerSurfaces() {
+        return new CallerSurfaceOpenApiCustomizer();
     }
 
     @Bean

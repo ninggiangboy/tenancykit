@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "Public and personal links that open a survey, and revoking them.")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class LinkController {
 

@@ -25,8 +25,9 @@ question: who is on the other end of this request, and how did they prove it?
 Two standard paths keep their path and are the only exceptions: `POST /oauth/token` (`tenant-system` and `internal`)
 and `GET /.well-known/jwks.json` (`public`). Platform is one process and has no public profile.
 
-The matrix at the bottom of this page shows the prefixes that exist in the committed contracts today. Phases 5-11 of
-`plans/261122-1543-caller-surfaces` move the paths to the target prefixes above; the matrix regenerates as they land.
+The matrix at the bottom of this page shows the prefixes that exist in the committed contracts today. Survey is the
+phase-5 pilot, so its `tenant-system` rows already read `/system/v1`; phases 6-11 of `plans/261122-1543-caller-surfaces`
+move the remaining paths to the target prefixes above, and the matrix regenerates as they land.
 
 ## How an endpoint names its caller
 
@@ -92,7 +93,7 @@ the same paths the app declares; the proxy adds no logic and does not read the c
 | Mailroom | tenant-system | `/api/v1` | `mailroom-api` | 46 |
 | Mailroom | public | `/t` | `mailroom-public` | 4 |
 | Survey | tenant-user | `/api/v1` | `survey-api` | 40 |
-| Survey | tenant-system | `/api/v1` | `survey-api` | 38 |
+| Survey | tenant-system | `/system/v1` | `survey-api` | 38 |
 | Survey | public | `/p` | `survey-public` | 7 |
 | Attribution | tenant-user | `/api/v1` | `attribution-api` | 40 |
 | Attribution | tenant-system | `/api/v1` | `attribution-api` | 37 |
@@ -111,8 +112,14 @@ the same paths the app declares; the proxy adds no logic and does not read the c
 
 ## Where this lives
 
-- The model: `Caller`, `Callers` and `PublicEndpoint` in `backend/libs/core/core-kernel/src/main/java/dev/ngb/core/security/`.
+- The model: `Caller`, `Callers`, `SelfService` and `PublicEndpoint` in
+  `backend/libs/core/core-kernel/src/main/java/dev/ngb/core/security/`; the prefix each caller implies in
+  `CallerPrefixes`.
+- The one reading of a handler's callers: `CallerResolver` in `core-spring`, shared by the label, the prefix and the
+  architecture rule.
 - The label and its description line: `CallerLabelCustomizer`, `PermissionCatalogs` and `CallerCatalog` in
-  `backend/libs/core/core-openapi`.
+  `backend/libs/core/core-openapi`; `CallerSurfaceOpenApiCustomizer` narrows a route documented at two prefixes and
+  pins the twin's id.
+- The mounting and the credential rule: `CallerPrefixMapping` (`core-spring`) and `CallerTokenFilter` (`core-suite`).
 - The per-caller documents and their code: `contracts/README.md` and `ops/docs/caller-matrix.rb`.
 - The caller pages: run `make docs` and open one page per caller.

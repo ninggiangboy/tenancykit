@@ -49,15 +49,15 @@ tags:
 - name: "Survey responses"
   description: "Reading and deleting completed responses."
 paths:
-  /api/v1/surveys/{id}/draft:
+  /system/v1/surveys/{id}/draft:
     get:
       tags:
       - "Survey drafts"
       summary: "Get a survey's draft"
       description: "Returns the survey's one editable document with its `ETag`, the\
         \ tag the next save has to carry. An unknown survey answers `404`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `survey:survey:read`."
-      operationId: "get"
+        \ tenant-system. Requires `survey:survey:read`."
+      operationId: "getAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -83,7 +83,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:survey:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     put:
       tags:
@@ -95,8 +94,8 @@ paths:
         \ the stored document, so a builder that never invents ids keeps them across\
         \ saves. Only the shape is enforced: a draft in progress may be incomplete,\
         \ and translations and jumps are checked on validate and publish.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `survey:survey:manage`."
-      operationId: "save"
+        \ tenant-system. Requires `survey:survey:manage`."
+      operationId: "saveAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -136,18 +135,10 @@ paths:
           $ref: "#/components/responses/NotFound"
         "412":
           $ref: "#/components/responses/PreconditionFailed"
-        "428":
-          description: "The request has no `If-Match` header. This endpoint requires\
-            \ the tag the draft was read at, so a save is never last-write-wins."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "survey:survey:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/webhook-endpoints:
+  /system/v1/webhook-endpoints:
     get:
       tags:
       - "Webhook endpoints"
@@ -163,9 +154,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `survey:webhook:manage`."
-      operationId: "listEndpoints"
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `survey:webhook:manage`."
+      operationId: "listEndpointsAsTenantSystem"
       parameters:
       - name: "filter[created_at][eq]"
         in: "query"
@@ -565,7 +555,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "survey:webhook:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
@@ -575,8 +564,8 @@ paths:
         \ event types. The signing secret is returned once, in this response, and\
         \ never again. A url that is not https or does not resolve to a public address,\
         \ or an unknown event type, answers `422`. Answers `201`. Requires `survey:webhook:manage`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `survey:webhook:manage`."
-      operationId: "createEndpoint"
+        \nCallers: tenant-system. Requires `survey:webhook:manage`."
+      operationId: "createEndpointAsTenantSystem"
       parameters:
       - name: "X-Request-Id"
         in: "header"
@@ -605,26 +594,18 @@ paths:
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/Forbidden"
-        "422":
-          description: "The url is not https or does not resolve to a public address,\
-            \ or an event type is not known."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "survey:webhook:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/webhook-endpoints/{id}/rotate-secret:
+  /system/v1/webhook-endpoints/{id}/rotate-secret:
     post:
       tags:
       - "Webhook endpoints"
       summary: "Rotate a webhook endpoint's secret"
       description: "Replaces the endpoint's signing secret and returns the new one\
-        \ once, never again. Requires `survey:webhook:manage`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `survey:webhook:manage`."
-      operationId: "rotateSecret"
+        \ once, never again. Requires `survey:webhook:manage`.\n\nCallers: tenant-system.\
+        \ Requires `survey:webhook:manage`."
+      operationId: "rotateSecretAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -654,17 +635,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:webhook:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/webhook-deliveries/{id}/resend:
+  /system/v1/webhook-deliveries/{id}/resend:
     post:
       tags:
       - "Webhook deliveries"
       summary: "Resend a webhook delivery"
       description: "Queues a fresh delivery of the same stored event to the same endpoint\
         \ and answers `202`: sending happens asynchronously. The original keeps its\
-        \ history.\n\nCallers: tenant-user, tenant-system. Requires `survey:webhook:manage`."
-      operationId: "resend"
+        \ history.\n\nCallers: tenant-system. Requires `survey:webhook:manage`."
+      operationId: "resendAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -694,9 +674,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:webhook:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys:
+  /system/v1/surveys:
     get:
       tags:
       - "Surveys"
@@ -712,9 +691,8 @@ paths:
         \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
         \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `survey:survey:read`."
-      operationId: "list"
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-system. Requires `survey:survey:read`."
+      operationId: "listAsTenantSystem"
       parameters:
       - name: "filter[created_at][eq]"
         in: "query"
@@ -1022,16 +1000,15 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "survey:survey:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
       - "Surveys"
       summary: "Create a survey"
       description: "Creates a survey with a `name` and the one empty draft a builder\
-        \ starts from, in one transaction. Answers `201`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `survey:survey:manage`."
-      operationId: "create"
+        \ starts from, in one transaction. Answers `201`.\n\nCallers: tenant-system.\
+        \ Requires `survey:survey:manage`."
+      operationId: "createAsTenantSystem"
       requestBody:
         description: "The survey to create."
         content:
@@ -1054,18 +1031,16 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "survey:survey:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/versions/{no}/simulate:
+  /system/v1/surveys/{id}/versions/{no}/simulate:
     post:
       tags:
       - "Survey preview and simulation"
       summary: "Simulate answers through a published version"
       description: "Runs `answers` through published version `no` of the survey with\
         \ the evaluator a respondent's submit uses. Nothing is stored. An unknown\
-        \ survey or version answers `404`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `survey:survey:read`."
-      operationId: "simulateVersion"
+        \ survey or version answers `404`.\n\nCallers: tenant-system. Requires `survey:survey:read`."
+      operationId: "simulateVersionAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -1076,7 +1051,7 @@ paths:
           format: "uuid"
       - name: "no"
         in: "path"
-        description: "The number of the published version to run the answers through."
+        description: "The number of the published version, starting at 1."
         required: true
         schema:
           type: "integer"
@@ -1105,17 +1080,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:survey:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/reopen:
+  /system/v1/surveys/{id}/reopen:
     post:
       tags:
       - "Surveys"
       summary: "Reopen a survey"
       description: "Opens a closed survey again. A survey closed before its first\
         \ publish returns to `DRAFT`, because there is no version to serve.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `survey:survey:manage`."
-      operationId: "reopen"
+        \ tenant-system. Requires `survey:survey:manage`."
+      operationId: "reopenAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -1141,9 +1115,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:survey:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/publish:
+  /system/v1/surveys/{id}/publish:
     post:
       tags:
       - "Survey versions"
@@ -1153,8 +1126,8 @@ paths:
         \ that landed in between is refused with `412` rather than published under\
         \ an older read. A document that does not validate answers `422` with every\
         \ problem. A question whose type changed is given a new id. Answers `201`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `survey:survey:manage`."
-      operationId: "publish"
+        \nCallers: tenant-system. Requires `survey:survey:manage`."
+      operationId: "publishAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -1188,25 +1161,10 @@ paths:
           $ref: "#/components/responses/NotFound"
         "412":
           $ref: "#/components/responses/PreconditionFailed"
-        "422":
-          description: "The document does not validate. The body lists every offending\
-            \ pointer."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ValidationResult"
-        "428":
-          description: "The request has no `If-Match` header. This endpoint requires\
-            \ the tag the draft was read at."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "survey:survey:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/links:
+  /system/v1/surveys/{id}/links:
     get:
       tags:
       - "Survey links"
@@ -1223,9 +1181,8 @@ paths:
         \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
         \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `survey:link:manage`."
-      operationId: "list_1"
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-system. Requires `survey:link:manage`."
+      operationId: "listAsTenantSystem_1"
       parameters:
       - name: "id"
         in: "path"
@@ -1603,7 +1560,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:link:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
@@ -1613,9 +1569,8 @@ paths:
         \ same source is refused rather than merged, because two links would split\
         \ one campaign's visits into rows a tenant cannot tell apart; a survey that\
         \ is not open is refused too, both with `409`. The answer carries the URL\
-        \ to hand out. Answers `201`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `survey:link:manage`."
-      operationId: "createPublic"
+        \ to hand out. Answers `201`.\n\nCallers: tenant-system. Requires `survey:link:manage`."
+      operationId: "createPublicAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -1646,18 +1601,10 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
-        "409":
-          description: "A public link for this `source` already exists, or the survey\
-            \ is not open."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "survey:link:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/links/personal:
+  /system/v1/surveys/{id}/links/personal:
     post:
       tags:
       - "Survey links"
@@ -1667,9 +1614,9 @@ paths:
         \ is the default for entries that name none. It is how an imported mailroom\
         \ segment becomes links. A duplicate `externalRef` in the request answers\
         \ `422` before anything is written, and a survey that is not open answers\
-        \ `409`. Answers `201` with the links.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `survey:link:manage`."
-      operationId: "createPersonal"
+        \ `409`. Answers `201` with the links.\n\nCallers: tenant-system. Requires\
+        \ `survey:link:manage`."
+      operationId: "createPersonalAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -1702,24 +1649,10 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
-        "409":
-          description: "The survey is not open."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
-        "422":
-          description: "The same `externalRef` is named twice in the request. Nothing\
-            \ is written."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
       x-required-permission: "survey:link:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/exports:
+  /system/v1/surveys/{id}/exports:
     get:
       tags:
       - "Survey exports"
@@ -1735,9 +1668,8 @@ paths:
         \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
         \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `survey:export:manage`."
-      operationId: "list_2"
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-system. Requires `survey:export:manage`."
+      operationId: "listAsTenantSystem_2"
       parameters:
       - name: "id"
         in: "path"
@@ -2157,7 +2089,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:export:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
@@ -2166,9 +2097,8 @@ paths:
       description: "Queues an export of the survey's responses narrowed by `filter`\
         \ and answers its state at once; a worker produces the CSV. Poll the export\
         \ until it finishes, then use its download link, which expires in fifteen\
-        \ minutes. Answers `201`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `survey:export:manage`."
-      operationId: "create_1"
+        \ minutes. Answers `201`.\n\nCallers: tenant-system. Requires `survey:export:manage`."
+      operationId: "createAsTenantSystem_1"
       parameters:
       - name: "id"
         in: "path"
@@ -2201,9 +2131,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:export:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/draft/validate:
+  /system/v1/surveys/{id}/draft/validate:
     post:
       tags:
       - "Survey drafts"
@@ -2211,9 +2140,8 @@ paths:
       description: "Reports every reason the `document` sent would not publish, without\
         \ storing it: the schema's shape check, the semantic rules and the expression\
         \ budgets, all in one answer so a builder fixes them in one round. The same\
-        \ check runs again at publish.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `survey:survey:read`."
-      operationId: "validate"
+        \ check runs again at publish.\n\nCallers: tenant-system. Requires `survey:survey:read`."
+      operationId: "validateAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -2246,9 +2174,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:survey:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/draft/simulate:
+  /system/v1/surveys/{id}/draft/simulate:
     post:
       tags:
       - "Survey preview and simulation"
@@ -2256,8 +2183,8 @@ paths:
       description: "Runs `answers` through the draft with the same evaluator a respondent's\
         \ submit uses and reports the path, variables and score. A draft that does\
         \ not compile answers `errors` naming every offending pointer. Nothing is\
-        \ stored.\n\nCallers: tenant-user, tenant-system. Requires `survey:survey:read`."
-      operationId: "simulateDraft"
+        \ stored.\n\nCallers: tenant-system. Requires `survey:survey:read`."
+      operationId: "simulateDraftAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -2290,9 +2217,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:survey:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/draft/preview:
+  /system/v1/surveys/{id}/draft/preview:
     post:
       tags:
       - "Survey preview and simulation"
@@ -2300,9 +2226,9 @@ paths:
       description: "Returns the draft's pages in presentation order as `locale` renders\
         \ them, with every question, its type and every option label. It is presentation\
         \ only: nothing is skipped, hidden or substituted, and piping stays as its\
-        \ stored placeholders. Nothing is stored.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `survey:survey:read`."
-      operationId: "preview"
+        \ stored placeholders. Nothing is stored.\n\nCallers: tenant-system. Requires\
+        \ `survey:survey:read`."
+      operationId: "previewAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -2313,7 +2239,8 @@ paths:
           format: "uuid"
       - name: "locale"
         in: "query"
-        description: "The locale to render the draft in."
+        description: "The locale to render in. When omitted, the survey's default\
+          \ locale is used."
         required: false
         schema:
           type: "string"
@@ -2335,18 +2262,17 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:survey:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/close:
+  /system/v1/surveys/{id}/close:
     post:
       tags:
       - "Surveys"
       summary: "Close a survey"
       description: "Withdraws every version from the public surface, so its links\
         \ stop collecting responses. Closing a survey that is already closed changes\
-        \ nothing and announces nothing, so a retry is harmless.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `survey:survey:manage`."
-      operationId: "close"
+        \ nothing and announces nothing, so a retry is harmless.\n\nCallers: tenant-system.\
+        \ Requires `survey:survey:manage`."
+      operationId: "closeAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -2372,9 +2298,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:survey:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/analytics/trend:
+  /system/v1/surveys/{id}/analytics/trend:
     post:
       tags:
       - "Survey analytics"
@@ -2382,8 +2307,8 @@ paths:
       description: "Returns the number of responses per time `bucket` in `timezone`.\
         \ The filter is the one a response list takes: `version`, a `from`/`to` window,\
         \ `source` and `externalRef`. Requires `survey:analytics:read`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `survey:analytics:read`."
-      operationId: "trend"
+        \ tenant-system. Requires `survey:analytics:read`."
+      operationId: "trendAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -2416,9 +2341,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:analytics:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/analytics/crosstab:
+  /system/v1/surveys/{id}/analytics/crosstab:
     post:
       tags:
       - "Survey analytics"
@@ -2426,8 +2350,8 @@ paths:
       description: "Counts how respondents answered `columnQuestionId` within each\
         \ answer to `rowQuestionId`. The filter is the one a response list takes:\
         \ `version`, a `from`/`to` window, `source` and `externalRef`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `survey:analytics:read`."
-      operationId: "crosstab"
+        \ tenant-system. Requires `survey:analytics:read`."
+      operationId: "crosstabAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -2462,9 +2386,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:analytics:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/analytics/aggregate:
+  /system/v1/surveys/{id}/analytics/aggregate:
     post:
       tags:
       - "Survey analytics"
@@ -2472,9 +2395,8 @@ paths:
       description: "Returns per-question aggregates of the survey's responses: counts\
         \ per option for a choice, the distribution of a number and the like. The\
         \ filter is the one a response list takes: `version`, a `from`/`to` window,\
-        \ `source` and `externalRef`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `survey:analytics:read`."
-      operationId: "aggregate"
+        \ `source` and `externalRef`.\n\nCallers: tenant-system. Requires `survey:analytics:read`."
+      operationId: "aggregateAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -2507,17 +2429,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:analytics:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/links/{linkId}/revoke:
+  /system/v1/links/{linkId}/revoke:
     post:
       tags:
       - "Survey links"
       summary: "Revoke a link"
       description: "Revokes the link, the only way to stop a link already handed out\
         \ from opening the survey. Idempotent: a link that is already revoked answers\
-        \ its current state.\n\nCallers: tenant-user, tenant-system. Requires `survey:link:manage`."
-      operationId: "revoke"
+        \ its current state.\n\nCallers: tenant-system. Requires `survey:link:manage`."
+      operationId: "revokeAsTenantSystem"
       parameters:
       - name: "linkId"
         in: "path"
@@ -2543,17 +2464,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:link:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/webhook-endpoints/{id}:
+  /system/v1/webhook-endpoints/{id}:
     get:
       tags:
       - "Webhook endpoints"
       summary: "Get a webhook endpoint"
       description: "Returns one endpoint; its version is also the response's `ETag`.\
-        \ An unknown id answers `404`. The secret is not returned.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `survey:webhook:manage`."
-      operationId: "getEndpoint"
+        \ An unknown id answers `404`. The secret is not returned.\n\nCallers: tenant-system.\
+        \ Requires `survey:webhook:manage`."
+      operationId: "getEndpointAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -2576,7 +2496,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:webhook:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     patch:
       tags:
@@ -2585,8 +2504,8 @@ paths:
       description: "Changes only the fields that are present: url, description, subscribed\
         \ event types or `status`. Setting `status` to `DISABLED` pauses delivery\
         \ without losing queued events. Pass the current `ETag` in `If-Match`; a stale\
-        \ version is refused.\n\nCallers: tenant-user, tenant-system. Requires `survey:webhook:manage`."
-      operationId: "updateEndpoint"
+        \ version is refused.\n\nCallers: tenant-system. Requires `survey:webhook:manage`."
+      operationId: "updateEndpointAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -2634,9 +2553,8 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "survey:webhook:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/webhook-deliveries:
+  /system/v1/webhook-deliveries:
     get:
       tags:
       - "Webhook deliveries"
@@ -2653,9 +2571,8 @@ paths:
         \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
         \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `survey:webhook:manage`."
-      operationId: "listDeliveries"
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-system. Requires `survey:webhook:manage`."
+      operationId: "listDeliveriesAsTenantSystem"
       parameters:
       - name: "filter[attempts][eq]"
         in: "query"
@@ -3193,17 +3110,16 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "survey:webhook:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/webhook-deliveries/{id}:
+  /system/v1/webhook-deliveries/{id}:
     get:
       tags:
       - "Webhook deliveries"
       summary: "Get a webhook delivery"
       description: "Returns one delivery with its state and every attempt: the status\
         \ code, error, response excerpt and latency. An unknown id answers `404`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `survey:webhook:manage`."
-      operationId: "getDelivery"
+        \nCallers: tenant-system. Requires `survey:webhook:manage`."
+      operationId: "getDeliveryAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -3226,9 +3142,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:webhook:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}:
+  /system/v1/surveys/{id}:
     get:
       tags:
       - "Surveys"
@@ -3236,8 +3151,8 @@ paths:
       description: "Returns one survey with its status and current published version;\
         \ its version is also the response's `ETag`. A survey of another tenant answers\
         \ `404` exactly as a missing one does. Requires `survey:survey:read`.\n\n\
-        Callers: tenant-user, tenant-system. Requires `survey:survey:read`."
-      operationId: "get_2"
+        Callers: tenant-system. Requires `survey:survey:read`."
+      operationId: "getAsTenantSystem_1"
       parameters:
       - name: "id"
         in: "path"
@@ -3263,9 +3178,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:survey:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/versions:
+  /system/v1/surveys/{id}/versions:
     get:
       tags:
       - "Survey versions"
@@ -3282,9 +3196,8 @@ paths:
         \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
         \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `survey:survey:read`."
-      operationId: "list_3"
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-system. Requires `survey:survey:read`."
+      operationId: "listAsTenantSystem_3"
       parameters:
       - name: "id"
         in: "path"
@@ -3562,17 +3475,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:survey:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/versions/{no}:
+  /system/v1/surveys/{id}/versions/{no}:
     get:
       tags:
       - "Survey versions"
       summary: "Get a published version"
       description: "Returns published version `no` of the survey with its document.\
         \ A published version never changes. An unknown survey or version answers\
-        \ `404`.\n\nCallers: tenant-user, tenant-system. Requires `survey:survey:read`."
-      operationId: "get_3"
+        \ `404`.\n\nCallers: tenant-system. Requires `survey:survey:read`."
+      operationId: "getAsTenantSystem_2"
       parameters:
       - name: "id"
         in: "path"
@@ -3606,9 +3518,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:survey:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/responses:
+  /system/v1/surveys/{id}/responses:
     get:
       tags:
       - "Survey responses"
@@ -3624,9 +3535,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `survey:response:read`."
-      operationId: "list_4"
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `survey:response:read`."
+      operationId: "listAsTenantSystem_4"
       parameters:
       - name: "id"
         in: "path"
@@ -4105,9 +4015,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:response:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/respondents:
+  /system/v1/surveys/{id}/respondents:
     get:
       tags:
       - "Survey respondents"
@@ -4124,9 +4033,8 @@ paths:
         \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
         \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `survey:response:read`."
-      operationId: "list_5"
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-system. Requires `survey:response:read`."
+      operationId: "listAsTenantSystem_5"
       parameters:
       - name: "id"
         in: "path"
@@ -4568,17 +4476,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:response:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/surveys/{id}/analytics/funnel:
+  /system/v1/surveys/{id}/analytics/funnel:
     get:
       tags:
       - "Survey analytics"
       summary: "Get a survey's drop-off funnel"
       description: "Returns how many visits reached each page and how many completed,\
         \ optionally split by `group_by`, within the `from`/`to` window.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `survey:analytics:read`."
-      operationId: "funnel"
+        \ tenant-system. Requires `survey:analytics:read`."
+      operationId: "funnelAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -4626,9 +4533,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:analytics:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/responses/{responseId}:
+  /system/v1/responses/{responseId}:
     get:
       tags:
       - "Survey responses"
@@ -4636,8 +4542,8 @@ paths:
       description: "Returns one response with its answers as submitted, and the variables\
         \ and score the server computed at submit. It carries no address, token or\
         \ user agent. An unknown id answers `404`. Requires `survey:response:read`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `survey:response:read`."
-      operationId: "get_4"
+        \nCallers: tenant-system. Requires `survey:response:read`."
+      operationId: "getAsTenantSystem_3"
       parameters:
       - name: "responseId"
         in: "path"
@@ -4663,7 +4569,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:response:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     delete:
       tags:
@@ -4672,8 +4577,8 @@ paths:
       description: "Deletes the response and everything that belongs to it, including\
         \ uploaded files, so it disappears from every report. The visit's source and\
         \ device facts survive, and the survey's submission counter is not decremented.\
-        \ Answers `204`.\n\nCallers: tenant-user, tenant-system. Requires `survey:response:delete`."
-      operationId: "delete"
+        \ Answers `204`.\n\nCallers: tenant-system. Requires `survey:response:delete`."
+      operationId: "deleteAsTenantSystem"
       parameters:
       - name: "responseId"
         in: "path"
@@ -4695,21 +4600,20 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:response:delete"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/links/{linkId}:
+  /system/v1/links/{linkId}:
     get:
       tags:
       - "Survey links"
       summary: "Get a link"
       description: "Returns one link with its URL, which is rebuilt from the link\
-        \ id and so is always current. An unknown id answers `404`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `survey:link:manage`."
-      operationId: "get_5"
+        \ id and so is always current. An unknown id answers `404`.\n\nCallers: tenant-system.\
+        \ Requires `survey:link:manage`."
+      operationId: "getAsTenantSystem_4"
       parameters:
       - name: "linkId"
         in: "path"
-        description: "The id of the link."
+        description: "The link id."
         required: true
         schema:
           type: "string"
@@ -4731,17 +4635,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:link:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/exports/{exportId}:
+  /system/v1/exports/{exportId}:
     get:
       tags:
       - "Survey exports"
       summary: "Get an export"
       description: "Returns one export with its state; a finished export carries a\
         \ presigned download that expires in fifteen minutes. An unknown id answers\
-        \ `404`.\n\nCallers: tenant-user, tenant-system. Requires `survey:export:manage`."
-      operationId: "get_6"
+        \ `404`.\n\nCallers: tenant-system. Requires `survey:export:manage`."
+      operationId: "getAsTenantSystem_5"
       parameters:
       - name: "exportId"
         in: "path"
@@ -4767,10 +4670,31 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "survey:export:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
 components:
   schemas:
+    DraftRequest:
+      type: "object"
+      description: "The draft document to store."
+      properties:
+        document:
+          type: "object"
+          additionalProperties: {}
+          description: "The whole document. It replaces the draft."
+    DraftResponse:
+      type: "object"
+      description: "A survey's draft, with the tag its next save has to carry."
+      properties:
+        document:
+          type: "object"
+          additionalProperties: {}
+          description: "The survey document: its pages, questions, logic and translations."
+        etag:
+          type: "string"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
     AnswersRequest:
       type: "object"
       description: "The respondent's answers."
@@ -4783,159 +4707,6 @@ components:
           type: "string"
           description: "The locale of the text: for example the survey's translation\
             \ to show."
-    DraftResponse:
-      type: "object"
-      description: "A survey's draft, with the tag its next save has to carry."
-      properties:
-        status:
-          type: "string"
-          description: "The current status."
-        answers:
-          type: "object"
-          additionalProperties: {}
-          description: "The answers, keyed by question id."
-    DraftRequest:
-      type: "object"
-      description: "The draft document to store."
-      properties:
-        document:
-          type: "object"
-          additionalProperties: {}
-          description: "The whole document. It replaces the draft."
-    UploadRequest:
-      type: "object"
-      description: "The file the respondent wants to upload."
-      properties:
-        questionId:
-          type: "string"
-          format: "uuid"
-          description: "The id of the file question the upload is for."
-        filename:
-          type: "string"
-          description: "The file's name."
-        size:
-          type: "integer"
-          format: "int64"
-          description: "The file's size in bytes."
-        mime:
-          type: "string"
-          description: "The file's media type."
-    Signed:
-      type: "object"
-      description: "A signed upload the browser then uses."
-      properties:
-        uploadId:
-          type: "string"
-          format: "uuid"
-          description: "The id of the upload."
-        url:
-          type: "string"
-          description: "The URL to send the file to."
-        headers:
-          type: "object"
-          additionalProperties:
-            type: "string"
-          description: "The headers the upload request must carry."
-    Problem:
-      type: "object"
-      description: "One problem with a document or an answer."
-      properties:
-        field:
-          type: "string"
-          description: "The question or member the problem is about."
-        code:
-          type: "string"
-          description: "The kind of problem. The value the sender gave is never echoed."
-    SubmitResult:
-      type: "object"
-      description: "The outcome of a submit."
-      properties:
-        responseId:
-          type: "string"
-          format: "uuid"
-          description: "The id of the completed response."
-        score:
-          type: "number"
-          description: "The quiz score, or null when the version does not score."
-        problems:
-          type: "array"
-          description: "The problems found when the submit is refused, by question\
-            \ and code. Empty on success."
-          items:
-            $ref: "#/components/schemas/Problem"
-    FlowResult:
-      type: "object"
-      description: "What one run of the version's logic produces."
-      properties:
-        path:
-          type: "array"
-          description: "The ids of the pages visited, in order."
-          items:
-            type: "string"
-        visible:
-          type: "object"
-          additionalProperties:
-            type: "boolean"
-          description: "Every question of the version, mapped to whether it is asked."
-        vars:
-          type: "object"
-          additionalProperties: {}
-          description: "Every computed variable's value."
-        score:
-          type: "number"
-          description: "The quiz score, or null when the version does not score."
-        errors:
-          type: "array"
-          description: "Every reason the version could not be evaluated, by pointer.\
-            \ A non-empty list means nothing ran."
-          items:
-            $ref: "#/components/schemas/ValidationError"
-    OpenedResponse:
-      type: "object"
-      description: "A visit that was just started from a link."
-      properties:
-        visitToken:
-          type: "string"
-          description: "The opaque token the browser uses for every later call of\
-            \ this visit."
-        surveyId:
-          type: "string"
-          format: "uuid"
-          description: "The id of the survey."
-        versionNo:
-          type: "integer"
-          format: "int32"
-          description: "The number of the published version the visit pinned."
-        honeypot:
-          type: "string"
-          description: "The name of a decoy field. A real respondent never sees it,\
-            \ so a submit that fills it is discarded without telling the sender."
-        flow:
-          $ref: "#/components/schemas/FlowResult"
-          description: "The version's logic evaluated for no answers, so the browser\
-            \ knows what to ask first."
-    ValidationError:
-      type: "object"
-      description: "One reason a document cannot be published or evaluated."
-      properties:
-        pointer:
-          type: "string"
-          description: "The JSON pointer to the offending member of the document."
-        code:
-          type: "string"
-          description: "The kind of problem."
-          enum:
-          - "REQUIRED"
-          - "UNKNOWN_TYPE"
-          - "DUPLICATE_ID"
-          - "DANGLING_REFERENCE"
-          - "TRANSLATION_MISSING"
-          - "LIMIT_EXCEEDED"
-          - "CYCLE"
-          - "EXPRESSION_INVALID"
-        message:
-          type: "string"
-          description: "What is wrong."
     CreateEndpointRequest:
       type: "object"
       description: "The endpoint to register."
@@ -5094,6 +4865,55 @@ components:
           type: "string"
           description: "The locale of the text: for example the survey's translation\
             \ to show."
+    FlowResult:
+      type: "object"
+      description: "What one run of the version's logic produces."
+      properties:
+        path:
+          type: "array"
+          description: "The ids of the pages visited, in order."
+          items:
+            type: "string"
+        visible:
+          type: "object"
+          additionalProperties:
+            type: "boolean"
+          description: "Every question of the version, mapped to whether it is asked."
+        vars:
+          type: "object"
+          additionalProperties: {}
+          description: "Every computed variable's value."
+        score:
+          type: "number"
+          description: "The quiz score, or null when the version does not score."
+        errors:
+          type: "array"
+          description: "Every reason the version could not be evaluated, by pointer.\
+            \ A non-empty list means nothing ran."
+          items:
+            $ref: "#/components/schemas/ValidationError"
+    ValidationError:
+      type: "object"
+      description: "One reason a document cannot be published or evaluated."
+      properties:
+        pointer:
+          type: "string"
+          description: "The JSON pointer to the offending member of the document."
+        code:
+          type: "string"
+          description: "The kind of problem."
+          enum:
+          - "REQUIRED"
+          - "UNKNOWN_TYPE"
+          - "DUPLICATE_ID"
+          - "DANGLING_REFERENCE"
+          - "TRANSLATION_MISSING"
+          - "LIMIT_EXCEEDED"
+          - "CYCLE"
+          - "EXPRESSION_INVALID"
+        message:
+          type: "string"
+          description: "What is wrong."
     VersionResponse:
       type: "object"
       description: "One published version with its document. A published version never\
@@ -5231,6 +5051,17 @@ components:
           type: "string"
           description: "A presigned download that expires in fifteen minutes, present\
             \ once the export is `DONE`."
+    Problem:
+      type: "object"
+      description: "One problem with a document or an answer."
+      properties:
+        pointer:
+          type: "string"
+        code:
+          type: "string"
+          description: "The kind of problem. The value the sender gave is never echoed."
+        message:
+          type: "string"
     ValidationResult:
       type: "object"
       description: "Every reason a document would not publish."
@@ -5495,6 +5326,81 @@ components:
             type: "integer"
             format: "int64"
           description: "The counts per matrix cell, keyed by row and column id."
+    UploadRequest:
+      type: "object"
+      description: "The file the respondent wants to upload."
+      properties:
+        questionId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the file question the upload is for."
+        filename:
+          type: "string"
+          description: "The file's name."
+        size:
+          type: "integer"
+          format: "int64"
+          description: "The file's size in bytes."
+        mime:
+          type: "string"
+          description: "The file's media type."
+    Signed:
+      type: "object"
+      description: "A signed upload the browser then uses."
+      properties:
+        uploadId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the upload."
+        url:
+          type: "string"
+          description: "The URL to send the file to."
+        headers:
+          type: "object"
+          additionalProperties:
+            type: "string"
+          description: "The headers the upload request must carry."
+    SubmitResult:
+      type: "object"
+      description: "The outcome of a submit."
+      properties:
+        responseId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the completed response."
+        score:
+          type: "number"
+          description: "The quiz score, or null when the version does not score."
+        problems:
+          type: "array"
+          description: "The problems found when the submit is refused, by question\
+            \ and code. Empty on success."
+          items:
+            $ref: "#/components/schemas/Problem"
+    OpenedResponse:
+      type: "object"
+      description: "A visit that was just started from a link."
+      properties:
+        visitToken:
+          type: "string"
+          description: "The opaque token the browser uses for every later call of\
+            \ this visit."
+        surveyId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the survey."
+        versionNo:
+          type: "integer"
+          format: "int32"
+          description: "The number of the published version the visit pinned."
+        honeypot:
+          type: "string"
+          description: "The name of a decoy field. A real respondent never sees it,\
+            \ so a submit that fills it is discarded without telling the sender."
+        flow:
+          $ref: "#/components/schemas/FlowResult"
+          description: "The version's logic evaluated for no answers, so the browser\
+            \ knows what to ask first."
     UpdateEndpointRequest:
       type: "object"
       description: "The fields to change. A field that is left out keeps its value."
@@ -5569,26 +5475,6 @@ components:
           format: "int64"
           description: "The version of the record. It is also the `ETag`, which a\
             \ conditional change sends as `If-Match`."
-    SchemaResponse:
-      type: "object"
-      description: "The survey a visit fills."
-      properties:
-        versionNo:
-          type: "integer"
-          format: "int32"
-          description: "The number of the version the visit pinned."
-        locale:
-          type: "string"
-          description: "The locale of the text: for example the survey's translation\
-            \ to show."
-        document:
-          type: "object"
-          additionalProperties: {}
-          description: "The version's document, rendered for the visit."
-        honeypot:
-          type: "string"
-          description: "The name of a decoy field. A real respondent never sees it,\
-            \ so a submit that fills it is discarded without telling the sender."
     PageEndpointResponse:
       type: "object"
       description: "A page of endpoint response rows, with the paging facts when the\
@@ -5935,6 +5821,26 @@ components:
           type: "string"
           description: "The page respondents most often stopped at. It depends on\
             \ the client reporting page views, so it is approximate."
+    SchemaResponse:
+      type: "object"
+      description: "The survey a visit fills."
+      properties:
+        versionNo:
+          type: "integer"
+          format: "int32"
+          description: "The number of the version the visit pinned."
+        locale:
+          type: "string"
+          description: "The locale of the text: for example the survey's translation\
+            \ to show."
+        document:
+          type: "object"
+          additionalProperties: {}
+          description: "The version's document, rendered for the visit."
+        honeypot:
+          type: "string"
+          description: "The name of a decoy field. A real respondent never sees it,\
+            \ so a submit that fills it is discarded without telling the sender."
     ProblemDetail:
       type: "object"
       description: "The body of every error: an RFC 9457 problem."

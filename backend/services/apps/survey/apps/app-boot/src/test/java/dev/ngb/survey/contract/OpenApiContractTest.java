@@ -40,7 +40,7 @@ class OpenApiContractTest extends SurveyIntegrationTest {
         String generated = mvc.perform(get("/v3/api-docs.yaml"))
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         assertThat(generated).startsWith("openapi:");
-        CallerLabelRules.check(generated, false);
+        CallerLabelRules.check(generated, true, true);
         CallerOpenApiSplitter.writeOrVerify(
                 generated,
                 RepositoryPaths.repositoryRoot().resolve("contracts/openapi"),

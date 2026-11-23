@@ -401,6 +401,28 @@ paths:
       - "public"
 components:
   schemas:
+    DraftRequest:
+      type: "object"
+      description: "The draft document to store."
+      properties:
+        document:
+          type: "object"
+          additionalProperties: {}
+          description: "The whole document. It replaces the draft."
+    DraftResponse:
+      type: "object"
+      description: "A survey's draft, with the tag its next save has to carry."
+      properties:
+        document:
+          type: "object"
+          additionalProperties: {}
+          description: "The survey document: its pages, questions, logic and translations."
+        etag:
+          type: "string"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+          description: "When the record was last changed."
     AnswersRequest:
       type: "object"
       description: "The respondent's answers."
@@ -413,159 +435,6 @@ components:
           type: "string"
           description: "The locale of the text: for example the survey's translation\
             \ to show."
-    DraftResponse:
-      type: "object"
-      description: "A survey's draft, with the tag its next save has to carry."
-      properties:
-        status:
-          type: "string"
-          description: "The current status."
-        answers:
-          type: "object"
-          additionalProperties: {}
-          description: "The answers, keyed by question id."
-    DraftRequest:
-      type: "object"
-      description: "The draft document to store."
-      properties:
-        document:
-          type: "object"
-          additionalProperties: {}
-          description: "The whole document. It replaces the draft."
-    UploadRequest:
-      type: "object"
-      description: "The file the respondent wants to upload."
-      properties:
-        questionId:
-          type: "string"
-          format: "uuid"
-          description: "The id of the file question the upload is for."
-        filename:
-          type: "string"
-          description: "The file's name."
-        size:
-          type: "integer"
-          format: "int64"
-          description: "The file's size in bytes."
-        mime:
-          type: "string"
-          description: "The file's media type."
-    Signed:
-      type: "object"
-      description: "A signed upload the browser then uses."
-      properties:
-        uploadId:
-          type: "string"
-          format: "uuid"
-          description: "The id of the upload."
-        url:
-          type: "string"
-          description: "The URL to send the file to."
-        headers:
-          type: "object"
-          additionalProperties:
-            type: "string"
-          description: "The headers the upload request must carry."
-    Problem:
-      type: "object"
-      description: "One problem with a document or an answer."
-      properties:
-        field:
-          type: "string"
-          description: "The question or member the problem is about."
-        code:
-          type: "string"
-          description: "The kind of problem. The value the sender gave is never echoed."
-    SubmitResult:
-      type: "object"
-      description: "The outcome of a submit."
-      properties:
-        responseId:
-          type: "string"
-          format: "uuid"
-          description: "The id of the completed response."
-        score:
-          type: "number"
-          description: "The quiz score, or null when the version does not score."
-        problems:
-          type: "array"
-          description: "The problems found when the submit is refused, by question\
-            \ and code. Empty on success."
-          items:
-            $ref: "#/components/schemas/Problem"
-    FlowResult:
-      type: "object"
-      description: "What one run of the version's logic produces."
-      properties:
-        path:
-          type: "array"
-          description: "The ids of the pages visited, in order."
-          items:
-            type: "string"
-        visible:
-          type: "object"
-          additionalProperties:
-            type: "boolean"
-          description: "Every question of the version, mapped to whether it is asked."
-        vars:
-          type: "object"
-          additionalProperties: {}
-          description: "Every computed variable's value."
-        score:
-          type: "number"
-          description: "The quiz score, or null when the version does not score."
-        errors:
-          type: "array"
-          description: "Every reason the version could not be evaluated, by pointer.\
-            \ A non-empty list means nothing ran."
-          items:
-            $ref: "#/components/schemas/ValidationError"
-    OpenedResponse:
-      type: "object"
-      description: "A visit that was just started from a link."
-      properties:
-        visitToken:
-          type: "string"
-          description: "The opaque token the browser uses for every later call of\
-            \ this visit."
-        surveyId:
-          type: "string"
-          format: "uuid"
-          description: "The id of the survey."
-        versionNo:
-          type: "integer"
-          format: "int32"
-          description: "The number of the published version the visit pinned."
-        honeypot:
-          type: "string"
-          description: "The name of a decoy field. A real respondent never sees it,\
-            \ so a submit that fills it is discarded without telling the sender."
-        flow:
-          $ref: "#/components/schemas/FlowResult"
-          description: "The version's logic evaluated for no answers, so the browser\
-            \ knows what to ask first."
-    ValidationError:
-      type: "object"
-      description: "One reason a document cannot be published or evaluated."
-      properties:
-        pointer:
-          type: "string"
-          description: "The JSON pointer to the offending member of the document."
-        code:
-          type: "string"
-          description: "The kind of problem."
-          enum:
-          - "REQUIRED"
-          - "UNKNOWN_TYPE"
-          - "DUPLICATE_ID"
-          - "DANGLING_REFERENCE"
-          - "TRANSLATION_MISSING"
-          - "LIMIT_EXCEEDED"
-          - "CYCLE"
-          - "EXPRESSION_INVALID"
-        message:
-          type: "string"
-          description: "What is wrong."
     CreateEndpointRequest:
       type: "object"
       description: "The endpoint to register."
@@ -724,6 +593,55 @@ components:
           type: "string"
           description: "The locale of the text: for example the survey's translation\
             \ to show."
+    FlowResult:
+      type: "object"
+      description: "What one run of the version's logic produces."
+      properties:
+        path:
+          type: "array"
+          description: "The ids of the pages visited, in order."
+          items:
+            type: "string"
+        visible:
+          type: "object"
+          additionalProperties:
+            type: "boolean"
+          description: "Every question of the version, mapped to whether it is asked."
+        vars:
+          type: "object"
+          additionalProperties: {}
+          description: "Every computed variable's value."
+        score:
+          type: "number"
+          description: "The quiz score, or null when the version does not score."
+        errors:
+          type: "array"
+          description: "Every reason the version could not be evaluated, by pointer.\
+            \ A non-empty list means nothing ran."
+          items:
+            $ref: "#/components/schemas/ValidationError"
+    ValidationError:
+      type: "object"
+      description: "One reason a document cannot be published or evaluated."
+      properties:
+        pointer:
+          type: "string"
+          description: "The JSON pointer to the offending member of the document."
+        code:
+          type: "string"
+          description: "The kind of problem."
+          enum:
+          - "REQUIRED"
+          - "UNKNOWN_TYPE"
+          - "DUPLICATE_ID"
+          - "DANGLING_REFERENCE"
+          - "TRANSLATION_MISSING"
+          - "LIMIT_EXCEEDED"
+          - "CYCLE"
+          - "EXPRESSION_INVALID"
+        message:
+          type: "string"
+          description: "What is wrong."
     VersionResponse:
       type: "object"
       description: "One published version with its document. A published version never\
@@ -861,6 +779,17 @@ components:
           type: "string"
           description: "A presigned download that expires in fifteen minutes, present\
             \ once the export is `DONE`."
+    Problem:
+      type: "object"
+      description: "One problem with a document or an answer."
+      properties:
+        pointer:
+          type: "string"
+        code:
+          type: "string"
+          description: "The kind of problem. The value the sender gave is never echoed."
+        message:
+          type: "string"
     ValidationResult:
       type: "object"
       description: "Every reason a document would not publish."
@@ -1125,6 +1054,81 @@ components:
             type: "integer"
             format: "int64"
           description: "The counts per matrix cell, keyed by row and column id."
+    UploadRequest:
+      type: "object"
+      description: "The file the respondent wants to upload."
+      properties:
+        questionId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the file question the upload is for."
+        filename:
+          type: "string"
+          description: "The file's name."
+        size:
+          type: "integer"
+          format: "int64"
+          description: "The file's size in bytes."
+        mime:
+          type: "string"
+          description: "The file's media type."
+    Signed:
+      type: "object"
+      description: "A signed upload the browser then uses."
+      properties:
+        uploadId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the upload."
+        url:
+          type: "string"
+          description: "The URL to send the file to."
+        headers:
+          type: "object"
+          additionalProperties:
+            type: "string"
+          description: "The headers the upload request must carry."
+    SubmitResult:
+      type: "object"
+      description: "The outcome of a submit."
+      properties:
+        responseId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the completed response."
+        score:
+          type: "number"
+          description: "The quiz score, or null when the version does not score."
+        problems:
+          type: "array"
+          description: "The problems found when the submit is refused, by question\
+            \ and code. Empty on success."
+          items:
+            $ref: "#/components/schemas/Problem"
+    OpenedResponse:
+      type: "object"
+      description: "A visit that was just started from a link."
+      properties:
+        visitToken:
+          type: "string"
+          description: "The opaque token the browser uses for every later call of\
+            \ this visit."
+        surveyId:
+          type: "string"
+          format: "uuid"
+          description: "The id of the survey."
+        versionNo:
+          type: "integer"
+          format: "int32"
+          description: "The number of the published version the visit pinned."
+        honeypot:
+          type: "string"
+          description: "The name of a decoy field. A real respondent never sees it,\
+            \ so a submit that fills it is discarded without telling the sender."
+        flow:
+          $ref: "#/components/schemas/FlowResult"
+          description: "The version's logic evaluated for no answers, so the browser\
+            \ knows what to ask first."
     UpdateEndpointRequest:
       type: "object"
       description: "The fields to change. A field that is left out keeps its value."
@@ -1199,26 +1203,6 @@ components:
           format: "int64"
           description: "The version of the record. It is also the `ETag`, which a\
             \ conditional change sends as `If-Match`."
-    SchemaResponse:
-      type: "object"
-      description: "The survey a visit fills."
-      properties:
-        versionNo:
-          type: "integer"
-          format: "int32"
-          description: "The number of the version the visit pinned."
-        locale:
-          type: "string"
-          description: "The locale of the text: for example the survey's translation\
-            \ to show."
-        document:
-          type: "object"
-          additionalProperties: {}
-          description: "The version's document, rendered for the visit."
-        honeypot:
-          type: "string"
-          description: "The name of a decoy field. A real respondent never sees it,\
-            \ so a submit that fills it is discarded without telling the sender."
     PageEndpointResponse:
       type: "object"
       description: "A page of endpoint response rows, with the paging facts when the\
@@ -1565,6 +1549,26 @@ components:
           type: "string"
           description: "The page respondents most often stopped at. It depends on\
             \ the client reporting page views, so it is approximate."
+    SchemaResponse:
+      type: "object"
+      description: "The survey a visit fills."
+      properties:
+        versionNo:
+          type: "integer"
+          format: "int32"
+          description: "The number of the version the visit pinned."
+        locale:
+          type: "string"
+          description: "The locale of the text: for example the survey's translation\
+            \ to show."
+        document:
+          type: "object"
+          additionalProperties: {}
+          description: "The version's document, rendered for the visit."
+        honeypot:
+          type: "string"
+          description: "The name of a decoy field. A real respondent never sees it,\
+            \ so a submit that fills it is discarded without telling the sender."
     ProblemDetail:
       type: "object"
       description: "The body of every error: an RFC 9457 problem."

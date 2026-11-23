@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "The tenant's survey defaults: abandonment window, upload limit, public rate limit and time zone.")
 @RestController
-@RequestMapping("/api/v1/settings")
+@RequestMapping("/settings")
 @Callers(Caller.TENANT_USER)
 class SettingsController {
 

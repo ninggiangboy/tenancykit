@@ -1,6 +1,7 @@
 package dev.ngb.core.openapi;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;
@@ -25,10 +26,24 @@ public final class CallerLabelRules {
 
     /** @param document the YAML text of an OpenAPI document */
     public static void check(String document, boolean singleCallerPerPath) {
-        check(YAML.readTree(document), singleCallerPerPath);
+        check(document, singleCallerPerPath, false);
+    }
+
+    /**
+     * @param singleCallerPerPath fail when one path names two callers
+     * @param callerPrefixStrict fail when a path under a caller prefix names a caller that prefix does not serve; on
+     *     per app only once its routes are mounted by the phase-5 mechanism, because until then a route still spells
+     *     {@code /api/v1} while carrying {@code tenant-system}
+     */
+    public static void check(String document, boolean singleCallerPerPath, boolean callerPrefixStrict) {
+        check(YAML.readTree(document), singleCallerPerPath, callerPrefixStrict);
     }
 
     static void check(JsonNode document, boolean singleCallerPerPath) {
+        check(document, singleCallerPerPath, false);
+    }
+
+    static void check(JsonNode document, boolean singleCallerPerPath, boolean callerPrefixStrict) {
         JsonNode paths = document.get("paths");
         if (paths == null || !paths.isObject()) {
             throw new AssertionError("the document has no paths");
@@ -53,6 +68,9 @@ public final class CallerLabelRules {
                     if (!CALLERS.contains(caller)) {
                         throw new AssertionError("unknown caller '" + caller + "' on " + method.toUpperCase() + " " + path);
                     }
+                    if (callerPrefixStrict) {
+                        checkPrefix(path, caller);
+                    }
                     onPath.add(caller);
                 }
                 if (operation.get("x-public") != null) {
@@ -64,6 +82,36 @@ public final class CallerLabelRules {
                         + "; only /api/v1/me/** and /oauth/token may share a path");
             }
         }
+    }
+
+    /**
+     * A caller prefix serves exactly the callers it implies. A route that spells the prefix but names another caller
+     * is how a moved path silently serves the wrong token kind, so this guards against bypassing the mechanism.
+     */
+    private static void checkPrefix(String path, String caller) {
+        String prefix = callerPrefix(path);
+        if (prefix == null) {
+            return;
+        }
+        Set<String> serves = switch (prefix) {
+            case "/api/v1" -> Set.of("tenant-user", "platform-user");
+            case "/admin/v1" -> Set.of("platform-user");
+            case "/system/v1" -> Set.of("tenant-system");
+            case "/internal/v1" -> Set.of("internal");
+            default -> null;
+        };
+        if (serves != null && !serves.contains(caller)) {
+            throw new AssertionError(path + " is under " + prefix + " but names " + caller);
+        }
+    }
+
+    private static String callerPrefix(String path) {
+        for (String prefix : List.of("/api/v1/me", "/api/v1", "/admin/v1", "/system/v1", "/internal/v1")) {
+            if (path.equals(prefix) || path.startsWith(prefix + "/")) {
+                return prefix;
+            }
+        }
+        return null;
     }
 
     private static boolean isOperation(JsonNode node) {

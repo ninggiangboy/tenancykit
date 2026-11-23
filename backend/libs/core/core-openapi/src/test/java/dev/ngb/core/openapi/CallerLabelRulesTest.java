@@ -80,6 +80,29 @@ class CallerLabelRulesTest {
     }
 
     @Test
+    void aCallerUnderAPrefixItDoesNotServeFailsWhenTheRuleIsOn() {
+        String wrong = document("/system/v1/wallets", labels("tenant-user"));
+
+        CallerLabelRules.check(wrong, false, false);
+        assertThatThrownBy(() -> CallerLabelRules.check(wrong, false, true))
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("is under /system/v1 but names tenant-user");
+    }
+
+    @Test
+    void aCallerUnderItsOwnPrefixPasses() {
+        CallerLabelRules.check(document("/system/v1/wallets", labels("tenant-system")), false, true);
+        CallerLabelRules.check(document("/api/v1/wallets", labels("tenant-user")), false, true);
+        CallerLabelRules.check(document("/admin/v1/tenants", labels("platform-user")), false, true);
+        CallerLabelRules.check(document("/internal/v1/replica/snapshot", labels("internal")), false, true);
+    }
+
+    @Test
+    void theMePathAcceptsBothPersonKinds() {
+        CallerLabelRules.check(document("/api/v1/me", labels("platform-user", "tenant-user")), false, true);
+    }
+
+    @Test
     void theRulesReadARealisticDocument() {
         String yaml = """
                 openapi: 3.1.0

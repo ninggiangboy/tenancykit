@@ -1,5 +1,9 @@
 package dev.ngb.survey.support;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.DynamicPropertyRegistrar;
@@ -31,6 +35,21 @@ public class PostgresContainerConfig {
     /** Shared with tests that build their own property source instead of importing this configuration. */
     public static PostgreSQLContainer postgres() {
         return POSTGRES;
+    }
+
+    /** A connection as the container's superuser, which is what a deployment's table owner is. */
+    public static Connection asOwner() throws SQLException {
+        return DriverManager.getConnection(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+    }
+
+    /** Runs one statement as the owner, for the replica rows a test seeds. */
+    public static void executeAsOwner(String sql) {
+        try (Connection owner = asOwner();
+                Statement statement = owner.createStatement()) {
+            statement.execute(sql);
+        } catch (SQLException e) {
+            throw new IllegalStateException("could not run: " + sql, e);
+        }
     }
 
     @Bean

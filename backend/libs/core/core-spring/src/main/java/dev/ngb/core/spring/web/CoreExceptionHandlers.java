@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 /**
@@ -99,6 +100,12 @@ public abstract class CoreExceptionHandlers {
                 .body(detail);
     }
 
+    /** A path no handler serves is a missing resource, not an unexpected error: {@code 404}, the same as any miss. */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ProblemDetail noResource(NoResourceFoundException e) {
+        return ProblemDetails.of(HttpStatus.NOT_FOUND, "No resource exists at this path.");
+    }
+
     /** Unexpected errors reveal nothing about the cause. */
     @ExceptionHandler(Exception.class)
     public ProblemDetail unexpected(Exception e) {
@@ -106,3 +113,4 @@ public abstract class CoreExceptionHandlers {
         return ProblemDetails.of(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong.");
     }
 }
+

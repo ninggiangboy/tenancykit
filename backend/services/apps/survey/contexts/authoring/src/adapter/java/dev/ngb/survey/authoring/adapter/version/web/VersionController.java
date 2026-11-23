@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "Publishing the draft as an immutable version and reading the version history.")
 @RestController
-@RequestMapping("/api/v1/surveys/{id}")
+@RequestMapping("/surveys/{id}")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class VersionController {
 

@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Prefix mounting and token enforcement"
-status: pending
+status: done
 priority: P1
 effort: 3d
 dependencies: [3]
@@ -59,3 +59,24 @@ only service-client suite tokens. Exceptions: `/oauth/token`, `/.well-known/jwks
 ## Risks
 - The mechanism must not need per-controller code, or phase 6 multiplies it by nine apps. If it does, stop and
   revisit the fallback from phase 1.
+
+## What landed
+- `dev.ngb.core.spring.web.CallerResolver` is the one reading of `@Callers` / `@SelfService` / `@PublicEndpoint` /
+  implied caller; the OpenAPI label, the route prefix and the architecture rule all use it, so they cannot drift.
+- `CallerPrefixMapping` mounts one mapping per prefix the callers imply and removes the un-prefixed one, so a bare
+  path never escapes the guards. A controller that still spells a derived prefix (the half-moved state of phase 6)
+  is left as the framework registered it, which is what makes a `/system/v1` twin appear before its literal is gone.
+- `CallerTokenFilter` refuses a valid token of the wrong kind on `/system`, `/internal`, `/api` and `/admin` with
+  `403`, deciding on the raw claims before the resource server resolves an actor; no token is left to the `401`.
+- `CallerSurfaceOpenApiCustomizer` (a `GlobalOpenApiCustomizer`) narrows a route documented at two prefixes to the
+  caller each prefix serves and gives the twin a stable id (`list` and `listAsTenantSystem`) instead of springdoc's
+  order-dependent `_1`. Person-facing `/api/v1` and `/admin/v1` ids are unchanged.
+- `CallerLabelRules.check(document, singleCallerPerPath, callerPrefixStrict)` adds the prefix check; Survey turns both
+  on. The other nine apps keep the check off until phase 6-7 mounts their routes.
+- A path no handler serves now answers `404` (`NoResourceFoundException`) in `CoreExceptionHandlers`, so a
+  non-grantable operation has no `/system/v1` twin, which is what this phase's fourth test asserts.
+- Survey's OpenAPI grew from 212,478 to 361,921 bytes and 47 to 85 operations (each grantable handler documented at
+  both prefixes); the baseline spike predicted ~2x.
+- `CallerSurfaceAccessTest` proves all four behaviours end to end on Survey: suite token on `/system/v1/surveys` is
+  `200`; the same token on `/api/v1/surveys` is `403`; a Keycloak JWT is the reverse; `/system/v1/settings` (a
+  non-grantable code) is `404`.

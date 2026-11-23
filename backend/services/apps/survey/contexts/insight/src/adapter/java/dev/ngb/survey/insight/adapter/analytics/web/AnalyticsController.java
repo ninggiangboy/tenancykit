@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "Per-question aggregates, cross-tabs, trends and the drop-off funnel.")
 @RestController
-@RequestMapping("/api/v1/surveys/{id}/analytics")
+@RequestMapping("/surveys/{id}/analytics")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class AnalyticsController {
 

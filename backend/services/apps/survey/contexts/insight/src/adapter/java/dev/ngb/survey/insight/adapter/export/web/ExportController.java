@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "Queued CSV exports of responses and reading their state.")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class ExportController {
 

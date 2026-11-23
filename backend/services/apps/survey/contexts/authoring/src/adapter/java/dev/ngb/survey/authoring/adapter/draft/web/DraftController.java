@@ -42,7 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "A survey's one editable document: read, save under If-Match, and validate.")
 @RestController
-@RequestMapping("/api/v1/surveys/{id}/draft")
+@RequestMapping("/surveys/{id}/draft")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class DraftController {
 

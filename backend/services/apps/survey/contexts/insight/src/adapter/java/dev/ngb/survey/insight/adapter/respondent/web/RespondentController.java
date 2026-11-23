@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "The respondents of a survey, for importing into a mailroom group for a reminder.")
 @RestController
-@RequestMapping("/api/v1/surveys/{id}/respondents")
+@RequestMapping("/surveys/{id}/respondents")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class RespondentController {
 

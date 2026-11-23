@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Try a draft's logic without publishing: preview a locale, or simulate answers through the draft or a "
                 + "version.")
 @RestController
-@RequestMapping("/api/v1/surveys/{id}")
+@RequestMapping("/surveys/{id}")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class FlowController {
 
