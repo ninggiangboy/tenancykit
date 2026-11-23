@@ -34,34 +34,34 @@ abstract class OrderApiTestCase extends CustomerApiTest {
     }
 
     ResultActions putOrder(Session session, String orderRef, String body) throws Exception {
-        return send(put("/api/v1/orders/{orderRef}", orderRef), session, body, null);
+        return send(put("/system/v1/orders/{orderRef}", orderRef), session, body, null);
     }
 
     ResultActions putOrder(Session session, String orderRef, String body, String token) throws Exception {
-        return send(put("/api/v1/orders/{orderRef}", orderRef), session, body, token, null);
+        return send(put("/system/v1/orders/{orderRef}", orderRef), session, body, token, null);
     }
 
     ResultActions getOrder(Session session, String orderRef) throws Exception {
-        return send(get("/api/v1/orders/{orderRef}", orderRef), session, null, null);
+        return send(get("/system/v1/orders/{orderRef}", orderRef), session, null, null);
     }
 
     ResultActions putReturn(Session session, String orderRef, String returnRef, String body) throws Exception {
-        return send(put("/api/v1/orders/{orderRef}/returns/{returnRef}", orderRef, returnRef), session, body, null);
+        return send(put("/system/v1/orders/{orderRef}/returns/{returnRef}", orderRef, returnRef), session, body, null);
     }
 
     ResultActions putReturn(Session session, String orderRef, String returnRef, String body, String token)
             throws Exception {
-        return send(put("/api/v1/orders/{orderRef}/returns/{returnRef}", orderRef, returnRef), session, body, token,
+        return send(put("/system/v1/orders/{orderRef}/returns/{returnRef}", orderRef, returnRef), session, body, token,
                 null);
     }
 
     ResultActions batch(Session session, String body) throws Exception {
-        return send(post("/api/v1/orders/batch"), session, body, null);
+        return send(post("/system/v1/orders/batch"), session, body, null);
     }
 
     ResultActions listOrders(Session session, String externalRef, String... params) throws Exception {
         MockHttpServletRequestBuilder request =
-                get("/api/v1/customers/{externalRef}/orders", externalRef);
+                get("/system/v1/customers/{externalRef}/orders", externalRef);
         for (int i = 0; i < params.length; i += 2) {
             request.param(params[i], params[i + 1]);
         }

@@ -71,7 +71,7 @@ class CustomerIsolationTest extends CustomerApiTestCase {
 
         putCustomer(session, "cust-read-only", "{\"displayName\":\"Ada\"}", readOnly)
                 .andExpect(status().isForbidden());
-        mvc.perform(get("/api/v1/customers/cust-read-only")
+        mvc.perform(get("/system/v1/customers/cust-read-only")
                         .header("Host", session.host())
                         .header("Authorization", "Bearer " + readOnly))
                 .andExpect(status().isNotFound());
@@ -81,7 +81,7 @@ class CustomerIsolationTest extends CustomerApiTestCase {
     void aRequestWithoutATokenIsRefused() throws Exception {
         Session session = tenant();
 
-        mvc.perform(get("/api/v1/customers").header("Host", session.host()))
+        mvc.perform(get("/system/v1/customers").header("Host", session.host()))
                 .andExpect(status().isUnauthorized());
     }
 

@@ -27,7 +27,7 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
     void aFieldIsDefinedListedAndWrittenOnACustomer() throws Exception {
         Session session = session();
 
-        postAs(session, "/api/v1/custom-fields", """
+        postAs(session, "/system/v1/custom-fields", """
                 {"key":"size","label":"Size","type":"CHOICE","choices":["S","M","L"]}
                 """)
                 .andExpect(status().isCreated())
@@ -37,16 +37,16 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
                 .andExpect(jsonPath("$.choices.length()").value(3))
                 .andExpect(jsonPath("$.archived").value(false));
 
-        getAs(session, "/api/v1/custom-fields")
+        getAs(session, "/system/v1/custom-fields")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1))
                 .andExpect(jsonPath("$.data[0].key").value("size"));
 
-        putAs(session, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"size\":\"M\"}}", "cust-field")
+        putAs(session, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"size\":\"M\"}}", "cust-field")
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.customFields.size").value("M"));
 
-        getAs(session, "/api/v1/customers/{externalRef}", "cust-field")
+        getAs(session, "/system/v1/customers/{externalRef}", "cust-field")
                 .andExpect(jsonPath("$.customFields.size").value("M"));
     }
 
@@ -54,20 +54,20 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
     void theShapeOfAFieldIsEnforced() throws Exception {
         Session session = session();
 
-        postAs(session, "/api/v1/custom-fields", """
+        postAs(session, "/system/v1/custom-fields", """
                 {"key":"9lives","label":"Lives","type":"TEXT"}
                 """)
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
-        postAs(session, "/api/v1/custom-fields", """
+        postAs(session, "/system/v1/custom-fields", """
                 {"key":"empty_choice","label":"Empty","type":"CHOICE","choices":[]}
                 """)
                 .andExpect(status().is(422));
-        postAs(session, "/api/v1/custom-fields", """
+        postAs(session, "/system/v1/custom-fields", """
                 {"key":"text_with_choices","label":"Text","type":"TEXT","choices":["a"]}
                 """)
                 .andExpect(status().is(422));
-        postAs(session, "/api/v1/custom-fields", """
+        postAs(session, "/system/v1/custom-fields", """
                 {"key":"no_label","label":"   ","type":"TEXT"}
                 """)
                 .andExpect(status().is(422));
@@ -80,7 +80,7 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
         Session session = session();
         define(session, "size", "TEXT");
 
-        postAs(session, "/api/v1/custom-fields", """
+        postAs(session, "/system/v1/custom-fields", """
                 {"key":"size","label":"Another size","type":"NUMBER"}
                 """)
                 .andExpect(status().isConflict())
@@ -92,14 +92,14 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
         Session session = session();
         define(session, "size", "TEXT");
 
-        patchAs(session, "/api/v1/custom-fields/{key}", "{\"type\":\"NUMBER\"}", null, "size")
+        patchAs(session, "/system/v1/custom-fields/{key}", "{\"type\":\"NUMBER\"}", null, "size")
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("FIELD_TYPE_IMMUTABLE"));
 
-        getAs(session, "/api/v1/custom-fields")
+        getAs(session, "/system/v1/custom-fields")
                 .andExpect(jsonPath("$.data[0].key").value("size"))
                 .andExpect(jsonPath("$.data[0].type").value("TEXT"));
-        patchAs(session, "/api/v1/custom-fields/{key}", "{\"label\":\"Size of the shirt\"}", null, "size")
+        patchAs(session, "/system/v1/custom-fields/{key}", "{\"label\":\"Size of the shirt\"}", null, "size")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.label").value("Size of the shirt"))
                 .andExpect(jsonPath("$.type").value("TEXT"));
@@ -109,25 +109,25 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
     void anArchivedFieldIsStillReadableButTakesNoNewValue() throws Exception {
         Session session = session();
         define(session, "nickname", "TEXT");
-        putAs(session, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"nickname\":\"Ada\"}}", "cust-arch")
+        putAs(session, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"nickname\":\"Ada\"}}", "cust-arch")
                 .andExpect(status().isCreated());
 
-        patchAs(session, "/api/v1/custom-fields/{key}", "{\"archived\":true}", null, "nickname")
+        patchAs(session, "/system/v1/custom-fields/{key}", "{\"archived\":true}", null, "nickname")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archived").value(true));
 
-        getAs(session, "/api/v1/customers/{externalRef}", "cust-arch")
+        getAs(session, "/system/v1/customers/{externalRef}", "cust-arch")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.customFields.nickname").value("Ada"));
 
-        putAs(session, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"nickname\":\"Grace\"}}", "cust-arch")
+        putAs(session, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"nickname\":\"Grace\"}}", "cust-arch")
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
-        patchAs(session, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"nickname\":\"Grace\"}}", "\"1\"",
+        patchAs(session, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"nickname\":\"Grace\"}}", "\"1\"",
                         "cust-arch")
                 .andExpect(status().is(422));
 
-        getAs(session, "/api/v1/customers/{externalRef}", "cust-arch")
+        getAs(session, "/system/v1/customers/{externalRef}", "cust-arch")
                 .andExpect(jsonPath("$.customFields.nickname").value("Ada"));
     }
 
@@ -136,18 +136,18 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
         Session session = session();
         define(session, "known", "TEXT");
 
-        putAs(session, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"unknown\":\"x\"}}", "cust-unknown")
+        putAs(session, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"unknown\":\"x\"}}", "cust-unknown")
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
         assertThat(rowsOf(session, CUSTOMERS)).isZero();
 
-        putAs(session, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"known\":\"x\"}}", "cust-two")
+        putAs(session, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"known\":\"x\"}}", "cust-two")
                 .andExpect(status().isCreated());
-        patchAs(session, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"unknown\":\"x\"}}", "\"1\"",
+        patchAs(session, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"unknown\":\"x\"}}", "\"1\"",
                         "cust-two")
                 .andExpect(status().is(422));
 
-        postAs(session, "/api/v1/customers/batch", """
+        postAs(session, "/system/v1/customers/batch", """
                 {"items":[{"externalRef":"cust-batch","customFields":{"unknown":"x"}}]}
                 """)
                 .andExpect(status().isOk())
@@ -161,22 +161,22 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
         define(session, "amount", "NUMBER");
         define(session, "born_on", "DATE");
         define(session, "member", "BOOLEAN");
-        postAs(session, "/api/v1/custom-fields", """
+        postAs(session, "/system/v1/custom-fields", """
                 {"key":"size","label":"Size","type":"CHOICE","choices":["S","M"]}
                 """).andExpect(status().isCreated());
 
-        putAs(session, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"amount\":\"lots\"}}", "cust-num")
+        putAs(session, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"amount\":\"lots\"}}", "cust-num")
                 .andExpect(status().is(422));
-        putAs(session, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"born_on\":\"31/12/2026\"}}", "cust-date")
+        putAs(session, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"born_on\":\"31/12/2026\"}}", "cust-date")
                 .andExpect(status().is(422));
-        putAs(session, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"member\":\"yes\"}}", "cust-bool")
+        putAs(session, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"member\":\"yes\"}}", "cust-bool")
                 .andExpect(status().is(422));
-        putAs(session, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"size\":\"XXL\"}}", "cust-choice")
+        putAs(session, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"size\":\"XXL\"}}", "cust-choice")
                 .andExpect(status().is(422));
 
         putAs(
                         session,
-                        "/api/v1/customers/{externalRef}",
+                        "/system/v1/customers/{externalRef}",
                         "{\"customFields\":{\"amount\":12.5,\"born_on\":\"2026-12-31\",\"member\":true}}",
                         "cust-typed")
                 .andExpect(status().isCreated())
@@ -188,16 +188,16 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
     void aNullValueClearsTheAnswer() throws Exception {
         Session session = session();
         define(session, "nickname", "TEXT");
-        putAs(session, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"nickname\":\"Ada\"}}", "cust-clear")
+        putAs(session, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"nickname\":\"Ada\"}}", "cust-clear")
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.customFields.nickname").value("Ada"));
 
-        patchAs(session, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"nickname\":null}}", "\"1\"",
+        patchAs(session, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"nickname\":null}}", "\"1\"",
                         "cust-clear")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.customFields.nickname").doesNotExist());
 
-        getAs(session, "/api/v1/customers/{externalRef}", "cust-clear")
+        getAs(session, "/system/v1/customers/{externalRef}", "cust-clear")
                 .andExpect(jsonPath("$.customFields.nickname").doesNotExist());
     }
 
@@ -209,12 +209,12 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
         }
         String value = "x".repeat(2000);
 
-        putAs(session, "/api/v1/customers/{externalRef}", bodyOfFields(9, value), "cust-too-big")
+        putAs(session, "/system/v1/customers/{externalRef}", bodyOfFields(9, value), "cust-too-big")
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
         assertThat(rowsOf(session, CUSTOMERS)).isZero();
 
-        putAs(session, "/api/v1/customers/{externalRef}", bodyOfFields(7, value), "cust-under-cap")
+        putAs(session, "/system/v1/customers/{externalRef}", bodyOfFields(7, value), "cust-under-cap")
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.customFields.text_1").value(value));
     }
@@ -226,15 +226,15 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
             define(session, "field_" + i, "TEXT");
         }
 
-        postAs(session, "/api/v1/custom-fields", """
+        postAs(session, "/system/v1/custom-fields", """
                 {"key":"one_too_many","label":"One too many","type":"TEXT"}
                 """)
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
 
-        patchAs(session, "/api/v1/custom-fields/{key}", "{\"archived\":true}", null, "field_1")
+        patchAs(session, "/system/v1/custom-fields/{key}", "{\"archived\":true}", null, "field_1")
                 .andExpect(status().isOk());
-        postAs(session, "/api/v1/custom-fields", """
+        postAs(session, "/system/v1/custom-fields", """
                 {"key":"after_archiving","label":"Fits now","type":"TEXT"}
                 """)
                 .andExpect(status().isCreated());
@@ -243,14 +243,14 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
     @Test
     void choicesAreAddedToAChoiceButNeverRemoved() throws Exception {
         Session session = session();
-        postAs(session, "/api/v1/custom-fields", """
+        postAs(session, "/system/v1/custom-fields", """
                 {"key":"size","label":"Size","type":"CHOICE","choices":["S","M"]}
                 """).andExpect(status().isCreated());
 
-        patchAs(session, "/api/v1/custom-fields/{key}", "{\"choices\":[\"L\"]}", null, "size")
+        patchAs(session, "/system/v1/custom-fields/{key}", "{\"choices\":[\"L\"]}", null, "size")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.choices.length()").value(3));
-        patchAs(session, "/api/v1/custom-fields/{key}", "{\"choices\":[\"S\"]}", null, "size")
+        patchAs(session, "/system/v1/custom-fields/{key}", "{\"choices\":[\"S\"]}", null, "size")
                 .andExpect(status().is(422));
     }
 
@@ -258,7 +258,7 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
     void anUnknownFieldIs404() throws Exception {
         Session session = session();
 
-        patchAs(session, "/api/v1/custom-fields/{key}", "{\"label\":\"Nowhere\"}", null, "nowhere")
+        patchAs(session, "/system/v1/custom-fields/{key}", "{\"label\":\"Nowhere\"}", null, "nowhere")
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("CUSTOM_FIELD_NOT_FOUND"));
     }
@@ -269,7 +269,7 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
         String customerOnly = credentialOf(session, "Customer only", CustomerPermissions.CUSTOMER_MANAGE);
 
         mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                        .post("/api/v1/custom-fields")
+                        .post("/system/v1/custom-fields")
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                         .content("{\"key\":\"size\",\"label\":\"Size\",\"type\":\"TEXT\"}")
                         .header("Host", session.host())
@@ -283,19 +283,19 @@ class CustomFieldIntegrationTest extends CustomerApiTest {
         Session tenantB = session();
         define(tenantA, "size", "TEXT");
 
-        getAs(tenantB, "/api/v1/custom-fields")
+        getAs(tenantB, "/system/v1/custom-fields")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(0));
-        putAs(tenantB, "/api/v1/customers/{externalRef}", "{\"customFields\":{\"size\":\"M\"}}", "cust-b")
+        putAs(tenantB, "/system/v1/customers/{externalRef}", "{\"customFields\":{\"size\":\"M\"}}", "cust-b")
                 .andExpect(status().is(422));
 
-        getAs(tenantA, "/api/v1/custom-fields").andExpect(jsonPath("$.data.length()").value(1));
+        getAs(tenantA, "/system/v1/custom-fields").andExpect(jsonPath("$.data.length()").value(1));
     }
 
     private void define(Session session, String key, String type) throws Exception {
         postAs(
                         session,
-                        "/api/v1/custom-fields",
+                        "/system/v1/custom-fields",
                         "{\"key\":\"" + key + "\",\"label\":\"" + key + "\",\"type\":\"" + type + "\"}")
                 .andExpect(status().isCreated());
     }

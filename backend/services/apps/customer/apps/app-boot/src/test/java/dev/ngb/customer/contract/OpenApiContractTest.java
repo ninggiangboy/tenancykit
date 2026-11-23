@@ -76,8 +76,8 @@ class OpenApiContractTest {
 
         Path file = RepositoryPaths.repositoryRoot().resolve(CONTRACT);
         String documentedText = Files.readString(file, StandardCharsets.UTF_8);
-        CallerLabelRules.check(served.toString(), false);
-        CallerLabelRules.check(documentedText, false);
+        CallerLabelRules.check(served.toString(), true, true);
+        CallerLabelRules.check(documentedText, true, true);
         CallerOpenApiSplitter.writeOrVerify(
                 documentedText,
                 RepositoryPaths.repositoryRoot().resolve("contracts/openapi"),
@@ -142,31 +142,37 @@ class OpenApiContractTest {
         JsonNode served = YAML.readTree(mvc.perform(get("/v3/api-docs.yaml"))
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8));
         Set<String> servedPaths = new TreeSet<>(List.of(served.get("paths").propertyNames().toArray(String[]::new)));
-        assertThat(servedPaths).containsExactlyInAnyOrder(
-                "/api/v1/activities",
-                "/api/v1/activities/batch",
-                "/api/v1/consent-topics",
-                "/api/v1/consent-topics/{key}",
-                "/api/v1/custom-fields",
-                "/api/v1/custom-fields/{key}",
-                "/api/v1/customers",
-                "/api/v1/customers/batch",
-                "/api/v1/customers/export",
-                "/api/v1/customers/{externalRef}",
-                "/api/v1/customers/{externalRef}/activities",
-                "/api/v1/customers/{externalRef}/consents",
-                "/api/v1/customers/{externalRef}/erasure",
-                "/api/v1/customers/{externalRef}/orders",
-                "/api/v1/customers/{externalRef}/profile",
-                "/api/v1/orders/batch",
-                "/api/v1/orders/{orderRef}",
-                "/api/v1/orders/{orderRef}/returns/{returnRef}",
-                "/api/v1/tags",
-                "/api/v1/webhook-deliveries",
-                "/api/v1/webhook-deliveries/{id}/retry",
-                "/api/v1/webhook-endpoints",
-                "/api/v1/webhook-endpoints/{id}",
-                "/api/v1/webhook-endpoints/{id}/rotate-secret");
+        // Every operation has two twins, one per caller kind, so the same resource path appears under both prefixes.
+        Set<String> expected = new TreeSet<>();
+        for (String resource : List.of(
+                "/activities",
+                "/activities/batch",
+                "/consent-topics",
+                "/consent-topics/{key}",
+                "/custom-fields",
+                "/custom-fields/{key}",
+                "/customers",
+                "/customers/batch",
+                "/customers/export",
+                "/customers/{externalRef}",
+                "/customers/{externalRef}/activities",
+                "/customers/{externalRef}/consents",
+                "/customers/{externalRef}/erasure",
+                "/customers/{externalRef}/orders",
+                "/customers/{externalRef}/profile",
+                "/orders/batch",
+                "/orders/{orderRef}",
+                "/orders/{orderRef}/returns/{returnRef}",
+                "/tags",
+                "/webhook-deliveries",
+                "/webhook-deliveries/{id}/retry",
+                "/webhook-endpoints",
+                "/webhook-endpoints/{id}",
+                "/webhook-endpoints/{id}/rotate-secret")) {
+            expected.add("/api/v1" + resource);
+            expected.add("/system/v1" + resource);
+        }
+        assertThat(servedPaths).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     @Test

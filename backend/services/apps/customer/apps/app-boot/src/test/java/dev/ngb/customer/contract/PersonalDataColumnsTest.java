@@ -102,7 +102,7 @@ class PersonalDataColumnsTest extends CustomerApiTest {
             inTenant(session.tenant(), () -> createEndpoint.execute(new CreateEndpointUseCase.Command(
                     receiver.url("/hook"), "housekeeping consumer", List.of("customer.created"))));
 
-            putAs(session, "/api/v1/customers/{externalRef}", "{\"displayName\":\"Ada Lovelace\"}", ref)
+            putAs(session, "/system/v1/customers/{externalRef}", "{\"displayName\":\"Ada Lovelace\"}", ref)
                     .andExpect(status().isCreated());
             assertThat(outboxPayloads(session))
                     .as("the announcement holds the Tenant's reference before the retention passes")

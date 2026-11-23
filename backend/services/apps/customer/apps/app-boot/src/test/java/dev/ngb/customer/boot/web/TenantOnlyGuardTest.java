@@ -32,7 +32,7 @@ class TenantOnlyGuardTest {
     private static void handle(RequestScope scope) {
         TenantContext context = new FixedScope(scope);
         new TenantOnlyGuard(context).preHandle(
-                new MockHttpServletRequest("GET", "/api/v1/webhook-endpoints"), new MockHttpServletResponse(), new Object());
+                new MockHttpServletRequest("GET", "/system/v1/webhook-endpoints"), new MockHttpServletResponse(), new Object());
     }
 
     private record FixedScope(RequestScope scope) implements TenantContext {

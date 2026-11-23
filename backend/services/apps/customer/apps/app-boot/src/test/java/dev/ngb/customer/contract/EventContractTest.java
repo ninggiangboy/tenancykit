@@ -55,7 +55,7 @@ class EventContractTest extends CustomerApiTest {
 
         WebhookReceiver.Call call = deliverOne(session, "customer.created", () -> putAs(
                         session,
-                        "/api/v1/customers/{externalRef}",
+                        "/system/v1/customers/{externalRef}",
                         "{\"displayName\":\"Ada Lovelace\",\"email\":\"ada@example.com\"}",
                         "cust-contract")
                 .andExpect(status().isCreated()));
@@ -71,7 +71,7 @@ class EventContractTest extends CustomerApiTest {
     @Test
     void customerErasedCarriesTheCustomersIdAndNothingElse() throws Exception {
         Session session = tenant(CustomerPermissions.CUSTOMER_MANAGE, CustomerPermissions.CUSTOMER_ERASE);
-        putAs(session, "/api/v1/customers/{externalRef}", """
+        putAs(session, "/system/v1/customers/{externalRef}", """
                 {"displayName":"Ada Lovelace","phone":"+44 20 7946 0958","email":"ada@example.com"}
                 """, "cust-contract-erased")
                 .andExpect(status().isCreated());
@@ -79,7 +79,7 @@ class EventContractTest extends CustomerApiTest {
         WebhookReceiver.Call call = deliverOne(
                 session,
                 "customer.erased",
-                () -> postAs(session, "/api/v1/customers/{externalRef}/erasure", null, "cust-contract-erased")
+                () -> postAs(session, "/system/v1/customers/{externalRef}/erasure", null, "cust-contract-erased")
                         .andExpect(status().isOk()));
 
         JsonNode envelope = JSON.readTree(call.bodyText());
@@ -96,7 +96,7 @@ class EventContractTest extends CustomerApiTest {
         Session session = tenant(CustomerPermissions.ORDER_RECORD);
 
         WebhookReceiver.Call call = deliverOne(session, "order.recorded", () -> putAs(
-                        session, "/api/v1/orders/{orderRef}", order("cust-contract-order"), "order-contract")
+                        session, "/system/v1/orders/{orderRef}", order("cust-contract-order"), "order-contract")
                 .andExpect(status().isCreated()));
 
         JsonNode envelope = JSON.readTree(call.bodyText());
@@ -112,7 +112,7 @@ class EventContractTest extends CustomerApiTest {
     @Test
     void orderRefundedCarriesTheReturnThatCausedIt() throws Exception {
         Session session = tenant(CustomerPermissions.ORDER_RECORD);
-        putAs(session, "/api/v1/orders/{orderRef}", order("cust-contract-refund"), "order-contract-refund")
+        putAs(session, "/system/v1/orders/{orderRef}", order("cust-contract-refund"), "order-contract-refund")
                 .andExpect(status().isCreated());
 
         WebhookReceiver.Call call = deliverOne(
@@ -120,7 +120,7 @@ class EventContractTest extends CustomerApiTest {
                 "order.refunded",
                 () -> putAs(
                                 session,
-                                "/api/v1/orders/{orderRef}/returns/{returnRef}",
+                                "/system/v1/orders/{orderRef}/returns/{returnRef}",
                                 """
                                 {"occurredAt":"%s","lines":[{"lineNo":1,"quantity":"1.000","amount":1300}]}
                                 """.formatted(past()),

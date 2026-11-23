@@ -71,9 +71,9 @@ class OrderIsolationTest extends OrderApiTestCase {
     void aRequestWithoutATokenIsRefused() throws Exception {
         Session session = tenant();
 
-        mvc.perform(get("/api/v1/orders/order-anything").header("Host", session.host()))
+        mvc.perform(get("/system/v1/orders/order-anything").header("Host", session.host()))
                 .andExpect(status().isUnauthorized());
-        mvc.perform(get("/api/v1/customers/cust-anything/orders").header("Host", session.host()))
+        mvc.perform(get("/system/v1/customers/cust-anything/orders").header("Host", session.host()))
                 .andExpect(status().isUnauthorized());
     }
 }

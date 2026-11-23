@@ -160,7 +160,7 @@ class ActivityApiIntegrationTest extends CustomerApiTest {
         Session session = tenant();
         putCustomer(session, "cust-batch").andExpect(status().isCreated());
 
-        postAs(session, "/api/v1/activities/batch", """
+        postAs(session, "/system/v1/activities/batch", """
                 {"items":[
                   {"externalRef":"cust-batch","type":"pos.receipt-printed","occurredAt":"2026-11-16T10:00:00Z",
                    "activityRef":"batch-1"},
@@ -179,7 +179,7 @@ class ActivityApiIntegrationTest extends CustomerApiTest {
 
         assertThat(rows(session)).isEqualTo(2);
 
-        postAs(session, "/api/v1/activities/batch", """
+        postAs(session, "/system/v1/activities/batch", """
                 {"items":[
                   {"externalRef":"cust-batch","type":"pos.receipt-printed","occurredAt":"2026-11-16T10:00:00Z",
                    "activityRef":"batch-1"}
@@ -200,10 +200,10 @@ class ActivityApiIntegrationTest extends CustomerApiTest {
                     .append("\"occurredAt\":\"2026-11-16T10:00:00Z\"}");
         }
 
-        postAs(session, "/api/v1/activities/batch", "{\"items\":[" + items + "]}")
+        postAs(session, "/system/v1/activities/batch", "{\"items\":[" + items + "]}")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("BATCH_LIMIT_EXCEEDED"));
-        postAs(session, "/api/v1/activities/batch", "{\"items\":[]}")
+        postAs(session, "/system/v1/activities/batch", "{\"items\":[]}")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
     }
@@ -310,10 +310,10 @@ class ActivityApiIntegrationTest extends CustomerApiTest {
         String token = TestTokenFactory.tenantSystemToken(
                 system, session.tenant().value(), CustomerPermissions.ACTIVITY_READ);
 
-        send(get("/api/v1/customers/{ref}/activities", "cust-any"), session, null, token, null)
+        send(get("/system/v1/customers/{ref}/activities", "cust-any"), session, null, token, null)
                 .andExpect(status().isNotFound());
 
-        send(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/activities")
+        send(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/system/v1/activities")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(activity("cust-any", "app.opened", "2026-11-16T10:00:00Z")),
                 session, null, token, null)
@@ -327,15 +327,15 @@ class ActivityApiIntegrationTest extends CustomerApiTest {
     }
 
     private ResultActions putCustomer(Session session, String externalRef) throws Exception {
-        return send(put("/api/v1/customers/{externalRef}", externalRef), session, "{\"displayName\":\"Ada\"}", null);
+        return send(put("/system/v1/customers/{externalRef}", externalRef), session, "{\"displayName\":\"Ada\"}", null);
     }
 
     private ResultActions postActivity(Session session, String body) throws Exception {
-        return postAs(session, "/api/v1/activities", body);
+        return postAs(session, "/system/v1/activities", body);
     }
 
     private ResultActions timeline(Session session, String externalRef, String... params) throws Exception {
-        MockHttpServletRequestBuilder request = get("/api/v1/customers/{externalRef}/activities", externalRef);
+        MockHttpServletRequestBuilder request = get("/system/v1/customers/{externalRef}/activities", externalRef);
         for (int i = 0; i < params.length; i += 2) {
             request.param(params[i], params[i + 1]);
         }

@@ -66,20 +66,20 @@ class WebhookDeliveryContractTest extends CustomerApiTest {
             subscribe(rival, receiver.url("/rival"), "another tenant's consumer");
 
             String ref = "cust-consumers";
-            putAs(session, "/api/v1/customers/{externalRef}", "{\"displayName\":\"Ada Lovelace\"}", ref)
+            putAs(session, "/system/v1/customers/{externalRef}", "{\"displayName\":\"Ada Lovelace\"}", ref)
                     .andExpect(status().isCreated());
-            putAs(session, "/api/v1/orders/{orderRef}", order(ref), "order-consumers")
+            putAs(session, "/system/v1/orders/{orderRef}", order(ref), "order-consumers")
                     .andExpect(status().isCreated());
             putAs(
                             session,
-                            "/api/v1/orders/{orderRef}/returns/{returnRef}",
+                            "/system/v1/orders/{orderRef}/returns/{returnRef}",
                             """
                             {"occurredAt":"%s","lines":[{"lineNo":1,"quantity":"1.000","amount":300}]}
                             """.formatted(past()),
                             "order-consumers",
                             "return-consumers")
                     .andExpect(status().isCreated());
-            postAs(session, "/api/v1/customers/{externalRef}/erasure", null, ref)
+            postAs(session, "/system/v1/customers/{externalRef}/erasure", null, ref)
                     .andExpect(status().isOk());
 
             OutboxRelay.Result relayed = inTenant(session.tenant(), () -> relay.relayDue());

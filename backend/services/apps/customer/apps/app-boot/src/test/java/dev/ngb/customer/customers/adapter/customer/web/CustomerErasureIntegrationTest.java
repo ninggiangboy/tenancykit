@@ -204,13 +204,13 @@ class CustomerErasureIntegrationTest extends CustomerApiTestCase {
         erase(session, ref).andExpect(status().isOk());
         String erased = "erased:" + id;
 
-        postAs(session, "/api/v1/activities", """
+        postAs(session, "/system/v1/activities", """
                 {"externalRef":"%s","type":"pos.receipt-printed","occurredAt":"%s","payload":{"receipt":"R-2"}}
                 """.formatted(erased, past()))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("CUSTOMER_ERASED"));
 
-        putAs(session, "/api/v1/orders/{orderRef}", """
+        putAs(session, "/system/v1/orders/{orderRef}", """
                 {"externalRef":"%s","currency":"EUR","occurredAt":"%s","storeCode":"S1","channel":"pos","total":100,
                  "createCustomer":false,"lines":[{"sku":"SKU-9","name":"Item","category":"grocery",
                  "quantity":"1.000","amount":100}]}
@@ -218,7 +218,7 @@ class CustomerErasureIntegrationTest extends CustomerApiTestCase {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("CUSTOMER_ERASED"));
 
-        postAs(session, "/api/v1/customers/{externalRef}/consents", """
+        postAs(session, "/system/v1/customers/{externalRef}/consents", """
                 {"topicKey":"marketing_email","status":"GRANTED","occurredAt":"%s","source":"pos"}
                 """.formatted(past()), erased)
                 .andExpect(status().isConflict())
@@ -291,7 +291,7 @@ class CustomerErasureIntegrationTest extends CustomerApiTestCase {
                     {"displayName":"%s","phone":"%s","email":"%s"}
                     """.formatted(SAMPLE_NAME, SAMPLE_PHONE, SAMPLE_EMAIL))
                     .andExpect(status().isCreated());
-            putAs(session, "/api/v1/orders/{orderRef}", """
+            putAs(session, "/system/v1/orders/{orderRef}", """
                     {"externalRef":"%s","currency":"EUR","occurredAt":"%s","storeCode":"S1","channel":"pos",
                      "total":1300,"createCustomer":false,"lines":[{"sku":"SKU-1","name":"Item",
                      "category":"grocery","quantity":"1.000","amount":1300}]}
@@ -338,16 +338,16 @@ class CustomerErasureIntegrationTest extends CustomerApiTestCase {
                 .getContentAsString(StandardCharsets.UTF_8);
         UUID id = UUID.fromString(JSON.readTree(created).get("id").asString());
 
-        postAs(session, "/api/v1/consent-topics", "{\"key\":\"marketing_email\",\"label\":\"Marketing\"}")
+        postAs(session, "/system/v1/consent-topics", "{\"key\":\"marketing_email\",\"label\":\"Marketing\"}")
                 .andExpect(status().isCreated());
         consent(session, ref, "GRANTED", "ref-grant", past());
         consent(session, ref, "REVOKED", "ref-revoke", Instant.now().minusSeconds(300));
-        postAs(session, "/api/v1/activities", """
+        postAs(session, "/system/v1/activities", """
                 {"externalRef":"%s","type":"pos.receipt-printed","occurredAt":"%s","source":"till-3",
                  "payload":{"receipt":"R-1"},"activityRef":"act-1"}
                 """.formatted(ref, past()))
                 .andExpect(status().isCreated());
-        putAs(session, "/api/v1/orders/{orderRef}", """
+        putAs(session, "/system/v1/orders/{orderRef}", """
                 {"externalRef":"%s","currency":"EUR","occurredAt":"%s","storeCode":"S1","channel":"pos","total":1300,
                  "createCustomer":false,"lines":[{"sku":"SKU-1","name":"Item","category":"grocery",
                  "quantity":"1.000","amount":1300}]}
@@ -361,11 +361,11 @@ class CustomerErasureIntegrationTest extends CustomerApiTestCase {
     }
 
     private ResultActions erase(Session session, String externalRef) throws Exception {
-        return postAs(session, "/api/v1/customers/{externalRef}/erasure", null, externalRef);
+        return postAs(session, "/system/v1/customers/{externalRef}/erasure", null, externalRef);
     }
 
     private void defineText(Session session, String key) throws Exception {
-        postAs(session, "/api/v1/custom-fields", """
+        postAs(session, "/system/v1/custom-fields", """
                 {"key":"%s","label":"Size","type":"TEXT"}
                 """.formatted(key))
                 .andExpect(status().isCreated());
@@ -373,7 +373,7 @@ class CustomerErasureIntegrationTest extends CustomerApiTestCase {
 
     private void consent(Session session, String ref, String status, String consentRef, Instant occurredAt)
             throws Exception {
-        postAs(session, "/api/v1/customers/{externalRef}/consents", """
+        postAs(session, "/system/v1/customers/{externalRef}/consents", """
                 {"topicKey":"marketing_email","status":"%s","occurredAt":"%s","source":"till-3",
                  "evidenceRef":"receipt-R-1","consentRef":"%s"}
                 """.formatted(status, occurredAt, consentRef), ref)

@@ -158,7 +158,7 @@ class ProfileIntegrationTest extends CustomerApiTest {
     }
 
     private ResultActions profile(Session session, String externalRef, String... params) throws Exception {
-        MockHttpServletRequestBuilder request = get("/api/v1/customers/{externalRef}/profile", externalRef);
+        MockHttpServletRequestBuilder request = get("/system/v1/customers/{externalRef}/profile", externalRef);
         for (int i = 0; i < params.length; i += 2) {
             request.param(params[i], params[i + 1]);
         }
@@ -166,24 +166,24 @@ class ProfileIntegrationTest extends CustomerApiTest {
     }
 
     private ResultActions putCustomer(Session session, String externalRef, String body) throws Exception {
-        return send(put("/api/v1/customers/{externalRef}", externalRef), session, body, null);
+        return send(put("/system/v1/customers/{externalRef}", externalRef), session, body, null);
     }
 
     private void defineTextField(Session session, String key) throws Exception {
-        send(post("/api/v1/custom-fields"), session,
+        send(post("/system/v1/custom-fields"), session,
                         "{\"key\":\"%s\",\"label\":\"Colour\",\"type\":\"TEXT\"}".formatted(key), null)
                 .andExpect(status().isCreated());
     }
 
     private void defineConsentTopic(Session session, String key) throws Exception {
-        send(post("/api/v1/consent-topics"), session,
+        send(post("/system/v1/consent-topics"), session,
                         "{\"key\":\"%s\",\"label\":\"Marketing\"}".formatted(key), null)
                 .andExpect(status().isCreated());
     }
 
     private void recordConsent(
             Session session, String externalRef, String topic, String state, String occurredAt) throws Exception {
-        send(post("/api/v1/customers/{externalRef}/consents", externalRef), session, """
+        send(post("/system/v1/customers/{externalRef}/consents", externalRef), session, """
                 {"topicKey":"%s","status":"%s","occurredAt":"%s"}
                 """.formatted(topic, state, occurredAt), null)
                 .andExpect(status().isCreated());

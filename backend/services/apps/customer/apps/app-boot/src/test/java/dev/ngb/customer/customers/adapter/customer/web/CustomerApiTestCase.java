@@ -36,7 +36,7 @@ abstract class CustomerApiTestCase extends CustomerApiTest {
     }
 
     ResultActions putCustomer(Session session, String externalRef, String body) throws Exception {
-        return mvc.perform(put("/api/v1/customers/{externalRef}", externalRef)
+        return mvc.perform(put("/system/v1/customers/{externalRef}", externalRef)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body)
                 .header("Host", session.host())
@@ -44,7 +44,7 @@ abstract class CustomerApiTestCase extends CustomerApiTest {
     }
 
     ResultActions putCustomer(Session session, String externalRef, String body, String token) throws Exception {
-        return mvc.perform(put("/api/v1/customers/{externalRef}", externalRef)
+        return mvc.perform(put("/system/v1/customers/{externalRef}", externalRef)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body)
                 .header("Host", session.host())
@@ -52,7 +52,7 @@ abstract class CustomerApiTestCase extends CustomerApiTest {
     }
 
     ResultActions patchCustomer(Session session, String externalRef, String ifMatch, String body) throws Exception {
-        MockHttpServletRequestBuilder request = patch("/api/v1/customers/{externalRef}", externalRef)
+        MockHttpServletRequestBuilder request = patch("/system/v1/customers/{externalRef}", externalRef)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body)
                 .header("Host", session.host())
@@ -64,13 +64,13 @@ abstract class CustomerApiTestCase extends CustomerApiTest {
     }
 
     ResultActions getCustomer(Session session, String externalRef) throws Exception {
-        return mvc.perform(get("/api/v1/customers/{externalRef}", externalRef)
+        return mvc.perform(get("/system/v1/customers/{externalRef}", externalRef)
                 .header("Host", session.host())
                 .header("Authorization", "Bearer " + session.token()));
     }
 
     ResultActions listCustomers(Session session, String... params) throws Exception {
-        MockHttpServletRequestBuilder request = get("/api/v1/customers")
+        MockHttpServletRequestBuilder request = get("/system/v1/customers")
                 .header("Host", session.host())
                 .header("Authorization", "Bearer " + session.token());
         for (int i = 0; i < params.length; i += 2) {
@@ -80,7 +80,7 @@ abstract class CustomerApiTestCase extends CustomerApiTest {
     }
 
     ResultActions batchCustomers(Session session, String body) throws Exception {
-        return mvc.perform(post("/api/v1/customers/batch")
+        return mvc.perform(post("/system/v1/customers/batch")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body)
                 .header("Host", session.host())

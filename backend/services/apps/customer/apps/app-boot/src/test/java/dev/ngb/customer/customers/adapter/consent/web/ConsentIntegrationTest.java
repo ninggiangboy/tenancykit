@@ -45,7 +45,7 @@ class ConsentIntegrationTest extends CustomerApiTest {
         record(session, "cust-consent", "marketing_email", "REVOKED", revoked, "ref-revoke")
                 .andExpect(status().isCreated());
 
-        getAs(session, "/api/v1/customers/{externalRef}/consents", "cust-consent")
+        getAs(session, "/system/v1/customers/{externalRef}/consents", "cust-consent")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.current.length()").value(1))
                 .andExpect(jsonPath("$.current[0].topicKey").value("marketing_email"))
@@ -66,14 +66,14 @@ class ConsentIntegrationTest extends CustomerApiTest {
         customer(session, "cust-replay");
         String body = recordBody("profiling", "GRANTED", Instant.now().minusSeconds(30), "ref-same");
 
-        postAs(session, "/api/v1/customers/{externalRef}/consents", body, "cust-replay")
+        postAs(session, "/system/v1/customers/{externalRef}/consents", body, "cust-replay")
                 .andExpect(status().isCreated());
-        postAs(session, "/api/v1/customers/{externalRef}/consents", body, "cust-replay")
+        postAs(session, "/system/v1/customers/{externalRef}/consents", body, "cust-replay")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.consentRef").value("ref-same"));
 
         assertThat(rowsOf(session, CONSENT_EVENTS)).as("a replay appends nothing").isEqualTo(1);
-        getAs(session, "/api/v1/customers/{externalRef}/consents", "cust-replay")
+        getAs(session, "/system/v1/customers/{externalRef}/consents", "cust-replay")
                 .andExpect(jsonPath("$.history.length()").value(1));
     }
 
@@ -86,13 +86,13 @@ class ConsentIntegrationTest extends CustomerApiTest {
 
         postAs(
                         session,
-                        "/api/v1/customers/{externalRef}/consents",
+                        "/system/v1/customers/{externalRef}/consents",
                         recordBody("profiling", "GRANTED", when, "ref-twice"),
                         "cust-conflict")
                 .andExpect(status().isCreated());
         postAs(
                         session,
-                        "/api/v1/customers/{externalRef}/consents",
+                        "/system/v1/customers/{externalRef}/consents",
                         recordBody("profiling", "REVOKED", when, "ref-twice"),
                         "cust-conflict")
                 .andExpect(status().isConflict());
@@ -138,17 +138,17 @@ class ConsentIntegrationTest extends CustomerApiTest {
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("CONSENT_TOPIC_UNKNOWN"));
 
-        patchAs(session, "/api/v1/consent-topics/{key}", "{\"archived\":true}", null, "profiling")
+        patchAs(session, "/system/v1/consent-topics/{key}", "{\"archived\":true}", null, "profiling")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.archived").value(true));
         record(session, "cust-topic", "profiling", "REVOKED", Instant.now().minusSeconds(10), "t-3")
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("CONSENT_TOPIC_UNKNOWN"));
 
-        getAs(session, "/api/v1/customers/{externalRef}/consents", "cust-topic")
+        getAs(session, "/system/v1/customers/{externalRef}/consents", "cust-topic")
                 .andExpect(jsonPath("$.current[0].status").value("GRANTED"))
                 .andExpect(jsonPath("$.history.length()").value(1));
-        getAs(session, "/api/v1/consent-topics")
+        getAs(session, "/system/v1/consent-topics")
                 .andExpect(jsonPath("$.data[0].key").value("profiling"))
                 .andExpect(jsonPath("$.data[0].archived").value(true));
     }
@@ -165,7 +165,7 @@ class ConsentIntegrationTest extends CustomerApiTest {
         record(session, "cust-two-topics", "newsletter", "REVOKED", when.plusSeconds(1), "a-2")
                 .andExpect(status().isCreated());
 
-        getAs(session, "/api/v1/customers/{externalRef}/consents", "cust-two-topics")
+        getAs(session, "/system/v1/customers/{externalRef}/consents", "cust-two-topics")
                 .andExpect(jsonPath("$.current.length()").value(2))
                 .andExpect(jsonPath("$.current[0].topicKey").value("newsletter"))
                 .andExpect(jsonPath("$.current[0].status").value("REVOKED"))
@@ -178,16 +178,16 @@ class ConsentIntegrationTest extends CustomerApiTest {
     void aTopicKeyAndLabelAreEnforcedAndTheKeyIsTakenOnce() throws Exception {
         Session session = session();
 
-        postAs(session, "/api/v1/consent-topics", "{\"key\":\"Not A Key\",\"label\":\"Bad\"}")
+        postAs(session, "/system/v1/consent-topics", "{\"key\":\"Not A Key\",\"label\":\"Bad\"}")
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
-        postAs(session, "/api/v1/consent-topics", "{\"key\":\"profiling\",\"label\":\"   \"}")
+        postAs(session, "/system/v1/consent-topics", "{\"key\":\"profiling\",\"label\":\"   \"}")
                 .andExpect(status().is(422));
         topic(session, "profiling");
-        postAs(session, "/api/v1/consent-topics", "{\"key\":\"profiling\",\"label\":\"Again\"}")
+        postAs(session, "/system/v1/consent-topics", "{\"key\":\"profiling\",\"label\":\"Again\"}")
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("CONSENT_TOPIC_KEY_EXISTS"));
-        patchAs(session, "/api/v1/consent-topics/{key}", "{\"label\":\"Nowhere\"}", null, "nowhere")
+        patchAs(session, "/system/v1/consent-topics/{key}", "{\"label\":\"Nowhere\"}", null, "nowhere")
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("CONSENT_TOPIC_NOT_FOUND"));
         assertThat(rowsOf(session, CONSENT_TOPICS)).isEqualTo(1);
@@ -200,7 +200,7 @@ class ConsentIntegrationTest extends CustomerApiTest {
 
         record(session, "cust-nowhere", "profiling", "GRANTED", Instant.now().minusSeconds(5), "x-1")
                 .andExpect(status().isNotFound());
-        getAs(session, "/api/v1/customers/{externalRef}/consents", "cust-nowhere")
+        getAs(session, "/system/v1/customers/{externalRef}/consents", "cust-nowhere")
                 .andExpect(status().isNotFound());
     }
 
@@ -213,18 +213,18 @@ class ConsentIntegrationTest extends CustomerApiTest {
         record(tenantA, "cust-shared", "profiling", "GRANTED", Instant.now().minusSeconds(60), "z-1")
                 .andExpect(status().isCreated());
 
-        getAs(tenantB, "/api/v1/consent-topics")
+        getAs(tenantB, "/system/v1/consent-topics")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(0));
         customer(tenantB, "cust-shared");
         record(tenantB, "cust-shared", "profiling", "GRANTED", Instant.now().minusSeconds(30), "z-2")
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("CONSENT_TOPIC_UNKNOWN"));
-        getAs(tenantB, "/api/v1/customers/{externalRef}/consents", "cust-shared")
+        getAs(tenantB, "/system/v1/customers/{externalRef}/consents", "cust-shared")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.history.length()").value(0));
 
-        getAs(tenantA, "/api/v1/customers/{externalRef}/consents", "cust-shared")
+        getAs(tenantA, "/system/v1/customers/{externalRef}/consents", "cust-shared")
                 .andExpect(jsonPath("$.history.length()").value(1));
     }
 
@@ -235,13 +235,13 @@ class ConsentIntegrationTest extends CustomerApiTest {
         customer(session, "cust-perm");
         String readOnly = credentialOf(session, "Read only", CustomerPermissions.CUSTOMER_READ);
 
-        mvc.perform(post("/api/v1/customers/{externalRef}/consents", "cust-perm")
+        mvc.perform(post("/system/v1/customers/{externalRef}/consents", "cust-perm")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(recordBody("profiling", "GRANTED", Instant.now().minusSeconds(5), "p-1"))
                         .header("Host", session.host())
                         .header("Authorization", "Bearer " + readOnly))
                 .andExpect(status().isForbidden());
-        getAs(session, "/api/v1/customers/{externalRef}/consents", "cust-perm")
+        getAs(session, "/system/v1/customers/{externalRef}/consents", "cust-perm")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.history.length()").value(0));
     }
@@ -249,13 +249,13 @@ class ConsentIntegrationTest extends CustomerApiTest {
     private void topic(Session session, String key) throws Exception {
         postAs(
                         session,
-                        "/api/v1/consent-topics",
+                        "/system/v1/consent-topics",
                         "{\"key\":\"" + key + "\",\"label\":\"Topic " + key + "\"}")
                 .andExpect(status().isCreated());
     }
 
     private void customer(Session session, String externalRef) throws Exception {
-        putAs(session, "/api/v1/customers/{externalRef}", "{}", externalRef).andExpect(status().isCreated());
+        putAs(session, "/system/v1/customers/{externalRef}", "{}", externalRef).andExpect(status().isCreated());
     }
 
     private org.springframework.test.web.servlet.ResultActions record(
@@ -268,7 +268,7 @@ class ConsentIntegrationTest extends CustomerApiTest {
             throws Exception {
         return postAs(
                 session,
-                "/api/v1/customers/{externalRef}/consents",
+                "/system/v1/customers/{externalRef}/consents",
                 recordBody(topicKey, status, occurredAt, consentRef),
                 externalRef);
     }

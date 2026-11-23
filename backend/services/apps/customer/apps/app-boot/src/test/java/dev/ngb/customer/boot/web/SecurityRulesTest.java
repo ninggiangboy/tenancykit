@@ -27,8 +27,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
  * System's token reads its own tenant's webhook endpoints ({@code 200}), a platform-scope caller is refused
  * ({@code 403}) and a request with no token is refused as unauthenticated ({@code 401}).
  *
- * <p>The endpoint used is a served one — {@code GET /api/v1/webhook-endpoints} — rather than a placeholder, so the
- * same case proves the real surface.
+ * <p>The endpoint used is a served one — {@code GET /system/v1/webhook-endpoints} — rather than a placeholder, so the
+ * same case proves the real surface. The prefix decides who may call it: a Tenant System's token reaches the handler on
+ * {@code /system/v1} and is refused at the person door on {@code /api/v1}, which Customer never opens.
  */
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc
@@ -36,7 +37,10 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @Import(TokensConfig.class)
 class SecurityRulesTest {
 
-    private static final String ENDPOINTS = "/api/v1/webhook-endpoints";
+    private static final String ENDPOINTS = "/system/v1/webhook-endpoints";
+
+    /** The person door of the same handler; Customer declares no person caller, so a suite token is refused here. */
+    private static final String PERSON_DOOR = "/api/v1/webhook-endpoints";
 
     @Autowired
     MockMvc mvc;
@@ -75,12 +79,23 @@ class SecurityRulesTest {
     }
 
     @Test
+    void aTenantSystemTokenIsRefusedAtThePersonDoor() {
+        ReplicaFixtures.TenantSeed tenant = replica.tenant();
+        UUID system = replica.tenantSystem(tenant.id().value(), "Tenant POS").value();
+        String token = TestTokenFactory.tenantSystemToken(system, tenant.id().value(), CustomerPermissions.WEBHOOK_MANAGE);
+
+        assertThat(status(tenant.host(), PERSON_DOOR, token))
+                .as("a suite token is at the wrong door on /api/v1")
+                .isEqualTo(403);
+    }
+
+    @Test
     void aPlatformScopeCallerIsRefused() {
         String platformHost = replica.platformHost();
         String subject = "platform-admin-" + UUID.randomUUID();
         replica.platformUser(subject, CustomerPermissions.WEBHOOK_MANAGE);
 
-        assertThat(status(platformHost, TestTokenFactory.userToken(subject))).isEqualTo(403);
+        assertThat(status(platformHost, PERSON_DOOR, TestTokenFactory.userToken(subject))).isEqualTo(403);
     }
 
     @Test
@@ -96,7 +111,10 @@ class SecurityRulesTest {
         String subject = "user-" + UUID.randomUUID();
         replica.user(tenant.id().value(), subject, CustomerPermissions.WEBHOOK_MANAGE);
 
-        assertThat(status(tenant.host(), TestTokenFactory.tokenForOtherAudience(subject))).isEqualTo(401);
+        // A person token is of the right kind for /api/v1, so the refusal is the audience check, a 401. The same token
+        // on /system/v1 would be refused earlier as the wrong kind of token (403), before the audience is read.
+        assertThat(status(tenant.host(), "/api/v1/webhook-endpoints", TestTokenFactory.tokenForOtherAudience(subject)))
+                .isEqualTo(401);
     }
 
     @Test
@@ -115,12 +133,16 @@ class SecurityRulesTest {
         replica.user(tenant.id().value(), subject, CustomerPermissions.WEBHOOK_MANAGE);
         replica.disableApp(tenant.id().value(), "customer");
 
-        assertThat(status(tenant.host(), TestTokenFactory.userToken(subject))).isEqualTo(403);
+        assertThat(status(tenant.host(), PERSON_DOOR, TestTokenFactory.userToken(subject))).isEqualTo(403);
     }
 
     private int status(String host, String token) {
+        return status(host, ENDPOINTS, token);
+    }
+
+    private int status(String host, String path, String token) {
         try {
-            MockHttpServletRequestBuilder request = get(ENDPOINTS).header("Host", host);
+            MockHttpServletRequestBuilder request = get(path).header("Host", host);
             if (token != null) {
                 request.header("Authorization", "Bearer " + token);
             }
