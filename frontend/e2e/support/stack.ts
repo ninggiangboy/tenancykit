@@ -153,7 +153,7 @@ export async function waitForBilling(host: string, token: string, timeoutMs = 12
   const deadline = Date.now() + timeoutMs
   let last = 0
   while (Date.now() < deadline) {
-    const answer = await call<unknown>('/api/v1/customers', { token, host })
+    const answer = await call<unknown>('/system/v1/customers', { token, host })
     last = answer.status
     if (answer.status === 200) return
     await new Promise((resolve) => setTimeout(resolve, 500))
@@ -251,11 +251,11 @@ export interface SeededBilling {
 /** Money records a browser test needs to exercise a list, a sheet and the keyboard without building them by hand. */
 export async function seedBilling(fixture: TenantFixture): Promise<SeededBilling> {
   const { token, systemId } = await tenantSystem(fixture)
-  await until200('/api/v1/customers', token, fixture.host, 'the tenant system replica')
+  await until200('/system/v1/customers', token, fixture.host, 'the tenant system replica')
 
   const idempotency = (value: string) => ({ 'Idempotency-Key': `${value}-${fixture.code}` })
   const customer = requireOk(
-    await call<{ id: string }>('/api/v1/customers', {
+    await call<{ id: string }>('/system/v1/customers', {
       method: 'POST',
       token,
       host: fixture.host,
@@ -270,7 +270,7 @@ export async function seedBilling(fixture: TenantFixture): Promise<SeededBilling
     'creating the seeded customer',
   )
   const wallet = requireOk(
-    await call<{ id: string }>('/api/v1/wallets', {
+    await call<{ id: string }>('/system/v1/wallets', {
       method: 'POST',
       token,
       host: fixture.host,
@@ -279,7 +279,7 @@ export async function seedBilling(fixture: TenantFixture): Promise<SeededBilling
     'opening the seeded wallet',
   )
   const charge = requireOk(
-    await call<{ id: string }>('/api/v1/charges', {
+    await call<{ id: string }>('/system/v1/charges', {
       method: 'POST',
       token,
       host: fixture.host,
@@ -288,7 +288,7 @@ export async function seedBilling(fixture: TenantFixture): Promise<SeededBilling
     }),
     'creating the seeded charge',
   )
-  const issued = await call<{ invoice: { id: string; number?: string } }>('/api/v1/invoices', {
+  const issued = await call<{ invoice: { id: string; number?: string } }>('/system/v1/invoices', {
     method: 'POST',
     token,
     host: fixture.host,
@@ -300,7 +300,7 @@ export async function seedBilling(fixture: TenantFixture): Promise<SeededBilling
   if (issued.status === 409) {
     const listed = requireOk(
       await call<{ data: Array<{ id: string; number?: string }> }>(
-        `/api/v1/invoices?${new URLSearchParams({ 'filter[customer_id][eq]': customer.id, limit: '1' })}`,
+        `/system/v1/invoices?${new URLSearchParams({ 'filter[customer_id][eq]': customer.id, limit: '1' })}`,
         { token, host: fixture.host },
       ),
       'reading the invoice that already bills the seeded charge',
@@ -315,18 +315,18 @@ export async function seedBilling(fixture: TenantFixture): Promise<SeededBilling
   const detail =
     invoice.number === undefined
       ? requireOk(
-          await call<{ number?: string }>(`/api/v1/invoices/${invoice.id}`, { token, host: fixture.host }),
+          await call<{ number?: string }>(`/system/v1/invoices/${invoice.id}`, { token, host: fixture.host }),
           'reading the seeded invoice',
         )
       : invoice
 
-  await call('/api/v1/usage-events', {
+  await call('/system/v1/usage-events', {
     method: 'POST',
     token,
     host: fixture.host,
     body: { customerId: customer.id, metric: 'api_calls', quantity: '120', unit: 'call' },
   })
-  await call('/api/v1/webhook-endpoints', {
+  await call('/system/v1/webhook-endpoints', {
     method: 'POST',
     token,
     host: fixture.host,

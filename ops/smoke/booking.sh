@@ -9,7 +9,7 @@ set -euo pipefail
 
 TENANT_CODE="${SMOKE_TENANT:-booking-smoke}"
 smoke_bootstrap "booking" "${TENANT_CODE}"
-BOOKING="${PROXY}/booking/api/v1"
+BOOKING="${PROXY}/booking/system/v1"
 PUBLIC="${PROXY}/booking/p"
 GATE_ORIGIN="https://${TENANT_CODE}.example"
 

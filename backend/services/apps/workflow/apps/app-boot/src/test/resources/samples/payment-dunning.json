@@ -7,7 +7,7 @@
       "type": "http",
       "app": "mailroom",
       "method": "POST",
-      "path": "/api/v1/emails",
+      "path": "/system/v1/emails",
       "body": {
         "to": { "input": "data.customer.email" },
         "subject": "Your payment did not go through",
@@ -28,7 +28,7 @@
       "type": "http",
       "app": "billing",
       "method": "POST",
-      "path": { "op": "concat", "args": ["/api/v1/invoices/", { "input": "data.invoiceId" }, "/payments"] },
+      "path": { "op": "concat", "args": ["/system/v1/invoices/", { "input": "data.invoiceId" }, "/payments"] },
       "next": "done",
       "on_error": "cancel"
     },
@@ -37,7 +37,7 @@
       "type": "http",
       "app": "billing",
       "method": "POST",
-      "path": { "op": "concat", "args": ["/api/v1/subscriptions/", { "input": "data.subscriptionId" }, "/cancel"] },
+      "path": { "op": "concat", "args": ["/system/v1/subscriptions/", { "input": "data.subscriptionId" }, "/cancel"] },
       "next": "done"
     },
     { "id": "done", "type": "end" }

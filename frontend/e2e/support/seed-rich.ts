@@ -62,7 +62,7 @@ type Answer<T> = Awaited<ReturnType<typeof call<T>>>
 
 export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilling> {
   const { token, systemId } = await tenantSystem(fixture, { name: 'e2e-rich' })
-  await until200('/api/v1/customers', token, fixture.host, 'the tenant system replica')
+  await until200('/system/v1/customers', token, fixture.host, 'the tenant system replica')
 
   const notes: string[] = []
   const send = async <T>(
@@ -106,7 +106,7 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
     const customer = await need<{ id: string }>(
       `customer ${person.name}`,
       send(
-        '/api/v1/customers',
+        '/system/v1/customers',
         {
           tenantSystemId: systemId,
           externalUserId: `rich-${fixture.code}-${index}`,
@@ -118,7 +118,7 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
     )
     const wallet = await need<{ id: string }>(
       `wallet of ${person.name}`,
-      send('/api/v1/wallets', {
+      send('/system/v1/wallets', {
         customerId: customer.id,
         currency: person.currency,
         mode: person.mode,
@@ -135,7 +135,7 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
       const charge = await attempt<{ id: string }>(
         `charge ${index}/${n}`,
         send(
-          '/api/v1/charges',
+          '/system/v1/charges',
           {
             walletId: entry.walletId,
             amount,
@@ -148,17 +148,17 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
       if (!charge) continue
       const invoice = await attempt<{ invoice?: { id: string } }>(
         `invoice ${index}/${n}`,
-        send('/api/v1/invoices', { chargeId: charge.id }),
+        send('/system/v1/invoices', { chargeId: charge.id }),
       )
       const invoiceId = invoice?.invoice?.id
       if (!invoiceId) continue
       invoices++
       if (n === 1)
-        await attempt(`void ${index}/${n}`, send(`/api/v1/invoices/${invoiceId}/void`, { reason: 'Billed twice' }))
+        await attempt(`void ${index}/${n}`, send(`/system/v1/invoices/${invoiceId}/void`, { reason: 'Billed twice' }))
       if (n === 2) {
         await attempt(
           `uncollectible ${index}/${n}`,
-          send(`/api/v1/invoices/${invoiceId}/uncollectible`, { reason: 'Customer unreachable' }),
+          send(`/system/v1/invoices/${invoiceId}/uncollectible`, { reason: 'Customer unreachable' }),
         )
       }
     }
@@ -166,7 +166,7 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
 
   // The customer who left.
   const former = wallets.at(-1)
-  if (former) await attempt('deactivate customer', send(`/api/v1/customers/${former.customerId}/deactivate`))
+  if (former) await attempt('deactivate customer', send(`/system/v1/customers/${former.customerId}/deactivate`))
 
   // Pricing plans of every model.
   const usage = { metric: 'api_calls', unit: 'call', unitPrice: '0.002' }
@@ -225,7 +225,7 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
   for (const plan of planDefinitions) {
     const created = await attempt<{ id: string }>(
       `plan ${plan.code}`,
-      send('/api/v1/pricing-plans', {
+      send('/system/v1/pricing-plans', {
         code: plan.code,
         name: plan.name,
         currency: plan.currency,
@@ -238,14 +238,14 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
   if (plans.starter) {
     await attempt(
       'starter version 2',
-      send(`/api/v1/pricing-plans/${plans.starter}/versions`, {
+      send(`/system/v1/pricing-plans/${plans.starter}/versions`, {
         billingCycle: 'MONTHLY',
         rule: { model: 'SUBSCRIPTION', fixedPrice: '39.00' },
       }),
     )
   }
   if (plans['batch-jobs'])
-    await attempt('retire batch-jobs', send(`/api/v1/pricing-plans/${plans['batch-jobs']}/retire`))
+    await attempt('retire batch-jobs', send(`/system/v1/pricing-plans/${plans['batch-jobs']}/retire`))
 
   // Subscriptions: two active, one canceled.
   let subscriptions = 0
@@ -260,13 +260,13 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
     if (!wallet || !planId) continue
     const subscription = await attempt<{ subscription?: { id?: string } }>(
       `subscribe ${code}`,
-      send('/api/v1/subscriptions', { walletId: wallet.walletId, planId }, { idempotency: `rich-sub-${code}` }),
+      send('/system/v1/subscriptions', { walletId: wallet.walletId, planId }, { idempotency: `rich-sub-${code}` }),
     )
     if (!subscription) continue
     subscriptions++
     const subscriptionId = subscription.subscription?.id
     if (code === 'growth' && subscriptionId) {
-      await attempt('cancel growth', send(`/api/v1/subscriptions/${subscriptionId}/cancel`))
+      await attempt('cancel growth', send(`/system/v1/subscriptions/${subscriptionId}/cancel`))
     }
   }
 
@@ -301,7 +301,7 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
   for (const coupon of couponDefinitions) {
     const created = await attempt<{ coupon?: { id?: string } }>(
       `coupon ${coupon.code}`,
-      send('/api/v1/coupons', {
+      send('/system/v1/coupons', {
         name: coupon.name,
         currency: 'USD',
         benefit: coupon.benefit,
@@ -317,13 +317,13 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
   if (coupons.WELCOME10) {
     await attempt(
       'extra code',
-      send(`/api/v1/coupons/${coupons.WELCOME10}/codes`, { code: 'WELCOME10-VIP', maxRedemptions: 5 }),
+      send(`/system/v1/coupons/${coupons.WELCOME10}/codes`, { code: 'WELCOME10-VIP', maxRedemptions: 5 }),
     )
   }
   if (coupons.BF2026) {
     await attempt(
       'deactivate coupon',
-      send(`/api/v1/coupons/${coupons.BF2026}/deactivate`, { revokeRedemptions: false }),
+      send(`/system/v1/coupons/${coupons.BF2026}/deactivate`, { revokeRedemptions: false }),
     )
   }
 
@@ -335,7 +335,7 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
     const redeemed = await attempt(
       'redeem WELCOME10',
       send(
-        `/api/v1/wallets/${first.walletId}/coupon-redemptions/attach`,
+        `/system/v1/wallets/${first.walletId}/coupon-redemptions/attach`,
         { couponId: coupons.WELCOME10 },
         { idempotency: 'rich-redeem-1' },
       ),
@@ -346,14 +346,14 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
     const redeemed = await attempt<{ id: string }>(
       'redeem SPRING5',
       send(
-        `/api/v1/wallets/${second.walletId}/coupon-redemptions/attach`,
+        `/system/v1/wallets/${second.walletId}/coupon-redemptions/attach`,
         { couponId: coupons.SPRING5 },
         { idempotency: 'rich-redeem-2' },
       ),
     )
     if (redeemed) {
       redemptions++
-      if (redeemed.id) await attempt('revoke redemption', send(`/api/v1/coupon-redemptions/${redeemed.id}/revoke`))
+      if (redeemed.id) await attempt('revoke redemption', send(`/system/v1/coupon-redemptions/${redeemed.id}/revoke`))
     }
   }
 
@@ -364,7 +364,7 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
       attempt<{ id: string }>(
         `reserve ${reference}`,
         send(
-          '/api/v1/reservations',
+          '/system/v1/reservations',
           { walletId: first.walletId, amount, currency: 'USD', ttlSeconds: 3_600, reference },
           { idempotency: `rich-${reference}` },
         ),
@@ -377,19 +377,19 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
       await attempt(
         'capture',
         send(
-          `/api/v1/reservations/${toCapture.id}/capture`,
+          `/system/v1/reservations/${toCapture.id}/capture`,
           { amount: 4_500, currency: 'USD', reference: 'rich-capture' },
           { idempotency: 'rich-capture-now' },
         ),
       )
     }
-    if (toRelease) await attempt('release', send(`/api/v1/reservations/${toRelease.id}/release`))
+    if (toRelease) await attempt('release', send(`/system/v1/reservations/${toRelease.id}/release`))
   }
   if (second) {
     const held = await attempt(
       'reserve second',
       send(
-        '/api/v1/reservations',
+        '/system/v1/reservations',
         { walletId: second.walletId, amount: 2_000, currency: 'USD', ttlSeconds: 7_200, reference: 'rich-held-2' },
         { idempotency: 'rich-held-2' },
       ),
@@ -417,7 +417,7 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
       })
     }
   }
-  const batch = await attempt<{ results?: unknown[] }>('usage batch', send('/api/v1/usage-events/batch', { events }))
+  const batch = await attempt<{ results?: unknown[] }>('usage batch', send('/system/v1/usage-events/batch', { events }))
 
   // Webhook endpoints.
   const endpoints = [
@@ -430,7 +430,7 @@ export async function seedBillingRich(fixture: TenantFixture): Promise<RichBilli
   for (const [name, eventTypes] of endpoints) {
     const created = await attempt(
       `webhook ${name}`,
-      send('/api/v1/webhook-endpoints', {
+      send('/system/v1/webhook-endpoints', {
         url: `https://${fixture.code}.example.test/hooks/${name}`,
         description: `${name[0]?.toUpperCase()}${name.slice(1)} feed`,
         eventTypes,

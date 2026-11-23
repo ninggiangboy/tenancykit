@@ -18,7 +18,7 @@ TENANT_CODE="${SMOKE_CUSTOMER_TENANT:-customer-smoke}"
 SMOKE_APPS="customer"
 smoke_bootstrap "customer" "${TENANT_CODE}"
 RECEIVER_PORT="${FORWARDER_PORT:-8099}"
-CUSTOMER="${PROXY}/customer/api/v1"
+CUSTOMER="${PROXY}/customer/system/v1"
 CUSTOMER_TOKEN="${CUSTOMER_TOKEN:?smoke_bootstrap must set it}"
 
 second_admin_token() {

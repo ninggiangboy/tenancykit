@@ -70,13 +70,13 @@ class HistoryQuotaAndRetentionTest extends WorkflowApiTest {
             inTenant(session.tenant(), () -> claimAndRun.runOnce());
         }
 
-        MvcResult listed = getAs(session, "/api/v1/instances?definition=history").andReturn();
+        MvcResult listed = getAs(session, "/system/v1/instances?definition=history").andReturn();
         JsonNode rows = json.readTree(listed.getResponse().getContentAsString());
         assertThat(rows.size()).isEqualTo(1);
         assertThat(rows.get(0).get("id").asString()).isEqualTo(instance.toString());
         assertThat(rows.get(0).get("status").asString()).isEqualTo("COMPLETED");
 
-        MvcResult one = getAs(session, "/api/v1/instances/{id}", instance).andReturn();
+        MvcResult one = getAs(session, "/system/v1/instances/{id}", instance).andReturn();
         JsonNode view = json.readTree(one.getResponse().getContentAsString());
         assertThat(view.get("definitionCode").asString()).isEqualTo("history");
         assertThat(view.has("input")).as("history never carries the trigger input").isFalse();
@@ -140,7 +140,7 @@ class HistoryQuotaAndRetentionTest extends WorkflowApiTest {
     }
 
     private int startStatus(Session session, UUID definitionId) throws Exception {
-        return postAs(session, "/api/v1/instances",
+        return postAs(session, "/system/v1/instances",
                         json.writeValueAsString(Map.of("definition", definitionId.toString(), "input", Map.of())))
                 .andReturn()
                 .getResponse()
@@ -148,7 +148,7 @@ class HistoryQuotaAndRetentionTest extends WorkflowApiTest {
     }
 
     private UUID start(Session session, UUID definitionId) throws Exception {
-        MvcResult started = postAs(session, "/api/v1/instances",
+        MvcResult started = postAs(session, "/system/v1/instances",
                         json.writeValueAsString(Map.of("definition", definitionId.toString(), "input", Map.of())))
                 .andReturn();
         assertThat(started.getResponse().getStatus()).isEqualTo(201);

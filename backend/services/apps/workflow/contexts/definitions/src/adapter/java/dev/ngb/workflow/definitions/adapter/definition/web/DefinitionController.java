@@ -56,7 +56,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Create a definition, edit its draft, publish immutable versions, retire it and simulate the draft.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class DefinitionController {
 

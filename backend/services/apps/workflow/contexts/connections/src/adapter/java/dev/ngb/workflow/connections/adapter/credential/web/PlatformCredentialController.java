@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The tenant's write-only credential for calling Platform, and its status.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class PlatformCredentialController {
 

@@ -29,7 +29,7 @@ wf_start() {
 
 seed_workflow() {
   step "Workflow: acme"
-  use_app acme workflow "${PROXY}/workflow/api/v1"
+  use_app acme workflow "${PROXY}/workflow/system/v1"
   local file key_id secret
   file="$(credential_file acme)"
   key_id=$(jq -r .keyId "${file}")

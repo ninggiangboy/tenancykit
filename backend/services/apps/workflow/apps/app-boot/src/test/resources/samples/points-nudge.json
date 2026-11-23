@@ -7,7 +7,7 @@
       "type": "http",
       "app": "mailroom",
       "method": "POST",
-      "path": "/api/v1/emails",
+      "path": "/system/v1/emails",
       "body": {
         "to": { "input": "data.member.email" },
         "subject": "Your points expire soon",
@@ -28,7 +28,7 @@
       "type": "http",
       "app": "mailroom",
       "method": "POST",
-      "path": "/api/v1/emails",
+      "path": "/system/v1/emails",
       "body": {
         "to": { "input": "data.member.email" },
         "subject": "Last chance: your points expire tomorrow",

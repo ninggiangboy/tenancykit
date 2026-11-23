@@ -124,7 +124,7 @@ class TasksApiTest extends WorkflowApiTest {
         UUID member = replica.user(session.tenant().value(), subject, TASK_READ, TASK_COMPLETE);
         Session user = new Session(session.tenant(), session.host(), TestTokenFactory.userToken(subject));
 
-        assertThat(statusCode(postAs(session, "/api/v1/task-groups",
+        assertThat(statusCode(postAs(session, "/system/v1/task-groups",
                         "{\"code\":\"managers\",\"name\":\"Managers\",\"members\":[\"" + member + "\"]}")))
                 .isEqualTo(201);
 

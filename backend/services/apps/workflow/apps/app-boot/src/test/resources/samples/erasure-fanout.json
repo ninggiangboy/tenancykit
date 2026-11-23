@@ -13,7 +13,7 @@
       "type": "http",
       "app": "customer",
       "method": "POST",
-      "path": { "op": "concat", "args": ["/api/v1/customers/", { "input": "data.externalRef" }, "/erasure"] },
+      "path": { "op": "concat", "args": ["/system/v1/customers/", { "input": "data.externalRef" }, "/erasure"] },
       "next": "all"
     },
     {
@@ -21,7 +21,7 @@
       "type": "http",
       "app": "loyalty",
       "method": "POST",
-      "path": { "op": "concat", "args": ["/api/v1/members/", { "input": "data.externalRef" }, "/erasure"] },
+      "path": { "op": "concat", "args": ["/system/v1/members/", { "input": "data.externalRef" }, "/erasure"] },
       "next": "all"
     },
     {
@@ -29,7 +29,7 @@
       "type": "http",
       "app": "mailroom",
       "method": "DELETE",
-      "path": { "op": "concat", "args": ["/api/v1/receivers/", { "input": "data.externalRef" }] },
+      "path": { "op": "concat", "args": ["/system/v1/receivers/", { "input": "data.externalRef" }] },
       "next": "all"
     },
     {

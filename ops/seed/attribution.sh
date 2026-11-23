@@ -16,7 +16,7 @@ attribution_click() {
 
 seed_attribution() {
   step "Attribution: acme"
-  use_app acme attribution "${PROXY}/attribution/api/v1"
+  use_app acme attribution "${PROXY}/attribution/system/v1"
   acall GET "/campaigns?limit=100"
   local first_run=0
   { [ "$(pick '.data | length')" != "0" ] && [ "${SEED_FORCE_TRAFFIC:-0}" != 1 ]; } || first_run=1

@@ -399,20 +399,6 @@ components:
           type: "string"
           format: "date-time"
           description: "When the record was last changed."
-    ReceiptResponse:
-      type: "object"
-      description: "The receipt of a delivered event."
-      properties:
-        eventId:
-          type: "string"
-          description: "The id of the event."
-        started:
-          type: "integer"
-          format: "int32"
-          description: "How many instances the event started."
-        duplicate:
-          type: "boolean"
-          description: "Whether the event id was seen before. A duplicate starts nothing."
     CreateEndpointRequest:
       type: "object"
       description: "The endpoint to register."
@@ -767,6 +753,20 @@ components:
         publishedBy:
           type: "string"
           description: "Who published the version."
+    ReceiptResponse:
+      type: "object"
+      description: "The receipt of a delivered event."
+      properties:
+        eventId:
+          type: "string"
+          description: "The id of the event."
+        started:
+          type: "integer"
+          format: "int32"
+          description: "How many instances the event started."
+        duplicate:
+          type: "boolean"
+          description: "Whether the event id was seen before. A duplicate starts nothing."
     PageEndpointResponse:
       type: "object"
       description: "A page of endpoint response rows, with the paging facts when the\

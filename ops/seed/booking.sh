@@ -19,7 +19,7 @@ booking_local() { printf '%sT%s:00' "$(iso_date "+$1")" "$2"; }
 
 seed_booking_tenant() {
   local code="$1" people="$2"
-  use_app "${code}" booking "${PROXY}/booking/api/v1"
+  use_app "${code}" booking "${PROXY}/booking/system/v1"
   acall_try "gate" PUT /settings/gate "{\"allowedOrigins\":[\"http://${code}.localhost:8090\"],\"maxTokenTtlSeconds\":900}" || true
 
   # --- resources: staff and rooms ---

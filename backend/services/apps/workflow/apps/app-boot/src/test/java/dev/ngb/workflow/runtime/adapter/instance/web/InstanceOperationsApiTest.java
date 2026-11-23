@@ -74,7 +74,7 @@ class InstanceOperationsApiTest extends WorkflowApiTest {
         runUntilRest(session, instance);
         assertThat(instanceStatus(session, instance)).isEqualTo("FAILED_STUCK");
 
-        MvcResult timeline = getAs(session, "/api/v1/instances/{id}/steps", instance).andReturn();
+        MvcResult timeline = getAs(session, "/system/v1/instances/{id}/steps", instance).andReturn();
         assertThat(timeline.getResponse().getStatus()).isEqualTo(200);
         JsonNode steps = json.readTree(timeline.getResponse().getContentAsString());
         assertThat(steps.size()).isEqualTo(2);
@@ -85,7 +85,7 @@ class InstanceOperationsApiTest extends WorkflowApiTest {
         assertThat(steps.get(1).get("idempotencyKey").asString()).hasSize(64);
         assertThat(steps.get(1).has("request")).as("the timeline never carries an input payload").isFalse();
 
-        MvcResult retried = postAs(session, "/api/v1/instances/{id}/retry", "{}", instance).andReturn();
+        MvcResult retried = postAs(session, "/system/v1/instances/{id}/retry", "{}", instance).andReturn();
         assertThat(retried.getResponse().getStatus()).isEqualTo(200);
         assertThat(json.readTree(retried.getResponse().getContentAsString()).get("status").asString())
                 .isEqualTo("RUNNING");
@@ -95,7 +95,7 @@ class InstanceOperationsApiTest extends WorkflowApiTest {
         runUntilRest(session, instance);
         assertThat(instanceStatus(session, instance)).isEqualTo("COMPLETED");
 
-        assertThat(statusCode(postAs(session, "/api/v1/instances/{id}/retry", null, instance)))
+        assertThat(statusCode(postAs(session, "/system/v1/instances/{id}/retry", null, instance)))
                 .as("an instance that is not dead-lettered cannot be retried")
                 .isEqualTo(409);
     }
@@ -105,12 +105,12 @@ class InstanceOperationsApiTest extends WorkflowApiTest {
         Session session = tenant(CODES.toArray(String[]::new));
         UUID instance = start(session, setAndEndGraph(), Map.of("kind", "replay"));
 
-        assertThat(statusCode(postAs(session, "/api/v1/instances/{id}/replay", null, instance)))
+        assertThat(statusCode(postAs(session, "/system/v1/instances/{id}/replay", null, instance)))
                 .as("an instance that has not finished cannot be replayed")
                 .isEqualTo(409);
 
         runUntilRest(session, instance);
-        MvcResult replayed = postAs(session, "/api/v1/instances/{id}/replay", null, instance).andReturn();
+        MvcResult replayed = postAs(session, "/system/v1/instances/{id}/replay", null, instance).andReturn();
         assertThat(replayed.getResponse().getStatus()).isEqualTo(201);
         UUID copy = UUID.fromString(
                 json.readTree(replayed.getResponse().getContentAsString()).get("id").asString());
@@ -156,7 +156,7 @@ class InstanceOperationsApiTest extends WorkflowApiTest {
                         .fetchOne(WORKFLOW_TOKEN.STATUS)))
                 .isEqualTo("WAITING");
 
-        MvcResult cancelled = postAs(session, "/api/v1/instances/{id}/cancel", null, instance).andReturn();
+        MvcResult cancelled = postAs(session, "/system/v1/instances/{id}/cancel", null, instance).andReturn();
         assertThat(cancelled.getResponse().getStatus()).isEqualTo(200);
         assertThat(json.readTree(cancelled.getResponse().getContentAsString()).get("status").asString())
                 .isEqualTo("CANCELLED");
@@ -184,7 +184,7 @@ class InstanceOperationsApiTest extends WorkflowApiTest {
                         WORKFLOW_STEP_RUN, WORKFLOW_STEP_RUN.INSTANCE_ID.eq(instance))))
                 .as("a cancelled instance records no step after the cancel")
                 .isEqualTo(2);
-        assertThat(statusCode(postAs(session, "/api/v1/instances/{id}/cancel", null, instance)))
+        assertThat(statusCode(postAs(session, "/system/v1/instances/{id}/cancel", null, instance)))
                 .as("an instance that already finished cannot be cancelled again")
                 .isEqualTo(409);
     }
@@ -202,7 +202,7 @@ class InstanceOperationsApiTest extends WorkflowApiTest {
                 .version());
         MvcResult started = postAs(
                         session,
-                        "/api/v1/instances",
+                        "/system/v1/instances",
                         json.writeValueAsString(Map.of("definition", definition.id().toString(), "input", input)))
                 .andReturn();
         assertThat(started.getResponse().getStatus()).isEqualTo(201);

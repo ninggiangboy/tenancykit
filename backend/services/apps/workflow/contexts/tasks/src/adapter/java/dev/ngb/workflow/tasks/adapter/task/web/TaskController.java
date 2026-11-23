@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The human-task inbox: read, claim, complete and reassign tasks.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class TaskController {
 

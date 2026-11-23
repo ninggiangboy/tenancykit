@@ -44,14 +44,516 @@ tags:
   description: "What an operator does with an instance that stopped: retry, replay,\
     \ cancel and read its timeline."
 paths:
+  /system/v1/webhook-endpoints/{id}:
+    get:
+      tags:
+      - "Webhook endpoints"
+      summary: "Get a webhook endpoint"
+      description: "Returns one endpoint; its version is also the response's `ETag`.\
+        \ The secret is not returned. An unknown id answers `404`.\n\nCallers: tenant-system.\
+        \ Requires `workflow:webhook:manage`."
+      operationId: "getEndpointAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the webhook endpoint."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "A webhook endpoint. The signing secret is not part of it."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-system"
+    put:
+      tags:
+      - "Webhook endpoints"
+      summary: "Update a webhook endpoint"
+      description: "Changes only the fields that are present: url, description, subscribed\
+        \ event types or `status`. Setting `status` to `DISABLED` pauses delivery\
+        \ without losing queued events. Pass the current `ETag` in `If-Match`; a stale\
+        \ version is refused with `412`.\n\nCallers: tenant-system. Requires `workflow:webhook:manage`."
+      operationId: "updateEndpointAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the webhook endpoint."
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "The fields to change. A field that is left out keeps its value."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEndpointRequest"
+        required: true
+      responses:
+        "200":
+          description: "A webhook endpoint. The signing secret is not part of it."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+      x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-system"
+    delete:
+      tags:
+      - "Webhook endpoints"
+      summary: "Delete a webhook endpoint"
+      description: "Deletes the endpoint: it stops receiving and leaves every list,\
+        \ while its delivery history stays readable. Pass the current `ETag` in `If-Match`;\
+        \ a stale version is refused with `412`. Requires `workflow:webhook:manage`.\n\
+        \nCallers: tenant-system. Requires `workflow:webhook:manage`."
+      operationId: "deleteEndpointAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the webhook endpoint."
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+      x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/triggers/{id}:
+    get:
+      tags:
+      - "Triggers"
+      summary: "Get a trigger"
+      description: "Returns one trigger without its secret; its version is also the\
+        \ response's `ETag`. An unknown id answers `404`.\n\nCallers: tenant-system.\
+        \ Requires `workflow:trigger:manage`."
+      operationId: "getTriggerAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the trigger."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "A way a definition starts. The signing secret is not part\
+            \ of it."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TriggerResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:trigger:manage"
+      x-allowed-callers:
+      - "tenant-system"
+    put:
+      tags:
+      - "Triggers"
+      summary: "Update or disable a trigger"
+      description: "Changes the trigger's name, event type, filter, correlation or\
+        \ input, or disables it with `enabled=false`. Pass the current `ETag` in `If-Match`;\
+        \ a stale version is refused with `412`.\n\nCallers: tenant-system. Requires\
+        \ `workflow:trigger:manage`."
+      operationId: "updateTriggerAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the trigger."
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "The fields to change. A field that is left out keeps its value."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTriggerRequest"
+        required: true
+      responses:
+        "200":
+          description: "A way a definition starts. The signing secret is not part\
+            \ of it."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TriggerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+      x-required-permission: "workflow:trigger:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/task-groups/{code}:
+    put:
+      tags:
+      - "Task groups"
+      summary: "Update a task group"
+      description: "Replaces the group's name and members. A member disabled later\
+        \ keeps the group membership but loses access to the tasks, because every\
+        \ action re-reads the user's state. Pass the current `ETag` in `If-Match`;\
+        \ a stale version is refused with `412`.\n\nCallers: tenant-system. Requires\
+        \ `workflow:task:manage`."
+      operationId: "updateAsTenantSystem"
+      parameters:
+      - name: "code"
+        in: "path"
+        description: "The code of the task group."
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "The task group to store."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupRequest"
+        required: true
+      responses:
+        "200":
+          description: "A named list a task may be assigned to."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+      x-required-permission: "workflow:task:manage"
+      x-allowed-callers:
+      - "tenant-system"
+    delete:
+      tags:
+      - "Task groups"
+      summary: "Delete a task group"
+      description: "Deletes the group. A workflow node that is assigned to it fails\
+        \ with a readable reason rather than creating a task nobody can see. Answers\
+        \ `204`.\n\nCallers: tenant-system. Requires `workflow:task:manage`."
+      operationId: "deleteAsTenantSystem"
+      parameters:
+      - name: "code"
+        in: "path"
+        description: "The code of the task group."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "204":
+          description: "No Content"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:task:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/platform-credential:
+    get:
+      tags:
+      - "Platform credential"
+      summary: "Get the Platform credential's status"
+      description: "Returns the credential's `clientId`, the key id that wrote its\
+        \ envelope, when it was last updated and whether Platform still accepts it.\
+        \ The secret is never returned. Requires `workflow:connection:manage`.\n\n\
+        Callers: tenant-system. Requires `workflow:connection:manage`."
+      operationId: "statusAsTenantSystem"
+      responses:
+        "200":
+          description: "The Platform credential's status. The secret is never part\
+            \ of it."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CredentialResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:connection:manage"
+      x-allowed-callers:
+      - "tenant-system"
+    put:
+      tags:
+      - "Platform credential"
+      summary: "Register the tenant's Platform credential"
+      description: "Stores the API credential (`clientId` and `secret`) workflow uses\
+        \ to call Platform for the tenant. The secret is write-only: it is encrypted\
+        \ on the way in and never read back. Answers the credential's status and the\
+        \ key id that wrote it.\n\nCallers: tenant-system. Requires `workflow:connection:manage`."
+      operationId: "registerAsTenantSystem"
+      requestBody:
+        description: "The credential to store."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: "The Platform credential's status. The secret is never part\
+            \ of it."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CredentialResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:connection:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/definitions/{id}/draft:
+    put:
+      tags:
+      - "Workflow definitions"
+      summary: "Replace a definition's draft"
+      description: "Replaces the whole draft `graph`. A structurally wrong draft is\
+        \ stored as sent and its problems are returned, because a draft is what an\
+        \ author is still writing; only publish refuses one. Pass the current `ETag`\
+        \ in `If-Match`; a stale version is refused with `412`. Requires `workflow:definition:manage`.\n\
+        \nCallers: tenant-system. Requires `workflow:definition:manage`."
+      operationId: "putDraftAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the definition."
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "The draft graph, replacing the stored one."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DraftRequest"
+        required: true
+      responses:
+        "200":
+          description: "The definition with the problems found in its draft."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DraftResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+      x-required-permission: "workflow:definition:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/connections/{id}:
+    get:
+      tags:
+      - "Connections"
+      summary: "Get a connection"
+      description: "Returns one connection without its secret; its version is also\
+        \ the response's `ETag`. An unknown id answers `404`.\n\nCallers: tenant-system.\
+        \ Requires `workflow:connection:manage`."
+      operationId: "getAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the connection."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "A connection. The secret is never part of it."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ConnectionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:connection:manage"
+      x-allowed-callers:
+      - "tenant-system"
+    put:
+      tags:
+      - "Connections"
+      summary: "Update a connection"
+      description: "Replaces the connection's name, kind, allowed host and headers,\
+        \ and its secret when one is sent. Pass the current `ETag` in `If-Match`;\
+        \ a stale version is refused with `412`. Requires `workflow:connection:manage`.\n\
+        \nCallers: tenant-system. Requires `workflow:connection:manage`."
+      operationId: "updateAsTenantSystem_1"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the connection."
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "The connection to store."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectionRequest"
+        required: true
+      responses:
+        "200":
+          description: "A connection. The secret is never part of it."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ConnectionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+      x-required-permission: "workflow:connection:manage"
+      x-allowed-callers:
+      - "tenant-system"
   /api/v1/webhook-endpoints/{id}:
     get:
       tags:
       - "Webhook endpoints"
       summary: "Get a webhook endpoint"
       description: "Returns one endpoint; its version is also the response's `ETag`.\
-        \ The secret is not returned. An unknown id answers `404`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `workflow:webhook:manage`."
+        \ The secret is not returned. An unknown id answers `404`.\n\nCallers: tenant-user.\
+        \ Requires `workflow:webhook:manage`."
       operationId: "getEndpoint"
       parameters:
       - name: "id"
@@ -76,7 +578,6 @@ paths:
       x-required-permission: "workflow:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     put:
       tags:
       - "Webhook endpoints"
@@ -84,8 +585,7 @@ paths:
       description: "Changes only the fields that are present: url, description, subscribed\
         \ event types or `status`. Setting `status` to `DISABLED` pauses delivery\
         \ without losing queued events. Pass the current `ETag` in `If-Match`; a stale\
-        \ version is refused with `412`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `workflow:webhook:manage`."
+        \ version is refused with `412`.\n\nCallers: tenant-user. Requires `workflow:webhook:manage`."
       operationId: "updateEndpoint"
       parameters:
       - name: "id"
@@ -135,7 +635,6 @@ paths:
       x-required-permission: "workflow:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     delete:
       tags:
       - "Webhook endpoints"
@@ -143,7 +642,7 @@ paths:
       description: "Deletes the endpoint: it stops receiving and leaves every list,\
         \ while its delivery history stays readable. Pass the current `ETag` in `If-Match`;\
         \ a stale version is refused with `412`. Requires `workflow:webhook:manage`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `workflow:webhook:manage`."
+        \nCallers: tenant-user. Requires `workflow:webhook:manage`."
       operationId: "deleteEndpoint"
       parameters:
       - name: "id"
@@ -180,15 +679,14 @@ paths:
       x-required-permission: "workflow:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/triggers/{id}:
     get:
       tags:
       - "Triggers"
       summary: "Get a trigger"
       description: "Returns one trigger without its secret; its version is also the\
-        \ response's `ETag`. An unknown id answers `404`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `workflow:trigger:manage`."
+        \ response's `ETag`. An unknown id answers `404`.\n\nCallers: tenant-user.\
+        \ Requires `workflow:trigger:manage`."
       operationId: "getTrigger"
       parameters:
       - name: "id"
@@ -214,15 +712,14 @@ paths:
       x-required-permission: "workflow:trigger:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     put:
       tags:
       - "Triggers"
       summary: "Update or disable a trigger"
       description: "Changes the trigger's name, event type, filter, correlation or\
         \ input, or disables it with `enabled=false`. Pass the current `ETag` in `If-Match`;\
-        \ a stale version is refused with `412`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `workflow:trigger:manage`."
+        \ a stale version is refused with `412`.\n\nCallers: tenant-user. Requires\
+        \ `workflow:trigger:manage`."
       operationId: "updateTrigger"
       parameters:
       - name: "id"
@@ -273,7 +770,6 @@ paths:
       x-required-permission: "workflow:trigger:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/task-groups/{code}:
     put:
       tags:
@@ -282,8 +778,8 @@ paths:
       description: "Replaces the group's name and members. A member disabled later\
         \ keeps the group membership but loses access to the tasks, because every\
         \ action re-reads the user's state. Pass the current `ETag` in `If-Match`;\
-        \ a stale version is refused with `412`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `workflow:task:manage`."
+        \ a stale version is refused with `412`.\n\nCallers: tenant-user. Requires\
+        \ `workflow:task:manage`."
       operationId: "update"
       parameters:
       - name: "code"
@@ -326,14 +822,13 @@ paths:
       x-required-permission: "workflow:task:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     delete:
       tags:
       - "Task groups"
       summary: "Delete a task group"
       description: "Deletes the group. A workflow node that is assigned to it fails\
         \ with a readable reason rather than creating a task nobody can see. Answers\
-        \ `204`.\n\nCallers: tenant-user, tenant-system. Requires `workflow:task:manage`."
+        \ `204`.\n\nCallers: tenant-user. Requires `workflow:task:manage`."
       operationId: "delete"
       parameters:
       - name: "code"
@@ -354,7 +849,6 @@ paths:
       x-required-permission: "workflow:task:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/platform-credential:
     get:
       tags:
@@ -363,7 +857,7 @@ paths:
       description: "Returns the credential's `clientId`, the key id that wrote its\
         \ envelope, when it was last updated and whether Platform still accepts it.\
         \ The secret is never returned. Requires `workflow:connection:manage`.\n\n\
-        Callers: tenant-user, tenant-system. Requires `workflow:connection:manage`."
+        Callers: tenant-user. Requires `workflow:connection:manage`."
       operationId: "status"
       responses:
         "200":
@@ -380,7 +874,6 @@ paths:
       x-required-permission: "workflow:connection:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     put:
       tags:
       - "Platform credential"
@@ -388,7 +881,7 @@ paths:
       description: "Stores the API credential (`clientId` and `secret`) workflow uses\
         \ to call Platform for the tenant. The secret is write-only: it is encrypted\
         \ on the way in and never read back. Answers the credential's status and the\
-        \ key id that wrote it.\n\nCallers: tenant-user, tenant-system. Requires `workflow:connection:manage`."
+        \ key id that wrote it.\n\nCallers: tenant-user. Requires `workflow:connection:manage`."
       operationId: "register"
       requestBody:
         description: "The credential to store."
@@ -414,7 +907,6 @@ paths:
       x-required-permission: "workflow:connection:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/definitions/{id}/draft:
     put:
       tags:
@@ -424,7 +916,7 @@ paths:
         \ stored as sent and its problems are returned, because a draft is what an\
         \ author is still writing; only publish refuses one. Pass the current `ETag`\
         \ in `If-Match`; a stale version is refused with `412`. Requires `workflow:definition:manage`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `workflow:definition:manage`."
+        \nCallers: tenant-user. Requires `workflow:definition:manage`."
       operationId: "putDraft"
       parameters:
       - name: "id"
@@ -474,15 +966,14 @@ paths:
       x-required-permission: "workflow:definition:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/connections/{id}:
     get:
       tags:
       - "Connections"
       summary: "Get a connection"
       description: "Returns one connection without its secret; its version is also\
-        \ the response's `ETag`. An unknown id answers `404`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `workflow:connection:manage`."
+        \ the response's `ETag`. An unknown id answers `404`.\n\nCallers: tenant-user.\
+        \ Requires `workflow:connection:manage`."
       operationId: "get"
       parameters:
       - name: "id"
@@ -507,7 +998,6 @@ paths:
       x-required-permission: "workflow:connection:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     put:
       tags:
       - "Connections"
@@ -515,7 +1005,7 @@ paths:
       description: "Replaces the connection's name, kind, allowed host and headers,\
         \ and its secret when one is sent. Pass the current `ETag` in `If-Match`;\
         \ a stale version is refused with `412`. Requires `workflow:connection:manage`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `workflow:connection:manage`."
+        \nCallers: tenant-user. Requires `workflow:connection:manage`."
       operationId: "update_1"
       parameters:
       - name: "id"
@@ -558,6 +1048,2008 @@ paths:
       x-required-permission: "workflow:connection:manage"
       x-allowed-callers:
       - "tenant-user"
+  /system/v1/webhook-endpoints:
+    get:
+      tags:
+      - "Webhook endpoints"
+      summary: "List webhook endpoints"
+      description: "Pages through the tenant's webhook endpoints, with the list-query\
+        \ contract's filtering, sorting and paging.\n\n**Filtering, sorting and paging**\
+        \ follow the list-query contract. Conditions in `filter[field][op]` are combined\
+        \ with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the\
+        \ index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20\
+        \ predicates in all, 100 values in an `in` list). `neq` and `nin` do not match\
+        \ rows where the field is null. Send `limit` with either `offset` (at most\
+        \ 10000) or the `cursor` taken from a previous page, never both. The body\
+        \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
+        \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
+        \ with `limit` and `next_cursor` alone, without counting the matching rows;\
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `workflow:webhook:manage`."
+      operationId: "listEndpointsAsTenantSystem"
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[description][eq]"
+        in: "query"
+        description: "`description` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[description][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `description`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[description][is_null]"
+        in: "query"
+        description: "`true` for rows where `description` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[description][neq]"
+        in: "query"
+        description: "`description` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[description][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `description`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[description][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `description`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[key_id][eq]"
+        in: "query"
+        description: "`key_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[key_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `key_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[key_id][neq]"
+        in: "query"
+        description: "`key_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[key_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `key_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[key_id][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `key_id`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[secret_rotated_at][eq]"
+        in: "query"
+        description: "`secret_rotated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][gt]"
+        in: "query"
+        description: "`secret_rotated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][gte]"
+        in: "query"
+        description: "`secret_rotated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `secret_rotated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[secret_rotated_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `secret_rotated_at` is null, `false` for\
+          \ rows where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[secret_rotated_at][lt]"
+        in: "query"
+        description: "`secret_rotated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][lte]"
+        in: "query"
+        description: "`secret_rotated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][neq]"
+        in: "query"
+        description: "`secret_rotated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[secret_rotated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `secret_rotated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "DELETED"
+          - "DISABLED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "ACTIVE"
+          - "DELETED"
+          - "DISABLED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[url][eq]"
+        in: "query"
+        description: "`url` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[url][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `url`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[url][neq]"
+        in: "query"
+        description: "`url` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[url][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `url`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[url][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `url`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `created_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "A page of endpoint response rows, with the paging facts when\
+            \ the request asked for them."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageEndpointResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags:
+      - "Webhook endpoints"
+      summary: "Create a webhook endpoint"
+      description: "Registers an HTTPS endpoint that subscribes to a subset of workflow's\
+        \ four event types. The signing secret is returned once, in this response,\
+        \ and never again. A url that is not https or does not resolve to a public\
+        \ address, or an unknown event type, answers `422`. Answers `201`. Requires\
+        \ `workflow:webhook:manage`.\n\nCallers: tenant-system. Requires `workflow:webhook:manage`."
+      operationId: "createEndpointAsTenantSystem"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "The endpoint to register."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEndpointRequest"
+        required: true
+      responses:
+        "201":
+          description: "An endpoint with its signing secret, shown once."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointWithSecretResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/webhook-endpoints/{id}/rotate-secret:
+    post:
+      tags:
+      - "Webhook endpoints"
+      summary: "Rotate a webhook endpoint's secret"
+      description: "Replaces the endpoint's signing secret and returns the new one\
+        \ once, never again. Requires `workflow:webhook:manage`.\n\nCallers: tenant-system.\
+        \ Requires `workflow:webhook:manage`."
+      operationId: "rotateSecretAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the webhook endpoint."
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "An endpoint with its signing secret, shown once."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/EndpointWithSecretResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/webhook-deliveries/{id}/retry:
+    post:
+      tags:
+      - "Webhook deliveries"
+      summary: "Retry a webhook delivery"
+      description: "Queues a fresh delivery of the same stored event to the same endpoint,\
+        \ with a new attempt budget, and answers `202`: sending happens asynchronously.\
+        \ The original keeps its history. Only a finished delivery can be retried;\
+        \ one still being attempted is already on its way. Requires `workflow:webhook:manage`.\n\
+        \nCallers: tenant-system. Requires `workflow:webhook:manage`."
+      operationId: "retryAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the webhook delivery."
+        required: true
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "202":
+          description: "One delivery of an event to an endpoint."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DeliveryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/triggers:
+    get:
+      tags:
+      - "Triggers"
+      summary: "List triggers"
+      description: "Pages through the tenant's triggers, with the list-query contract's\
+        \ filtering, sorting and paging. \n\n**Filtering, sorting and paging** follow\
+        \ the list-query contract. Conditions in `filter[field][op]` are combined\
+        \ with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the\
+        \ index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20\
+        \ predicates in all, 100 values in an `in` list). `neq` and `nin` do not match\
+        \ rows where the field is null. Send `limit` with either `offset` (at most\
+        \ 10000) or the `cursor` taken from a previous page, never both. The body\
+        \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
+        \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
+        \ with `limit` and `next_cursor` alone, without counting the matching rows;\
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `workflow:trigger:manage`."
+      operationId: "listTriggersAsTenantSystem"
+      parameters:
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[enabled][eq]"
+        in: "query"
+        description: "`enabled` eq the value."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[enabled][neq]"
+        in: "query"
+        description: "`enabled` neq the value."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[event_type][eq]"
+        in: "query"
+        description: "`event_type` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[event_type][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `event_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_type][is_null]"
+        in: "query"
+        description: "`true` for rows where `event_type` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[event_type][neq]"
+        in: "query"
+        description: "`event_type` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[event_type][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `event_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_type][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `event_type`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[kind][eq]"
+        in: "query"
+        description: "`kind` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[kind][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `kind`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[kind][neq]"
+        in: "query"
+        description: "`kind` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[kind][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `kind`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[kind][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `kind`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][eq]"
+        in: "query"
+        description: "`name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][neq]"
+        in: "query"
+        description: "`name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[source][eq]"
+        in: "query"
+        description: "`source` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[source][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `source`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[source][neq]"
+        in: "query"
+        description: "`source` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[source][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `source`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[source][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `source`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "A page of trigger response rows, with the paging facts when\
+            \ the request asked for them."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageTriggerResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:trigger:manage"
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags:
+      - "Triggers"
+      summary: "Create a trigger"
+      description: "Creates a way to start a workflow: a `kind` (`APP` for a suite\
+        \ app's signed webhook, `EXTERNAL` for an outside system's signed webhook,\
+        \ or `SCHEDULE` for a cron schedule), its `source` and `eventType`, the definition\
+        \ to start, an optional `filter`, `correlation` and `input`. A signed trigger's\
+        \ secret is in this response and never again. A schedule trigger's first tick\
+        \ is after now, so one created while the worker was down does not fire every\
+        \ missed tick. Requires `workflow:trigger:manage`.\n\nCallers: tenant-system.\
+        \ Requires `workflow:trigger:manage`."
+      operationId: "createTriggerAsTenantSystem"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "The trigger to create."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTriggerRequest"
+        required: true
+      responses:
+        "200":
+          description: "A trigger with its signing secret, shown once."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TriggerWithSecretResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:trigger:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/tasks/{id}/reassign:
+    post:
+      tags:
+      - "Human tasks"
+      summary: "Reassign a task"
+      description: "Moves an open task to another `user` or `group`; the new group's\
+        \ members are copied onto it. Pass the current `ETag` in `If-Match`; a stale\
+        \ version is refused with `412`. Requires `workflow:task:complete`.\n\nCallers:\
+        \ tenant-system. Requires `workflow:task:complete`."
+      operationId: "reassignAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the task."
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "Who to move the task to. Give a user or a group."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReassignRequest"
+        required: true
+      responses:
+        "200":
+          description: "One human task: what it asks, who it is for, when it is due\
+            \ and what was decided."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TaskView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+      x-required-permission: "workflow:task:complete"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/tasks/{id}/complete:
+    post:
+      tags:
+      - "Human tasks"
+      summary: "Complete a task"
+      description: "Completes the task with one of its declared `decision` values\
+        \ and an `output` that matches its form; the workflow resumes in the same\
+        \ transaction. A person acts on their own task; a Tenant System acts on any\
+        \ task of its tenant and must name the person it speaks for in `completedBy`,\
+        \ which is recorded as stated. Pass the current `ETag` in `If-Match`; a stale\
+        \ version is refused with `412`. Requires `workflow:task:complete`.\n\nCallers:\
+        \ tenant-system. Requires `workflow:task:complete`."
+      operationId: "completeAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the task."
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "How to complete the task."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteRequest"
+        required: true
+      responses:
+        "200":
+          description: "One human task: what it asks, who it is for, when it is due\
+            \ and what was decided."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TaskView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+      x-required-permission: "workflow:task:complete"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/tasks/{id}/claim:
+    post:
+      tags:
+      - "Human tasks"
+      summary: "Claim a task"
+      description: "A person takes an open task. Claiming a task that is already claimed\
+        \ is a conflict, and a Tenant System may not claim at all. Pass the current\
+        \ `ETag` in `If-Match`; a stale version is refused with `412`.\n\nCallers:\
+        \ tenant-system. Requires `workflow:task:complete`."
+      operationId: "claimAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the task."
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "One human task: what it asks, who it is for, when it is due\
+            \ and what was decided."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TaskView"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+      x-required-permission: "workflow:task:complete"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/task-groups:
+    get:
+      tags:
+      - "Task groups"
+      summary: "List task groups"
+      description: "Returns the named lists a task may be assigned to, with their\
+        \ members. Requires `workflow:task:read`.\n\nCallers: tenant-system. Requires\
+        \ `workflow:task:read`."
+      operationId: "listAsTenantSystem"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/GroupResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:task:read"
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags:
+      - "Task groups"
+      summary: "Create a task group"
+      description: "Creates a group with a `code`, a name and its `members`. Members\
+        \ must be active users when they are added. Answers `201`.\n\nCallers: tenant-system.\
+        \ Requires `workflow:task:manage`."
+      operationId: "createAsTenantSystem"
+      requestBody:
+        description: "The task group to store."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupRequest"
+        required: true
+      responses:
+        "201":
+          description: "A named list a task may be assigned to."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/GroupResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:task:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/instances:
+    get:
+      tags:
+      - "Workflow instances"
+      summary: "List workflow instances"
+      description: "Returns the instances the tenant's flows started, narrowed by\
+        \ `status`, `definition` code and `correlationKey`, paged with `limit` (default\
+        \ 50) and `offset`. No answer carries the trigger input or a secret.\n\nCallers:\
+        \ tenant-system. Requires `workflow:instance:read`."
+      operationId: "listAsTenantSystem_1"
+      parameters:
+      - name: "status"
+        in: "query"
+        description: "Only rows in this status."
+        required: false
+        schema:
+          type: "string"
+      - name: "definition"
+        in: "query"
+        description: "Only instances of the definition with this code."
+        required: false
+        schema:
+          type: "string"
+      - name: "correlationKey"
+        in: "query"
+        description: "Only instances with this correlation key."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "The page size. Defaults to 50."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+      - name: "offset"
+        in: "query"
+        description: "The number of rows to skip. Defaults to 0."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/InstanceView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:instance:read"
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags:
+      - "Manual start"
+      summary: "Start a workflow manually"
+      description: "Starts an instance of `definition` from its newest published version,\
+        \ with `input` and an optional `correlationKey`. The tenant comes from the\
+        \ request, so a caller can never start another tenant's workflow. A repeated\
+        \ call with the same `Idempotency-Key` returns the first instance; the same\
+        \ key with another body answers `409`. Answers `201`.\n\nCallers: tenant-system.\
+        \ Requires `workflow:instance:manage`."
+      operationId: "startInstanceAsTenantSystem"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
+        required: false
+        schema:
+          type: "string"
+      - name: "Idempotency-Key"
+        in: "header"
+        description: "A key the caller chooses so a retry is safe: the same key with\
+          \ the same body answers the first result instead of acting twice, and the\
+          \ same key with a different body is a conflict."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "The instance to start."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartInstanceRequest"
+        required: true
+      responses:
+        "201":
+          description: "The instance that was started."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/StartedInstanceResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/IdempotencyConflict"
+      x-required-permission: "workflow:instance:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/instances/{id}/retry:
+    post:
+      tags:
+      - "Instance operations"
+      summary: "Retry a failed instance"
+      description: "Retries an instance that dead-lettered: the failed step becomes\
+        \ ready again with the same id and attempt, so it sends the same idempotency\
+        \ key, and the instance goes back to `RUNNING` with no failure reason. `nodeId`\
+        \ names the step when needed.\n\nCallers: tenant-system. Requires `workflow:instance:manage`."
+      operationId: "retryAsTenantSystem_1"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the instance."
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        description: "Which step to retry."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RetryRequest"
+      responses:
+        "200":
+          description: "The instance after an operation."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InstanceStateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:instance:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/instances/{id}/replay:
+    post:
+      tags:
+      - "Instance operations"
+      summary: "Replay a finished instance"
+      description: "Starts a new instance from the same input and the same pinned\
+        \ version, and records the instance it was replayed from. The old instance\
+        \ stays as it was, so the pair is the comparison. Requires `workflow:instance:manage`.\n\
+        \nCallers: tenant-system. Requires `workflow:instance:manage`."
+      operationId: "replayAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the instance."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "The instance after an operation."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InstanceStateResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:instance:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/instances/{id}/cancel:
+    post:
+      tags:
+      - "Instance operations"
+      summary: "Cancel an instance"
+      description: "Cancels an instance an operator no longer wants: its live steps\
+        \ are cancelled, no timer or event can resume it, its open tasks are cancelled\
+        \ and it finishes `CANCELLED`. With `compensate=true` the completed steps\
+        \ are rolled back first.\n\nCallers: tenant-system. Requires `workflow:instance:manage`."
+      operationId: "cancelAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the instance."
+        required: true
+        schema:
+          type: "string"
+      - name: "compensate"
+        in: "query"
+        description: "`true` to roll back the steps that already completed before\
+          \ cancelling. Defaults to `false`."
+        required: false
+        schema:
+          type: "boolean"
+          default: false
+      responses:
+        "200":
+          description: "The instance after an operation."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InstanceStateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:instance:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/definitions:
+    get:
+      tags:
+      - "Workflow definitions"
+      summary: "List workflow definitions"
+      description: "Pages through the tenant's definitions, with the list-query contract's\
+        \ filtering, sorting and paging.\n\n**Filtering, sorting and paging** follow\
+        \ the list-query contract. Conditions in `filter[field][op]` are combined\
+        \ with AND. For OR, use `filter[or][i][field][op]`: predicates sharing the\
+        \ index `i` are AND-ed and the branches are OR-ed (at most 10 branches, 20\
+        \ predicates in all, 100 values in an `in` list). `neq` and `nin` do not match\
+        \ rows where the field is null. Send `limit` with either `offset` (at most\
+        \ 10000) or the `cursor` taken from a previous page, never both. The body\
+        \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
+        \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
+        \ with `limit` and `next_cursor` alone, without counting the matching rows;\
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `workflow:definition:read`."
+      operationId: "listDefinitionsAsTenantSystem"
+      parameters:
+      - name: "filter[code][eq]"
+        in: "query"
+        description: "`code` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[code][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[code][neq]"
+        in: "query"
+        description: "`code` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[code][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[code][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `code`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[latest_version][eq]"
+        in: "query"
+        description: "`latest_version` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[latest_version][gt]"
+        in: "query"
+        description: "`latest_version` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[latest_version][gte]"
+        in: "query"
+        description: "`latest_version` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[latest_version][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `latest_version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[latest_version][lt]"
+        in: "query"
+        description: "`latest_version` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[latest_version][lte]"
+        in: "query"
+        description: "`latest_version` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[latest_version][neq]"
+        in: "query"
+        description: "`latest_version` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[latest_version][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `latest_version`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][eq]"
+        in: "query"
+        description: "`name` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][neq]"
+        in: "query"
+        description: "`name` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[name][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `name`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[name][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `name`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "DRAFT"
+          - "PUBLISHED"
+          - "RETIRED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "DRAFT"
+          - "PUBLISHED"
+          - "RETIRED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][eq]"
+        in: "query"
+        description: "`updated_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gt]"
+        in: "query"
+        description: "`updated_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][gte]"
+        in: "query"
+        description: "`updated_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[updated_at][lt]"
+        in: "query"
+        description: "`updated_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][lte]"
+        in: "query"
+        description: "`updated_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][neq]"
+        in: "query"
+        description: "`updated_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[updated_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `updated_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id, latest_version, updated_at. At most\
+          \ 4 fields; `id` is appended to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "A page of definition response rows, with the paging facts\
+            \ when the request asked for them."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageDefinitionResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:definition:read"
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags:
+      - "Workflow definitions"
+      summary: "Create a workflow definition"
+      description: "Creates a definition with a `code` and a name and an empty draft;\
+        \ the graph arrives through the draft endpoint.\n\nCallers: tenant-system.\
+        \ Requires `workflow:definition:manage`."
+      operationId: "createDefinitionAsTenantSystem"
+      parameters:
+      - name: "X-Request-Id"
+        in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
+        required: false
+        schema:
+          type: "string"
+      requestBody:
+        description: "The definition to create. It starts with an empty draft."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDefinitionRequest"
+        required: true
+      responses:
+        "200":
+          description: "A workflow definition."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DefinitionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:definition:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/definitions/{id}/simulate:
+    post:
+      tags:
+      - "Workflow definitions"
+      summary: "Simulate a draft"
+      description: "Walks the draft over a sample `input` and canned step outputs\
+        \ (`steps`) and reports the path, the decisions and the variables. It calls\
+        \ nothing out and writes nothing. Requires `workflow:definition:read`.\n\n\
+        Callers: tenant-system. Requires `workflow:definition:read`."
+      operationId: "simulateDefinitionAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the definition."
+        required: true
+        schema:
+          type: "string"
+      requestBody:
+        description: "The sample to walk the draft with."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimulateRequest"
+      responses:
+        "200":
+          description: "What a simulated walk did. Nothing was called or stored."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/SimulationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:definition:read"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/definitions/{id}/retire:
+    post:
+      tags:
+      - "Workflow definitions"
+      summary: "Retire a definition"
+      description: "Stops new instances from starting. The published versions and\
+        \ the instances pinned to them are untouched and keep running. Pass the current\
+        \ `ETag` in `If-Match`; a stale version is refused with `412`.\n\nCallers:\
+        \ tenant-system. Requires `workflow:definition:manage`."
+      operationId: "retireDefinitionAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the definition."
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "A workflow definition."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DefinitionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+      x-required-permission: "workflow:definition:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/definitions/{id}/publish:
+    post:
+      tags:
+      - "Workflow definitions"
+      summary: "Publish a definition"
+      description: "Freezes the draft into the next immutable version number. An invalid\
+        \ draft answers `422` with every problem by pointer. Pass the current `ETag`\
+        \ in `If-Match`; a stale version is refused with `412`.\n\nCallers: tenant-system.\
+        \ Requires `workflow:definition:manage`."
+      operationId: "publishDefinitionAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the definition."
+        required: true
+        schema:
+          type: "string"
+      - name: "If-Match"
+        in: "header"
+        description: "The `ETag` of the version the caller last read. The change is\
+          \ refused with `412` when the resource has moved on since."
+        required: false
+        schema:
+          type: "string"
+      - name: "X-Request-Id"
+        in: "header"
+        description: "An id the caller chooses for this call. It is recorded with\
+          \ the call and its audit entry, so the call can be found again."
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "One immutable published version of a definition."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VersionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+      x-required-permission: "workflow:definition:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/connections:
+    get:
+      tags:
+      - "Connections"
+      summary: "List connections"
+      description: "Returns the tenant's connections without their secrets.\n\nCallers:\
+        \ tenant-system. Requires `workflow:connection:manage`."
+      operationId: "listAsTenantSystem_2"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/ConnectionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:connection:manage"
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags:
+      - "Connections"
+      summary: "Create a connection"
+      description: "Registers a connection a workflow step may call: a name, a `kind`,\
+        \ the one `allowedHost` it may reach, optional `headers` and a `secret`. The\
+        \ secret goes in as plaintext, is stored as an encrypted envelope and is never\
+        \ returned; every response names the key id that wrote the envelope instead.\n\
+        \nCallers: tenant-system. Requires `workflow:connection:manage`."
+      operationId: "createAsTenantSystem_1"
+      requestBody:
+        description: "The connection to store."
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectionRequest"
+        required: true
+      responses:
+        "200":
+          description: "A connection. The secret is never part of it."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ConnectionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:connection:manage"
+      x-allowed-callers:
       - "tenant-system"
   /hooks/{triggerId}:
     post:
@@ -619,8 +3111,7 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `workflow:webhook:manage`."
+        \ omit it for the rows alone.\n\nCallers: tenant-user. Requires `workflow:webhook:manage`."
       operationId: "listEndpoints"
       parameters:
       - name: "filter[created_at][eq]"
@@ -1024,7 +3515,6 @@ paths:
       x-required-permission: "workflow:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Webhook endpoints"
@@ -1033,8 +3523,7 @@ paths:
         \ four event types. The signing secret is returned once, in this response,\
         \ and never again. A url that is not https or does not resolve to a public\
         \ address, or an unknown event type, answers `422`. Answers `201`. Requires\
-        \ `workflow:webhook:manage`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `workflow:webhook:manage`."
+        \ `workflow:webhook:manage`.\n\nCallers: tenant-user. Requires `workflow:webhook:manage`."
       operationId: "createEndpoint"
       parameters:
       - name: "X-Request-Id"
@@ -1074,15 +3563,14 @@ paths:
       x-required-permission: "workflow:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-endpoints/{id}/rotate-secret:
     post:
       tags:
       - "Webhook endpoints"
       summary: "Rotate a webhook endpoint's secret"
       description: "Replaces the endpoint's signing secret and returns the new one\
-        \ once, never again. Requires `workflow:webhook:manage`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `workflow:webhook:manage`."
+        \ once, never again. Requires `workflow:webhook:manage`.\n\nCallers: tenant-user.\
+        \ Requires `workflow:webhook:manage`."
       operationId: "rotateSecret"
       parameters:
       - name: "id"
@@ -1114,7 +3602,6 @@ paths:
       x-required-permission: "workflow:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-deliveries/{id}/retry:
     post:
       tags:
@@ -1124,7 +3611,7 @@ paths:
         \ with a new attempt budget, and answers `202`: sending happens asynchronously.\
         \ The original keeps its history. Only a finished delivery can be retried;\
         \ one still being attempted is already on its way. Requires `workflow:webhook:manage`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `workflow:webhook:manage`."
+        \nCallers: tenant-user. Requires `workflow:webhook:manage`."
       operationId: "retry"
       parameters:
       - name: "id"
@@ -1156,7 +3643,6 @@ paths:
       x-required-permission: "workflow:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/triggers:
     get:
       tags:
@@ -1173,8 +3659,7 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `workflow:trigger:manage`."
+        \ omit it for the rows alone.\n\nCallers: tenant-user. Requires `workflow:trigger:manage`."
       operationId: "listTriggers"
       parameters:
       - name: "filter[created_at][eq]"
@@ -1530,7 +4015,6 @@ paths:
       x-required-permission: "workflow:trigger:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Triggers"
@@ -1541,8 +4025,8 @@ paths:
         \ to start, an optional `filter`, `correlation` and `input`. A signed trigger's\
         \ secret is in this response and never again. A schedule trigger's first tick\
         \ is after now, so one created while the worker was down does not fire every\
-        \ missed tick. Requires `workflow:trigger:manage`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `workflow:trigger:manage`."
+        \ missed tick. Requires `workflow:trigger:manage`.\n\nCallers: tenant-user.\
+        \ Requires `workflow:trigger:manage`."
       operationId: "createTrigger"
       parameters:
       - name: "X-Request-Id"
@@ -1575,7 +4059,6 @@ paths:
       x-required-permission: "workflow:trigger:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/tasks/{id}/reassign:
     post:
       tags:
@@ -1584,7 +4067,7 @@ paths:
       description: "Moves an open task to another `user` or `group`; the new group's\
         \ members are copied onto it. Pass the current `ETag` in `If-Match`; a stale\
         \ version is refused with `412`. Requires `workflow:task:complete`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `workflow:task:complete`."
+        \ tenant-user. Requires `workflow:task:complete`."
       operationId: "reassign"
       parameters:
       - name: "id"
@@ -1628,7 +4111,6 @@ paths:
       x-required-permission: "workflow:task:complete"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/tasks/{id}/complete:
     post:
       tags:
@@ -1640,7 +4122,7 @@ paths:
         \ task of its tenant and must name the person it speaks for in `completedBy`,\
         \ which is recorded as stated. Pass the current `ETag` in `If-Match`; a stale\
         \ version is refused with `412`. Requires `workflow:task:complete`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `workflow:task:complete`."
+        \ tenant-user. Requires `workflow:task:complete`."
       operationId: "complete"
       parameters:
       - name: "id"
@@ -1684,7 +4166,6 @@ paths:
       x-required-permission: "workflow:task:complete"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/tasks/{id}/claim:
     post:
       tags:
@@ -1693,7 +4174,7 @@ paths:
       description: "A person takes an open task. Claiming a task that is already claimed\
         \ is a conflict, and a Tenant System may not claim at all. Pass the current\
         \ `ETag` in `If-Match`; a stale version is refused with `412`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `workflow:task:complete`."
+        \ tenant-user. Requires `workflow:task:complete`."
       operationId: "claim"
       parameters:
       - name: "id"
@@ -1734,15 +4215,14 @@ paths:
       x-required-permission: "workflow:task:complete"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/task-groups:
     get:
       tags:
       - "Task groups"
       summary: "List task groups"
       description: "Returns the named lists a task may be assigned to, with their\
-        \ members. Requires `workflow:task:read`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `workflow:task:read`."
+        \ members. Requires `workflow:task:read`.\n\nCallers: tenant-user. Requires\
+        \ `workflow:task:read`."
       operationId: "list"
       responses:
         "200":
@@ -1760,14 +4240,13 @@ paths:
       x-required-permission: "workflow:task:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Task groups"
       summary: "Create a task group"
       description: "Creates a group with a `code`, a name and its `members`. Members\
-        \ must be active users when they are added. Answers `201`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `workflow:task:manage`."
+        \ must be active users when they are added. Answers `201`.\n\nCallers: tenant-user.\
+        \ Requires `workflow:task:manage`."
       operationId: "create"
       requestBody:
         description: "The task group to store."
@@ -1792,7 +4271,6 @@ paths:
       x-required-permission: "workflow:task:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/instances:
     get:
       tags:
@@ -1801,7 +4279,7 @@ paths:
       description: "Returns the instances the tenant's flows started, narrowed by\
         \ `status`, `definition` code and `correlationKey`, paged with `limit` (default\
         \ 50) and `offset`. No answer carries the trigger input or a secret.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `workflow:instance:read`."
+        \ tenant-user. Requires `workflow:instance:read`."
       operationId: "list_1"
       parameters:
       - name: "status"
@@ -1857,7 +4335,6 @@ paths:
       x-required-permission: "workflow:instance:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Manual start"
@@ -1866,8 +4343,8 @@ paths:
         \ with `input` and an optional `correlationKey`. The tenant comes from the\
         \ request, so a caller can never start another tenant's workflow. A repeated\
         \ call with the same `Idempotency-Key` returns the first instance; the same\
-        \ key with another body answers `409`. Answers `201`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `workflow:instance:manage`."
+        \ key with another body answers `409`. Answers `201`.\n\nCallers: tenant-user.\
+        \ Requires `workflow:instance:manage`."
       operationId: "startInstance"
       parameters:
       - name: "X-Request-Id"
@@ -1910,7 +4387,6 @@ paths:
       x-required-permission: "workflow:instance:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/instances/{id}/retry:
     post:
       tags:
@@ -1919,8 +4395,7 @@ paths:
       description: "Retries an instance that dead-lettered: the failed step becomes\
         \ ready again with the same id and attempt, so it sends the same idempotency\
         \ key, and the instance goes back to `RUNNING` with no failure reason. `nodeId`\
-        \ names the step when needed.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `workflow:instance:manage`."
+        \ names the step when needed.\n\nCallers: tenant-user. Requires `workflow:instance:manage`."
       operationId: "retry_1"
       parameters:
       - name: "id"
@@ -1953,7 +4428,6 @@ paths:
       x-required-permission: "workflow:instance:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/instances/{id}/replay:
     post:
       tags:
@@ -1962,7 +4436,7 @@ paths:
       description: "Starts a new instance from the same input and the same pinned\
         \ version, and records the instance it was replayed from. The old instance\
         \ stays as it was, so the pair is the comparison. Requires `workflow:instance:manage`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `workflow:instance:manage`."
+        \nCallers: tenant-user. Requires `workflow:instance:manage`."
       operationId: "replay"
       parameters:
       - name: "id"
@@ -1987,7 +4461,6 @@ paths:
       x-required-permission: "workflow:instance:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/instances/{id}/cancel:
     post:
       tags:
@@ -1996,8 +4469,7 @@ paths:
       description: "Cancels an instance an operator no longer wants: its live steps\
         \ are cancelled, no timer or event can resume it, its open tasks are cancelled\
         \ and it finishes `CANCELLED`. With `compensate=true` the completed steps\
-        \ are rolled back first.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `workflow:instance:manage`."
+        \ are rolled back first.\n\nCallers: tenant-user. Requires `workflow:instance:manage`."
       operationId: "cancel"
       parameters:
       - name: "id"
@@ -2032,7 +4504,6 @@ paths:
       x-required-permission: "workflow:instance:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/definitions:
     get:
       tags:
@@ -2049,8 +4520,7 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `workflow:definition:read`."
+        \ omit it for the rows alone.\n\nCallers: tenant-user. Requires `workflow:definition:read`."
       operationId: "listDefinitions"
       parameters:
       - name: "filter[code][eq]"
@@ -2407,14 +4877,13 @@ paths:
       x-required-permission: "workflow:definition:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Workflow definitions"
       summary: "Create a workflow definition"
       description: "Creates a definition with a `code` and a name and an empty draft;\
-        \ the graph arrives through the draft endpoint.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `workflow:definition:manage`."
+        \ the graph arrives through the draft endpoint.\n\nCallers: tenant-user. Requires\
+        \ `workflow:definition:manage`."
       operationId: "createDefinition"
       parameters:
       - name: "X-Request-Id"
@@ -2447,7 +4916,6 @@ paths:
       x-required-permission: "workflow:definition:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/definitions/{id}/simulate:
     post:
       tags:
@@ -2456,7 +4924,7 @@ paths:
       description: "Walks the draft over a sample `input` and canned step outputs\
         \ (`steps`) and reports the path, the decisions and the variables. It calls\
         \ nothing out and writes nothing. Requires `workflow:definition:read`.\n\n\
-        Callers: tenant-user, tenant-system. Requires `workflow:definition:read`."
+        Callers: tenant-user. Requires `workflow:definition:read`."
       operationId: "simulateDefinition"
       parameters:
       - name: "id"
@@ -2489,7 +4957,6 @@ paths:
       x-required-permission: "workflow:definition:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/definitions/{id}/retire:
     post:
       tags:
@@ -2498,7 +4965,7 @@ paths:
       description: "Stops new instances from starting. The published versions and\
         \ the instances pinned to them are untouched and keep running. Pass the current\
         \ `ETag` in `If-Match`; a stale version is refused with `412`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `workflow:definition:manage`."
+        \ tenant-user. Requires `workflow:definition:manage`."
       operationId: "retireDefinition"
       parameters:
       - name: "id"
@@ -2539,7 +5006,6 @@ paths:
       x-required-permission: "workflow:definition:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/definitions/{id}/publish:
     post:
       tags:
@@ -2547,8 +5013,8 @@ paths:
       summary: "Publish a definition"
       description: "Freezes the draft into the next immutable version number. An invalid\
         \ draft answers `422` with every problem by pointer. Pass the current `ETag`\
-        \ in `If-Match`; a stale version is refused with `412`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `workflow:definition:manage`."
+        \ in `If-Match`; a stale version is refused with `412`.\n\nCallers: tenant-user.\
+        \ Requires `workflow:definition:manage`."
       operationId: "publishDefinition"
       parameters:
       - name: "id"
@@ -2595,14 +5061,13 @@ paths:
       x-required-permission: "workflow:definition:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/connections:
     get:
       tags:
       - "Connections"
       summary: "List connections"
       description: "Returns the tenant's connections without their secrets.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `workflow:connection:manage`."
+        \ tenant-user. Requires `workflow:connection:manage`."
       operationId: "list_2"
       responses:
         "200":
@@ -2620,7 +5085,6 @@ paths:
       x-required-permission: "workflow:connection:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Connections"
@@ -2629,7 +5093,7 @@ paths:
         \ the one `allowedHost` it may reach, optional `headers` and a `secret`. The\
         \ secret goes in as plaintext, is stored as an encrypted envelope and is never\
         \ returned; every response names the key id that wrote the envelope instead.\n\
-        \nCallers: tenant-user, tenant-system. Requires `workflow:connection:manage`."
+        \nCallers: tenant-user. Requires `workflow:connection:manage`."
       operationId: "create_1"
       requestBody:
         description: "The connection to store."
@@ -2654,6 +5118,798 @@ paths:
       x-required-permission: "workflow:connection:manage"
       x-allowed-callers:
       - "tenant-user"
+  /system/v1/webhook-deliveries:
+    get:
+      tags:
+      - "Webhook deliveries"
+      summary: "List webhook deliveries"
+      description: "Lists the attempts workflow made to report an event to an endpoint,\
+        \ with the list-query contract's filtering, sorting and paging. A delivery\
+        \ that exhausted its attempts is `DEAD` and stays visible here so it can be\
+        \ retried.\n\n**Filtering, sorting and paging** follow the list-query contract.\
+        \ Conditions in `filter[field][op]` are combined with AND. For OR, use `filter[or][i][field][op]`:\
+        \ predicates sharing the index `i` are AND-ed and the branches are OR-ed (at\
+        \ most 10 branches, 20 predicates in all, 100 values in an `in` list). `neq`\
+        \ and `nin` do not match rows where the field is null. Send `limit` with either\
+        \ `offset` (at most 10000) or the `cursor` taken from a previous page, never\
+        \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
+        \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
+        \ fills it with `limit` and `next_cursor` alone, without counting the matching\
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-system. Requires `workflow:webhook:manage`."
+      operationId: "listDeliveriesAsTenantSystem"
+      parameters:
+      - name: "filter[attempts][eq]"
+        in: "query"
+        description: "`attempts` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][gt]"
+        in: "query"
+        description: "`attempts` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][gte]"
+        in: "query"
+        description: "`attempts` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `attempts`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[attempts][lt]"
+        in: "query"
+        description: "`attempts` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][lte]"
+        in: "query"
+        description: "`attempts` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][neq]"
+        in: "query"
+        description: "`attempts` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[attempts][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `attempts`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[completed_at][eq]"
+        in: "query"
+        description: "`completed_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][gt]"
+        in: "query"
+        description: "`completed_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][gte]"
+        in: "query"
+        description: "`completed_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `completed_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[completed_at][is_null]"
+        in: "query"
+        description: "`true` for rows where `completed_at` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[completed_at][lt]"
+        in: "query"
+        description: "`completed_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][lte]"
+        in: "query"
+        description: "`completed_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][neq]"
+        in: "query"
+        description: "`completed_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[completed_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `completed_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][eq]"
+        in: "query"
+        description: "`created_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gt]"
+        in: "query"
+        description: "`created_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][gte]"
+        in: "query"
+        description: "`created_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[created_at][lt]"
+        in: "query"
+        description: "`created_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][lte]"
+        in: "query"
+        description: "`created_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][neq]"
+        in: "query"
+        description: "`created_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[created_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `created_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[endpoint_id][eq]"
+        in: "query"
+        description: "`endpoint_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[endpoint_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `endpoint_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[endpoint_id][neq]"
+        in: "query"
+        description: "`endpoint_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[endpoint_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `endpoint_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_id][eq]"
+        in: "query"
+        description: "`event_id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[event_id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `event_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_id][neq]"
+        in: "query"
+        description: "`event_id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[event_id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `event_id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_type][eq]"
+        in: "query"
+        description: "`event_type` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[event_type][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `event_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_type][neq]"
+        in: "query"
+        description: "`event_type` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[event_type][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `event_type`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[event_type][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `event_type`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[id][eq]"
+        in: "query"
+        description: "`id` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[id][neq]"
+        in: "query"
+        description: "`id` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "uuid"
+      - name: "filter[id][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_error][eq]"
+        in: "query"
+        description: "`last_error` eq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[last_error][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `last_error`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_error][is_null]"
+        in: "query"
+        description: "`true` for rows where `last_error` is null, `false` for rows\
+          \ where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[last_error][neq]"
+        in: "query"
+        description: "`last_error` neq the value."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[last_error][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `last_error`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_error][starts_with]"
+        in: "query"
+        description: "Case-insensitive prefix match on `last_error`."
+        required: false
+        schema:
+          type: "string"
+          maxLength: 255
+      - name: "filter[last_status_code][eq]"
+        in: "query"
+        description: "`last_status_code` eq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][gt]"
+        in: "query"
+        description: "`last_status_code` gt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][gte]"
+        in: "query"
+        description: "`last_status_code` gte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `last_status_code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[last_status_code][is_null]"
+        in: "query"
+        description: "`true` for rows where `last_status_code` is null, `false` for\
+          \ rows where it is set."
+        required: false
+        schema:
+          type: "boolean"
+      - name: "filter[last_status_code][lt]"
+        in: "query"
+        description: "`last_status_code` lt the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][lte]"
+        in: "query"
+        description: "`last_status_code` lte the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][neq]"
+        in: "query"
+        description: "`last_status_code` neq the value."
+        required: false
+        schema:
+          type: "integer"
+          format: "int64"
+      - name: "filter[last_status_code][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `last_status_code`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[next_attempt_at][eq]"
+        in: "query"
+        description: "`next_attempt_at` eq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][gt]"
+        in: "query"
+        description: "`next_attempt_at` gt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][gte]"
+        in: "query"
+        description: "`next_attempt_at` gte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `next_attempt_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[next_attempt_at][lt]"
+        in: "query"
+        description: "`next_attempt_at` lt the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][lte]"
+        in: "query"
+        description: "`next_attempt_at` lte the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][neq]"
+        in: "query"
+        description: "`next_attempt_at` neq the value."
+        required: false
+        schema:
+          type: "string"
+          format: "date-time"
+      - name: "filter[next_attempt_at][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `next_attempt_at`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][eq]"
+        in: "query"
+        description: "`status` eq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "DEAD"
+          - "IN_PROGRESS"
+          - "PENDING"
+          - "SUCCEEDED"
+      - name: "filter[status][in]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `in` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "filter[status][neq]"
+        in: "query"
+        description: "`status` neq the value."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "DEAD"
+          - "IN_PROGRESS"
+          - "PENDING"
+          - "SUCCEEDED"
+      - name: "filter[status][nin]"
+        in: "query"
+        description: "Comma-separated list of up to 100 values; `nin` of `status`."
+        required: false
+        schema:
+          type: "string"
+      - name: "sort"
+        in: "query"
+        description: "Comma-separated sortable fields, each optionally prefixed with\
+          \ `-` for descending: created_at, id. At most 4 fields; `id` is appended\
+          \ to make the order total. Default: `-created_at,id`."
+        required: false
+        schema:
+          type: "string"
+      - name: "limit"
+        in: "query"
+        description: "Page size, 1 to 200."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 50
+          maximum: 200
+          minimum: 1
+      - name: "offset"
+        in: "query"
+        description: "Rows to skip, at most 10000. Not combinable with `cursor`."
+        required: false
+        schema:
+          type: "integer"
+          format: "int32"
+          default: 0
+          maximum: 10000
+          minimum: 0
+      - name: "cursor"
+        in: "query"
+        description: "The `next_cursor` of the previous page. Valid only with the\
+          \ same filter and sort."
+        required: false
+        schema:
+          type: "string"
+      - name: "page_info"
+        in: "query"
+        description: "`full` fills `page` with the limit, offset, total and next cursor;\
+          \ `cursor` fills it with the limit and the next cursor alone, so a walk\
+          \ over a large listing is not counted; omit it for the rows alone."
+        required: false
+        schema:
+          type: "string"
+          enum:
+          - "full"
+          - "cursor"
+      responses:
+        "200":
+          description: "A page of delivery response rows, with the paging facts when\
+            \ the request asked for them."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageDeliveryResponse"
+        "400":
+          description: "A filter, sort, cursor or paging parameter is unknown, not\
+            \ allowed for the field, or not valid for its type."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:webhook:manage"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/tasks:
+    get:
+      tags:
+      - "Human tasks"
+      summary: "List the caller's tasks"
+      description: "Returns the human tasks the caller may see: those that name the\
+        \ caller and those assigned to a group the caller belongs to, optionally narrowed\
+        \ by `status`.\n\nCallers: tenant-system. Requires `workflow:task:read`."
+      operationId: "inboxAsTenantSystem"
+      parameters:
+      - name: "status"
+        in: "query"
+        description: "Only rows in this status."
+        required: false
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/TaskView"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: "workflow:task:read"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/tasks/{id}:
+    get:
+      tags:
+      - "Human tasks"
+      summary: "Get a task"
+      description: "Returns one task with its form and decisions. A task the caller\
+        \ may not see answers `404`, because a `403` would confirm that it exists.\n\
+        \nCallers: tenant-system. Requires `workflow:task:read`."
+      operationId: "getAsTenantSystem_1"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the task."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "One human task: what it asks, who it is for, when it is due\
+            \ and what was decided."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TaskView"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:task:read"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/instances/{id}:
+    get:
+      tags:
+      - "Workflow instances"
+      summary: "Get a workflow instance"
+      description: "Returns one instance with its state and, when it failed, the reason.\
+        \ An unknown id answers `404`.\n\nCallers: tenant-system. Requires `workflow:instance:read`."
+      operationId: "getAsTenantSystem_2"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the instance."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "One instance of a workflow. The trigger input is never part\
+            \ of it."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InstanceView"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:instance:read"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/instances/{id}/steps:
+    get:
+      tags:
+      - "Instance operations"
+      summary: "List an instance's steps"
+      description: "Returns the recorded timeline of the instance, one entry per step\
+        \ run. Requests and responses are redacted: a step's request never leaves\
+        \ this API.\n\nCallers: tenant-system. Requires `workflow:instance:read`."
+      operationId: "stepsAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the instance."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/StepRunView"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:instance:read"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/definitions/{id}:
+    get:
+      tags:
+      - "Workflow definitions"
+      summary: "Get a workflow definition"
+      description: "Returns one definition; its version is also the response's `ETag`.\
+        \ An unknown id answers `404`.\n\nCallers: tenant-system. Requires `workflow:definition:read`."
+      operationId: "getDefinitionAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the definition."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "A workflow definition."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DefinitionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:definition:read"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/definitions/{id}/versions:
+    get:
+      tags:
+      - "Workflow definitions"
+      summary: "List a definition's versions"
+      description: "Returns the definition's published versions.\n\nCallers: tenant-system.\
+        \ Requires `workflow:definition:read`."
+      operationId: "listVersionsAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the definition."
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/VersionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:definition:read"
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/definitions/{id}/versions/{version}:
+    get:
+      tags:
+      - "Workflow definitions"
+      summary: "Get a published version"
+      description: "Returns published version `version` of the definition with its\
+        \ graph. A published version never changes. An unknown definition or version\
+        \ answers `404`.\n\nCallers: tenant-system. Requires `workflow:definition:read`."
+      operationId: "getVersionAsTenantSystem"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "The id of the definition."
+        required: true
+        schema:
+          type: "string"
+      - name: "version"
+        in: "path"
+        description: "The number of the published version, starting at 1."
+        required: true
+        schema:
+          type: "integer"
+          format: "int32"
+      responses:
+        "200":
+          description: "One immutable published version of a definition."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VersionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      x-required-permission: "workflow:definition:read"
+      x-allowed-callers:
       - "tenant-system"
   /api/v1/webhook-deliveries:
     get:
@@ -2672,8 +5928,7 @@ paths:
         \ both. The body is `{\"data\": [...], \"page\": null}`. `page_info=full`\
         \ fills `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `workflow:webhook:manage`."
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-user. Requires `workflow:webhook:manage`."
       operationId: "listDeliveries"
       parameters:
       - name: "filter[attempts][eq]"
@@ -3213,7 +6468,6 @@ paths:
       x-required-permission: "workflow:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/tasks:
     get:
       tags:
@@ -3221,7 +6475,7 @@ paths:
       summary: "List the caller's tasks"
       description: "Returns the human tasks the caller may see: those that name the\
         \ caller and those assigned to a group the caller belongs to, optionally narrowed\
-        \ by `status`.\n\nCallers: tenant-user, tenant-system. Requires `workflow:task:read`."
+        \ by `status`.\n\nCallers: tenant-user. Requires `workflow:task:read`."
       operationId: "inbox"
       parameters:
       - name: "status"
@@ -3247,7 +6501,6 @@ paths:
       x-required-permission: "workflow:task:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/tasks/{id}:
     get:
       tags:
@@ -3255,7 +6508,7 @@ paths:
       summary: "Get a task"
       description: "Returns one task with its form and decisions. A task the caller\
         \ may not see answers `404`, because a `403` would confirm that it exists.\n\
-        \nCallers: tenant-user, tenant-system. Requires `workflow:task:read`."
+        \nCallers: tenant-user. Requires `workflow:task:read`."
       operationId: "get_1"
       parameters:
       - name: "id"
@@ -3286,15 +6539,13 @@ paths:
       x-required-permission: "workflow:task:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/instances/{id}:
     get:
       tags:
       - "Workflow instances"
       summary: "Get a workflow instance"
       description: "Returns one instance with its state and, when it failed, the reason.\
-        \ An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `workflow:instance:read`."
+        \ An unknown id answers `404`.\n\nCallers: tenant-user. Requires `workflow:instance:read`."
       operationId: "get_2"
       parameters:
       - name: "id"
@@ -3320,7 +6571,6 @@ paths:
       x-required-permission: "workflow:instance:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/instances/{id}/steps:
     get:
       tags:
@@ -3328,7 +6578,7 @@ paths:
       summary: "List an instance's steps"
       description: "Returns the recorded timeline of the instance, one entry per step\
         \ run. Requests and responses are redacted: a step's request never leaves\
-        \ this API.\n\nCallers: tenant-user, tenant-system. Requires `workflow:instance:read`."
+        \ this API.\n\nCallers: tenant-user. Requires `workflow:instance:read`."
       operationId: "steps"
       parameters:
       - name: "id"
@@ -3355,15 +6605,13 @@ paths:
       x-required-permission: "workflow:instance:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/definitions/{id}:
     get:
       tags:
       - "Workflow definitions"
       summary: "Get a workflow definition"
       description: "Returns one definition; its version is also the response's `ETag`.\
-        \ An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `workflow:definition:read`."
+        \ An unknown id answers `404`.\n\nCallers: tenant-user. Requires `workflow:definition:read`."
       operationId: "getDefinition"
       parameters:
       - name: "id"
@@ -3388,14 +6636,13 @@ paths:
       x-required-permission: "workflow:definition:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/definitions/{id}/versions:
     get:
       tags:
       - "Workflow definitions"
       summary: "List a definition's versions"
-      description: "Returns the definition's published versions.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `workflow:definition:read`."
+      description: "Returns the definition's published versions.\n\nCallers: tenant-user.\
+        \ Requires `workflow:definition:read`."
       operationId: "listVersions"
       parameters:
       - name: "id"
@@ -3422,7 +6669,6 @@ paths:
       x-required-permission: "workflow:definition:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/definitions/{id}/versions/{version}:
     get:
       tags:
@@ -3430,7 +6676,7 @@ paths:
       summary: "Get a published version"
       description: "Returns published version `version` of the definition with its\
         \ graph. A published version never changes. An unknown definition or version\
-        \ answers `404`.\n\nCallers: tenant-user, tenant-system. Requires `workflow:definition:read`."
+        \ answers `404`.\n\nCallers: tenant-user. Requires `workflow:definition:read`."
       operationId: "getVersion"
       parameters:
       - name: "id"
@@ -3464,7 +6710,6 @@ paths:
       x-required-permission: "workflow:definition:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
 components:
   schemas:
     UpdateEndpointRequest:
@@ -3776,20 +7021,6 @@ components:
           type: "string"
           format: "date-time"
           description: "When the record was last changed."
-    ReceiptResponse:
-      type: "object"
-      description: "The receipt of a delivered event."
-      properties:
-        eventId:
-          type: "string"
-          description: "The id of the event."
-        started:
-          type: "integer"
-          format: "int32"
-          description: "How many instances the event started."
-        duplicate:
-          type: "boolean"
-          description: "Whether the event id was seen before. A duplicate starts nothing."
     CreateEndpointRequest:
       type: "object"
       description: "The endpoint to register."
@@ -4144,6 +7375,20 @@ components:
         publishedBy:
           type: "string"
           description: "Who published the version."
+    ReceiptResponse:
+      type: "object"
+      description: "The receipt of a delivered event."
+      properties:
+        eventId:
+          type: "string"
+          description: "The id of the event."
+        started:
+          type: "integer"
+          format: "int32"
+          description: "How many instances the event started."
+        duplicate:
+          type: "boolean"
+          description: "Whether the event id was seen before. A duplicate starts nothing."
     PageEndpointResponse:
       type: "object"
       description: "A page of endpoint response rows, with the paging facts when the\

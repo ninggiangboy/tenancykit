@@ -98,19 +98,19 @@ class TriggerApiTest extends WorkflowApiTest {
         String definitionId = publishedDefinition(session);
         String firstBody = "{\"definition\":\"" + definitionId + "\",\"input\":{\"n\":1}}";
 
-        MvcResult first = send(post("/api/v1/instances").header("Idempotency-Key", "manual-1"), session,
+        MvcResult first = send(post("/system/v1/instances").header("Idempotency-Key", "manual-1"), session,
                         firstBody, null)
                 .andReturn();
         assertThat(first.getResponse().getStatus()).isEqualTo(201);
         String firstId = read(first).get("id").asString();
 
-        MvcResult again = send(post("/api/v1/instances").header("Idempotency-Key", "manual-1"), session,
+        MvcResult again = send(post("/system/v1/instances").header("Idempotency-Key", "manual-1"), session,
                         firstBody, null)
                 .andReturn();
         assertThat(again.getResponse().getStatus()).isEqualTo(201);
         assertThat(read(again).get("id").asString()).isEqualTo(firstId);
 
-        MvcResult other = send(post("/api/v1/instances").header("Idempotency-Key", "manual-1"), session,
+        MvcResult other = send(post("/system/v1/instances").header("Idempotency-Key", "manual-1"), session,
                         "{\"definition\":\"" + definitionId + "\",\"input\":{\"n\":2}}", null)
                 .andReturn();
         assertThat(other.getResponse().getStatus()).isEqualTo(409);
@@ -120,23 +120,23 @@ class TriggerApiTest extends WorkflowApiTest {
     @Test
     void aCredentialWithoutTheManageCodeCannotListTriggers() throws Exception {
         Session readOnly = tenant(READ);
-        MvcResult result = getAs(readOnly, "/api/v1/triggers").andReturn();
+        MvcResult result = getAs(readOnly, "/system/v1/triggers").andReturn();
         assertThat(result.getResponse().getStatus()).isEqualTo(403);
     }
 
     // ------------------------------------------------------------------ helpers
 
     private String publishedDefinition(Session session) throws Exception {
-        MvcResult created = postAs(session, "/api/v1/definitions",
+        MvcResult created = postAs(session, "/system/v1/definitions",
                         "{\"code\":\"hook" + UUID.randomUUID().toString().replace("-", "").substring(0, 8)
                                 + "\",\"name\":\"Hook target\"}")
                 .andReturn();
         String id = read(created).get("id").asString();
-        MvcResult draft = putAs(session, "/api/v1/definitions/{id}/draft", GRAPH,
+        MvcResult draft = putAs(session, "/system/v1/definitions/{id}/draft", GRAPH,
                         created.getResponse().getHeader("ETag"), id)
                 .andReturn();
         assertThat(read(draft).get("problems").size()).isZero();
-        MvcResult publish = send(post("/api/v1/definitions/{id}/publish", id), session, null,
+        MvcResult publish = send(post("/system/v1/definitions/{id}/publish", id), session, null,
                         draft.getResponse().getHeader("ETag"))
                 .andReturn();
         assertThat(publish.getResponse().getStatus()).isEqualTo(201);
@@ -146,7 +146,7 @@ class TriggerApiTest extends WorkflowApiTest {
     private record Created(String id, String secret) {}
 
     private Created trigger(Session session, String definitionId, String eventType) throws Exception {
-        MvcResult result = postAs(session, "/api/v1/triggers", """
+        MvcResult result = postAs(session, "/system/v1/triggers", """
                 {"name":"Billing hook","kind":"APP","source":"billing","eventType":"%s","definitionId":"%s"}
                 """.formatted(eventType, definitionId)).andReturn();
         assertThat(result.getResponse().getStatus()).isEqualTo(201);

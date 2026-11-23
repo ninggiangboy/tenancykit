@@ -29,7 +29,7 @@
       "type": "http",
       "app": "billing",
       "method": "POST",
-      "path": { "op": "concat", "args": ["/api/v1/payments/", { "input": "data.paymentId" }, "/refunds"] },
+      "path": { "op": "concat", "args": ["/system/v1/payments/", { "input": "data.paymentId" }, "/refunds"] },
       "body": { "amount": { "input": "data.amount" } },
       "next": "done",
       "on_error": "rejected"
@@ -39,7 +39,7 @@
       "type": "http",
       "app": "mailroom",
       "method": "POST",
-      "path": "/api/v1/emails",
+      "path": "/system/v1/emails",
       "body": {
         "to": { "input": "data.customer.email" },
         "subject": "Your refund was not approved",

@@ -6,7 +6,7 @@
 
 seed_mailroom() {
   step "Mailroom: acme"
-  use_app acme mailroom "${PROXY}/mailroom/api/v1"
+  use_app acme mailroom "${PROXY}/mailroom/system/v1"
 
   # --- templates (Mustache) ---
   local entry key name subject html

@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "What a tenant's flows did and are doing: the instances started and their state.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class InstanceHistoryController {
 

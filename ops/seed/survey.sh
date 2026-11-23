@@ -95,7 +95,7 @@ survey_ensure() {
 
 seed_survey() {
   step "Survey: acme"
-  use_app acme survey "${PROXY}/survey/api/v1"
+  use_app acme survey "${PROXY}/survey/system/v1"
   local nps
   survey_ensure "Customer satisfaction (NPS)" "$(survey_nps_document)" yes none && nps="${SURVEY_ID}"
   if [ -n "${nps}" ]; then

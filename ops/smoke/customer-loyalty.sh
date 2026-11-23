@@ -19,8 +19,8 @@ set -euo pipefail
 TENANT_CODE="${SMOKE_TENANT:-customer-loyalty-smoke}"
 smoke_bootstrap "customer loyalty" "${TENANT_CODE}"
 RECEIVER_PORT="${FORWARDER_PORT:-8099}"
-CUSTOMER="${PROXY}/customer/api/v1"
-LOYALTY="${PROXY}/loyalty/api/v1"
+CUSTOMER="${PROXY}/customer/system/v1"
+LOYALTY="${PROXY}/loyalty/system/v1"
 
 SECOND_TENANT="${TENANT_CODE}-other"
 SECOND_ADMIN_TOKEN=$(tenant_admin_token "${SECOND_TENANT}" "admin@${SECOND_TENANT}.test")

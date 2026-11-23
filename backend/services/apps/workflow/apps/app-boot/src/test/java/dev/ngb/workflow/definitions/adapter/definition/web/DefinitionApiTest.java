@@ -52,37 +52,37 @@ class DefinitionApiTest extends WorkflowApiTest {
         assertThat(created.status).isEqualTo(201);
         assertThat(created.etag).isNotBlank();
 
-        MvcResult draft = putAs(session, "/api/v1/definitions/{id}/draft", TRIGGER_TO_END, created.etag, created.id)
+        MvcResult draft = putAs(session, "/system/v1/definitions/{id}/draft", TRIGGER_TO_END, created.etag, created.id)
                 .andReturn();
         assertThat(draft.getResponse().getStatus()).isEqualTo(200);
         assertThat(read(draft).get("problems").size()).isZero();
         String draftEtag = draft.getResponse().getHeader("ETag");
         assertThat(draftEtag).isNotEqualTo(created.etag);
 
-        MvcResult first = postAs(session, "/api/v1/definitions/{id}/publish", null, created.id)
+        MvcResult first = postAs(session, "/system/v1/definitions/{id}/publish", null, created.id)
                 .andReturn();
         assertThat(first.getResponse().getStatus()).isEqualTo(428);
 
         MvcResult published = send(
-                        post("/api/v1/definitions/{id}/publish", created.id), session, null, draftEtag)
+                        post("/system/v1/definitions/{id}/publish", created.id), session, null, draftEtag)
                 .andReturn();
         assertThat(published.getResponse().getStatus()).isEqualTo(201);
         assertThat(read(published).get("version").asInt()).isEqualTo(1);
         String publishEtag = published.getResponse().getHeader("ETag");
 
         MvcResult second = send(
-                        post("/api/v1/definitions/{id}/publish", created.id), session, null, publishEtag)
+                        post("/system/v1/definitions/{id}/publish", created.id), session, null, publishEtag)
                 .andReturn();
         assertThat(second.getResponse().getStatus()).isEqualTo(201);
         assertThat(read(second).get("version").asInt()).isEqualTo(2);
 
-        JsonNode versions = read(getAs(session, "/api/v1/definitions/{id}/versions", created.id).andReturn());
+        JsonNode versions = read(getAs(session, "/system/v1/definitions/{id}/versions", created.id).andReturn());
         assertThat(versions.size()).isEqualTo(2);
         assertThat(versions.get(0).get("version").asInt()).isEqualTo(2);
         assertThat(versions.get(1).get("graph").get("start").asString()).isEqualTo("start");
 
         MvcResult retired = send(
-                        post("/api/v1/definitions/{id}/retire", created.id), session, null,
+                        post("/system/v1/definitions/{id}/retire", created.id), session, null,
                         second.getResponse().getHeader("ETag"))
                 .andReturn();
         assertThat(retired.getResponse().getStatus()).isEqualTo(200);
@@ -93,11 +93,11 @@ class DefinitionApiTest extends WorkflowApiTest {
     void aStaleIfMatchIsRefusedAndCarriesTheCurrentVersion() throws Exception {
         Session session = tenant(MANAGE, READ);
         Created created = create(session, "stale", "Stale draft");
-        MvcResult first = putAs(session, "/api/v1/definitions/{id}/draft", TRIGGER_TO_END, created.etag, created.id)
+        MvcResult first = putAs(session, "/system/v1/definitions/{id}/draft", TRIGGER_TO_END, created.etag, created.id)
                 .andReturn();
         String fresh = first.getResponse().getHeader("ETag");
 
-        MvcResult stale = putAs(session, "/api/v1/definitions/{id}/draft", NO_END, created.etag, created.id)
+        MvcResult stale = putAs(session, "/system/v1/definitions/{id}/draft", NO_END, created.etag, created.id)
                 .andReturn();
 
         assertThat(stale.getResponse().getStatus()).isEqualTo(412);
@@ -108,13 +108,13 @@ class DefinitionApiTest extends WorkflowApiTest {
     void publishingAnInvalidDraftAnswers422WithPointers() throws Exception {
         Session session = tenant(MANAGE, READ);
         Created created = create(session, "invalid", "Invalid draft");
-        MvcResult draft = putAs(session, "/api/v1/definitions/{id}/draft", NO_END, created.etag, created.id)
+        MvcResult draft = putAs(session, "/system/v1/definitions/{id}/draft", NO_END, created.etag, created.id)
                 .andReturn();
         assertThat(draft.getResponse().getStatus()).isEqualTo(200);
         assertThat(read(draft).get("problems").size()).isGreaterThan(0);
 
         MvcResult publish = send(
-                        post("/api/v1/definitions/{id}/publish", created.id), session, null,
+                        post("/system/v1/definitions/{id}/publish", created.id), session, null,
                         draft.getResponse().getHeader("ETag"))
                 .andReturn();
 
@@ -131,13 +131,13 @@ class DefinitionApiTest extends WorkflowApiTest {
     void simulateWalksTheDraftWithoutSideEffects() throws Exception {
         Session session = tenant(MANAGE, READ);
         Created created = create(session, "simulate", "Simulated refund");
-        MvcResult draft = putAs(session, "/api/v1/definitions/{id}/draft", REFUND_BRANCH, created.etag, created.id)
+        MvcResult draft = putAs(session, "/system/v1/definitions/{id}/draft", REFUND_BRANCH, created.etag, created.id)
                 .andReturn();
         assertThat(read(draft).get("problems").size()).isZero();
 
         JsonNode result = read(postAs(
                         session,
-                        "/api/v1/definitions/{id}/simulate",
+                        "/system/v1/definitions/{id}/simulate",
                         "{\"input\":{\"kind\":\"refund\",\"amount\":12.5}}",
                         created.id)
                 .andReturn());
@@ -155,7 +155,7 @@ class DefinitionApiTest extends WorkflowApiTest {
         Session readOnly = tenant(READ);
 
         MvcResult result = postAs(
-                        readOnly, "/api/v1/definitions", "{\"code\":\"readonly\",\"name\":\"Read only\"}")
+                        readOnly, "/system/v1/definitions", "{\"code\":\"readonly\",\"name\":\"Read only\"}")
                 .andReturn();
 
         assertThat(result.getResponse().getStatus()).isEqualTo(403);
@@ -166,7 +166,7 @@ class DefinitionApiTest extends WorkflowApiTest {
     private Created create(Session session, String code, String name) throws Exception {
         MvcResult result = postAs(
                         session,
-                        "/api/v1/definitions",
+                        "/system/v1/definitions",
                         "{\"code\":\"" + code + "\",\"name\":\"" + name + "\"}")
                 .andReturn();
         int status = result.getResponse().getStatus();

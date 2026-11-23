@@ -20,7 +20,7 @@ set -euo pipefail
 TENANT_CODE="${SMOKE_WORKFLOW_TENANT:-workflow-smoke}"
 SMOKE_APPS="workflow billing mailroom customer loyalty"
 smoke_bootstrap "workflow" "${TENANT_CODE}"
-WORKFLOW="${PROXY}/workflow/api/v1"
+WORKFLOW="${PROXY}/workflow/system/v1"
 HOST="${HOST:?smoke_bootstrap must set it}"
 ADMIN_TOKEN="${ADMIN_TOKEN:?smoke_bootstrap must set it}"
 

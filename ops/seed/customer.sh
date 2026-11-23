@@ -60,7 +60,7 @@ seed_customer_tenant() {
   local code="$1" currency="$2" store="$3" people products
   eval "people=(\"\${CUSTOMERS_${code}[@]}\")"
   eval "products=(\"\${PRODUCTS_${code}[@]}\")"
-  use_app "${code}" customer "${PROXY}/customer/api/v1"
+  use_app "${code}" customer "${PROXY}/customer/system/v1"
 
   # The vocabulary a tenant defines once: custom fields and consent topics.
   local field

@@ -20,7 +20,7 @@ set -euo pipefail
 TENANT_CODE="${SMOKE_LOYALTY_TENANT:-loyalty-smoke}"
 smoke_bootstrap "loyalty" "${TENANT_CODE}"
 RECEIVER_PORT="${FORWARDER_PORT:-8099}"
-LOYALTY="${PROXY}/loyalty/api/v1"
+LOYALTY="${PROXY}/loyalty/system/v1"
 LOYALTY_TOKEN="${LOYALTY_TOKEN:?smoke_bootstrap must set it}"
 
 SECOND_TENANT="${TENANT_CODE}-other"

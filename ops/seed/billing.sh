@@ -212,7 +212,7 @@ seed_billing() {
   local code
   for code in acme globex; do
     step "Billing: ${code}"
-    use_app "${code}" billing "${PROXY}/api/v1"
+    use_app "${code}" billing "${PROXY}/system/v1"
     seed_billing_people
     # The customer who left: the last one of the first tenant.
     if [ "${code}" = acme ]; then

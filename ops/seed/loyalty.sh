@@ -115,7 +115,7 @@ seed_loyalty_members() {
 
 seed_loyalty() {
   step "Loyalty: acme"
-  use_app acme loyalty "${PROXY}/loyalty/api/v1"
+  use_app acme loyalty "${PROXY}/loyalty/system/v1"
   seed_loyalty_program
   seed_loyalty_catalog
   seed_loyalty_members

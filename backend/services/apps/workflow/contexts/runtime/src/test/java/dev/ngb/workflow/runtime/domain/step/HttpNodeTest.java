@@ -30,7 +30,7 @@ class HttpNodeTest {
         StepOutcome outcome = run(http, Map.of(
                 "app", "crm",
                 "method", "get",
-                "path", "/api/v1/customers",
+                "path", "/system/v1/customers",
                 "headers", Map.of("X-Trace", "abc"),
                 "body", Map.of("limit", 10),
                 "next", "done"));
@@ -39,7 +39,7 @@ class HttpNodeTest {
         assertThat(outcome.nextNodeIds()).containsExactly("done");
         assertThat(http.last.method()).isEqualTo("GET");
         assertThat(http.last.app()).isEqualTo("crm");
-        assertThat(http.last.path()).isEqualTo("/api/v1/customers");
+        assertThat(http.last.path()).isEqualTo("/system/v1/customers");
         assertThat(http.last.headers()).containsEntry("X-Trace", "abc");
         assertThat(http.last.body()).isEqualTo(Map.of("limit", 10));
         assertThat(http.last.idempotencyKey()).hasSize(64);

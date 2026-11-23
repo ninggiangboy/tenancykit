@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "The connections a workflow step may call. A secret goes in and never comes out.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class ConnectionController {
 
