@@ -39,7 +39,7 @@ class OfferingApiIntegrationTest extends BookingApiTest {
     void createOfferingAnswers201WithItsVersionAsTheETag() throws Exception {
         Session session = catalog();
 
-        postAs(session, "/api/v1/offerings", """
+        postAs(session, "/system/v1/offerings", """
                 {"code":"massage-60","name":"Massage 60","kind":"INTERVAL","durationMin":60,"slotStep":30,"horizonDays":30}
                 """)
                 .andExpect(status().isCreated())
@@ -70,7 +70,7 @@ class OfferingApiIntegrationTest extends BookingApiTest {
         Session session = catalog();
         createOffering(session, "taken");
 
-        postAs(session, "/api/v1/offerings", offeringBody("taken", "Another", "INTERVAL"))
+        postAs(session, "/system/v1/offerings", offeringBody("taken", "Another", "INTERVAL"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("DUPLICATE_CODE"));
     }
@@ -79,7 +79,7 @@ class OfferingApiIntegrationTest extends BookingApiTest {
     void anInvalidDurationIsRefusedWith422() throws Exception {
         Session session = catalog();
 
-        postAs(session, "/api/v1/offerings", """
+        postAs(session, "/system/v1/offerings", """
                 {"code":"bad-duration","name":"Bad","kind":"INTERVAL","durationMin":0,"slotStep":30,"horizonDays":30}
                 """)
                 .andExpect(status().is(422))
@@ -91,7 +91,7 @@ class OfferingApiIntegrationTest extends BookingApiTest {
         Session session = catalog();
         String id = createOffering(session, "conditional");
 
-        patchAs(session, "/api/v1/offerings/{id}", "{\"name\":\"Renamed\"}", null, id)
+        patchAs(session, "/system/v1/offerings/{id}", "{\"name\":\"Renamed\"}", null, id)
                 .andExpect(status().isPreconditionRequired());
     }
 
@@ -100,14 +100,14 @@ class OfferingApiIntegrationTest extends BookingApiTest {
         Session session = catalog();
         String id = createOffering(session, "patchable");
 
-        patchAs(session, "/api/v1/offerings/{id}", "{\"name\":\"Renamed\",\"status\":\"ACTIVE\"}", "\"1\"", id)
+        patchAs(session, "/system/v1/offerings/{id}", "{\"name\":\"Renamed\",\"status\":\"ACTIVE\"}", "\"1\"", id)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"2\""))
                 .andExpect(jsonPath("$.name").value("Renamed"))
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
                 .andExpect(jsonPath("$.durationMin").value(60));
 
-        getAs(session, "/api/v1/offerings/{id}", id)
+        getAs(session, "/system/v1/offerings/{id}", id)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"2\""))
                 .andExpect(jsonPath("$.name").value("Renamed"));
@@ -117,15 +117,15 @@ class OfferingApiIntegrationTest extends BookingApiTest {
     void aStaleIfMatchIsRefusedWith412() throws Exception {
         Session session = catalog();
         String id = createOffering(session, "stale");
-        patchAs(session, "/api/v1/offerings/{id}", "{\"name\":\"Renamed\"}", "\"1\"", id)
+        patchAs(session, "/system/v1/offerings/{id}", "{\"name\":\"Renamed\"}", "\"1\"", id)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"2\""));
 
-        patchAs(session, "/api/v1/offerings/{id}", "{\"name\":\"Again\"}", "\"1\"", id)
+        patchAs(session, "/system/v1/offerings/{id}", "{\"name\":\"Again\"}", "\"1\"", id)
                 .andExpect(status().isPreconditionFailed())
                 .andExpect(header().string("ETag", "\"2\""));
 
-        getAs(session, "/api/v1/offerings/{id}", id).andExpect(jsonPath("$.name").value("Renamed"));
+        getAs(session, "/system/v1/offerings/{id}", id).andExpect(jsonPath("$.name").value("Renamed"));
     }
 
     @Test
@@ -169,16 +169,16 @@ class OfferingApiIntegrationTest extends BookingApiTest {
         Session session = catalog();
         String id = createOffering(session, "archivable");
 
-        deleteAs(session, "/api/v1/offerings/{id}", "\"1\"", id).andExpect(status().isNoContent());
+        deleteAs(session, "/system/v1/offerings/{id}", "\"1\"", id).andExpect(status().isNoContent());
 
-        getAs(session, "/api/v1/offerings/{id}", id)
+        getAs(session, "/system/v1/offerings/{id}", id)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"2\""))
                 .andExpect(jsonPath("$.status").value("ARCHIVED"));
 
-        deleteAs(session, "/api/v1/offerings/{id}", "\"2\"", id)
+        deleteAs(session, "/system/v1/offerings/{id}", "\"2\"", id)
                 .andExpect(status().isNoContent());
-        getAs(session, "/api/v1/offerings/{id}", id).andExpect(header().string("ETag", "\"2\""));
+        getAs(session, "/system/v1/offerings/{id}", id).andExpect(header().string("ETag", "\"2\""));
     }
 
     @Test
@@ -187,7 +187,7 @@ class OfferingApiIntegrationTest extends BookingApiTest {
         UUID resource = seedResource(session, "room-1");
         String id = createOffering(session, "interval");
 
-        putAs(session, "/api/v1/offerings/{id}/requirements", """
+        putAs(session, "/system/v1/offerings/{id}/requirements", """
                 {"requirements":[{"slotCode":"staff","resourceId":"%s"}]}
                 """.formatted(resource), id)
                 .andExpect(status().isOk())
@@ -195,7 +195,7 @@ class OfferingApiIntegrationTest extends BookingApiTest {
                 .andExpect(jsonPath("$.requirements[0].slotCode").value("staff"))
                 .andExpect(jsonPath("$.requirements[0].resourceId").value(resource.toString()));
 
-        getAs(session, "/api/v1/offerings/{id}", id)
+        getAs(session, "/system/v1/offerings/{id}", id)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.requirements.length()").value(1))
                 .andExpect(jsonPath("$.requirements[0].resourceId").value(resource.toString()));
@@ -207,7 +207,7 @@ class OfferingApiIntegrationTest extends BookingApiTest {
         UUID resource = seedResource(session, "seat-1");
         String id = createOffering(session, "capacity", "Capacity", "CAPACITY");
 
-        putAs(session, "/api/v1/offerings/{id}/requirements", """
+        putAs(session, "/system/v1/offerings/{id}/requirements", """
                 {"requirements":[{"slotCode":"seat","resourceId":"%s"}]}
                 """.formatted(resource), id)
                 .andExpect(status().is(422))
@@ -220,7 +220,7 @@ class OfferingApiIntegrationTest extends BookingApiTest {
         UUID resource = seedResource(session, "room-2");
         String id = createOffering(session, "twice");
 
-        putAs(session, "/api/v1/offerings/{id}/requirements", """
+        putAs(session, "/system/v1/offerings/{id}/requirements", """
                 {"requirements":[{"slotCode":"one","resourceId":"%s"},{"slotCode":"two","resourceId":"%s"}]}
                 """.formatted(resource, resource), id)
                 .andExpect(status().is(422))
@@ -232,7 +232,7 @@ class OfferingApiIntegrationTest extends BookingApiTest {
         Session session = catalog();
         String id = createOffering(session, "cancellable");
 
-        putAs(session, "/api/v1/offerings/{id}/cancellation-windows", """
+        putAs(session, "/system/v1/offerings/{id}/cancellation-windows", """
                 {"windows":[{"minutesBeforeStart":60,"code":"late"},{"minutesBeforeStart":1440,"code":"full"}]}
                 """, id)
                 .andExpect(status().isOk())
@@ -249,8 +249,8 @@ class OfferingApiIntegrationTest extends BookingApiTest {
         Session other = catalog();
         String id = createOffering(one, "private");
 
-        getAs(other, "/api/v1/offerings/{id}", id).andExpect(status().isNotFound());
-        patchAs(other, "/api/v1/offerings/{id}", "{\"name\":\"Mine\"}", "\"1\"", id)
+        getAs(other, "/system/v1/offerings/{id}", id).andExpect(status().isNotFound());
+        patchAs(other, "/system/v1/offerings/{id}", "{\"name\":\"Mine\"}", "\"1\"", id)
                 .andExpect(status().isNotFound());
     }
 
@@ -259,7 +259,7 @@ class OfferingApiIntegrationTest extends BookingApiTest {
     }
 
     private String createOffering(Session session, String code, String name, String kind) throws Exception {
-        String response = postAs(session, "/api/v1/offerings", offeringBody(code, name, kind))
+        String response = postAs(session, "/system/v1/offerings", offeringBody(code, name, kind))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -274,7 +274,7 @@ class OfferingApiIntegrationTest extends BookingApiTest {
     }
 
     private ResultActions listOfferings(Session session, String... params) throws Exception {
-        MockHttpServletRequestBuilder request = get("/api/v1/offerings")
+        MockHttpServletRequestBuilder request = get("/system/v1/offerings")
                 .header("Host", session.host())
                 .header("Authorization", "Bearer " + session.token());
         for (int i = 0; i < params.length; i += 2) {

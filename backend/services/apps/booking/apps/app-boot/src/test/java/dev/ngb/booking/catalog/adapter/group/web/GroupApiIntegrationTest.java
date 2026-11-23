@@ -31,7 +31,7 @@ class GroupApiIntegrationTest extends BookingApiTest {
         UUID first = seedResource(session, "room-a");
         UUID second = seedResource(session, "room-b");
 
-        postAs(session, "/api/v1/resource-groups", groupBody("front", "Front desk", "PRIORITY", 2, first, 0, second, 1))
+        postAs(session, "/system/v1/resource-groups", groupBody("front", "Front desk", "PRIORITY", 2, first, 0, second, 1))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isString())
                 .andExpect(jsonPath("$.code").value("front"))
@@ -52,7 +52,7 @@ class GroupApiIntegrationTest extends BookingApiTest {
         createGroup(session, "one", "One", resource);
         createGroup(session, "two", "Two", resource);
 
-        getAs(session, "/api/v1/resource-groups")
+        getAs(session, "/system/v1/resource-groups")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(2));
     }
@@ -63,7 +63,7 @@ class GroupApiIntegrationTest extends BookingApiTest {
         UUID resource = seedResource(session, "room-read");
         String id = createGroup(session, "readable", "Readable", resource);
 
-        getAs(session, "/api/v1/resource-groups/{id}", id)
+        getAs(session, "/system/v1/resource-groups/{id}", id)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("readable"))
                 .andExpect(jsonPath("$.members[0].resourceId").value(resource.toString()));
@@ -76,7 +76,7 @@ class GroupApiIntegrationTest extends BookingApiTest {
         UUID second = seedResource(session, "room-new");
         String id = createGroup(session, "patchable", "Patchable", first);
 
-        patchAs(session, "/api/v1/resource-groups/{id}", """
+        patchAs(session, "/system/v1/resource-groups/{id}", """
                 {"strategy":"ROUND_ROBIN","members":[{"resourceId":"%s","priority":5}]}
                 """.formatted(second), "\"1\"", id)
                 .andExpect(status().isOk())
@@ -86,7 +86,7 @@ class GroupApiIntegrationTest extends BookingApiTest {
                 .andExpect(jsonPath("$.members[0].resourceId").value(second.toString()))
                 .andExpect(jsonPath("$.members[0].priority").value(5));
 
-        getAs(session, "/api/v1/resource-groups/{id}", id)
+        getAs(session, "/system/v1/resource-groups/{id}", id)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.strategy").value("ROUND_ROBIN"))
                 .andExpect(jsonPath("$.members[0].resourceId").value(second.toString()));
@@ -98,7 +98,7 @@ class GroupApiIntegrationTest extends BookingApiTest {
         UUID resource = seedResource(session, "room-conditional");
         String id = createGroup(session, "conditional", "Conditional", resource);
 
-        patchAs(session, "/api/v1/resource-groups/{id}", "{\"strategy\":\"LEAST_BUSY\"}", null, id)
+        patchAs(session, "/system/v1/resource-groups/{id}", "{\"strategy\":\"LEAST_BUSY\"}", null, id)
                 .andExpect(status().isPreconditionRequired());
     }
 
@@ -108,14 +108,14 @@ class GroupApiIntegrationTest extends BookingApiTest {
         UUID resource = seedResource(session, "room-stale");
         String id = createGroup(session, "stale", "Stale", resource);
 
-        patchAs(session, "/api/v1/resource-groups/{id}", "{\"strategy\":\"LEAST_BUSY\"}", "\"1\"", id)
+        patchAs(session, "/system/v1/resource-groups/{id}", "{\"strategy\":\"LEAST_BUSY\"}", "\"1\"", id)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.version").value(2));
 
-        patchAs(session, "/api/v1/resource-groups/{id}", "{\"strategy\":\"FIT_SEATS\"}", "\"1\"", id)
+        patchAs(session, "/system/v1/resource-groups/{id}", "{\"strategy\":\"FIT_SEATS\"}", "\"1\"", id)
                 .andExpect(status().isPreconditionFailed());
 
-        getAs(session, "/api/v1/resource-groups/{id}", id)
+        getAs(session, "/system/v1/resource-groups/{id}", id)
                 .andExpect(jsonPath("$.strategy").value("LEAST_BUSY"));
     }
 
@@ -125,7 +125,7 @@ class GroupApiIntegrationTest extends BookingApiTest {
         UUID resource = seedResource(session, "room-duplicate");
         createGroup(session, "taken", "Taken", resource);
 
-        postAs(session, "/api/v1/resource-groups", groupBody("taken", "Another", "PRIORITY", 1, resource, 0, null, 0))
+        postAs(session, "/system/v1/resource-groups", groupBody("taken", "Another", "PRIORITY", 1, resource, 0, null, 0))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("DUPLICATE_CODE"));
     }
@@ -134,7 +134,7 @@ class GroupApiIntegrationTest extends BookingApiTest {
     void anUnknownResourceIsRefusedWith422() throws Exception {
         Session session = catalog();
 
-        postAs(session, "/api/v1/resource-groups", groupBody(
+        postAs(session, "/system/v1/resource-groups", groupBody(
                         "unknown", "Unknown", "PRIORITY", 1, UUID.randomUUID(), 0, null, 0))
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
@@ -147,15 +147,15 @@ class GroupApiIntegrationTest extends BookingApiTest {
         UUID resource = seedResource(one, "room-private");
         String id = createGroup(one, "private", "Private", resource);
 
-        getAs(other, "/api/v1/resource-groups/{id}", id).andExpect(status().isNotFound());
-        patchAs(other, "/api/v1/resource-groups/{id}", "{\"strategy\":\"LEAST_BUSY\"}", "\"1\"", id)
+        getAs(other, "/system/v1/resource-groups/{id}", id).andExpect(status().isNotFound());
+        patchAs(other, "/system/v1/resource-groups/{id}", "{\"strategy\":\"LEAST_BUSY\"}", "\"1\"", id)
                 .andExpect(status().isNotFound());
     }
 
     private String createGroup(Session session, String code, String name, UUID resource) throws Exception {
         String response = postAs(
                         session,
-                        "/api/v1/resource-groups",
+                        "/system/v1/resource-groups",
                         groupBody(code, name, "PRIORITY", 1, resource, 0, null, 0))
                 .andExpect(status().isCreated())
                 .andReturn()

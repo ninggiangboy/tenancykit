@@ -40,7 +40,7 @@ paths:
     get:
       tags: ["Resources"]
       summary: "List resources"
-      description: "One tenant's resources, with the shared list query contract (`docs/list-query-contract.md`): filters on `status`, `zone` and `code`, sorts on `code`, `name` and `created_at`.\n\nCallers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      description: "One tenant's resources, with the shared list query contract (`docs/list-query-contract.md`): filters on `status`, `zone` and `code`, sorts on `code`, `name` and `created_at`.\n\nCallers: tenant-user. Requires `booking:resource:read`."
       operationId: listResources
       parameters:
       - $ref: "#/components/parameters/Filter"
@@ -61,12 +61,11 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:resource:read
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     post:
       tags: ["Resources"]
       summary: "Create a resource"
-      description: "Codes are chosen by the Tenant, unique per tenant and immutable. `zone` must be an IANA id known to the JDK's tz database.\n\nCallers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      description: "Codes are chosen by the Tenant, unique per tenant and immutable. `zone` must be an IANA id known to the JDK's tz database.\n\nCallers: tenant-user. Requires `booking:resource:manage`."
       operationId: createResource
       requestBody:
         required: true
@@ -95,8 +94,7 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
       x-required-permission: booking:resource:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/resources/{resourceId}:
     parameters:
     - $ref: "#/components/parameters/ResourceId"
@@ -117,14 +115,13 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:resource:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      description: "Callers: tenant-user. Requires `booking:resource:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     patch:
       tags: ["Resources"]
       summary: "Change a resource"
-      description: "Requires `If-Match`. `zone` is immutable once a booking references the resource.\n\nCallers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      description: "Requires `If-Match`. `zone` is immutable once a booking references the resource.\n\nCallers: tenant-user. Requires `booking:resource:manage`."
       operationId: patchResource
       parameters:
       - $ref: "#/components/parameters/IfMatch"
@@ -158,12 +155,11 @@ paths:
         "428": { $ref: "#/components/responses/PreconditionRequired" }
       x-required-permission: booking:resource:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     delete:
       tags: ["Resources"]
       summary: "Archive a resource"
-      description: "A referenced resource is archived, never deleted; an unreferenced one is deleted.\n\nCallers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      description: "A referenced resource is archived, never deleted; an unreferenced one is deleted.\n\nCallers: tenant-user. Requires `booking:resource:manage`."
       operationId: archiveResource
       parameters:
       - $ref: "#/components/parameters/IfMatch"
@@ -176,15 +172,14 @@ paths:
         "428": { $ref: "#/components/responses/PreconditionRequired" }
       x-required-permission: booking:resource:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/resources/{resourceId}/working-hours:
     parameters:
     - $ref: "#/components/parameters/ResourceId"
     put:
       tags: ["Calendar"]
       summary: "Replace a resource's weekly hours"
-      description: "Local wall-clock times in the resource's zone; several rows per weekday are allowed but must not overlap; `closes` may be `24:00`.\n\nCallers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      description: "Local wall-clock times in the resource's zone; several rows per weekday are allowed but must not overlap; `closes` may be `24:00`.\n\nCallers: tenant-user. Requires `booking:resource:manage`."
       operationId: replaceWorkingHours
       requestBody:
         required: true
@@ -205,8 +200,7 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
       x-required-permission: booking:resource:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     get:
       tags: ["Calendar"]
       summary: "Read a resource's weekly hours"
@@ -222,10 +216,9 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:resource:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      description: "Callers: tenant-user. Requires `booking:resource:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/resources/{resourceId}/exceptions:
     parameters:
     - $ref: "#/components/parameters/ResourceId"
@@ -244,14 +237,13 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:resource:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      description: "Callers: tenant-user. Requires `booking:resource:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     post:
       tags: ["Calendar"]
       summary: "Add a dated exception"
-      description: "`CLOSED` closes the day; `OPEN` replaces that day's hours with the given hours.\n\nCallers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      description: "`CLOSED` closes the day; `OPEN` replaces that day's hours with the given hours.\n\nCallers: tenant-user. Requires `booking:resource:manage`."
       operationId: addException
       requestBody:
         required: true
@@ -272,8 +264,7 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
       x-required-permission: booking:resource:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/resources/{resourceId}/exceptions/{exceptionId}:
     parameters:
     - $ref: "#/components/parameters/ResourceId"
@@ -291,10 +282,9 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:resource:manage
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      description: "Callers: tenant-user. Requires `booking:resource:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/resource-groups:
     get:
       tags: ["Resource groups"]
@@ -310,10 +300,9 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:resource:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      description: "Callers: tenant-user. Requires `booking:resource:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     post:
       tags: ["Resource groups"]
       summary: "Create a resource group"
@@ -341,10 +330,9 @@ paths:
                 $ref: "#/components/schemas/Error"
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
       x-required-permission: booking:resource:manage
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      description: "Callers: tenant-user. Requires `booking:resource:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/resource-groups/{groupId}:
     parameters:
     - name: groupId
@@ -366,10 +354,9 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:resource:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      description: "Callers: tenant-user. Requires `booking:resource:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     patch:
       tags: ["Resource groups"]
       summary: "Change a group's strategy or members"
@@ -396,10 +383,9 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
       x-required-permission: booking:resource:manage
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      description: "Callers: tenant-user. Requires `booking:resource:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/offerings:
     get:
       tags: ["Offerings"]
@@ -423,14 +409,13 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:offering:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:read`."
+      description: "Callers: tenant-user. Requires `booking:offering:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     post:
       tags: ["Offerings"]
       summary: "Create an offering"
-      description: "`INTERVAL` needs at least one requirement; `CAPACITY` needs none, because its pools come with sessions.\n\nCallers: tenant-user, tenant-system. Requires `booking:offering:manage`."
+      description: "`INTERVAL` needs at least one requirement; `CAPACITY` needs none, because its pools come with sessions.\n\nCallers: tenant-user. Requires `booking:offering:manage`."
       operationId: createOffering
       requestBody:
         required: true
@@ -458,8 +443,7 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
       x-required-permission: booking:offering:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/offerings/{offeringId}:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
@@ -480,10 +464,9 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:offering:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:read`."
+      description: "Callers: tenant-user. Requires `booking:offering:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     patch:
       tags: ["Offerings"]
       summary: "Change an offering"
@@ -512,10 +495,9 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
       x-required-permission: booking:offering:manage
-      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:manage`."
+      description: "Callers: tenant-user. Requires `booking:offering:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     delete:
       tags: ["Offerings"]
       summary: "Archive an offering"
@@ -530,17 +512,16 @@ paths:
         "412": { $ref: "#/components/responses/PreconditionFailed" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
       x-required-permission: booking:offering:manage
-      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:manage`."
+      description: "Callers: tenant-user. Requires `booking:offering:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/offerings/{offeringId}/requirements:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
     put:
       tags: ["Offerings"]
       summary: "Replace an interval offering's requirements"
-      description: "Each requirement names one resource or one group; one booking claims one resource per requirement, all distinct.\n\nCallers: tenant-user, tenant-system. Requires `booking:offering:manage`."
+      description: "Each requirement names one resource or one group; one booking claims one resource per requirement, all distinct.\n\nCallers: tenant-user. Requires `booking:offering:manage`."
       operationId: replaceRequirements
       requestBody:
         required: true
@@ -566,15 +547,14 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:offering:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/offerings/{offeringId}/cancellation-windows:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
     put:
       tags: ["Offerings"]
       summary: "Replace an offering's cancellation windows"
-      description: "A Tenant-chosen `code` per threshold; booking records no amount and charges nothing.\n\nCallers: tenant-user, tenant-system. Requires `booking:offering:manage`."
+      description: "A Tenant-chosen `code` per threshold; booking records no amount and charges nothing.\n\nCallers: tenant-user. Requires `booking:offering:manage`."
       operationId: replaceCancellationWindows
       requestBody:
         required: true
@@ -595,15 +575,14 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
       x-required-permission: booking:offering:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/offerings/{offeringId}/availability:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
     get:
       tags: ["Availability"]
       summary: "Free start instants for an interval offering"
-      description: "Computed at query time from weekly hours, exceptions, blocks and claims in the resource's zone; never materialized. Keyset-paged by start instant. A start is free only if every requirement has a free, distinct resource.\n\nCallers: tenant-user, tenant-system. Requires `booking:offering:read`."
+      description: "Computed at query time from weekly hours, exceptions, blocks and claims in the resource's zone; never materialized. Keyset-paged by start instant. A start is free only if every requirement has a free, distinct resource.\n\nCallers: tenant-user. Requires `booking:offering:read`."
       operationId: getAvailability
       parameters:
       - name: from
@@ -647,8 +626,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:offering:read
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/offerings/{offeringId}/queue:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
@@ -667,10 +645,9 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:offering:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:read`."
+      description: "Callers: tenant-user. Requires `booking:offering:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/blocks:
     get:
       tags: ["Calendar"]
@@ -686,14 +663,13 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:calendar:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:read`."
+      description: "Callers: tenant-user. Requires `booking:calendar:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     post:
       tags: ["Calendar"]
       summary: "Create a block"
-      description: "A closed period on a resource. Blocks never delete existing bookings; the response reports the bookings they overlap.\n\nCallers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+      description: "A closed period on a resource. Blocks never delete existing bookings; the response reports the bookings they overlap.\n\nCallers: tenant-user. Requires `booking:calendar:manage`."
       operationId: createBlock
       requestBody:
         required: true
@@ -714,8 +690,7 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
       x-required-permission: booking:calendar:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/blocks/{blockId}:
     parameters:
     - name: blockId
@@ -732,15 +707,14 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:calendar:manage
-      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+      description: "Callers: tenant-user. Requires `booking:calendar:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/recurrence/preview:
     post:
       tags: ["Calendar"]
       summary: "Expand a recurrence without storing it"
-      description: "The same port the materialization job uses, so a Tenant can check a rule before creating a series. Every vector under `contracts/booking/recurrence-vectors/` passes through this endpoint.\n\nCallers: tenant-user, tenant-system. Requires `booking:calendar:read`."
+      description: "The same port the materialization job uses, so a Tenant can check a rule before creating a series. Every vector under `contracts/booking/recurrence-vectors/` passes through this endpoint.\n\nCallers: tenant-user. Requires `booking:calendar:read`."
       operationId: previewRecurrence
       requestBody:
         required: true
@@ -765,8 +739,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:calendar:read
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/session-series:
     get:
       tags: ["Sessions"]
@@ -782,14 +755,13 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:calendar:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:read`."
+      description: "Callers: tenant-user. Requires `booking:calendar:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     post:
       tags: ["Sessions"]
       summary: "Create a capacity session series"
-      description: "Materializes sessions inside the horizon on create. Changing a series regenerates only future sessions with no booking and reports the ones it left alone.\n\nCallers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+      description: "Materializes sessions inside the horizon on create. Changing a series regenerates only future sessions with no booking and reports the ones it left alone.\n\nCallers: tenant-user. Requires `booking:calendar:manage`."
       operationId: createSessionSeries
       requestBody:
         required: true
@@ -809,8 +781,7 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
       x-required-permission: booking:calendar:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/session-series/{seriesId}:
     parameters:
     - name: seriesId
@@ -843,15 +814,14 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
       x-required-permission: booking:calendar:manage
-      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+      description: "Callers: tenant-user. Requires `booking:calendar:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/sessions:
     get:
       tags: ["Sessions"]
       summary: "List sessions"
-      description: "Filters on `offering_id`, `status` and a `starts_at` range; each session carries its remaining places per pool.\n\nCallers: tenant-user, tenant-system. Requires `booking:offering:read`."
+      description: "Filters on `offering_id`, `status` and a `starts_at` range; each session carries its remaining places per pool.\n\nCallers: tenant-user. Requires `booking:offering:read`."
       operationId: listSessions
       parameters:
       - $ref: "#/components/parameters/Filter"
@@ -872,8 +842,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:offering:read
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/sessions/{sessionId}:
     parameters:
     - $ref: "#/components/parameters/SessionId"
@@ -892,14 +861,13 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:offering:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:read`."
+      description: "Callers: tenant-user. Requires `booking:offering:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     delete:
       tags: ["Sessions"]
       summary: "Cancel one occurrence"
-      description: "Marks the session `CANCELLED` and adds an `EXDATE` to its series so it is not re-created. Refused while held or booked places exist.\n\nCallers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+      description: "Marks the session `CANCELLED` and adds an `EXDATE` to its series so it is not re-created. Refused while held or booked places exist.\n\nCallers: tenant-user. Requires `booking:calendar:manage`."
       operationId: cancelSession
       responses:
         "204": { description: "Cancelled." }
@@ -914,15 +882,14 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:calendar:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/sessions/{sessionId}/pools:
     parameters:
     - $ref: "#/components/parameters/SessionId"
     put:
       tags: ["Sessions"]
       summary: "Resize a session's pools"
-      description: "Growing inserts free places; shrinking deletes only free places and answers `409` when the target is below held plus booked.\n\nCallers: tenant-user, tenant-system. Requires `booking:booking:manage`."
+      description: "Growing inserts free places; shrinking deletes only free places and answers `409` when the target is below held plus booked.\n\nCallers: tenant-user. Requires `booking:booking:manage`."
       operationId: resizePools
       requestBody:
         required: true
@@ -949,13 +916,12 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
       x-required-permission: booking:booking:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/bookings:
     get:
       tags: ["Bookings"]
       summary: "List bookings"
-      description: "Filters on `status`, `offering_id`, `customer_ref`, `source` and a `starts_at` range, through the shared list query contract.\n\nCallers: tenant-user, tenant-system. Requires `booking:booking:read`."
+      description: "Filters on `status`, `offering_id`, `customer_ref`, `source` and a `starts_at` range, through the shared list query contract.\n\nCallers: tenant-user. Requires `booking:booking:read`."
       operationId: listBookings
       parameters:
       - $ref: "#/components/parameters/Filter"
@@ -976,12 +942,11 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:booking:read
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     post:
       tags: ["Bookings"]
       summary: "Hold a place or a time range"
-      description: "Creates a `HELD` booking and claims it through the offering's engine in one transaction. The `Idempotency-Key` header makes a retry return the same booking.\n\nCallers: tenant-user, tenant-system. Requires `booking:booking:hold`."
+      description: "Creates a `HELD` booking and claims it through the offering's engine in one transaction. The `Idempotency-Key` header makes a retry return the same booking.\n\nCallers: tenant-user. Requires `booking:booking:hold`."
       operationId: createBooking
       parameters:
       - $ref: "#/components/parameters/IdempotencyKey"
@@ -1023,8 +988,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:booking:hold
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/bookings/{bookingId}:
     parameters:
     - $ref: "#/components/parameters/BookingId"
@@ -1045,17 +1009,16 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:booking:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:booking:read`."
+      description: "Callers: tenant-user. Requires `booking:booking:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/bookings/{bookingId}/confirm:
     parameters:
     - $ref: "#/components/parameters/BookingId"
     post:
       tags: ["Bookings"]
       summary: "Confirm a held booking"
-      description: "Accepted while the booking is `HELD` and its claims are still held, even inside the grace window. Once the worker expired it the answer is `409 hold-lapsed`.\n\nCallers: tenant-user, tenant-system. Requires `booking:booking:confirm`."
+      description: "Accepted while the booking is `HELD` and its claims are still held, even inside the grace window. Once the worker expired it the answer is `409 hold-lapsed`.\n\nCallers: tenant-user. Requires `booking:booking:confirm`."
       operationId: confirmBooking
       parameters:
       - $ref: "#/components/parameters/IdempotencyKey"
@@ -1079,8 +1042,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:booking:confirm
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/bookings/{bookingId}/extend:
     parameters:
     - $ref: "#/components/parameters/BookingId"
@@ -1117,17 +1079,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:booking:hold
-      description: "Callers: tenant-user, tenant-system. Requires `booking:booking:hold`."
+      description: "Callers: tenant-user. Requires `booking:booking:hold`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/bookings/{bookingId}/cancel:
     parameters:
     - $ref: "#/components/parameters/BookingId"
     post:
       tags: ["Bookings"]
       summary: "Cancel a booking"
-      description: "Releases the claims. A cancellation of a `CONFIRMED` booking records the policy window code; booking never charges.\n\nCallers: tenant-user, tenant-system. Requires `booking:booking:hold`."
+      description: "Releases the claims. A cancellation of a `CONFIRMED` booking records the policy window code; booking never charges.\n\nCallers: tenant-user. Requires `booking:booking:hold`."
       operationId: cancelBooking
       responses:
         "200":
@@ -1147,15 +1108,14 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:booking:hold
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/bookings/{bookingId}/reschedule:
     parameters:
     - $ref: "#/components/parameters/BookingId"
     post:
       tags: ["Bookings"]
       summary: "Move a booking"
-      description: "Claims the new place and releases the old one in one transaction, keeping the booking id and status. If the new place is taken, nothing changes.\n\nCallers: tenant-user, tenant-system. Requires `booking:booking:manage`."
+      description: "Claims the new place and releases the old one in one transaction, keeping the booking id and status. If the new place is taken, nothing changes.\n\nCallers: tenant-user. Requires `booking:booking:manage`."
       operationId: rescheduleBooking
       requestBody:
         required: true
@@ -1182,15 +1142,14 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
       x-required-permission: booking:booking:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/bookings/{bookingId}/no-show:
     parameters:
     - $ref: "#/components/parameters/BookingId"
     post:
       tags: ["Bookings"]
       summary: "Mark a confirmed booking as a no-show"
-      description: "Allowed once the start has passed. The claims stay as history.\n\nCallers: tenant-user, tenant-system. Requires `booking:booking:manage`."
+      description: "Allowed once the start has passed. The claims stay as history.\n\nCallers: tenant-user. Requires `booking:booking:manage`."
       operationId: markNoShow
       responses:
         "200":
@@ -1210,8 +1169,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:booking:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/series:
     get:
       tags: ["Booking series"]
@@ -1227,14 +1185,13 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:series:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:series:read`."
+      description: "Callers: tenant-user. Requires `booking:series:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     post:
       tags: ["Booking series"]
       summary: "Book a repeating series"
-      description: "One hold per occurrence, sharing a recurrence and a hold expiry. `ALL_OR_NOTHING` is the default: every occurrence is claimed or none is, and the `409` lists each failing occurrence. `SKIP_CONFLICTS` books what it can and returns `skipped[]`. At most 52 occurrences.\n\nCallers: tenant-user, tenant-system. Requires `booking:series:manage`."
+      description: "One hold per occurrence, sharing a recurrence and a hold expiry. `ALL_OR_NOTHING` is the default: every occurrence is claimed or none is, and the `409` lists each failing occurrence. `SKIP_CONFLICTS` books what it can and returns `skipped[]`. At most 52 occurrences.\n\nCallers: tenant-user. Requires `booking:series:manage`."
       operationId: createBookingSeries
       parameters:
       - $ref: "#/components/parameters/IdempotencyKey"
@@ -1267,8 +1224,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:series:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/series/{seriesId}:
     parameters:
     - name: seriesId
@@ -1290,10 +1246,9 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:series:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:series:read`."
+      description: "Callers: tenant-user. Requires `booking:series:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/series/{seriesId}/confirm:
     parameters:
     - name: seriesId
@@ -1321,10 +1276,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:series:manage
-      description: "Callers: tenant-user, tenant-system. Requires `booking:series:manage`."
+      description: "Callers: tenant-user. Requires `booking:series:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/series/{seriesId}/cancel:
     parameters:
     - name: seriesId
@@ -1352,10 +1306,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:series:manage
-      description: "Callers: tenant-user, tenant-system. Requires `booking:series:manage`."
+      description: "Callers: tenant-user. Requires `booking:series:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/waitlist:
     get:
       tags: ["Waitlist"]
@@ -1371,14 +1324,13 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:waitlist:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:waitlist:read`."
+      description: "Callers: tenant-user. Requires `booking:waitlist:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     post:
       tags: ["Waitlist"]
       summary: "Join a waitlist"
-      description: "Allowed only when the target is not free. One `WAITING` entry per `(customerRef, target)`; the per-target cap answers `409 waitlist-full`.\n\nCallers: tenant-user, tenant-system. Requires `booking:waitlist:manage`."
+      description: "Allowed only when the target is not free. One `WAITING` entry per `(customerRef, target)`; the per-target cap answers `409 waitlist-full`.\n\nCallers: tenant-user. Requires `booking:waitlist:manage`."
       operationId: joinWaitlist
       requestBody:
         required: true
@@ -1409,8 +1361,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:waitlist:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/waitlist/{entryId}:
     parameters:
     - name: entryId
@@ -1432,10 +1383,9 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:waitlist:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:waitlist:read`."
+      description: "Callers: tenant-user. Requires `booking:waitlist:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     delete:
       tags: ["Waitlist"]
       summary: "Leave the waitlist"
@@ -1452,10 +1402,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:waitlist:manage
-      description: "Callers: tenant-user, tenant-system. Requires `booking:waitlist:manage`."
+      description: "Callers: tenant-user. Requires `booking:waitlist:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/webhook-endpoints:
     get:
       tags: ["Webhooks"]
@@ -1471,14 +1420,13 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:webhook:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:read`."
+      description: "Callers: tenant-user. Requires `booking:webhook:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     post:
       tags: ["Webhooks"]
       summary: "Register a webhook endpoint"
-      description: "The response carries the signing secret once; a private or loopback destination is refused.\n\nCallers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+      description: "The response carries the signing secret once; a private or loopback destination is refused.\n\nCallers: tenant-user. Requires `booking:webhook:manage`."
       operationId: createWebhookEndpoint
       requestBody:
         required: true
@@ -1503,8 +1451,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:webhook:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/webhook-endpoints/{endpointId}:
     parameters:
     - name: endpointId
@@ -1526,10 +1473,9 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:webhook:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:read`."
+      description: "Callers: tenant-user. Requires `booking:webhook:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     patch:
       tags: ["Webhooks"]
       summary: "Change or disable an endpoint"
@@ -1556,10 +1502,9 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
       x-required-permission: booking:webhook:manage
-      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+      description: "Callers: tenant-user. Requires `booking:webhook:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     delete:
       tags: ["Webhooks"]
       summary: "Delete an endpoint"
@@ -1570,10 +1515,9 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:webhook:manage
-      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+      description: "Callers: tenant-user. Requires `booking:webhook:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/webhook-endpoints/{endpointId}/rotate-secret:
     parameters:
     - name: endpointId
@@ -1583,7 +1527,7 @@ paths:
     post:
       tags: ["Webhooks"]
       summary: "Rotate an endpoint's secret"
-      description: "The previous secret verifies for one rotation window; the new one is shown once.\n\nCallers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+      description: "The previous secret verifies for one rotation window; the new one is shown once.\n\nCallers: tenant-user. Requires `booking:webhook:manage`."
       operationId: rotateWebhookSecret
       responses:
         "200":
@@ -1597,8 +1541,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
       x-required-permission: booking:webhook:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/webhook-deliveries:
     get:
       tags: ["Webhooks"]
@@ -1614,10 +1557,9 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:webhook:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:read`."
+      description: "Callers: tenant-user. Requires `booking:webhook:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/webhook-deliveries/{deliveryId}/resend:
     parameters:
     - name: deliveryId
@@ -1640,15 +1582,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:webhook:manage
-      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+      description: "Callers: tenant-user. Requires `booking:webhook:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/customer-tokens:
     post:
       tags: ["Customer tokens"]
       summary: "Mint a customer token for the public gate"
-      description: "The token binds tenant, customerRef, the scopes and optionally one offering, carries a signing key id and expires within the tenant's cap. Booking mints it; the Tenant decides which of its customers may have one.\n\nCallers: tenant-user, tenant-system. Requires `booking:token:issue`."
+      description: "The token binds tenant, customerRef, the scopes and optionally one offering, carries a signing key id and expires within the tenant's cap. Booking mints it; the Tenant decides which of its customers may have one.\n\nCallers: tenant-user. Requires `booking:token:issue`."
       operationId: createCustomerToken
       requestBody:
         required: true
@@ -1673,8 +1614,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: booking:token:issue
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/settings:
     get:
       tags: ["Settings"]
@@ -1690,10 +1630,9 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
       x-required-permission: booking:settings:read
-      description: "Callers: tenant-user, tenant-system. Requires `booking:settings:read`."
+      description: "Callers: tenant-user. Requires `booking:settings:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/settings/gate:
     put:
       tags: ["Settings"]
@@ -1718,7 +1657,7 @@ paths:
         "422": { $ref: "#/components/responses/UnprocessableEntity" }
       x-required-permission: booking:settings:manage
       x-allowed-callers:
-      - tenant-user
+      - "tenant-user"
   /p/offerings/{offeringId}:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
@@ -1979,6 +1918,1628 @@ paths:
         "429": { $ref: "#/components/responses/TooManyRequests" }
       x-allowed-callers:
       - public
+  /system/v1/resources:
+    get:
+      tags: ["Resources"]
+      summary: "List resources"
+      description: "One tenant's resources, with the shared list query contract (`docs/list-query-contract.md`): filters on `status`, `zone` and `code`, sorts on `code`, `name` and `created_at`.\n\nCallers: tenant-system. Requires `booking:resource:read`."
+      operationId: "listResourcesAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/Filter"
+      - $ref: "#/components/parameters/Sort"
+      - $ref: "#/components/parameters/Limit"
+      - $ref: "#/components/parameters/Offset"
+      - $ref: "#/components/parameters/Cursor"
+      - $ref: "#/components/parameters/PageInfo"
+      responses:
+        "200":
+          description: "The page of resources."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourcePage"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      x-required-permission: booking:resource:read
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags: ["Resources"]
+      summary: "Create a resource"
+      description: "Codes are chosen by the Tenant, unique per tenant and immutable. `zone` must be an IANA id known to the JDK's tz database.\n\nCallers: tenant-system. Requires `booking:resource:manage`."
+      operationId: "createResourceAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceCreate"
+      responses:
+        "201":
+          description: "The resource was created."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: "A resource with this code already exists in the tenant. Code `DUPLICATE_CODE`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+      x-required-permission: booking:resource:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/resources/{resourceId}:
+    parameters:
+    - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: ["Resources"]
+      summary: "Read one resource"
+      operationId: "getResourceAsTenantSystem"
+      responses:
+        "200":
+          description: "The resource."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:resource:read
+      description: "Callers: tenant-system. Requires `booking:resource:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    patch:
+      tags: ["Resources"]
+      summary: "Change a resource"
+      description: "Requires `If-Match`. `zone` is immutable once a booking references the resource.\n\nCallers: tenant-system. Requires `booking:resource:manage`."
+      operationId: "patchResourceAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourcePatch"
+      responses:
+        "200":
+          description: "The resource after the change."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "The zone cannot change once a booking references the resource. Code `RESOURCE_IN_USE`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412": { $ref: "#/components/responses/PreconditionFailed" }
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+      x-required-permission: booking:resource:manage
+      x-allowed-callers:
+      - "tenant-system"
+    delete:
+      tags: ["Resources"]
+      summary: "Archive a resource"
+      description: "A referenced resource is archived, never deleted; an unreferenced one is deleted.\n\nCallers: tenant-system. Requires `booking:resource:manage`."
+      operationId: "archiveResourceAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "204": { description: "Archived or deleted." }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "412": { $ref: "#/components/responses/PreconditionFailed" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+      x-required-permission: booking:resource:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/resources/{resourceId}/working-hours:
+    parameters:
+    - $ref: "#/components/parameters/ResourceId"
+    put:
+      tags: ["Calendar"]
+      summary: "Replace a resource's weekly hours"
+      description: "Local wall-clock times in the resource's zone; several rows per weekday are allowed but must not overlap; `closes` may be `24:00`.\n\nCallers: tenant-system. Requires `booking:resource:manage`."
+      operationId: "replaceWorkingHoursAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkingHoursReplace"
+      responses:
+        "200":
+          description: "The stored hours."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkingHours"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+      x-required-permission: booking:resource:manage
+      x-allowed-callers:
+      - "tenant-system"
+    get:
+      tags: ["Calendar"]
+      summary: "Read a resource's weekly hours"
+      operationId: "getWorkingHoursAsTenantSystem"
+      responses:
+        "200":
+          description: "The stored hours."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkingHours"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:resource:read
+      description: "Callers: tenant-system. Requires `booking:resource:read`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/resources/{resourceId}/exceptions:
+    parameters:
+    - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: ["Calendar"]
+      summary: "List a resource's dated exceptions"
+      operationId: "listExceptionsAsTenantSystem"
+      responses:
+        "200":
+          description: "The exceptions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExceptionPage"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:resource:read
+      description: "Callers: tenant-system. Requires `booking:resource:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags: ["Calendar"]
+      summary: "Add a dated exception"
+      description: "`CLOSED` closes the day; `OPEN` replaces that day's hours with the given hours.\n\nCallers: tenant-system. Requires `booking:resource:manage`."
+      operationId: "addExceptionAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalendarExceptionCreate"
+      responses:
+        "201":
+          description: "The exception."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalendarException"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+      x-required-permission: booking:resource:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/resources/{resourceId}/exceptions/{exceptionId}:
+    parameters:
+    - $ref: "#/components/parameters/ResourceId"
+    - name: exceptionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    delete:
+      tags: ["Calendar"]
+      summary: "Remove an exception"
+      operationId: "deleteExceptionAsTenantSystem"
+      responses:
+        "204": { description: "Removed." }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:resource:manage
+      description: "Callers: tenant-system. Requires `booking:resource:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/resource-groups:
+    get:
+      tags: ["Resource groups"]
+      summary: "List resource groups"
+      operationId: "listGroupsAsTenantSystem"
+      responses:
+        "200":
+          description: "The groups."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GroupPage"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      x-required-permission: booking:resource:read
+      description: "Callers: tenant-system. Requires `booking:resource:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags: ["Resource groups"]
+      summary: "Create a resource group"
+      operationId: "createGroupAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupCreate"
+      responses:
+        "201":
+          description: "The group."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceGroup"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: "A group with this code already exists. Code `DUPLICATE_CODE`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+      x-required-permission: booking:resource:manage
+      description: "Callers: tenant-system. Requires `booking:resource:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/resource-groups/{groupId}:
+    parameters:
+    - name: groupId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    get:
+      tags: ["Resource groups"]
+      summary: "Read one group with its members"
+      operationId: "getGroupAsTenantSystem"
+      responses:
+        "200":
+          description: "The group."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceGroup"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:resource:read
+      description: "Callers: tenant-system. Requires `booking:resource:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    patch:
+      tags: ["Resource groups"]
+      summary: "Change a group's strategy or members"
+      operationId: "patchGroupAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupPatch"
+      responses:
+        "200":
+          description: "The group after the change."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceGroup"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "412": { $ref: "#/components/responses/PreconditionFailed" }
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+      x-required-permission: booking:resource:manage
+      description: "Callers: tenant-system. Requires `booking:resource:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/offerings:
+    get:
+      tags: ["Offerings"]
+      summary: "List offerings"
+      operationId: "listOfferingsAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/Filter"
+      - $ref: "#/components/parameters/Sort"
+      - $ref: "#/components/parameters/Limit"
+      - $ref: "#/components/parameters/Offset"
+      - $ref: "#/components/parameters/Cursor"
+      - $ref: "#/components/parameters/PageInfo"
+      responses:
+        "200":
+          description: "The page of offerings."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfferingPage"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      x-required-permission: booking:offering:read
+      description: "Callers: tenant-system. Requires `booking:offering:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags: ["Offerings"]
+      summary: "Create an offering"
+      description: "`INTERVAL` needs at least one requirement; `CAPACITY` needs none, because its pools come with sessions.\n\nCallers: tenant-system. Requires `booking:offering:manage`."
+      operationId: "createOfferingAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfferingCreate"
+      responses:
+        "201":
+          description: "The offering."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offering"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: "A code collision. Code `DUPLICATE_CODE`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+      x-required-permission: booking:offering:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/offerings/{offeringId}:
+    parameters:
+    - $ref: "#/components/parameters/OfferingId"
+    get:
+      tags: ["Offerings"]
+      summary: "Read one offering"
+      operationId: "getOfferingAsTenantSystem"
+      responses:
+        "200":
+          description: "The offering."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offering"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:offering:read
+      description: "Callers: tenant-system. Requires `booking:offering:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    patch:
+      tags: ["Offerings"]
+      summary: "Change an offering"
+      operationId: "patchOfferingAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfferingPatch"
+      responses:
+        "200":
+          description: "The offering after the change."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Offering"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "412": { $ref: "#/components/responses/PreconditionFailed" }
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+      x-required-permission: booking:offering:manage
+      description: "Callers: tenant-system. Requires `booking:offering:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+    delete:
+      tags: ["Offerings"]
+      summary: "Archive an offering"
+      operationId: "archiveOfferingAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "204": { description: "Archived." }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "412": { $ref: "#/components/responses/PreconditionFailed" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+      x-required-permission: booking:offering:manage
+      description: "Callers: tenant-system. Requires `booking:offering:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/offerings/{offeringId}/requirements:
+    parameters:
+    - $ref: "#/components/parameters/OfferingId"
+    put:
+      tags: ["Offerings"]
+      summary: "Replace an interval offering's requirements"
+      description: "Each requirement names one resource or one group; one booking claims one resource per requirement, all distinct.\n\nCallers: tenant-system. Requires `booking:offering:manage`."
+      operationId: "replaceRequirementsAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequirementsReplace"
+      responses:
+        "200":
+          description: "The stored requirements."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Requirements"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422":
+          description: "A requirement names one resource twice, names an archived resource, or a `CAPACITY` offering carries requirements. Code `VALIDATION_FAILED` or `INVALID_REQUIREMENTS`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:offering:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/offerings/{offeringId}/cancellation-windows:
+    parameters:
+    - $ref: "#/components/parameters/OfferingId"
+    put:
+      tags: ["Offerings"]
+      summary: "Replace an offering's cancellation windows"
+      description: "A Tenant-chosen `code` per threshold; booking records no amount and charges nothing.\n\nCallers: tenant-system. Requires `booking:offering:manage`."
+      operationId: "replaceCancellationWindowsAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CancellationWindowsReplace"
+      responses:
+        "200":
+          description: "The stored windows."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancellationWindows"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+      x-required-permission: booking:offering:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/offerings/{offeringId}/availability:
+    parameters:
+    - $ref: "#/components/parameters/OfferingId"
+    get:
+      tags: ["Availability"]
+      summary: "Free start instants for an interval offering"
+      description: "Computed at query time from weekly hours, exceptions, blocks and claims in the resource's zone; never materialized. Keyset-paged by start instant. A start is free only if every requirement has a free, distinct resource.\n\nCallers: tenant-system. Requires `booking:offering:read`."
+      operationId: "getAvailabilityAsTenantSystem"
+      parameters:
+      - name: from
+        in: query
+        required: true
+        schema: { type: string, format: date-time }
+      - name: to
+        in: query
+        required: true
+        schema: { type: string, format: date-time }
+      - name: durationMinutes
+        in: query
+        required: false
+        schema: { type: integer, minimum: 1 }
+      - name: resource
+        in: query
+        required: false
+        schema: { type: string, format: uuid }
+      - name: partySize
+        in: query
+        required: false
+        description: "Used by a `FIT_SEATS` group."
+        schema: { type: integer, minimum: 1 }
+      - $ref: "#/components/parameters/Limit"
+      - $ref: "#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: "The free starts."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilityPage"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422":
+          description: "The duration is outside `[durationMin, durationMax]` or not on `durationStep`. Code `INVALID_DURATION`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:offering:read
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/offerings/{offeringId}/queue:
+    parameters:
+    - $ref: "#/components/parameters/OfferingId"
+    get:
+      tags: ["Queue"]
+      summary: "Read an offering's queue counts"
+      operationId: "getQueueCountsAsTenantSystem"
+      responses:
+        "200":
+          description: "Waiting, admitted, used and expired ticket counts."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueCounts"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:offering:read
+      description: "Callers: tenant-system. Requires `booking:offering:read`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/blocks:
+    get:
+      tags: ["Calendar"]
+      summary: "List blocks"
+      operationId: "listBlocksAsTenantSystem"
+      responses:
+        "200":
+          description: "The blocks."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockPage"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      x-required-permission: booking:calendar:read
+      description: "Callers: tenant-system. Requires `booking:calendar:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags: ["Calendar"]
+      summary: "Create a block"
+      description: "A closed period on a resource. Blocks never delete existing bookings; the response reports the bookings they overlap.\n\nCallers: tenant-system. Requires `booking:calendar:manage`."
+      operationId: "createBlockAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlockCreate"
+      responses:
+        "201":
+          description: "The block and the bookings it overlaps."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlockCreated"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+      x-required-permission: booking:calendar:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/blocks/{blockId}:
+    parameters:
+    - name: blockId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    delete:
+      tags: ["Calendar"]
+      summary: "Remove a block"
+      operationId: "deleteBlockAsTenantSystem"
+      responses:
+        "204": { description: "Removed." }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:calendar:manage
+      description: "Callers: tenant-system. Requires `booking:calendar:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/recurrence/preview:
+    post:
+      tags: ["Calendar"]
+      summary: "Expand a recurrence without storing it"
+      description: "The same port the materialization job uses, so a Tenant can check a rule before creating a series. Every vector under `contracts/booking/recurrence-vectors/` passes through this endpoint.\n\nCallers: tenant-system. Requires `booking:calendar:read`."
+      operationId: "previewRecurrenceAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurrencePreviewRequest"
+      responses:
+        "200":
+          description: "The expanded start instants in UTC."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurrencePreview"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422":
+          description: "The rule is unparsable, unbounded, finer than daily for a session, or expands beyond the per-call cap. Code `invalid-recurrence` with the offending part."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:calendar:read
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/session-series:
+    get:
+      tags: ["Sessions"]
+      summary: "List session series"
+      operationId: "listSeriesAsTenantSystem"
+      responses:
+        "200":
+          description: "The series."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionSeriesPage"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      x-required-permission: booking:calendar:read
+      description: "Callers: tenant-system. Requires `booking:calendar:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags: ["Sessions"]
+      summary: "Create a capacity session series"
+      description: "Materializes sessions inside the horizon on create. Changing a series regenerates only future sessions with no booking and reports the ones it left alone.\n\nCallers: tenant-system. Requires `booking:calendar:manage`."
+      operationId: "createSessionSeriesAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionSeriesCreate"
+      responses:
+        "201":
+          description: "The series and the sessions it materialized."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionSeriesCreated"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+      x-required-permission: booking:calendar:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/session-series/{seriesId}:
+    parameters:
+    - name: seriesId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    patch:
+      tags: ["Sessions"]
+      summary: "Change a capacity session series"
+      operationId: "patchSessionSeriesAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionSeriesPatch"
+      responses:
+        "200":
+          description: "The series and the sessions it left alone."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionSeriesCreated"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "412": { $ref: "#/components/responses/PreconditionFailed" }
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+      x-required-permission: booking:calendar:manage
+      description: "Callers: tenant-system. Requires `booking:calendar:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/sessions:
+    get:
+      tags: ["Sessions"]
+      summary: "List sessions"
+      description: "Filters on `offering_id`, `status` and a `starts_at` range; each session carries its remaining places per pool.\n\nCallers: tenant-system. Requires `booking:offering:read`."
+      operationId: "listSessionsAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/Filter"
+      - $ref: "#/components/parameters/Sort"
+      - $ref: "#/components/parameters/Limit"
+      - $ref: "#/components/parameters/Offset"
+      - $ref: "#/components/parameters/Cursor"
+      - $ref: "#/components/parameters/PageInfo"
+      responses:
+        "200":
+          description: "The page of sessions."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionPage"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      x-required-permission: booking:offering:read
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/sessions/{sessionId}:
+    parameters:
+    - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: ["Sessions"]
+      summary: "Read one session"
+      operationId: "getSessionAsTenantSystem"
+      responses:
+        "200":
+          description: "The session and its pools."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:offering:read
+      description: "Callers: tenant-system. Requires `booking:offering:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    delete:
+      tags: ["Sessions"]
+      summary: "Cancel one occurrence"
+      description: "Marks the session `CANCELLED` and adds an `EXDATE` to its series so it is not re-created. Refused while held or booked places exist.\n\nCallers: tenant-system. Requires `booking:calendar:manage`."
+      operationId: "cancelSessionAsTenantSystem"
+      responses:
+        "204": { description: "Cancelled." }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "The session still has held or booked places. Code `SESSION_IN_USE`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:calendar:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/sessions/{sessionId}/pools:
+    parameters:
+    - $ref: "#/components/parameters/SessionId"
+    put:
+      tags: ["Sessions"]
+      summary: "Resize a session's pools"
+      description: "Growing inserts free places; shrinking deletes only free places and answers `409` when the target is below held plus booked.\n\nCallers: tenant-system. Requires `booking:booking:manage`."
+      operationId: "resizePoolsAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PoolResize"
+      responses:
+        "200":
+          description: "The session after the resize."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "The target capacity is below held plus booked. Code `CAPACITY_BELOW_COMMITTED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+      x-required-permission: booking:booking:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/bookings:
+    get:
+      tags: ["Bookings"]
+      summary: "List bookings"
+      description: "Filters on `status`, `offering_id`, `customer_ref`, `source` and a `starts_at` range, through the shared list query contract.\n\nCallers: tenant-system. Requires `booking:booking:read`."
+      operationId: "listBookingsAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/Filter"
+      - $ref: "#/components/parameters/Sort"
+      - $ref: "#/components/parameters/Limit"
+      - $ref: "#/components/parameters/Offset"
+      - $ref: "#/components/parameters/Cursor"
+      - $ref: "#/components/parameters/PageInfo"
+      responses:
+        "200":
+          description: "The page of bookings."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingPage"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      x-required-permission: booking:booking:read
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags: ["Bookings"]
+      summary: "Hold a place or a time range"
+      description: "Creates a `HELD` booking and claims it through the offering's engine in one transaction. The `Idempotency-Key` header makes a retry return the same booking.\n\nCallers: tenant-system. Requires `booking:booking:hold`."
+      operationId: "createBookingAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingCreate"
+      responses:
+        "201":
+          description: "The held booking; `booking.held` is appended in the same transaction."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "200":
+          description: "An idempotent replay of the same key and body; the original booking."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: "A typed conflict: `slot-taken` for an overlapping interval claim, `sold-out` for a short capacity pool, or `IDEMPOTENCY_CONFLICT` when the key is reused with a different body."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "A typed validation failure: `outside-open-hours`, `INVALID_DURATION`, `max_qty` exceeded, or an unknown resource or session. Code as stated."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:booking:hold
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/bookings/{bookingId}:
+    parameters:
+    - $ref: "#/components/parameters/BookingId"
+    get:
+      tags: ["Bookings"]
+      summary: "Read one booking"
+      operationId: "getBookingAsTenantSystem"
+      responses:
+        "200":
+          description: "The booking."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:booking:read
+      description: "Callers: tenant-system. Requires `booking:booking:read`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/bookings/{bookingId}/confirm:
+    parameters:
+    - $ref: "#/components/parameters/BookingId"
+    post:
+      tags: ["Bookings"]
+      summary: "Confirm a held booking"
+      description: "Accepted while the booking is `HELD` and its claims are still held, even inside the grace window. Once the worker expired it the answer is `409 hold-lapsed`.\n\nCallers: tenant-system. Requires `booking:booking:confirm`."
+      operationId: "confirmBookingAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          description: "The confirmed booking; `booking.confirmed` is appended."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "`409 hold-lapsed` when the hold is gone, or `409 booking-state` for an illegal transition."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:booking:confirm
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/bookings/{bookingId}/extend:
+    parameters:
+    - $ref: "#/components/parameters/BookingId"
+    post:
+      tags: ["Bookings"]
+      summary: "Lengthen a hold once"
+      operationId: "extendBookingAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingExtend"
+      responses:
+        "200":
+          description: "The booking with its new `holdExpiresAt`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "The hold was already extended or is no longer held. Code `booking-state` or `hold-lapsed`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The total extension would pass the cap. Code `EXTENSION_CAP`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:booking:hold
+      description: "Callers: tenant-system. Requires `booking:booking:hold`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/bookings/{bookingId}/cancel:
+    parameters:
+    - $ref: "#/components/parameters/BookingId"
+    post:
+      tags: ["Bookings"]
+      summary: "Cancel a booking"
+      description: "Releases the claims. A cancellation of a `CONFIRMED` booking records the policy window code; booking never charges.\n\nCallers: tenant-system. Requires `booking:booking:hold`."
+      operationId: "cancelBookingAsTenantSystem"
+      responses:
+        "200":
+          description: "The cancelled booking; `booking.cancelled` is appended."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "The booking is already cancelled, expired or a no-show. Code `booking-state`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:booking:hold
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/bookings/{bookingId}/reschedule:
+    parameters:
+    - $ref: "#/components/parameters/BookingId"
+    post:
+      tags: ["Bookings"]
+      summary: "Move a booking"
+      description: "Claims the new place and releases the old one in one transaction, keeping the booking id and status. If the new place is taken, nothing changes.\n\nCallers: tenant-system. Requires `booking:booking:manage`."
+      operationId: "rescheduleBookingAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingReschedule"
+      responses:
+        "200":
+          description: "The rescheduled booking; `booking.rescheduled` carries the old place."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "`slot-taken`, `sold-out`, or `booking-state` for a booking that is neither held nor confirmed."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+      x-required-permission: booking:booking:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/bookings/{bookingId}/no-show:
+    parameters:
+    - $ref: "#/components/parameters/BookingId"
+    post:
+      tags: ["Bookings"]
+      summary: "Mark a confirmed booking as a no-show"
+      description: "Allowed once the start has passed. The claims stay as history.\n\nCallers: tenant-system. Requires `booking:booking:manage`."
+      operationId: "markNoShowAsTenantSystem"
+      responses:
+        "200":
+          description: "The no-show booking; `booking.no-show` is appended with `policyCode` `NO_SHOW`."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "The booking is not confirmed, or its start has not passed. Code `booking-state`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:booking:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/series:
+    get:
+      tags: ["Booking series"]
+      summary: "List booking series"
+      operationId: "listBookingSeriesAsTenantSystem"
+      responses:
+        "200":
+          description: "The series."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingSeriesPage"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      x-required-permission: booking:series:read
+      description: "Callers: tenant-system. Requires `booking:series:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags: ["Booking series"]
+      summary: "Book a repeating series"
+      description: "One hold per occurrence, sharing a recurrence and a hold expiry. `ALL_OR_NOTHING` is the default: every occurrence is claimed or none is, and the `409` lists each failing occurrence. `SKIP_CONFLICTS` books what it can and returns `skipped[]`. At most 52 occurrences.\n\nCallers: tenant-system. Requires `booking:series:manage`."
+      operationId: "createBookingSeriesAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingSeriesCreate"
+      responses:
+        "201":
+          description: "The series and its occurrences; `series.created` is appended."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingSeries"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: "An occurrence conflicts in `ALL_OR_NOTHING` mode; the body lists each failing occurrence and its reason. Code `series-conflict`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/SeriesConflict"
+        "422":
+          description: "The recurrence is invalid or expands past 52 occurrences. Code `invalid-recurrence`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:series:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/series/{seriesId}:
+    parameters:
+    - name: seriesId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    get:
+      tags: ["Booking series"]
+      summary: "Read one booking series"
+      operationId: "getBookingSeriesAsTenantSystem"
+      responses:
+        "200":
+          description: "The series and its occurrences."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingSeries"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:series:read
+      description: "Callers: tenant-system. Requires `booking:series:read`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/series/{seriesId}/confirm:
+    parameters:
+    - name: seriesId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    post:
+      tags: ["Booking series"]
+      summary: "Confirm every held occurrence"
+      operationId: "confirmBookingSeriesAsTenantSystem"
+      responses:
+        "200":
+          description: "The confirmed series."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingSeries"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "At least one occurrence is no longer held. Code `hold-lapsed`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:series:manage
+      description: "Callers: tenant-system. Requires `booking:series:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/series/{seriesId}/cancel:
+    parameters:
+    - name: seriesId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    post:
+      tags: ["Booking series"]
+      summary: "Cancel the future occurrences"
+      operationId: "cancelBookingSeriesAsTenantSystem"
+      responses:
+        "200":
+          description: "The cancelled series; `series.cancelled` reports the number of occurrences cancelled."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingSeries"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "The series is already cancelled. Code `booking-state`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:series:manage
+      description: "Callers: tenant-system. Requires `booking:series:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/waitlist:
+    get:
+      tags: ["Waitlist"]
+      summary: "List waitlist entries"
+      operationId: "listWaitlistAsTenantSystem"
+      responses:
+        "200":
+          description: "The entries."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WaitlistEntryPage"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      x-required-permission: booking:waitlist:read
+      description: "Callers: tenant-system. Requires `booking:waitlist:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags: ["Waitlist"]
+      summary: "Join a waitlist"
+      description: "Allowed only when the target is not free. One `WAITING` entry per `(customerRef, target)`; the per-target cap answers `409 waitlist-full`.\n\nCallers: tenant-system. Requires `booking:waitlist:manage`."
+      operationId: "joinWaitlistAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WaitlistJoin"
+      responses:
+        "201":
+          description: "The waiting entry."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WaitlistEntry"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: "`waitlist-full`, or `ALREADY_WAITING` for this customer and target."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The target is free, so a waitlist entry is pointless. Code `TARGET_AVAILABLE`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:waitlist:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/waitlist/{entryId}:
+    parameters:
+    - name: entryId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    get:
+      tags: ["Waitlist"]
+      summary: "Read one entry and its position"
+      operationId: "getWaitlistEntryAsTenantSystem"
+      responses:
+        "200":
+          description: "The entry; `position` counts the `WAITING` entries ahead."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WaitlistEntry"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:waitlist:read
+      description: "Callers: tenant-system. Requires `booking:waitlist:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    delete:
+      tags: ["Waitlist"]
+      summary: "Leave the waitlist"
+      operationId: "leaveWaitlistAsTenantSystem"
+      responses:
+        "204": { description: "Left." }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "The entry is already `OFFERED`: the offered hold must be released instead. Code `booking-state`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:waitlist:manage
+      description: "Callers: tenant-system. Requires `booking:waitlist:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/webhook-endpoints:
+    get:
+      tags: ["Webhooks"]
+      summary: "List webhook endpoints"
+      operationId: "listWebhookEndpointsAsTenantSystem"
+      responses:
+        "200":
+          description: "The endpoints."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookEndpointPage"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      x-required-permission: booking:webhook:read
+      description: "Callers: tenant-system. Requires `booking:webhook:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags: ["Webhooks"]
+      summary: "Register a webhook endpoint"
+      description: "The response carries the signing secret once; a private or loopback destination is refused.\n\nCallers: tenant-system. Requires `booking:webhook:manage`."
+      operationId: "createWebhookEndpointAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEndpointCreate"
+      responses:
+        "201":
+          description: "The endpoint and its secret, shown once."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookEndpointSecret"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422":
+          description: "A non-public destination, an unknown event type, or an invalid URL. Code `INVALID_TARGET` or `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:webhook:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/webhook-endpoints/{endpointId}:
+    parameters:
+    - name: endpointId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    get:
+      tags: ["Webhooks"]
+      summary: "Read one endpoint"
+      operationId: "getWebhookEndpointAsTenantSystem"
+      responses:
+        "200":
+          description: "The endpoint."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookEndpoint"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:webhook:read
+      description: "Callers: tenant-system. Requires `booking:webhook:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    patch:
+      tags: ["Webhooks"]
+      summary: "Change or disable an endpoint"
+      operationId: "patchWebhookEndpointAsTenantSystem"
+      parameters:
+      - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEndpointPatch"
+      responses:
+        "200":
+          description: "The endpoint after the change."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookEndpoint"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "412": { $ref: "#/components/responses/PreconditionFailed" }
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+      x-required-permission: booking:webhook:manage
+      description: "Callers: tenant-system. Requires `booking:webhook:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+    delete:
+      tags: ["Webhooks"]
+      summary: "Delete an endpoint"
+      operationId: "deleteWebhookEndpointAsTenantSystem"
+      responses:
+        "204": { description: "Deleted; its delivery history stays readable." }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:webhook:manage
+      description: "Callers: tenant-system. Requires `booking:webhook:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/webhook-endpoints/{endpointId}/rotate-secret:
+    parameters:
+    - name: endpointId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    post:
+      tags: ["Webhooks"]
+      summary: "Rotate an endpoint's secret"
+      description: "The previous secret verifies for one rotation window; the new one is shown once.\n\nCallers: tenant-system. Requires `booking:webhook:manage`."
+      operationId: "rotateWebhookSecretAsTenantSystem"
+      responses:
+        "200":
+          description: "The endpoint and its new secret."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookEndpointSecret"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+      x-required-permission: booking:webhook:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/webhook-deliveries:
+    get:
+      tags: ["Webhooks"]
+      summary: "Read the delivery log"
+      operationId: "listDeliveriesAsTenantSystem"
+      responses:
+        "200":
+          description: "The deliveries."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeliveryPage"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      x-required-permission: booking:webhook:read
+      description: "Callers: tenant-system. Requires `booking:webhook:read`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/webhook-deliveries/{deliveryId}/resend:
+    parameters:
+    - name: deliveryId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    post:
+      tags: ["Webhooks"]
+      summary: "Resend a delivery"
+      operationId: "resendDeliveryAsTenantSystem"
+      responses:
+        "202": { description: "Queued for another attempt." }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "The delivery already succeeded. Code `DELIVERY_SUCCEEDED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:webhook:manage
+      description: "Callers: tenant-system. Requires `booking:webhook:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/customer-tokens:
+    post:
+      tags: ["Customer tokens"]
+      summary: "Mint a customer token for the public gate"
+      description: "The token binds tenant, customerRef, the scopes and optionally one offering, carries a signing key id and expires within the tenant's cap. Booking mints it; the Tenant decides which of its customers may have one.\n\nCallers: tenant-system. Requires `booking:token:issue`."
+      operationId: "createCustomerTokenAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerTokenRequest"
+      responses:
+        "201":
+          description: "The token and its expiry."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerToken"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422":
+          description: "The TTL exceeds the cap, or a scope or offering is unknown. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: booking:token:issue
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/settings:
+    get:
+      tags: ["Settings"]
+      summary: "Read the tenant's booking settings"
+      operationId: "getSettingsAsTenantSystem"
+      responses:
+        "200":
+          description: "The settings and their current values."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+      x-required-permission: booking:settings:read
+      description: "Callers: tenant-system. Requires `booking:settings:read`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/settings/gate:
+    put:
+      tags: ["Settings"]
+      summary: "Change the public gate settings"
+      description: "Only the origins the Tenant registers are echoed by CORS; no wildcard, no credentials.\n\nCallers: tenant-system. Requires `booking:settings:manage`."
+      operationId: "putGateSettingsAsTenantSystem"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GateSettings"
+      responses:
+        "200":
+          description: "The stored settings."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GateSettings"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+      x-required-permission: booking:settings:manage
+      x-allowed-callers:
+      - "tenant-system"
 components:
   securitySchemes:
     SuiteToken:

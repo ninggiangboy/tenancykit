@@ -57,7 +57,7 @@ paths:
       summary: "List resources"
       description: "One tenant's resources, with the shared list query contract (`docs/list-query-contract.md`):\
         \ filters on `status`, `zone` and `code`, sorts on `code`, `name` and `created_at`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `booking:resource:read`."
+        \nCallers: tenant-user. Requires `booking:resource:read`."
       operationId: "listResources"
       parameters:
       - $ref: "#/components/parameters/Filter"
@@ -82,14 +82,13 @@ paths:
       x-required-permission: "booking:resource:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Resources"
       summary: "Create a resource"
       description: "Codes are chosen by the Tenant, unique per tenant and immutable.\
-        \ `zone` must be an IANA id known to the JDK's tz database.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `booking:resource:manage`."
+        \ `zone` must be an IANA id known to the JDK's tz database.\n\nCallers: tenant-user.\
+        \ Requires `booking:resource:manage`."
       operationId: "createResource"
       requestBody:
         required: true
@@ -125,7 +124,6 @@ paths:
       x-required-permission: "booking:resource:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/resources/{resourceId}:
     parameters:
     - $ref: "#/components/parameters/ResourceId"
@@ -151,16 +149,15 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:resource:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      description: "Callers: tenant-user. Requires `booking:resource:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     patch:
       tags:
       - "Resources"
       summary: "Change a resource"
       description: "Requires `If-Match`. `zone` is immutable once a booking references\
-        \ the resource.\n\nCallers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+        \ the resource.\n\nCallers: tenant-user. Requires `booking:resource:manage`."
       operationId: "patchResource"
       parameters:
       - $ref: "#/components/parameters/IfMatch"
@@ -204,13 +201,12 @@ paths:
       x-required-permission: "booking:resource:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     delete:
       tags:
       - "Resources"
       summary: "Archive a resource"
       description: "A referenced resource is archived, never deleted; an unreferenced\
-        \ one is deleted.\n\nCallers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+        \ one is deleted.\n\nCallers: tenant-user. Requires `booking:resource:manage`."
       operationId: "archiveResource"
       parameters:
       - $ref: "#/components/parameters/IfMatch"
@@ -230,7 +226,6 @@ paths:
       x-required-permission: "booking:resource:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/resources/{resourceId}/working-hours:
     parameters:
     - $ref: "#/components/parameters/ResourceId"
@@ -240,7 +235,7 @@ paths:
       summary: "Replace a resource's weekly hours"
       description: "Local wall-clock times in the resource's zone; several rows per\
         \ weekday are allowed but must not overlap; `closes` may be `24:00`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `booking:resource:manage`."
+        \ tenant-user. Requires `booking:resource:manage`."
       operationId: "replaceWorkingHours"
       requestBody:
         required: true
@@ -266,7 +261,6 @@ paths:
       x-required-permission: "booking:resource:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     get:
       tags:
       - "Calendar"
@@ -286,10 +280,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:resource:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      description: "Callers: tenant-user. Requires `booking:resource:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/resources/{resourceId}/exceptions:
     parameters:
     - $ref: "#/components/parameters/ResourceId"
@@ -312,16 +305,15 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:resource:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      description: "Callers: tenant-user. Requires `booking:resource:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Calendar"
       summary: "Add a dated exception"
       description: "`CLOSED` closes the day; `OPEN` replaces that day's hours with\
-        \ the given hours.\n\nCallers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+        \ the given hours.\n\nCallers: tenant-user. Requires `booking:resource:manage`."
       operationId: "addException"
       requestBody:
         required: true
@@ -347,7 +339,6 @@ paths:
       x-required-permission: "booking:resource:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/resources/{resourceId}/exceptions/{exceptionId}:
     parameters:
     - $ref: "#/components/parameters/ResourceId"
@@ -372,10 +363,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:resource:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      description: "Callers: tenant-user. Requires `booking:resource:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/resource-groups:
     get:
       tags:
@@ -394,10 +384,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "booking:resource:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      description: "Callers: tenant-user. Requires `booking:resource:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Resource groups"
@@ -429,10 +418,9 @@ paths:
         "422":
           $ref: "#/components/responses/UnprocessableEntity"
       x-required-permission: "booking:resource:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      description: "Callers: tenant-user. Requires `booking:resource:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/resource-groups/{groupId}:
     parameters:
     - name: "groupId"
@@ -460,10 +448,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:resource:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:read`."
+      description: "Callers: tenant-user. Requires `booking:resource:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     patch:
       tags:
       - "Resource groups"
@@ -497,10 +484,9 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: "booking:resource:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:resource:manage`."
+      description: "Callers: tenant-user. Requires `booking:resource:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/offerings:
     get:
       tags:
@@ -528,17 +514,16 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "booking:offering:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:read`."
+      description: "Callers: tenant-user. Requires `booking:offering:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Offerings"
       summary: "Create an offering"
       description: "`INTERVAL` needs at least one requirement; `CAPACITY` needs none,\
-        \ because its pools come with sessions.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `booking:offering:manage`."
+        \ because its pools come with sessions.\n\nCallers: tenant-user. Requires\
+        \ `booking:offering:manage`."
       operationId: "createOffering"
       requestBody:
         required: true
@@ -571,7 +556,6 @@ paths:
       x-required-permission: "booking:offering:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/offerings/{offeringId}:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
@@ -597,10 +581,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:offering:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:read`."
+      description: "Callers: tenant-user. Requires `booking:offering:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     patch:
       tags:
       - "Offerings"
@@ -637,10 +620,9 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: "booking:offering:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:manage`."
+      description: "Callers: tenant-user. Requires `booking:offering:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     delete:
       tags:
       - "Offerings"
@@ -662,10 +644,9 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: "booking:offering:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:manage`."
+      description: "Callers: tenant-user. Requires `booking:offering:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/offerings/{offeringId}/requirements:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
@@ -674,8 +655,8 @@ paths:
       - "Offerings"
       summary: "Replace an interval offering's requirements"
       description: "Each requirement names one resource or one group; one booking\
-        \ claims one resource per requirement, all distinct.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `booking:offering:manage`."
+        \ claims one resource per requirement, all distinct.\n\nCallers: tenant-user.\
+        \ Requires `booking:offering:manage`."
       operationId: "replaceRequirements"
       requestBody:
         required: true
@@ -707,7 +688,6 @@ paths:
       x-required-permission: "booking:offering:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/offerings/{offeringId}/cancellation-windows:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
@@ -716,7 +696,7 @@ paths:
       - "Offerings"
       summary: "Replace an offering's cancellation windows"
       description: "A Tenant-chosen `code` per threshold; booking records no amount\
-        \ and charges nothing.\n\nCallers: tenant-user, tenant-system. Requires `booking:offering:manage`."
+        \ and charges nothing.\n\nCallers: tenant-user. Requires `booking:offering:manage`."
       operationId: "replaceCancellationWindows"
       requestBody:
         required: true
@@ -742,7 +722,6 @@ paths:
       x-required-permission: "booking:offering:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/offerings/{offeringId}/availability:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
@@ -753,7 +732,7 @@ paths:
       description: "Computed at query time from weekly hours, exceptions, blocks and\
         \ claims in the resource's zone; never materialized. Keyset-paged by start\
         \ instant. A start is free only if every requirement has a free, distinct\
-        \ resource.\n\nCallers: tenant-user, tenant-system. Requires `booking:offering:read`."
+        \ resource.\n\nCallers: tenant-user. Requires `booking:offering:read`."
       operationId: "getAvailability"
       parameters:
       - name: "from"
@@ -812,7 +791,6 @@ paths:
       x-required-permission: "booking:offering:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/offerings/{offeringId}/queue:
     parameters:
     - $ref: "#/components/parameters/OfferingId"
@@ -835,10 +813,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:offering:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:read`."
+      description: "Callers: tenant-user. Requires `booking:offering:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/blocks:
     get:
       tags:
@@ -857,17 +834,16 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "booking:calendar:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:read`."
+      description: "Callers: tenant-user. Requires `booking:calendar:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Calendar"
       summary: "Create a block"
       description: "A closed period on a resource. Blocks never delete existing bookings;\
-        \ the response reports the bookings they overlap.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `booking:calendar:manage`."
+        \ the response reports the bookings they overlap.\n\nCallers: tenant-user.\
+        \ Requires `booking:calendar:manage`."
       operationId: "createBlock"
       requestBody:
         required: true
@@ -893,7 +869,6 @@ paths:
       x-required-permission: "booking:calendar:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/blocks/{blockId}:
     parameters:
     - name: "blockId"
@@ -917,10 +892,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:calendar:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+      description: "Callers: tenant-user. Requires `booking:calendar:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/recurrence/preview:
     post:
       tags:
@@ -928,8 +902,7 @@ paths:
       summary: "Expand a recurrence without storing it"
       description: "The same port the materialization job uses, so a Tenant can check\
         \ a rule before creating a series. Every vector under `contracts/booking/recurrence-vectors/`\
-        \ passes through this endpoint.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `booking:calendar:read`."
+        \ passes through this endpoint.\n\nCallers: tenant-user. Requires `booking:calendar:read`."
       operationId: "previewRecurrence"
       requestBody:
         required: true
@@ -959,7 +932,6 @@ paths:
       x-required-permission: "booking:calendar:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/session-series:
     get:
       tags:
@@ -978,17 +950,16 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "booking:calendar:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:read`."
+      description: "Callers: tenant-user. Requires `booking:calendar:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Sessions"
       summary: "Create a capacity session series"
       description: "Materializes sessions inside the horizon on create. Changing a\
         \ series regenerates only future sessions with no booking and reports the\
-        \ ones it left alone.\n\nCallers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+        \ ones it left alone.\n\nCallers: tenant-user. Requires `booking:calendar:manage`."
       operationId: "createSessionSeries"
       requestBody:
         required: true
@@ -1012,7 +983,6 @@ paths:
       x-required-permission: "booking:calendar:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/session-series/{seriesId}:
     parameters:
     - name: "seriesId"
@@ -1054,18 +1024,17 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: "booking:calendar:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+      description: "Callers: tenant-user. Requires `booking:calendar:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/sessions:
     get:
       tags:
       - "Sessions"
       summary: "List sessions"
       description: "Filters on `offering_id`, `status` and a `starts_at` range; each\
-        \ session carries its remaining places per pool.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `booking:offering:read`."
+        \ session carries its remaining places per pool.\n\nCallers: tenant-user.\
+        \ Requires `booking:offering:read`."
       operationId: "listSessions"
       parameters:
       - $ref: "#/components/parameters/Filter"
@@ -1090,7 +1059,6 @@ paths:
       x-required-permission: "booking:offering:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/sessions/{sessionId}:
     parameters:
     - $ref: "#/components/parameters/SessionId"
@@ -1113,17 +1081,16 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:offering:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:offering:read`."
+      description: "Callers: tenant-user. Requires `booking:offering:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     delete:
       tags:
       - "Sessions"
       summary: "Cancel one occurrence"
       description: "Marks the session `CANCELLED` and adds an `EXDATE` to its series\
         \ so it is not re-created. Refused while held or booked places exist.\n\n\
-        Callers: tenant-user, tenant-system. Requires `booking:calendar:manage`."
+        Callers: tenant-user. Requires `booking:calendar:manage`."
       operationId: "cancelSession"
       responses:
         "204":
@@ -1143,7 +1110,6 @@ paths:
       x-required-permission: "booking:calendar:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/sessions/{sessionId}/pools:
     parameters:
     - $ref: "#/components/parameters/SessionId"
@@ -1153,7 +1119,7 @@ paths:
       summary: "Resize a session's pools"
       description: "Growing inserts free places; shrinking deletes only free places\
         \ and answers `409` when the target is below held plus booked.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `booking:booking:manage`."
+        \ tenant-user. Requires `booking:booking:manage`."
       operationId: "resizePools"
       requestBody:
         required: true
@@ -1185,7 +1151,6 @@ paths:
       x-required-permission: "booking:booking:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/bookings:
     get:
       tags:
@@ -1193,7 +1158,7 @@ paths:
       summary: "List bookings"
       description: "Filters on `status`, `offering_id`, `customer_ref`, `source` and\
         \ a `starts_at` range, through the shared list query contract.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `booking:booking:read`."
+        \ tenant-user. Requires `booking:booking:read`."
       operationId: "listBookings"
       parameters:
       - $ref: "#/components/parameters/Filter"
@@ -1218,14 +1183,13 @@ paths:
       x-required-permission: "booking:booking:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Bookings"
       summary: "Hold a place or a time range"
       description: "Creates a `HELD` booking and claims it through the offering's\
         \ engine in one transaction. The `Idempotency-Key` header makes a retry return\
-        \ the same booking.\n\nCallers: tenant-user, tenant-system. Requires `booking:booking:hold`."
+        \ the same booking.\n\nCallers: tenant-user. Requires `booking:booking:hold`."
       operationId: "createBooking"
       parameters:
       - $ref: "#/components/parameters/IdempotencyKey"
@@ -1276,7 +1240,6 @@ paths:
       x-required-permission: "booking:booking:hold"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/bookings/{bookingId}:
     parameters:
     - $ref: "#/components/parameters/BookingId"
@@ -1302,10 +1265,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:booking:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:booking:read`."
+      description: "Callers: tenant-user. Requires `booking:booking:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/bookings/{bookingId}/confirm:
     parameters:
     - $ref: "#/components/parameters/BookingId"
@@ -1315,7 +1277,7 @@ paths:
       summary: "Confirm a held booking"
       description: "Accepted while the booking is `HELD` and its claims are still\
         \ held, even inside the grace window. Once the worker expired it the answer\
-        \ is `409 hold-lapsed`.\n\nCallers: tenant-user, tenant-system. Requires `booking:booking:confirm`."
+        \ is `409 hold-lapsed`.\n\nCallers: tenant-user. Requires `booking:booking:confirm`."
       operationId: "confirmBooking"
       parameters:
       - $ref: "#/components/parameters/IdempotencyKey"
@@ -1345,7 +1307,6 @@ paths:
       x-required-permission: "booking:booking:confirm"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/bookings/{bookingId}/extend:
     parameters:
     - $ref: "#/components/parameters/BookingId"
@@ -1387,10 +1348,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "booking:booking:hold"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:booking:hold`."
+      description: "Callers: tenant-user. Requires `booking:booking:hold`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/bookings/{bookingId}/cancel:
     parameters:
     - $ref: "#/components/parameters/BookingId"
@@ -1399,8 +1359,8 @@ paths:
       - "Bookings"
       summary: "Cancel a booking"
       description: "Releases the claims. A cancellation of a `CONFIRMED` booking records\
-        \ the policy window code; booking never charges.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `booking:booking:hold`."
+        \ the policy window code; booking never charges.\n\nCallers: tenant-user.\
+        \ Requires `booking:booking:hold`."
       operationId: "cancelBooking"
       responses:
         "200":
@@ -1425,7 +1385,6 @@ paths:
       x-required-permission: "booking:booking:hold"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/bookings/{bookingId}/reschedule:
     parameters:
     - $ref: "#/components/parameters/BookingId"
@@ -1435,7 +1394,7 @@ paths:
       summary: "Move a booking"
       description: "Claims the new place and releases the old one in one transaction,\
         \ keeping the booking id and status. If the new place is taken, nothing changes.\n\
-        \nCallers: tenant-user, tenant-system. Requires `booking:booking:manage`."
+        \nCallers: tenant-user. Requires `booking:booking:manage`."
       operationId: "rescheduleBooking"
       requestBody:
         required: true
@@ -1469,7 +1428,6 @@ paths:
       x-required-permission: "booking:booking:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/bookings/{bookingId}/no-show:
     parameters:
     - $ref: "#/components/parameters/BookingId"
@@ -1478,7 +1436,7 @@ paths:
       - "Bookings"
       summary: "Mark a confirmed booking as a no-show"
       description: "Allowed once the start has passed. The claims stay as history.\n\
-        \nCallers: tenant-user, tenant-system. Requires `booking:booking:manage`."
+        \nCallers: tenant-user. Requires `booking:booking:manage`."
       operationId: "markNoShow"
       responses:
         "200":
@@ -1504,7 +1462,6 @@ paths:
       x-required-permission: "booking:booking:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/series:
     get:
       tags:
@@ -1523,10 +1480,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "booking:series:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:series:read`."
+      description: "Callers: tenant-user. Requires `booking:series:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Booking series"
@@ -1534,8 +1490,8 @@ paths:
       description: "One hold per occurrence, sharing a recurrence and a hold expiry.\
         \ `ALL_OR_NOTHING` is the default: every occurrence is claimed or none is,\
         \ and the `409` lists each failing occurrence. `SKIP_CONFLICTS` books what\
-        \ it can and returns `skipped[]`. At most 52 occurrences.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `booking:series:manage`."
+        \ it can and returns `skipped[]`. At most 52 occurrences.\n\nCallers: tenant-user.\
+        \ Requires `booking:series:manage`."
       operationId: "createBookingSeries"
       parameters:
       - $ref: "#/components/parameters/IdempotencyKey"
@@ -1573,7 +1529,6 @@ paths:
       x-required-permission: "booking:series:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/series/{seriesId}:
     parameters:
     - name: "seriesId"
@@ -1601,10 +1556,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:series:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:series:read`."
+      description: "Callers: tenant-user. Requires `booking:series:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/series/{seriesId}/confirm:
     parameters:
     - name: "seriesId"
@@ -1638,10 +1592,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "booking:series:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:series:manage`."
+      description: "Callers: tenant-user. Requires `booking:series:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/series/{seriesId}/cancel:
     parameters:
     - name: "seriesId"
@@ -1676,10 +1629,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "booking:series:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:series:manage`."
+      description: "Callers: tenant-user. Requires `booking:series:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/waitlist:
     get:
       tags:
@@ -1698,17 +1650,16 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "booking:waitlist:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:waitlist:read`."
+      description: "Callers: tenant-user. Requires `booking:waitlist:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Waitlist"
       summary: "Join a waitlist"
       description: "Allowed only when the target is not free. One `WAITING` entry\
         \ per `(customerRef, target)`; the per-target cap answers `409 waitlist-full`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `booking:waitlist:manage`."
+        \nCallers: tenant-user. Requires `booking:waitlist:manage`."
       operationId: "joinWaitlist"
       requestBody:
         required: true
@@ -1744,7 +1695,6 @@ paths:
       x-required-permission: "booking:waitlist:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/waitlist/{entryId}:
     parameters:
     - name: "entryId"
@@ -1772,10 +1722,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:waitlist:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:waitlist:read`."
+      description: "Callers: tenant-user. Requires `booking:waitlist:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     delete:
       tags:
       - "Waitlist"
@@ -1798,10 +1747,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "booking:waitlist:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:waitlist:manage`."
+      description: "Callers: tenant-user. Requires `booking:waitlist:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-endpoints:
     get:
       tags:
@@ -1820,17 +1768,15 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "booking:webhook:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:read`."
+      description: "Callers: tenant-user. Requires `booking:webhook:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Webhooks"
       summary: "Register a webhook endpoint"
       description: "The response carries the signing secret once; a private or loopback\
-        \ destination is refused.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `booking:webhook:manage`."
+        \ destination is refused.\n\nCallers: tenant-user. Requires `booking:webhook:manage`."
       operationId: "createWebhookEndpoint"
       requestBody:
         required: true
@@ -1859,7 +1805,6 @@ paths:
       x-required-permission: "booking:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-endpoints/{endpointId}:
     parameters:
     - name: "endpointId"
@@ -1887,10 +1832,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:webhook:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:read`."
+      description: "Callers: tenant-user. Requires `booking:webhook:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     patch:
       tags:
       - "Webhooks"
@@ -1924,10 +1868,9 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: "booking:webhook:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+      description: "Callers: tenant-user. Requires `booking:webhook:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     delete:
       tags:
       - "Webhooks"
@@ -1943,10 +1886,9 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
       x-required-permission: "booking:webhook:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+      description: "Callers: tenant-user. Requires `booking:webhook:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-endpoints/{endpointId}/rotate-secret:
     parameters:
     - name: "endpointId"
@@ -1960,7 +1902,7 @@ paths:
       - "Webhooks"
       summary: "Rotate an endpoint's secret"
       description: "The previous secret verifies for one rotation window; the new\
-        \ one is shown once.\n\nCallers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+        \ one is shown once.\n\nCallers: tenant-user. Requires `booking:webhook:manage`."
       operationId: "rotateWebhookSecret"
       responses:
         "200":
@@ -1978,7 +1920,6 @@ paths:
       x-required-permission: "booking:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-deliveries:
     get:
       tags:
@@ -1997,10 +1938,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "booking:webhook:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:read`."
+      description: "Callers: tenant-user. Requires `booking:webhook:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-deliveries/{deliveryId}/resend:
     parameters:
     - name: "deliveryId"
@@ -2030,10 +1970,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "booking:webhook:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:webhook:manage`."
+      description: "Callers: tenant-user. Requires `booking:webhook:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/customer-tokens:
     post:
       tags:
@@ -2042,7 +1981,7 @@ paths:
       description: "The token binds tenant, customerRef, the scopes and optionally\
         \ one offering, carries a signing key id and expires within the tenant's cap.\
         \ Booking mints it; the Tenant decides which of its customers may have one.\n\
-        \nCallers: tenant-user, tenant-system. Requires `booking:token:issue`."
+        \nCallers: tenant-user. Requires `booking:token:issue`."
       operationId: "createCustomerToken"
       requestBody:
         required: true
@@ -2071,7 +2010,6 @@ paths:
       x-required-permission: "booking:token:issue"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/settings:
     get:
       tags:
@@ -2090,10 +2028,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "booking:settings:read"
-      description: "Callers: tenant-user, tenant-system. Requires `booking:settings:read`."
+      description: "Callers: tenant-user. Requires `booking:settings:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/settings/gate:
     put:
       tags:

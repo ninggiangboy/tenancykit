@@ -40,16 +40,16 @@ class RescheduleAndNoShowTest extends BookingApiTest {
         String moving = hold(session, offering, "moving", tomorrow(10));
         String taken = hold(session, offering, "taken", tomorrow(11));
 
-        postAs(session, "/api/v1/bookings/{bookingId}/reschedule", """
+        postAs(session, "/system/v1/bookings/{bookingId}/reschedule", """
                 {"start":"%s","durationMinutes":60}
                 """.formatted(tomorrow(11)), moving)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("slot-taken"));
 
-        getAs(session, "/api/v1/bookings/{bookingId}", moving)
+        getAs(session, "/system/v1/bookings/{bookingId}", moving)
                 .andExpect(jsonPath("$.startsAt").value(tomorrow(10).toString()))
                 .andExpect(jsonPath("$.version").value(1));
-        getAs(session, "/api/v1/bookings/{bookingId}", taken)
+        getAs(session, "/system/v1/bookings/{bookingId}", taken)
                 .andExpect(jsonPath("$.startsAt").value(tomorrow(11).toString()));
     }
 
@@ -59,7 +59,7 @@ class RescheduleAndNoShowTest extends BookingApiTest {
         String offering = intervalOffering(session);
         String booking = hold(session, offering, "shift", tomorrow(10));
 
-        postAs(session, "/api/v1/bookings/{bookingId}/reschedule", """
+        postAs(session, "/system/v1/bookings/{bookingId}/reschedule", """
                 {"start":"%s","durationMinutes":60}
                 """.formatted(tomorrow(10).plus(Duration.ofMinutes(15))), booking)
                 .andExpect(status().isOk())
@@ -73,19 +73,19 @@ class RescheduleAndNoShowTest extends BookingApiTest {
         Session session = lifecycle();
         String offering = intervalOffering(session);
         String future = hold(session, offering, "future", tomorrow(10));
-        postAs(session, "/api/v1/bookings/{bookingId}/confirm", null, future).andExpect(status().isOk());
-        postAs(session, "/api/v1/bookings/{bookingId}/no-show", null, future)
+        postAs(session, "/system/v1/bookings/{bookingId}/confirm", null, future).andExpect(status().isOk());
+        postAs(session, "/system/v1/bookings/{bookingId}/no-show", null, future)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("booking-state"));
 
         String held = hold(session, offering, "held", yesterday(10));
-        postAs(session, "/api/v1/bookings/{bookingId}/no-show", null, held)
+        postAs(session, "/system/v1/bookings/{bookingId}/no-show", null, held)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("booking-state"));
 
         String missed = hold(session, offering, "missed", yesterday(8));
-        postAs(session, "/api/v1/bookings/{bookingId}/confirm", null, missed).andExpect(status().isOk());
-        postAs(session, "/api/v1/bookings/{bookingId}/no-show", null, missed)
+        postAs(session, "/system/v1/bookings/{bookingId}/confirm", null, missed).andExpect(status().isOk());
+        postAs(session, "/system/v1/bookings/{bookingId}/no-show", null, missed)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("NO_SHOW"))
                 .andExpect(jsonPath("$.version").value(3));
@@ -103,7 +103,7 @@ class RescheduleAndNoShowTest extends BookingApiTest {
 
     private String intervalOffering(Session session) throws Exception {
         String code = "move-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/offerings", """
+        String body = postAs(session, "/system/v1/offerings", """
                 {"code":"%s","name":"Move","kind":"INTERVAL","durationMin":60,"slotStep":15,"horizonDays":30}
                 """.formatted(code))
                 .andExpect(status().isCreated())
@@ -112,7 +112,7 @@ class RescheduleAndNoShowTest extends BookingApiTest {
                 .getContentAsString(StandardCharsets.UTF_8);
         String offering = JSON.readTree(body).get("id").asString();
         UUID resource = resource(session);
-        putAs(session, "/api/v1/offerings/{offeringId}/requirements", """
+        putAs(session, "/system/v1/offerings/{offeringId}/requirements", """
                 {"requirements":[{"slotCode":"staff","resourceId":"%s"}]}
                 """.formatted(resource), offering)
                 .andExpect(status().isOk());
@@ -121,7 +121,7 @@ class RescheduleAndNoShowTest extends BookingApiTest {
 
     private UUID resource(Session session) throws Exception {
         String code = "move-res-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/resources", """
+        String body = postAs(session, "/system/v1/resources", """
                 {"code":"%s","name":"Move","zone":"UTC"}
                 """.formatted(code))
                 .andExpect(status().isCreated())
@@ -129,13 +129,13 @@ class RescheduleAndNoShowTest extends BookingApiTest {
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
         UUID resource = UUID.fromString(JSON.readTree(body).get("id").asString());
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
                 .andExpect(status().isOk());
         return resource;
     }
 
     private String hold(Session session, String offeringId, String customerRef, Instant start) throws Exception {
-        return JSON.readTree(postAs(session, "/api/v1/bookings", """
+        return JSON.readTree(postAs(session, "/system/v1/bookings", """
                         {"offeringId":"%s","customerRef":"%s","start":"%s","durationMinutes":60}
                         """.formatted(offeringId, customerRef, start))
                 .andExpect(status().isCreated())

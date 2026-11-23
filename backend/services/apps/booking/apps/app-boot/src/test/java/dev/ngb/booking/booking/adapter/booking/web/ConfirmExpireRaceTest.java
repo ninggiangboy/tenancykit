@@ -57,7 +57,7 @@ class ConfirmExpireRaceTest extends BookingApiTest {
         try (ExecutorService callers = Executors.newVirtualThreadPerTaskExecutor()) {
             for (int i = 0; i < CONFIRMS; i++) {
                 answers.add(callers.submit(() -> {
-                    return mvc.perform(post("/api/v1/bookings/{bookingId}/confirm", booking)
+                    return mvc.perform(post("/system/v1/bookings/{bookingId}/confirm", booking)
                                     .header("Host", session.host())
                                     .header("Authorization", "Bearer " + session.token()))
                             .andReturn()
@@ -100,7 +100,7 @@ class ConfirmExpireRaceTest extends BookingApiTest {
 
     private String intervalOffering(Session session) throws Exception {
         String code = "race-" + UUID.randomUUID().toString().substring(0, 8);
-        String offering = JSON.readTree(postAs(session, "/api/v1/offerings", """
+        String offering = JSON.readTree(postAs(session, "/system/v1/offerings", """
                         {"code":"%s","name":"Race","kind":"INTERVAL","durationMin":60,"slotStep":30,"horizonDays":30}
                         """.formatted(code))
                 .andExpect(status().isCreated())
@@ -110,7 +110,7 @@ class ConfirmExpireRaceTest extends BookingApiTest {
                 .get("id")
                 .asString();
         UUID resource = seedResource(session);
-        putAs(session, "/api/v1/offerings/{offeringId}/requirements", """
+        putAs(session, "/system/v1/offerings/{offeringId}/requirements", """
                 {"requirements":[{"slotCode":"staff","resourceId":"%s"}]}
                 """.formatted(resource), offering)
                 .andExpect(status().isOk());
@@ -122,7 +122,7 @@ class ConfirmExpireRaceTest extends BookingApiTest {
                 .truncatedTo(ChronoUnit.DAYS)
                 .plus(Duration.ofDays(1))
                 .plus(Duration.ofHours(9));
-        return JSON.readTree(postAs(session, "/api/v1/bookings", """
+        return JSON.readTree(postAs(session, "/system/v1/bookings", """
                         {"offeringId":"%s","customerRef":"cust-race","start":"%s","durationMinutes":60}
                         """.formatted(offeringId, start))
                 .andExpect(status().isCreated())
@@ -135,7 +135,7 @@ class ConfirmExpireRaceTest extends BookingApiTest {
 
     private UUID seedResource(Session session) throws Exception {
         String code = "race-room-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/resources", """
+        String body = postAs(session, "/system/v1/resources", """
                 {"code":"%s","name":"Room %s","zone":"UTC"}
                 """.formatted(code, code))
                 .andExpect(status().isCreated())
@@ -143,7 +143,7 @@ class ConfirmExpireRaceTest extends BookingApiTest {
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
         UUID resource = UUID.fromString(JSON.readTree(body).get("id").asString());
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
                 .andExpect(status().isOk());
         return resource;
     }

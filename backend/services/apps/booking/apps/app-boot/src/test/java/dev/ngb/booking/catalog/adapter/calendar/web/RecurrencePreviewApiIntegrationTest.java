@@ -54,7 +54,7 @@ class RecurrencePreviewApiIntegrationTest extends BookingApiTest {
         JsonNode vector = read(file);
         Session session = tenant(BookingPermissions.CALENDAR_READ);
 
-        String body = postAs(session, "/api/v1/recurrence/preview", request(vector))
+        String body = postAs(session, "/system/v1/recurrence/preview", request(vector))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.instants.length()").value(vector.get("expect").size()))
                 .andReturn()
@@ -69,7 +69,7 @@ class RecurrencePreviewApiIntegrationTest extends BookingApiTest {
     void aRuleTheExpanderCannotReadIsRefusedWith422AndItsCode() throws Exception {
         Session session = tenant(BookingPermissions.CALENDAR_READ);
 
-        postAs(session, "/api/v1/recurrence/preview", """
+        postAs(session, "/system/v1/recurrence/preview", """
                 {"zone":"Europe/Berlin","dtstart":"2026-01-05T09:00:00","rule":["RRULE:FREQ=NEVER"],
                  "from":"2026-01-01T00:00:00Z","to":"2026-02-01T00:00:00Z"}
                 """)
@@ -81,7 +81,7 @@ class RecurrencePreviewApiIntegrationTest extends BookingApiTest {
     void aRuleThatExpandsBeyondTheCapIsRefusedWithTheInvalidRecurrenceCode() throws Exception {
         Session session = tenant(BookingPermissions.CALENDAR_READ);
 
-        postAs(session, "/api/v1/recurrence/preview", """
+        postAs(session, "/system/v1/recurrence/preview", """
                 {"zone":"UTC","dtstart":"2026-01-05T09:00:00","rule":["RRULE:FREQ=MINUTELY"],
                  "from":"2026-01-01T00:00:00Z","to":"2026-02-01T00:00:00Z"}
                 """)

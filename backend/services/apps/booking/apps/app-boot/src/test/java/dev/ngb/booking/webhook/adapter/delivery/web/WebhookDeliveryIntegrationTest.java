@@ -141,7 +141,7 @@ class WebhookDeliveryIntegrationTest extends BookingApiTest {
     }
 
     private String endpoint(Session session, String url) throws Exception {
-        String body = postAs(session, "/api/v1/webhook-endpoints", """
+        String body = postAs(session, "/system/v1/webhook-endpoints", """
                 {"url":"%s","eventTypes":["booking.held"]}
                 """.formatted(url))
                 .andExpect(status().isCreated())
@@ -162,7 +162,7 @@ class WebhookDeliveryIntegrationTest extends BookingApiTest {
 
     private String offering(Session session) throws Exception {
         String code = "hook-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/offerings", """
+        String body = postAs(session, "/system/v1/offerings", """
                 {"code":"%s","name":"Webhook","kind":"INTERVAL","durationMin":60,"slotStep":30,"horizonDays":30}
                 """.formatted(code))
                 .andExpect(status().isCreated())
@@ -171,7 +171,7 @@ class WebhookDeliveryIntegrationTest extends BookingApiTest {
                 .getContentAsString(StandardCharsets.UTF_8);
         String offering = JSON.readTree(body).get("id").asString();
         UUID resource = resource(session);
-        putAs(session, "/api/v1/offerings/{offeringId}/requirements", """
+        putAs(session, "/system/v1/offerings/{offeringId}/requirements", """
                 {"requirements":[{"slotCode":"staff","resourceId":"%s"}]}
                 """.formatted(resource), offering)
                 .andExpect(status().isOk());
@@ -180,7 +180,7 @@ class WebhookDeliveryIntegrationTest extends BookingApiTest {
 
     private UUID resource(Session session) throws Exception {
         String code = "hook-res-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/resources", """
+        String body = postAs(session, "/system/v1/resources", """
                 {"code":"%s","name":"Webhook","zone":"UTC"}
                 """.formatted(code))
                 .andExpect(status().isCreated())
@@ -188,7 +188,7 @@ class WebhookDeliveryIntegrationTest extends BookingApiTest {
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
         UUID resource = UUID.fromString(JSON.readTree(body).get("id").asString());
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
                 .andExpect(status().isOk());
         return resource;
     }
@@ -198,7 +198,7 @@ class WebhookDeliveryIntegrationTest extends BookingApiTest {
                 .truncatedTo(ChronoUnit.DAYS)
                 .plus(Duration.ofDays(1))
                 .plus(Duration.ofHours(9));
-        postAs(session, "/api/v1/bookings", """
+        postAs(session, "/system/v1/bookings", """
                 {"offeringId":"%s","customerRef":"cust-hook","start":"%s","durationMinutes":60}
                 """.formatted(offering, start))
                 .andExpect(status().isCreated());

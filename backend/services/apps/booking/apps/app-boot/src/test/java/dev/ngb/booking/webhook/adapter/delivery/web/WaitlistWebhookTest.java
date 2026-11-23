@@ -44,7 +44,7 @@ class WaitlistWebhookTest extends BookingApiTest {
     @Test
     void theOfferedPayloadMatchesTheSchema() throws Exception {
         Fixture fixture = fixture();
-        postAs(session(fixture), "/api/v1/bookings/{bookingId}/cancel", null, fixture.holder())
+        postAs(session(fixture), "/system/v1/bookings/{bookingId}/cancel", null, fixture.holder())
                 .andExpect(status().isOk());
         assertThat(inTenant(fixture.session().tenant(), offers::execute)).isEqualTo(1);
 
@@ -54,11 +54,11 @@ class WaitlistWebhookTest extends BookingApiTest {
     @Test
     void theLapsedPayloadMatchesTheSchema() throws Exception {
         Fixture fixture = fixture();
-        postAs(session(fixture), "/api/v1/bookings/{bookingId}/cancel", null, fixture.holder())
+        postAs(session(fixture), "/system/v1/bookings/{bookingId}/cancel", null, fixture.holder())
                 .andExpect(status().isOk());
         inTenant(fixture.session().tenant(), offers::execute);
         String offered = JSON.readTree(getAs(
-                                session(fixture), "/api/v1/waitlist/{entryId}", fixture.entry())
+                                session(fixture), "/system/v1/waitlist/{entryId}", fixture.entry())
                         .andReturn()
                         .getResponse()
                         .getContentAsString(StandardCharsets.UTF_8))
@@ -89,7 +89,7 @@ class WaitlistWebhookTest extends BookingApiTest {
                 BookingPermissions.WAITLIST_READ,
                 BookingPermissions.WAITLIST_MANAGE);
         String code = "wait-ev-" + UUID.randomUUID().toString().substring(0, 8);
-        String offering = JSON.readTree(postAs(session, "/api/v1/offerings", """
+        String offering = JSON.readTree(postAs(session, "/system/v1/offerings", """
                         {"code":"%s","name":"Waitlist","kind":"CAPACITY","durationMin":60,"slotStep":60,
                          "horizonDays":30}
                         """.formatted(code))
@@ -106,7 +106,7 @@ class WaitlistWebhookTest extends BookingApiTest {
                 .withSecond(0)
                 .withNano(0)
                 .toString();
-        String sessionId = JSON.readTree(postAs(session, "/api/v1/session-series", """
+        String sessionId = JSON.readTree(postAs(session, "/system/v1/session-series", """
                         {"offeringId":"%s","zone":"UTC","dtstart":"%s","rule":["RRULE:FREQ=DAILY;COUNT=2"],
                          "durationMinutes":60,"capacity":1}
                         """.formatted(offering, dtstart))
@@ -118,7 +118,7 @@ class WaitlistWebhookTest extends BookingApiTest {
                 .get(0)
                 .get("id")
                 .asString();
-        String holder = JSON.readTree(postAs(session, "/api/v1/bookings", """
+        String holder = JSON.readTree(postAs(session, "/system/v1/bookings", """
                         {"offeringId":"%s","customerRef":"holder","sessionId":"%s","poolCode":"default","qty":1}
                         """.formatted(offering, sessionId))
                 .andExpect(status().isCreated())
@@ -127,7 +127,7 @@ class WaitlistWebhookTest extends BookingApiTest {
                 .getContentAsString(StandardCharsets.UTF_8))
                 .get("id")
                 .asString();
-        String entry = JSON.readTree(postAs(session, "/api/v1/waitlist", """
+        String entry = JSON.readTree(postAs(session, "/system/v1/waitlist", """
                         {"offeringId":"%s","customerRef":"cust-wait","qty":1,"sessionId":"%s","poolCode":"default"}
                         """.formatted(offering, sessionId))
                 .andExpect(status().isCreated())

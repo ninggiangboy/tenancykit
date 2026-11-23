@@ -79,8 +79,8 @@ class OpenApiContractTest {
 
         Path file = RepositoryPaths.repositoryRoot().resolve(CONTRACT);
         String documentedText = Files.readString(file, StandardCharsets.UTF_8);
-        CallerLabelRules.check(served.toString(), false);
-        CallerLabelRules.check(documentedText, false);
+        CallerLabelRules.check(served.toString(), true, true);
+        CallerLabelRules.check(documentedText, true, true);
         CallerOpenApiSplitter.writeOrVerify(
                 documentedText,
                 RepositoryPaths.repositoryRoot().resolve("contracts/openapi"),

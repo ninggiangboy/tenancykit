@@ -181,7 +181,7 @@ class QueueIntegrationTest extends BookingApiTest {
 
     private Capacity capacity(Session session, int places, int perSecond, int window) throws Exception {
         String code = "queue-" + UUID.randomUUID().toString().substring(0, 8);
-        String offering = JSON.readTree(postAs(session, "/api/v1/offerings", """
+        String offering = JSON.readTree(postAs(session, "/system/v1/offerings", """
                         {"code":"%s","name":"Queue","kind":"CAPACITY","durationMin":60,"slotStep":60,
                          "horizonDays":30,"queueMode":"REQUIRED","admitPerSecond":%d,"admitWindowSeconds":%d}
                         """.formatted(code, perSecond, window))
@@ -195,7 +195,7 @@ class QueueIntegrationTest extends BookingApiTest {
                 .plusDays(1)
                 .withHour(18).withMinute(0).withSecond(0).withNano(0)
                 .toString();
-        String sessionId = JSON.readTree(postAs(session, "/api/v1/session-series", """
+        String sessionId = JSON.readTree(postAs(session, "/system/v1/session-series", """
                         {"offeringId":"%s","zone":"UTC","dtstart":"%s","rule":["RRULE:FREQ=DAILY;COUNT=2"],
                          "durationMinutes":60,"capacity":%d}
                         """.formatted(offering, dtstart, places))
@@ -208,7 +208,7 @@ class QueueIntegrationTest extends BookingApiTest {
     }
 
     private String mint(Session session, String customerRef, List<String> scopes) throws Exception {
-        return JSON.readTree(postAs(session, "/api/v1/customer-tokens", """
+        return JSON.readTree(postAs(session, "/system/v1/customer-tokens", """
                         {"customerRef":"%s","scopes":["%s"],"ttlSeconds":600}
                         """.formatted(customerRef, String.join("\",\"", scopes)))
                 .andExpect(status().isCreated())

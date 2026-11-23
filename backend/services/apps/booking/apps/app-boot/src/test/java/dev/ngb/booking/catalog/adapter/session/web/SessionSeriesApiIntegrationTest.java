@@ -41,7 +41,7 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
         Session session = catalog();
         String offering = createOffering(session, "create", "CAPACITY", 90);
 
-        String body = postAs(session, "/api/v1/session-series", seriesBody(offering, "RRULE:FREQ=DAILY;COUNT=5"))
+        String body = postAs(session, "/system/v1/session-series", seriesBody(offering, "RRULE:FREQ=DAILY;COUNT=5"))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("ETag", "\"1\""))
                 .andExpect(jsonPath("$.series.id").isString())
@@ -74,7 +74,7 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
         Session session = catalog();
         String offering = createOffering(session, "interval", "INTERVAL", 30);
 
-        postAs(session, "/api/v1/session-series", seriesBody(offering, "RRULE:FREQ=DAILY;COUNT=2"))
+        postAs(session, "/system/v1/session-series", seriesBody(offering, "RRULE:FREQ=DAILY;COUNT=2"))
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
 
@@ -85,7 +85,7 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
     void anUnknownOfferingIsRefusedWith422() throws Exception {
         Session session = catalog();
 
-        postAs(session, "/api/v1/session-series", seriesBody(UUID.randomUUID().toString(), "RRULE:FREQ=DAILY;COUNT=2"))
+        postAs(session, "/system/v1/session-series", seriesBody(UUID.randomUUID().toString(), "RRULE:FREQ=DAILY;COUNT=2"))
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
     }
@@ -95,7 +95,7 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
         Session session = catalog();
         String offering = createOffering(session, "hourly", "CAPACITY", 90);
 
-        postAs(session, "/api/v1/session-series", seriesBody(offering, "RRULE:FREQ=HOURLY;COUNT=3"))
+        postAs(session, "/system/v1/session-series", seriesBody(offering, "RRULE:FREQ=HOURLY;COUNT=3"))
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("invalid-recurrence"));
     }
@@ -106,7 +106,7 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
         String offering = createOffering(session, "conditional", "CAPACITY", 90);
         String seriesId = idOf(createSeries(session, offering, "RRULE:FREQ=DAILY;COUNT=3"));
 
-        patchAs(session, "/api/v1/session-series/{seriesId}", "{\"durationMinutes\":90}", null, seriesId)
+        patchAs(session, "/system/v1/session-series/{seriesId}", "{\"durationMinutes\":90}", null, seriesId)
                 .andExpect(status().isPreconditionRequired());
     }
 
@@ -116,11 +116,11 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
         String offering = createOffering(session, "stale", "CAPACITY", 90);
         String seriesId = idOf(createSeries(session, offering, "RRULE:FREQ=DAILY;COUNT=3"));
 
-        patchAs(session, "/api/v1/session-series/{seriesId}", "{\"durationMinutes\":90}", "\"1\"", seriesId)
+        patchAs(session, "/system/v1/session-series/{seriesId}", "{\"durationMinutes\":90}", "\"1\"", seriesId)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"2\""));
 
-        patchAs(session, "/api/v1/session-series/{seriesId}", "{\"durationMinutes\":120}", "\"1\"", seriesId)
+        patchAs(session, "/system/v1/session-series/{seriesId}", "{\"durationMinutes\":120}", "\"1\"", seriesId)
                 .andExpect(status().isPreconditionFailed())
                 .andExpect(header().string("ETag", "\"2\""));
     }
@@ -132,7 +132,7 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
         String seriesId = idOf(createSeries(session, offering, "RRULE:FREQ=DAILY;COUNT=5"));
         assertThat(rowsOf(session, SESSIONS)).isEqualTo(5);
 
-        String body = patchAs(session, "/api/v1/session-series/{seriesId}", "{\"durationMinutes\":90}", "\"1\"", seriesId)
+        String body = patchAs(session, "/system/v1/session-series/{seriesId}", "{\"durationMinutes\":90}", "\"1\"", seriesId)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"2\""))
                 .andExpect(jsonPath("$.series.durationMinutes").value(90))
@@ -160,7 +160,7 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
         String offering = createOffering(session, "archived", "CAPACITY", 90);
         String seriesId = idOf(createSeries(session, offering, "RRULE:FREQ=DAILY;COUNT=3"));
 
-        patchAs(session, "/api/v1/session-series/{seriesId}", "{\"status\":\"ARCHIVED\"}", "\"1\"", seriesId)
+        patchAs(session, "/system/v1/session-series/{seriesId}", "{\"status\":\"ARCHIVED\"}", "\"1\"", seriesId)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sessions.length()").value(0));
 
@@ -177,9 +177,9 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
         JsonNode created = createSeries(session, offering, "RRULE:FREQ=DAILY;COUNT=3");
         String sessionId = created.get("sessions").get(0).get("id").asString();
 
-        deleteAs(session, "/api/v1/sessions/{sessionId}", null, sessionId).andExpect(status().isNoContent());
+        deleteAs(session, "/system/v1/sessions/{sessionId}", null, sessionId).andExpect(status().isNoContent());
 
-        getAs(session, "/api/v1/sessions/{sessionId}", sessionId)
+        getAs(session, "/system/v1/sessions/{sessionId}", sessionId)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
 
@@ -195,7 +195,7 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
     void cancellingAnUnknownSessionIs404() throws Exception {
         Session session = catalog();
 
-        deleteAs(session, "/api/v1/sessions/{sessionId}", null, UUID.randomUUID())
+        deleteAs(session, "/system/v1/sessions/{sessionId}", null, UUID.randomUUID())
                 .andExpect(status().isNotFound());
     }
 
@@ -206,7 +206,7 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
         JsonNode created = createSeries(session, offering, "RRULE:FREQ=DAILY;COUNT=2");
         String sessionId = created.get("sessions").get(0).get("id").asString();
 
-        putAs(session, "/api/v1/sessions/{sessionId}/pools", """
+        putAs(session, "/system/v1/sessions/{sessionId}/pools", """
                 {"pools":[{"code":"adult","capacity":6},{"code":"child","capacity":4}]}
                 """, sessionId)
                 .andExpect(status().isOk())
@@ -217,7 +217,7 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
                 .andExpect(jsonPath("$.pools[1].code").value("child"))
                 .andExpect(jsonPath("$.pools[1].capacity").value(4));
 
-        getAs(session, "/api/v1/sessions/{sessionId}", sessionId)
+        getAs(session, "/system/v1/sessions/{sessionId}", sessionId)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pools.length()").value(2))
                 .andExpect(jsonPath("$.pools[0].code").value("adult"));
@@ -230,13 +230,13 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
         JsonNode created = createSeries(session, offering, "RRULE:FREQ=DAILY;COUNT=2");
         String sessionId = created.get("sessions").get(0).get("id").asString();
 
-        putAs(session, "/api/v1/sessions/{sessionId}/pools", """
+        putAs(session, "/system/v1/sessions/{sessionId}/pools", """
                 {"pools":[{"code":"adult","capacity":11}]}
                 """, sessionId)
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
 
-        putAs(session, "/api/v1/sessions/{sessionId}/pools", """
+        putAs(session, "/system/v1/sessions/{sessionId}/pools", """
                 {"pools":[{"code":"adult","capacity":-1}]}
                 """, sessionId)
                 .andExpect(status().is(422))
@@ -276,8 +276,8 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
         JsonNode created = createSeries(one, offering, "RRULE:FREQ=DAILY;COUNT=2");
         String sessionId = created.get("sessions").get(0).get("id").asString();
 
-        getAs(other, "/api/v1/sessions/{sessionId}", sessionId).andExpect(status().isNotFound());
-        deleteAs(other, "/api/v1/sessions/{sessionId}", null, sessionId).andExpect(status().isNotFound());
+        getAs(other, "/system/v1/sessions/{sessionId}", sessionId).andExpect(status().isNotFound());
+        deleteAs(other, "/system/v1/sessions/{sessionId}", null, sessionId).andExpect(status().isNotFound());
     }
 
     private Session catalog() {
@@ -290,7 +290,7 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
     }
 
     private String createOffering(Session session, String code, String kind, int horizonDays) throws Exception {
-        String body = postAs(session, "/api/v1/offerings", """
+        String body = postAs(session, "/system/v1/offerings", """
                 {"code":"%s","name":"Offering %s","kind":"%s","durationMin":60,"slotStep":60,"horizonDays":%d}
                 """.formatted(code, code, kind, horizonDays))
                 .andExpect(status().isCreated())
@@ -301,7 +301,7 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
     }
 
     private JsonNode createSeries(Session session, String offeringId, String rule) throws Exception {
-        String body = postAs(session, "/api/v1/session-series", seriesBody(offeringId, rule))
+        String body = postAs(session, "/system/v1/session-series", seriesBody(offeringId, rule))
                 .andExpect(status().isCreated())
                 .andReturn()
                 .getResponse()
@@ -322,7 +322,7 @@ class SessionSeriesApiIntegrationTest extends BookingApiTest {
     }
 
     private ResultActions list(Session session, String... params) throws Exception {
-        MockHttpServletRequestBuilder request = get("/api/v1/sessions")
+        MockHttpServletRequestBuilder request = get("/system/v1/sessions")
                 .header("Host", session.host())
                 .header("Authorization", "Bearer " + session.token());
         for (int i = 0; i < params.length; i += 2) {

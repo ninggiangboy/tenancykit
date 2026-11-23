@@ -26,7 +26,7 @@ class CalendarApiIntegrationTest extends BookingApiTest {
         Session session = reader();
         String id = create(session);
 
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", """
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", """
                 {"hours":[{"weekday":1,"opens":"09:00","closes":"17:00"},{"weekday":2,"opens":"08:00","closes":"12:00"}]}
                 """, id)
                 .andExpect(status().isOk())
@@ -35,7 +35,7 @@ class CalendarApiIntegrationTest extends BookingApiTest {
                 .andExpect(jsonPath("$.hours[0].opens").value("09:00"))
                 .andExpect(jsonPath("$.hours[0].closes").value("17:00"));
 
-        getAs(session, "/api/v1/resources/{resourceId}/working-hours", id)
+        getAs(session, "/system/v1/resources/{resourceId}/working-hours", id)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.hours.length()").value(2))
                 .andExpect(jsonPath("$.hours[1].weekday").value(2))
@@ -48,13 +48,13 @@ class CalendarApiIntegrationTest extends BookingApiTest {
         Session session = reader();
         String id = create(session);
 
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", """
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", """
                 {"hours":[{"weekday":7,"opens":"09:00","closes":"24:00"}]}
                 """, id)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.hours[0].closes").value("24:00"));
 
-        getAs(session, "/api/v1/resources/{resourceId}/working-hours", id)
+        getAs(session, "/system/v1/resources/{resourceId}/working-hours", id)
                 .andExpect(jsonPath("$.hours[0].closes").value("24:00"));
     }
 
@@ -63,13 +63,13 @@ class CalendarApiIntegrationTest extends BookingApiTest {
         Session session = reader();
         String id = create(session);
 
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", """
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", """
                 {"hours":[{"weekday":1,"opens":"09:00","closes":"12:00"},{"weekday":1,"opens":"11:00","closes":"13:00"}]}
                 """, id)
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
 
-        getAs(session, "/api/v1/resources/{resourceId}/working-hours", id)
+        getAs(session, "/system/v1/resources/{resourceId}/working-hours", id)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.hours.length()").value(0));
     }
@@ -79,7 +79,7 @@ class CalendarApiIntegrationTest extends BookingApiTest {
         Session session = reader();
         String id = create(session);
 
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", """
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", """
                 {"hours":[{"weekday":1,"opens":"17:00","closes":"09:00"}]}
                 """, id)
                 .andExpect(status().is(422))
@@ -91,7 +91,7 @@ class CalendarApiIntegrationTest extends BookingApiTest {
         Session session = reader();
         String id = create(session);
 
-        postAs(session, "/api/v1/resources/{resourceId}/exceptions", """
+        postAs(session, "/system/v1/resources/{resourceId}/exceptions", """
                 {"fromDate":"2026-12-25","toDate":"2026-12-26","kind":"CLOSED"}
                 """, id)
                 .andExpect(status().isCreated())
@@ -99,7 +99,7 @@ class CalendarApiIntegrationTest extends BookingApiTest {
                 .andExpect(jsonPath("$.kind").value("CLOSED"))
                 .andExpect(jsonPath("$.hours.length()").value(0));
 
-        postAs(session, "/api/v1/resources/{resourceId}/exceptions", """
+        postAs(session, "/system/v1/resources/{resourceId}/exceptions", """
                 {"fromDate":"2026-12-24","toDate":"2026-12-24","kind":"OPEN",
                  "hours":[{"weekday":4,"opens":"10:00","closes":"14:00"}]}
                 """, id)
@@ -109,7 +109,7 @@ class CalendarApiIntegrationTest extends BookingApiTest {
                 .andExpect(jsonPath("$.hours[0].opens").value("10:00"))
                 .andExpect(jsonPath("$.hours[0].closes").value("14:00"));
 
-        getAs(session, "/api/v1/resources/{resourceId}/exceptions", id)
+        getAs(session, "/system/v1/resources/{resourceId}/exceptions", id)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(2))
                 .andExpect(jsonPath("$.data[0].fromDate").value("2026-12-24"))
@@ -122,7 +122,7 @@ class CalendarApiIntegrationTest extends BookingApiTest {
         Session session = reader();
         String id = create(session);
 
-        postAs(session, "/api/v1/resources/{resourceId}/exceptions", """
+        postAs(session, "/system/v1/resources/{resourceId}/exceptions", """
                 {"fromDate":"2026-12-24","toDate":"2026-12-24","kind":"OPEN"}
                 """, id)
                 .andExpect(status().is(422))
@@ -133,7 +133,7 @@ class CalendarApiIntegrationTest extends BookingApiTest {
     void anExceptionIsRemovedAndASecondRemovalIs404() throws Exception {
         Session session = reader();
         String id = create(session);
-        String body = postAs(session, "/api/v1/resources/{resourceId}/exceptions", """
+        String body = postAs(session, "/system/v1/resources/{resourceId}/exceptions", """
                 {"fromDate":"2026-12-25","toDate":"2026-12-25","kind":"CLOSED"}
                 """, id)
                 .andExpect(status().isCreated())
@@ -142,12 +142,12 @@ class CalendarApiIntegrationTest extends BookingApiTest {
                 .getContentAsString(StandardCharsets.UTF_8);
         String exceptionId = JSON.readTree(body).get("id").asString();
 
-        deleteAs(session, "/api/v1/resources/{resourceId}/exceptions/{exceptionId}", null, id, exceptionId)
+        deleteAs(session, "/system/v1/resources/{resourceId}/exceptions/{exceptionId}", null, id, exceptionId)
                 .andExpect(status().isNoContent());
-        deleteAs(session, "/api/v1/resources/{resourceId}/exceptions/{exceptionId}", null, id, exceptionId)
+        deleteAs(session, "/system/v1/resources/{resourceId}/exceptions/{exceptionId}", null, id, exceptionId)
                 .andExpect(status().isNotFound());
 
-        getAs(session, "/api/v1/resources/{resourceId}/exceptions", id)
+        getAs(session, "/system/v1/resources/{resourceId}/exceptions", id)
                 .andExpect(jsonPath("$.data.length()").value(0));
     }
 
@@ -156,9 +156,9 @@ class CalendarApiIntegrationTest extends BookingApiTest {
         Session session = reader();
         String unknown = UUID.randomUUID().toString();
 
-        getAs(session, "/api/v1/resources/{resourceId}/working-hours", unknown).andExpect(status().isNotFound());
-        getAs(session, "/api/v1/resources/{resourceId}/exceptions", unknown).andExpect(status().isNotFound());
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", "{\"hours\":[]}", unknown)
+        getAs(session, "/system/v1/resources/{resourceId}/working-hours", unknown).andExpect(status().isNotFound());
+        getAs(session, "/system/v1/resources/{resourceId}/exceptions", unknown).andExpect(status().isNotFound());
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", "{\"hours\":[]}", unknown)
                 .andExpect(status().isNotFound());
     }
 
@@ -168,7 +168,7 @@ class CalendarApiIntegrationTest extends BookingApiTest {
 
     private String create(Session session) throws Exception {
         String code = "cal-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/resources", """
+        String body = postAs(session, "/system/v1/resources", """
                 {"code":"%s","name":"Calendar %s","zone":"UTC"}
                 """.formatted(code, code))
                 .andExpect(status().isCreated())

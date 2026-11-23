@@ -153,7 +153,7 @@ class MultiResourceAssignmentTest extends BookingApiTest {
     private UUID resource(Session session, Integer seats) throws Exception {
         String code = "res-" + UUID.randomUUID().toString().substring(0, 8);
         String seatField = seats == null ? "" : ",\"seats\":" + seats;
-        String body = postAs(session, "/api/v1/resources", """
+        String body = postAs(session, "/system/v1/resources", """
                 {"code":"%s","name":"Resource %s","zone":"UTC"%s}
                 """.formatted(code, code, seatField))
                 .andExpect(status().isCreated())
@@ -161,14 +161,14 @@ class MultiResourceAssignmentTest extends BookingApiTest {
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
         UUID resource = UUID.fromString(JSON.readTree(body).get("id").asString());
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
                 .andExpect(status().isOk());
         return resource;
     }
 
     private String group(Session session, String strategy, int maxCombine, String... members) throws Exception {
         String code = "grp-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/resource-groups", """
+        String body = postAs(session, "/system/v1/resource-groups", """
                 {"code":"%s","name":"Group %s","strategy":"%s","maxCombine":%d,"members":[%s]}
                 """.formatted(code, code, strategy, maxCombine, String.join(",", members)))
                 .andExpect(status().isCreated())
@@ -198,7 +198,7 @@ class MultiResourceAssignmentTest extends BookingApiTest {
 
     private String offering(Session session, String requirements) throws Exception {
         String code = "off-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/offerings", """
+        String body = postAs(session, "/system/v1/offerings", """
                 {"code":"%s","name":"Offering %s","kind":"INTERVAL","durationMin":60,"slotStep":30,"horizonDays":30}
                 """.formatted(code, code))
                 .andExpect(status().isCreated())
@@ -206,7 +206,7 @@ class MultiResourceAssignmentTest extends BookingApiTest {
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
         String offering = JSON.readTree(body).get("id").asString();
-        putAs(session, "/api/v1/offerings/{offeringId}/requirements", """
+        putAs(session, "/system/v1/offerings/{offeringId}/requirements", """
                 {"requirements":[%s]}
                 """.formatted(requirements), offering)
                 .andExpect(status().isOk());
@@ -221,7 +221,7 @@ class MultiResourceAssignmentTest extends BookingApiTest {
     private ResultActions hold(Session session, String offeringId, String customerRef, Instant start, Integer partySize)
             throws Exception {
         String party = partySize == null ? "" : ",\"partySize\":" + partySize;
-        return postAs(session, "/api/v1/bookings", """
+        return postAs(session, "/system/v1/bookings", """
                 {"offeringId":"%s","customerRef":"%s","start":"%s","durationMinutes":60%s}
                 """.formatted(offeringId, customerRef, start, party));
     }
@@ -241,7 +241,7 @@ class MultiResourceAssignmentTest extends BookingApiTest {
 
     private List<UUID> availability(Session session, String offeringId, Instant start, Integer partySize)
             throws Exception {
-        String body = getAs(session, "/api/v1/offerings/{offeringId}/availability?from=%s&to=%s&partySize=%d"
+        String body = getAs(session, "/system/v1/offerings/{offeringId}/availability?from=%s&to=%s&partySize=%d"
                         .formatted(start, start.plus(Duration.ofHours(1)), partySize), offeringId)
                 .andExpect(status().isOk())
                 .andReturn()

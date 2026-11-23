@@ -35,7 +35,7 @@ class CancellationPolicyTest extends BookingApiTest {
     void thePolicyCodeFollowsTheNoticeGiven() throws Exception {
         Session session = lifecycle();
         String offering = intervalOffering(session);
-        putAs(session, "/api/v1/offerings/{offeringId}/cancellation-windows", """
+        putAs(session, "/system/v1/offerings/{offeringId}/cancellation-windows", """
                 {"windows":[{"minutesBeforeStart":1440,"code":"full-refund"},
                             {"minutesBeforeStart":60,"code":"late"}]}
                 """, offering)
@@ -51,7 +51,7 @@ class CancellationPolicyTest extends BookingApiTest {
                 .andExpect(jsonPath("$.policyCode").value("AFTER_START"));
 
         String held = hold(session, offering, "held", tomorrow(12));
-        postAs(session, "/api/v1/bookings/{bookingId}/cancel", null, held)
+        postAs(session, "/system/v1/bookings/{bookingId}/cancel", null, held)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.policyCode").value("NONE"));
     }
@@ -59,9 +59,9 @@ class CancellationPolicyTest extends BookingApiTest {
     private org.springframework.test.web.servlet.ResultActions confirmed(
             Session session, String offering, String customer, Instant start) throws Exception {
         String booking = hold(session, offering, customer, start);
-        postAs(session, "/api/v1/bookings/{bookingId}/confirm", null, booking)
+        postAs(session, "/system/v1/bookings/{bookingId}/confirm", null, booking)
                 .andExpect(status().isOk());
-        return postAs(session, "/api/v1/bookings/{bookingId}/cancel", null, booking)
+        return postAs(session, "/system/v1/bookings/{bookingId}/cancel", null, booking)
                 .andExpect(status().isOk());
     }
 
@@ -76,7 +76,7 @@ class CancellationPolicyTest extends BookingApiTest {
 
     private String intervalOffering(Session session) throws Exception {
         String code = "policy-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/offerings", """
+        String body = postAs(session, "/system/v1/offerings", """
                 {"code":"%s","name":"Policy","kind":"INTERVAL","durationMin":60,"slotStep":15,"horizonDays":30}
                 """.formatted(code))
                 .andExpect(status().isCreated())
@@ -85,7 +85,7 @@ class CancellationPolicyTest extends BookingApiTest {
                 .getContentAsString(StandardCharsets.UTF_8);
         String offering = JSON.readTree(body).get("id").asString();
         UUID resource = resource(session);
-        putAs(session, "/api/v1/offerings/{offeringId}/requirements", """
+        putAs(session, "/system/v1/offerings/{offeringId}/requirements", """
                 {"requirements":[{"slotCode":"staff","resourceId":"%s"}]}
                 """.formatted(resource), offering)
                 .andExpect(status().isOk());
@@ -94,7 +94,7 @@ class CancellationPolicyTest extends BookingApiTest {
 
     private UUID resource(Session session) throws Exception {
         String code = "policy-res-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/resources", """
+        String body = postAs(session, "/system/v1/resources", """
                 {"code":"%s","name":"Policy","zone":"UTC"}
                 """.formatted(code))
                 .andExpect(status().isCreated())
@@ -102,13 +102,13 @@ class CancellationPolicyTest extends BookingApiTest {
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
         UUID resource = UUID.fromString(JSON.readTree(body).get("id").asString());
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
                 .andExpect(status().isOk());
         return resource;
     }
 
     private String hold(Session session, String offeringId, String customerRef, Instant start) throws Exception {
-        return JSON.readTree(postAs(session, "/api/v1/bookings", """
+        return JSON.readTree(postAs(session, "/system/v1/bookings", """
                         {"offeringId":"%s","customerRef":"%s","start":"%s","durationMinutes":60}
                         """.formatted(offeringId, customerRef, start))
                 .andExpect(status().isCreated())

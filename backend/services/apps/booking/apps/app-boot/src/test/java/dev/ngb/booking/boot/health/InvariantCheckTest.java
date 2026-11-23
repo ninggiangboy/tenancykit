@@ -33,7 +33,7 @@ class InvariantCheckTest extends BookingApiTest {
         assertThat(before).isEmpty();
 
         String code = "inv-" + UUID.randomUUID().toString().substring(0, 8);
-        String offering = JSON.readTree(postAs(session, "/api/v1/offerings", """
+        String offering = JSON.readTree(postAs(session, "/system/v1/offerings", """
                         {"code":"%s","name":"Invariant","kind":"CAPACITY","durationMin":60,"slotStep":60,
                          "horizonDays":30}
                         """.formatted(code))
@@ -46,7 +46,7 @@ class InvariantCheckTest extends BookingApiTest {
         String dtstart = LocalDateTime.now(ZoneOffset.UTC)
                 .plusDays(1).withHour(18).withMinute(0).withSecond(0).withNano(0)
                 .toString();
-        String sessionId = JSON.readTree(postAs(session, "/api/v1/session-series", """
+        String sessionId = JSON.readTree(postAs(session, "/system/v1/session-series", """
                         {"offeringId":"%s","zone":"UTC","dtstart":"%s","rule":["RRULE:FREQ=DAILY;COUNT=2"],
                          "durationMinutes":60,"capacity":2}
                         """.formatted(offering, dtstart))
@@ -55,7 +55,7 @@ class InvariantCheckTest extends BookingApiTest {
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8))
                 .get("sessions").get(0).get("id").asString();
-        postAs(session, "/api/v1/bookings", """
+        postAs(session, "/system/v1/bookings", """
                         {"offeringId":"%s","customerRef":"cust-inv","sessionId":"%s","poolCode":"default","qty":1}
                         """.formatted(offering, sessionId))
                 .andExpect(status().isCreated());

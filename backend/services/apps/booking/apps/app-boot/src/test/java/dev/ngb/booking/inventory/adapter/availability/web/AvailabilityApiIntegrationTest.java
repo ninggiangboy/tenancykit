@@ -107,7 +107,7 @@ class AvailabilityApiIntegrationTest extends BookingApiTest {
     private ResultActions availability(
             Session session, String offeringId, Instant from, Instant to, Integer durationMinutes) throws Exception {
         MockHttpServletRequestBuilder request =
-                get("/api/v1/offerings/{offeringId}/availability", offeringId)
+                get("/system/v1/offerings/{offeringId}/availability", offeringId)
                         .param("from", from.toString())
                         .param("to", to.toString());
         if (durationMinutes != null) {
@@ -118,7 +118,7 @@ class AvailabilityApiIntegrationTest extends BookingApiTest {
 
     private String createResource(Session session) throws Exception {
         String code = "av-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/resources", """
+        String body = postAs(session, "/system/v1/resources", """
                 {"code":"%s","name":"Availability %s","zone":"UTC"}
                 """.formatted(code, code))
                 .andExpect(status().isCreated())
@@ -129,7 +129,7 @@ class AvailabilityApiIntegrationTest extends BookingApiTest {
     }
 
     private void putHours(Session session, String resourceId) throws Exception {
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resourceId)
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resourceId)
                 .andExpect(status().isOk());
     }
 
@@ -138,7 +138,7 @@ class AvailabilityApiIntegrationTest extends BookingApiTest {
             throws Exception {
         String code = "av-" + UUID.randomUUID().toString().substring(0, 8);
         String max = durationMax == null ? "null" : durationMax.toString();
-        String body = postAs(session, "/api/v1/offerings", """
+        String body = postAs(session, "/system/v1/offerings", """
                 {"code":"%s","name":"Availability %s","kind":"%s","durationMin":%d,"durationMax":%s,
                  "durationStep":%d,"slotStep":%d,"horizonDays":30}
                 """.formatted(code, code, kind, durationMin, max, durationStep, slotStep))
@@ -150,7 +150,7 @@ class AvailabilityApiIntegrationTest extends BookingApiTest {
     }
 
     private void putRequirement(Session session, String offeringId, String resourceId) throws Exception {
-        putAs(session, "/api/v1/offerings/{offeringId}/requirements", """
+        putAs(session, "/system/v1/offerings/{offeringId}/requirements", """
                 {"requirements":[{"slotCode":"staff","resourceId":"%s"}]}
                 """.formatted(resourceId), offeringId)
                 .andExpect(status().isOk());

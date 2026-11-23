@@ -39,7 +39,7 @@ class ResourceApiIntegrationTest extends BookingApiTest {
     void createAnswers201AndTheVersionAsTheETag() throws Exception {
         Session session = reader();
 
-        postAs(session, "/api/v1/resources", """
+        postAs(session, "/system/v1/resources", """
                 {"code":"room-1","name":"Room One","zone":"Europe/London","seats":4}
                 """)
                 .andExpect(status().isCreated())
@@ -62,8 +62,8 @@ class ResourceApiIntegrationTest extends BookingApiTest {
                 {"code":"room-dup","name":"Room Dup","zone":"UTC"}
                 """;
 
-        postAs(session, "/api/v1/resources", body).andExpect(status().isCreated());
-        postAs(session, "/api/v1/resources", body)
+        postAs(session, "/system/v1/resources", body).andExpect(status().isCreated());
+        postAs(session, "/system/v1/resources", body)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("DUPLICATE_CODE"));
 
@@ -74,7 +74,7 @@ class ResourceApiIntegrationTest extends BookingApiTest {
     void aResourceWithAnUnknownZoneIsRefusedWith422() throws Exception {
         Session session = reader();
 
-        postAs(session, "/api/v1/resources", """
+        postAs(session, "/system/v1/resources", """
                 {"code":"room-mars","name":"Room Mars","zone":"Mars/Olympus"}
                 """)
                 .andExpect(status().is(422))
@@ -88,7 +88,7 @@ class ResourceApiIntegrationTest extends BookingApiTest {
         Session session = reader();
         String id = create(session, "room-read");
 
-        getAs(session, "/api/v1/resources/{resourceId}", id)
+        getAs(session, "/system/v1/resources/{resourceId}", id)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"1\""))
                 .andExpect(jsonPath("$.code").value("room-read"));
@@ -99,14 +99,14 @@ class ResourceApiIntegrationTest extends BookingApiTest {
         Session session = reader();
         String id = create(session, "room-patch");
 
-        patchAs(session, "/api/v1/resources/{resourceId}", "{\"name\":\"Renamed\"}", "\"1\"", id)
+        patchAs(session, "/system/v1/resources/{resourceId}", "{\"name\":\"Renamed\"}", "\"1\"", id)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"2\""))
                 .andExpect(jsonPath("$.name").value("Renamed"))
                 .andExpect(jsonPath("$.zone").value("UTC"))
                 .andExpect(jsonPath("$.seats").value(2));
 
-        getAs(session, "/api/v1/resources/{resourceId}", id)
+        getAs(session, "/system/v1/resources/{resourceId}", id)
                 .andExpect(jsonPath("$.name").value("Renamed"))
                 .andExpect(jsonPath("$.version").value(2));
     }
@@ -116,10 +116,10 @@ class ResourceApiIntegrationTest extends BookingApiTest {
         Session session = reader();
         String id = create(session, "room-conditional");
 
-        patchAs(session, "/api/v1/resources/{resourceId}", "{\"name\":\"Renamed\"}", null, id)
+        patchAs(session, "/system/v1/resources/{resourceId}", "{\"name\":\"Renamed\"}", null, id)
                 .andExpect(status().isPreconditionRequired());
 
-        getAs(session, "/api/v1/resources/{resourceId}", id).andExpect(jsonPath("$.name").value("Resource room-conditional"));
+        getAs(session, "/system/v1/resources/{resourceId}", id).andExpect(jsonPath("$.name").value("Resource room-conditional"));
     }
 
     @Test
@@ -127,15 +127,15 @@ class ResourceApiIntegrationTest extends BookingApiTest {
         Session session = reader();
         String id = create(session, "room-stale");
 
-        patchAs(session, "/api/v1/resources/{resourceId}", "{\"name\":\"First\"}", "\"1\"", id)
+        patchAs(session, "/system/v1/resources/{resourceId}", "{\"name\":\"First\"}", "\"1\"", id)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"2\""));
 
-        patchAs(session, "/api/v1/resources/{resourceId}", "{\"name\":\"Second\"}", "\"1\"", id)
+        patchAs(session, "/system/v1/resources/{resourceId}", "{\"name\":\"Second\"}", "\"1\"", id)
                 .andExpect(status().isPreconditionFailed())
                 .andExpect(header().string("ETag", "\"2\""));
 
-        getAs(session, "/api/v1/resources/{resourceId}", id).andExpect(jsonPath("$.name").value("First"));
+        getAs(session, "/system/v1/resources/{resourceId}", id).andExpect(jsonPath("$.name").value("First"));
     }
 
     @Test
@@ -143,10 +143,10 @@ class ResourceApiIntegrationTest extends BookingApiTest {
         Session session = reader();
         String id = create(session, "room-delete");
 
-        deleteAs(session, "/api/v1/resources/{resourceId}", "\"1\"", id).andExpect(status().isNoContent());
+        deleteAs(session, "/system/v1/resources/{resourceId}", "\"1\"", id).andExpect(status().isNoContent());
 
         assertThat(rowsOf(session, RESOURCES)).isZero();
-        getAs(session, "/api/v1/resources/{resourceId}", id).andExpect(status().isNotFound());
+        getAs(session, "/system/v1/resources/{resourceId}", id).andExpect(status().isNotFound());
     }
 
     @Test
@@ -155,10 +155,10 @@ class ResourceApiIntegrationTest extends BookingApiTest {
         String id = create(session, "room-referenced");
         reference(session, id);
 
-        deleteAs(session, "/api/v1/resources/{resourceId}", "\"1\"", id).andExpect(status().isNoContent());
+        deleteAs(session, "/system/v1/resources/{resourceId}", "\"1\"", id).andExpect(status().isNoContent());
 
         assertThat(rowsOf(session, RESOURCES)).isEqualTo(1);
-        getAs(session, "/api/v1/resources/{resourceId}", id)
+        getAs(session, "/system/v1/resources/{resourceId}", id)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"2\""))
                 .andExpect(jsonPath("$.status").value("ARCHIVED"));
@@ -169,7 +169,7 @@ class ResourceApiIntegrationTest extends BookingApiTest {
         Session session = reader();
         String id = create(session, "room-guarded");
 
-        deleteAs(session, "/api/v1/resources/{resourceId}", null, id).andExpect(status().isPreconditionRequired());
+        deleteAs(session, "/system/v1/resources/{resourceId}", null, id).andExpect(status().isPreconditionRequired());
 
         assertThat(rowsOf(session, RESOURCES)).isEqualTo(1);
     }
@@ -208,12 +208,12 @@ class ResourceApiIntegrationTest extends BookingApiTest {
     void anUnknownResourceIs404() throws Exception {
         Session session = reader();
 
-        getAs(session, "/api/v1/resources/{resourceId}", UUID.randomUUID()).andExpect(status().isNotFound());
+        getAs(session, "/system/v1/resources/{resourceId}", UUID.randomUUID()).andExpect(status().isNotFound());
     }
 
     /** Creates a resource as the session and answers its id. */
     private String create(Session session, String code) throws Exception {
-        String body = postAs(session, "/api/v1/resources", """
+        String body = postAs(session, "/system/v1/resources", """
                 {"code":"%s","name":"Resource %s","zone":"UTC","seats":2}
                 """.formatted(code, code))
                 .andExpect(status().isCreated())
@@ -246,7 +246,7 @@ class ResourceApiIntegrationTest extends BookingApiTest {
     }
 
     private ResultActions list(Session session, String... params) throws Exception {
-        MockHttpServletRequestBuilder request = get("/api/v1/resources");
+        MockHttpServletRequestBuilder request = get("/system/v1/resources");
         for (int i = 0; i < params.length; i += 2) {
             request.param(params[i], params[i + 1]);
         }

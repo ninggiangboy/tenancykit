@@ -58,7 +58,7 @@ class SessionMaterializationTest extends BookingApiTest {
         Instant cancelled = firstStart(created);
         String sessionId = created.get("sessions").get(0).get("id").asString();
 
-        deleteAs(session, "/api/v1/sessions/{sessionId}", null, sessionId).andExpect(status().isNoContent());
+        deleteAs(session, "/system/v1/sessions/{sessionId}", null, sessionId).andExpect(status().isNoContent());
 
         inTenant(session.tenant(), () -> unitOfWork.transactional(() -> {
             dsl.deleteFrom(SESSIONS).execute();
@@ -79,13 +79,13 @@ class SessionMaterializationTest extends BookingApiTest {
         JsonNode created = createSeries(session, offering, "RRULE:FREQ=DAILY;COUNT=3");
         String sessionId = created.get("sessions").get(0).get("id").asString();
 
-        deleteAs(session, "/api/v1/sessions/{sessionId}", null, sessionId).andExpect(status().isNoContent());
+        deleteAs(session, "/system/v1/sessions/{sessionId}", null, sessionId).andExpect(status().isNoContent());
 
-        getAs(session, "/api/v1/sessions/{sessionId}", sessionId)
+        getAs(session, "/system/v1/sessions/{sessionId}", sessionId)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
 
-        String series = getAs(session, "/api/v1/session-series")
+        String series = getAs(session, "/system/v1/session-series")
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -114,7 +114,7 @@ class SessionMaterializationTest extends BookingApiTest {
     }
 
     private String createOffering(Session session, String code) throws Exception {
-        String body = postAs(session, "/api/v1/offerings", """
+        String body = postAs(session, "/system/v1/offerings", """
                 {"code":"cap-%s","name":"Capacity %s","kind":"CAPACITY","durationMin":60,"slotStep":60,"horizonDays":90}
                 """.formatted(code, code))
                 .andExpect(status().isCreated())
@@ -126,7 +126,7 @@ class SessionMaterializationTest extends BookingApiTest {
 
     private JsonNode createSeries(Session session, String offeringId, String rule) throws Exception {
         String dtstart = LocalDateTime.now(ZoneOffset.UTC).plusDays(1).withNano(0).toString();
-        String body = postAs(session, "/api/v1/session-series", """
+        String body = postAs(session, "/system/v1/session-series", """
                 {"offeringId":"%s","zone":"UTC","dtstart":"%s","rule":["%s"],"durationMinutes":60,"capacity":10}
                 """.formatted(offeringId, dtstart, rule))
                 .andExpect(status().isCreated())

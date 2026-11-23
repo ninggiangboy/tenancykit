@@ -32,8 +32,8 @@ class CatalogIsolationTest extends BookingApiTest {
         String idB = create(tenantB, "shared-code");
 
         assertThat(idA).isNotEqualTo(idB);
-        getAs(tenantA, "/api/v1/resources/{resourceId}", idA).andExpect(jsonPath("$.code").value("shared-code"));
-        getAs(tenantB, "/api/v1/resources/{resourceId}", idB).andExpect(jsonPath("$.code").value("shared-code"));
+        getAs(tenantA, "/system/v1/resources/{resourceId}", idA).andExpect(jsonPath("$.code").value("shared-code"));
+        getAs(tenantB, "/system/v1/resources/{resourceId}", idB).andExpect(jsonPath("$.code").value("shared-code"));
     }
 
     @Test
@@ -42,16 +42,16 @@ class CatalogIsolationTest extends BookingApiTest {
         Session tenantB = reader();
         String idA = create(tenantA, "tenant-a-only");
 
-        getAs(tenantB, "/api/v1/resources/{resourceId}", idA).andExpect(status().isNotFound());
-        patchAs(tenantB, "/api/v1/resources/{resourceId}", "{\"name\":\"Stolen\"}", "\"1\"", idA)
+        getAs(tenantB, "/system/v1/resources/{resourceId}", idA).andExpect(status().isNotFound());
+        patchAs(tenantB, "/system/v1/resources/{resourceId}", "{\"name\":\"Stolen\"}", "\"1\"", idA)
                 .andExpect(status().isNotFound());
-        deleteAs(tenantB, "/api/v1/resources/{resourceId}", "\"1\"", idA).andExpect(status().isNotFound());
+        deleteAs(tenantB, "/system/v1/resources/{resourceId}", "\"1\"", idA).andExpect(status().isNotFound());
 
-        getAs(tenantB, "/api/v1/resources")
+        getAs(tenantB, "/system/v1/resources")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(0));
         assertThat(rowsOf(tenantB, RESOURCES)).isZero();
-        getAs(tenantA, "/api/v1/resources/{resourceId}", idA).andExpect(jsonPath("$.code").value("tenant-a-only"));
+        getAs(tenantA, "/system/v1/resources/{resourceId}", idA).andExpect(jsonPath("$.code").value("tenant-a-only"));
     }
 
     @Test
@@ -59,7 +59,7 @@ class CatalogIsolationTest extends BookingApiTest {
         Session session = reader();
         String readOnly = credentialOf(session, "Read Only", BookingPermissions.RESOURCE_READ);
 
-        send(post("/api/v1/resources"), session, """
+        send(post("/system/v1/resources"), session, """
                 {"code":"room-forbidden","name":"Room","zone":"UTC"}
                 """, readOnly, null)
                 .andExpect(status().isForbidden());
@@ -71,7 +71,7 @@ class CatalogIsolationTest extends BookingApiTest {
     void aRequestWithoutATokenIsRefusedWith401() throws Exception {
         Session session = reader();
 
-        mvc.perform(get("/api/v1/resources").header("Host", session.host()))
+        mvc.perform(get("/system/v1/resources").header("Host", session.host()))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -80,7 +80,7 @@ class CatalogIsolationTest extends BookingApiTest {
     }
 
     private String create(Session session, String code) throws Exception {
-        String body = postAs(session, "/api/v1/resources", """
+        String body = postAs(session, "/system/v1/resources", """
                 {"code":"%s","name":"Resource %s","zone":"UTC"}
                 """.formatted(code, code))
                 .andExpect(status().isCreated())

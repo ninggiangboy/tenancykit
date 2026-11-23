@@ -45,7 +45,7 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
         String offering = intervalOffering(session);
         String booking = hold(session, offering, "cust-a", tomorrow(10));
 
-        getAs(session, "/api/v1/bookings/{bookingId}", booking)
+        getAs(session, "/system/v1/bookings/{bookingId}", booking)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"1\""))
                 .andExpect(jsonPath("$.status").value("HELD"))
@@ -53,12 +53,12 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
                 .andExpect(jsonPath("$.customerRef").value("cust-a"))
                 .andExpect(jsonPath("$.resources.length()").value(1));
 
-        postAs(session, "/api/v1/bookings/{bookingId}/confirm", null, booking)
+        postAs(session, "/system/v1/bookings/{bookingId}/confirm", null, booking)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"2\""))
                 .andExpect(jsonPath("$.status").value("CONFIRMED"));
 
-        postAs(session, "/api/v1/bookings/{bookingId}/cancel", null, booking)
+        postAs(session, "/system/v1/bookings/{bookingId}/cancel", null, booking)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"3\""))
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
@@ -71,7 +71,7 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
         String booking = hold(session, offering, "cust-extend", tomorrow(11));
 
         Instant extended = Instant.parse(JSON.readTree(postAs(
-                                session, "/api/v1/bookings/{bookingId}/extend", "{\"seconds\":600}", booking)
+                                session, "/system/v1/bookings/{bookingId}/extend", "{\"seconds\":600}", booking)
                         .andExpect(status().isOk())
                         .andExpect(header().string("ETag", "\"2\""))
                         .andExpect(jsonPath("$.extendedSeconds").value(600))
@@ -81,11 +81,11 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
                 .get("holdExpiresAt")
                 .asString());
 
-        postAs(session, "/api/v1/bookings/{bookingId}/extend", "{\"seconds\":600}", booking)
+        postAs(session, "/system/v1/bookings/{bookingId}/extend", "{\"seconds\":600}", booking)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("booking-state"));
 
-        getAs(session, "/api/v1/bookings/{bookingId}", booking)
+        getAs(session, "/system/v1/bookings/{bookingId}", booking)
                 .andExpect(jsonPath("$.holdExpiresAt").value(extended.toString()))
                 .andExpect(jsonPath("$.extendedSeconds").value(600));
     }
@@ -96,7 +96,7 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
         String offering = intervalOffering(session);
         String booking = hold(session, offering, "cust-cap", tomorrow(12));
 
-        postAs(session, "/api/v1/bookings/{bookingId}/extend", "{\"seconds\":3600}", booking)
+        postAs(session, "/system/v1/bookings/{bookingId}/extend", "{\"seconds\":3600}", booking)
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("EXTENSION_CAP"));
     }
@@ -136,7 +136,7 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
     void anUnknownBookingIs404() throws Exception {
         Session session = lifecycle();
 
-        getAs(session, "/api/v1/bookings/{bookingId}", UUID.randomUUID()).andExpect(status().isNotFound());
+        getAs(session, "/system/v1/bookings/{bookingId}", UUID.randomUUID()).andExpect(status().isNotFound());
     }
 
     @Test
@@ -145,7 +145,7 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
         String offering = capacityOffering(session);
         String sessionId = materializeSession(session, offering);
 
-        postAs(session, "/api/v1/bookings", """
+        postAs(session, "/system/v1/bookings", """
                 {"offeringId":"%s","customerRef":"cust-capacity","sessionId":"%s","poolCode":"default","qty":1}
                 """.formatted(offering, sessionId))
                 .andExpect(status().isCreated())
@@ -169,7 +169,7 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
 
     private String intervalOffering(Session session) throws Exception {
         String offering = createOffering(session, "INTERVAL", 60, 30, 30);
-        putAs(session, "/api/v1/offerings/{offeringId}/requirements", """
+        putAs(session, "/system/v1/offerings/{offeringId}/requirements", """
                 {"requirements":[{"slotCode":"staff","resourceId":"%s"}]}
                 """.formatted(seedResource(session)), offering)
                 .andExpect(status().isOk());
@@ -183,7 +183,7 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
     private String createOffering(Session session, String kind, int durationMin, int slotStep, int horizonDays)
             throws Exception {
         String code = "book-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/offerings", """
+        String body = postAs(session, "/system/v1/offerings", """
                 {"code":"%s","name":"Booking %s","kind":"%s","durationMin":%d,"slotStep":%d,"horizonDays":%d}
                 """.formatted(code, code, kind, durationMin, slotStep, horizonDays))
                 .andExpect(status().isCreated())
@@ -201,7 +201,7 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
                 .withSecond(0)
                 .withNano(0)
                 .toString();
-        String body = postAs(session, "/api/v1/session-series", """
+        String body = postAs(session, "/system/v1/session-series", """
                 {"offeringId":"%s","zone":"UTC","dtstart":"%s","rule":["RRULE:FREQ=DAILY;COUNT=2"],
                  "durationMinutes":60,"capacity":10}
                 """.formatted(offeringId, dtstart))
@@ -213,7 +213,7 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
     }
 
     private String hold(Session session, String offeringId, String customerRef, Instant start) throws Exception {
-        String body = postAs(session, "/api/v1/bookings", """
+        String body = postAs(session, "/system/v1/bookings", """
                 {"offeringId":"%s","customerRef":"%s","start":"%s","durationMinutes":60}
                 """.formatted(offeringId, customerRef, start))
                 .andExpect(status().isCreated())
@@ -227,7 +227,7 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
 
     private UUID seedResource(Session session) throws Exception {
         String code = "room-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/resources", """
+        String body = postAs(session, "/system/v1/resources", """
                 {"code":"%s","name":"Room %s","zone":"UTC"}
                 """.formatted(code, code))
                 .andExpect(status().isCreated())
@@ -235,7 +235,7 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
         UUID resource = UUID.fromString(JSON.readTree(body).get("id").asString());
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
                 .andExpect(status().isOk());
         return resource;
     }
@@ -249,7 +249,7 @@ class BookingLifecycleIntegrationTest extends BookingApiTest {
     }
 
     private ResultActions list(Session session, String... params) throws Exception {
-        MockHttpServletRequestBuilder request = get("/api/v1/bookings");
+        MockHttpServletRequestBuilder request = get("/system/v1/bookings");
         for (int i = 0; i < params.length; i += 2) {
             request.param(params[i], params[i + 1]);
         }

@@ -165,9 +165,11 @@ class PublicGateIntegrationTest extends BookingApiTest {
     void corsEchoesOnlyARegisteredOrigin() throws Exception {
         Session session = lifecycle();
         Capacity capacity = capacity(session, 1);
-        putAs(session, "/api/v1/settings/gate", """
+        // booking:settings:manage is not grantable, so it is edited by a person, not by the tenant's system.
+        String admin = personOf(session, BookingPermissions.SETTINGS_MANAGE);
+        putAsToken(session, "/api/v1/settings/gate", """
                 {"allowedOrigins":["https://shop.example.com"],"maxTokenTtlSeconds":600}
-                """).andExpect(status().isOk());
+                """, admin).andExpect(status().isOk());
 
         mvc.perform(options("/p/offerings/" + capacity.offeringId())
                         .header("Host", session.host())
@@ -237,7 +239,7 @@ class PublicGateIntegrationTest extends BookingApiTest {
 
     private Capacity capacity(Session session, int places) throws Exception {
         String code = "gate-" + UUID.randomUUID().toString().substring(0, 8);
-        String offering = JSON.readTree(postAs(session, "/api/v1/offerings", """
+        String offering = JSON.readTree(postAs(session, "/system/v1/offerings", """
                         {"code":"%s","name":"Gate","kind":"CAPACITY","durationMin":60,"slotStep":60,"horizonDays":30}
                         """.formatted(code))
                 .andExpect(status().isCreated())
@@ -253,7 +255,7 @@ class PublicGateIntegrationTest extends BookingApiTest {
                 .withSecond(0)
                 .withNano(0)
                 .toString();
-        String sessionId = JSON.readTree(postAs(session, "/api/v1/session-series", """
+        String sessionId = JSON.readTree(postAs(session, "/system/v1/session-series", """
                         {"offeringId":"%s","zone":"UTC","dtstart":"%s","rule":["RRULE:FREQ=DAILY;COUNT=2"],
                          "durationMinutes":60,"capacity":%d}
                         """.formatted(offering, dtstart, places))
@@ -269,7 +271,7 @@ class PublicGateIntegrationTest extends BookingApiTest {
     }
 
     private void fill(Session session, Capacity capacity, String customer) throws Exception {
-        postAs(session, "/api/v1/bookings", """
+        postAs(session, "/system/v1/bookings", """
                         {"offeringId":"%s","customerRef":"%s","sessionId":"%s","poolCode":"default","qty":1}
                         """.formatted(capacity.offeringId(), customer, capacity.sessionId()))
                 .andExpect(status().isCreated());
@@ -278,7 +280,7 @@ class PublicGateIntegrationTest extends BookingApiTest {
     private String mint(Session session, String customerRef, List<String> scopes, UUID offeringId, int ttl)
             throws Exception {
         String offering = offeringId == null ? "" : ",\"offeringId\":\"" + offeringId + "\"";
-        String body = JSON.readTree(postAs(session, "/api/v1/customer-tokens", """
+        String body = JSON.readTree(postAs(session, "/system/v1/customer-tokens", """
                         {"customerRef":"%s","scopes":[%s],"ttlSeconds":%d%s}
                         """.formatted(
                                 customerRef,

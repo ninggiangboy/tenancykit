@@ -60,6 +60,16 @@ public abstract class BookingApiTest extends BookingIntegrationTest {
         return TestTokenFactory.tenantSystemToken(system, session.tenant().value(), permissions);
     }
 
+    /**
+     * A person of the tenant holding the codes the caller names, and their Keycloak-shaped token. A code that is not
+     * grantable to a Tenant System is only reachable at the person door, so a test that exercises one needs a person.
+     */
+    protected String personOf(Session session, String... permissions) {
+        String subject = "kc-" + UUID.randomUUID();
+        replica.user(session.tenant().value(), subject, permissions);
+        return TestTokenFactory.userToken(subject);
+    }
+
     protected ResultActions getAs(Session session, String path, Object... variables) throws Exception {
         return send(get(path, variables), session, null, null);
     }
@@ -70,6 +80,12 @@ public abstract class BookingApiTest extends BookingIntegrationTest {
 
     protected ResultActions putAs(Session session, String path, String body, Object... variables) throws Exception {
         return send(put(path, variables), session, body, null);
+    }
+
+    /** A PUT presented with an explicit token, for a person whose credential is not the session's. */
+    protected ResultActions putAsToken(
+            Session session, String path, String body, String token, Object... variables) throws Exception {
+        return send(put(path, variables), session, body, token, null);
     }
 
     protected ResultActions patchAs(

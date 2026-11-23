@@ -62,8 +62,8 @@ class WaitlistIntegrationTest extends BookingApiTest {
                 .andExpect(status().is(422))
                 .andExpect(jsonPath("$.code").value("TARGET_AVAILABLE"));
 
-        deleteAs(session, "/api/v1/waitlist/{entryId}", null, entry).andExpect(status().isNoContent());
-        getAs(session, "/api/v1/waitlist/{entryId}", entry)
+        deleteAs(session, "/system/v1/waitlist/{entryId}", null, entry).andExpect(status().isNoContent());
+        getAs(session, "/system/v1/waitlist/{entryId}", entry)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
     }
@@ -76,10 +76,10 @@ class WaitlistIntegrationTest extends BookingApiTest {
         String first = entryId(join(session, capacity, "cust-first", 1).andExpect(status().isCreated()));
         entryId(join(session, capacity, "cust-second", 1).andExpect(status().isCreated()));
 
-        postAs(session, "/api/v1/bookings/{bookingId}/cancel", null, holder).andExpect(status().isOk());
+        postAs(session, "/system/v1/bookings/{bookingId}/cancel", null, holder).andExpect(status().isOk());
         assertThat(inTenant(session.tenant(), offers::execute)).isEqualTo(1);
 
-        String offered = getAs(session, "/api/v1/waitlist/{entryId}", first)
+        String offered = getAs(session, "/system/v1/waitlist/{entryId}", first)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("OFFERED"))
                 .andExpect(jsonPath("$.offeredBookingId").isString())
@@ -90,9 +90,9 @@ class WaitlistIntegrationTest extends BookingApiTest {
         assertThat(expectedBooking).isNotBlank();
         assertThat(outbox(session, "waitlist.offered")).isEqualTo(1);
 
-        postAs(session, "/api/v1/bookings/{bookingId}/confirm", null, expectedBooking)
+        postAs(session, "/system/v1/bookings/{bookingId}/confirm", null, expectedBooking)
                 .andExpect(status().isOk());
-        getAs(session, "/api/v1/waitlist/{entryId}", first)
+        getAs(session, "/system/v1/waitlist/{entryId}", first)
                 .andExpect(jsonPath("$.status").value("ACCEPTED"));
     }
 
@@ -104,9 +104,9 @@ class WaitlistIntegrationTest extends BookingApiTest {
         String first = entryId(join(session, capacity, "cust-first", 1).andExpect(status().isCreated()));
         String second = entryId(join(session, capacity, "cust-second", 1).andExpect(status().isCreated()));
 
-        postAs(session, "/api/v1/bookings/{bookingId}/cancel", null, holder).andExpect(status().isOk());
+        postAs(session, "/system/v1/bookings/{bookingId}/cancel", null, holder).andExpect(status().isOk());
         assertThat(inTenant(session.tenant(), offers::execute)).isEqualTo(1);
-        String offeredBooking = JSON.readTree(getAs(session, "/api/v1/waitlist/{entryId}", first)
+        String offeredBooking = JSON.readTree(getAs(session, "/system/v1/waitlist/{entryId}", first)
                         .andReturn()
                         .getResponse()
                         .getContentAsString(StandardCharsets.UTF_8))
@@ -119,12 +119,12 @@ class WaitlistIntegrationTest extends BookingApiTest {
                 .execute()));
         inTenant(session.tenant(), expirations::execute);
 
-        getAs(session, "/api/v1/waitlist/{entryId}", first)
+        getAs(session, "/system/v1/waitlist/{entryId}", first)
                 .andExpect(jsonPath("$.status").value("LAPSED"));
         assertThat(outbox(session, "waitlist.lapsed")).isEqualTo(1);
 
         assertThat(inTenant(session.tenant(), offers::execute)).isEqualTo(1);
-        getAs(session, "/api/v1/waitlist/{entryId}", second)
+        getAs(session, "/system/v1/waitlist/{entryId}", second)
                 .andExpect(jsonPath("$.status").value("OFFERED"));
     }
 
@@ -137,13 +137,13 @@ class WaitlistIntegrationTest extends BookingApiTest {
         String three = entryId(join(session, capacity, "cust-three", 3).andExpect(status().isCreated()));
         String one = entryId(join(session, capacity, "cust-one", 1).andExpect(status().isCreated()));
 
-        postAs(session, "/api/v1/bookings/{bookingId}/cancel", null, holder).andExpect(status().isOk());
+        postAs(session, "/system/v1/bookings/{bookingId}/cancel", null, holder).andExpect(status().isOk());
         assertThat(inTenant(session.tenant(), offers::execute)).isEqualTo(1);
 
-        getAs(session, "/api/v1/waitlist/{entryId}", three)
+        getAs(session, "/system/v1/waitlist/{entryId}", three)
                 .andExpect(jsonPath("$.status").value("WAITING"))
                 .andExpect(jsonPath("$.position").value(0));
-        getAs(session, "/api/v1/waitlist/{entryId}", one)
+        getAs(session, "/system/v1/waitlist/{entryId}", one)
                 .andExpect(jsonPath("$.status").value("OFFERED"));
     }
 
@@ -163,7 +163,7 @@ class WaitlistIntegrationTest extends BookingApiTest {
 
     private Capacity capacity(Session session, int places) throws Exception {
         String code = "wait-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/offerings", """
+        String body = postAs(session, "/system/v1/offerings", """
                 {"code":"%s","name":"Waitlist","kind":"CAPACITY","durationMin":60,"slotStep":60,"horizonDays":30}
                 """.formatted(code))
                 .andExpect(status().isCreated())
@@ -178,7 +178,7 @@ class WaitlistIntegrationTest extends BookingApiTest {
                 .withSecond(0)
                 .withNano(0)
                 .toString();
-        String series = postAs(session, "/api/v1/session-series", """
+        String series = postAs(session, "/system/v1/session-series", """
                 {"offeringId":"%s","zone":"UTC","dtstart":"%s","rule":["RRULE:FREQ=DAILY;COUNT=2"],
                  "durationMinutes":60,"capacity":%d}
                 """.formatted(offering, dtstart, places))
@@ -191,7 +191,7 @@ class WaitlistIntegrationTest extends BookingApiTest {
     }
 
     private String fill(Session session, Capacity capacity, String customer) throws Exception {
-        return JSON.readTree(postAs(session, "/api/v1/bookings", """
+        return JSON.readTree(postAs(session, "/system/v1/bookings", """
                         {"offeringId":"%s","customerRef":"%s","sessionId":"%s","poolCode":"default","qty":1}
                         """.formatted(capacity.offeringId(), customer, capacity.sessionId()))
                 .andExpect(status().isCreated())
@@ -204,7 +204,7 @@ class WaitlistIntegrationTest extends BookingApiTest {
 
     private org.springframework.test.web.servlet.ResultActions join(
             Session session, Capacity capacity, String customer, int qty) throws Exception {
-        return postAs(session, "/api/v1/waitlist", """
+        return postAs(session, "/system/v1/waitlist", """
                 {"offeringId":"%s","customerRef":"%s","qty":%d,"sessionId":"%s","poolCode":"default"}
                 """.formatted(capacity.offeringId(), customer, qty, capacity.sessionId()));
     }

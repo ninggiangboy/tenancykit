@@ -78,7 +78,7 @@ class BookingIdempotencyTest extends BookingApiTest {
     }
 
     private ResultActions create(Session session, String body, String key) throws Exception {
-        MockHttpServletRequestBuilder request = post("/api/v1/bookings");
+        MockHttpServletRequestBuilder request = post("/system/v1/bookings");
         if (key != null) {
             request.header(HttpHeaders.IDEMPOTENCY_KEY, key);
         }
@@ -87,7 +87,7 @@ class BookingIdempotencyTest extends BookingApiTest {
 
     private String intervalOffering(Session session) throws Exception {
         String code = "idem-" + UUID.randomUUID().toString().substring(0, 8);
-        String offering = JSON.readTree(postAs(session, "/api/v1/offerings", """
+        String offering = JSON.readTree(postAs(session, "/system/v1/offerings", """
                         {"code":"%s","name":"Idempotent","kind":"INTERVAL","durationMin":60,"slotStep":30,
                          "horizonDays":30}
                         """.formatted(code))
@@ -98,7 +98,7 @@ class BookingIdempotencyTest extends BookingApiTest {
                 .get("id")
                 .asString();
         UUID resource = seedResource(session);
-        putAs(session, "/api/v1/offerings/{offeringId}/requirements", """
+        putAs(session, "/system/v1/offerings/{offeringId}/requirements", """
                 {"requirements":[{"slotCode":"staff","resourceId":"%s"}]}
                 """.formatted(resource), offering)
                 .andExpect(status().isOk());
@@ -107,7 +107,7 @@ class BookingIdempotencyTest extends BookingApiTest {
 
     private UUID seedResource(Session session) throws Exception {
         String code = "idem-room-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/resources", """
+        String body = postAs(session, "/system/v1/resources", """
                 {"code":"%s","name":"Room %s","zone":"UTC"}
                 """.formatted(code, code))
                 .andExpect(status().isCreated())
@@ -115,7 +115,7 @@ class BookingIdempotencyTest extends BookingApiTest {
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
         UUID resource = UUID.fromString(JSON.readTree(body).get("id").asString());
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
                 .andExpect(status().isOk());
         return resource;
     }

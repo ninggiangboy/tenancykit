@@ -37,11 +37,11 @@ class BookingIsolationTest extends BookingApiTest {
         String offering = intervalOffering(one);
         String booking = hold(one, offering);
 
-        getAs(other, "/api/v1/bookings/{bookingId}", booking).andExpect(status().isNotFound());
-        postAs(other, "/api/v1/bookings/{bookingId}/confirm", null, booking).andExpect(status().isNotFound());
-        postAs(other, "/api/v1/bookings/{bookingId}/cancel", null, booking).andExpect(status().isNotFound());
+        getAs(other, "/system/v1/bookings/{bookingId}", booking).andExpect(status().isNotFound());
+        postAs(other, "/system/v1/bookings/{bookingId}/confirm", null, booking).andExpect(status().isNotFound());
+        postAs(other, "/system/v1/bookings/{bookingId}/cancel", null, booking).andExpect(status().isNotFound());
 
-        getAs(one, "/api/v1/bookings/{bookingId}", booking)
+        getAs(one, "/system/v1/bookings/{bookingId}", booking)
                 .andExpect(status().isOk())
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.status")
                         .value("HELD"));
@@ -58,7 +58,7 @@ class BookingIsolationTest extends BookingApiTest {
 
     private String intervalOffering(Session session) throws Exception {
         String code = "iso-" + UUID.randomUUID().toString().substring(0, 8);
-        String offering = JSON.readTree(postAs(session, "/api/v1/offerings", """
+        String offering = JSON.readTree(postAs(session, "/system/v1/offerings", """
                         {"code":"%s","name":"Isolation","kind":"INTERVAL","durationMin":60,"slotStep":30,
                          "horizonDays":30}
                         """.formatted(code))
@@ -69,7 +69,7 @@ class BookingIsolationTest extends BookingApiTest {
                 .get("id")
                 .asString();
         UUID resource = seedResource(session);
-        putAs(session, "/api/v1/offerings/{offeringId}/requirements", """
+        putAs(session, "/system/v1/offerings/{offeringId}/requirements", """
                 {"requirements":[{"slotCode":"staff","resourceId":"%s"}]}
                 """.formatted(resource), offering)
                 .andExpect(status().isOk());
@@ -81,7 +81,7 @@ class BookingIsolationTest extends BookingApiTest {
                 .truncatedTo(ChronoUnit.DAYS)
                 .plus(Duration.ofDays(1))
                 .plus(Duration.ofHours(9));
-        return JSON.readTree(postAs(session, "/api/v1/bookings", """
+        return JSON.readTree(postAs(session, "/system/v1/bookings", """
                         {"offeringId":"%s","customerRef":"cust-iso","start":"%s","durationMinutes":60}
                         """.formatted(offeringId, start))
                 .andExpect(status().isCreated())
@@ -94,7 +94,7 @@ class BookingIsolationTest extends BookingApiTest {
 
     private UUID seedResource(Session session) throws Exception {
         String code = "iso-room-" + UUID.randomUUID().toString().substring(0, 8);
-        String body = postAs(session, "/api/v1/resources", """
+        String body = postAs(session, "/system/v1/resources", """
                 {"code":"%s","name":"Room %s","zone":"UTC"}
                 """.formatted(code, code))
                 .andExpect(status().isCreated())
@@ -102,7 +102,7 @@ class BookingIsolationTest extends BookingApiTest {
                 .getResponse()
                 .getContentAsString(StandardCharsets.UTF_8);
         UUID resource = UUID.fromString(JSON.readTree(body).get("id").asString());
-        putAs(session, "/api/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
+        putAs(session, "/system/v1/resources/{resourceId}/working-hours", ALL_DAY_HOURS, resource.toString())
                 .andExpect(status().isOk());
         return resource;
     }

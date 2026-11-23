@@ -23,7 +23,7 @@ class EndpointApiIntegrationTest extends BookingApiTest {
     void theSecretIsShownOnceAndAChangeNeedsTheTag() throws Exception {
         Session session = tenant(BookingPermissions.WEBHOOK_READ, BookingPermissions.WEBHOOK_MANAGE);
 
-        String created = postAs(session, "/api/v1/webhook-endpoints", """
+        String created = postAs(session, "/system/v1/webhook-endpoints", """
                 {"url":"https://example.com/hooks/booking","eventTypes":["booking.held","series.created"]}
                 """)
                 .andExpect(status().isCreated())
@@ -39,28 +39,28 @@ class EndpointApiIntegrationTest extends BookingApiTest {
         String keyId = node.get("endpoint").get("keyId").asString();
         assertThat(secret).startsWith("whsec_");
 
-        getAs(session, "/api/v1/webhook-endpoints")
+        getAs(session, "/system/v1/webhook-endpoints")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(1))
                 .andExpect(jsonPath("$.data[0].id").value(endpoint))
                 .andExpect(jsonPath("$.data[0].secret").doesNotExist());
 
-        getAs(session, "/api/v1/webhook-endpoints/{endpointId}", endpoint)
+        getAs(session, "/system/v1/webhook-endpoints/{endpointId}", endpoint)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"1\""))
                 .andExpect(jsonPath("$.version").value(1))
                 .andExpect(jsonPath("$.keyId").value(keyId));
 
-        patchAs(session, "/api/v1/webhook-endpoints/{endpointId}", "{\"status\":\"DISABLED\"}", null, endpoint)
+        patchAs(session, "/system/v1/webhook-endpoints/{endpointId}", "{\"status\":\"DISABLED\"}", null, endpoint)
                 .andExpect(status().is(428));
 
-        patchAs(session, "/api/v1/webhook-endpoints/{endpointId}", "{\"status\":\"DISABLED\"}", "\"1\"", endpoint)
+        patchAs(session, "/system/v1/webhook-endpoints/{endpointId}", "{\"status\":\"DISABLED\"}", "\"1\"", endpoint)
                 .andExpect(status().isOk())
                 .andExpect(header().string("ETag", "\"2\""))
                 .andExpect(jsonPath("$.status").value("DISABLED"))
                 .andExpect(jsonPath("$.version").value(2));
 
-        String rotated = postAs(session, "/api/v1/webhook-endpoints/{endpointId}/rotate-secret", null, endpoint)
+        String rotated = postAs(session, "/system/v1/webhook-endpoints/{endpointId}/rotate-secret", null, endpoint)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.secret").isString())
                 .andReturn()
@@ -76,7 +76,7 @@ class EndpointApiIntegrationTest extends BookingApiTest {
     @Test
     void deletingAnEndpointLeavesItsDeliveriesReadable() throws Exception {
         Session session = tenant(BookingPermissions.WEBHOOK_READ, BookingPermissions.WEBHOOK_MANAGE);
-        String created = postAs(session, "/api/v1/webhook-endpoints", """
+        String created = postAs(session, "/system/v1/webhook-endpoints", """
                 {"url":"https://example.com/hooks/booking","eventTypes":["booking.held"]}
                 """)
                 .andExpect(status().isCreated())
@@ -85,13 +85,13 @@ class EndpointApiIntegrationTest extends BookingApiTest {
                 .getContentAsString(StandardCharsets.UTF_8);
         String endpoint = JSON.readTree(created).get("endpoint").get("id").asString();
 
-        deleteAs(session, "/api/v1/webhook-endpoints/{endpointId}", "\"1\"", endpoint)
+        deleteAs(session, "/system/v1/webhook-endpoints/{endpointId}", "\"1\"", endpoint)
                 .andExpect(status().isNoContent());
 
-        getAs(session, "/api/v1/webhook-endpoints")
+        getAs(session, "/system/v1/webhook-endpoints")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(0));
-        getAs(session, "/api/v1/webhook-deliveries")
+        getAs(session, "/system/v1/webhook-deliveries")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(0));
     }

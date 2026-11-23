@@ -64,7 +64,7 @@ class CapacitySessionPlacesTest extends BookingApiTest {
         JsonNode created = createSeries(session, offering, "RRULE:FREQ=DAILY;COUNT=2");
         String first = created.get("sessions").get(0).get("id").asString();
 
-        deleteAs(session, "/api/v1/sessions/{sessionId}", null, first).andExpect(status().isNoContent());
+        deleteAs(session, "/system/v1/sessions/{sessionId}", null, first).andExpect(status().isNoContent());
         inTenant(session.tenant(), () -> unitOfWork.transactional(() -> horizon.execute()));
 
         assertThat(rowsOf(session, CAPACITY_UNITS)).as("the cancelled occurrence is not materialized again").isEqualTo(20);
@@ -79,7 +79,7 @@ class CapacitySessionPlacesTest extends BookingApiTest {
         String first = created.get("sessions").get(0).get("id").asString();
         String second = created.get("sessions").get(1).get("id").asString();
 
-        putAs(session, "/api/v1/sessions/{sessionId}/pools", """
+        putAs(session, "/system/v1/sessions/{sessionId}/pools", """
                 {"pools":[{"code":"adult","capacity":8},{"code":"child","capacity":2}]}
                 """, second)
                 .andExpect(status().isOk());
@@ -89,14 +89,14 @@ class CapacitySessionPlacesTest extends BookingApiTest {
         assertPlaces(session, first, "adult", 6);
         assertPlaces(session, first, "child", 4);
 
-        getAs(session, "/api/v1/sessions/{sessionId}", second)
+        getAs(session, "/system/v1/sessions/{sessionId}", second)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pools[0].code").value("adult"))
                 .andExpect(jsonPath("$.pools[0].remaining").value(8))
                 .andExpect(jsonPath("$.pools[1].code").value("child"))
                 .andExpect(jsonPath("$.pools[1].remaining").value(2));
 
-        putAs(session, "/api/v1/sessions/{sessionId}/pools", """
+        putAs(session, "/system/v1/sessions/{sessionId}/pools", """
                 {"pools":[{"code":"adult","capacity":10}]}
                 """, second)
                 .andExpect(status().isOk())
@@ -140,7 +140,7 @@ class CapacitySessionPlacesTest extends BookingApiTest {
     }
 
     private String createOffering(Session session, String code) throws Exception {
-        String body = postAs(session, "/api/v1/offerings", """
+        String body = postAs(session, "/system/v1/offerings", """
                 {"code":"%s","name":"Offering %s","kind":"CAPACITY","durationMin":60,"slotStep":60,"horizonDays":90}
                 """.formatted(code, code))
                 .andExpect(status().isCreated())
@@ -152,7 +152,7 @@ class CapacitySessionPlacesTest extends BookingApiTest {
 
     private JsonNode createSeries(Session session, String offeringId, String rule) throws Exception {
         String dtstart = LocalDateTime.now(ZoneOffset.UTC).plusDays(1).withNano(0).toString();
-        String body = postAs(session, "/api/v1/session-series", """
+        String body = postAs(session, "/system/v1/session-series", """
                 {"offeringId":"%s","zone":"UTC","dtstart":"%s","rule":["%s"],"durationMinutes":60,"capacity":10,
                  "pools":[{"code":"adult","capacity":6},{"code":"child","capacity":4}]}
                 """.formatted(offeringId, dtstart, rule))
