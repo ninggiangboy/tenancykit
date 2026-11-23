@@ -54,10 +54,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:program:read
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:program:read`."
+      description: "Callers: tenant-user. Requires `loyalty:program:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     put:
       tags:
       - "Program"
@@ -108,7 +107,7 @@ paths:
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: loyalty:program:manage
       x-allowed-callers:
-      - tenant-user
+      - "tenant-user"
   /api/v1/tiers:
     get:
       tags:
@@ -135,10 +134,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:program:read
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:program:read`."
+      description: "Callers: tenant-user. Requires `loyalty:program:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     put:
       tags:
       - "Tiers"
@@ -189,7 +187,7 @@ paths:
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: loyalty:program:manage
       x-allowed-callers:
-      - tenant-user
+      - "tenant-user"
   /api/v1/promotions:
     get:
       tags:
@@ -233,10 +231,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: loyalty:program:read
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:program:read`."
+      description: "Callers: tenant-user. Requires `loyalty:program:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     post:
       tags:
       - "Promotions"
@@ -270,7 +267,7 @@ paths:
       x-required-permission: loyalty:program:manage
       description: "Callers: tenant-user. Requires `loyalty:program:manage`."
       x-allowed-callers:
-      - tenant-user
+      - "tenant-user"
   /api/v1/promotions/{id}:
     get:
       tags:
@@ -304,10 +301,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:program:read
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:program:read`."
+      description: "Callers: tenant-user. Requires `loyalty:program:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     patch:
       tags:
       - "Promotions"
@@ -364,13 +360,13 @@ paths:
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: loyalty:program:manage
       x-allowed-callers:
-      - tenant-user
+      - "tenant-user"
   /api/v1/members/{externalRef}:
     put:
       tags:
       - "Members"
       summary: "Enrol or update a member"
-      description: "Enrols a member ahead of its first order. Idempotent by `externalRef`: `201` when the member is created and `200` when it already exists. An order for an unknown ref enrols the member the same way and emits the same webhook.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:member:manage`."
+      description: "Enrols a member ahead of its first order. Idempotent by `externalRef`: `201` when the member is created and `200` when it already exists. An order for an unknown ref enrols the member the same way and emits the same webhook.\n\nCallers: tenant-user. Requires `loyalty:member:manage`."
       operationId: putMember
       parameters:
       - name: externalRef
@@ -414,8 +410,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:member:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     get:
       tags:
       - "Members"
@@ -459,16 +454,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:member:read
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:member:read`."
+      description: "Callers: tenant-user. Requires `loyalty:member:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/members/{externalRef}/ledger:
     get:
       tags:
       - "Members"
       summary: "List a member's ledger entries"
-      description: "The member's append-only ledger, newest first, keyset-paginated by `cursor`.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:member:read`."
+      description: "The member's append-only ledger, newest first, keyset-paginated by `cursor`.\n\nCallers: tenant-user. Requires `loyalty:member:read`."
       operationId: getMemberLedger
       parameters:
       - name: externalRef
@@ -528,14 +522,13 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:member:read
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/members/{externalRef}/erasure:
     post:
       tags:
       - "Members"
       summary: "Erase a member"
-      description: "Anonymizes the member, voids its unused vouchers and keeps its ledger as anonymous totals keyed by the opaque member id. Idempotent: erasing an already erased member replays `200`. Emits `member.erased`.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:member:erase`."
+      description: "Anonymizes the member, voids its unused vouchers and keeps its ledger as anonymous totals keyed by the opaque member id. Idempotent: erasing an already erased member replays `200`. Emits `member.erased`.\n\nCallers: tenant-user. Requires `loyalty:member:erase`."
       operationId: eraseMember
       parameters:
       - name: externalRef
@@ -566,14 +559,13 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:member:erase
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/orders/{orderRef}:
     put:
       tags:
       - "Orders"
       summary: "Record an order"
-      description: "Records an order once and grants the points it earns. Idempotent by `orderRef`: the same body replays the stored result with `200`, a different body is `409`. The first order for an unknown `externalRef` enrols the member. The order lines use the shared order shape.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:order:record`."
+      description: "Records an order once and grants the points it earns. Idempotent by `orderRef`: the same body replays the stored result with `200`, a different body is `409`. The first order for an unknown `externalRef` enrols the member. The order lines use the shared order shape.\n\nCallers: tenant-user. Requires `loyalty:order:record`."
       operationId: putOrder
       parameters:
       - name: orderRef
@@ -623,8 +615,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:order:record
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     get:
       tags:
       - "Orders"
@@ -658,16 +649,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:member:read
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:member:read`."
+      description: "Callers: tenant-user. Requires `loyalty:member:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/orders/{orderRef}/returns/{returnRef}:
     put:
       tags:
       - "Orders"
       summary: "Record a return against an order"
-      description: "Records one return once and recomputes the order's points with the snapshot stored when the order was recorded, never with today's rules. Idempotent by `returnRef`: the same body replays the stored result with `200`, a different body is `409`.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:order:record`."
+      description: "Records one return once and recomputes the order's points with the snapshot stored when the order was recorded, never with today's rules. Idempotent by `returnRef`: the same body replays the stored result with `200`, a different body is `409`.\n\nCallers: tenant-user. Requires `loyalty:order:record`."
       operationId: putOrderReturn
       parameters:
       - name: orderRef
@@ -724,14 +714,13 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:order:record
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/members/{externalRef}/redemptions:
     post:
       tags:
       - "Redemptions"
       summary: "Spend a member's points"
-      description: "Spends points at once and consumes lots by earliest expiry. Requires an `Idempotency-Key`: the same key and body replays the stored result with `200`, a different body is `409`.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:points:redeem`."
+      description: "Spends points at once and consumes lots by earliest expiry. Requires an `Idempotency-Key`: the same key and body replays the stored result with `200`, a different body is `409`.\n\nCallers: tenant-user. Requires `loyalty:points:redeem`."
       operationId: createRedemption
       parameters:
       - name: externalRef
@@ -787,8 +776,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:points:redeem
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/members/{externalRef}/redemptions/{id}:
     get:
       tags:
@@ -829,16 +817,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:member:read
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:member:read`."
+      description: "Callers: tenant-user. Requires `loyalty:member:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/members/{externalRef}/redemptions/{id}/reversal:
     post:
       tags:
       - "Redemptions"
       summary: "Reverse a redemption"
-      description: "Restores the lots the redemption consumed and voids an unused voucher it issued. Idempotent: an already reversed redemption replays `200`. Points restored into a lot that has since expired stay expired.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:points:redeem`."
+      description: "Restores the lots the redemption consumed and voids an unused voucher it issued. Idempotent: an already reversed redemption replays `200`. Points restored into a lot that has since expired stay expired.\n\nCallers: tenant-user. Requires `loyalty:points:redeem`."
       operationId: reverseRedemption
       parameters:
       - name: externalRef
@@ -881,8 +868,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:points:redeem
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/rewards:
     get:
       tags:
@@ -926,10 +912,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: loyalty:reward:read
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:reward:read`."
+      description: "Callers: tenant-user. Requires `loyalty:reward:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     post:
       tags:
       - "Rewards"
@@ -961,10 +946,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:reward:manage
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:reward:manage`."
+      description: "Callers: tenant-user. Requires `loyalty:reward:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/rewards/{id}:
     get:
       tags:
@@ -998,15 +982,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:reward:read
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:reward:read`."
+      description: "Callers: tenant-user. Requires `loyalty:reward:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     patch:
       tags:
       - "Rewards"
       summary: "Update a reward"
-      description: "Changes only the given fields. A cost or stock change never affects vouchers already issued. The response carries the reward's `ETag`.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:reward:manage`."
+      description: "Changes only the given fields. A cost or stock change never affects vouchers already issued. The response carries the reward's `ETag`.\n\nCallers: tenant-user. Requires `loyalty:reward:manage`."
       operationId: updateReward
       parameters:
       - name: id
@@ -1058,14 +1041,13 @@ paths:
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: loyalty:reward:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/members/{externalRef}/reward-redemptions:
     post:
       tags:
       - "Rewards"
       summary: "Redeem a reward for a member and issue a voucher"
-      description: "Spends the reward's points and issues one single-use voucher in one transaction. Requires an `Idempotency-Key`: a replay returns the same voucher with `200`. loyalty only issues and consumes vouchers; delivering the reward is the Tenant's job.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:reward:redeem`."
+      description: "Spends the reward's points and issues one single-use voucher in one transaction. Requires an `Idempotency-Key`: a replay returns the same voucher with `200`. loyalty only issues and consumes vouchers; delivering the reward is the Tenant's job.\n\nCallers: tenant-user. Requires `loyalty:reward:redeem`."
       operationId: createRewardRedemption
       parameters:
       - name: externalRef
@@ -1127,8 +1109,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:reward:redeem
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/members/{externalRef}/vouchers:
     get:
       tags:
@@ -1189,10 +1170,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:voucher:read
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:voucher:read`."
+      description: "Callers: tenant-user. Requires `loyalty:voucher:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/vouchers/{code}:
     get:
       tags:
@@ -1228,16 +1208,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:voucher:read
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:voucher:read`."
+      description: "Callers: tenant-user. Requires `loyalty:voucher:read`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/vouchers/{code}/use:
     post:
       tags:
       - "Vouchers"
       summary: "Use a voucher once"
-      description: "Consumes the voucher atomically. Replays by `useRef`: the same `useRef` on a used voucher returns the same result with `200`.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:voucher:use`."
+      description: "Consumes the voucher atomically. Replays by `useRef`: the same `useRef` on a used voucher returns the same result with `200`.\n\nCallers: tenant-user. Requires `loyalty:voucher:use`."
       operationId: useVoucher
       parameters:
       - name: code
@@ -1286,8 +1265,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:voucher:use
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/webhook-endpoints:
     get:
       tags:
@@ -1325,15 +1303,14 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: loyalty:webhook:manage
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+      description: "Callers: tenant-user. Requires `loyalty:webhook:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     post:
       tags:
       - "Webhook endpoints"
       summary: "Create a webhook endpoint"
-      description: "Registers an endpoint that subscribes to a subset of loyalty's event types. The signing secret is returned once, in this response.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+      description: "Registers an endpoint that subscribes to a subset of loyalty's event types. The signing secret is returned once, in this response.\n\nCallers: tenant-user. Requires `loyalty:webhook:manage`."
       operationId: createWebhookEndpoint
       requestBody:
         content:
@@ -1362,8 +1339,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:webhook:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/webhook-endpoints/{id}:
     get:
       tags:
@@ -1397,15 +1373,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:webhook:manage
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+      description: "Callers: tenant-user. Requires `loyalty:webhook:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     put:
       tags:
       - "Webhook endpoints"
       summary: "Update a webhook endpoint"
-      description: "Changes the endpoint's url, description, subscribed event types or status. The response carries the endpoint's `ETag`.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+      description: "Changes the endpoint's url, description, subscribed event types or status. The response carries the endpoint's `ETag`.\n\nCallers: tenant-user. Requires `loyalty:webhook:manage`."
       operationId: updateWebhookEndpoint
       parameters:
       - name: id
@@ -1457,8 +1432,7 @@ paths:
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: loyalty:webhook:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
     delete:
       tags:
       - "Webhook endpoints"
@@ -1497,16 +1471,15 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: loyalty:webhook:manage
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+      description: "Callers: tenant-user. Requires `loyalty:webhook:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/webhook-endpoints/{id}/rotate-secret:
     post:
       tags:
       - "Webhook endpoints"
       summary: "Rotate a webhook endpoint's signing secret"
-      description: "Replaces the endpoint's signing secret and returns the new one once. A receiver may keep the previous secret during a rotation.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+      description: "Replaces the endpoint's signing secret and returns the new one once. A receiver may keep the previous secret during a rotation.\n\nCallers: tenant-user. Requires `loyalty:webhook:manage`."
       operationId: rotateWebhookEndpointSecret
       parameters:
       - name: id
@@ -1536,8 +1509,7 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:webhook:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/webhook-deliveries:
     get:
       tags:
@@ -1588,16 +1560,15 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: loyalty:webhook:manage
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+      description: "Callers: tenant-user. Requires `loyalty:webhook:manage`."
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
   /api/v1/webhook-deliveries/{id}/retry:
     post:
       tags:
       - "Webhook deliveries"
       summary: "Retry a webhook delivery"
-      description: "Schedules another attempt of a finished or dead delivery and answers `202`.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+      description: "Schedules another attempt of a finished or dead delivery and answers `202`.\n\nCallers: tenant-user. Requires `loyalty:webhook:manage`."
       operationId: retryWebhookDelivery
       parameters:
       - name: id
@@ -1627,8 +1598,1578 @@ paths:
                 $ref: "#/components/schemas/Error"
       x-required-permission: loyalty:webhook:manage
       x-allowed-callers:
-      - tenant-user
-      - tenant-system
+      - "tenant-user"
+  /system/v1/program:
+    get:
+      tags:
+      - "Program"
+      summary: "Read the points program"
+      operationId: "getProgramAsTenantSystem"
+      responses:
+        "200":
+          description: "The tenant's one points program."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Program"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No program is configured yet for this tenant. Code `PROGRAM_NOT_CONFIGURED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:program:read
+      description: "Callers: tenant-system. Requires `loyalty:program:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    put:
+      tags:
+      - "Program"
+      summary: "Create or replace the points program"
+      description: "A full replace of the tenant's one program. The response carries the resource's `ETag`; pass it as `If-Match` on the next write. The `currency` is immutable once a ledger entry exists.\n\nCallers: tenant-system. Requires `loyalty:program:manage`."
+      operationId: "putProgramAsTenantSystem"
+      parameters:
+      - name: If-Match
+        in: header
+        required: false
+        description: "Required by this update; the endpoint answers `428` without it and `412` when it does not match the current `ETag`."
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Program"
+        required: true
+      responses:
+        "200":
+          description: "The program, created or replaced."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Program"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "The program's `currency` cannot change once a ledger entry exists. Code `CURRENCY_IMMUTABLE`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: "A field is out of range or malformed: `currency` is not an ISO 4217 code, `currencyUnit` is below 1, `expiryMonths` is outside 1-120, `expiryNoticeDays` is outside 0-365, `tierWindowMonths` is outside 1-60, or `timeZone` is not an IANA id. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: loyalty:program:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/tiers:
+    get:
+      tags:
+      - "Tiers"
+      summary: "Read the ordered tier list"
+      operationId: "getTiersAsTenantSystem"
+      responses:
+        "200":
+          description: "The whole tier list in order."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TierList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No program is configured yet for this tenant. Code `PROGRAM_NOT_CONFIGURED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:program:read
+      description: "Callers: tenant-system. Requires `loyalty:program:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    put:
+      tags:
+      - "Tiers"
+      summary: "Replace the ordered tier list"
+      description: "Replaces the whole tier list by `code`: an existing code keeps its identity, a new code is added, and a removed code is allowed only while no member holds it. A change re-evaluates every member's tier in the daily job. The response carries the list's `ETag`.\n\nCallers: tenant-system. Requires `loyalty:program:manage`."
+      operationId: "putTiersAsTenantSystem"
+      parameters:
+      - name: If-Match
+        in: header
+        required: false
+        description: "Required by this update; the endpoint answers `428` without it and `412` when it does not match the current `ETag`."
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TierList"
+        required: true
+      responses:
+        "200":
+          description: "The tier list as stored."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/TierList"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "A tier was removed while a member still holds it. Code `TIER_IN_USE`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: "The list is empty, its first tier's `minSpend` is not 0, its `minSpend` thresholds do not strictly increase, it has duplicate `code`s, a negative `minSpend`, or an `earnMultiplier` below 1.00 or above 10.00. Code `TIER_LIST_INVALID`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: loyalty:program:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/promotions:
+    get:
+      tags:
+      - "Promotions"
+      summary: "List promotions"
+      operationId: "listPromotionsAsTenantSystem"
+      parameters:
+      - name: active
+        in: query
+        required: false
+        description: "When set, return only active (`true`) or only inactive (`false`) promotions."
+        schema:
+          type: boolean
+      - name: limit
+        in: query
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: cursor
+        in: query
+        required: false
+        description: "The `next_cursor` of the previous page. Valid only with the same filter."
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "A page of promotions."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PromotionPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: loyalty:program:read
+      description: "Callers: tenant-system. Requires `loyalty:program:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags:
+      - "Promotions"
+      summary: "Create a promotion"
+      operationId: "createPromotionAsTenantSystem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromotionRequest"
+        required: true
+      responses:
+        "201":
+          description: "The promotion was created."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Promotion"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          description: "The window ends before it starts, `multiplier` is below 1.01 or above 10.00, a `daysOfWeek` value is outside 1-7, or the tenant already holds 200 non-archived promotions. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:program:manage
+      description: "Callers: tenant-system. Requires `loyalty:program:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/promotions/{id}:
+    get:
+      tags:
+      - "Promotions"
+      summary: "Read a promotion"
+      operationId: "getPromotionAsTenantSystem"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: "The promotion."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Promotion"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No promotion with that id in this tenant. Code `PROMOTION_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:program:read
+      description: "Callers: tenant-system. Requires `loyalty:program:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    patch:
+      tags:
+      - "Promotions"
+      summary: "Update a promotion"
+      description: "Changes only the given fields. The response carries the promotion's `ETag`.\n\nCallers: tenant-system. Requires `loyalty:program:manage`."
+      operationId: "updatePromotionAsTenantSystem"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        description: "Required by this update; the endpoint answers `428` without it and `412` when it does not match the current `ETag`."
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromotionPatch"
+        required: true
+      responses:
+        "200":
+          description: "The promotion as stored."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Promotion"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No promotion with that id in this tenant. Code `PROMOTION_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: "A changed field is out of range: the window ends before it starts, `multiplier` is below 1.01 or above 10.00, or a `daysOfWeek` value is outside 1-7. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: loyalty:program:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/members/{externalRef}:
+    put:
+      tags:
+      - "Members"
+      summary: "Enrol or update a member"
+      description: "Enrols a member ahead of its first order. Idempotent by `externalRef`: `201` when the member is created and `200` when it already exists. An order for an unknown ref enrols the member the same way and emits the same webhook.\n\nCallers: tenant-system. Requires `loyalty:member:manage`."
+      operationId: "putMemberAsTenantSystem"
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        description: "The Tenant's reference for the member, unique per tenant and immutable."
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberUpsert"
+        required: true
+      responses:
+        "200":
+          description: "The member already existed."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Member"
+        "201":
+          description: "The member was created."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Member"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          description: "`externalRef` is empty or over 200 characters, or `displayName` is over 255 characters. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:member:manage
+      x-allowed-callers:
+      - "tenant-system"
+    get:
+      tags:
+      - "Members"
+      summary: "Read a member's points, tier and expiring points"
+      operationId: "getMemberAsTenantSystem"
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: expiringWithinDays
+        in: query
+        required: false
+        description: "Return the lots that expire within this many days. Defaults to 30 and is capped at 365."
+        schema:
+          type: integer
+          format: int32
+          default: 30
+          minimum: 0
+          maximum: 365
+      responses:
+        "200":
+          description: "The member with its computed balance, debt, tier, next tier and the points expiring in the requested window."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Member"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member with that `externalRef` in this tenant, or the member was erased. Code `MEMBER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:member:read
+      description: "Callers: tenant-system. Requires `loyalty:member:read`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/members/{externalRef}/ledger:
+    get:
+      tags:
+      - "Members"
+      summary: "List a member's ledger entries"
+      description: "The member's append-only ledger, newest first, keyset-paginated by `cursor`.\n\nCallers: tenant-system. Requires `loyalty:member:read`."
+      operationId: "getMemberLedgerAsTenantSystem"
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: kind
+        in: query
+        required: false
+        description: "Return only entries of this kind."
+        schema:
+          type: string
+          enum:
+          - EARN
+          - REDEEM
+          - REVERSE
+          - EXPIRE
+          - CLAWBACK
+          - DEBT_REPAY
+      - name: limit
+        in: query
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: cursor
+        in: query
+        required: false
+        description: "The `next_cursor` of the previous page. Valid only with the same filter."
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "A page of the member's ledger entries."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/LedgerPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member with that `externalRef` in this tenant, or the member was erased. Code `MEMBER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:member:read
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/members/{externalRef}/erasure:
+    post:
+      tags:
+      - "Members"
+      summary: "Erase a member"
+      description: "Anonymizes the member, voids its unused vouchers and keeps its ledger as anonymous totals keyed by the opaque member id. Idempotent: erasing an already erased member replays `200`. Emits `member.erased`.\n\nCallers: tenant-system. Requires `loyalty:member:erase`."
+      operationId: "eraseMemberAsTenantSystem"
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      responses:
+        "200":
+          description: "The member was erased (or had been erased already)."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ErasureResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member with that `externalRef` in this tenant. Code `MEMBER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:member:erase
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/orders/{orderRef}:
+    put:
+      tags:
+      - "Orders"
+      summary: "Record an order"
+      description: "Records an order once and grants the points it earns. Idempotent by `orderRef`: the same body replays the stored result with `200`, a different body is `409`. The first order for an unknown `externalRef` enrols the member. The order lines use the shared order shape.\n\nCallers: tenant-system. Requires `loyalty:order:record`."
+      operationId: "putOrderAsTenantSystem"
+      parameters:
+      - name: orderRef
+        in: path
+        required: true
+        description: "The Tenant's reference for the order, unique per tenant."
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderUpsert"
+        required: true
+      responses:
+        "200":
+          description: "The order was recorded before with the same body; the stored result is replayed."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderView"
+        "201":
+          description: "The order was recorded and its points were granted."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "No program is configured yet (`PROGRAM_NOT_CONFIGURED`), or the same `orderRef` was sent before with a different body (`IDEMPOTENCY_CONFLICT`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The order's `currency` differs from the program's (`CURRENCY_MISMATCH`); the order has no lines or more than 500 (`LINE_LIMIT_EXCEEDED`); or an amount is negative, a quantity is not positive, or `occurredAt` is more than 5 minutes in the future (`VALIDATION_FAILED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:order:record
+      x-allowed-callers:
+      - "tenant-system"
+    get:
+      tags:
+      - "Orders"
+      summary: "Read what an order earned and what its returns took back"
+      operationId: "getOrderAsTenantSystem"
+      parameters:
+      - name: orderRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      responses:
+        "200":
+          description: "The order, its points, its stored earn snapshot and its returns."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "loyalty has not recorded that order. Code `ORDER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:member:read
+      description: "Callers: tenant-system. Requires `loyalty:member:read`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/orders/{orderRef}/returns/{returnRef}:
+    put:
+      tags:
+      - "Orders"
+      summary: "Record a return against an order"
+      description: "Records one return once and recomputes the order's points with the snapshot stored when the order was recorded, never with today's rules. Idempotent by `returnRef`: the same body replays the stored result with `200`, a different body is `409`.\n\nCallers: tenant-system. Requires `loyalty:order:record`."
+      operationId: "putOrderReturnAsTenantSystem"
+      parameters:
+      - name: orderRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: returnRef
+        in: path
+        required: true
+        description: "The Tenant's reference for the return, unique per tenant."
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderReturn"
+        required: true
+      responses:
+        "200":
+          description: "The return was recorded before with the same body; the stored result is replayed."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderView"
+        "201":
+          description: "The return was recorded and the points were clawed back."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          description: "The same `returnRef` was sent before with a different body. Code `IDEMPOTENCY_CONFLICT`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "loyalty has not seen the order (`ORDER_UNKNOWN`, the caller retries); the cumulative returned quantity or amount would exceed what the order line holds (`RETURN_EXCEEDS_SALE`); or a line is not in the order or an amount is negative (`VALIDATION_FAILED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:order:record
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/members/{externalRef}/redemptions:
+    post:
+      tags:
+      - "Redemptions"
+      summary: "Spend a member's points"
+      description: "Spends points at once and consumes lots by earliest expiry. Requires an `Idempotency-Key`: the same key and body replays the stored result with `200`, a different body is `409`.\n\nCallers: tenant-system. Requires `loyalty:points:redeem`."
+      operationId: "createRedemptionAsTenantSystem"
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: "The caller's idempotency key for this spend."
+        schema:
+          type: string
+          maxLength: 200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RedemptionRequest"
+        required: true
+      responses:
+        "200":
+          description: "The same key and body were seen before; the stored redemption is replayed."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+        "201":
+          description: "The points were spent."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member with that `externalRef` in this tenant. Code `MEMBER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "The member's `debt` is positive (`MEMBER_IN_DEBT`); `points` exceeds the available balance (`INSUFFICIENT_POINTS`); or the same `Idempotency-Key` was sent before with a different body (`IDEMPOTENCY_CONFLICT`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:points:redeem
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/members/{externalRef}/redemptions/{id}:
+    get:
+      tags:
+      - "Redemptions"
+      summary: "Read a redemption"
+      operationId: "getRedemptionAsTenantSystem"
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: "The redemption."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member (`MEMBER_NOT_FOUND`) or no redemption (`REDEMPTION_NOT_FOUND`) with that id in this tenant."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:member:read
+      description: "Callers: tenant-system. Requires `loyalty:member:read`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/members/{externalRef}/redemptions/{id}/reversal:
+    post:
+      tags:
+      - "Redemptions"
+      summary: "Reverse a redemption"
+      description: "Restores the lots the redemption consumed and voids an unused voucher it issued. Idempotent: an already reversed redemption replays `200`. Points restored into a lot that has since expired stay expired.\n\nCallers: tenant-system. Requires `loyalty:points:redeem`."
+      operationId: "reverseRedemptionAsTenantSystem"
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: "The redemption is reversed (or had been reversed already)."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RedemptionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member (`MEMBER_NOT_FOUND`) or no redemption (`REDEMPTION_NOT_FOUND`) with that id in this tenant."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "The redemption issued a voucher that has already been used, so it cannot be reversed. Code `VOUCHER_ALREADY_USED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:points:redeem
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/rewards:
+    get:
+      tags:
+      - "Rewards"
+      summary: "List rewards"
+      operationId: "listRewardsAsTenantSystem"
+      parameters:
+      - name: active
+        in: query
+        required: false
+        description: "When set, return only active (`true`) or only inactive (`false`) rewards."
+        schema:
+          type: boolean
+      - name: limit
+        in: query
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: cursor
+        in: query
+        required: false
+        description: "The `next_cursor` of the previous page. Valid only with the same filter."
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "A page of rewards."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RewardPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: loyalty:reward:read
+      description: "Callers: tenant-system. Requires `loyalty:reward:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags:
+      - "Rewards"
+      summary: "Create a reward"
+      operationId: "createRewardAsTenantSystem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardRequest"
+        required: true
+      responses:
+        "201":
+          description: "The reward was created."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Reward"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          description: "A field is out of range: `pointsCost` is negative, the validity window ends before it starts, or `voucherValidDays` is below 1. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:reward:manage
+      description: "Callers: tenant-system. Requires `loyalty:reward:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/rewards/{id}:
+    get:
+      tags:
+      - "Rewards"
+      summary: "Read a reward"
+      operationId: "getRewardAsTenantSystem"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: "The reward."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Reward"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No reward with that id in this tenant. Code `REWARD_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:reward:read
+      description: "Callers: tenant-system. Requires `loyalty:reward:read`."
+      x-allowed-callers:
+      - "tenant-system"
+    patch:
+      tags:
+      - "Rewards"
+      summary: "Update a reward"
+      description: "Changes only the given fields. A cost or stock change never affects vouchers already issued. The response carries the reward's `ETag`.\n\nCallers: tenant-system. Requires `loyalty:reward:manage`."
+      operationId: "updateRewardAsTenantSystem"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        description: "Required by this update; the endpoint answers `428` without it and `412` when it does not match the current `ETag`."
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardPatch"
+        required: true
+      responses:
+        "200":
+          description: "The reward as stored."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Reward"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No reward with that id in this tenant. Code `REWARD_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: "A changed field is out of range: `pointsCost` is negative, the validity window ends before it starts, or `voucherValidDays` is below 1. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: loyalty:reward:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/members/{externalRef}/reward-redemptions:
+    post:
+      tags:
+      - "Rewards"
+      summary: "Redeem a reward for a member and issue a voucher"
+      description: "Spends the reward's points and issues one single-use voucher in one transaction. Requires an `Idempotency-Key`: a replay returns the same voucher with `200`. loyalty only issues and consumes vouchers; delivering the reward is the Tenant's job.\n\nCallers: tenant-system. Requires `loyalty:reward:redeem`."
+      operationId: "createRewardRedemptionAsTenantSystem"
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: Idempotency-Key
+        in: header
+        required: true
+        description: "The caller's idempotency key for this reward redemption."
+        schema:
+          type: string
+          maxLength: 200
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardRedemptionRequest"
+        required: true
+      responses:
+        "200":
+          description: "The same key and body were seen before; the stored voucher is replayed."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RewardRedemptionResponse"
+        "201":
+          description: "The points were spent and the voucher was issued."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/RewardRedemptionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member with that `externalRef` (`MEMBER_NOT_FOUND`) or no reward with that id (`REWARD_NOT_FOUND`) in this tenant."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "The member's `debt` is positive (`MEMBER_IN_DEBT`); `points` exceeds the available balance (`INSUFFICIENT_POINTS`); the reward's stock is exhausted (`OUT_OF_STOCK`); or the same `Idempotency-Key` was sent before with a different body (`IDEMPOTENCY_CONFLICT`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "The reward is not active or is outside its validity window. Code `REWARD_NOT_AVAILABLE`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:reward:redeem
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/members/{externalRef}/vouchers:
+    get:
+      tags:
+      - "Vouchers"
+      summary: "List a member's vouchers"
+      operationId: "listMemberVouchersAsTenantSystem"
+      parameters:
+      - name: externalRef
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 200
+      - name: status
+        in: query
+        required: false
+        description: "Return only vouchers in this state."
+        schema:
+          type: string
+          enum:
+          - ISSUED
+          - USED
+          - VOIDED
+      - name: limit
+        in: query
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: cursor
+        in: query
+        required: false
+        description: "The `next_cursor` of the previous page. Valid only with the same filter."
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "A page of the member's vouchers."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/VoucherPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No member with that `externalRef` in this tenant. Code `MEMBER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:voucher:read
+      description: "Callers: tenant-system. Requires `loyalty:voucher:read`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/vouchers/{code}:
+    get:
+      tags:
+      - "Vouchers"
+      summary: "Read a voucher by code"
+      operationId: "getVoucherAsTenantSystem"
+      parameters:
+      - name: code
+        in: path
+        required: true
+        description: "The single-use voucher code."
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+      responses:
+        "200":
+          description: "The voucher, including its `rewardId`, `state` and `expiresAt`."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Voucher"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No voucher with that code in this tenant; an unknown or another tenant's code is the same constant answer. Code `VOUCHER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:voucher:read
+      description: "Callers: tenant-system. Requires `loyalty:voucher:read`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/vouchers/{code}/use:
+    post:
+      tags:
+      - "Vouchers"
+      summary: "Use a voucher once"
+      description: "Consumes the voucher atomically. Replays by `useRef`: the same `useRef` on a used voucher returns the same result with `200`.\n\nCallers: tenant-system. Requires `loyalty:voucher:use`."
+      operationId: "useVoucherAsTenantSystem"
+      parameters:
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoucherUseRequest"
+        required: true
+      responses:
+        "200":
+          description: "The voucher is used (this call or the `useRef`'s original call)."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Voucher"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No voucher with that code in this tenant. Code `VOUCHER_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: "The voucher was already used with another `useRef` (`VOUCHER_USED`) or has expired (`VOUCHER_EXPIRED`)."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: "`useRef` is missing or empty. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:voucher:use
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/webhook-endpoints:
+    get:
+      tags:
+      - "Webhook endpoints"
+      summary: "List webhook endpoints"
+      operationId: "listWebhookEndpointsAsTenantSystem"
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: cursor
+        in: query
+        required: false
+        description: "The `next_cursor` of the previous page."
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "A page of the tenant's webhook endpoints."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpointPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: loyalty:webhook:manage
+      description: "Callers: tenant-system. Requires `loyalty:webhook:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+    post:
+      tags:
+      - "Webhook endpoints"
+      summary: "Create a webhook endpoint"
+      description: "Registers an endpoint that subscribes to a subset of loyalty's event types. The signing secret is returned once, in this response.\n\nCallers: tenant-system. Requires `loyalty:webhook:manage`."
+      operationId: "createWebhookEndpointAsTenantSystem"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEndpointRequest"
+        required: true
+      responses:
+        "201":
+          description: "The endpoint with its signing secret."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpointWithSecret"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          description: "The `url` is not an https URL that resolves to a public address, `eventTypes` is empty, or it contains a type that is not one of loyalty's twelve. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:webhook:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/webhook-endpoints/{id}:
+    get:
+      tags:
+      - "Webhook endpoints"
+      summary: "Read a webhook endpoint"
+      operationId: "getWebhookEndpointAsTenantSystem"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: "The endpoint."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpoint"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No endpoint with that id in this tenant. Code `WEBHOOK_ENDPOINT_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:webhook:manage
+      description: "Callers: tenant-system. Requires `loyalty:webhook:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+    put:
+      tags:
+      - "Webhook endpoints"
+      summary: "Update a webhook endpoint"
+      description: "Changes the endpoint's url, description, subscribed event types or status. The response carries the endpoint's `ETag`.\n\nCallers: tenant-system. Requires `loyalty:webhook:manage`."
+      operationId: "updateWebhookEndpointAsTenantSystem"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        description: "Required by this update; the endpoint answers `428` without it and `412` when it does not match the current `ETag`."
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEndpointRequest"
+        required: true
+      responses:
+        "200":
+          description: "The endpoint as stored."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpoint"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No endpoint with that id in this tenant. Code `WEBHOOK_ENDPOINT_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "422":
+          description: "The `url` is not an https URL that resolves to a public address, `eventTypes` is empty, or it contains a type that is not one of loyalty's twelve. Code `VALIDATION_FAILED`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: loyalty:webhook:manage
+      x-allowed-callers:
+      - "tenant-system"
+    delete:
+      tags:
+      - "Webhook endpoints"
+      summary: "Delete a webhook endpoint"
+      operationId: "deleteWebhookEndpointAsTenantSystem"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: If-Match
+        in: header
+        required: false
+        description: "Required by this delete; the endpoint answers `428` without it and `412` when it does not match the current `ETag`."
+        schema:
+          type: string
+      responses:
+        "204":
+          description: "The endpoint was deleted."
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No endpoint with that id in this tenant. Code `WEBHOOK_ENDPOINT_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+      x-required-permission: loyalty:webhook:manage
+      description: "Callers: tenant-system. Requires `loyalty:webhook:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/webhook-endpoints/{id}/rotate-secret:
+    post:
+      tags:
+      - "Webhook endpoints"
+      summary: "Rotate a webhook endpoint's signing secret"
+      description: "Replaces the endpoint's signing secret and returns the new one once. A receiver may keep the previous secret during a rotation.\n\nCallers: tenant-system. Requires `loyalty:webhook:manage`."
+      operationId: "rotateWebhookEndpointSecretAsTenantSystem"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: "The endpoint with its new signing secret."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookEndpointWithSecret"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No endpoint with that id in this tenant. Code `WEBHOOK_ENDPOINT_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:webhook:manage
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/webhook-deliveries:
+    get:
+      tags:
+      - "Webhook deliveries"
+      summary: "List webhook deliveries"
+      operationId: "listWebhookDeliveriesAsTenantSystem"
+      parameters:
+      - name: endpointId
+        in: query
+        required: false
+        description: "Return only deliveries of this endpoint."
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        required: false
+        description: "Return only deliveries in this state, such as `PENDING`, `DELIVERED` or `DEAD`."
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        description: "Page size, 1 to 200."
+        schema:
+          type: integer
+          format: int32
+          default: 50
+          minimum: 1
+          maximum: 200
+      - name: cursor
+        in: query
+        required: false
+        description: "The `next_cursor` of the previous page. Valid only with the same filter."
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "A page of webhook deliveries."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookDeliveryPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+      x-required-permission: loyalty:webhook:manage
+      description: "Callers: tenant-system. Requires `loyalty:webhook:manage`."
+      x-allowed-callers:
+      - "tenant-system"
+  /system/v1/webhook-deliveries/{id}/retry:
+    post:
+      tags:
+      - "Webhook deliveries"
+      summary: "Retry a webhook delivery"
+      description: "Schedules another attempt of a finished or dead delivery and answers `202`.\n\nCallers: tenant-system. Requires `loyalty:webhook:manage`."
+      operationId: "retryWebhookDeliveryAsTenantSystem"
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "202":
+          description: "The delivery was queued for another attempt."
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/WebhookDelivery"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: "No delivery with that id in this tenant. Code `WEBHOOK_DELIVERY_NOT_FOUND`."
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      x-required-permission: loyalty:webhook:manage
+      x-allowed-callers:
+      - "tenant-system"
 components:
   responses:
     BadRequest:

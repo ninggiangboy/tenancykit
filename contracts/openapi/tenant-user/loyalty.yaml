@@ -73,10 +73,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "loyalty:program:read"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:program:read`."
+      description: "Callers: tenant-user. Requires `loyalty:program:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     put:
       tags:
       - "Program"
@@ -162,10 +161,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "loyalty:program:read"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:program:read`."
+      description: "Callers: tenant-user. Requires `loyalty:program:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     put:
       tags:
       - "Tiers"
@@ -270,10 +268,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "loyalty:program:read"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:program:read`."
+      description: "Callers: tenant-user. Requires `loyalty:program:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Promotions"
@@ -343,10 +340,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "loyalty:program:read"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:program:read`."
+      description: "Callers: tenant-user. Requires `loyalty:program:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     patch:
       tags:
       - "Promotions"
@@ -416,7 +412,7 @@ paths:
       description: "Enrols a member ahead of its first order. Idempotent by `externalRef`:\
         \ `201` when the member is created and `200` when it already exists. An order\
         \ for an unknown ref enrols the member the same way and emits the same webhook.\n\
-        \nCallers: tenant-user, tenant-system. Requires `loyalty:member:manage`."
+        \nCallers: tenant-user. Requires `loyalty:member:manage`."
       operationId: "putMember"
       parameters:
       - name: "externalRef"
@@ -463,7 +459,6 @@ paths:
       x-required-permission: "loyalty:member:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     get:
       tags:
       - "Members"
@@ -510,17 +505,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "loyalty:member:read"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:member:read`."
+      description: "Callers: tenant-user. Requires `loyalty:member:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/members/{externalRef}/ledger:
     get:
       tags:
       - "Members"
       summary: "List a member's ledger entries"
       description: "The member's append-only ledger, newest first, keyset-paginated\
-        \ by `cursor`.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:member:read`."
+        \ by `cursor`.\n\nCallers: tenant-user. Requires `loyalty:member:read`."
       operationId: "getMemberLedger"
       parameters:
       - name: "externalRef"
@@ -583,7 +577,6 @@ paths:
       x-required-permission: "loyalty:member:read"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/members/{externalRef}/erasure:
     post:
       tags:
@@ -592,7 +585,7 @@ paths:
       description: "Anonymizes the member, voids its unused vouchers and keeps its\
         \ ledger as anonymous totals keyed by the opaque member id. Idempotent: erasing\
         \ an already erased member replays `200`. Emits `member.erased`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `loyalty:member:erase`."
+        \ tenant-user. Requires `loyalty:member:erase`."
       operationId: "eraseMember"
       parameters:
       - name: "externalRef"
@@ -624,7 +617,6 @@ paths:
       x-required-permission: "loyalty:member:erase"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/orders/{orderRef}:
     put:
       tags:
@@ -633,8 +625,8 @@ paths:
       description: "Records an order once and grants the points it earns. Idempotent\
         \ by `orderRef`: the same body replays the stored result with `200`, a different\
         \ body is `409`. The first order for an unknown `externalRef` enrols the member.\
-        \ The order lines use the shared order shape.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `loyalty:order:record`."
+        \ The order lines use the shared order shape.\n\nCallers: tenant-user. Requires\
+        \ `loyalty:order:record`."
       operationId: "putOrder"
       parameters:
       - name: "orderRef"
@@ -690,7 +682,6 @@ paths:
       x-required-permission: "loyalty:order:record"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     get:
       tags:
       - "Orders"
@@ -724,10 +715,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "loyalty:member:read"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:member:read`."
+      description: "Callers: tenant-user. Requires `loyalty:member:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/orders/{orderRef}/returns/{returnRef}:
     put:
       tags:
@@ -736,8 +726,7 @@ paths:
       description: "Records one return once and recomputes the order's points with\
         \ the snapshot stored when the order was recorded, never with today's rules.\
         \ Idempotent by `returnRef`: the same body replays the stored result with\
-        \ `200`, a different body is `409`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `loyalty:order:record`."
+        \ `200`, a different body is `409`.\n\nCallers: tenant-user. Requires `loyalty:order:record`."
       operationId: "putOrderReturn"
       parameters:
       - name: "orderRef"
@@ -800,7 +789,6 @@ paths:
       x-required-permission: "loyalty:order:record"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/members/{externalRef}/redemptions:
     post:
       tags:
@@ -808,8 +796,7 @@ paths:
       summary: "Spend a member's points"
       description: "Spends points at once and consumes lots by earliest expiry. Requires\
         \ an `Idempotency-Key`: the same key and body replays the stored result with\
-        \ `200`, a different body is `409`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `loyalty:points:redeem`."
+        \ `200`, a different body is `409`.\n\nCallers: tenant-user. Requires `loyalty:points:redeem`."
       operationId: "createRedemption"
       parameters:
       - name: "externalRef"
@@ -869,7 +856,6 @@ paths:
       x-required-permission: "loyalty:points:redeem"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/members/{externalRef}/redemptions/{id}:
     get:
       tags:
@@ -911,10 +897,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "loyalty:member:read"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:member:read`."
+      description: "Callers: tenant-user. Requires `loyalty:member:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/members/{externalRef}/redemptions/{id}/reversal:
     post:
       tags:
@@ -923,7 +908,7 @@ paths:
       description: "Restores the lots the redemption consumed and voids an unused\
         \ voucher it issued. Idempotent: an already reversed redemption replays `200`.\
         \ Points restored into a lot that has since expired stay expired.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `loyalty:points:redeem`."
+        \ tenant-user. Requires `loyalty:points:redeem`."
       operationId: "reverseRedemption"
       parameters:
       - name: "externalRef"
@@ -969,7 +954,6 @@ paths:
       x-required-permission: "loyalty:points:redeem"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/rewards:
     get:
       tags:
@@ -1015,10 +999,9 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "loyalty:reward:read"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:reward:read`."
+      description: "Callers: tenant-user. Requires `loyalty:reward:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Rewards"
@@ -1052,10 +1035,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "loyalty:reward:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:reward:manage`."
+      description: "Callers: tenant-user. Requires `loyalty:reward:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/rewards/{id}:
     get:
       tags:
@@ -1089,17 +1071,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "loyalty:reward:read"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:reward:read`."
+      description: "Callers: tenant-user. Requires `loyalty:reward:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     patch:
       tags:
       - "Rewards"
       summary: "Update a reward"
       description: "Changes only the given fields. A cost or stock change never affects\
         \ vouchers already issued. The response carries the reward's `ETag`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `loyalty:reward:manage`."
+        \ tenant-user. Requires `loyalty:reward:manage`."
       operationId: "updateReward"
       parameters:
       - name: "id"
@@ -1155,7 +1136,6 @@ paths:
       x-required-permission: "loyalty:reward:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/members/{externalRef}/reward-redemptions:
     post:
       tags:
@@ -1164,8 +1144,7 @@ paths:
       description: "Spends the reward's points and issues one single-use voucher in\
         \ one transaction. Requires an `Idempotency-Key`: a replay returns the same\
         \ voucher with `200`. loyalty only issues and consumes vouchers; delivering\
-        \ the reward is the Tenant's job.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `loyalty:reward:redeem`."
+        \ the reward is the Tenant's job.\n\nCallers: tenant-user. Requires `loyalty:reward:redeem`."
       operationId: "createRewardRedemption"
       parameters:
       - name: "externalRef"
@@ -1234,7 +1213,6 @@ paths:
       x-required-permission: "loyalty:reward:redeem"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/members/{externalRef}/vouchers:
     get:
       tags:
@@ -1296,10 +1274,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "loyalty:voucher:read"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:voucher:read`."
+      description: "Callers: tenant-user. Requires `loyalty:voucher:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/vouchers/{code}:
     get:
       tags:
@@ -1336,10 +1313,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "loyalty:voucher:read"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:voucher:read`."
+      description: "Callers: tenant-user. Requires `loyalty:voucher:read`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/vouchers/{code}/use:
     post:
       tags:
@@ -1347,7 +1323,7 @@ paths:
       summary: "Use a voucher once"
       description: "Consumes the voucher atomically. Replays by `useRef`: the same\
         \ `useRef` on a used voucher returns the same result with `200`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `loyalty:voucher:use`."
+        \ tenant-user. Requires `loyalty:voucher:use`."
       operationId: "useVoucher"
       parameters:
       - name: "code"
@@ -1399,7 +1375,6 @@ paths:
       x-required-permission: "loyalty:voucher:use"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-endpoints:
     get:
       tags:
@@ -1437,17 +1412,16 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "loyalty:webhook:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+      description: "Callers: tenant-user. Requires `loyalty:webhook:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     post:
       tags:
       - "Webhook endpoints"
       summary: "Create a webhook endpoint"
       description: "Registers an endpoint that subscribes to a subset of loyalty's\
         \ event types. The signing secret is returned once, in this response.\n\n\
-        Callers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+        Callers: tenant-user. Requires `loyalty:webhook:manage`."
       operationId: "createWebhookEndpoint"
       requestBody:
         content:
@@ -1479,7 +1453,6 @@ paths:
       x-required-permission: "loyalty:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-endpoints/{id}:
     get:
       tags:
@@ -1513,17 +1486,16 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       x-required-permission: "loyalty:webhook:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+      description: "Callers: tenant-user. Requires `loyalty:webhook:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     put:
       tags:
       - "Webhook endpoints"
       summary: "Update a webhook endpoint"
       description: "Changes the endpoint's url, description, subscribed event types\
-        \ or status. The response carries the endpoint's `ETag`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `loyalty:webhook:manage`."
+        \ or status. The response carries the endpoint's `ETag`.\n\nCallers: tenant-user.\
+        \ Requires `loyalty:webhook:manage`."
       operationId: "updateWebhookEndpoint"
       parameters:
       - name: "id"
@@ -1579,7 +1551,6 @@ paths:
       x-required-permission: "loyalty:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
     delete:
       tags:
       - "Webhook endpoints"
@@ -1619,10 +1590,9 @@ paths:
         "428":
           $ref: "#/components/responses/PreconditionRequired"
       x-required-permission: "loyalty:webhook:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+      description: "Callers: tenant-user. Requires `loyalty:webhook:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-endpoints/{id}/rotate-secret:
     post:
       tags:
@@ -1630,7 +1600,7 @@ paths:
       summary: "Rotate a webhook endpoint's signing secret"
       description: "Replaces the endpoint's signing secret and returns the new one\
         \ once. A receiver may keep the previous secret during a rotation.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+        \ tenant-user. Requires `loyalty:webhook:manage`."
       operationId: "rotateWebhookEndpointSecret"
       parameters:
       - name: "id"
@@ -1661,7 +1631,6 @@ paths:
       x-required-permission: "loyalty:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-deliveries:
     get:
       tags:
@@ -1714,17 +1683,16 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "loyalty:webhook:manage"
-      description: "Callers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+      description: "Callers: tenant-user. Requires `loyalty:webhook:manage`."
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
   /api/v1/webhook-deliveries/{id}/retry:
     post:
       tags:
       - "Webhook deliveries"
       summary: "Retry a webhook delivery"
       description: "Schedules another attempt of a finished or dead delivery and answers\
-        \ `202`.\n\nCallers: tenant-user, tenant-system. Requires `loyalty:webhook:manage`."
+        \ `202`.\n\nCallers: tenant-user. Requires `loyalty:webhook:manage`."
       operationId: "retryWebhookDelivery"
       parameters:
       - name: "id"
@@ -1755,7 +1723,6 @@ paths:
       x-required-permission: "loyalty:webhook:manage"
       x-allowed-callers:
       - "tenant-user"
-      - "tenant-system"
 components:
   responses:
     BadRequest:

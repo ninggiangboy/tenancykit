@@ -41,8 +41,8 @@ class OpenApiContractTest extends LoyaltyIntegrationTest {
         JsonNode generated = generatedDocument();
         String publishedText = Files.readString(RepositoryPaths.repositoryRoot().resolve(CONTRACT), StandardCharsets.UTF_8);
         JsonNode published = YAML.readTree(publishedText);
-        CallerLabelRules.check(generated.toString(), false);
-        CallerLabelRules.check(publishedText, false);
+        CallerLabelRules.check(generated.toString(), true, true);
+        CallerLabelRules.check(publishedText, true, true);
         CallerOpenApiSplitter.writeOrVerify(
                 publishedText,
                 RepositoryPaths.repositoryRoot().resolve("contracts/openapi"),

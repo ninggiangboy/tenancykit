@@ -82,7 +82,7 @@ class SuiteAccessTest extends LoyaltyIntegrationTest {
     void anEntitledTenantWithAWebhookPermissionGets200() throws Exception {
         Tenant tenant = seedTenant(true);
 
-        int status = mvc.perform(asTenant(tenant, "/api/v1/webhook-endpoints")).andReturn().getResponse().getStatus();
+        int status = mvc.perform(asTenant(tenant, "/system/v1/webhook-endpoints")).andReturn().getResponse().getStatus();
 
         assertThat(status).isEqualTo(200);
     }
@@ -91,7 +91,7 @@ class SuiteAccessTest extends LoyaltyIntegrationTest {
     void aRequestWithNoTokenIs401() throws Exception {
         Tenant tenant = seedTenant(true);
 
-        int status = mvc.perform(onHost("/api/v1/webhook-endpoints", tenant.host())).andReturn().getResponse().getStatus();
+        int status = mvc.perform(onHost("/system/v1/webhook-endpoints", tenant.host())).andReturn().getResponse().getStatus();
 
         assertThat(status).isEqualTo(401);
     }
@@ -100,7 +100,7 @@ class SuiteAccessTest extends LoyaltyIntegrationTest {
     void thePlatformScopeIs403() throws Exception {
         Tenant platform = seedPlatformSystem();
 
-        int status = mvc.perform(asTenant(platform, "/api/v1/webhook-endpoints")).andReturn().getResponse().getStatus();
+        int status = mvc.perform(asTenant(platform, "/system/v1/webhook-endpoints")).andReturn().getResponse().getStatus();
 
         assertThat(status).isEqualTo(403);
     }
@@ -109,7 +109,7 @@ class SuiteAccessTest extends LoyaltyIntegrationTest {
     void aTenantWithoutTheEntitlementIs403EvenWithAValidToken() throws Exception {
         Tenant tenant = seedTenant(false);
 
-        int status = mvc.perform(asTenant(tenant, "/api/v1/webhook-endpoints")).andReturn().getResponse().getStatus();
+        int status = mvc.perform(asTenant(tenant, "/system/v1/webhook-endpoints")).andReturn().getResponse().getStatus();
 
         assertThat(status).isEqualTo(403);
     }
@@ -118,7 +118,7 @@ class SuiteAccessTest extends LoyaltyIntegrationTest {
     void aTokenMintedForAnotherAppIsRefused() throws Exception {
         Tenant tenant = seedTenant(true);
 
-        int status = mvc.perform(onHost("/api/v1/webhook-endpoints", tenant.host())
+        int status = mvc.perform(onHost("/system/v1/webhook-endpoints", tenant.host())
                         .header("Authorization", "Bearer " + token(tenant.systemId(), tenant.id(), "billing")))
                 .andReturn().getResponse().getStatus();
 
