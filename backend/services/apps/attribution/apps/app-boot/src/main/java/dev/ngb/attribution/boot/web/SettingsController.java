@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "The click parameter, the origins allowed to collect and the default attribution window.")
 @RestController
-@RequestMapping("/api/v1/settings")
+@RequestMapping("/settings")
 @Callers(Caller.TENANT_USER)
 public class SettingsController {
 

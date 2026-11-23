@@ -43,15 +43,15 @@ tags:
   description: "The public endpoint a tenant's page snippet posts page views to. Anything\
     \ unacceptable answers 204 without storing."
 paths:
-  /api/v1/campaigns/{campaignId}/spend/{day}:
+  /system/v1/campaigns/{campaignId}/spend/{day}:
     put:
       tags:
       - "Campaign spend"
       summary: "Set a campaign's spend for one day"
       description: "Sets the manual advertising cost of the campaign on `day`, with\
         \ optional impressions and clicks. A currency the campaign does not use is\
-        \ refused.\n\nCallers: tenant-user, tenant-system. Requires `attribution:spend:manage`."
-      operationId: "set"
+        \ refused.\n\nCallers: tenant-system. Requires `attribution:spend:manage`."
+      operationId: "setAsTenantSystem"
       parameters:
       - name: "campaignId"
         in: "path"
@@ -91,16 +91,15 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:spend:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     delete:
       tags:
       - "Campaign spend"
       summary: "Delete a campaign's manual spend for one day"
       description: "Deletes only the manual cost of the campaign on `day`, leaving\
-        \ any imported row in place. Answers `204`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `attribution:spend:manage`."
-      operationId: "delete"
+        \ any imported row in place. Answers `204`.\n\nCallers: tenant-system. Requires\
+        \ `attribution:spend:manage`."
+      operationId: "deleteAsTenantSystem"
       parameters:
       - name: "campaignId"
         in: "path"
@@ -129,9 +128,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:spend:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/links:
+  /system/v1/links:
     get:
       tags:
       - "Tracked links"
@@ -147,9 +145,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `attribution:link:read`."
-      operationId: "list"
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `attribution:link:read`."
+      operationId: "listAsTenantSystem"
       parameters:
       - name: "filter[campaign_id][eq]"
         in: "query"
@@ -649,7 +646,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:link:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
@@ -660,9 +656,8 @@ paths:
         \ is validated at save: one that points at the suite or a private address\
         \ is refused, because that check is what stops a link becoming a phishing\
         \ relay. The password is stored as a hash and never returned. The link's public\
-        \ URL works at once. Answers `201`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `attribution:link:manage`."
-      operationId: "create"
+        \ URL works at once. Answers `201`.\n\nCallers: tenant-system. Requires `attribution:link:manage`."
+      operationId: "createAsTenantSystem"
       requestBody:
         description: "The link to create, or its new properties."
         content:
@@ -685,16 +680,15 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:link:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/links/{id}/resume:
+  /system/v1/links/{id}/resume:
     post:
       tags:
       - "Tracked links"
       summary: "Resume a link"
       description: "Makes a paused link redirect again. Answers `204`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `attribution:link:manage`."
-      operationId: "resume"
+        \ tenant-system. Requires `attribution:link:manage`."
+      operationId: "resumeAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -716,17 +710,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:link:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/links/{id}/pause:
+  /system/v1/links/{id}/pause:
     post:
       tags:
       - "Tracked links"
       summary: "Pause a link"
       description: "Stops the link redirecting at once; only an active link redirects.\
-        \ Answers `204`. Requires `attribution:link:manage`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `attribution:link:manage`."
-      operationId: "pause"
+        \ Answers `204`. Requires `attribution:link:manage`.\n\nCallers: tenant-system.\
+        \ Requires `attribution:link:manage`."
+      operationId: "pauseAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -748,16 +741,15 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:link:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/links/{id}/archive:
+  /system/v1/links/{id}/archive:
     post:
       tags:
       - "Tracked links"
       summary: "Archive a link"
       description: "Archives the link so it no longer redirects. Answers `204`.\n\n\
-        Callers: tenant-user, tenant-system. Requires `attribution:link:manage`."
-      operationId: "archive"
+        Callers: tenant-system. Requires `attribution:link:manage`."
+      operationId: "archiveAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -779,9 +771,8 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:link:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/links/bulk:
+  /system/v1/links/bulk:
     post:
       tags:
       - "Tracked links"
@@ -790,9 +781,8 @@ paths:
         \ UTM, in one transaction: every row produces a link or none does. A replay\
         \ of the same `Idempotency-Key` with the same body returns the links already\
         \ created; the same key with a different body is refused. Answers `201`. Requires\
-        \ `attribution:link:manage`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `attribution:link:manage`."
-      operationId: "bulk"
+        \ `attribution:link:manage`.\n\nCallers: tenant-system. Requires `attribution:link:manage`."
+      operationId: "bulkAsTenantSystem"
       parameters:
       - name: "Idempotency-Key"
         in: "header"
@@ -828,9 +818,8 @@ paths:
           $ref: "#/components/responses/IdempotencyConflict"
       x-required-permission: "attribution:link:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/goals:
+  /system/v1/goals:
     get:
       tags:
       - "Goals"
@@ -846,9 +835,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `attribution:goal:read`."
-      operationId: "list_1"
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `attribution:goal:read`."
+      operationId: "listAsTenantSystem_1"
       parameters:
       - name: "filter[created_at][eq]"
         in: "query"
@@ -1235,7 +1223,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:goal:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
@@ -1243,9 +1230,9 @@ paths:
       summary: "Create a goal"
       description: "Creates a goal: a conversion `key` the tenant's site and backend\
         \ both report, a name, and an optional default value and currency. Two goals\
-        \ in one tenant cannot share a key. Answers `201`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `attribution:goal:manage`."
-      operationId: "create_1"
+        \ in one tenant cannot share a key. Answers `201`.\n\nCallers: tenant-system.\
+        \ Requires `attribution:goal:manage`."
+      operationId: "createAsTenantSystem_1"
       requestBody:
         description: "The goal to create, or its new properties."
         content:
@@ -1268,9 +1255,8 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:goal:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/conversions:
+  /system/v1/conversions:
     get:
       tags:
       - "Conversions"
@@ -1286,9 +1272,8 @@ paths:
         \ The body is `{\"data\": [...], \"page\": null}`. `page_info=full` fills\
         \ `page` with `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor`\
         \ fills it with `limit` and `next_cursor` alone, without counting the matching\
-        \ rows; omit it for the rows alone.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `attribution:report:read`."
-      operationId: "list_2"
+        \ rows; omit it for the rows alone.\n\nCallers: tenant-system. Requires `attribution:report:read`."
+      operationId: "listAsTenantSystem_2"
       parameters:
       - name: "filter[click_id][eq]"
         in: "query"
@@ -1726,7 +1711,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:report:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
@@ -1739,8 +1723,8 @@ paths:
         \ is stored as `UNATTRIBUTED` rather than rejected, because the tenant's order\
         \ flow must not fail when its own reporting is imperfect; a request with neither\
         \ a click nor a visitor is `400`. Requires `attribution:conversion:write`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `attribution:conversion:write`."
-      operationId: "create_2"
+        \nCallers: tenant-system. Requires `attribution:conversion:write`."
+      operationId: "createAsTenantSystem_2"
       parameters:
       - name: "Idempotency-Key"
         in: "header"
@@ -1759,14 +1743,7 @@ paths:
         required: true
       responses:
         "200":
-          description: "The same `Idempotency-Key` and body were seen before, so the\
-            \ first conversion is returned."
-          content:
-            '*/*':
-              schema:
-                $ref: "#/components/schemas/ConversionResponse"
-        "201":
-          description: "The conversion was recorded."
+          description: "A conversion with its chain and credits."
           content:
             '*/*':
               schema:
@@ -1781,9 +1758,8 @@ paths:
           $ref: "#/components/responses/IdempotencyConflict"
       x-required-permission: "attribution:conversion:write"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/campaigns:
+  /system/v1/campaigns:
     get:
       tags:
       - "Campaigns"
@@ -1799,9 +1775,8 @@ paths:
         \ is `{\"data\": [...], \"page\": null}`. `page_info=full` fills `page` with\
         \ `limit`, `offset`, `total` and `next_cursor`; `page_info=cursor` fills it\
         \ with `limit` and `next_cursor` alone, without counting the matching rows;\
-        \ omit it for the rows alone.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `attribution:campaign:read`."
-      operationId: "list_3"
+        \ omit it for the rows alone.\n\nCallers: tenant-system. Requires `attribution:campaign:read`."
+      operationId: "listAsTenantSystem_3"
       parameters:
       - name: "filter[attribution_model][eq]"
         in: "query"
@@ -2198,7 +2173,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:campaign:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
@@ -2207,9 +2181,8 @@ paths:
       description: "Creates a campaign with a name, a channel, an attribution model,\
         \ a window in days, a currency and optional start and end dates. The `slug`\
         \ can be omitted; one is derived from the name, and a collision falls back\
-        \ to a generated one. Answers `201`.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `attribution:campaign:manage`."
-      operationId: "create_3"
+        \ to a generated one. Answers `201`.\n\nCallers: tenant-system. Requires `attribution:campaign:manage`."
+      operationId: "createAsTenantSystem_3"
       requestBody:
         description: "The campaign to create, or its new properties."
         content:
@@ -2232,16 +2205,15 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:campaign:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/campaigns/{id}/archive:
+  /system/v1/campaigns/{id}/archive:
     post:
       tags:
       - "Campaigns"
       summary: "Archive a campaign"
       description: "Archives the campaign. Archiving is terminal. Answers `204`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `attribution:campaign:manage`."
-      operationId: "archive_1"
+        \nCallers: tenant-system. Requires `attribution:campaign:manage`."
+      operationId: "archiveAsTenantSystem_1"
       parameters:
       - name: "id"
         in: "path"
@@ -2263,17 +2235,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:campaign:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/campaigns/{campaignId}/spend:
+  /system/v1/campaigns/{campaignId}/spend:
     get:
       tags:
       - "Campaign spend"
       summary: "List a campaign's spend"
       description: "Returns the campaign's cost rows with their source, so a double\
-        \ entry of a manual and an imported row is visible.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `attribution:spend:read`."
-      operationId: "list_4"
+        \ entry of a manual and an imported row is visible.\n\nCallers: tenant-system.\
+        \ Requires `attribution:spend:read`."
+      operationId: "listAsTenantSystem_4"
       parameters:
       - name: "campaignId"
         in: "path"
@@ -2284,14 +2255,14 @@ paths:
           format: "uuid"
       - name: "from"
         in: "query"
-        description: "The first day to return, as `YYYY-MM-DD`."
+        description: "The start of the range, inclusive."
         required: false
         schema:
           type: "string"
           format: "date"
       - name: "to"
         in: "query"
-        description: "The last day to return, as `YYYY-MM-DD`."
+        description: "The end of the range, exclusive."
         required: false
         schema:
           type: "string"
@@ -2315,16 +2286,15 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:spend:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     post:
       tags:
       - "Campaign spend"
       summary: "Set a campaign's spend for several days"
       description: "Sets the manual cost for up to 366 days of the campaign in one\
-        \ transaction. Requires `attribution:spend:manage`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `attribution:spend:manage`."
-      operationId: "bulk_1"
+        \ transaction. Requires `attribution:spend:manage`.\n\nCallers: tenant-system.\
+        \ Requires `attribution:spend:manage`."
+      operationId: "bulkAsTenantSystem_1"
       parameters:
       - name: "campaignId"
         in: "path"
@@ -2359,17 +2329,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:spend:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/links/{id}:
+  /system/v1/links/{id}:
     get:
       tags:
       - "Tracked links"
       summary: "Get a link"
       description: "Returns one link with its public URL; its version is also the\
         \ response's `ETag`. The password is never returned. An unknown id answers\
-        \ `404`.\n\nCallers: tenant-user, tenant-system. Requires `attribution:link:read`."
-      operationId: "get_1"
+        \ `404`.\n\nCallers: tenant-system. Requires `attribution:link:read`."
+      operationId: "getAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -2395,7 +2364,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:link:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     patch:
       tags:
@@ -2404,9 +2372,8 @@ paths:
       description: "Changes the link's destinations, limits and metadata. A blank\
         \ `password` keeps the stored hash, so a caller that never knew the password\
         \ can still edit the link. Pass the current `ETag` in `If-Match`; a stale\
-        \ version is refused with `412`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `attribution:link:manage`."
-      operationId: "update"
+        \ version is refused with `412`.\n\nCallers: tenant-system. Requires `attribution:link:manage`."
+      operationId: "updateAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -2448,17 +2415,16 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "attribution:link:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/goals/{id}:
+  /system/v1/goals/{id}:
     get:
       tags:
       - "Goals"
       summary: "Get a goal"
       description: "Returns one goal; its version is also the response's `ETag`. An\
         \ unknown id answers `404`. Requires `attribution:goal:read`.\n\nCallers:\
-        \ tenant-user, tenant-system. Requires `attribution:goal:read`."
-      operationId: "get_2"
+        \ tenant-system. Requires `attribution:goal:read`."
+      operationId: "getAsTenantSystem_1"
       parameters:
       - name: "id"
         in: "path"
@@ -2484,7 +2450,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:goal:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     patch:
       tags:
@@ -2492,8 +2457,8 @@ paths:
       summary: "Edit a goal"
       description: "Changes the goal's name, default value and currency. Pass the\
         \ current `ETag` in `If-Match`; a stale version is refused with `412`.\n\n\
-        Callers: tenant-user, tenant-system. Requires `attribution:goal:manage`."
-      operationId: "update_1"
+        Callers: tenant-system. Requires `attribution:goal:manage`."
+      operationId: "updateAsTenantSystem_1"
       parameters:
       - name: "id"
         in: "path"
@@ -2535,17 +2500,15 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "attribution:goal:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/campaigns/{id}:
+  /system/v1/campaigns/{id}:
     get:
       tags:
       - "Campaigns"
       summary: "Get a campaign"
       description: "Returns one campaign; its version is also the response's `ETag`.\
-        \ An unknown id answers `404`.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `attribution:campaign:read`."
-      operationId: "get_3"
+        \ An unknown id answers `404`.\n\nCallers: tenant-system. Requires `attribution:campaign:read`."
+      operationId: "getAsTenantSystem_2"
       parameters:
       - name: "id"
         in: "path"
@@ -2571,7 +2534,6 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:campaign:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
     patch:
       tags:
@@ -2581,8 +2543,8 @@ paths:
         \ model or the window is stored at once and starts a recompute of its conversions.\
         \ The currency is fixed once spend or a conversion exists. Pass the current\
         \ `ETag` in `If-Match`; a stale version is refused with `412`. Requires `attribution:campaign:manage`.\n\
-        \nCallers: tenant-user, tenant-system. Requires `attribution:campaign:manage`."
-      operationId: "update_2"
+        \nCallers: tenant-system. Requires `attribution:campaign:manage`."
+      operationId: "updateAsTenantSystem_2"
       parameters:
       - name: "id"
         in: "path"
@@ -2624,9 +2586,8 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
       x-required-permission: "attribution:campaign:manage"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/reports/timeseries:
+  /system/v1/reports/timeseries:
     get:
       tags:
       - "Reports"
@@ -2637,8 +2598,8 @@ paths:
         \ `goal_id`, `entry`, `device` and `country`; `include` adds bot or suspect\
         \ traffic that the default leaves out. Answers `text/csv` instead of JSON\
         \ when the request asks for it with `Accept` or with the `.csv` path.\n\n\
-        Callers: tenant-user, tenant-system. Requires `attribution:report:read`."
-      operationId: "timeseries"
+        Callers: tenant-system. Requires `attribution:report:read`."
+      operationId: "timeseriesAsTenantSystem"
       parameters:
       - name: "from"
         in: "query"
@@ -2731,29 +2692,23 @@ paths:
               schema:
                 type: "object"
         "400":
-          description: "A parameter is not valid, or a CSV export would exceed 100,000\
-            \ rows. Narrow the range."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:report:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/reports/timeseries.csv:
+  /system/v1/reports/timeseries.csv:
     get:
       tags:
       - "Reports"
       summary: "Export a time series as CSV"
       description: "The same report as the JSON one, always as `text/csv`; an export\
-        \ is capped at 100,000 rows and a larger answer is `400`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `attribution:report:read`."
-      operationId: "timeseriesCsv"
+        \ is capped at 100,000 rows and a larger answer is `400`.\n\nCallers: tenant-system.\
+        \ Requires `attribution:report:read`."
+      operationId: "timeseriesCsvAsTenantSystem"
       parameters:
       - name: "from"
         in: "query"
@@ -2843,21 +2798,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/StreamingResponseBody"
         "400":
-          description: "A parameter is not valid, or the export would exceed 100,000\
-            \ rows. Narrow the range."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:report:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/reports/funnel:
+  /system/v1/reports/funnel:
     get:
       tags:
       - "Reports"
@@ -2865,9 +2814,8 @@ paths:
       description: "Returns how many clicks became sessions, page views and conversions\
         \ over the `from`/`to` range, narrowed by `campaign_id`, `link_id` and `goal_id`.\
         \ Answers `text/csv` instead of JSON when the request asks for it with `Accept`\
-        \ or with the `.csv` path.\n\nCallers: tenant-user, tenant-system. Requires\
-        \ `attribution:report:read`."
-      operationId: "funnel"
+        \ or with the `.csv` path.\n\nCallers: tenant-system. Requires `attribution:report:read`."
+      operationId: "funnelAsTenantSystem"
       parameters:
       - name: "from"
         in: "query"
@@ -2922,29 +2870,23 @@ paths:
               schema:
                 type: "object"
         "400":
-          description: "A parameter is not valid, or a CSV export would exceed 100,000\
-            \ rows. Narrow the range."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:report:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/reports/funnel.csv:
+  /system/v1/reports/funnel.csv:
     get:
       tags:
       - "Reports"
       summary: "Export the funnel as CSV"
       description: "The same report as the JSON one, always as `text/csv`; an export\
-        \ is capped at 100,000 rows and a larger answer is `400`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `attribution:report:read`."
-      operationId: "funnelCsv"
+        \ is capped at 100,000 rows and a larger answer is `400`.\n\nCallers: tenant-system.\
+        \ Requires `attribution:report:read`."
+      operationId: "funnelCsvAsTenantSystem"
       parameters:
       - name: "from"
         in: "query"
@@ -2996,21 +2938,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/StreamingResponseBody"
         "400":
-          description: "A parameter is not valid, or the export would exceed 100,000\
-            \ rows. Narrow the range."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:report:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/reports/costs:
+  /system/v1/reports/costs:
     get:
       tags:
       - "Reports"
@@ -3018,9 +2954,9 @@ paths:
       description: "Returns advertising spend over the `from`/`to` range, optionally\
         \ for one `campaign_id` and grouped by `group_by`, set against what the same\
         \ campaigns earned. Answers `text/csv` instead of JSON when the request asks\
-        \ for it with `Accept` or with the `.csv` path.\n\nCallers: tenant-user, tenant-system.\
+        \ for it with `Accept` or with the `.csv` path.\n\nCallers: tenant-system.\
         \ Requires `attribution:report:read`."
-      operationId: "costs"
+      operationId: "costsAsTenantSystem"
       parameters:
       - name: "from"
         in: "query"
@@ -3060,29 +2996,23 @@ paths:
               schema:
                 type: "object"
         "400":
-          description: "A parameter is not valid, or a CSV export would exceed 100,000\
-            \ rows. Narrow the range."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:report:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/reports/costs.csv:
+  /system/v1/reports/costs.csv:
     get:
       tags:
       - "Reports"
       summary: "Export the cost report as CSV"
       description: "The same report as the JSON one, always as `text/csv`; an export\
-        \ is capped at 100,000 rows and a larger answer is `400`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `attribution:report:read`."
-      operationId: "costsCsv"
+        \ is capped at 100,000 rows and a larger answer is `400`.\n\nCallers: tenant-system.\
+        \ Requires `attribution:report:read`."
+      operationId: "costsCsvAsTenantSystem"
       parameters:
       - name: "from"
         in: "query"
@@ -3119,21 +3049,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/StreamingResponseBody"
         "400":
-          description: "A parameter is not valid, or the export would exceed 100,000\
-            \ rows. Narrow the range."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:report:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/reports/cohorts:
+  /system/v1/reports/cohorts:
     get:
       tags:
       - "Reports"
@@ -3141,9 +3065,9 @@ paths:
       description: "Groups visitors by the week of their first click and reports how\
         \ they converted over the following `periods` (default 12). `cohort` can only\
         \ be `week`. Answers `text/csv` instead of JSON when the request asks for\
-        \ it with `Accept` or with the `.csv` path.\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `attribution:report:read`."
-      operationId: "cohorts"
+        \ it with `Accept` or with the `.csv` path.\n\nCallers: tenant-system. Requires\
+        \ `attribution:report:read`."
+      operationId: "cohortsAsTenantSystem"
       parameters:
       - name: "from"
         in: "query"
@@ -3192,29 +3116,23 @@ paths:
               schema:
                 type: "object"
         "400":
-          description: "A parameter is not valid (`cohort` can only be `week`), or\
-            \ a CSV export would exceed 100,000 rows. Narrow the range."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:report:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/reports/cohorts.csv:
+  /system/v1/reports/cohorts.csv:
     get:
       tags:
       - "Reports"
       summary: "Export cohorts as CSV"
       description: "The same report as the JSON one, always as `text/csv`; an export\
-        \ is capped at 100,000 rows and a larger answer is `400`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `attribution:report:read`."
-      operationId: "cohortsCsv"
+        \ is capped at 100,000 rows and a larger answer is `400`.\n\nCallers: tenant-system.\
+        \ Requires `attribution:report:read`."
+      operationId: "cohortsCsvAsTenantSystem"
       parameters:
       - name: "from"
         in: "query"
@@ -3260,21 +3178,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/StreamingResponseBody"
         "400":
-          description: "A parameter is not valid (`cohort` can only be `week`), or\
-            \ the export would exceed 100,000 rows. Narrow the range."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:report:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/reports/breakdown:
+  /system/v1/reports/breakdown:
     get:
       tags:
       - "Reports"
@@ -3284,9 +3196,9 @@ paths:
         \ `campaign_id`, `destination_id`, `goal_id`, `entry`, `device` and `country`;\
         \ `include` adds bot or suspect traffic that the default leaves out. Also\
         \ filters by `referrer`. Answers `text/csv` instead of JSON when the request\
-        \ asks for it with `Accept` or with the `.csv` path.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `attribution:report:read`."
-      operationId: "breakdown"
+        \ asks for it with `Accept` or with the `.csv` path.\n\nCallers: tenant-system.\
+        \ Requires `attribution:report:read`."
+      operationId: "breakdownAsTenantSystem"
       parameters:
       - name: "dimension"
         in: "query"
@@ -3392,29 +3304,23 @@ paths:
               schema:
                 type: "object"
         "400":
-          description: "A parameter is not valid, or a CSV export would exceed 100,000\
-            \ rows. Narrow the range."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:report:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/reports/breakdown.csv:
+  /system/v1/reports/breakdown.csv:
     get:
       tags:
       - "Reports"
       summary: "Export a breakdown as CSV"
       description: "The same report as the JSON one, always as `text/csv`; an export\
-        \ is capped at 100,000 rows and a larger answer is `400`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `attribution:report:read`."
-      operationId: "breakdownCsv"
+        \ is capped at 100,000 rows and a larger answer is `400`.\n\nCallers: tenant-system.\
+        \ Requires `attribution:report:read`."
+      operationId: "breakdownCsvAsTenantSystem"
       parameters:
       - name: "dimension"
         in: "query"
@@ -3517,21 +3423,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/StreamingResponseBody"
         "400":
-          description: "A parameter is not valid, or the export would exceed 100,000\
-            \ rows. Narrow the range."
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ProblemDetail"
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:report:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/ping:
+  /system/v1/ping:
     get:
       tags:
       - "Health check"
@@ -3539,8 +3439,8 @@ paths:
       description: "Answers the caller's own tenant identity and nothing else. It\
         \ proves that the suite token, the tenant scope and the permission check are\
         \ wired; a platform-scope caller is refused even when it holds the code.\n\
-        \nCallers: tenant-user, tenant-system. Requires `attribution:link:read`."
-      operationId: "ping"
+        \nCallers: tenant-system. Requires `attribution:link:read`."
+      operationId: "pingAsTenantSystem"
       responses:
         "200":
           description: "OK"
@@ -3555,9 +3455,8 @@ paths:
           $ref: "#/components/responses/Forbidden"
       x-required-permission: "attribution:link:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/links/{id}/stats:
+  /system/v1/links/{id}/stats:
     get:
       tags:
       - "Link statistics"
@@ -3565,8 +3464,8 @@ paths:
       description: "Returns the link's click total, its clicks per day for the last\
         \ thirty days, the bot clicks the default leaves out, and its status and click\
         \ cap. The numbers come from rollups, so `dataThrough` says how fresh they\
-        \ are.\n\nCallers: tenant-user, tenant-system. Requires `attribution:link:read`."
-      operationId: "stats"
+        \ are.\n\nCallers: tenant-system. Requires `attribution:link:read`."
+      operationId: "statsAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -3592,17 +3491,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:link:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/links/{id}/qr:
+  /system/v1/links/{id}/qr:
     get:
       tags:
       - "Tracked links"
       summary: "Get a link's QR code"
       description: "Returns a QR code of the link's public URL as `png` (the default)\
-        \ or `svg`, `size` pixels wide (default 256).\n\nCallers: tenant-user, tenant-system.\
-        \ Requires `attribution:link:read`."
-      operationId: "qr"
+        \ or `svg`, `size` pixels wide (default 256).\n\nCallers: tenant-system. Requires\
+        \ `attribution:link:read`."
+      operationId: "qrAsTenantSystem"
       parameters:
       - name: "id"
         in: "path"
@@ -3644,17 +3542,16 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:link:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
-  /api/v1/conversions/{id}:
+  /system/v1/conversions/{id}:
     get:
       tags:
       - "Conversions"
       summary: "Get a conversion"
       description: "Returns one conversion with its chain of touches and the credit\
-        \ each campaign received. An unknown id answers `404`.\n\nCallers: tenant-user,\
-        \ tenant-system. Requires `attribution:report:read`."
-      operationId: "get_4"
+        \ each campaign received. An unknown id answers `404`.\n\nCallers: tenant-system.\
+        \ Requires `attribution:report:read`."
+      operationId: "getAsTenantSystem_3"
       parameters:
       - name: "id"
         in: "path"
@@ -3680,45 +3577,9 @@ paths:
           $ref: "#/components/responses/NotFound"
       x-required-permission: "attribution:report:read"
       x-allowed-callers:
-      - "tenant-user"
       - "tenant-system"
 components:
   schemas:
-    SettingsRequest:
-      type: "object"
-      description: "The settings to store."
-      properties:
-        click_param:
-          type: "string"
-          description: "The name of the query parameter that carries the click id."
-        allowed_origins:
-          type: "array"
-          description: "The origins allowed to post to the collection endpoint. Each\
-            \ is an absolute `https` origin, or `http://localhost`; wildcards are\
-            \ refused."
-          items:
-            type: "string"
-        default_window_days:
-          type: "integer"
-          format: "int32"
-          description: "The attribution window applied when a campaign does not set\
-            \ its own, in days."
-    SettingsView:
-      type: "object"
-      description: "The tenant's attribution settings."
-      properties:
-        clickParam:
-          type: "string"
-          description: "The name of the query parameter that carries the click id."
-        allowedOrigins:
-          type: "array"
-          description: "The origins allowed to post to the collection endpoint."
-          items:
-            type: "string"
-        defaultWindowDays:
-          type: "integer"
-          format: "int32"
-          description: "The default attribution window in days."
     SpendRequest:
       type: "object"
       description: "The cost of one day."
@@ -3771,6 +3632,41 @@ components:
           type: "integer"
           format: "int64"
           description: "The number of clicks."
+    SettingsRequest:
+      type: "object"
+      description: "The settings to store."
+      properties:
+        click_param:
+          type: "string"
+          description: "The name of the query parameter that carries the click id."
+        allowed_origins:
+          type: "array"
+          description: "The origins allowed to post to the collection endpoint. Each\
+            \ is an absolute `https` origin, or `http://localhost`; wildcards are\
+            \ refused."
+          items:
+            type: "string"
+        default_window_days:
+          type: "integer"
+          format: "int32"
+          description: "The attribution window applied when a campaign does not set\
+            \ its own, in days."
+    SettingsView:
+      type: "object"
+      description: "The tenant's attribution settings."
+      properties:
+        clickParam:
+          type: "string"
+          description: "The name of the query parameter that carries the click id."
+        allowedOrigins:
+          type: "array"
+          description: "The origins allowed to post to the collection endpoint."
+          items:
+            type: "string"
+        defaultWindowDays:
+          type: "integer"
+          format: "int32"
+          description: "The default attribution window in days."
     EventBatch:
       type: "object"
       description: "A batch of page views from a tenant's page."
@@ -3807,13 +3703,6 @@ components:
         occurredAt:
           type: "string"
           description: "When the page was viewed, as an ISO-8601 instant."
-    UnlockRequest:
-      type: "object"
-      description: "The password of a protected link."
-      properties:
-        password:
-          type: "string"
-          description: "The password the link's owner chose."
     DestinationRequest:
       type: "object"
       description: "One place a link can send a visitor."
@@ -4064,38 +3953,6 @@ components:
         status:
           type: "string"
           description: "`ACTIVE` or `ARCHIVED`."
-    ErasureRequest:
-      type: "object"
-      description: "The visitor to erase."
-      properties:
-        visitor_id:
-          type: "string"
-          description: "The id of the visitor whose collected data is removed."
-    ErasureView:
-      type: "object"
-      description: "How many rows of each kind were removed."
-      properties:
-        page_events:
-          type: "integer"
-          format: "int32"
-          description: "The number of page events removed."
-        sessions:
-          type: "integer"
-          format: "int32"
-          description: "The number of sessions removed."
-        bindings:
-          type: "integer"
-          format: "int32"
-          description: "The number of visitor-to-click bindings removed."
-        clicks:
-          type: "integer"
-          format: "int32"
-          description: "The number of clicks removed that only this visitor was bound\
-            \ to."
-        conversions:
-          type: "integer"
-          format: "int32"
-          description: "The number of conversions detached from the visitor."
     ConversionRequest:
       type: "object"
       description: "The conversion to record."
@@ -4274,6 +4131,45 @@ components:
           type: "string"
           format: "date-time"
           description: "When the record was last changed."
+    UnlockRequest:
+      type: "object"
+      description: "The password of a protected link."
+      properties:
+        password:
+          type: "string"
+          description: "The password the link's owner chose."
+    ErasureRequest:
+      type: "object"
+      description: "The visitor to erase."
+      properties:
+        visitor_id:
+          type: "string"
+          description: "The id of the visitor whose collected data is removed."
+    ErasureView:
+      type: "object"
+      description: "How many rows of each kind were removed."
+      properties:
+        page_events:
+          type: "integer"
+          format: "int32"
+          description: "The number of page events removed."
+        sessions:
+          type: "integer"
+          format: "int32"
+          description: "The number of sessions removed."
+        bindings:
+          type: "integer"
+          format: "int32"
+          description: "The number of visitor-to-click bindings removed."
+        clicks:
+          type: "integer"
+          format: "int32"
+          description: "The number of clicks removed that only this visitor was bound\
+            \ to."
+        conversions:
+          type: "integer"
+          format: "int32"
+          description: "The number of conversions detached from the visitor."
     StreamingResponseBody: {}
     PageInfo:
       type: "object"

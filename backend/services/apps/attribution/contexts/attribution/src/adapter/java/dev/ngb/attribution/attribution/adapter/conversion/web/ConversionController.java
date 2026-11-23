@@ -45,7 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "The postback a tenant's order flow calls and the read side of conversions with their credits.")
 @RestController
-@RequestMapping("/api/v1/conversions")
+@RequestMapping("/conversions")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class ConversionController {
 

@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "A link's click totals and last thirty days.")
 @RestController
-@RequestMapping("/api/v1/links/{id}/stats")
+@RequestMapping("/links/{id}/stats")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class LinkStatsController {
 

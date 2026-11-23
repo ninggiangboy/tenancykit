@@ -216,41 +216,6 @@ paths:
       - "public"
 components:
   schemas:
-    SettingsRequest:
-      type: "object"
-      description: "The settings to store."
-      properties:
-        click_param:
-          type: "string"
-          description: "The name of the query parameter that carries the click id."
-        allowed_origins:
-          type: "array"
-          description: "The origins allowed to post to the collection endpoint. Each\
-            \ is an absolute `https` origin, or `http://localhost`; wildcards are\
-            \ refused."
-          items:
-            type: "string"
-        default_window_days:
-          type: "integer"
-          format: "int32"
-          description: "The attribution window applied when a campaign does not set\
-            \ its own, in days."
-    SettingsView:
-      type: "object"
-      description: "The tenant's attribution settings."
-      properties:
-        clickParam:
-          type: "string"
-          description: "The name of the query parameter that carries the click id."
-        allowedOrigins:
-          type: "array"
-          description: "The origins allowed to post to the collection endpoint."
-          items:
-            type: "string"
-        defaultWindowDays:
-          type: "integer"
-          format: "int32"
-          description: "The default attribution window in days."
     SpendRequest:
       type: "object"
       description: "The cost of one day."
@@ -303,6 +268,41 @@ components:
           type: "integer"
           format: "int64"
           description: "The number of clicks."
+    SettingsRequest:
+      type: "object"
+      description: "The settings to store."
+      properties:
+        click_param:
+          type: "string"
+          description: "The name of the query parameter that carries the click id."
+        allowed_origins:
+          type: "array"
+          description: "The origins allowed to post to the collection endpoint. Each\
+            \ is an absolute `https` origin, or `http://localhost`; wildcards are\
+            \ refused."
+          items:
+            type: "string"
+        default_window_days:
+          type: "integer"
+          format: "int32"
+          description: "The attribution window applied when a campaign does not set\
+            \ its own, in days."
+    SettingsView:
+      type: "object"
+      description: "The tenant's attribution settings."
+      properties:
+        clickParam:
+          type: "string"
+          description: "The name of the query parameter that carries the click id."
+        allowedOrigins:
+          type: "array"
+          description: "The origins allowed to post to the collection endpoint."
+          items:
+            type: "string"
+        defaultWindowDays:
+          type: "integer"
+          format: "int32"
+          description: "The default attribution window in days."
     EventBatch:
       type: "object"
       description: "A batch of page views from a tenant's page."
@@ -339,13 +339,6 @@ components:
         occurredAt:
           type: "string"
           description: "When the page was viewed, as an ISO-8601 instant."
-    UnlockRequest:
-      type: "object"
-      description: "The password of a protected link."
-      properties:
-        password:
-          type: "string"
-          description: "The password the link's owner chose."
     DestinationRequest:
       type: "object"
       description: "One place a link can send a visitor."
@@ -596,38 +589,6 @@ components:
         status:
           type: "string"
           description: "`ACTIVE` or `ARCHIVED`."
-    ErasureRequest:
-      type: "object"
-      description: "The visitor to erase."
-      properties:
-        visitor_id:
-          type: "string"
-          description: "The id of the visitor whose collected data is removed."
-    ErasureView:
-      type: "object"
-      description: "How many rows of each kind were removed."
-      properties:
-        page_events:
-          type: "integer"
-          format: "int32"
-          description: "The number of page events removed."
-        sessions:
-          type: "integer"
-          format: "int32"
-          description: "The number of sessions removed."
-        bindings:
-          type: "integer"
-          format: "int32"
-          description: "The number of visitor-to-click bindings removed."
-        clicks:
-          type: "integer"
-          format: "int32"
-          description: "The number of clicks removed that only this visitor was bound\
-            \ to."
-        conversions:
-          type: "integer"
-          format: "int32"
-          description: "The number of conversions detached from the visitor."
     ConversionRequest:
       type: "object"
       description: "The conversion to record."
@@ -806,6 +767,45 @@ components:
           type: "string"
           format: "date-time"
           description: "When the record was last changed."
+    UnlockRequest:
+      type: "object"
+      description: "The password of a protected link."
+      properties:
+        password:
+          type: "string"
+          description: "The password the link's owner chose."
+    ErasureRequest:
+      type: "object"
+      description: "The visitor to erase."
+      properties:
+        visitor_id:
+          type: "string"
+          description: "The id of the visitor whose collected data is removed."
+    ErasureView:
+      type: "object"
+      description: "How many rows of each kind were removed."
+      properties:
+        page_events:
+          type: "integer"
+          format: "int32"
+          description: "The number of page events removed."
+        sessions:
+          type: "integer"
+          format: "int32"
+          description: "The number of sessions removed."
+        bindings:
+          type: "integer"
+          format: "int32"
+          description: "The number of visitor-to-click bindings removed."
+        clicks:
+          type: "integer"
+          format: "int32"
+          description: "The number of clicks removed that only this visitor was bound\
+            \ to."
+        conversions:
+          type: "integer"
+          format: "int32"
+          description: "The number of conversions detached from the visitor."
     StreamingResponseBody: {}
     PageInfo:
       type: "object"

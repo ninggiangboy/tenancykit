@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "The conversion keys a tenant's site and backend report.")
 @RestController
-@RequestMapping("/api/v1/goals")
+@RequestMapping("/goals")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class GoalController {
 

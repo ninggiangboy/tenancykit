@@ -54,7 +54,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
         description =
                 "Time series, breakdowns, funnel, cohorts and cost reports, each as JSON or CSV.")
 @RestController
-@RequestMapping("/api/v1/reports")
+@RequestMapping("/reports")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class ReportController {
 

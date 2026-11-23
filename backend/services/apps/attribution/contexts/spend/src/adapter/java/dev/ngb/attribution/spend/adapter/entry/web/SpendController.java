@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "A campaign's advertising cost: set manual days, bulk set, delete a manual day and read the rows.")
 @RestController
-@RequestMapping("/api/v1/campaigns/{campaignId}/spend")
+@RequestMapping("/campaigns/{campaignId}/spend")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class SpendController {
 

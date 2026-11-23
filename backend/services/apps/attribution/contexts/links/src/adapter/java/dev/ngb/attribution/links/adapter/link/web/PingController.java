@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Answers the caller's tenant identity, proving the token, tenant scope and permission check are "
                 + "wired.")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class PingController {
 

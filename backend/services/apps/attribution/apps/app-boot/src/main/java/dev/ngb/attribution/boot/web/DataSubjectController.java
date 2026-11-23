@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "Erasing one visitor's collected data.")
 @RestController
-@RequestMapping("/api/v1/data-subjects")
+@RequestMapping("/data-subjects")
 @Callers(Caller.TENANT_USER)
 public class DataSubjectController {
 

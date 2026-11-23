@@ -54,7 +54,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Create, edit, pause, resume and archive tracked links, mint personal links in bulk and fetch a QR "
                 + "code.")
 @RestController
-@RequestMapping("/api/v1/links")
+@RequestMapping("/links")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class LinkController {
 

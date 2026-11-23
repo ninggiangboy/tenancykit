@@ -44,7 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
         description =
                 "A tenant's campaigns, their attribution model and window.")
 @RestController
-@RequestMapping("/api/v1/campaigns")
+@RequestMapping("/campaigns")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 class CampaignController {
 
