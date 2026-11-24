@@ -62,7 +62,7 @@ class MoneyHttpIntegrationTest {
         HttpWorld.System moneySystem = world.newSystem(acme, prefixed(MONEY_SCOPES));
         key = moneySystem.token();
         readOnlyKey = moneySystem.tokenFor("billing:wallet:read");
-        customerId = world.body(post(acme, key, "cust-" + UUID.randomUUID(), "/api/v1/customers", HttpWorld.Map2.of("externalUserId", "user-" + UUID.randomUUID(), "displayName", "Acme Ltd"))).get("id").asString();
+        customerId = world.body(post(acme, key, "cust-" + UUID.randomUUID(), "/system/v1/customers", HttpWorld.Map2.of("externalUserId", "user-" + UUID.randomUUID(), "displayName", "Acme Ltd"))).get("id").asString();
     }
 
     private static String[] prefixed(List<String> codes) {
@@ -95,9 +95,9 @@ class MoneyHttpIntegrationTest {
 
     /** Opens a wallet for a customer of its own, so tests never share a balance. */
     private String openWallet(String currency, String mode) {
-        String ownCustomer = world.body(post(acme, key, "cust-" + UUID.randomUUID(), "/api/v1/customers",
+        String ownCustomer = world.body(post(acme, key, "cust-" + UUID.randomUUID(), "/system/v1/customers",
                 HttpWorld.Map2.of("externalUserId", "user-" + UUID.randomUUID(), "displayName", "Customer"))).get("id").asString();
-        MvcResult result = world.call(HttpMethod.POST, acme.host(), key, "/api/v1/wallets",
+        MvcResult result = world.call(HttpMethod.POST, acme.host(), key, "/system/v1/wallets",
                 HttpWorld.Map2.of("customerId", ownCustomer, "currency", currency, "mode", mode));
         return world.body(result).get("id").asString();
     }
@@ -110,21 +110,21 @@ class MoneyHttpIntegrationTest {
 
     @Test
     void aWalletIsOpenedOncePerCustomerAndCurrency() {
-        MvcResult first = world.call(HttpMethod.POST, acme.host(), key, "/api/v1/wallets",
+        MvcResult first = world.call(HttpMethod.POST, acme.host(), key, "/system/v1/wallets",
                 HttpWorld.Map2.of("customerId", customerId, "currency", "EUR", "mode", "PREPAID"));
-        MvcResult again = world.call(HttpMethod.POST, acme.host(), key, "/api/v1/wallets",
+        MvcResult again = world.call(HttpMethod.POST, acme.host(), key, "/system/v1/wallets",
                 HttpWorld.Map2.of("customerId", customerId, "currency", "EUR", "mode", "PREPAID"));
         assertThat(first.getResponse().getStatus()).isEqualTo(201);
         assertThat(again.getResponse().getStatus()).isEqualTo(200);
         assertThat(parse(again).get("id").asString()).isEqualTo(parse(first).get("id").asString());
 
-        assertThat(world.status(HttpMethod.POST, acme.host(), key, "/api/v1/wallets",
+        assertThat(world.status(HttpMethod.POST, acme.host(), key, "/system/v1/wallets",
                 HttpWorld.Map2.of("customerId", customerId, "currency", "EUR", "mode", "POSTPAID", "creditLimit", 100))).isEqualTo(409);
-        assertThat(world.status(HttpMethod.POST, acme.host(), key, "/api/v1/wallets",
+        assertThat(world.status(HttpMethod.POST, acme.host(), key, "/system/v1/wallets",
                 HttpWorld.Map2.of("customerId", UUID.randomUUID().toString(), "currency", "EUR", "mode", "PREPAID"))).isEqualTo(404);
-        assertThat(world.status(HttpMethod.POST, acme.host(), key, "/api/v1/wallets",
+        assertThat(world.status(HttpMethod.POST, acme.host(), key, "/system/v1/wallets",
                 HttpWorld.Map2.of("customerId", customerId, "currency", "ZZZ", "mode", "PREPAID"))).isEqualTo(400);
-        assertThat(world.status(HttpMethod.POST, acme.host(), key, "/api/v1/wallets",
+        assertThat(world.status(HttpMethod.POST, acme.host(), key, "/system/v1/wallets",
                 HttpWorld.Map2.of("customerId", customerId, "currency", "GBP", "mode", "PREPAID", "creditLimit", 5))).as("prepaid has no credit limit").isEqualTo(400);
     }
 
@@ -133,47 +133,47 @@ class MoneyHttpIntegrationTest {
         String wallet = openWallet("USD", "PREPAID");
         credit(wallet, 10_000, "USD");
 
-        assertThat(post(acme, key, null, "/api/v1/reservations", HttpWorld.Map2.of("walletId", wallet, "amount", 100, "currency", "USD"))
+        assertThat(post(acme, key, null, "/system/v1/reservations", HttpWorld.Map2.of("walletId", wallet, "amount", 100, "currency", "USD"))
                 .getResponse().getStatus()).as("missing Idempotency-Key").isEqualTo(400);
 
-        MvcResult reserved = post(acme, key, "res-1", "/api/v1/reservations",
+        MvcResult reserved = post(acme, key, "res-1", "/system/v1/reservations",
                 HttpWorld.Map2.of("walletId", wallet, "amount", 4_000, "currency", "USD", "ttlSeconds", 600, "reference", "vm-1"));
         assertThat(reserved.getResponse().getStatus()).isEqualTo(201);
         String reservationId = parse(reserved).get("id").asString();
-        MvcResult reservationReplay = post(acme, key, "res-1", "/api/v1/reservations",
+        MvcResult reservationReplay = post(acme, key, "res-1", "/system/v1/reservations",
                 HttpWorld.Map2.of("walletId", wallet, "amount", 4_000, "currency", "USD", "ttlSeconds", 600, "reference", "vm-1"));
         assertThat(reservationReplay.getResponse().getStatus()).as("a replayed reservation answers 200").isEqualTo(200);
         assertThat(parse(reservationReplay).get("id").asString()).isEqualTo(reservationId);
-        assertThat(post(acme, key, "res-2", "/api/v1/reservations", HttpWorld.Map2.of("walletId", wallet, "amount", 6_001, "currency", "USD"))
+        assertThat(post(acme, key, "res-2", "/system/v1/reservations", HttpWorld.Map2.of("walletId", wallet, "amount", 6_001, "currency", "USD"))
                 .getResponse().getStatus()).as("more than is available").isEqualTo(402);
 
-        MvcResult capture = post(acme, key, "cap-1", "/api/v1/reservations/" + reservationId + "/capture",
+        MvcResult capture = post(acme, key, "cap-1", "/system/v1/reservations/" + reservationId + "/capture",
                 HttpWorld.Map2.of("amount", 2_500, "currency", "USD", "reference", "vm-1 final"));
         assertThat(capture.getResponse().getStatus()).isEqualTo(201);
         assertThat(parse(capture).get("status").asString()).isEqualTo("SUCCEEDED");
-        MvcResult captureReplay = post(acme, key, "cap-1", "/api/v1/reservations/" + reservationId + "/capture",
+        MvcResult captureReplay = post(acme, key, "cap-1", "/system/v1/reservations/" + reservationId + "/capture",
                 HttpWorld.Map2.of("amount", 2_500, "currency", "USD", "reference", "vm-1 final"));
         assertThat(captureReplay.getResponse().getStatus()).as("a replayed capture answers 200").isEqualTo(200);
         assertThat(parse(captureReplay).get("id").asString()).isEqualTo(parse(capture).get("id").asString());
 
-        JsonNode afterCapture = world.body(world.call(HttpMethod.GET, acme.host(), key, "/api/v1/wallets/" + wallet, null));
+        JsonNode afterCapture = world.body(world.call(HttpMethod.GET, acme.host(), key, "/system/v1/wallets/" + wallet, null));
         assertThat(afterCapture.get("balance").get("amount").asLong()).isEqualTo(7_500);
         assertThat(afterCapture.get("held").get("amount").asLong()).isZero();
         assertThat(afterCapture.get("available").get("amount").asLong()).isEqualTo(7_500);
 
-        JsonNode charge = parse(post(acme, key, "chg-1", "/api/v1/charges",
+        JsonNode charge = parse(post(acme, key, "chg-1", "/system/v1/charges",
                 HttpWorld.Map2.of("walletId", wallet, "amount", 500, "currency", "USD", "usageRef", "usage-42")));
         assertThat(charge.get("status").asString()).isEqualTo("SUCCEEDED");
         assertThat(charge.get("usageRef").asString()).isEqualTo("usage-42");
-        MvcResult chargeReplay = post(acme, key, "chg-1", "/api/v1/charges",
+        MvcResult chargeReplay = post(acme, key, "chg-1", "/system/v1/charges",
                 HttpWorld.Map2.of("walletId", wallet, "amount", 500, "currency", "USD", "usageRef", "usage-42"));
         assertThat(chargeReplay.getResponse().getStatus()).as("a replayed charge answers 200").isEqualTo(200);
         assertThat(parse(chargeReplay).get("id").asString()).isEqualTo(charge.get("id").asString());
-        assertThat(world.body(world.call(HttpMethod.GET, acme.host(), key, "/api/v1/charges/" + charge.get("id").asString(), null)).get("status").asString())
+        assertThat(world.body(world.call(HttpMethod.GET, acme.host(), key, "/system/v1/charges/" + charge.get("id").asString(), null)).get("status").asString())
                 .isEqualTo("SUCCEEDED");
-        assertThat(post(acme, key, "chg-1", "/api/v1/charges", HttpWorld.Map2.of("walletId", wallet, "amount", 501, "currency", "USD", "usageRef", "usage-42"))
+        assertThat(post(acme, key, "chg-1", "/system/v1/charges", HttpWorld.Map2.of("walletId", wallet, "amount", 501, "currency", "USD", "usageRef", "usage-42"))
                 .getResponse().getStatus()).as("same key, different amount").isEqualTo(409);
-        assertThat(post(acme, key, "chg-x", "/api/v1/charges", HttpWorld.Map2.of("walletId", wallet, "amount", 5, "currency", "EUR"))
+        assertThat(post(acme, key, "chg-x", "/system/v1/charges", HttpWorld.Map2.of("walletId", wallet, "amount", 5, "currency", "EUR"))
                 .getResponse().getStatus()).as("wrong currency").isEqualTo(400);
     }
 
@@ -182,15 +182,15 @@ class MoneyHttpIntegrationTest {
         String wallet = openWallet("USD", "PREPAID");
         credit(wallet, 100, "USD");
 
-        MvcResult failed = post(acme, key, "broke-1", "/api/v1/charges", HttpWorld.Map2.of("walletId", wallet, "amount", 101, "currency", "USD"));
-        MvcResult replay = post(acme, key, "broke-1", "/api/v1/charges", HttpWorld.Map2.of("walletId", wallet, "amount", 101, "currency", "USD"));
+        MvcResult failed = post(acme, key, "broke-1", "/system/v1/charges", HttpWorld.Map2.of("walletId", wallet, "amount", 101, "currency", "USD"));
+        MvcResult replay = post(acme, key, "broke-1", "/system/v1/charges", HttpWorld.Map2.of("walletId", wallet, "amount", 101, "currency", "USD"));
 
         assertThat(failed.getResponse().getStatus()).isEqualTo(402);
         assertThat(parse(failed).get("status").asString()).isEqualTo("FAILED");
         assertThat(parse(failed).get("failureReason").asString()).isEqualTo("insufficient_funds");
         assertThat(replay.getResponse().getStatus()).isEqualTo(402);
         assertThat(parse(replay).get("id").asString()).isEqualTo(parse(failed).get("id").asString());
-        assertThat(world.body(world.call(HttpMethod.GET, acme.host(), key, "/api/v1/wallets/" + wallet, null)).get("balance").get("amount").asLong()).isEqualTo(100);
+        assertThat(world.body(world.call(HttpMethod.GET, acme.host(), key, "/system/v1/wallets/" + wallet, null)).get("balance").get("amount").asLong()).isEqualTo(100);
     }
 
     @Test
@@ -200,16 +200,16 @@ class MoneyHttpIntegrationTest {
             credit(wallet, 10, "USD");
         }
         JsonNode firstPage = world.body(world.call(HttpMethod.GET, acme.host(), key,
-                "/api/v1/wallets/" + wallet + "/ledger?limit=3", null)).get("data");
+                "/system/v1/wallets/" + wallet + "/ledger?limit=3", null)).get("data");
         assertThat(firstPage).hasSize(3);
         assertThat(firstPage.get(0).get("sequence").asLong()).isEqualTo(1);
         JsonNode secondPage = world.body(world.call(HttpMethod.GET, acme.host(), key,
-                "/api/v1/wallets/" + wallet + "/ledger?filter[seq][gt]=3&limit=3", null)).get("data");
+                "/system/v1/wallets/" + wallet + "/ledger?filter[seq][gt]=3&limit=3", null)).get("data");
         assertThat(secondPage).hasSize(2);
         assertThat(secondPage.get(0).get("sequence").asLong()).isEqualTo(4);
         assertThat(secondPage.get(0).get("type").asString()).isEqualTo("CREDIT");
         assertThat(secondPage.get(0).get("amount").get("amount").asLong()).isEqualTo(10);
-        assertThat(world.body(world.call(HttpMethod.GET, acme.host(), key, "/api/v1/wallets/" + wallet + "/ledger?limit=0", null)).get("data"))
+        assertThat(world.body(world.call(HttpMethod.GET, acme.host(), key, "/system/v1/wallets/" + wallet + "/ledger?limit=0", null)).get("data"))
                 .as("a page size below one is raised to one")
                 .hasSize(1);
     }
@@ -218,17 +218,15 @@ class MoneyHttpIntegrationTest {
     void onlyAdministratorsWithThePermissionCanCorrectTheLedger() {
         String wallet = openWallet("USD", "PREPAID");
         credit(wallet, 10_000, "USD");
-        JsonNode charge = parse(post(acme, key, "wrong-" + UUID.randomUUID(), "/api/v1/charges",
+        JsonNode charge = parse(post(acme, key, "wrong-" + UUID.randomUUID(), "/system/v1/charges",
                 HttpWorld.Map2.of("walletId", wallet, "amount", 6_000, "currency", "USD", "reference", "charge:wrong")));
         String entryId = charge.get("ledgerEntryId").asString();
 
+        assertThat(world.status(HttpMethod.POST, acme.host(), key, "/system/v1/ledger-entries/" + entryId + "/reverse", HttpWorld.Map2.of("reason", "x")))
+                .as("a reversal is not grantable to a tenant system, so its door has no such route").isEqualTo(404);
+        // A person's door refuses a machine token outright, whatever the codes it carries.
         assertThat(world.status(HttpMethod.POST, acme.host(), key, "/api/v1/ledger-entries/" + entryId + "/reverse", HttpWorld.Map2.of("reason", "x")))
-                .as("a tenant system key cannot reverse").isEqualTo(403);
-        // Billing no longer issues credentials; Platform refuses ledger:reverse to a machine. A machine token that
-        // simply lacks the code is refused by Billing's own check, which is what this asserts.
-        String noReverse = world.newSystem(acme, "billing:wallet:read").token();
-        assertThat(world.status(HttpMethod.POST, acme.host(), noReverse, "/api/v1/ledger-entries/" + entryId + "/reverse", HttpWorld.Map2.of("reason", "x")))
-                .as("a machine without ledger:reverse is refused").isEqualTo(403);
+                .as("a tenant system key at the person door").isEqualTo(403);
         String viewer = world.newUserToken(acme, Set.of("billing:wallet:read"));
         assertThat(world.status(HttpMethod.POST, acme.host(), viewer, "/api/v1/ledger-entries/" + entryId + "/reverse", HttpWorld.Map2.of("reason", "x"))).isEqualTo(403);
 
@@ -240,7 +238,7 @@ class MoneyHttpIntegrationTest {
         assertThat(body.get("reversal").get("reversalOf").asString()).isEqualTo(entryId);
         assertThat(body.get("reversal").get("amount").get("amount").asLong()).isEqualTo(6_000);
         assertThat(body.get("replacement").get("amount").get("amount").asLong()).isEqualTo(-4_000);
-        assertThat(world.body(world.call(HttpMethod.GET, acme.host(), key, "/api/v1/wallets/" + wallet, null)).get("balance").get("amount").asLong()).isEqualTo(6_000);
+        assertThat(world.body(world.call(HttpMethod.GET, acme.host(), key, "/system/v1/wallets/" + wallet, null)).get("balance").get("amount").asLong()).isEqualTo(6_000);
         assertThat(world.status(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/ledger-entries/" + entryId + "/reverse",
                 HttpWorld.Map2.of("reason", "wrong_price"))).as("reversing twice replays the first reversal").isEqualTo(200);
         assertThat(world.status(HttpMethod.POST, acme.host(), acme.adminToken(), "/api/v1/ledger-entries/" + entryId + "/reverse", HttpWorld.Map2.of("reason", " "))).isEqualTo(400);
@@ -252,7 +250,7 @@ class MoneyHttpIntegrationTest {
         credit(wallet, 1_000, "USD");
         String viewer = world.newUserToken(acme, Set.of("billing:wallet:read"));
         String nobody = world.newUserToken(acme, Set.of());
-        String reservation = parse(post(acme, key, "perm-res-" + UUID.randomUUID(), "/api/v1/reservations",
+        String reservation = parse(post(acme, key, "perm-res-" + UUID.randomUUID(), "/system/v1/reservations",
                 HttpWorld.Map2.of("walletId", wallet, "amount", 10, "currency", "USD"))).get("id").asString();
 
         assertThat(world.status(HttpMethod.GET, acme.host(), viewer, "/api/v1/wallets/" + wallet, null)).isEqualTo(200);
@@ -266,11 +264,11 @@ class MoneyHttpIntegrationTest {
         assertThat(world.status(HttpMethod.GET, acme.host(), nobody, "/api/v1/wallets/" + wallet, null)).isEqualTo(403);
         assertThat(world.status(HttpMethod.GET, acme.host(), nobody, "/api/v1/wallets?filter[customer_id][eq]=" + customerId, null)).isEqualTo(403);
 
-        assertThat(world.status(HttpMethod.GET, acme.host(), readOnlyKey, "/api/v1/wallets/" + wallet, null)).isEqualTo(200);
-        assertThat(post(acme, readOnlyKey, "r-" + UUID.randomUUID(), "/api/v1/charges", HttpWorld.Map2.of("walletId", wallet, "amount", 1, "currency", "USD")).getResponse().getStatus()).isEqualTo(403);
-        assertThat(world.status(HttpMethod.POST, acme.host(), readOnlyKey, "/api/v1/reservations/" + reservation + "/release", null)).isEqualTo(403);
-        assertThat(world.status(HttpMethod.POST, acme.host(), key, "/api/v1/reservations/" + reservation + "/release", null)).isEqualTo(200);
-        assertThat(world.status(HttpMethod.POST, acme.host(), key, "/api/v1/reservations/" + reservation + "/release", null)).as("releasing twice is harmless").isEqualTo(200);
+        assertThat(world.status(HttpMethod.GET, acme.host(), readOnlyKey, "/system/v1/wallets/" + wallet, null)).isEqualTo(200);
+        assertThat(post(acme, readOnlyKey, "r-" + UUID.randomUUID(), "/system/v1/charges", HttpWorld.Map2.of("walletId", wallet, "amount", 1, "currency", "USD")).getResponse().getStatus()).isEqualTo(403);
+        assertThat(world.status(HttpMethod.POST, acme.host(), readOnlyKey, "/system/v1/reservations/" + reservation + "/release", null)).isEqualTo(403);
+        assertThat(world.status(HttpMethod.POST, acme.host(), key, "/system/v1/reservations/" + reservation + "/release", null)).isEqualTo(200);
+        assertThat(world.status(HttpMethod.POST, acme.host(), key, "/system/v1/reservations/" + reservation + "/release", null)).as("releasing twice is harmless").isEqualTo(200);
     }
 
     @Test

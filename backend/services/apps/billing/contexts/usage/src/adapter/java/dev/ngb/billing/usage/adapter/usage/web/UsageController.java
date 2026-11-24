@@ -48,7 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Usage reported by tenant systems, idempotent per event, and its aggregates.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class UsageController {
 

@@ -77,16 +77,16 @@ class PaymentHttpIntegrationTest {
                 "billing:payment:create", "billing:payment:read", "billing:wallet:manage", "billing:wallet:read",
                 "billing:customer:write", "billing:customer:read").token();
         viewerToken = world.newUserToken(acme, java.util.Set.of("billing:payment:read", "billing:stripe:read"));
-        customerId = world.body(call(HttpMethod.POST, acme, systemKey, "/api/v1/customers", "cust-" + UUID.randomUUID(),
+        customerId = world.body(call(HttpMethod.POST, acme, systemKey, "/system/v1/customers", "cust-" + UUID.randomUUID(),
                 HttpWorld.Map2.of("externalUserId", "u-" + UUID.randomUUID(), "displayName", "Payer"))).get("id").asString();
-        walletId = world.body(call(HttpMethod.POST, acme, systemKey, "/api/v1/wallets", null,
+        walletId = world.body(call(HttpMethod.POST, acme, systemKey, "/system/v1/wallets", null,
                 HttpWorld.Map2.of("customerId", customerId, "currency", "USD", "mode", "PREPAID"))).get("id").asString();
         refunderKey = world.newSystem(acme,
                 "billing:refund:create", "billing:payment:create", "billing:payment:read", "billing:wallet:manage",
                 "billing:wallet:read", "billing:customer:write", "billing:customer:read").token();
-        String refunderCustomerId = world.body(call(HttpMethod.POST, acme, refunderKey, "/api/v1/customers", "rc-" + UUID.randomUUID(),
+        String refunderCustomerId = world.body(call(HttpMethod.POST, acme, refunderKey, "/system/v1/customers", "rc-" + UUID.randomUUID(),
                 HttpWorld.Map2.of("externalUserId", "ru-" + UUID.randomUUID(), "displayName", "Refunded Payer"))).get("id").asString();
-        refunderWalletId = world.body(call(HttpMethod.POST, acme, refunderKey, "/api/v1/wallets", null,
+        refunderWalletId = world.body(call(HttpMethod.POST, acme, refunderKey, "/system/v1/wallets", null,
                 HttpWorld.Map2.of("customerId", refunderCustomerId, "currency", "USD", "mode", "PREPAID"))).get("id").asString();
         connectDirect();
     }
@@ -120,7 +120,7 @@ class PaymentHttpIntegrationTest {
     }
 
     private JsonNode topUp(long amount, String key) {
-        return world.body(call(HttpMethod.POST, acme, systemKey, "/api/v1/payments/top-ups", key,
+        return world.body(call(HttpMethod.POST, acme, systemKey, "/system/v1/payments/top-ups", key,
                 HttpWorld.Map2.of("walletId", walletId, "amount", amount, "currency", "USD")));
     }
 
@@ -211,30 +211,31 @@ class PaymentHttpIntegrationTest {
     void onlyAnAdministratorMayConnectStripeOrRefund() {
         assertThat(call(HttpMethod.PUT, acme, viewerToken, "/api/v1/stripe/configuration/direct", null,
                 HttpWorld.Map2.of("secretKey", SECRET_KEY)).getResponse().getStatus()).as("a viewer").isEqualTo(403);
-        assertThat(call(HttpMethod.PUT, acme, systemKey, "/api/v1/stripe/configuration/direct", null,
-                HttpWorld.Map2.of("secretKey", SECRET_KEY)).getResponse().getStatus()).as("a tenant system").isEqualTo(403);
-        assertThat(call(HttpMethod.GET, acme, systemKey, "/api/v1/stripe/configuration", null, null).getResponse().getStatus()).isEqualTo(403);
+        assertThat(call(HttpMethod.PUT, acme, systemKey, "/system/v1/stripe/configuration/direct", null,
+                HttpWorld.Map2.of("secretKey", SECRET_KEY)).getResponse().getStatus())
+                .as("Stripe configuration has no machine door, so a tenant system finds no such route").isEqualTo(404);
+        assertThat(call(HttpMethod.GET, acme, systemKey, "/system/v1/stripe/configuration", null, null).getResponse().getStatus()).isEqualTo(404);
         assertThat(call(HttpMethod.GET, acme, viewerToken, "/api/v1/stripe/configuration", null, null).getResponse().getStatus()).as("a viewer may read").isEqualTo(200);
-        assertThat(call(HttpMethod.POST, acme, systemKey, "/api/v1/payments/" + UUID.randomUUID() + "/refunds", "k", HttpWorld.Map2.of()).getResponse().getStatus())
+        assertThat(call(HttpMethod.POST, acme, systemKey, "/system/v1/payments/" + UUID.randomUUID() + "/refunds", "k", HttpWorld.Map2.of()).getResponse().getStatus())
                 .as("a machine without billing:refund:create is refused").isEqualTo(403);
         assertThat(call(HttpMethod.POST, acme, viewerToken, "/api/v1/payments/top-ups", "k",
                 HttpWorld.Map2.of("walletId", walletId, "amount", 100, "currency", "USD")).getResponse().getStatus()).as("a viewer cannot top up").isEqualTo(403);
         // Billing no longer issues credentials; Platform decides which codes a machine may carry. A machine token
         // that simply lacks the code is refused by Billing's own check, which is what this asserts.
         String noRefund = world.newSystem(acme, "billing:payment:read").token();
-        assertThat(call(HttpMethod.POST, acme, noRefund, "/api/v1/payments/" + UUID.randomUUID() + "/refunds", "k",
+        assertThat(call(HttpMethod.POST, acme, noRefund, "/system/v1/payments/" + UUID.randomUUID() + "/refunds", "k",
                 HttpWorld.Map2.of("amount", 100, "currency", "USD", "reason", "requested_by_customer")).getResponse().getStatus())
                 .as("a machine without billing:refund:create is refused").isEqualTo(403);
     }
 
     @Test
     void aTenantSystemHoldingTheRefundCodeRefundsAPaymentOfItsOwnCustomer() throws Exception {
-        JsonNode payment = world.body(call(HttpMethod.POST, acme, refunderKey, "/api/v1/payments/top-ups", "refund-top-up",
+        JsonNode payment = world.body(call(HttpMethod.POST, acme, refunderKey, "/system/v1/payments/top-ups", "refund-top-up",
                 HttpWorld.Map2.of("walletId", refunderWalletId, "amount", 900, "currency", "USD")));
         deliverPaid(payment, "pi_refund_" + UUID.randomUUID().toString().substring(0, 8));
 
         MvcResult refund = call(HttpMethod.POST, acme, refunderKey,
-                "/api/v1/payments/" + payment.get("id").asString() + "/refunds", "refund-key-1", java.util.Map.of());
+                "/system/v1/payments/" + payment.get("id").asString() + "/refunds", "refund-key-1", java.util.Map.of());
 
         assertThat(refund.getResponse().getStatus()).isEqualTo(201);
         assertThat(world.body(refund).get("paymentId").asString()).isEqualTo(payment.get("id").asString());
@@ -246,30 +247,30 @@ class PaymentHttpIntegrationTest {
         deliverPaid(payment, "pi_other_" + UUID.randomUUID().toString().substring(0, 8));
 
         MvcResult refund = call(HttpMethod.POST, acme, refunderKey,
-                "/api/v1/payments/" + payment.get("id").asString() + "/refunds", "refund-key-2", java.util.Map.of());
+                "/system/v1/payments/" + payment.get("id").asString() + "/refunds", "refund-key-2", java.util.Map.of());
 
         assertThat(refund.getResponse().getStatus()).as("another Tenant System's customer is answered as absent").isEqualTo(404);
     }
 
     @Test
     void aTenantSystemStartsATopUpAndGetsStripesHostedPageWithoutMovingMoney() throws Exception {
-        long before = world.body(call(HttpMethod.GET, acme, systemKey, "/api/v1/wallets/" + walletId, null, null)).get("balance").get("amount").asLong();
+        long before = world.body(call(HttpMethod.GET, acme, systemKey, "/system/v1/wallets/" + walletId, null, null)).get("balance").get("amount").asLong();
         JsonNode payment = topUp(2500, "http-1");
 
         assertThat(payment.get("status").asString()).isEqualTo("REQUIRES_ACTION");
         assertThat(payment.get("checkoutUrl").asString()).startsWith("https://checkout.stripe.test/");
         assertThat(payment.get("amount").get("amount").asLong()).isEqualTo(2500);
         assertThat(payment.toString()).doesNotContain(SECRET_KEY);
-        assertThat(world.body(call(HttpMethod.GET, acme, systemKey, "/api/v1/wallets/" + walletId, null, null)).get("balance").get("amount").asLong())
+        assertThat(world.body(call(HttpMethod.GET, acme, systemKey, "/system/v1/wallets/" + walletId, null, null)).get("balance").get("amount").asLong())
                 .isEqualTo(before);
 
-        MvcResult replay = call(HttpMethod.POST, acme, systemKey, "/api/v1/payments/top-ups", "http-1",
+        MvcResult replay = call(HttpMethod.POST, acme, systemKey, "/system/v1/payments/top-ups", "http-1",
                 HttpWorld.Map2.of("walletId", walletId, "amount", 2500, "currency", "USD"));
         assertThat(replay.getResponse().getStatus()).isEqualTo(200);
         assertThat(json.readTree(replay.getResponse().getContentAsString()).get("id").asString()).isEqualTo(payment.get("id").asString());
-        assertThat(call(HttpMethod.POST, acme, systemKey, "/api/v1/payments/top-ups", "http-1",
+        assertThat(call(HttpMethod.POST, acme, systemKey, "/system/v1/payments/top-ups", "http-1",
                 HttpWorld.Map2.of("walletId", walletId, "amount", 9999, "currency", "USD")).getResponse().getStatus()).isEqualTo(409);
-        assertThat(call(HttpMethod.POST, acme, systemKey, "/api/v1/payments/top-ups", null,
+        assertThat(call(HttpMethod.POST, acme, systemKey, "/system/v1/payments/top-ups", null,
                 HttpWorld.Map2.of("walletId", walletId, "amount", 100, "currency", "USD")).getResponse().getStatus()).as("a key is required").isEqualTo(400);
     }
 
@@ -277,10 +278,10 @@ class PaymentHttpIntegrationTest {
     void aTopUpThatStripeCannotReachAsksTheCallerToRepeatWithTheSameKey() {
         stripe.failNextCheckout = FakePaymentProvider.unreachable();
 
-        assertThat(call(HttpMethod.POST, acme, systemKey, "/api/v1/payments/top-ups", "http-down",
+        assertThat(call(HttpMethod.POST, acme, systemKey, "/system/v1/payments/top-ups", "http-down",
                 HttpWorld.Map2.of("walletId", walletId, "amount", 300, "currency", "USD")).getResponse().getStatus()).isEqualTo(502);
         // The payment row was stored before Stripe was called, so the retry replays it and answers 200.
-        assertThat(call(HttpMethod.POST, acme, systemKey, "/api/v1/payments/top-ups", "http-down",
+        assertThat(call(HttpMethod.POST, acme, systemKey, "/system/v1/payments/top-ups", "http-down",
                 HttpWorld.Map2.of("walletId", walletId, "amount", 300, "currency", "USD")).getResponse().getStatus()).isEqualTo(200);
     }
 
@@ -290,24 +291,24 @@ class PaymentHttpIntegrationTest {
         String accepted = "k" + "x".repeat(219);
         String tooLong = "k" + "x".repeat(255);
 
-        assertThat(call(HttpMethod.POST, acme, systemKey, "/api/v1/payments/top-ups", accepted,
+        assertThat(call(HttpMethod.POST, acme, systemKey, "/system/v1/payments/top-ups", accepted,
                 HttpWorld.Map2.of("walletId", walletId, "amount", 100, "currency", "USD")).getResponse().getStatus())
                 .as("220 characters is within the limit").isEqualTo(201);
-        assertThat(call(HttpMethod.POST, acme, systemKey, "/api/v1/payments/top-ups", tooLong,
+        assertThat(call(HttpMethod.POST, acme, systemKey, "/system/v1/payments/top-ups", tooLong,
                 HttpWorld.Map2.of("walletId", walletId, "amount", 100, "currency", "USD")).getResponse().getStatus())
                 .as("256 characters is over the limit").isEqualTo(400);
     }
 
     @Test
     void aVerifiedPaymentCreditsTheWalletAndCanBeRefundedThroughTheApi() throws Exception {
-        long before = world.body(call(HttpMethod.GET, acme, systemKey, "/api/v1/wallets/" + walletId, null, null)).get("balance").get("amount").asLong();
+        long before = world.body(call(HttpMethod.GET, acme, systemKey, "/system/v1/wallets/" + walletId, null, null)).get("balance").get("amount").asLong();
         JsonNode payment = topUp(4000, "http-flow-" + UUID.randomUUID());
         deliverPaid(payment, "pi_flow_" + UUID.randomUUID().toString().substring(0, 8));
 
-        JsonNode settled = world.body(call(HttpMethod.GET, acme, systemKey, "/api/v1/payments/" + payment.get("id").asString(), null, null));
+        JsonNode settled = world.body(call(HttpMethod.GET, acme, systemKey, "/system/v1/payments/" + payment.get("id").asString(), null, null));
         assertThat(settled.get("payment").get("status").asString()).isEqualTo("SUCCEEDED");
         assertThat(settled.get("payment").get("checkoutUrl").isNull()).as("a settled payment offers no page to pay").isTrue();
-        assertThat(world.body(call(HttpMethod.GET, acme, systemKey, "/api/v1/wallets/" + walletId, null, null)).get("balance").get("amount").asLong())
+        assertThat(world.body(call(HttpMethod.GET, acme, systemKey, "/system/v1/wallets/" + walletId, null, null)).get("balance").get("amount").asLong())
                 .isEqualTo(before + 4000);
 
         MvcResult refund = call(HttpMethod.POST, acme, acme.adminToken(), "/api/v1/payments/" + payment.get("id").asString() + "/refunds", "http-refund-" + payment.get("id").asString(),
@@ -315,7 +316,7 @@ class PaymentHttpIntegrationTest {
         assertThat(refund.getResponse().getStatus()).isEqualTo(201);
         JsonNode refunded = json.readTree(refund.getResponse().getContentAsString());
         assertThat(refunded.get("status").asString()).isEqualTo("PENDING");
-        assertThat(world.body(call(HttpMethod.GET, acme, systemKey, "/api/v1/wallets/" + walletId, null, null)).get("balance").get("amount").asLong())
+        assertThat(world.body(call(HttpMethod.GET, acme, systemKey, "/system/v1/wallets/" + walletId, null, null)).get("balance").get("amount").asLong())
                 .as("not debited until Stripe confirms").isEqualTo(before + 4000);
 
         assertThat(call(HttpMethod.POST, acme, acme.adminToken(), "/api/v1/payments/" + payment.get("id").asString() + "/refunds", "http-refund-too-much-" + payment.get("id").asString(),

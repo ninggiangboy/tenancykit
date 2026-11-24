@@ -70,9 +70,29 @@ class SuiteTokenSecurityTest {
         String token = dev.ngb.billing.support.TestTokenFactory.tenantSystemToken(
                 java.util.UUID.fromString(systemId), globex.id().value(), "billing:customer:read");
 
-        assertThat(world.status(HttpMethod.GET, acme.host(), token, "/api/v1/customers", null))
+        assertThat(world.status(HttpMethod.GET, acme.host(), token, "/system/v1/customers", null))
                 .as("the tenant of the token must equal the host's tenant")
                 .isEqualTo(403);
+    }
+
+    @Test
+    void eachDoorAcceptsOnlyItsOwnKindOfToken() throws Exception {
+        HttpWorld world = world();
+        HttpWorld.Account account = world.newTenant();
+        HttpWorld.System system = world.newSystem(account, "billing:customer:read");
+        String person = world.newUserToken(account, "billing:customer:read");
+
+        assertThat(world.status(HttpMethod.GET, account.host(), person, "/api/v1/customers", null)).isEqualTo(200);
+        assertThat(world.status(HttpMethod.GET, account.host(), system.token(), "/system/v1/customers", null)).isEqualTo(200);
+
+        var machineAtPersonDoor = world.call(HttpMethod.GET, account.host(), system.token(), "/api/v1/customers", null);
+        assertThat(machineAtPersonDoor.getResponse().getStatus())
+                .as("a genuine suite token at the person door").isEqualTo(403);
+        assertThat(machineAtPersonDoor.getResponse().getContentAsString()).contains("wrong-token-kind");
+        var personAtMachineDoor = world.call(HttpMethod.GET, account.host(), person, "/system/v1/customers", null);
+        assertThat(personAtMachineDoor.getResponse().getStatus())
+                .as("a genuine user token at the machine door").isEqualTo(403);
+        assertThat(personAtMachineDoor.getResponse().getContentAsString()).contains("wrong-token-kind");
     }
 
     @Test

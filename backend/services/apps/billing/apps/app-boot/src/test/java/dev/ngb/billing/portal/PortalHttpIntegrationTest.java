@@ -134,7 +134,7 @@ class PortalHttpIntegrationTest {
     void revokedAndExpiredSessionsFailImmediately() throws Exception {
         Session revoked = createSession(customerA, null);
         Portal revokedPortal = portal(acme.host(), exchange(acme.host(), revoked.exchangeToken));
-        assertThat(world.call(HttpMethod.POST, acme.host(), systemKey, "/api/v1/billing-sessions/" + revoked.id + "/revoke", null)
+        assertThat(world.call(HttpMethod.POST, acme.host(), systemKey, "/system/v1/billing-sessions/" + revoked.id + "/revoke", null)
                 .getResponse().getStatus()).isEqualTo(204);
         assertThat(revokedPortal.status(HttpMethod.GET, "/portal/api/customer", null)).isEqualTo(401);
 
@@ -156,7 +156,7 @@ class PortalHttpIntegrationTest {
 
     @Test
     void aReturnUrlOffTheAllowlistIsRejected() {
-        MvcResult result = world.call(HttpMethod.POST, acme.host(), systemKey, "/api/v1/billing-sessions", HttpWorld.Map2.of(
+        MvcResult result = world.call(HttpMethod.POST, acme.host(), systemKey, "/system/v1/billing-sessions", HttpWorld.Map2.of(
                 "customerId", customerA, "returnUrl", "https://evil.example.com/done"));
 
         assertThat(result.getResponse().getStatus()).isEqualTo(400);
@@ -223,7 +223,7 @@ class PortalHttpIntegrationTest {
 
     private String createCustomer(String externalUserId) {
         try {
-            MvcResult result = mvc.perform(post("/api/v1/customers").header("Host", acme.host())
+            MvcResult result = mvc.perform(post("/system/v1/customers").header("Host", acme.host())
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + systemKey)
                     .header("Idempotency-Key", UUID.randomUUID().toString())
                     .contentType(MediaType.APPLICATION_JSON)
@@ -236,12 +236,12 @@ class PortalHttpIntegrationTest {
     }
 
     private String openWallet(String customerId, String currency) {
-        return world.body(world.call(HttpMethod.POST, acme.host(), systemKey, "/api/v1/wallets",
+        return world.body(world.call(HttpMethod.POST, acme.host(), systemKey, "/system/v1/wallets",
                 HttpWorld.Map2.of("customerId", customerId, "currency", currency, "mode", "PREPAID"))).get("id").asString();
     }
 
     private Session createSession(String customerId, List<String> permissions) {
-        MvcResult result = world.call(HttpMethod.POST, acme.host(), systemKey, "/api/v1/billing-sessions", HttpWorld.Map2.of(
+        MvcResult result = world.call(HttpMethod.POST, acme.host(), systemKey, "/system/v1/billing-sessions", HttpWorld.Map2.of(
                 "customerId", customerId, "returnUrl", RETURN_URL, "permissions", permissions));
         JsonNode body = world.body(result);
         String portalUrl = body.get("portalUrl").asString();

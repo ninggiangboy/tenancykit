@@ -62,7 +62,7 @@ class WebhookHttpIntegrationTest {
     }
 
     private JsonNode createEndpoint(Account account, String token, String url, List<String> types) {
-        return world.body(world.call(HttpMethod.POST, account.host(), token, "/api/v1/webhook-endpoints",
+        return world.body(world.call(HttpMethod.POST, account.host(), token, "/system/v1/webhook-endpoints",
                 HttpWorld.Map2.of("url", url, "eventTypes", types, "description", "test")));
     }
 
@@ -72,7 +72,7 @@ class WebhookHttpIntegrationTest {
 
     @Test
     void theSigningSecretIsShownExactlyOnceAndNeverRead() throws Exception {
-        MvcResult created = world.call(HttpMethod.POST, acme.host(), manageKey, "/api/v1/webhook-endpoints",
+        MvcResult created = world.call(HttpMethod.POST, acme.host(), manageKey, "/system/v1/webhook-endpoints",
                 HttpWorld.Map2.of("url", "https://hooks.example.com/billing", "eventTypes", List.of("charge.succeeded")));
         assertThat(created.getResponse().getStatus()).isEqualTo(201);
         JsonNode body = json(created);
@@ -81,12 +81,12 @@ class WebhookHttpIntegrationTest {
         assertThat(secret).startsWith("whsec_");
         assertThat(body.get("endpoint").get("keyId").asString()).startsWith("whk_");
 
-        String fetched = world.call(HttpMethod.GET, acme.host(), manageKey, "/api/v1/webhook-endpoints/" + id, null).getResponse().getContentAsString();
-        String listed = world.call(HttpMethod.GET, acme.host(), manageKey, "/api/v1/webhook-endpoints", null).getResponse().getContentAsString();
+        String fetched = world.call(HttpMethod.GET, acme.host(), manageKey, "/system/v1/webhook-endpoints/" + id, null).getResponse().getContentAsString();
+        String listed = world.call(HttpMethod.GET, acme.host(), manageKey, "/system/v1/webhook-endpoints", null).getResponse().getContentAsString();
         for (String text : List.of(fetched, listed)) {
             assertThat(text).doesNotContain(secret).doesNotContain("signingSecret").doesNotContain("ciphertext").doesNotContain("v1.k1.");
         }
-        assertThat(json(world.call(HttpMethod.GET, acme.host(), manageKey, "/api/v1/webhook-endpoints/" + id, null)).get("keyId").asString())
+        assertThat(json(world.call(HttpMethod.GET, acme.host(), manageKey, "/system/v1/webhook-endpoints/" + id, null)).get("keyId").asString())
                 .isEqualTo(body.get("endpoint").get("keyId").asString());
     }
 
@@ -94,7 +94,7 @@ class WebhookHttpIntegrationTest {
     void rotatingIssuesANewSecretAndKeyId() {
         JsonNode created = createEndpoint(acme, manageKey, "https://hooks.example.com/a", List.of("*"));
         String id = created.get("endpoint").get("id").asString();
-        JsonNode rotated = json(world.call(HttpMethod.POST, acme.host(), manageKey, "/api/v1/webhook-endpoints/" + id + "/rotate-secret", null));
+        JsonNode rotated = json(world.call(HttpMethod.POST, acme.host(), manageKey, "/system/v1/webhook-endpoints/" + id + "/rotate-secret", null));
         assertThat(rotated.get("signingSecret").asString()).isNotEqualTo(created.get("signingSecret").asString());
         assertThat(rotated.get("endpoint").get("keyId").asString()).isNotEqualTo(created.get("endpoint").get("keyId").asString());
         assertThat(rotated.get("endpoint").get("secretRotatedAt").isNull()).isFalse();
@@ -105,13 +105,13 @@ class WebhookHttpIntegrationTest {
         JsonNode created = createEndpoint(acme, manageKey, "https://hooks.example.com/b", List.of("*"));
         String id = created.get("endpoint").get("id").asString();
 
-        assertThat(world.status(HttpMethod.GET, acme.host(), readKey, "/api/v1/webhook-endpoints", null)).isEqualTo(200);
-        assertThat(world.status(HttpMethod.GET, acme.host(), readKey, "/api/v1/webhook-deliveries", null)).isEqualTo(200);
-        assertThat(world.status(HttpMethod.POST, acme.host(), readKey, "/api/v1/webhook-endpoints",
+        assertThat(world.status(HttpMethod.GET, acme.host(), readKey, "/system/v1/webhook-endpoints", null)).isEqualTo(200);
+        assertThat(world.status(HttpMethod.GET, acme.host(), readKey, "/system/v1/webhook-deliveries", null)).isEqualTo(200);
+        assertThat(world.status(HttpMethod.POST, acme.host(), readKey, "/system/v1/webhook-endpoints",
                 HttpWorld.Map2.of("url", "https://hooks.example.com/c", "eventTypes", List.of("*")))).isEqualTo(403);
-        assertThat(world.status(HttpMethod.PATCH, acme.host(), readKey, "/api/v1/webhook-endpoints/" + id, HttpWorld.Map2.of("status", "DISABLED"))).isEqualTo(403);
-        assertThat(world.status(HttpMethod.POST, acme.host(), readKey, "/api/v1/webhook-endpoints/" + id + "/rotate-secret", null)).isEqualTo(403);
-        assertThat(world.status(HttpMethod.GET, acme.host(), noWebhookKey, "/api/v1/webhook-endpoints", null)).isEqualTo(403);
+        assertThat(world.status(HttpMethod.PATCH, acme.host(), readKey, "/system/v1/webhook-endpoints/" + id, HttpWorld.Map2.of("status", "DISABLED"))).isEqualTo(403);
+        assertThat(world.status(HttpMethod.POST, acme.host(), readKey, "/system/v1/webhook-endpoints/" + id + "/rotate-secret", null)).isEqualTo(403);
+        assertThat(world.status(HttpMethod.GET, acme.host(), noWebhookKey, "/system/v1/webhook-endpoints", null)).isEqualTo(403);
         assertThat(world.status(HttpMethod.GET, acme.host(), null, "/api/v1/webhook-endpoints", null)).isEqualTo(401);
         assertThat(world.status(HttpMethod.GET, acme.host(), acme.adminToken(), "/api/v1/webhook-endpoints", null)).as("a tenant administrator").isEqualTo(200);
     }
@@ -119,15 +119,15 @@ class WebhookHttpIntegrationTest {
     @Test
     void invalidEndpointsAreRejected() {
         String host = acme.host();
-        assertThat(world.status(HttpMethod.POST, host, manageKey, "/api/v1/webhook-endpoints",
+        assertThat(world.status(HttpMethod.POST, host, manageKey, "/system/v1/webhook-endpoints",
                 HttpWorld.Map2.of("url", "ftp://hooks.example.com/x", "eventTypes", List.of("*")))).isEqualTo(400);
-        assertThat(world.status(HttpMethod.POST, host, manageKey, "/api/v1/webhook-endpoints",
+        assertThat(world.status(HttpMethod.POST, host, manageKey, "/system/v1/webhook-endpoints",
                 HttpWorld.Map2.of("url", "https://user:pw@hooks.example.com/x", "eventTypes", List.of("*")))).isEqualTo(400);
-        assertThat(world.status(HttpMethod.POST, host, manageKey, "/api/v1/webhook-endpoints",
+        assertThat(world.status(HttpMethod.POST, host, manageKey, "/system/v1/webhook-endpoints",
                 HttpWorld.Map2.of("url", "https://hooks.example.com/x", "eventTypes", List.of("charge.succeded")))).as("typo").isEqualTo(400);
-        assertThat(world.status(HttpMethod.POST, host, manageKey, "/api/v1/webhook-endpoints",
+        assertThat(world.status(HttpMethod.POST, host, manageKey, "/system/v1/webhook-endpoints",
                 HttpWorld.Map2.of("url", "https://hooks.example.com/x", "eventTypes", List.of()))).isEqualTo(400);
-        assertThat(world.status(HttpMethod.POST, host, manageKey, "/api/v1/webhook-endpoints", HttpWorld.Map2.of("url", "https://hooks.example.com/x")))
+        assertThat(world.status(HttpMethod.POST, host, manageKey, "/system/v1/webhook-endpoints", HttpWorld.Map2.of("url", "https://hooks.example.com/x")))
                 .as("no event types").isEqualTo(400);
     }
 
@@ -135,13 +135,13 @@ class WebhookHttpIntegrationTest {
     void anEndpointCanBeChangedAndPaused() {
         JsonNode created = createEndpoint(acme, manageKey, "https://hooks.example.com/d", List.of("charge.succeeded"));
         String id = created.get("endpoint").get("id").asString();
-        JsonNode updated = json(world.call(HttpMethod.PATCH, acme.host(), manageKey, "/api/v1/webhook-endpoints/" + id,
+        JsonNode updated = json(world.call(HttpMethod.PATCH, acme.host(), manageKey, "/system/v1/webhook-endpoints/" + id,
                 HttpWorld.Map2.of("url", "https://hooks.example.com/e", "eventTypes", List.of("charge.failed", "reservation.created"), "status", "DISABLED")));
         assertThat(updated.get("url").asString()).isEqualTo("https://hooks.example.com/e");
         assertThat(updated.get("status").asString()).isEqualTo("DISABLED");
         assertThat(updated.get("eventTypes")).hasSize(2);
-        assertThat(world.status(HttpMethod.PATCH, acme.host(), manageKey, "/api/v1/webhook-endpoints/" + id, HttpWorld.Map2.of("status", "BROKEN"))).isEqualTo(400);
-        assertThat(json(world.call(HttpMethod.PATCH, acme.host(), manageKey, "/api/v1/webhook-endpoints/" + id, HttpWorld.Map2.of("description", "only this")))
+        assertThat(world.status(HttpMethod.PATCH, acme.host(), manageKey, "/system/v1/webhook-endpoints/" + id, HttpWorld.Map2.of("status", "BROKEN"))).isEqualTo(400);
+        assertThat(json(world.call(HttpMethod.PATCH, acme.host(), manageKey, "/system/v1/webhook-endpoints/" + id, HttpWorld.Map2.of("description", "only this")))
                 .get("url").asString()).as("absent fields stay").isEqualTo("https://hooks.example.com/e");
     }
 
@@ -161,9 +161,9 @@ class WebhookHttpIntegrationTest {
             JsonNode endpoint = createEndpoint(acme, manageKey, receiver.url(), List.of("customer.created"));
             String endpointId = endpoint.get("endpoint").get("id").asString();
 
-            MvcResult customer = world.call(HttpMethod.POST, acme.host(), manageKey, "/api/v1/customers", HttpWorld.Map2.of("displayName", "Hooked Co"));
+            MvcResult customer = world.call(HttpMethod.POST, acme.host(), manageKey, "/system/v1/customers", HttpWorld.Map2.of("displayName", "Hooked Co"));
             assertThat(customer.getResponse().getStatus()).as("create customer needs an Idempotency-Key").isEqualTo(400);
-            var request = org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/customers").header("Host", acme.host())
+            var request = org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/system/v1/customers").header("Host", acme.host())
                     .header("Authorization", "Bearer " + manageKey).header("Idempotency-Key", UUID.randomUUID().toString())
                     .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                     .content("{\"externalUserId\":\"u-" + UUID.randomUUID() + "\",\"displayName\":\"Hooked Co\"}");
@@ -173,31 +173,31 @@ class WebhookHttpIntegrationTest {
             scopes.runInTenant(tenant, deliver::runOnce);
 
             JsonNode list = json(world.call(HttpMethod.GET, acme.host(), readKey,
-                    "/api/v1/webhook-deliveries?filter[status][eq]=SUCCEEDED&filter[endpoint_id][eq]=" + endpointId, null)).get("data");
+                    "/system/v1/webhook-deliveries?filter[status][eq]=SUCCEEDED&filter[endpoint_id][eq]=" + endpointId, null)).get("data");
             assertThat(list).hasSize(1);
             assertThat(list.get(0).get("eventType").asString()).isEqualTo("customer.created");
             String deliveryId = list.get(0).get("id").asString();
 
-            JsonNode detail = json(world.call(HttpMethod.GET, acme.host(), readKey, "/api/v1/webhook-deliveries/" + deliveryId, null));
+            JsonNode detail = json(world.call(HttpMethod.GET, acme.host(), readKey, "/system/v1/webhook-deliveries/" + deliveryId, null));
             assertThat(detail.get("attempts")).hasSize(1);
             assertThat(detail.get("attempts").get(0).get("statusCode").asInt()).isEqualTo(200);
-            JsonNode delivered = world.body(world.call(HttpMethod.GET, acme.host(), readKey, "/api/v1/webhook-deliveries/" + deliveryId, null));
+            JsonNode delivered = world.body(world.call(HttpMethod.GET, acme.host(), readKey, "/system/v1/webhook-deliveries/" + deliveryId, null));
             String body = detail.get("body").asString();
             assertThat(delivered.get("body").asString()).isEqualTo(receiver.requests().get(0).body());
             JsonNode envelope = new tools.jackson.databind.json.JsonMapper().readTree(body);
             assertThat(envelope.get("type").asString()).isEqualTo("customer.created");
             assertThat(EventSchemas.validate("customer.created", envelope.get("data").toString())).isEmpty();
 
-            assertThat(world.status(HttpMethod.POST, acme.host(), readKey, "/api/v1/webhook-deliveries/" + deliveryId + "/resend", null)).isEqualTo(403);
-            MvcResult resent = world.call(HttpMethod.POST, acme.host(), manageKey, "/api/v1/webhook-deliveries/" + deliveryId + "/resend", null);
+            assertThat(world.status(HttpMethod.POST, acme.host(), readKey, "/system/v1/webhook-deliveries/" + deliveryId + "/resend", null)).isEqualTo(403);
+            MvcResult resent = world.call(HttpMethod.POST, acme.host(), manageKey, "/system/v1/webhook-deliveries/" + deliveryId + "/resend", null);
             assertThat(resent.getResponse().getStatus()).isEqualTo(202);
             assertThat(json(resent).get("resendOf").asString()).isEqualTo(deliveryId);
             scopes.runInTenant(tenant, deliver::runOnce);
             assertThat(receiver.requests()).hasSize(2);
             assertThat(receiver.requests().get(1).header("Billing-Event-Id")).isEqualTo(receiver.requests().get(0).header("Billing-Event-Id"));
 
-            assertThat(world.status(HttpMethod.GET, acme.host(), readKey, "/api/v1/webhook-deliveries?filter[status][eq]=NOPE", null)).isEqualTo(400);
-            assertThat(world.status(HttpMethod.GET, acme.host(), readKey, "/api/v1/webhook-deliveries/" + UUID.randomUUID(), null)).isEqualTo(404);
+            assertThat(world.status(HttpMethod.GET, acme.host(), readKey, "/system/v1/webhook-deliveries?filter[status][eq]=NOPE", null)).isEqualTo(400);
+            assertThat(world.status(HttpMethod.GET, acme.host(), readKey, "/system/v1/webhook-deliveries/" + UUID.randomUUID(), null)).isEqualTo(404);
             assertThat(world.status(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/webhook-deliveries/" + deliveryId, null)).isEqualTo(404);
         }
     }

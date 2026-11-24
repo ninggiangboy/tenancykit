@@ -63,8 +63,14 @@ class CustomerHttpIntegrationTest {
 
 
 
+    /** A machine token is served at the system door, a person's at the tenant door. */
+    private String doorOf(String token) {
+        boolean machine = token != null && (token.equals(acmeKey) || token.equals(acmeReadOnlyKey) || token.equals(globexKey));
+        return machine ? "/system/v1" : "/api/v1";
+    }
+
     private MvcResult post(Account account, String token, String idempotencyKey, Object body) throws Exception {
-        var request = MockMvcRequestBuilders.post("/api/v1/customers").header("Host", account.host())
+        var request = MockMvcRequestBuilders.post(doorOf(token) + "/customers").header("Host", account.host())
                 .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(body));
         if (token != null) {
             request.header("Authorization", "Bearer " + token);
@@ -112,13 +118,13 @@ class CustomerHttpIntegrationTest {
         String externalUser = "user_" + UUID.randomUUID();
         String id = parse(post(acme, acmeKey, "k-" + UUID.randomUUID(), HttpWorld.Map2.of("externalUserId", externalUser, "displayName", "Findable"))).get("id").asString();
 
-        var found = world.body(world.call(HttpMethod.GET, acme.host(), acmeKey, "/api/v1/customers/by-external-user/" + externalUser, null));
+        var found = world.body(world.call(HttpMethod.GET, acme.host(), acmeKey, "/system/v1/customers/by-external-user/" + externalUser, null));
         assertThat(found.get("id").asString()).isEqualTo(id);
-        assertThat(world.status(HttpMethod.GET, acme.host(), acmeKey, "/api/v1/customers/by-external-user/nobody", null)).isEqualTo(404);
+        assertThat(world.status(HttpMethod.GET, acme.host(), acmeKey, "/system/v1/customers/by-external-user/nobody", null)).isEqualTo(404);
 
         // The same external id in another tenant is a different, independent customer (or none at all).
-        assertThat(world.status(HttpMethod.GET, globex.host(), globexKey, "/api/v1/customers/by-external-user/" + externalUser, null)).isEqualTo(404);
-        assertThat(world.status(HttpMethod.GET, globex.host(), globexKey, "/api/v1/customers/" + id, null)).isEqualTo(404);
+        assertThat(world.status(HttpMethod.GET, globex.host(), globexKey, "/system/v1/customers/by-external-user/" + externalUser, null)).isEqualTo(404);
+        assertThat(world.status(HttpMethod.GET, globex.host(), globexKey, "/system/v1/customers/" + id, null)).isEqualTo(404);
         assertThat(world.status(HttpMethod.GET, globex.host(), globex.adminToken(), "/api/v1/customers/" + id, null)).isEqualTo(404);
 
         String inGlobex = parse(post(globex, globexKey, "k-" + UUID.randomUUID(), HttpWorld.Map2.of("externalUserId", externalUser, "displayName", "Globex's"))).get("id").asString();
@@ -128,8 +134,8 @@ class CustomerHttpIntegrationTest {
     @Test
     void aReadOnlyKeyReadsButCannotWrite() throws Exception {
         assertThat(post(acme, acmeReadOnlyKey, "k-" + UUID.randomUUID(), HttpWorld.Map2.of("externalUserId", "u", "displayName", "x")).getResponse().getStatus()).isEqualTo(403);
-        assertThat(world.status(HttpMethod.GET, acme.host(), acmeReadOnlyKey, "/api/v1/customers", null)).isEqualTo(200);
-        assertThat(world.status(HttpMethod.PUT, acme.host(), acmeReadOnlyKey, "/api/v1/customers/" + UUID.randomUUID(), HttpWorld.Map2.of("displayName", "x"))).isEqualTo(403);
+        assertThat(world.status(HttpMethod.GET, acme.host(), acmeReadOnlyKey, "/system/v1/customers", null)).isEqualTo(200);
+        assertThat(world.status(HttpMethod.PUT, acme.host(), acmeReadOnlyKey, "/system/v1/customers/" + UUID.randomUUID(), HttpWorld.Map2.of("displayName", "x"))).isEqualTo(403);
     }
 
     @Test
@@ -147,7 +153,7 @@ class CustomerHttpIntegrationTest {
                 HttpWorld.Map2.of("externalUserId", externalUser, "displayName", "Rendered Ltd", "email", "render@acme.test"));
         String id = parse(created).get("id").asString();
 
-        MvcResult read = world.call(HttpMethod.GET, acme.host(), acmeKey, "/api/v1/customers/" + id, null);
+        MvcResult read = world.call(HttpMethod.GET, acme.host(), acmeKey, "/system/v1/customers/" + id, null);
 
         assertThat(created.getResponse().getStatus()).isEqualTo(201);
         assertThat(read.getResponse().getStatus()).isEqualTo(200);

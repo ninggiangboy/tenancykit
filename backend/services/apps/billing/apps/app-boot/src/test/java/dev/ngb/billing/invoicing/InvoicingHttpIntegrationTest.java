@@ -80,9 +80,9 @@ class InvoicingHttpIntegrationTest {
         systemKey = world.newSystem(acme, prefixed(SCOPES_TEXT.split(","))).token();
         otherSystemKey = world.newSystem(acme, prefixed(SCOPES_TEXT.split(","))).token();
         viewerToken = world.newUserToken(acme, java.util.Set.of("billing:invoice:read", "billing:subscription:read"));
-        customerId = world.body(call(HttpMethod.POST, systemKey, "/api/v1/customers", "cust-" + UUID.randomUUID(),
+        customerId = world.body(call(HttpMethod.POST, systemKey, "/system/v1/customers", "cust-" + UUID.randomUUID(),
                 HttpWorld.Map2.of("externalUserId", "u-" + UUID.randomUUID(), "displayName", "Payer"))).get("id").asString();
-        walletId = world.body(call(HttpMethod.POST, systemKey, "/api/v1/wallets", null,
+        walletId = world.body(call(HttpMethod.POST, systemKey, "/system/v1/wallets", null,
                 HttpWorld.Map2.of("customerId", customerId, "currency", "USD", "mode", "POSTPAID", "creditLimit", 1_000_000))).get("id").asString();
         world.body(call(HttpMethod.PUT, acme.adminToken(), "/api/v1/stripe/configuration/direct", null, HttpWorld.Map2.of("secretKey", "sk_test_http_invoicing_" + UUID.randomUUID().toString().replace("-", ""),
                 "publishableKey", "pk_test_x", "webhookSecret", "whsec_http_invoicing_secret_0123456789")));
@@ -127,7 +127,7 @@ class InvoicingHttpIntegrationTest {
     /** An open invoice for a fresh Postpaid charge, made the way a Tenant System would ask for one. */
     private JsonNode openInvoice(long amount) {
         ChargeResult charged = charge(amount);
-        return world.body(call(HttpMethod.POST, systemKey, "/api/v1/invoices", null, HttpWorld.Map2.of("chargeId", charged.id().toString())));
+        return world.body(call(HttpMethod.POST, systemKey, "/system/v1/invoices", null, HttpWorld.Map2.of("chargeId", charged.id().toString())));
     }
 
     private String invoiceId(JsonNode detail) {
@@ -137,8 +137,8 @@ class InvoicingHttpIntegrationTest {
     @Test
     void anInvoiceForAChargeIsCreatedOnceAndAskingAgainReturnsIt() {
         ChargeResult charged = charge(1_500);
-        MvcResult first = call(HttpMethod.POST, systemKey, "/api/v1/invoices", null, HttpWorld.Map2.of("chargeId", charged.id().toString()));
-        MvcResult again = call(HttpMethod.POST, systemKey, "/api/v1/invoices", null, HttpWorld.Map2.of("chargeId", charged.id().toString()));
+        MvcResult first = call(HttpMethod.POST, systemKey, "/system/v1/invoices", null, HttpWorld.Map2.of("chargeId", charged.id().toString()));
+        MvcResult again = call(HttpMethod.POST, systemKey, "/system/v1/invoices", null, HttpWorld.Map2.of("chargeId", charged.id().toString()));
 
         assertThat(status(first)).isEqualTo(201);
         assertThat(status(again)).isEqualTo(200);
@@ -148,8 +148,8 @@ class InvoicingHttpIntegrationTest {
         assertThat(created.get("invoice").get("number").asString()).startsWith("INV-");
         assertThat(created.get("items")).hasSize(1);
         assertThat(world.body(again).get("invoice").get("id").asString()).isEqualTo(invoiceId(created));
-        assertThat(status(call(HttpMethod.POST, systemKey, "/api/v1/invoices", null, HttpWorld.Map2.of("chargeId", UUID.randomUUID().toString())))).isEqualTo(404);
-        assertThat(status(call(HttpMethod.POST, systemKey, "/api/v1/invoices", null, HttpWorld.Map2.of()))).isEqualTo(400);
+        assertThat(status(call(HttpMethod.POST, systemKey, "/system/v1/invoices", null, HttpWorld.Map2.of("chargeId", UUID.randomUUID().toString())))).isEqualTo(404);
+        assertThat(status(call(HttpMethod.POST, systemKey, "/system/v1/invoices", null, HttpWorld.Map2.of()))).isEqualTo(400);
     }
 
     @Test
@@ -157,12 +157,13 @@ class InvoicingHttpIntegrationTest {
         String id = invoiceId(openInvoice(900));
 
         for (String token : new String[] {acme.adminToken(), systemKey, viewerToken}) {
-            JsonNode list = world.body(call(HttpMethod.GET, token, "/api/v1/invoices?filter[customer_id][eq]=" + customerId, null, null)).get("data");
+            String door = doorOf(token);
+            JsonNode list = world.body(call(HttpMethod.GET, token, door + "/invoices?filter[customer_id][eq]=" + customerId, null, null)).get("data");
             assertThat(list.valueStream().map(i -> i.get("id").asString())).contains(id);
-            assertThat(status(call(HttpMethod.GET, token, "/api/v1/invoices/" + id, null, null))).isEqualTo(200);
+            assertThat(status(call(HttpMethod.GET, token, door + "/invoices/" + id, null, null))).isEqualTo(200);
         }
-        assertThat(world.body(call(HttpMethod.GET, otherSystemKey, "/api/v1/invoices", null, null)).get("data")).isEmpty();
-        assertThat(status(call(HttpMethod.GET, otherSystemKey, "/api/v1/invoices/" + id, null, null))).isEqualTo(404);
+        assertThat(world.body(call(HttpMethod.GET, otherSystemKey, "/system/v1/invoices", null, null)).get("data")).isEmpty();
+        assertThat(status(call(HttpMethod.GET, otherSystemKey, "/system/v1/invoices/" + id, null, null))).isEqualTo(404);
         assertThat(status(call(HttpMethod.GET, null, "/api/v1/invoices", null, null))).isEqualTo(401);
     }
 
@@ -170,8 +171,8 @@ class InvoicingHttpIntegrationTest {
     void payingStartsAPaymentAndMarksNothingPaid() {
         String id = invoiceId(openInvoice(2_000));
 
-        MvcResult started = call(HttpMethod.POST, systemKey, "/api/v1/invoices/" + id + "/payments", "pay-" + id, null);
-        MvcResult replay = call(HttpMethod.POST, systemKey, "/api/v1/invoices/" + id + "/payments", "pay-" + id, null);
+        MvcResult started = call(HttpMethod.POST, systemKey, "/system/v1/invoices/" + id + "/payments", "pay-" + id, null);
+        MvcResult replay = call(HttpMethod.POST, systemKey, "/system/v1/invoices/" + id + "/payments", "pay-" + id, null);
 
         assertThat(status(started)).isEqualTo(201);
         assertThat(status(replay)).isEqualTo(200);
@@ -181,10 +182,10 @@ class InvoicingHttpIntegrationTest {
         assertThat(body.get("invoice").get("invoice").get("status").asString()).isEqualTo("OPEN");
         assertThat(body.get("invoice").get("payments")).hasSize(1);
         assertThat(world.body(replay).get("payment").get("id").asString()).isEqualTo(body.get("payment").get("id").asString());
-        assertThat(status(call(HttpMethod.POST, systemKey, "/api/v1/invoices/" + id + "/payments", null, null))).as("an Idempotency-Key is required").isEqualTo(400);
-        assertThat(status(call(HttpMethod.POST, otherSystemKey, "/api/v1/invoices/" + id + "/payments", "other-" + id, null))).isEqualTo(404);
+        assertThat(status(call(HttpMethod.POST, systemKey, "/system/v1/invoices/" + id + "/payments", null, null))).as("an Idempotency-Key is required").isEqualTo(400);
+        assertThat(status(call(HttpMethod.POST, otherSystemKey, "/system/v1/invoices/" + id + "/payments", "other-" + id, null))).isEqualTo(404);
         assertThat(status(call(HttpMethod.POST, viewerToken, "/api/v1/invoices/" + id + "/payments", "viewer-" + id, null))).isEqualTo(403);
-        JsonNode after = world.body(call(HttpMethod.GET, systemKey, "/api/v1/invoices/" + id, null, null));
+        JsonNode after = world.body(call(HttpMethod.GET, systemKey, "/system/v1/invoices/" + id, null, null));
         assertThat(after.get("invoice").get("status").asString()).as("only a verified Stripe result can pay it").isEqualTo("OPEN");
     }
 
@@ -201,7 +202,7 @@ class InvoicingHttpIntegrationTest {
         assertThat(voided.get("invoice").get("status").asString()).isEqualTo("VOID");
         assertThat(voided.get("invoice").get("voidReason").asString()).isEqualTo("issued in error");
         assertThat(status(call(HttpMethod.POST, acme.adminToken(), path, null, HttpWorld.Map2.of("reason", "again")))).isEqualTo(409);
-        assertThat(status(call(HttpMethod.POST, systemKey, "/api/v1/invoices/" + id + "/payments", "late-" + id, null))).as("a void invoice cannot be paid").isEqualTo(409);
+        assertThat(status(call(HttpMethod.POST, systemKey, "/system/v1/invoices/" + id + "/payments", "late-" + id, null))).as("a void invoice cannot be paid").isEqualTo(409);
     }
 
     @Test
@@ -209,15 +210,17 @@ class InvoicingHttpIntegrationTest {
         String id = invoiceId(openInvoice(700));
         JsonNode written = world.body(call(HttpMethod.POST, acme.adminToken(), "/api/v1/invoices/" + id + "/uncollectible", null, null));
         assertThat(written.get("invoice").get("status").asString()).isEqualTo("UNCOLLECTIBLE");
-        assertThat(status(call(HttpMethod.POST, systemKey, "/api/v1/invoices/" + id + "/payments", "late-" + id, null))).isEqualTo(201);
-        assertThat(status(call(HttpMethod.POST, systemKey, "/api/v1/invoices/" + id + "/uncollectible", null, null))).isEqualTo(403);
+        assertThat(status(call(HttpMethod.POST, systemKey, "/system/v1/invoices/" + id + "/payments", "late-" + id, null))).isEqualTo(201);
+        assertThat(status(call(HttpMethod.POST, systemKey, "/system/v1/invoices/" + id + "/uncollectible", null, null)))
+                .as("writing an invoice off is not grantable to a machine, so its door has no such route").isEqualTo(404);
     }
 
     @Test
-    void aTenantSystemTokenWithoutInvoiceManageIsRefused() {
-        // Billing no longer issues credentials; Platform refuses invoice:manage to a machine. Here a machine token
-        // that simply lacks the code is refused by Billing's own check.
+    void aTenantSystemHasNoDoorToVoidAnInvoice() {
+        // Platform refuses invoice:manage to a machine, so Billing mounts the void only for people: a machine finds
+        // no such route at its own door, and the person door refuses its token.
         String system = world.newSystem(acme, "billing:invoice:read").token();
+        assertThat(status(call(HttpMethod.POST, system, "/system/v1/invoices/" + UUID.randomUUID() + "/void", null, null))).isEqualTo(404);
         assertThat(status(call(HttpMethod.POST, system, "/api/v1/invoices/" + UUID.randomUUID() + "/void", null, null))).isEqualTo(403);
     }
 
@@ -227,8 +230,8 @@ class InvoicingHttpIntegrationTest {
         java.util.Map<String, Object> request = HttpWorld.Map2.of("walletId", walletId, "planId", planId);
         String key = "sub-" + UUID.randomUUID();
 
-        MvcResult created = call(HttpMethod.POST, systemKey, "/api/v1/subscriptions", key, request);
-        MvcResult replay = call(HttpMethod.POST, systemKey, "/api/v1/subscriptions", key, request);
+        MvcResult created = call(HttpMethod.POST, systemKey, "/system/v1/subscriptions", key, request);
+        MvcResult replay = call(HttpMethod.POST, systemKey, "/system/v1/subscriptions", key, request);
 
         assertThat(status(created)).isEqualTo(201);
         assertThat(status(replay)).isEqualTo(200);
@@ -239,26 +242,31 @@ class InvoicingHttpIntegrationTest {
         assertThat(body.get("subscription").get("cycle").asString()).isEqualTo("MONTHLY");
         assertThat(body.get("history").valueStream().map(e -> e.get("type").asString())).containsExactly("CREATED", "RENEWED");
         assertThat(world.body(replay).get("subscription").get("id").asString()).isEqualTo(id);
-        assertThat(status(call(HttpMethod.POST, systemKey, "/api/v1/subscriptions", null, request))).as("an Idempotency-Key is required").isEqualTo(400);
-        assertThat(status(call(HttpMethod.POST, systemKey, "/api/v1/subscriptions", "bad-" + key, HttpWorld.Map2.of("walletId", walletId)))).isEqualTo(400);
+        assertThat(status(call(HttpMethod.POST, systemKey, "/system/v1/subscriptions", null, request))).as("an Idempotency-Key is required").isEqualTo(400);
+        assertThat(status(call(HttpMethod.POST, systemKey, "/system/v1/subscriptions", "bad-" + key, HttpWorld.Map2.of("walletId", walletId)))).isEqualTo(400);
 
         assertThat(world.body(call(HttpMethod.GET, acme.adminToken(),
                 "/api/v1/subscriptions?filter[customer_id][eq]=" + customerId, null, null)).get("data").valueStream()
                 .map(s -> s.get("id").asString())).contains(id);
-        assertThat(world.body(call(HttpMethod.GET, otherSystemKey, "/api/v1/subscriptions", null, null)).get("data")).isEmpty();
-        assertThat(status(call(HttpMethod.GET, otherSystemKey, "/api/v1/subscriptions/" + id, null, null))).isEqualTo(404);
-        assertThat(status(call(HttpMethod.POST, otherSystemKey, "/api/v1/subscriptions/" + id + "/cancel", null, null))).isEqualTo(404);
+        assertThat(world.body(call(HttpMethod.GET, otherSystemKey, "/system/v1/subscriptions", null, null)).get("data")).isEmpty();
+        assertThat(status(call(HttpMethod.GET, otherSystemKey, "/system/v1/subscriptions/" + id, null, null))).isEqualTo(404);
+        assertThat(status(call(HttpMethod.POST, otherSystemKey, "/system/v1/subscriptions/" + id + "/cancel", null, null))).isEqualTo(404);
         assertThat(status(call(HttpMethod.POST, viewerToken, "/api/v1/subscriptions/" + id + "/cancel", null, null))).isEqualTo(403);
 
-        JsonNode canceled = world.body(call(HttpMethod.POST, systemKey, "/api/v1/subscriptions/" + id + "/cancel", null, null));
+        JsonNode canceled = world.body(call(HttpMethod.POST, systemKey, "/system/v1/subscriptions/" + id + "/cancel", null, null));
         assertThat(canceled.get("subscription").get("cancelAtPeriodEnd").asBoolean()).isTrue();
         assertThat(canceled.get("subscription").get("status").asString()).isEqualTo("ACTIVE");
-        JsonNode again = world.body(call(HttpMethod.POST, systemKey, "/api/v1/subscriptions/" + id + "/cancel", null, null));
+        JsonNode again = world.body(call(HttpMethod.POST, systemKey, "/system/v1/subscriptions/" + id + "/cancel", null, null));
         assertThat(again.get("history").valueStream().filter(e -> e.get("type").asString().equals("CANCEL_REQUESTED"))).hasSize(1);
     }
 
+    /** A machine token is served at the system door, a person's at the tenant door. */
+    private String doorOf(String token) {
+        return token.equals(systemKey) || token.equals(otherSystemKey) ? "/system/v1" : "/api/v1";
+    }
+
     private JsonNode list(String token, String query) {
-        MvcResult result = call(HttpMethod.GET, token, "/api/v1/invoices?" + query, null, null);
+        MvcResult result = call(HttpMethod.GET, token, doorOf(token) + "/invoices?" + query, null, null);
         assertThat(status(result)).as(query).isEqualTo(200);
         return world.body(result);
     }
@@ -344,7 +352,7 @@ class InvoicingHttpIntegrationTest {
             {"filter[total][in]=" + totals + "&sort=-total&limit=1&cursor=" + cursor, "different filter or sort"},
         };
         for (String[] attempt : refused) {
-            MvcResult result = call(HttpMethod.GET, systemKey, "/api/v1/invoices?" + attempt[0], null, null);
+            MvcResult result = call(HttpMethod.GET, systemKey, "/system/v1/invoices?" + attempt[0], null, null);
             assertThat(status(result)).as(attempt[0]).isEqualTo(400);
             assertThat(json.readTree(body(result)).path("detail").asString()).as(attempt[0] + " -> " + body(result)).contains(attempt[1]);
         }
@@ -369,15 +377,15 @@ class InvoicingHttpIntegrationTest {
     @Test
     void theCycleInvoiceAppearsThroughTheApiWithItsSubscriptionLine() {
         String planId = pricing.plan(tenant, "pro", pricing.pro(), BillingCycle.MONTHLY, null, null).id().toString();
-        JsonNode sub = world.body(call(HttpMethod.POST, systemKey, "/api/v1/subscriptions", "sub-" + UUID.randomUUID(), HttpWorld.Map2.of("walletId", walletId, "planId", planId)));
+        JsonNode sub = world.body(call(HttpMethod.POST, systemKey, "/system/v1/subscriptions", "sub-" + UUID.randomUUID(), HttpWorld.Map2.of("walletId", walletId, "planId", planId)));
         scopes.runInTenant(tenant, relay::relayDue);
         owner.jdbc().update("update invoice_items set cycle_start = cycle_start - interval '1 month', cycle_end = cycle_end - interval '1 month' "
                 + "where wallet_id = ? and invoice_id is null", UUID.fromString(walletId));
         scopes.inTenant(tenant, closeCycle::runOnce);
 
-        JsonNode invoices = world.body(call(HttpMethod.GET, systemKey, "/api/v1/invoices?filter[wallet_id][eq]=" + walletId + "&filter[status][eq]=OPEN", null, null)).get("data");
+        JsonNode invoices = world.body(call(HttpMethod.GET, systemKey, "/system/v1/invoices?filter[wallet_id][eq]=" + walletId + "&filter[status][eq]=OPEN", null, null)).get("data");
         JsonNode cycle = invoices.valueStream().filter(i -> i.get("origin").asString().equals("POSTPAID_CYCLE")).findFirst().orElseThrow();
-        JsonNode detail = world.body(call(HttpMethod.GET, systemKey, "/api/v1/invoices/" + cycle.get("id").asString(), null, null));
+        JsonNode detail = world.body(call(HttpMethod.GET, systemKey, "/system/v1/invoices/" + cycle.get("id").asString(), null, null));
         assertThat(detail.get("items").valueStream().map(i -> i.get("subscriptionId") == null || i.get("subscriptionId").isNull() ? "" : i.get("subscriptionId").asString()))
                 .contains(sub.get("subscription").get("id").asString());
         assertThat(detail.get("items").valueStream().map(i -> i.get("source").asString())).contains("SUBSCRIPTION_PERIOD");

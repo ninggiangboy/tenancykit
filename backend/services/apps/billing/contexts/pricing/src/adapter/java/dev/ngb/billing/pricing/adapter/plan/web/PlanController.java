@@ -49,7 +49,7 @@ import tools.jackson.databind.json.JsonMapper;
                 "Pricing plans and their versions.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers(Caller.TENANT_USER)
 public class PlanController {
 

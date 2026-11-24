@@ -11,9 +11,11 @@ import dev.ngb.core.error.PreconditionFailedException;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 
 class CoreExceptionHandlersTest {
 
@@ -50,6 +52,16 @@ class CoreExceptionHandlersTest {
         assertThat(response.getStatusCode().value()).isEqualTo(503);
         assertThat(response.getHeaders().getFirst("Retry-After")).isEqualTo("1");
         assertThat(response.getBody().getStatus()).isEqualTo(503);
+    }
+
+    @Test
+    void aMethodThePathDoesNotServeIs405AndNamesTheMethodsItDoes() {
+        ResponseEntity<ProblemDetail> response = handlers.methodNotAllowed(
+                new HttpRequestMethodNotSupportedException("POST", java.util.List.of("GET", "HEAD")));
+
+        assertThat(response.getStatusCode().value()).isEqualTo(405);
+        assertThat(response.getHeaders().getAllow()).containsExactlyInAnyOrder(HttpMethod.GET, HttpMethod.HEAD);
+        assertThat(response.getBody().getStatus()).isEqualTo(405);
     }
 
     private static void assertStatus(ProblemDetail problem, int status, String detail) {

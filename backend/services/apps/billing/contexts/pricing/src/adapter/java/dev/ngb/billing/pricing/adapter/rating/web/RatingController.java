@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "What is done with a plan: cost estimates, reserving the estimate and charging usage.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class RatingController {
 

@@ -42,7 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Hold part of a wallet's balance for a later charge.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class ReservationController {
 

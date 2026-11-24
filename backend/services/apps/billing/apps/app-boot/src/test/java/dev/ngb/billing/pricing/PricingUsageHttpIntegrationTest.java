@@ -129,11 +129,11 @@ class PricingUsageHttpIntegrationTest {
     }
 
     private String customer() {
-        return ok(withHeader(ops, "/api/v1/customers", "cust-" + UUID.randomUUID(), Map2.of("externalUserId", "u-" + UUID.randomUUID(), "displayName", "Co"))).get("id").asString();
+        return ok(withHeader(ops, "/system/v1/customers", "cust-" + UUID.randomUUID(), Map2.of("externalUserId", "u-" + UUID.randomUUID(), "displayName", "Co"))).get("id").asString();
     }
 
     private String wallet(String customerId, long balance) {
-        String id = ok(call(acme, ops, HttpMethod.POST, "/api/v1/wallets", Map2.of("customerId", customerId, "currency", "USD", "mode", "PREPAID"))).get("id").asString();
+        String id = ok(call(acme, ops, HttpMethod.POST, "/system/v1/wallets", Map2.of("customerId", customerId, "currency", "USD", "mode", "PREPAID"))).get("id").asString();
         if (balance > 0) {
             scopes.runInTenant(TenantId.of(acme.tenantId()), () -> creditWallet.credit(new CreditCommand(WalletId.of(id), Money.of(balance, Currency.of("USD")),
                     "topup:" + UUID.randomUUID(), null, "credit-" + UUID.randomUUID(), "system/test")));
@@ -166,20 +166,23 @@ class PricingUsageHttpIntegrationTest {
                         Map2.of("model", "EVENT_BASED", "metric", m5, "unit", "request", "unitPrice", "0.01"),
                         Map2.of("model", "USAGE_BASED", "metric", metric(), "unit", "gb", "unitPrice", "2"))))))).get("id").asString();
 
-        JsonNode listed = ok(call(acme, ops, HttpMethod.GET, "/api/v1/pricing-plans?filter[status][eq]=ACTIVE", null)).get("data");
+        JsonNode listed = ok(call(acme, ops, HttpMethod.GET, "/system/v1/pricing-plans?filter[status][eq]=ACTIVE", null)).get("data");
         List<String> ids = listed.valueStream().map(n -> n.get("id").asString()).toList();
         assertThat(ids).contains(time, usage, workload, event, result, hybrid);
-        JsonNode eventPlan = ok(call(acme, ops, HttpMethod.GET, "/api/v1/pricing-plans/" + event, null));
+        JsonNode eventPlan = ok(call(acme, ops, HttpMethod.GET, "/system/v1/pricing-plans/" + event, null));
         assertThat(eventPlan.get("versions").get(0).get("rule").get("unitPrice").asString()).as("a fraction of a cent survives").isEqualTo("0.0000004");
-        assertThat(ok(call(acme, ops, HttpMethod.GET, "/api/v1/pricing-plans/" + hybrid, null)).get("versions").get(0).get("rule").get("components")).hasSize(2);
+        assertThat(ok(call(acme, ops, HttpMethod.GET, "/system/v1/pricing-plans/" + hybrid, null)).get("versions").get(0).get("rule").get("components")).hasSize(2);
     }
 
     @Test
     void onlyAdministratorsManagePlans() {
         Map<String, Object> body = plan(code(), "EVENT_BASED", Map2.of("metric", metric(), "unit", "call", "unitPrice", "1"));
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/pricing-plans", body).getResponse().getStatus()).as("a tenant system cannot set prices").isEqualTo(403);
-        assertThat(call(acme, readOnly, HttpMethod.POST, "/api/v1/pricing-plans", body).getResponse().getStatus()).isEqualTo(403);
-        assertThat(call(acme, readOnly, HttpMethod.GET, "/api/v1/pricing-plans", null).getResponse().getStatus()).isEqualTo(200);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/pricing-plans", body).getResponse().getStatus())
+                .as("a tenant system cannot set prices: its door serves plans for reading only").isEqualTo(405);
+        assertThat(call(acme, readOnly, HttpMethod.POST, "/system/v1/pricing-plans", body).getResponse().getStatus()).isEqualTo(405);
+        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/pricing-plans", body).getResponse().getStatus())
+                .as("the person door refuses a machine token whatever it carries").isEqualTo(403);
+        assertThat(call(acme, readOnly, HttpMethod.GET, "/system/v1/pricing-plans", null).getResponse().getStatus()).isEqualTo(200);
         assertThat(call(acme, null, HttpMethod.GET, "/api/v1/pricing-plans", null).getResponse().getStatus()).isEqualTo(401);
         assertThat(call(acme, acme.adminToken(), HttpMethod.POST, "/api/v1/pricing-plans", body).getResponse().getStatus()).isEqualTo(201);
     }
@@ -230,17 +233,17 @@ class PricingUsageHttpIntegrationTest {
         JsonNode v2 = ok(call(acme, acme.adminToken(), HttpMethod.POST, "/api/v1/pricing-plans/" + id + "/versions",
                 Map2.of("rule", Map2.of("metric", metric, "unit", "call", "unitPrice", "2"), "validFrom", "2026-12-01T00:00:00Z", "rounding", "UP")));
         assertThat(v2.get("version").asInt()).isEqualTo(2);
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/pricing-plans/" + id + "/versions", Map2.of("rule", Map2.of("metric", metric, "unit", "call", "unitPrice", "3")))
-                .getResponse().getStatus()).isEqualTo(403);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/pricing-plans/" + id + "/versions", Map2.of("rule", Map2.of("metric", metric, "unit", "call", "unitPrice", "3")))
+                .getResponse().getStatus()).as("adding a version has no machine door").isEqualTo(404);
         assertThat(call(acme, acme.adminToken(), HttpMethod.POST, "/api/v1/pricing-plans/" + id + "/versions",
                 Map2.of("rule", Map2.of("metric", metric, "unit", "call", "unitPrice", "3"), "validFrom", "2026-11-01T00:00:00Z")).getResponse().getStatus())
                 .as("a version cannot start before the previous one").isEqualTo(400);
 
         assertThat(ok(call(acme, acme.adminToken(), HttpMethod.POST, "/api/v1/pricing-plans/" + id + "/retire", null)).get("status").asString()).isEqualTo("RETIRED");
         assertThat(call(acme, acme.adminToken(), HttpMethod.POST, "/api/v1/pricing-plans/" + id + "/retire", null).getResponse().getStatus()).isEqualTo(409);
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/pricing/estimates", Map2.of("planId", id, "usage", List.of(Map2.of("metric", metric, "quantity", "1"))))
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/pricing/estimates", Map2.of("planId", id, "usage", List.of(Map2.of("metric", metric, "quantity", "1"))))
                 .getResponse().getStatus()).as("a retired plan is not offered").isEqualTo(409);
-        assertThat(ok(call(acme, ops, HttpMethod.GET, "/api/v1/pricing-plans?filter[status][eq]=ACTIVE", null)).get("data").valueStream()
+        assertThat(ok(call(acme, ops, HttpMethod.GET, "/system/v1/pricing-plans?filter[status][eq]=ACTIVE", null)).get("data").valueStream()
                 .map(n -> n.get("id").asString())).doesNotContain(id);
     }
 
@@ -250,7 +253,7 @@ class PricingUsageHttpIntegrationTest {
     void anEstimateIsAPureCalculationWithABreakdown() {
         String metric = metric();
         String id = createPlan("USAGE_BASED", storageRule(metric));
-        JsonNode estimate = ok(call(acme, readOnly, HttpMethod.POST, "/api/v1/pricing/estimates",
+        JsonNode estimate = ok(call(acme, readOnly, HttpMethod.POST, "/system/v1/pricing/estimates",
                 Map2.of("planId", id, "usage", List.of(Map2.of("metric", metric, "quantity", "1100")))));
 
         assertThat(estimate.get("amount").get("amount").asLong()).isEqualTo(1950);
@@ -260,9 +263,9 @@ class PricingUsageHttpIntegrationTest {
         assertThat(estimate.get("lines")).hasSize(3);
         assertThat(estimate.get("lines").get(1).get("amount").asString()).isEqualTo("1800");
 
-        assertThat(call(acme, readOnly, HttpMethod.POST, "/api/v1/pricing/estimates", Map2.of("planId", UUID.randomUUID().toString(), "usage", List.of())).getResponse().getStatus())
+        assertThat(call(acme, readOnly, HttpMethod.POST, "/system/v1/pricing/estimates", Map2.of("planId", UUID.randomUUID().toString(), "usage", List.of())).getResponse().getStatus())
                 .isEqualTo(404);
-        assertThat(call(acme, readOnly, HttpMethod.POST, "/api/v1/pricing/estimates", Map2.of("planId", id, "usage", List.of(Map2.of("metric", "other", "quantity", "1"))))
+        assertThat(call(acme, readOnly, HttpMethod.POST, "/system/v1/pricing/estimates", Map2.of("planId", id, "usage", List.of(Map2.of("metric", "other", "quantity", "1"))))
                 .getResponse().getStatus()).isEqualTo(400);
         assertThat(call(globex, globex.adminToken(), HttpMethod.POST, "/api/v1/pricing/estimates", Map2.of("planId", id, "usage", List.of())).getResponse().getStatus())
                 .as("another tenant's plan").isEqualTo(404);
@@ -277,8 +280,8 @@ class PricingUsageHttpIntegrationTest {
         String customer = customer();
         String key = "evt-" + UUID.randomUUID();
 
-        MvcResult first = call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", usageEvent(customer, metric, "call", "5", key));
-        MvcResult again = call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", usageEvent(customer, metric, "call", "5", key));
+        MvcResult first = call(acme, ops, HttpMethod.POST, "/system/v1/usage-events", usageEvent(customer, metric, "call", "5", key));
+        MvcResult again = call(acme, ops, HttpMethod.POST, "/system/v1/usage-events", usageEvent(customer, metric, "call", "5", key));
         assertThat(first.getResponse().getStatus()).isEqualTo(201);
         assertThat(again.getResponse().getStatus()).isEqualTo(200);
         assertThat(parse(again).get("replayed").asBoolean()).isTrue();
@@ -286,13 +289,13 @@ class PricingUsageHttpIntegrationTest {
         assertThat(parse(first).get("event").get("tenantSystemId").isNull()).as("the credential's system is traced").isFalse();
         assertThat(parse(first).get("event").get("resourceRef").asString()).isEqualTo("res-1");
 
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", usageEvent(customer, metric, "call", "6", key)).getResponse().getStatus()).isEqualTo(409);
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", usageEvent(customer, "no-such-metric", "call", "1", "k1")).getResponse().getStatus()).isEqualTo(400);
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", usageEvent(customer, metric, "gb", "1", "k2")).getResponse().getStatus()).isEqualTo(400);
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", usageEvent(customer, metric, "call", "0", "k3")).getResponse().getStatus()).isEqualTo(400);
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", usageEvent(customer, metric, "call", "abc", "k4")).getResponse().getStatus()).isEqualTo(400);
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", usageEvent(UUID.randomUUID().toString(), metric, "call", "1", "k5")).getResponse().getStatus()).isEqualTo(404);
-        assertThat(call(acme, readOnly, HttpMethod.POST, "/api/v1/usage-events", usageEvent(customer, metric, "call", "1", "k6")).getResponse().getStatus()).isEqualTo(403);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/usage-events", usageEvent(customer, metric, "call", "6", key)).getResponse().getStatus()).isEqualTo(409);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/usage-events", usageEvent(customer, "no-such-metric", "call", "1", "k1")).getResponse().getStatus()).isEqualTo(400);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/usage-events", usageEvent(customer, metric, "gb", "1", "k2")).getResponse().getStatus()).isEqualTo(400);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/usage-events", usageEvent(customer, metric, "call", "0", "k3")).getResponse().getStatus()).isEqualTo(400);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/usage-events", usageEvent(customer, metric, "call", "abc", "k4")).getResponse().getStatus()).isEqualTo(400);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/usage-events", usageEvent(UUID.randomUUID().toString(), metric, "call", "1", "k5")).getResponse().getStatus()).isEqualTo(404);
+        assertThat(call(acme, readOnly, HttpMethod.POST, "/system/v1/usage-events", usageEvent(customer, metric, "call", "1", "k6")).getResponse().getStatus()).isEqualTo(403);
         assertThat(call(globex, globex.adminToken(), HttpMethod.POST, "/api/v1/usage-events", usageEvent(customer, metric, "call", "1", "k7")).getResponse().getStatus())
                 .as("another tenant").isEqualTo(400);
     }
@@ -305,19 +308,19 @@ class PricingUsageHttpIntegrationTest {
         String k1 = "b-" + UUID.randomUUID();
         String k2 = "b-" + UUID.randomUUID();
 
-        MvcResult bad = call(acme, ops, HttpMethod.POST, "/api/v1/usage-events/batch", Map2.of("events", List.of(
+        MvcResult bad = call(acme, ops, HttpMethod.POST, "/system/v1/usage-events/batch", Map2.of("events", List.of(
                 usageEvent(customer, metric, "call", "1", k1), usageEvent(customer, metric, "call", "-1", k2))));
         assertThat(bad.getResponse().getStatus()).isEqualTo(400);
-        assertThat(ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?filter[customer_id][eq]=" + customer, null)).get("data")).isEmpty();
+        assertThat(ok(call(acme, ops, HttpMethod.GET, "/system/v1/usage-events?filter[customer_id][eq]=" + customer, null)).get("data")).isEmpty();
 
-        JsonNode good = ok(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events/batch", Map2.of("events", List.of(
+        JsonNode good = ok(call(acme, ops, HttpMethod.POST, "/system/v1/usage-events/batch", Map2.of("events", List.of(
                 usageEvent(customer, metric, "call", "1", k1), usageEvent(customer, metric, "call", "2", k2)))));
         assertThat(good.get("results")).hasSize(2);
-        JsonNode retry = ok(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events/batch", Map2.of("events", List.of(
+        JsonNode retry = ok(call(acme, ops, HttpMethod.POST, "/system/v1/usage-events/batch", Map2.of("events", List.of(
                 usageEvent(customer, metric, "call", "1", k1), usageEvent(customer, metric, "call", "2", k2)))));
         assertThat(retry.get("results").valueStream().map(n -> n.get("replayed").asBoolean())).containsExactly(true, true);
-        assertThat(ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?filter[customer_id][eq]=" + customer, null)).get("data")).hasSize(2);
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events/batch", Map2.of("events", List.of())).getResponse().getStatus()).isEqualTo(400);
+        assertThat(ok(call(acme, ops, HttpMethod.GET, "/system/v1/usage-events?filter[customer_id][eq]=" + customer, null)).get("data")).hasSize(2);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/usage-events/batch", Map2.of("events", List.of())).getResponse().getStatus()).isEqualTo(400);
     }
 
     @Test
@@ -326,22 +329,22 @@ class PricingUsageHttpIntegrationTest {
         createPlan("EVENT_BASED", Map2.of("metric", metric, "unit", "call", "unitPrice", "1"));
         String customer = customer();
         for (int i = 0; i < 5; i++) {
-            ok(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", usageEvent(customer, metric, "call", String.valueOf(i + 1), "h-" + UUID.randomUUID())));
+            ok(call(acme, ops, HttpMethod.POST, "/system/v1/usage-events", usageEvent(customer, metric, "call", String.valueOf(i + 1), "h-" + UUID.randomUUID())));
         }
         String mine = "filter[customer_id][eq]=" + customer;
-        JsonNode first = ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?" + mine + "&limit=3&page_info=full", null));
-        JsonNode second = ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-events?" + mine + "&limit=3&page_info=full&cursor="
+        JsonNode first = ok(call(acme, ops, HttpMethod.GET, "/system/v1/usage-events?" + mine + "&limit=3&page_info=full", null));
+        JsonNode second = ok(call(acme, ops, HttpMethod.GET, "/system/v1/usage-events?" + mine + "&limit=3&page_info=full&cursor="
                 + first.get("page").get("next_cursor").asString(), null));
         assertThat(first.get("data")).hasSize(3);
         assertThat(second.get("data")).hasSize(2);
 
-        JsonNode totals = ok(call(acme, ops, HttpMethod.GET, "/api/v1/usage-aggregates?customerId=" + customer + "&from=" + FROM + "&to=" + TO, null));
+        JsonNode totals = ok(call(acme, ops, HttpMethod.GET, "/system/v1/usage-aggregates?customerId=" + customer + "&from=" + FROM + "&to=" + TO, null));
         assertThat(totals).hasSize(1);
         assertThat(totals.get(0).get("metric").asString()).isEqualTo(metric);
         assertThat(totals.get(0).get("quantity").asString()).isEqualTo("15");
         assertThat(totals.get(0).get("events").asInt()).isEqualTo(5);
-        assertThat(call(acme, ops, HttpMethod.GET, "/api/v1/usage-aggregates?customerId=" + customer + "&from=" + TO + "&to=" + FROM, null).getResponse().getStatus()).isEqualTo(400);
-        assertThat(call(acme, readOnly, HttpMethod.GET, "/api/v1/usage-events?filter[customer_id][eq]=" + customer, null).getResponse().getStatus()).isEqualTo(403);
+        assertThat(call(acme, ops, HttpMethod.GET, "/system/v1/usage-aggregates?customerId=" + customer + "&from=" + TO + "&to=" + FROM, null).getResponse().getStatus()).isEqualTo(400);
+        assertThat(call(acme, readOnly, HttpMethod.GET, "/system/v1/usage-events?filter[customer_id][eq]=" + customer, null).getResponse().getStatus()).isEqualTo(403);
         assertThat(call(globex, globex.adminToken(), HttpMethod.GET, "/api/v1/usage-events?filter[customer_id][eq]=" + customer, null)
                 .getResponse().getStatus()).isEqualTo(200);
     }
@@ -354,16 +357,16 @@ class PricingUsageHttpIntegrationTest {
         String plan = createPlan("USAGE_BASED", storageRule(metric));
         String customer = customer();
         String wallet = wallet(customer, 500);
-        ok(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", usageEvent(customer, metric, "gb", "1100", "u-" + UUID.randomUUID())));
+        ok(call(acme, ops, HttpMethod.POST, "/system/v1/usage-events", usageEvent(customer, metric, "gb", "1100", "u-" + UUID.randomUUID())));
         Map<String, Object> request = Map2.of("customerId", customer, "walletId", wallet, "planId", plan, "from", FROM, "to", TO);
 
-        MvcResult broke = call(acme, ops, HttpMethod.POST, "/api/v1/pricing/usage-charges", request);
+        MvcResult broke = call(acme, ops, HttpMethod.POST, "/system/v1/pricing/usage-charges", request);
         assertThat(broke.getResponse().getStatus()).as("500 does not cover 1950").isEqualTo(402);
         assertThat(parse(broke).get("failureReason").asString()).isEqualTo("insufficient_funds");
 
         scopes.runInTenant(TenantId.of(acme.tenantId()), () -> creditWallet.credit(new CreditCommand(WalletId.of(wallet), Money.of(5000, Currency.of("USD")),
                 "topup:" + UUID.randomUUID(), null, "credit-" + UUID.randomUUID(), "system/test")));
-        MvcResult paid = call(acme, ops, HttpMethod.POST, "/api/v1/pricing/usage-charges", request);
+        MvcResult paid = call(acme, ops, HttpMethod.POST, "/system/v1/pricing/usage-charges", request);
         assertThat(paid.getResponse().getStatus()).isEqualTo(201);
         JsonNode body = parse(paid);
         assertThat(body.get("outcome").asString()).isEqualTo("CHARGED");
@@ -371,18 +374,18 @@ class PricingUsageHttpIntegrationTest {
         assertThat(body.get("planVersion").asInt()).isEqualTo(1);
         assertThat(body.get("lines")).hasSize(3);
 
-        MvcResult repeated = call(acme, ops, HttpMethod.POST, "/api/v1/pricing/usage-charges", request);
+        MvcResult repeated = call(acme, ops, HttpMethod.POST, "/system/v1/pricing/usage-charges", request);
         assertThat(repeated.getResponse().getStatus()).isEqualTo(200);
         assertThat(parse(repeated).get("replayed").asBoolean()).isTrue();
         assertThat(parse(repeated).get("id").asString()).isEqualTo(body.get("id").asString());
-        assertThat(ok(call(acme, ops, HttpMethod.GET, "/api/v1/wallets/" + wallet, null)).get("balance").get("amount").asLong()).isEqualTo(500 + 5000 - 1950);
-        assertThat(ok(call(acme, chargeReader, HttpMethod.GET, "/api/v1/pricing/usage-charges/" + body.get("id").asString(), null)).get("amount").get("amount").asLong()).isEqualTo(1950);
+        assertThat(ok(call(acme, ops, HttpMethod.GET, "/system/v1/wallets/" + wallet, null)).get("balance").get("amount").asLong()).isEqualTo(500 + 5000 - 1950);
+        assertThat(ok(call(acme, chargeReader, HttpMethod.GET, "/system/v1/pricing/usage-charges/" + body.get("id").asString(), null)).get("amount").get("amount").asLong()).isEqualTo(1950);
 
         Map<String, Object> nothing = Map2.of("customerId", customer, "walletId", wallet, "planId", plan, "from", "2026-01-01T00:00:00Z", "to", "2026-01-02T00:00:00Z");
-        MvcResult none = call(acme, ops, HttpMethod.POST, "/api/v1/pricing/usage-charges", nothing);
+        MvcResult none = call(acme, ops, HttpMethod.POST, "/system/v1/pricing/usage-charges", nothing);
         assertThat(none.getResponse().getStatus()).isEqualTo(409); // the plan has no version in force that early
-        assertThat(call(acme, readOnly, HttpMethod.POST, "/api/v1/pricing/usage-charges", request).getResponse().getStatus()).isEqualTo(403);
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/pricing/usage-charges", Map2.of("customerId", customer, "walletId", wallet, "planId", plan)).getResponse().getStatus())
+        assertThat(call(acme, readOnly, HttpMethod.POST, "/system/v1/pricing/usage-charges", request).getResponse().getStatus()).isEqualTo(403);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/pricing/usage-charges", Map2.of("customerId", customer, "walletId", wallet, "planId", plan)).getResponse().getStatus())
                 .isEqualTo(400);
         assertThat(call(globex, globex.adminToken(), HttpMethod.POST, "/api/v1/pricing/usage-charges", request).getResponse().getStatus()).isEqualTo(404);
     }
@@ -396,20 +399,20 @@ class PricingUsageHttpIntegrationTest {
         Map<String, Object> request = Map2.of("walletId", wallet, "planId", plan, "usage", List.of(Map2.of("metric", metric, "quantity", "4")), "ttlSeconds", 600, "reference", "vm-1");
         String key = "res-" + UUID.randomUUID();
 
-        assertThat(withHeader(ops, "/api/v1/pricing/reservations", null, request).getResponse().getStatus()).as("an Idempotency-Key is required").isEqualTo(400);
-        MvcResult created = withHeader(ops, "/api/v1/pricing/reservations", key, request);
+        assertThat(withHeader(ops, "/system/v1/pricing/reservations", null, request).getResponse().getStatus()).as("an Idempotency-Key is required").isEqualTo(400);
+        MvcResult created = withHeader(ops, "/system/v1/pricing/reservations", key, request);
         assertThat(created.getResponse().getStatus()).isEqualTo(201);
         assertThat(parse(created).get("estimate").get("amount").get("amount").asLong()).isEqualTo(14);
         assertThat(parse(created).get("reservation").get("amount").get("amount").asLong()).isEqualTo(14);
-        MvcResult replay = withHeader(ops, "/api/v1/pricing/reservations", key, request);
+        MvcResult replay = withHeader(ops, "/system/v1/pricing/reservations", key, request);
         assertThat(replay.getResponse().getStatus()).as("a replayed reservation answers 200").isEqualTo(200);
         assertThat(parse(replay).get("reservation").get("id").asString()).isEqualTo(parse(created).get("reservation").get("id").asString());
         assertThat(parse(replay).get("reservation").get("replayed").asBoolean()).isTrue();
-        assertThat(ok(call(acme, ops, HttpMethod.GET, "/api/v1/wallets/" + wallet, null)).get("held").get("amount").asLong()).isEqualTo(14);
+        assertThat(ok(call(acme, ops, HttpMethod.GET, "/system/v1/wallets/" + wallet, null)).get("held").get("amount").asLong()).isEqualTo(14);
 
         Map<String, Object> tooBig = Map2.of("walletId", wallet, "planId", plan, "usage", List.of(Map2.of("metric", metric, "quantity", "1000")));
-        assertThat(withHeader(ops, "/api/v1/pricing/reservations", "res-" + UUID.randomUUID(), tooBig).getResponse().getStatus()).isEqualTo(402);
-        assertThat(withHeader(readOnly, "/api/v1/pricing/reservations", "res-" + UUID.randomUUID(), request).getResponse().getStatus()).isEqualTo(403);
+        assertThat(withHeader(ops, "/system/v1/pricing/reservations", "res-" + UUID.randomUUID(), tooBig).getResponse().getStatus()).isEqualTo(402);
+        assertThat(withHeader(readOnly, "/system/v1/pricing/reservations", "res-" + UUID.randomUUID(), request).getResponse().getStatus()).isEqualTo(403);
     }
 
     @Test
@@ -418,17 +421,17 @@ class PricingUsageHttpIntegrationTest {
         createPlan("EVENT_BASED", Map2.of("metric", metric, "unit", "call", "unitPrice", "1"));
         Map<String, Object> event = usageEvent(customer(), metric, "call", "1", "future-" + UUID.randomUUID());
         event.put("occurredAt", Instant.now().plusSeconds(3600).toString());
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", event).getResponse().getStatus()).isEqualTo(400);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/usage-events", event).getResponse().getStatus()).isEqualTo(400);
     }
 
     @Test
     void missingIdentifiersAreBadRequestsNotServerErrors() {
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/pricing/estimates", Map2.of("usage", List.of())).getResponse().getStatus()).isEqualTo(400);
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/pricing/usage-charges", Map2.of("from", FROM, "to", TO)).getResponse().getStatus()).isEqualTo(400);
-        assertThat(withHeader(ops, "/api/v1/pricing/reservations", "k-" + UUID.randomUUID(), Map2.of("usage", List.of())).getResponse().getStatus()).isEqualTo(400);
-        assertThat(call(acme, ops, HttpMethod.POST, "/api/v1/usage-events", Map2.of("metric", "x", "quantity", "1")).getResponse().getStatus()).isEqualTo(400);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/pricing/estimates", Map2.of("usage", List.of())).getResponse().getStatus()).isEqualTo(400);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/pricing/usage-charges", Map2.of("from", FROM, "to", TO)).getResponse().getStatus()).isEqualTo(400);
+        assertThat(withHeader(ops, "/system/v1/pricing/reservations", "k-" + UUID.randomUUID(), Map2.of("usage", List.of())).getResponse().getStatus()).isEqualTo(400);
+        assertThat(call(acme, ops, HttpMethod.POST, "/system/v1/usage-events", Map2.of("metric", "x", "quantity", "1")).getResponse().getStatus()).isEqualTo(400);
         assertThat(call(acme, acme.adminToken(), HttpMethod.POST, "/api/v1/pricing-plans", Map2.of("code", code(), "name", "x", "model", "EVENT_BASED",
                 "version", Map2.of("rule", Map2.of("metric", metric(), "unit", "call", "unitPrice", "1")))).getResponse().getStatus()).isEqualTo(400);
-        assertThat(call(acme, ops, HttpMethod.GET, "/api/v1/pricing-plans/not-a-uuid", null).getResponse().getStatus()).isEqualTo(400);
+        assertThat(call(acme, ops, HttpMethod.GET, "/system/v1/pricing-plans/not-a-uuid", null).getResponse().getStatus()).isEqualTo(400);
     }
 }

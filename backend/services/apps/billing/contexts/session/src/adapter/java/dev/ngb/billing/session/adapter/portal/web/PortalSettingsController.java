@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
-@RequestMapping("/api/v1/portal/return-urls")
+@RequestMapping("/portal/return-urls")
 @Callers(Caller.TENANT_USER)
 public class PortalSettingsController {
 

@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Problems with Stripe that need a person to look, and resolving them.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers(Caller.TENANT_USER)
 public class IncidentController {
 

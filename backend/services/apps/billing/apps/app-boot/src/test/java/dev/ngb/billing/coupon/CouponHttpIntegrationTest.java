@@ -75,12 +75,12 @@ class CouponHttpIntegrationTest {
     }
 
     private String newCustomer(Account account, String token) {
-        return postWithKey(token, "/api/v1/customers",
+        return postWithKey(token, "/system/v1/customers",
                 HttpWorld.Map2.of("externalUserId", "user-" + UUID.randomUUID(), "displayName", "Acme Ltd")).get("id").asString();
     }
 
     private String openWallet(Account account, String token, String customer, String currency) {
-        return postWithKey(token, "/api/v1/wallets",
+        return postWithKey(token, "/system/v1/wallets",
                 HttpWorld.Map2.of("customerId", customer, "currency", currency, "mode", "PREPAID")).get("id").asString();
     }
 
@@ -91,7 +91,7 @@ class CouponHttpIntegrationTest {
     }
 
     private JsonNode createPercentCoupon(String token, int basisPoints, long maxRedemptions, String code) {
-        MvcResult result = world.call(HttpMethod.POST, acme.host(), token, "/api/v1/coupons", HttpWorld.Map2.of(
+        MvcResult result = world.call(HttpMethod.POST, acme.host(), token, "/system/v1/coupons", HttpWorld.Map2.of(
                 "name", "Save " + basisPoints,
                 "currency", "USD",
                 "benefit", HttpWorld.Map2.of("type", "PERCENT_OFF", "basisPoints", basisPoints),
@@ -102,7 +102,7 @@ class CouponHttpIntegrationTest {
     }
 
     private JsonNode createCreditCoupon(String token, long amount, String code) {
-        MvcResult result = world.call(HttpMethod.POST, acme.host(), token, "/api/v1/coupons", HttpWorld.Map2.of(
+        MvcResult result = world.call(HttpMethod.POST, acme.host(), token, "/system/v1/coupons", HttpWorld.Map2.of(
                 "name", "Welcome credit",
                 "currency", "USD",
                 "benefit", HttpWorld.Map2.of("type", "WALLET_CREDIT", "amount", amount),
@@ -112,12 +112,12 @@ class CouponHttpIntegrationTest {
     }
 
     private MvcResult redeemByCode(String token, String wallet, String code, String key) {
-        return world.call(HttpMethod.POST, acme.host(), token, "/api/v1/wallets/" + wallet + "/coupon-redemptions",
+        return world.call(HttpMethod.POST, acme.host(), token, "/system/v1/wallets/" + wallet + "/coupon-redemptions",
                 HttpWorld.Map2.of("code", code), java.util.Map.of("Idempotency-Key", key));
     }
 
     private MvcResult attach(String token, String wallet, String couponId, String key) {
-        return world.call(HttpMethod.POST, acme.host(), token, "/api/v1/wallets/" + wallet + "/coupon-redemptions/attach",
+        return world.call(HttpMethod.POST, acme.host(), token, "/system/v1/wallets/" + wallet + "/coupon-redemptions/attach",
                 HttpWorld.Map2.of("couponId", couponId), java.util.Map.of("Idempotency-Key", key));
     }
 
@@ -132,16 +132,16 @@ class CouponHttpIntegrationTest {
         assertThat(created.get("code").get("code").asString()).isEqualTo("SAVE20");
 
         String couponId = created.get("coupon").get("id").asString();
-        JsonNode listed = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(), "/api/v1/coupons", null));
+        JsonNode listed = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(), "/system/v1/coupons", null));
         assertThat(listed.findValuesAsString("id")).contains(couponId);
 
-        JsonNode codes = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(), "/api/v1/coupons/" + couponId + "/codes", null));
+        JsonNode codes = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(), "/system/v1/coupons/" + couponId + "/codes", null));
         assertThat(codes.findValuesAsString("code")).contains("SAVE20");
     }
 
     @Test
     void aCouponWithoutATotalBoundIsRefused() {
-        MvcResult result = world.call(HttpMethod.POST, acme.host(), couponSystem.token(), "/api/v1/coupons", HttpWorld.Map2.of(
+        MvcResult result = world.call(HttpMethod.POST, acme.host(), couponSystem.token(), "/system/v1/coupons", HttpWorld.Map2.of(
                 "name", "Unbounded",
                 "currency", "USD",
                 "benefit", HttpWorld.Map2.of("type", "PERCENT_OFF", "basisPoints", 1_000),
@@ -166,7 +166,7 @@ class CouponHttpIntegrationTest {
         assertThat(world.body(replay).get("id").asString()).isEqualTo(redemptionId);
 
         JsonNode listed = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(),
-                "/api/v1/wallets/" + wallet + "/coupon-redemptions", null)).get("data");
+                "/system/v1/wallets/" + wallet + "/coupon-redemptions", null)).get("data");
         assertThat(listed).hasSize(1);
         assertThat(listed.get(0).get("status").asString()).isEqualTo("ACTIVE");
     }
@@ -224,7 +224,7 @@ class CouponHttpIntegrationTest {
         assertThat(world.body(first).get("status").asString()).isEqualTo("ENDED");
         assertThat(world.body(first).get("endReason").asString()).isEqualTo("GRANTED");
 
-        JsonNode balance = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(), "/api/v1/wallets/" + wallet, null));
+        JsonNode balance = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(), "/system/v1/wallets/" + wallet, null));
         assertThat(balance.get("balance").get("amount").asLong()).isEqualTo(25_000);
         assertThat(balance.get("lastSequence").asLong()).as("one ledger entry, however often the key arrives").isEqualTo(1);
     }
@@ -232,7 +232,7 @@ class CouponHttpIntegrationTest {
     @Test
     void maxPerCustomerStopsAWalletCreditCouponFromBeingRedeemedAgain() {
         String wallet = openWallet(acme, couponSystem.token(), newCustomer(acme, couponSystem.token()), "USD");
-        world.body(world.call(HttpMethod.POST, acme.host(), couponSystem.token(), "/api/v1/coupons", HttpWorld.Map2.of(
+        world.body(world.call(HttpMethod.POST, acme.host(), couponSystem.token(), "/system/v1/coupons", HttpWorld.Map2.of(
                 "name", "Credit once",
                 "currency", "USD",
                 "benefit", HttpWorld.Map2.of("type", "WALLET_CREDIT", "amount", 25_000),
@@ -244,7 +244,7 @@ class CouponHttpIntegrationTest {
 
         assertThat(first.getResponse().getStatus()).isEqualTo(201);
         assertThat(again.getResponse().getStatus()).as("an ended credit redemption still counts toward the customer's limit").isEqualTo(409);
-        JsonNode balance = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(), "/api/v1/wallets/" + wallet, null));
+        JsonNode balance = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(), "/system/v1/wallets/" + wallet, null));
         assertThat(balance.get("balance").get("amount").asLong()).as("credited once").isEqualTo(25_000);
     }
 
@@ -265,9 +265,9 @@ class CouponHttpIntegrationTest {
         String redemptionId = world.body(redeemByCode(couponSystem.token(), wallet, "REVOKE1", "revoke-key")).get("id").asString();
 
         JsonNode revoked = world.body(world.call(HttpMethod.POST, acme.host(), couponSystem.token(),
-                "/api/v1/coupon-redemptions/" + redemptionId + "/revoke", null));
+                "/system/v1/coupon-redemptions/" + redemptionId + "/revoke", null));
         JsonNode again = world.body(world.call(HttpMethod.POST, acme.host(), couponSystem.token(),
-                "/api/v1/coupon-redemptions/" + redemptionId + "/revoke", null));
+                "/system/v1/coupon-redemptions/" + redemptionId + "/revoke", null));
 
         assertThat(revoked.get("status").asString()).isEqualTo("REVOKED");
         assertThat(revoked.get("endReason").asString()).isEqualTo("REVOKED");
@@ -281,13 +281,13 @@ class CouponHttpIntegrationTest {
         String couponId = created.get("coupon").get("id").asString();
         world.body(redeemByCode(couponSystem.token(), wallet, "DEACT1", "deact-key"));
 
-        world.body(world.call(HttpMethod.POST, acme.host(), couponSystem.token(), "/api/v1/coupons/" + couponId + "/deactivate",
+        world.body(world.call(HttpMethod.POST, acme.host(), couponSystem.token(), "/system/v1/coupons/" + couponId + "/deactivate",
                 HttpWorld.Map2.of("revokeRedemptions", false)));
 
         String otherWallet = openWallet(acme, couponSystem.token(), newCustomer(acme, couponSystem.token()), "USD");
         assertThat(redeemByCode(couponSystem.token(), otherWallet, "DEACT1", "deact-key-2").getResponse().getStatus()).isEqualTo(404);
         JsonNode running = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(),
-                "/api/v1/wallets/" + wallet + "/coupon-redemptions", null)).get("data");
+                "/system/v1/wallets/" + wallet + "/coupon-redemptions", null)).get("data");
         assertThat(running.get(0).get("status").asString()).isEqualTo("ACTIVE");
     }
 
@@ -297,11 +297,11 @@ class CouponHttpIntegrationTest {
         String couponId = createPercentCoupon(couponSystem.token(), 2_000, 100, "PULLIT").get("coupon").get("id").asString();
         world.body(redeemByCode(couponSystem.token(), wallet, "PULLIT", "pull-key"));
 
-        world.body(world.call(HttpMethod.POST, acme.host(), couponSystem.token(), "/api/v1/coupons/" + couponId + "/deactivate",
+        world.body(world.call(HttpMethod.POST, acme.host(), couponSystem.token(), "/system/v1/coupons/" + couponId + "/deactivate",
                 HttpWorld.Map2.of("revokeRedemptions", true)));
 
         JsonNode running = world.body(world.call(HttpMethod.GET, acme.host(), couponSystem.token(),
-                "/api/v1/wallets/" + wallet + "/coupon-redemptions", null)).get("data");
+                "/system/v1/wallets/" + wallet + "/coupon-redemptions", null)).get("data");
         assertThat(running.get(0).get("status").asString()).isEqualTo("REVOKED");
         assertThat(running.get(0).get("endReason").asString()).isEqualTo("COUPON_DEACTIVATED");
     }
@@ -313,7 +313,7 @@ class CouponHttpIntegrationTest {
         String redeemOnly = couponSystem.tokenFor("billing:coupon:redeem");
 
         assertThat(redeemByCode(redeemOnly, wallet, "PERMCODE", "perm-key").getResponse().getStatus()).isEqualTo(201);
-        assertThat(world.status(HttpMethod.POST, acme.host(), redeemOnly, "/api/v1/coupons", HttpWorld.Map2.of(
+        assertThat(world.status(HttpMethod.POST, acme.host(), redeemOnly, "/system/v1/coupons", HttpWorld.Map2.of(
                 "name", "x", "currency", "USD", "benefit", HttpWorld.Map2.of("type", "PERCENT_OFF", "basisPoints", 100),
                 "limits", HttpWorld.Map2.of("redeemBy", "2027-01-01T00:00:00Z"), "stackable", true))).isEqualTo(403);
     }
@@ -337,13 +337,13 @@ class CouponHttpIntegrationTest {
         String ownWallet = openWallet(acme, couponSystem.token(), newCustomer(acme, couponSystem.token()), "USD");
         String redemptionId = world.body(redeemByCode(couponSystem.token(), ownWallet, "SEEN", "seen-key")).get("id").asString();
 
-        assertThat(world.status(HttpMethod.GET, acme.host(), couponSystem.token(), "/api/v1/wallets/" + ownWallet + "/coupon-redemptions", null))
+        assertThat(world.status(HttpMethod.GET, acme.host(), couponSystem.token(), "/system/v1/wallets/" + ownWallet + "/coupon-redemptions", null))
                 .isEqualTo(200);
-        assertThat(world.status(HttpMethod.GET, acme.host(), narrow.token(), "/api/v1/wallets/" + ownWallet + "/coupon-redemptions", null))
+        assertThat(world.status(HttpMethod.GET, acme.host(), narrow.token(), "/system/v1/wallets/" + ownWallet + "/coupon-redemptions", null))
                 .as("the customer is not mapped to this system").isEqualTo(404);
-        assertThat(world.status(HttpMethod.GET, acme.host(), narrow.token(), "/api/v1/coupon-redemptions/" + redemptionId, null))
+        assertThat(world.status(HttpMethod.GET, acme.host(), narrow.token(), "/system/v1/coupon-redemptions/" + redemptionId, null))
                 .isEqualTo(404);
-        assertThat(world.status(HttpMethod.GET, acme.host(), couponSystem.token(), "/api/v1/coupon-redemptions/" + redemptionId, null))
+        assertThat(world.status(HttpMethod.GET, acme.host(), couponSystem.token(), "/system/v1/coupon-redemptions/" + redemptionId, null))
                 .isEqualTo(200);
     }
 

@@ -12,6 +12,7 @@ import dev.ngb.core.suite.security.SuiteActorConverter;
 import dev.ngb.core.suite.security.SuiteActorResolver;
 import dev.ngb.core.suite.security.SuiteAuthentication;
 import dev.ngb.core.suite.security.SuiteJwtDecoders;
+import dev.ngb.core.suite.web.CallerTokenFilter;
 import dev.ngb.core.security.Actor;
 import dev.ngb.core.security.Authorizer;
 import dev.ngb.core.security.CurrentActor;
@@ -50,6 +51,8 @@ class SecurityConfiguration {
             PortalProperties portal) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(portalCors))
+                // Refuses a valid token of the wrong kind on each caller prefix before the resource server resolves it.
+                .addFilterBefore(new CallerTokenFilter(decoders), BearerTokenAuthenticationFilter.class)
                 .sessionManagement(sessions -> sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/scalar", "/scalar/**", "/actuator/health", "/actuator/health/**")

@@ -11,11 +11,13 @@ import dev.ngb.core.version.ExpectedVersion;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * The RFC 9457 mapping shared by every service, so the same failure always produces the same status and shape.
@@ -104,6 +106,20 @@ public abstract class CoreExceptionHandlers {
     @ExceptionHandler(NoResourceFoundException.class)
     public ProblemDetail noResource(NoResourceFoundException e) {
         return ProblemDetails.of(HttpStatus.NOT_FOUND, "No resource exists at this path.");
+    }
+
+    /**
+     * A method the path does not serve is the caller's mistake, not an unexpected error: {@code 405} with the methods it
+     * does serve. A path shared by two callers can serve a different set of methods to each, so a machine reaching a
+     * person-only method on a shared path lands here.
+     */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ProblemDetail> methodNotAllowed(HttpRequestMethodNotSupportedException e) {
+        ResponseEntity.BodyBuilder response = ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED);
+        if (e.getSupportedHttpMethods() != null) {
+            response.allow(e.getSupportedHttpMethods().toArray(HttpMethod[]::new));
+        }
+        return response.body(ProblemDetails.of(HttpStatus.METHOD_NOT_ALLOWED, "This path does not serve this method."));
     }
 
     /** Unexpected errors reveal nothing about the cause. */

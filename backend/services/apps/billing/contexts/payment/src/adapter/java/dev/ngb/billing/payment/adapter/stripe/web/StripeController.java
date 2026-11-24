@@ -52,7 +52,7 @@ import org.springframework.web.bind.annotation.RestController;
                 + "secret.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers(Caller.TENANT_USER)
 public class StripeController {
 

@@ -7,6 +7,7 @@ import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.suite.security.SuiteActorConverter;
 import dev.ngb.core.suite.security.SuiteActorResolver;
 import dev.ngb.core.suite.security.SuiteJwtDecoders;
+import dev.ngb.core.suite.web.CallerTokenFilter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +15,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -32,6 +34,8 @@ class SecurityConfiguration {
     SecurityFilterChain apiSecurity(
             HttpSecurity http, SuiteJwtDecoders decoders, SuiteActorResolver actorResolver) throws Exception {
         http.csrf(csrf -> csrf.disable())
+                // Refuses a valid token of the wrong kind on each caller prefix before the resource server resolves it.
+                .addFilterBefore(new CallerTokenFilter(decoders), BearerTokenAuthenticationFilter.class)
                 .sessionManagement(sessions -> sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/actuator/health", "/actuator/health/**")

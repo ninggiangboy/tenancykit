@@ -5,14 +5,17 @@ import dev.ngb.core.security.Authorizer;
 import dev.ngb.core.security.CurrentActor;
 import dev.ngb.core.security.RequiresPermission;
 import dev.ngb.core.openapi.CallerLabelCustomizer;
+import dev.ngb.core.openapi.CallerSurfaceOpenApiCustomizer;
 import dev.ngb.core.openapi.DescriptionsOpenApiCustomizer;
 import dev.ngb.core.openapi.ErrorResponsesOpenApiCustomizer;
 import dev.ngb.core.openapi.ListingOpenApiCustomizer;
 import dev.ngb.core.openapi.PermissionCatalogs;
 import dev.ngb.core.spring.query.ListQueryResolver;
 import dev.ngb.core.spring.security.PermissionInterceptor;
+import dev.ngb.core.spring.web.CallerPrefixMapping;
 import dev.ngb.core.idempotency.RepeatableCreate;
 import dev.ngb.core.version.ConditionalUpdate;
+import dev.ngb.billing.boot.config.SuiteProperties;
 import dev.ngb.billing.session.api.portal.PortalAuthorizer;
 import dev.ngb.billing.session.api.portal.RequiresPortalPermission;
 import io.swagger.v3.oas.models.Components;
@@ -28,12 +31,14 @@ import io.swagger.v3.oas.models.servers.Server;
 import java.util.List;
 import java.util.Map;
 import org.springdoc.core.customizers.OperationCustomizer;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
@@ -51,6 +56,17 @@ class WebConfiguration implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(
                 new PermissionInterceptor(authorizer, List.of(new PortalPermissionCheck(portalAuthorizer))));
+    }
+
+    /**
+     * Mounts every handler under the prefixes its declared callers imply, so a controller declares only its resource
+     * path. It must be created after the framework has registered its mappings, which the bean dependency guarantees.
+     * Billing keeps its routes at the host root, so its prefixes carry no app segment.
+     */
+    @Bean
+    CallerPrefixMapping callerPrefixes(
+            @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping mapping, SuiteProperties suite) {
+        return new CallerPrefixMapping(mapping, suite.appCode(), false);
     }
 
     @Override
@@ -173,5 +189,11 @@ class WebConfiguration implements WebMvcConfigurer {
         return new CallerLabelCustomizer(
                 PermissionCatalogs.fromClasspath(),
                 Map.of(RequiresPortalPermission.class, Caller.CUSTOMER_SESSION));
+    }
+
+    /** Narrows a route documented at two prefixes to the one caller each prefix serves, and pins a twin's id. */
+    @Bean
+    CallerSurfaceOpenApiCustomizer callerSurfaces() {
+        return new CallerSurfaceOpenApiCustomizer();
     }
 }

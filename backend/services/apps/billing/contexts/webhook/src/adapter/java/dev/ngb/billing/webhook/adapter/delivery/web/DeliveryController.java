@@ -42,7 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
                 + "delivery that exhausted its attempts is DEAD and stays visible so it can be resent.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class DeliveryController {
 

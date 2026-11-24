@@ -77,20 +77,20 @@ class ConditionalUpdateHttpIntegrationTest {
     @Test
     void customerUpdateFollowsTheConditionalMatrix() throws Exception {
         String id = newCustomer();
-        assertCustomerMatrix("/api/v1/customers/" + id, HttpMethod.PUT,
+        assertCustomerMatrix("/system/v1/customers/" + id, HttpMethod.PUT,
                 HttpWorld.Map2.of("displayName", "Renamed", "email", "billing@acme.test"));
     }
 
     @Test
     void customerDeactivateFollowsTheConditionalMatrix() throws Exception {
-        assertCustomerMatrix("/api/v1/customers/" + newCustomer() + "/deactivate", HttpMethod.POST, null);
+        assertCustomerMatrix("/system/v1/customers/" + newCustomer() + "/deactivate", HttpMethod.POST, null);
     }
 
     @Test
     void theCustomerGetAnswersAnEtag() throws Exception {
         String id = newCustomer();
 
-        MvcResult got = call(acme.host(), acmeKey, HttpMethod.GET, "/api/v1/customers/" + id, null, Map.of());
+        MvcResult got = call(acme.host(), acmeKey, HttpMethod.GET, "/system/v1/customers/" + id, null, Map.of());
         assertThat(got.getResponse().getStatus()).isEqualTo(200);
         assertThat(got.getResponse().getHeader("ETag")).isEqualTo("\"1\"");
     }
@@ -100,13 +100,13 @@ class ConditionalUpdateHttpIntegrationTest {
         String id = newCustomer();
         String otherSystem = world.newSystem(acme, "billing:customer:read", "billing:customer:write").token();
 
-        MvcResult unmapped = call(acme.host(), otherSystem, HttpMethod.PUT, "/api/v1/customers/" + id,
+        MvcResult unmapped = call(acme.host(), otherSystem, HttpMethod.PUT, "/system/v1/customers/" + id,
                 HttpWorld.Map2.of("displayName", "Hijack"), Map.of("If-Match", "\"1\""));
         assertThat(unmapped.getResponse().getStatus())
                 .as("visibility is checked first, so the version of an unmapped customer does not leak")
                 .isEqualTo(404);
 
-        MvcResult crossTenant = call(globex.host(), globexKey, HttpMethod.PUT, "/api/v1/customers/" + id,
+        MvcResult crossTenant = call(globex.host(), globexKey, HttpMethod.PUT, "/system/v1/customers/" + id,
                 HttpWorld.Map2.of("displayName", "Hijack"), Map.of("If-Match", "\"1\""));
         assertThat(crossTenant.getResponse().getStatus()).isEqualTo(404);
     }
@@ -132,7 +132,7 @@ class ConditionalUpdateHttpIntegrationTest {
     @Test
     void webhookEndpointPatchAndGetCarryTheTag() throws Exception {
         String id = newEndpoint();
-        String path = "/api/v1/webhook-endpoints/" + id;
+        String path = "/system/v1/webhook-endpoints/" + id;
         Map<String, Object> body = HttpWorld.Map2.of("description", "Renamed");
 
         MvcResult got = call(acme.host(), acmeKey, HttpMethod.GET, path, null, Map.of());
@@ -190,7 +190,7 @@ class ConditionalUpdateHttpIntegrationTest {
     }
 
     private String newCustomer() {
-        MvcResult created = call(acme.host(), acmeKey, HttpMethod.POST, "/api/v1/customers",
+        MvcResult created = call(acme.host(), acmeKey, HttpMethod.POST, "/system/v1/customers",
                 HttpWorld.Map2.of("tenantSystemId", acmeSystemId, "externalUserId", "u-" + UUID.randomUUID(),
                         "displayName", "Acme Ltd", "email", "billing@acme.test"),
                 Map.of("Idempotency-Key", "k-" + UUID.randomUUID()));
@@ -199,7 +199,7 @@ class ConditionalUpdateHttpIntegrationTest {
     }
 
     private String newEndpoint() {
-        MvcResult created = call(acme.host(), acmeKey, HttpMethod.POST, "/api/v1/webhook-endpoints",
+        MvcResult created = call(acme.host(), acmeKey, HttpMethod.POST, "/system/v1/webhook-endpoints",
                 HttpWorld.Map2.of("url", "https://hooks.example.test/x", "eventTypes", List.of("*")), Map.of());
         assertThat(created.getResponse().getStatus()).isEqualTo(201);
         return world.body(created).get("endpoint").get("id").asString();

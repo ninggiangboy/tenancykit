@@ -46,7 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Invoices. An invoice becomes paid only from a verified payment; no request marks one paid.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class InvoiceController {
 

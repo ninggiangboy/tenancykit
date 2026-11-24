@@ -44,7 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Open and read wallets. Amounts are integers in minor units with an ISO 4217 currency.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class WalletController {
 

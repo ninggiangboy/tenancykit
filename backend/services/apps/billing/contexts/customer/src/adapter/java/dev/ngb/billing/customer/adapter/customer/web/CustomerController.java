@@ -51,7 +51,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Billing customers of the tenant, optionally mapped to a Tenant System's own users.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1/customers")
+@RequestMapping("/customers")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class CustomerController {
 

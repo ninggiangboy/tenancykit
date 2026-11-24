@@ -48,7 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
                 "Redeem a coupon onto a wallet by code or by id, revoke one, and read a wallet's redemptions.")
 @Profile("api")
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class RedemptionController {
 

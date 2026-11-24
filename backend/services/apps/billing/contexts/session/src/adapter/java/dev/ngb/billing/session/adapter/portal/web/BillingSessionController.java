@@ -45,7 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("api")
 @ConditionalOnProperty(name = "billing.portal.enabled", havingValue = "true", matchIfMissing = true)
 @RestController
-@RequestMapping("/api/v1/billing-sessions")
+@RequestMapping("/billing-sessions")
 @Callers({Caller.TENANT_USER, Caller.TENANT_SYSTEM})
 public class BillingSessionController {
 

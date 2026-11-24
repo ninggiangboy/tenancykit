@@ -75,7 +75,7 @@ class CouponChargeIntegrationTest {
         if (code != null) {
             body.put("code", code);
         }
-        return world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/api/v1/coupons", body));
+        return world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/system/v1/coupons", body));
     }
 
     private JsonNode createAmountCoupon(long amount, String code) {
@@ -88,14 +88,14 @@ class CouponChargeIntegrationTest {
         if (code != null) {
             body.put("code", code);
         }
-        return world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/api/v1/coupons", body));
+        return world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/system/v1/coupons", body));
     }
 
     private String walletWith(long balance) {
-        String customer = world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/api/v1/customers",
+        String customer = world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/system/v1/customers",
                 HttpWorld.Map2.of("externalUserId", "user-" + UUID.randomUUID(), "displayName", "Acme Ltd"),
                 Map.of("Idempotency-Key", "cust-" + UUID.randomUUID()))).get("id").asString();
-        String id = world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/api/v1/wallets",
+        String id = world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/system/v1/wallets",
                 HttpWorld.Map2.of("customerId", customer, "currency", "USD", "mode", "PREPAID"),
                 Map.of("Idempotency-Key", "wallet-" + UUID.randomUUID()))).get("id").asString();
         if (balance > 0) {
@@ -108,12 +108,12 @@ class CouponChargeIntegrationTest {
 
     private JsonNode attach(String walletId, String couponId, String key) {
         return world.body(world.call(HttpMethod.POST, acme.host(), system.token(),
-                "/api/v1/wallets/" + walletId + "/coupon-redemptions/attach", HttpWorld.Map2.of("couponId", couponId),
+                "/system/v1/wallets/" + walletId + "/coupon-redemptions/attach", HttpWorld.Map2.of("couponId", couponId),
                 Map.of("Idempotency-Key", key)));
     }
 
     private MvcResult charge(String walletId, long amount, String key) {
-        return world.call(HttpMethod.POST, acme.host(), system.token(), "/api/v1/charges",
+        return world.call(HttpMethod.POST, acme.host(), system.token(), "/system/v1/charges",
                 HttpWorld.Map2.of("walletId", walletId, "amount", amount, "currency", "USD", "reference", "test-charge"),
                 Map.of("Idempotency-Key", key));
     }
@@ -131,7 +131,7 @@ class CouponChargeIntegrationTest {
     }
 
     private JsonNode balance(String walletId) {
-        return world.body(world.call(HttpMethod.GET, acme.host(), system.token(), "/api/v1/wallets/" + walletId, null));
+        return world.body(world.call(HttpMethod.GET, acme.host(), system.token(), "/system/v1/wallets/" + walletId, null));
     }
 
     @Test
@@ -159,7 +159,7 @@ class CouponChargeIntegrationTest {
         String target = walletWith(100_000);
         attach(target, coupon, "keep-attach");
 
-        world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/api/v1/coupons/" + coupon + "/deactivate",
+        world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/system/v1/coupons/" + coupon + "/deactivate",
                 HttpWorld.Map2.of("revokeRedemptions", false)));
         JsonNode charged = world.body(charge(target, 10_000, "keep-charge"));
 
@@ -180,7 +180,7 @@ class CouponChargeIntegrationTest {
         assertThat(replay.get("id").asString()).isEqualTo(first.get("id").asString());
         assertThat(balance(target).get("balance").get("amount").asLong()).isEqualTo(20_000);
         JsonNode redemption = world.body(world.call(HttpMethod.GET, acme.host(), system.token(),
-                "/api/v1/coupon-redemptions/" + first.get("discounts").get(0).get("redemptionId").asString(), null));
+                "/system/v1/coupon-redemptions/" + first.get("discounts").get(0).get("redemptionId").asString(), null));
         assertThat(redemption.get("applicationsUsed").asInt()).as("a replay consumes nothing").isEqualTo(1);
     }
 
@@ -193,7 +193,7 @@ class CouponChargeIntegrationTest {
         body.put("maxApplications", 1);
         body.put("limits", HttpWorld.Map2.of("redeemBy", "2027-01-01T00:00:00Z"));
         body.put("stackable", true);
-        String couponId = world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/api/v1/coupons", body))
+        String couponId = world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/system/v1/coupons", body))
                 .get("coupon").get("id").asString();
         String target = walletWith(200_000);
         attach(target, couponId, "once-1");
@@ -205,7 +205,7 @@ class CouponChargeIntegrationTest {
         assertThat(second.get("amount").get("amount").asLong()).as("the coupon is spent").isEqualTo(100_000);
         String redemptionId = first.get("discounts").get(0).get("redemptionId").asString();
         JsonNode redemption = world.body(world.call(HttpMethod.GET, acme.host(), system.token(),
-                "/api/v1/coupon-redemptions/" + redemptionId, null));
+                "/system/v1/coupon-redemptions/" + redemptionId, null));
         assertThat(redemption.get("status").asString()).isEqualTo("ENDED");
         assertThat(redemption.get("endReason").asString()).isEqualTo("EXHAUSTED");
     }
@@ -239,7 +239,7 @@ class CouponChargeIntegrationTest {
         assertThat(failedBody.get("status").asString()).isEqualTo("FAILED");
         assertThat(failedBody.get("discounts")).isEmpty();
         JsonNode redemption = world.body(world.call(HttpMethod.GET, acme.host(), system.token(),
-                "/api/v1/wallets/" + poor + "/coupon-redemptions", null)).get("data");
+                "/system/v1/wallets/" + poor + "/coupon-redemptions", null)).get("data");
         assertThat(redemption.get(0).get("applicationsUsed").asInt()).as("a failed charge consumed nothing").isZero();
 
         scopes.runInTenant(new TenantId(UUID.fromString(acme.tenantId())), () -> creditWallet.credit(new CreditCommand(
@@ -260,7 +260,7 @@ class CouponChargeIntegrationTest {
         single.put("benefit", HttpWorld.Map2.of("type", "PERCENT_OFF", "basisPoints", 500));
         single.put("limits", HttpWorld.Map2.of("redeemBy", "2027-01-01T00:00:00Z"));
         single.put("stackable", false);
-        String exclusive = world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/api/v1/coupons", single))
+        String exclusive = world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/system/v1/coupons", single))
                 .get("coupon").get("id").asString();
         String stackable = createPercentCoupon(1_000, "STACK10").get("coupon").get("id").asString();
         String target = walletWith(100_000);
@@ -278,12 +278,12 @@ class CouponChargeIntegrationTest {
         String saving = createPercentCoupon(2_000, "RESERVE20").get("coupon").get("id").asString();
         String target = walletWith(100_000);
         attach(target, saving, "reserve-1");
-        JsonNode reservation = world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/api/v1/reservations",
+        JsonNode reservation = world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/system/v1/reservations",
                 HttpWorld.Map2.of("walletId", target, "amount", 100_000, "currency", "USD", "ttlSeconds", 600, "reference", "vm"),
                 Map.of("Idempotency-Key", "res-" + UUID.randomUUID())));
 
         JsonNode capture = world.body(world.call(HttpMethod.POST, acme.host(), system.token(),
-                "/api/v1/reservations/" + reservation.get("id").asString() + "/capture",
+                "/system/v1/reservations/" + reservation.get("id").asString() + "/capture",
                 HttpWorld.Map2.of("amount", 100_000, "currency", "USD", "reference", "vm final"),
                 Map.of("Idempotency-Key", "cap-" + UUID.randomUUID())));
 
@@ -304,7 +304,7 @@ class CouponChargeIntegrationTest {
         body.put("limits", HttpWorld.Map2.of("redeemBy", "2027-01-01T00:00:00Z"));
         body.put("scope", HttpWorld.Map2.of("kinds", List.of("USAGE")));
         body.put("stackable", true);
-        String couponId = world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/api/v1/coupons", body))
+        String couponId = world.body(world.call(HttpMethod.POST, acme.host(), system.token(), "/system/v1/coupons", body))
                 .get("coupon").get("id").asString();
         String target = walletWith(100_000);
         attach(target, couponId, "scoped-1");
