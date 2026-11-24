@@ -166,7 +166,7 @@ rejected.
 ## Billing Session (Customer Portal)
 
 The Customer Portal has no login. A Tenant System issues a Billing Session for one mapped Customer through
-`POST /api/v1/billing-sessions` (`billing:billing-session:create`). The single-use token in the portal URL is
+`POST /system/v1/billing-sessions` (`billing:billing-session:create`). The single-use token in the portal URL is
 exchanged for an HttpOnly, Secure, SameSite cookie; the session principal carries the Tenant, that Customer and the
 session permissions only. Every portal query takes the Customer from the principal, and a session issued in one Tenant
 is not usable in another. State-changing calls use a double-submit CSRF token, and CORS is limited to the tenant

@@ -168,7 +168,9 @@ logged.
 ## API surface
 
 Every tenant endpoint is under `/mailroom/api/v1` on the client's side (the proxy strips `/mailroom`, and the
-controller serves `/api/v1`). JSON field names are camelCase, as in every other app; the database columns are snake_case
+controller serves `/api/v1`) for a signed-in person. A Tenant System reaches the operations its credential may carry
+under `/mailroom/system/v1` with a suite token; each door refuses the other's token with `403`
+([audiences-and-surfaces.md](audiences-and-surfaces.md)). JSON field names are camelCase, as in every other app; the database columns are snake_case
 and never appear on the wire.
 
 | Resource | Endpoints |

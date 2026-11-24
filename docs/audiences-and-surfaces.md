@@ -83,31 +83,31 @@ the same paths the app declares; the proxy adds no logic and does not read the c
 | Platform | public | `/.well-known/jwks.json` | `platform` | 1 |
 | Platform | internal | `/api/v1`, `/internal`, `/oauth/token` | `platform` | 3 |
 | Billing | tenant-user | `/api/v1` | `billing-api` | 85 |
-| Billing | tenant-system | `/api/v1` | `billing-api` | 64 |
+| Billing | tenant-system | `/system/v1` | `billing-api` | 64 |
 | Billing | customer-session | `/portal` | `billing-public` | 17 |
 | Billing | public | `/portal` | `billing-public` | 2 |
 | Billing | provider | `/stripe/webhooks` | `billing-public` | 2 |
 | Notification | tenant-user | `/api/v1` | `notification-api` | 8 |
 | Notification | platform-user | `/api/v1` | `notification-api` | 9 |
 | Mailroom | tenant-user | `/api/v1` | `mailroom-api` | 47 |
-| Mailroom | tenant-system | `/api/v1` | `mailroom-api` | 46 |
+| Mailroom | tenant-system | `/system/v1` | `mailroom-api` | 46 |
 | Mailroom | public | `/t` | `mailroom-public` | 4 |
 | Survey | tenant-user | `/api/v1` | `survey-api` | 40 |
 | Survey | tenant-system | `/system/v1` | `survey-api` | 38 |
 | Survey | public | `/p` | `survey-public` | 7 |
 | Attribution | tenant-user | `/api/v1` | `attribution-api` | 40 |
-| Attribution | tenant-system | `/api/v1` | `attribution-api` | 37 |
+| Attribution | tenant-system | `/system/v1` | `attribution-api` | 37 |
 | Attribution | public | `/go`, `/t` | `attribution-public` | 4 |
 | Workflow | tenant-user | `/api/v1` | `workflow-api` | 43 |
-| Workflow | tenant-system | `/api/v1` | `workflow-api` | 43 |
+| Workflow | tenant-system | `/system/v1` | `workflow-api` | 43 |
 | Workflow | provider | `/hooks` | `workflow-public` | 1 |
 | Booking | tenant-user | `/api/v1` | `booking-api` | 62 |
-| Booking | tenant-system | `/api/v1` | `booking-api` | 61 |
+| Booking | tenant-system | `/system/v1` | `booking-api` | 62 |
 | Booking | public | `/p` | `booking-public` | 10 |
 | Customer | tenant-user | `/api/v1` | `customer-api` | 33 |
-| Customer | tenant-system | `/api/v1` | `customer-api` | 33 |
+| Customer | tenant-system | `/system/v1` | `customer-api` | 33 |
 | Loyalty | tenant-user | `/api/v1` | `loyalty-api` | 34 |
-| Loyalty | tenant-system | `/api/v1` | `loyalty-api` | 30 |
+| Loyalty | tenant-system | `/system/v1` | `loyalty-api` | 34 |
 <!-- END GENERATED -->
 
 ## Where this lives

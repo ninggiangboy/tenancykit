@@ -234,7 +234,9 @@ retain nothing deletes the response. A survey closed and emptied leaves its visi
 ## API surface
 
 Every tenant endpoint is under `/survey/api/v1` on the client's side (the proxy strips `/survey`, and the controller
-serves `/api/v1`). JSON field names are camelCase; database columns are snake_case and never appear on the wire. The
+serves `/api/v1`) for a signed-in person. A Tenant System reaches the operations its credential may carry under
+`/survey/system/v1` with a suite token; each door refuses the other's token with `403`
+([audiences-and-surfaces.md](audiences-and-surfaces.md)). JSON field names are camelCase; database columns are snake_case and never appear on the wire. The
 committed contract is [contracts/openapi/survey.yaml](../contracts/openapi/survey.yaml).
 
 | Resource | Endpoints |

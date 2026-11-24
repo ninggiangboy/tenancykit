@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: "Roll out prefixes to all apps"
-status: pending
+status: done
 priority: P1
 effort: 3d
 dependencies: [5]
@@ -44,3 +44,17 @@ Billing, Mailroom, Attribution, Booking, Customer, Loyalty, Workflow and Notific
 
 ## Risks
 - Hand-written YAML apps get ~2x paths by hand; the phase 3 comparison test must stay strict.
+
+## Outcome
+- Seven apps (Billing, Mailroom, Attribution, Booking, Customer, Loyalty, Workflow) declare only their resource path,
+  answer on `/api/v1` and `/system/v1`, refuse the other kind of token with `403`, and run their contract test with the
+  one-caller and prefix rules on. Their suite-token callers (seeds, smoke scripts, e2e fixtures, tests, docs) use
+  `/system/v1`; the generated Billing client was regenerated from the merged contract.
+- Notification gets only the token filter here. Its templates (`/admin/v1`), inbox and preferences (`/me`) move in
+  phase 7, and a controller that spells `/api/v1` while its callers imply another prefix would be remounted under a
+  doubled path, so wiring the prefix mapping and the one-caller rule waits for phase 7 with those controllers.
+- A request whose method a path does not serve now answers `405` with an `Allow` header instead of `500`; a machine
+  that sends a person-only method to a path shared by both doors reaches this case.
+- Not run: `make up-all`, `make smoke` and `pnpm -C frontend e2e` against the local stack (no suite images are built on
+  the machine that finished this phase). Run them before merging; any `403 wrong-token-kind` from a script names a
+  caller that was missed.

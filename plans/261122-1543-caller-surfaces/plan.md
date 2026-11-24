@@ -104,12 +104,12 @@ default upstream), so its prefixes are `/api/v1` and `/system/v1` without an app
 
 | # | Phase | Status |
 |---|-------|--------|
-| 1 | [Baseline and spikes](./phase-01-baseline-and-spikes.md) | Pending |
-| 2 | [Caller model and label derivation](./phase-02-caller-model-and-label-derivation.md) | Pending |
-| 3 | [Label contract tests and per-caller OpenAPI](./phase-03-label-contract-tests-and-per-caller-openapi.md) | Pending |
-| 4 | [Scalar pages and caller matrix doc](./phase-04-scalar-pages-and-caller-matrix-doc.md) | Pending |
-| 5 | [Prefix mounting and token enforcement](./phase-05-prefix-mounting-and-token-enforcement.md) | Pending |
-| 6 | [Roll out prefixes to all apps](./phase-06-roll-out-prefixes-to-all-apps.md) | Pending |
+| 1 | [Baseline and spikes](./phase-01-baseline-and-spikes.md) | Done |
+| 2 | [Caller model and label derivation](./phase-02-caller-model-and-label-derivation.md) | Done |
+| 3 | [Label contract tests and per-caller OpenAPI](./phase-03-label-contract-tests-and-per-caller-openapi.md) | Done |
+| 4 | [Scalar pages and caller matrix doc](./phase-04-scalar-pages-and-caller-matrix-doc.md) | Done |
+| 5 | [Prefix mounting and token enforcement](./phase-05-prefix-mounting-and-token-enforcement.md) | Done |
+| 6 | [Roll out prefixes to all apps](./phase-06-roll-out-prefixes-to-all-apps.md) | Done |
 | 7 | [Platform admin split and me routes](./phase-07-platform-admin-split-and-me-routes.md) | Pending |
 | 8 | [Internal routes edge block](./phase-08-internal-routes-edge-block.md) | Pending |
 | 9 | [Public namespace pilot: Survey and Workflow](./phase-09-public-namespace-pilot-survey-workflow.md) | Pending |

@@ -172,7 +172,7 @@ absolute `https` origin (or `http://localhost`), and a wildcard, a path or a bar
 ## Conversions and the attribution engine
 
 A goal is a conversion kind a Tenant names by a stable key (`purchase`, `signup`), with an optional default value and
-currency. A conversion is reported by the Tenant's backend (the postback, `POST /api/v1/conversions`) or by the site
+currency. A conversion is reported by the Tenant's backend (the postback, `POST /system/v1/conversions` with a suite token) or by the site
 snippet's `goal(key)`. The postback verifies the signed click token; a token that does not verify is stored
 **`UNATTRIBUTED`** rather than rejected, because a Tenant's order flow must not fail on its own reporting. Only a
 postback that names neither a click nor a visitor is a client error.
